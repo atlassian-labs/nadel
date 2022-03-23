@@ -475,3 +475,8 @@ internal fun javaValueToAstValue(value: Any?): AnyAstValue {
 
 val GraphQLSchema.operationTypes
     get() = listOfNotNull(queryType, mutationType, subscriptionType)
+
+internal fun ExecutionResultImpl.Builder.extensions(extensions: Map<String, Any?>): ExecutionResultImpl.Builder {
+    @Suppress("UNCHECKED_CAST")
+    return extensions(extensions as Map<Any, Any>)
+}

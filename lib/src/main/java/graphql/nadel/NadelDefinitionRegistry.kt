@@ -9,6 +9,13 @@ import graphql.nadel.util.AnySDLDefinition
 import java.util.Collections
 
 /**
+ * This stores a service's definitions to the _overall_ schema. However, this is
+ * NOT a comprehensive list of the types a service owns. It is missing things
+ * like shared types that were already defined by another service etc.
+ *
+ * We should look into phasing this out of the [Service] definition and replacing
+ * it with the blueprint code if necessary.
+ *
  * Alternative to [graphql.schema.idl.TypeDefinitionRegistry] but is more generic
  * and tailored to Nadel specific operations to build the overall schema.
  */

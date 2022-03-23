@@ -2,7 +2,6 @@ package graphql.nadel.engine.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
@@ -10,7 +9,6 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 
 class NadelQueryTransformer private constructor(
-    private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val service: Service,
     private val executionContext: NadelExecutionContext,
     private val executionPlan: NadelExecutionPlan,
@@ -18,7 +16,6 @@ class NadelQueryTransformer private constructor(
 ) {
     companion object {
         suspend fun transformQuery(
-            executionBlueprint: NadelOverallExecutionBlueprint,
             service: Service,
             executionContext: NadelExecutionContext,
             executionPlan: NadelExecutionPlan,
@@ -27,7 +24,6 @@ class NadelQueryTransformer private constructor(
             val transformContext = TransformContext()
 
             val transformer = NadelQueryTransformer(
-                executionBlueprint,
                 service,
                 executionContext,
                 executionPlan,
@@ -149,7 +145,6 @@ class NadelQueryTransformer private constructor(
             val transformResultForStep = transform.transformField(
                 executionContext,
                 this,
-                executionBlueprint,
                 service,
                 fieldFromPreviousTransform,
                 state,
@@ -168,9 +163,7 @@ class NadelQueryTransformer private constructor(
     }
 
     private fun getUnderlyingTypeNames(objectTypeNames: Collection<String>): List<String> {
-        return objectTypeNames.map {
-            executionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
-        }
+        return objectTypeNames.map(service.blueprint.typeRenames::getUnderlyingName)
     }
 
     private fun fixParentRefs(

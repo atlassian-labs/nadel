@@ -5,7 +5,6 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelDeepRenameFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NFUtil
@@ -81,13 +80,12 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val deepRenameInstructions = executionBlueprint.fieldInstructions
+        val deepRenameInstructions = service.blueprint.fieldInstructions
             .getTypeNameToInstructionMap<NadelDeepRenameFieldInstruction>(overallField)
         if (deepRenameInstructions.isEmpty()) {
             return null
@@ -153,7 +151,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -174,7 +171,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                     makeDeepField(
                         state,
                         transformer,
-                        executionBlueprint,
                         service,
                         field,
                         objectTypeWithRename,
@@ -235,13 +231,12 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     private suspend fun makeDeepField(
         state: State,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         objectTypeName: GraphQLObjectTypeName,
         deepRename: NadelDeepRenameFieldInstruction,
     ): ExecutableNormalizedField {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
+        val underlyingTypeName = service.blueprint.typeRenames.getUnderlyingName(overallTypeName = objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
@@ -285,7 +280,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
@@ -300,7 +294,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
             val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
-                executionBlueprint = executionBlueprint,
                 service = service,
                 aliasHelper = state.aliasHelper,
                 parentNode = parentNode,

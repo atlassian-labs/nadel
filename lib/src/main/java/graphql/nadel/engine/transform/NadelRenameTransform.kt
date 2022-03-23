@@ -4,7 +4,6 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.NadelRenameTransform.State
@@ -37,13 +36,12 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val renameInstructions = executionBlueprint.fieldInstructions
+        val renameInstructions = service.blueprint.fieldInstructions
             .getTypeNameToInstructionMap<NadelRenameFieldInstruction>(overallField)
         if (renameInstructions.isEmpty()) {
             return null
@@ -66,7 +64,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -80,7 +77,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             } else {
                 null
             },
-            artificialFields = makeRenamedFields(state, transformer, field, executionBlueprint).let {
+            artificialFields = makeRenamedFields(state, transformer, field).let {
                 when (val typeNameField = makeTypeNameField(state, field)) {
                     null -> it
                     else -> it + typeNameField
@@ -123,7 +120,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
         state: State,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
-        executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
         val setOfFieldObjectTypeNames = field.objectTypeNames.toSet()
         return state.instructionsByObjectTypeNames
@@ -137,7 +133,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 makeRenamedField(
                     state,
                     transformer,
-                    executionBlueprint,
                     state.service,
                     field,
                     typeName,
@@ -150,13 +145,12 @@ internal class NadelRenameTransform : NadelTransform<State> {
     private suspend fun makeRenamedField(
         state: State,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         typeName: GraphQLObjectTypeName,
         rename: NadelRenameFieldInstruction,
     ): ExecutableNormalizedField {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = typeName)
+        val underlyingTypeName = service.blueprint.typeRenames.getUnderlyingName(overallTypeName = typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
         return state.aliasHelper.toArtificial(
@@ -172,7 +166,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
@@ -188,7 +181,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
         return parentNodes.mapNotNull instruction@{ parentNode ->
             val instruction = getInstructionForNode(
                 state = state,
-                executionBlueprint = executionBlueprint,
                 parentNode = parentNode,
             ) ?: return@instruction null
 
@@ -205,7 +197,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     private fun getInstructionForNode(
         state: State,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         parentNode: JsonNode,
     ): NadelRenameFieldInstruction? {
         // There can't be multiple instructions for a top level field
@@ -214,7 +205,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
         }
 
         return state.instructionsByObjectTypeNames.getInstructionForNode(
-            executionBlueprint = executionBlueprint,
             service = state.service,
             aliasHelper = state.aliasHelper,
             parentNode = parentNode,

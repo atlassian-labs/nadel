@@ -2,7 +2,6 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.transform.NadelTransformUtil
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getHydrationActorNodes
@@ -21,7 +20,6 @@ import graphql.nadel.engine.util.unwrapNonNull
 
 internal object NadelBatchHydrationByObjectId {
     fun getHydrateInstructionsMatchingObjectIds(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         state: NadelBatchHydrationTransform.State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -29,7 +27,6 @@ internal object NadelBatchHydrationByObjectId {
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers,
     ): List<NadelResultInstruction> {
         return getHydrateInstructionsMatchingObjectIds(
-            executionBlueprint,
             state,
             instruction,
             parentNodes,
@@ -39,7 +36,6 @@ internal object NadelBatchHydrationByObjectId {
     }
 
     fun getHydrateInstructionsMatchingObjectId(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         state: NadelBatchHydrationTransform.State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -47,7 +43,6 @@ internal object NadelBatchHydrationByObjectId {
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<NadelResultInstruction> {
         return getHydrateInstructionsMatchingObjectIds(
-            executionBlueprint,
             state,
             instruction,
             parentNodes,
@@ -57,7 +52,6 @@ internal object NadelBatchHydrationByObjectId {
     }
 
     private fun getHydrateInstructionsMatchingObjectIds(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         state: NadelBatchHydrationTransform.State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -117,7 +111,6 @@ internal object NadelBatchHydrationByObjectId {
                 }
 
             getHydrateInstructionsForNodeMatchingObjectId(
-                executionBlueprint = executionBlueprint,
                 state = state,
                 sourceNode = sourceNode,
                 sourceIds = sourceIds,
@@ -127,7 +120,6 @@ internal object NadelBatchHydrationByObjectId {
     }
 
     private fun getHydrateInstructionsForNodeMatchingObjectId(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         state: NadelBatchHydrationTransform.State,
         sourceNode: JsonNode,
         sourceIds: List<List<Any?>>,
@@ -137,7 +129,6 @@ internal object NadelBatchHydrationByObjectId {
             overallField = state.hydratedField,
             parentNode = sourceNode,
             service = state.hydratedFieldService,
-            executionBlueprint = executionBlueprint,
             aliasHelper = state.aliasHelper,
         ) ?: error("Unable to find field definition for ${state.hydratedField.queryPath}")
 

@@ -16,9 +16,9 @@ overallSchema:
 underlyingSchema:
   NextgenIssues: |-
     type Query {
-      fastIssue(id: ID!): NextgenIssue
+      fastIssue(id: ID!): Issue
     }
-    type NextgenIssue {
+    type Issue {
       id: ID
     }
   IssueService: |-
@@ -52,7 +52,7 @@ serviceCalls:
       {
         "data": {
           "fastIssue": {
-            "__typename": "NextgenIssue",
+            "__typename": "Issue",
             "id": "ISSUE-1"
           }
         },

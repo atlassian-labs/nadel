@@ -7,7 +7,6 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
@@ -44,7 +43,6 @@ internal class SkipIncludeTransform : NadelTransform<State> {
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
@@ -55,7 +53,7 @@ internal class SkipIncludeTransform : NadelTransform<State> {
             val mergedField = executionContext.query.getMergedField(overallField)
             if (hasAnyChildren(mergedField)) {
                 // Adds a field so we can transform it
-                overallField.children.add(createSkipField(executionBlueprint.engineSchema, overallField))
+                overallField.children.add(createSkipField(service.schema, overallField))
             }
         }
 
@@ -74,7 +72,6 @@ internal class SkipIncludeTransform : NadelTransform<State> {
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -92,7 +89,6 @@ internal class SkipIncludeTransform : NadelTransform<State> {
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

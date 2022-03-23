@@ -2,25 +2,46 @@ package graphql.nadel.engine.transform.query
 
 import graphql.introspection.Introspection
 import graphql.nadel.Service
-import graphql.nadel.engine.blueprint.IntrospectionService
-import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.introspection.IntrospectionServiceFactory
+import graphql.nadel.engine.introspection.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.transform.query.NadelNamespacedFields.isNamespacedField
+import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.copyWithChildren
 import graphql.nadel.engine.util.makeFieldCoordinates
+import graphql.nadel.engine.util.toMapStrictly
 import graphql.nadel.util.NamespacedUtil.serviceOwnsNamespacedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
+import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 
 internal class NadelFieldToService(
-    private val querySchema: GraphQLSchema,
-    private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
+    private val engineSchema: GraphQLSchema,
+    querySchema: GraphQLSchema,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     private val dynamicServiceResolution: DynamicServiceResolution,
     private val services: Map<String, Service>,
 ) {
-    private val introspectionService = IntrospectionService(querySchema, introspectionRunnerFactory)
+    private val introspectionService = IntrospectionServiceFactory.make(querySchema, introspectionRunnerFactory)
+
+    private val topLevelFieldToService: Map<FieldCoordinates, Service> = services.values
+        .asSequence()
+        .flatMap { service ->
+            service.definitionRegistry
+                .definitions
+                .asSequence()
+                .filterIsInstance<AnyImplementingTypeDefinition>()
+                .flatMap { fieldContainer ->
+                    fieldContainer.fieldDefinitions
+                        .map { fieldDef ->
+                            makeFieldCoordinates(fieldContainer.name, fieldDef.name)
+                        }
+                }
+                .map {
+                    it to service
+                }
+        }
+        .toMapStrictly()
 
     fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
@@ -87,12 +108,12 @@ internal class NadelFieldToService(
 
         val operationTypeName = overallField.objectTypeNames.single()
         val fieldCoordinates = makeFieldCoordinates(operationTypeName, overallField.name)
-        return overallExecutionBlueprint.getServiceOwning(fieldCoordinates)
-            ?: error("Unable to find service for field at: $fieldCoordinates")
+        return topLevelFieldToService[fieldCoordinates]
+            ?: throw IllegalStateException("Field is not mapped to any service")
     }
 
     private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
-        return isNamespacedField(field, overallExecutionBlueprint.engineSchema)
+        return isNamespacedField(field, engineSchema)
     }
 }
 
@@ -100,4 +121,3 @@ data class NadelFieldAndService(
     val field: ExecutableNormalizedField,
     val service: Service,
 )
-

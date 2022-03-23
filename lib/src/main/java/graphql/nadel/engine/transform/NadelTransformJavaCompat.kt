@@ -4,7 +4,6 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -23,7 +22,6 @@ interface NadelTransformJavaCompat<State : Any> {
      */
     fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
@@ -36,7 +34,6 @@ interface NadelTransformJavaCompat<State : Any> {
     fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformerJavaCompat,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -47,7 +44,6 @@ interface NadelTransformJavaCompat<State : Any> {
      */
     fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
@@ -61,7 +57,6 @@ interface NadelTransformJavaCompat<State : Any> {
             return object : NadelTransform<State> {
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
@@ -69,7 +64,6 @@ interface NadelTransformJavaCompat<State : Any> {
                 ): State? {
                     return compat.isApplicable(
                         executionContext = executionContext,
-                        executionBlueprint = executionBlueprint,
                         services = services,
                         service = service,
                         overallField = overallField,
@@ -80,7 +74,6 @@ interface NadelTransformJavaCompat<State : Any> {
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: State,
@@ -91,8 +84,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         compat.transformField(
                             executionContext = executionContext,
                             transformer = NadelQueryTransformerJavaCompat(transformer, scope),
-                            executionBlueprint = executionBlueprint,
-                            service = service,
+                                service = service,
                             field = field,
                             state = state,
                         ).asDeferred().await()
@@ -101,7 +93,6 @@ interface NadelTransformJavaCompat<State : Any> {
 
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
@@ -111,7 +102,6 @@ interface NadelTransformJavaCompat<State : Any> {
                 ): List<NadelResultInstruction> {
                     return compat.getResultInstructions(
                         executionContext = executionContext,
-                        executionBlueprint = executionBlueprint,
                         service = service,
                         overallField = overallField,
                         underlyingParentField = underlyingParentField,

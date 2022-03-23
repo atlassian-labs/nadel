@@ -5,7 +5,6 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.transform.getInstructionsForNode
 import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
@@ -26,13 +25,11 @@ internal class NadelBatchHydrator(
 ) {
     suspend fun hydrate(
         state: State,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
         val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction?, List<JsonNode>> = parentNodes
             .mapNotNull { parentNode ->
                 val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
-                    executionBlueprint = executionBlueprint,
                     service = state.hydratedFieldService,
                     aliasHelper = state.aliasHelper,
                     parentNode = parentNode,
@@ -64,7 +61,7 @@ internal class NadelBatchHydrator(
                                 newValue = null,
                             )
                         }
-                        else -> hydrate(executionBlueprint, state, instruction, parentNodes)
+                        else -> hydrate(state, instruction, parentNodes)
                     }
                 }
             }
@@ -74,7 +71,6 @@ internal class NadelBatchHydrator(
     }
 
     private suspend fun hydrate(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -93,7 +89,6 @@ internal class NadelBatchHydrator(
                 batches = batches,
             )
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> getHydrateInstructionsMatchingObjectId(
-                executionBlueprint = executionBlueprint,
                 state = state,
                 instruction = instruction,
                 parentNodes = parentNodes,
@@ -101,7 +96,6 @@ internal class NadelBatchHydrator(
                 matchStrategy = matchStrategy,
             )
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> getHydrateInstructionsMatchingObjectIds(
-                executionBlueprint = executionBlueprint,
                 state = state,
                 instruction = instruction,
                 parentNodes = parentNodes,
@@ -116,9 +110,7 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<ServiceExecutionResult> {
-        val executionBlueprint = state.executionBlueprint
         val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
-            executionBlueprint = executionBlueprint,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             hydratedField = state.hydratedField,
@@ -130,17 +122,16 @@ internal class NadelBatchHydrator(
             actorQueries
                 .map { actorQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
-                        val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
                         engine.executeHydration(
                             service = instruction.actorService,
                             topLevelField = actorQuery,
                             pathToActorField = instruction.queryPathToActorField,
                             executionContext = state.executionContext,
                             serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                                instruction.timeout,
-                                instruction.batchSize,
-                                hydrationSourceService,
-                                instruction.location
+                                timeout = instruction.timeout,
+                                batchSize = instruction.batchSize,
+                                hydrationSourceService = state.hydratedFieldService,
+                                hydrationSourceField = instruction.location
                             )
                         )
                     }
@@ -154,6 +145,7 @@ internal class NadelBatchHydrator(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         parentNode: JsonNode,
     ): NadelBatchHydrationFieldInstruction? {
+        // todo delete this once the hook interfaces are merged together
         if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
             error(
                 "Cannot decide which hydration instruction should be used. " +

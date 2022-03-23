@@ -2,39 +2,25 @@ package graphql.nadel.validation
 
 import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLString
-import graphql.language.ObjectTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.engine.util.AnyNamedNode
-import graphql.nadel.engine.util.isExtensionDef
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.isNotWrapped
 import graphql.nadel.engine.util.isWrapped
-import graphql.nadel.engine.util.operationTypes
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.unwrapOne
-import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
-import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
-import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
-import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
-import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
-import graphql.nadel.validation.util.getReachableTypeNames
+import graphql.nadel.validation.util.getServiceTypes
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
-import graphql.schema.GraphQLNamedType
-import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
-import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
-import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 
 internal class NadelTypeValidation(
@@ -51,7 +37,7 @@ internal class NadelTypeValidation(
     fun validate(
         service: Service,
     ): List<NadelSchemaValidationError> {
-        val (serviceTypes, serviceTypeErrors) = getServiceTypes(service)
+        val (serviceTypes, serviceTypeErrors) = getServiceTypes(overallSchema, service)
 
         val fieldIssues = serviceTypes.asSequence()
             .flatMap(::validate)
@@ -180,107 +166,6 @@ internal class NadelTypeValidation(
         }
 
         return false
-    }
-
-    private fun getServiceTypes(
-        service: Service,
-    ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationError>> {
-        val errors = mutableListOf<NadelSchemaValidationError>()
-        val polymorphicHydrationUnions = getPolymorphicHydrationUnions(service)
-        val namesUsed = getTypeNamesUsed(service, externalTypes = polymorphicHydrationUnions)
-
-        fun addMissingUnderlyingTypeError(overallType: GraphQLNamedType) {
-            errors.add(MissingUnderlyingType(service, overallType))
-        }
-
-        return overallSchema
-            .typeMap
-            .asSequence()
-            .filter { (key) ->
-                key in namesUsed
-            }
-            .filterNot { (key) ->
-                key in allNadelBuiltInTypeNames
-            }
-            .mapNotNull { (_, overallType) ->
-                val underlyingType = getUnderlyingType(overallType, service)
-
-                if (underlyingType == null) {
-                    addMissingUnderlyingTypeError(overallType).let { null }
-                } else {
-                    NadelServiceSchemaElement(
-                        service = service,
-                        overall = overallType,
-                        underlying = underlyingType,
-                    )
-                }
-            }
-            .toList()
-            .also { types ->
-                // Add error for duplicated types
-                errors.addAll(
-                    types
-                        .groupBy { it.underlying.name }
-                        .filterValues { it.size > 1 }
-                        .values
-                        .map { duplicatedTypes ->
-                            DuplicatedUnderlyingType(duplicatedTypes)
-                        },
-                )
-            } to errors
-    }
-
-    private fun getPolymorphicHydrationUnions(service: Service): Set<GraphQLUnionType> {
-        return service.definitionRegistry
-            .definitions
-            .asSequence()
-            .filterIsInstance<ObjectTypeDefinition>()
-            .flatMap { it.fieldDefinitions }
-            .filter { it.getDirectives(hydratedDirectiveDefinition.name).size > 1 }
-            .map { it.type.unwrapAll() }
-            .map { overallSchema.getType(it.name) }
-            .filterIsInstance<GraphQLUnionType>()
-            .toSet()
-    }
-
-    private fun getTypeNamesUsed(service: Service, externalTypes: Set<GraphQLNamedType>): Set<String> {
-        // There is no shared service to validate.
-        // These shared types are USED in other services. When they are used, the validation
-        // will validate that the service has a compatible underlying type.
-        if (service.name == "shared") {
-            return emptySet()
-        }
-
-        val namesToIgnore = externalTypes.map { it.name }.toSet()
-
-        val definitionNames = service.definitionRegistry.definitions
-            .asSequence()
-            .filterIsInstance<AnyNamedNode>()
-            .filter { def ->
-                if (def.isExtensionDef) {
-                    isNamespacedOperationType(typeName = def.name)
-                } else {
-                    true
-                }
-            }
-            .map {
-                it.name
-            }
-            .toSet() - namesToIgnore
-
-        // If it can be reached by using your service, you must own it to return it!
-        val referencedTypes = getReachableTypeNames(overallSchema, service, definitionNames)
-
-        return (definitionNames + referencedTypes).toSet()
-    }
-
-    private fun isNamespacedOperationType(typeName: String): Boolean {
-        return overallSchema.operationTypes.any { operationType ->
-            operationType.fields.any { field ->
-                field.hasAppliedDirective(NadelDirectives.namespacedDirectiveDefinition.name) &&
-                    field.type.unwrapAll().name == typeName
-            }
-        }
     }
 
     private fun visitElement(schemaElement: NadelServiceSchemaElement): Boolean {

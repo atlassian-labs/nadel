@@ -359,8 +359,13 @@ class Nadel private constructor(
                     underlyingTypeDefinitions,
                     underlyingWiringFactory,
                 )
-                val nadelDefinitionRegistry: NadelDefinitionRegistry = NadelDefinitionRegistry.from(serviceSchema)
-                Service(serviceName, underlyingSchema, serviceExecution, nadelDefinitionRegistry)
+                val nadelDefinitionRegistry = NadelDefinitionRegistry.from(serviceSchema)
+                Service(
+                    name = serviceName,
+                    underlyingSchema = underlyingSchema,
+                    serviceExecution = serviceExecution,
+                    definitionRegistry = nadelDefinitionRegistry
+                )
             }
         }
 

@@ -5,8 +5,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.IntrospectionService
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.introspection.IntrospectionService
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform.State
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -71,7 +70,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
@@ -86,11 +84,11 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             service.name == IntrospectionService.name -> return null
         }
 
-        val typeNamesOwnedByService = executionBlueprint.getOverAllTypeNamesForService(service)
+        val typeNamesOwnedByService = service.blueprint.overallTypesDefined
         // Add underlying type names as well to handle combination of hydration and renames.
         // Transforms are applied to hydration fields as well, and those fields always reference
         // elements from the underlying schema
-        val underlyingTypeNamesOwnedByService = executionBlueprint.getUnderlyingTypeNamesForService(service)
+        val underlyingTypeNamesOwnedByService = service.blueprint.underlyingTypesDefined
 
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
             .filter {
@@ -104,7 +102,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         if (fieldObjectTypeNamesOwnedByService.size == overallField.objectTypeNames.size) {
             return null
         }
-
 
         return State(
             aliasHelper = NadelAliasHelper.forField(
@@ -120,18 +117,17 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
         // Nothing to query if there are no fields, we need to add selection
         if (state.fieldObjectTypeNamesOwnedByService.isEmpty()) {
-            val objectTypeNames = state.overallField.parent.getFieldDefinitions(executionBlueprint.engineSchema)
+            val objectTypeNames = state.overallField.parent.getFieldDefinitions(service.schema)
                 .asSequence()
                 .flatMap { fieldDef ->
                     resolveObjectTypes(
-                        executionBlueprint.engineSchema,
+                        service.schema,
                         type = fieldDef.type,
                         onNotObjectType = { type ->
                             error("Unable to resolve to object type: $type")
@@ -174,7 +170,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

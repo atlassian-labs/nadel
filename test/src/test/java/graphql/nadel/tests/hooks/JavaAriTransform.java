@@ -5,7 +5,6 @@ import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionHydrationDetails;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.engine.NadelExecutionContext;
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint;
 import graphql.nadel.engine.transform.NadelTransform;
 import graphql.nadel.engine.transform.NadelTransformFieldResult;
 import graphql.nadel.engine.transform.NadelTransformJavaCompat;
@@ -47,25 +46,24 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
     @NotNull
     @Override
     public CompletableFuture<Set<String>> isApplicable(@NotNull NadelExecutionContext executionContext,
-                                                       @NotNull NadelOverallExecutionBlueprint executionBlueprint,
-                                                       @NotNull Map<String, ? extends Service> services,
+                                                       @NotNull Map<String, Service> services,
                                                        @NotNull Service service,
                                                        @NotNull ExecutableNormalizedField overallField,
                                                        @Nullable ServiceExecutionHydrationDetails hydrationDetails) {
 
         String singleObjectTypeName = getSingleObjectTypeName(overallField);
         FieldCoordinates fieldCoordinates = makeFieldCoordinates(singleObjectTypeName, overallField.getName());
-        GraphQLFieldDefinition fieldDef = executionBlueprint.getEngineSchema().getFieldDefinition(fieldCoordinates);
+        GraphQLFieldDefinition fieldDef = service.getSchema().getFieldDefinition(fieldCoordinates);
         Objects.requireNonNull(fieldDef, "No field def");
 
         var argDefsByName = CollectionUtilKt.strictAssociateBy(fieldDef.getArguments(), GraphQLArgument::getName);
 
         var argsToTransform = overallField.getNormalizedArguments().keySet()
-                .stream()
-                .filter((argName) -> {
-                    return argDefsByName.get(argName).hasDirective("interpretAri");
-                })
-                .collect(Collectors.toSet());
+            .stream()
+            .filter((argName) -> {
+                return argDefsByName.get(argName).hasDirective("interpretAri");
+            })
+            .collect(Collectors.toSet());
 
         if (argsToTransform.isEmpty()) {
             return CompletableFuture.completedFuture(null);
@@ -78,7 +76,6 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
     @Override
     public CompletableFuture<NadelTransformFieldResult> transformField(@NotNull NadelExecutionContext executionContext,
                                                                        @NotNull NadelQueryTransformerJavaCompat transformer,
-                                                                       @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                        @NotNull Service service,
                                                                        @NotNull ExecutableNormalizedField field,
                                                                        @NotNull Set<String> fieldsArgsToInterpret) {
@@ -123,7 +120,6 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
     @NotNull
     @Override
     public CompletableFuture<List<NadelResultInstruction>> getResultInstructions(@NotNull NadelExecutionContext executionContext,
-                                                                                 @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                                  @NotNull Service service,
                                                                                  @NotNull ExecutableNormalizedField overallField,
                                                                                  @Nullable ExecutableNormalizedField underlyingParentField,

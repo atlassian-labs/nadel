@@ -3,15 +3,15 @@ package graphql.nadel
 import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
-import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
-import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.document.DocumentPredicates
+import graphql.nadel.engine.introspection.IntrospectionService
+import graphql.nadel.engine.introspection.NadelDefaultIntrospectionRunner
+import graphql.nadel.engine.introspection.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
@@ -21,7 +21,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.beginExecute
-import graphql.nadel.engine.util.copy
 import graphql.nadel.engine.util.fold
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.mergeResults
@@ -33,8 +32,6 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toBuilder
-import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.LogKit.getLogger
 import graphql.nadel.util.LogKit.getNotPrivacySafeLogger
 import graphql.nadel.util.OperationNameUtil
@@ -65,34 +62,41 @@ class NextgenEngine @JvmOverloads constructor(
     private val log = getLogger<NextgenEngine>()
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
+
     private val engineSchema = nadel.engineSchema
     private val querySchema = nadel.querySchema
-    private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
-    private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
-        engineSchema = nadel.engineSchema,
-        services = nadel.services,
-    )
+    private val serviceExecutionHooks = nadel.serviceExecutionHooks
+    private val instrumentation = nadel.instrumentation
+    private val executionIdProvider = nadel.executionIdProvider
+
+    private val services = nadel.services.strictAssociateBy(Service::name)
+
     private val executionPlanner = NadelExecutionPlanFactory.create(
-        executionBlueprint = overallExecutionBlueprint,
         engine = this,
         transforms = transforms,
+        services = services,
     )
-    private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
-    private val instrumentation = nadel.instrumentation
+    private val resultTransformer = NadelResultTransformer(services)
     private val dynamicServiceResolution = DynamicServiceResolution(
         engineSchema = engineSchema,
         serviceExecutionHooks = serviceExecutionHooks,
-        services = nadel.services,
+        services = services,
     )
     private val fieldToService = NadelFieldToService(
-        querySchema = nadel.querySchema,
-        overallExecutionBlueprint = overallExecutionBlueprint,
+        engineSchema = engineSchema,
+        querySchema = querySchema,
         introspectionRunnerFactory = introspectionRunnerFactory,
         dynamicServiceResolution = dynamicServiceResolution,
-        services,
+        services = services,
     )
-    private val executionIdProvider = nadel.executionIdProvider
+
+    init {
+        // Finish Service definitions
+        services.forEach { (_, service) ->
+            service.schema = engineSchema
+            service.blueprint = NadelExecutionBlueprintFactory.create(engineSchema, nadel.services, service)
+        }
+    }
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -180,7 +184,11 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         executionContext: NadelExecutionContext,
     ): ExecutionResult {
-        val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
+        if (service.name == IntrospectionService.name) {
+            return executeIntrospection(service, topLevelField, executionContext)
+        }
+
+        val executionPlan = executionPlanner.create(executionContext, service, topLevelField)
         val queryTransform = transformQuery(service, executionContext, executionPlan, topLevelField)
         val transformedQuery = queryTransform.result.single()
         val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
@@ -196,12 +204,18 @@ class NextgenEngine @JvmOverloads constructor(
             )
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return newExecutionResult()
-            .data(transformedResult.data)
-            .errors(ErrorUtil.createGraphQLErrorsFromRawErrors(transformedResult.errors))
-            .extensions(transformedResult.extensions as Map<Any, Any>)
-            .build()
+        return transformedResult.toExecutionResult()
+    }
+
+    /**
+     * This shortcuts the introspection execution because that does _not_ require any transforms etc.
+     */
+    private suspend fun executeIntrospection(
+        service: Service,
+        topLevelField: ExecutableNormalizedField,
+        executionContext: NadelExecutionContext,
+    ): ExecutionResult {
+        return executeService(service, topLevelField, executionContext).toExecutionResult()
     }
 
     internal suspend fun executeHydration(
@@ -255,7 +269,6 @@ class NextgenEngine @JvmOverloads constructor(
     ): Pair<NadelQueryTransformer.TransformResult, NadelExecutionPlan> {
         val executionPlan = executionPlanner.create(
             executionContext,
-            services,
             service,
             rootField = actorField,
             serviceHydrationDetails,
@@ -330,7 +343,7 @@ class NextgenEngine @JvmOverloads constructor(
 
         return serviceExecResult.copy(
             data = serviceExecResult.data.let { data ->
-                data?.takeIf { transformedQuery.resultKey in data }
+                data.takeIf { transformedQuery.resultKey in data }
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
         )
@@ -360,7 +373,6 @@ class NextgenEngine @JvmOverloads constructor(
         field: ExecutableNormalizedField,
     ): NadelQueryTransformer.TransformResult {
         return NadelQueryTransformer.transformQuery(
-            overallExecutionBlueprint,
             service,
             executionContext,
             executionPlan,

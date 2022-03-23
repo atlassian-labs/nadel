@@ -6,6 +6,7 @@ import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.hooks.ServiceExecutionHooks
 
+// todo merge this with ServiceExecutionHooks
 interface NadelEngineExecutionHooks : ServiceExecutionHooks {
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
