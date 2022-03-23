@@ -9,6 +9,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -170,7 +171,7 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
         }
 
-        it("tracks visited types to avoid stack overflow").config(timeout = Duration.seconds(1)) {
+        it("tracks visited types to avoid stack overflow").config(timeout = 1.seconds) {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "test" to """

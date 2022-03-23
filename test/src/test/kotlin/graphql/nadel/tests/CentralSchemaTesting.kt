@@ -15,14 +15,12 @@ import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
 
 val File.parents: Sequence<File>
-    get() = sequence<File> {
+    get() = sequence {
         var file: File? = parentFile
         while (file != null) {
             yield(file)
@@ -96,7 +94,8 @@ suspend fun main() {
             NextgenEngine(nadel)
             // NadelEngine(nadel)
         }
-        .dsl(overallSchemas)
+        .overallSchemas(overallSchemas)
+        .underlyingSchemas(underlyingSchemas)
         .serviceExecutionFactory(object : ServiceExecutionFactory {
             override fun getServiceExecution(serviceName: String): ServiceExecution {
                 return ServiceExecution {
@@ -113,10 +112,6 @@ suspend fun main() {
                         ),
                     )
                 }
-            }
-
-            override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                return SchemaParser().parse(underlyingSchemas[serviceName] ?: return TypeDefinitionRegistry())
             }
         })
         .overallWiringFactory(GatewaySchemaWiringFactory())

@@ -27,8 +27,6 @@ import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.future.await
@@ -164,7 +162,8 @@ private suspend fun execute(
                     transforms = testHook.customTransforms,
                 )
             }
-            .dsl(fixture.overallSchema)
+            .overallSchemas(fixture.overallSchema)
+            .underlyingSchemas(fixture.underlyingSchema)
             .overallWiringFactory(testHook.wiringFactory)
             .underlyingWiringFactory(testHook.wiringFactory)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
@@ -219,10 +218,6 @@ private suspend fun execute(
                             fail("Unable to invoke service '$serviceName'", e)
                         }
                     }
-                }
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    return SchemaParser().parse(fixture.underlyingSchema[serviceName])
                 }
 
                 private fun fixVariables(variables: JsonMap): JsonMap {
@@ -339,20 +334,14 @@ fun validate(
                 }
             }
         }
-        .dsl(fixture.overallSchema)
+        .overallSchemas(fixture.overallSchema)
+        .underlyingSchemas(fixture.underlyingSchema)
         .serviceExecutionFactory(
             object : ServiceExecutionFactory {
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
                     return ServiceExecution {
                         throw UnsupportedOperationException("no-op")
                     }
-                }
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    val text = fixture.underlyingSchema[serviceName]
-                        ?: throw IllegalStateException("Missing schema for $serviceName")
-
-                    return SchemaParser().parse(text)
                 }
             },
         )

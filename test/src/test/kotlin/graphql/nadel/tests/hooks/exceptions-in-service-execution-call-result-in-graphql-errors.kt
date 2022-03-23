@@ -11,7 +11,6 @@ import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.message
 import graphql.nadel.tests.util.serviceExecutionFactory
-import graphql.schema.idl.TypeDefinitionRegistry
 import strikt.api.expectThat
 import strikt.assertions.contains
 import strikt.assertions.get
@@ -22,18 +21,12 @@ import strikt.assertions.single
 @UseHook
 class `exceptions-in-service-execution-call-result-in-graphql-errors` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        val serviceExecutionFactory = builder.serviceExecutionFactory
-
         return builder
             .serviceExecutionFactory(object : ServiceExecutionFactory {
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
                     return ServiceExecution {
                         throw RuntimeException("Pop goes the weasel")
                     }
-                }
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    return serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName)
                 }
             })
     }

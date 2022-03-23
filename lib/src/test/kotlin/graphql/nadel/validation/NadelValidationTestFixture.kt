@@ -9,9 +9,6 @@ import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.NadelExecutionParams
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeDefinitionRegistry
-import graphql.schema.idl.errors.SchemaProblem
 import java.util.concurrent.CompletableFuture
 
 data class NadelValidationTestFixture(
@@ -32,23 +29,12 @@ data class NadelValidationTestFixture(
                     }
                 }
             }
-            .dsl(overallSchema)
+            .overallSchemas(overallSchema)
+            .underlyingSchemas(underlyingSchema)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
                     return ServiceExecution {
                         error("no-op")
-                    }
-                }
-
-                private val schemaParser = SchemaParser()
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    try {
-                        val schemaText = underlyingSchema[serviceName]
-                            ?: error("Unable to find underlying schema for service $serviceName")
-                        return schemaParser.parse(schemaText)
-                    } catch (e: SchemaProblem) {
-                        throw RuntimeException("Unable to parse underlying schema for $serviceName", e)
                     }
                 }
             })
