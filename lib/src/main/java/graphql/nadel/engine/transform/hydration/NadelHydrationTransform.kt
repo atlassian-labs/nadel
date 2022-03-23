@@ -197,6 +197,7 @@ internal class NadelHydrationTransform(
                 aliasHelper = state.aliasHelper,
                 fieldToHydrate = fieldToHydrate,
                 parentNode = parentNode,
+                executionBlueprint = executionBlueprint,
             ).map { actorQuery ->
                 async {
                     val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
