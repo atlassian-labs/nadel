@@ -18,7 +18,7 @@ data class NadelSchemas internal constructor(
 ) {
     companion object {
         @JvmStatic
-        fun newBuilder() = Builder()
+        fun newNadelSchemas() = Builder()
     }
 
     class Builder {
