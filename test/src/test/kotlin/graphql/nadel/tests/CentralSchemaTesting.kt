@@ -6,13 +6,13 @@ import graphql.GraphQLError
 import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
+import graphql.nadel.NadelSchemas
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
-import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import kotlinx.coroutines.future.asDeferred
@@ -119,8 +119,13 @@ suspend fun main() {
         .build()
 
     NadelSchemaValidation(
-        overallSchema = nadel.engineSchema,
-        services = nadel.services.strictAssociateBy { it.name }
+        NadelSchemas.Builder()
+            .overallSchemas(overallSchemas)
+            .underlyingSchemas(underlyingSchemas)
+            .overallWiringFactory(GatewaySchemaWiringFactory())
+            .underlyingWiringFactory(GatewaySchemaWiringFactory())
+            .stubServiceExecution()
+            .build()
     )
         .validate()
         .sortedBy { it.javaClass.name }

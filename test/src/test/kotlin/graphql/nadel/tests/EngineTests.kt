@@ -1,19 +1,13 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import graphql.ExecutionInput
-import graphql.ExecutionResult
-import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
-import graphql.language.Document
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
-import graphql.nadel.NadelExecutionParams
+import graphql.nadel.NadelSchemas
 import graphql.nadel.NextgenEngine
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
@@ -21,7 +15,6 @@ import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
-import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
@@ -321,35 +314,14 @@ fun validate(
     fixture: TestFixture,
     hook: EngineTestHook,
 ) {
-    val nadel = Nadel.newNadel()
-        .engineFactory {
-            object : NadelExecutionEngine {
-                override fun execute(
-                    executionInput: ExecutionInput,
-                    queryDocument: Document,
-                    instrumentationState: InstrumentationState?,
-                    nadelExecutionParams: NadelExecutionParams,
-                ): CompletableFuture<ExecutionResult> {
-                    throw UnsupportedOperationException("no-op")
-                }
-            }
-        }
-        .overallSchemas(fixture.overallSchema)
-        .underlyingSchemas(fixture.underlyingSchema)
-        .serviceExecutionFactory(
-            object : ServiceExecutionFactory {
-                override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    return ServiceExecution {
-                        throw UnsupportedOperationException("no-op")
-                    }
-                }
-            },
-        )
-        .build()
-
     val validation = NadelSchemaValidation(
-        overallSchema = nadel.engineSchema,
-        services = nadel.services.strictAssociateBy(Service::name),
+        NadelSchemas.Builder()
+            .overallSchemas(fixture.overallSchema)
+            .underlyingSchemas(fixture.underlyingSchema)
+            .overallWiringFactory(GatewaySchemaWiringFactory())
+            .underlyingWiringFactory(GatewaySchemaWiringFactory())
+            .stubServiceExecution()
+            .build()
     )
 
     val errors = validation.validate()

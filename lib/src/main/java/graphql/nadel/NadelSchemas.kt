@@ -93,6 +93,21 @@ data class NadelSchemas internal constructor(
                 }
         }
 
+        /**
+         * Use this if you want just want the service schema without the "full" [Service].
+         */
+        fun stubServiceExecution(): Builder = also {
+            serviceExecutionFactory(
+                object : ServiceExecutionFactory {
+                    override fun getServiceExecution(serviceName: String): ServiceExecution {
+                        return ServiceExecution {
+                            throw UnsupportedOperationException("no-op")
+                        }
+                    }
+                },
+            )
+        }
+
         fun build(): NadelSchemas {
             require(overallSchemas.isNotEmpty()) { "Nadel schemas must not be empty" }
             require(underlyingSchemas.isNotEmpty()) { "Underlying schemas must not be empty" }
