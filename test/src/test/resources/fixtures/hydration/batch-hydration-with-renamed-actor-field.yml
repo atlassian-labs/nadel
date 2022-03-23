@@ -1,4 +1,4 @@
-name: hydration list with batching renamed actor field
+name: batch hydration with renamed actor field
 enabled: true
 overallSchema:
   service2: |
