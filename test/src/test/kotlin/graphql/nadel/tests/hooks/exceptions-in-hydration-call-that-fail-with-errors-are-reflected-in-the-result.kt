@@ -4,8 +4,8 @@ import graphql.ExecutionResult
 import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.assertJsonKeys

@@ -1,7 +1,7 @@
 package graphql.nadel.tests.hooks
 
 import graphql.ExecutionResult
-import graphql.nadel.enginekt.util.AnyList
+import graphql.nadel.engine.util.AnyList
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook

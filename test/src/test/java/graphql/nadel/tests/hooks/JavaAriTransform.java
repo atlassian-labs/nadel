@@ -4,14 +4,14 @@ import graphql.language.StringValue;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionHydrationDetails;
 import graphql.nadel.ServiceExecutionResult;
-import graphql.nadel.enginekt.NadelExecutionContext;
-import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint;
-import graphql.nadel.enginekt.transform.NadelTransform;
-import graphql.nadel.enginekt.transform.NadelTransformFieldResult;
-import graphql.nadel.enginekt.transform.NadelTransformJavaCompat;
-import graphql.nadel.enginekt.transform.query.NadelQueryTransformerJavaCompat;
-import graphql.nadel.enginekt.transform.result.NadelResultInstruction;
-import graphql.nadel.enginekt.util.CollectionUtilKt;
+import graphql.nadel.engine.NadelExecutionContext;
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint;
+import graphql.nadel.engine.transform.NadelTransform;
+import graphql.nadel.engine.transform.NadelTransformFieldResult;
+import graphql.nadel.engine.transform.NadelTransformJavaCompat;
+import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat;
+import graphql.nadel.engine.transform.result.NadelResultInstruction;
+import graphql.nadel.engine.util.CollectionUtilKt;
 import graphql.normalized.ExecutableNormalizedField;
 import graphql.normalized.NormalizedInputValue;
 import graphql.schema.FieldCoordinates;
@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static graphql.nadel.enginekt.util.GraphQLUtilKt.makeFieldCoordinates;
+import static graphql.nadel.engine.util.GraphQLUtilKt.makeFieldCoordinates;
 import static java.util.Collections.emptyList;
 
 public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {

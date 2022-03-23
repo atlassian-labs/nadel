@@ -1,7 +1,6 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.execution.instrumentation.InstrumentationState
@@ -18,12 +17,11 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.enginekt.util.AnyList
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.MutableJsonMap
-import graphql.nadel.enginekt.util.newGraphQLError
-import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.engine.util.AnyList
+import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.engine.util.MutableJsonMap
+import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
@@ -31,7 +29,6 @@ import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
-import graphql.schema.idl.errors.SchemaProblem
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.future.await

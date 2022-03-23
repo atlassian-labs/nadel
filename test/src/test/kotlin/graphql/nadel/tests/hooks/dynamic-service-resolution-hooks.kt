@@ -2,7 +2,6 @@ package graphql.nadel.tests.hooks
 
 import graphql.ErrorType
 import graphql.GraphqlErrorBuilder
-import graphql.execution.ExecutionStepInfo
 import graphql.execution.ResultPath
 import graphql.nadel.Nadel
 import graphql.nadel.Service
