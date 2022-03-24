@@ -26,6 +26,7 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: NadelAliasHelper,
         fieldToHydrate: ExecutableNormalizedField,
         parentNode: JsonNode,
+        executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
         return NadelHydrationInputBuilder.getInputValues(
             instruction = instruction,
@@ -37,6 +38,7 @@ internal object NadelHydrationFieldsBuilder {
                 instruction = instruction,
                 fieldArguments = args,
                 fieldChildren = deepClone(fields = fieldToHydrate.children),
+                executionBlueprint = executionBlueprint,
             )
         }
     }
@@ -81,6 +83,7 @@ internal object NadelHydrationFieldsBuilder {
                 instruction = instruction,
                 fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationActorInputDef) -> inputDef.name },
                 fieldChildren = fieldChildren,
+                executionBlueprint = executionBlueprint,
             )
         }
     }
@@ -136,10 +139,11 @@ internal object NadelHydrationFieldsBuilder {
         instruction: NadelGenericHydrationInstruction,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
+        executionBlueprint: NadelOverallExecutionBlueprint,
     ): ExecutableNormalizedField {
         return NFUtil.createField(
-            schema = instruction.actorService.underlyingSchema,
-            parentType = instruction.actorService.underlyingSchema.queryType,
+            schema = executionBlueprint.engineSchema,
+            parentType = executionBlueprint.engineSchema.queryType,
             queryPathToField = instruction.queryPathToActorField,
             fieldArguments = fieldArguments,
             fieldChildren = fieldChildren,
