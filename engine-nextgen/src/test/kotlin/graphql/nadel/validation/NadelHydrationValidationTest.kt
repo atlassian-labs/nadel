@@ -930,18 +930,19 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                         type JiraIssue @renamed(from: "Issue") {
                             id: ID!
-                            creator: User @hydrated(
+                            creator(someArg: ID!): User @hydrated(
                                 service: "users"
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creator"}
+                                    {name: "someArg", value: "$argument.someArg"}
                                 ]
                             )
                         }
                     """.trimIndent(),
                             "users" to """
                         type Query {
-                            user(id: Int!): User
+                            user(id: Int!, someArg: Int!): User
                         }
                         type User {
                             id: ID!
@@ -961,7 +962,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                             "users" to """
                         type Query {
-                            user(id: Int!): User
+                            user(id: Int!, someArg: Int!): User
                         }
                         type User {
                             id: ID!

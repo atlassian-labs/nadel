@@ -217,6 +217,8 @@ internal class NadelHydrationValidation(
             actorField: GraphQLFieldDefinition,
     ): NadelSchemaValidationError? {
         val remoteArgSource = remoteArg.remoteArgumentSource
+        val actorArg = actorField.getArgument(remoteArg.name)
+        val actorArgInputType = actorArg.type
         return when (remoteArgSource.sourceType) {
             ObjectField -> {
                 val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField!!)
@@ -224,10 +226,8 @@ internal class NadelHydrationValidation(
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
                     //check the input types match with hydration and actor fields
-                    val actorArg = actorField.getArgument(remoteArg.name)
                     val fieldOutputType = field.type
-                    val actorArgInputType = actorArg.type
-                    if (!outputTypeMatchesInputType(fieldOutputType, actorArgInputType)) {
+                    if (!hydrationArgTypesMatch(fieldOutputType, actorArgInputType)) {
                         IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType, actorArgInputType)
                     }
                     null
@@ -238,7 +238,7 @@ internal class NadelHydrationValidation(
                 if (argument == null) {
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {
-                    // TODO: check argument type is correct
+                    //check the input types match with hydration and actor fields
                     null
                 }
             }
