@@ -10,9 +10,9 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.MutableJsonMap
-import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.engine.util.MutableJsonMap
+import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.schema.idl.SchemaParser

@@ -1,7 +1,7 @@
 name: dynamic service resolution multiple services
 enabled: true
 overallSchema:
-  Common: |
+  shared: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
 
     type Query {
@@ -22,7 +22,7 @@ overallSchema:
       issueKey: String
     }
 underlyingSchema:
-  Common: |
+  shared: |
     type Query {
       echo: String
     }

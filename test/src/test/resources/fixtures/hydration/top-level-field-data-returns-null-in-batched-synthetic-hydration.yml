@@ -6,12 +6,11 @@ overallSchema:
       users: UsersQuery
     }
     type UsersQuery {
-      foo: String
       usersByIds(id: [ID]): [User]
     }
     type User {
       id: ID
-      lastName: String
+      name: String
     }
   service1: |
     type Query {

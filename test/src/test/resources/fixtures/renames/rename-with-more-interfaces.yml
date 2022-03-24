@@ -27,7 +27,7 @@ underlyingSchema:
     }
     type Troll implements Node {
       id: ID!
-      nameOfFirstThingEaten: String
+      nameOfFirstThingEaten: ID!
     }
     type Issue implements Node {
       id: ID!

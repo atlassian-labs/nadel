@@ -7,7 +7,7 @@ import graphql.language.AstSorter
 import graphql.language.Document
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionEngine
-import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.engine.util.JsonMap
 import graphql.parser.Parser
 
 data class TestFixture(

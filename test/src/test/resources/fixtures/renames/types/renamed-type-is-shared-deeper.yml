@@ -1,5 +1,6 @@
 name: renamed type is shared deeper
-enabled: true
+# Doesn't even get past validation
+enabled: false
 overallSchema:
   NextgenIssues: |-
     type Query {

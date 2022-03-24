@@ -38,7 +38,7 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "foo": null
+          "foo": "Custom Scalar"
         },
         "extensions": {}
       }
@@ -46,7 +46,7 @@ serviceCalls:
 response: |-
   {
     "data": {
-      "foo": null
+      "foo": "Custom Scalar"
     },
     "extensions": {}
   }

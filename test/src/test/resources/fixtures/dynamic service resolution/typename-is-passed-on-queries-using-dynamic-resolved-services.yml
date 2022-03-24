@@ -1,7 +1,7 @@
 name: __typename is passed on queries using dynamic resolved services
 enabled: true
 overallSchema:
-  Common: |
+  shared: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
 
     type Query {
@@ -17,7 +17,7 @@ overallSchema:
       description: String
     }
 underlyingSchema:
-  Common: |
+  shared: |
     type Query {
       echo: String
     }

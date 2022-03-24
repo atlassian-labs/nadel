@@ -1,4 +1,4 @@
-name: inlined-all-arguments-with-mixed-literals-and-variables
+name: inlined all arguments with mixed literals and variables
 enabled: true
 overallSchema:
   MyService: |

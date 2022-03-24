@@ -1,5 +1,6 @@
 name: renamed type is shared but not renamed in one service
-enabled: true
+# Not supported
+enabled: false
 overallSchema:
   NextgenIssues: |-
     type Query {

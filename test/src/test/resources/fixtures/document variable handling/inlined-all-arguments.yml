@@ -37,7 +37,7 @@ serviceCalls:
           hello(arg: $v0, arg1: $v1)
         }
       variables:
-        v0: { names: [ "Bobba","Fett" ], payload: { "name": "Bobert", age: "23" } }
+        v0: { names: [ "Bobba", "Fett" ], payload: { "name": "Bobert", age: "23" } }
         v1: { interests: [ "photography", "basketball" ] }
       operationName: myQuery
     # language=JSON

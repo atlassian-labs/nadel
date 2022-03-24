@@ -1,22 +1,32 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.ExecutionInput
+import graphql.ExecutionResult
+import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
+import graphql.language.Document
 import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
+import graphql.nadel.NadelExecutionParams
 import graphql.nadel.NextgenEngine
+import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.enginekt.util.AnyList
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.MutableJsonMap
+import graphql.nadel.engine.util.AnyList
+import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.engine.util.MutableJsonMap
+import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
+import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
@@ -144,6 +154,8 @@ private suspend fun execute(
     printSyncLine("\n$sep\n${fixture.name}\n$sep")
 
     try {
+        validate(fixture, testHook)
+
         val nadel: Nadel = Nadel.newNadel()
             .schemaTransformationHook(testHook.schemaTransformationHook)
             .engineFactory { nadel ->
@@ -307,5 +319,61 @@ private suspend fun execute(
             return
         }
         fail("Unexpected error during engine execution", e)
+    }
+}
+
+fun validate(
+    fixture: TestFixture,
+    hook: EngineTestHook,
+) {
+    val nadel = Nadel.newNadel()
+        .engineFactory {
+            object : NadelExecutionEngine {
+                override fun execute(
+                    executionInput: ExecutionInput,
+                    queryDocument: Document,
+                    instrumentationState: InstrumentationState?,
+                    nadelExecutionParams: NadelExecutionParams,
+                ): CompletableFuture<ExecutionResult> {
+                    throw UnsupportedOperationException("no-op")
+                }
+            }
+        }
+        .dsl(fixture.overallSchema)
+        .serviceExecutionFactory(
+            object : ServiceExecutionFactory {
+                override fun getServiceExecution(serviceName: String): ServiceExecution {
+                    return ServiceExecution {
+                        throw UnsupportedOperationException("no-op")
+                    }
+                }
+
+                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
+                    val text = fixture.underlyingSchema[serviceName]
+                        ?: throw IllegalStateException("Missing schema for $serviceName")
+
+                    return SchemaParser().parse(text)
+                }
+            },
+        )
+        .build()
+
+    val validation = NadelSchemaValidation(
+        overallSchema = nadel.engineSchema,
+        services = nadel.services.strictAssociateBy(Service::name),
+    )
+
+    val errors = validation.validate()
+    if (errors.isEmpty()) {
+        return
+    }
+
+    errors
+        .asSequence()
+        .map(NadelSchemaValidationError::message)
+        .forEach(System.err::println)
+
+    if (!hook.isSchemaValid(errors)) {
+        throw ValidationException("Test fixture was not valid", errors)
     }
 }
