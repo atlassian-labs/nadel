@@ -920,5 +920,59 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.overallField.name == "name")
             assert(error.subject == error.overallField)
         }
+
+        it("fails if hydration argument types are mismatch with actor") {
+            val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                            creator: User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: Int!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: Int!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
     }
 })

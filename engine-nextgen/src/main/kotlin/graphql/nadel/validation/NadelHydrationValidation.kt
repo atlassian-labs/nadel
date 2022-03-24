@@ -1,19 +1,23 @@
 package graphql.nadel.validation
 
 import graphql.nadel.Service
-import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.isNonNull
+import graphql.nadel.enginekt.util.isNotWrapped
+import graphql.nadel.enginekt.util.isWrapped
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.enginekt.util.unwrapNonNull
+import graphql.nadel.enginekt.util.unwrapOne
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleHydrationArgumentType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
@@ -26,8 +30,11 @@ import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 
@@ -179,8 +186,7 @@ internal class NadelHydrationValidation(
                     argument = remoteArg.name,
                 )
             } else {
-                val remoteArgSource = remoteArg.remoteArgumentSource
-                getRemoteArgErrors(parent, overallField, remoteArgSource)
+                getRemoteArgErrors(parent, overallField, remoteArg, actorField)
             }
         }
 
@@ -205,17 +211,25 @@ internal class NadelHydrationValidation(
     }
 
     private fun getRemoteArgErrors(
-        parent: NadelServiceSchemaElement,
-        overallField: GraphQLFieldDefinition,
-        remoteArgSource: RemoteArgumentSource,
+            parent: NadelServiceSchemaElement,
+            overallField: GraphQLFieldDefinition,
+            remoteArg: RemoteArgumentDefinition,
+            actorField: GraphQLFieldDefinition,
     ): NadelSchemaValidationError? {
+        val remoteArgSource = remoteArg.remoteArgumentSource
         return when (remoteArgSource.sourceType) {
             ObjectField -> {
                 val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField!!)
                 if (field == null) {
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
-                    // TODO: check argument type is correct
+                    //check the input types match with hydration and actor fields
+                    val actorArg = actorField.getArgument(remoteArg.name)
+                    val fieldOutputType = field.type
+                    val actorArgInputType = actorArg.type
+                    if (!outputTypeMatchesInputType(fieldOutputType, actorArgInputType)) {
+                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType, actorArgInputType)
+                    }
                     null
                 }
             }
@@ -232,5 +246,14 @@ internal class NadelHydrationValidation(
                 null
             }
         }
+    }
+
+    /*
+    *  Checks the type of a hydration argument against the type of an actor field argument to see if they match
+    *
+    */
+    private fun hydrationArgTypesMatch(outputType: GraphQLOutputType, inputType: GraphQLInputType): Boolean {
+        //TODO
+        return true
     }
 }

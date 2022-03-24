@@ -16,9 +16,11 @@ import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectField
+import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
 
@@ -316,6 +318,28 @@ sealed interface NadelSchemaValidationError {
             val uf = "${parentType.underlying.name}.${remoteArgSource.pathToField?.joinToString(separator = ".")}"
             val s = service.name
             "Field $of tried to hydrate using value of non-existent underlying field $uf from service $s as an argument"
+        }
+
+        override val subject = overallField
+    }
+
+    data class IncompatibleHydrationArgumentType(
+            val parentType: NadelServiceSchemaElement,
+            val overallField: GraphQLFieldDefinition,
+            val remoteArg: RemoteArgumentDefinition,
+            val outputFieldType: GraphQLOutputType,
+            val actorArgInputType: GraphQLInputType,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val hydrationArgName = remoteArg.name
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val uf = "${parentType.underlying.name}.${remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".")}"
+            val s = service.name
+            "Field $of tried to hydrate with argument $hydrationArgName using value from underlying field $uf from " +
+                    "service $s with an argument of $outputFieldType whereas the actor field requires an argument of" +
+                    "type $actorArgInputType"
         }
 
         override val subject = overallField
