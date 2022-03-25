@@ -55,7 +55,7 @@ service Issues {
           service: "Users"
           field: "users"
           arguments: [{name: "ids" value: "$source.authorIds"}] 
-          identifiedBy: "id"(ids: $source.authorIds)
+          identifiedBy: "id"
           batchSize: 10
         )
     }
