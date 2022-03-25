@@ -112,10 +112,16 @@ data class NadelSchemas internal constructor(
             require(overallSchemas.isNotEmpty()) { "Nadel schemas must not be empty" }
             require(underlyingSchemas.isNotEmpty()) { "Underlying schemas must not be empty" }
 
-            require(underlyingSchemas.keys.containsAll(overallSchemas.keys)) {
-                val missing = overallSchemas.keys - underlyingSchemas.keys
-                "Each Nadel schema must have an equivalent underlying schema. Missing $missing"
+            require(overallSchemas.keys == underlyingSchemas.keys) {
+                val extraOverallKeys = overallSchemas.keys - underlyingSchemas.keys
+                if (extraOverallKeys.isNotEmpty()) {
+                    "There are services in the overall schemas $extraOverallKeys that are not present in the underlying schemas"
+                } else {
+                    val extraUnderlyingKeys = underlyingSchemas.keys - overallSchemas.keys
+                    "There are extra services in the underlying schemas $extraUnderlyingKeys that are not present in the overall schemas"
+                }
             }
+
             val serviceExecutionFactory = requireNotNull(serviceExecutionFactory) {
                 "serviceExecutionFactory must be set"
             }
