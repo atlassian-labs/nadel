@@ -51,7 +51,13 @@ service Issues {
     }
     type Issue {
         id: ID
-        authors: [User] => hydrated from Users.users(ids: $source.authorIds) object identified by id, batch size 10
+        authors: [User] @hydrated(
+          service: "Users"
+          field: "users"
+          arguments: [{name: "ids" value: "$source.authorIds"}] 
+          identifiedBy: "id"(ids: $source.authorIds)
+          batchSize: 10
+        )
     }
 }
 
@@ -61,7 +67,7 @@ service Users {
     }
     type User {
         id: ID
-        name: String => renamed from fullName
+        name: String @renamed(from: "fullName")
     }
 }
 ```
