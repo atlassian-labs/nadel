@@ -1,19 +1,13 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import graphql.ExecutionInput
-import graphql.ExecutionResult
-import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
-import graphql.language.Document
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
-import graphql.nadel.NadelExecutionParams
+import graphql.nadel.NadelSchemas
 import graphql.nadel.NextgenEngine
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
@@ -21,14 +15,11 @@ import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
-import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.future.await
@@ -164,7 +155,8 @@ private suspend fun execute(
                     transforms = testHook.customTransforms,
                 )
             }
-            .dsl(fixture.overallSchema)
+            .overallSchemas(fixture.overallSchema)
+            .underlyingSchemas(fixture.underlyingSchema)
             .overallWiringFactory(testHook.wiringFactory)
             .underlyingWiringFactory(testHook.wiringFactory)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
@@ -219,10 +211,6 @@ private suspend fun execute(
                             fail("Unable to invoke service '$serviceName'", e)
                         }
                     }
-                }
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    return SchemaParser().parse(fixture.underlyingSchema[serviceName])
                 }
 
                 private fun fixVariables(variables: JsonMap): JsonMap {
@@ -326,41 +314,14 @@ fun validate(
     fixture: TestFixture,
     hook: EngineTestHook,
 ) {
-    val nadel = Nadel.newNadel()
-        .engineFactory {
-            object : NadelExecutionEngine {
-                override fun execute(
-                    executionInput: ExecutionInput,
-                    queryDocument: Document,
-                    instrumentationState: InstrumentationState?,
-                    nadelExecutionParams: NadelExecutionParams,
-                ): CompletableFuture<ExecutionResult> {
-                    throw UnsupportedOperationException("no-op")
-                }
-            }
-        }
-        .dsl(fixture.overallSchema)
-        .serviceExecutionFactory(
-            object : ServiceExecutionFactory {
-                override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    return ServiceExecution {
-                        throw UnsupportedOperationException("no-op")
-                    }
-                }
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    val text = fixture.underlyingSchema[serviceName]
-                        ?: throw IllegalStateException("Missing schema for $serviceName")
-
-                    return SchemaParser().parse(text)
-                }
-            },
-        )
-        .build()
-
     val validation = NadelSchemaValidation(
-        overallSchema = nadel.engineSchema,
-        services = nadel.services.strictAssociateBy(Service::name),
+        NadelSchemas.Builder()
+            .overallSchemas(fixture.overallSchema)
+            .underlyingSchemas(fixture.underlyingSchema)
+            .overallWiringFactory(GatewaySchemaWiringFactory())
+            .underlyingWiringFactory(GatewaySchemaWiringFactory())
+            .stubServiceExecution()
+            .build()
     )
 
     val errors = validation.validate()

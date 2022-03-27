@@ -35,10 +35,6 @@ class `hydration-matching-using-index-with-lists` : EngineTestHook {
                         serviceExecution
                     }
                 }
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    return serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName)
-                }
             })
     }
 }
