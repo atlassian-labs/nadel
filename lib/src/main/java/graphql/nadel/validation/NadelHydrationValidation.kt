@@ -211,7 +211,7 @@ internal class NadelHydrationValidation(
                     //check the input types match with hydration and actor fields
                     val fieldOutputType = field.type
                     if (!hydrationArgTypesMatch(fieldOutputType, actorArgInputType)) {
-                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType.name, actorArgInputType.name)
+                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType.toString(), actorArgInputType.toString())
                     }
                     null
                 }
@@ -224,7 +224,7 @@ internal class NadelHydrationValidation(
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
                     if (!hydrationArgTypesMatch(hydrationArgType, actorArgInputType)) {
-                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, hydrationArgType.name, actorArgInputType.name)
+                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, hydrationArgType.toString(), actorArgInputType.toString())
                     }
                     null
                 }
@@ -236,16 +236,18 @@ internal class NadelHydrationValidation(
     }
 
     /*
-    *  Checks the type of a hydration argument against the type of an actor field argument to see if they match
+    *  Checks the type of a hydration argument derived from source field output against the type of an actor field
+    * argument to see if they match
     *
     */
-    private fun hydrationArgTypesMatch(outputType: GraphQLOutputType, inputType: GraphQLInputType): Boolean {
+    private fun hydrationArgTypesMatch(fieldOutputType: GraphQLOutputType, inputType: GraphQLInputType): Boolean {
         //TODO
         return true
     }
 
     /*
-    *  Checks the type of a hydration argument against the type of an actor field argument to see if they match
+    *  Checks the type of a hydration argument derived from field input argument against the type of an actor field
+    * argument to see if they match
     *
     */
     private fun hydrationArgTypesMatch(argInputType: GraphQLInputType, inputType: GraphQLInputType): Boolean {
