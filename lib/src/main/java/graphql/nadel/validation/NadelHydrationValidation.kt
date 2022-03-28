@@ -30,6 +30,7 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnionType
@@ -209,8 +210,8 @@ internal class NadelHydrationValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val fieldOutputType = field.type
-                    if (!hydrationArgTypesMatch(fieldOutputType, actorArgInputType)) {
-                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType, actorArgInputType)
+                    if (!typeValidation.isAssignableTo(actorArgInputType as GraphQLNamedType, fieldOutputType as GraphQLNamedType)) {
+                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType.name, actorArgInputType.name)
                     }
                     null
                 }
@@ -221,6 +222,10 @@ internal class NadelHydrationValidation(
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {
                     //check the input types match with hydration and actor fields
+                        val hydrationArgType = argument.type
+                    if (!typeValidation.isAssignableTo(actorArgInputType as GraphQLNamedType, hydrationArgType as GraphQLNamedType)) {
+                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, hydrationArgType.name, actorArgInputType.name)
+                    }
                     null
                 }
             }

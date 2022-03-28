@@ -326,8 +326,8 @@ sealed interface NadelSchemaValidationError {
             val parentType: NadelServiceSchemaElement,
             val overallField: GraphQLFieldDefinition,
             val remoteArg: RemoteArgumentDefinition,
-            val outputFieldType: GraphQLOutputType,
-            val actorArgInputType: GraphQLInputType,
+            val hydrationType: String,
+            val actorArgInputType: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -337,7 +337,7 @@ sealed interface NadelSchemaValidationError {
             val uf = "${parentType.underlying.name}.${remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".")}"
             val s = service.name
             "Field $of tried to hydrate with argument $hydrationArgName using value from underlying field $uf from " +
-                    "service $s with an argument of $outputFieldType whereas the actor field requires an argument of" +
+                    "service $s with an argument of $hydrationType whereas the actor field requires an argument of" +
                     "type $actorArgInputType"
         }
 
