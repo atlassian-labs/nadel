@@ -210,7 +210,7 @@ internal class NadelHydrationValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val fieldOutputType = field.type
-                    if (!typeValidation.isAssignableTo(actorArgInputType as GraphQLNamedType, fieldOutputType as GraphQLNamedType)) {
+                    if (!hydrationArgTypesMatch(fieldOutputType, actorArgInputType)) {
                         IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType.name, actorArgInputType.name)
                     }
                     null
@@ -222,8 +222,8 @@ internal class NadelHydrationValidation(
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {
                     //check the input types match with hydration and actor fields
-                        val hydrationArgType = argument.type
-                    if (!typeValidation.isAssignableTo(actorArgInputType as GraphQLNamedType, hydrationArgType as GraphQLNamedType)) {
+                    val hydrationArgType = argument.type
+                    if (!hydrationArgTypesMatch(hydrationArgType, actorArgInputType)) {
                         IncompatibleHydrationArgumentType(parent, overallField, remoteArg, hydrationArgType.name, actorArgInputType.name)
                     }
                     null
@@ -240,6 +240,15 @@ internal class NadelHydrationValidation(
     *
     */
     private fun hydrationArgTypesMatch(outputType: GraphQLOutputType, inputType: GraphQLInputType): Boolean {
+        //TODO
+        return true
+    }
+
+    /*
+    *  Checks the type of a hydration argument against the type of an actor field argument to see if they match
+    *
+    */
+    private fun hydrationArgTypesMatch(argInputType: GraphQLInputType, inputType: GraphQLInputType): Boolean {
         //TODO
         return true
     }
