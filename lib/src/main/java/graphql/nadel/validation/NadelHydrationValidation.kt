@@ -263,8 +263,8 @@ internal class NadelHydrationValidation(
 
         if (hydrationSource.isNotWrapped && actorArgument.isNotWrapped) {
             return typeValidation.isAssignableTo(
-                lhs = hydrationSource as GraphQLNamedType,
-                rhs = actorArgument as GraphQLNamedType,
+                lhs = actorArgument as GraphQLNamedType,
+                rhs = hydrationSource as GraphQLNamedType,
             )
         } else {
             return false
