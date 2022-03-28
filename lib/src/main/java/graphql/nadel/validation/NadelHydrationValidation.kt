@@ -34,6 +34,7 @@ import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnionType
@@ -261,28 +262,12 @@ internal class NadelHydrationValidation(
         }
 
         if (hydrationSource.isNotWrapped && actorArgument.isNotWrapped) {
-            return isOutputTypeNameValid(
-                hydrationSourceType = hydrationSource as GraphQLUnmodifiedType,
-                actorArgumentInputType = actorArgument as GraphQLUnmodifiedType,
+            return typeValidation.isAssignableTo(
+                lhs = hydrationSource as GraphQLNamedType,
+                rhs = actorArgument as GraphQLNamedType,
             )
         } else {
             return false
         }
-    }
-
-    private fun isOutputTypeNameValid(
-        hydrationSourceType: GraphQLUnmodifiedType,
-        actorArgumentInputType: GraphQLUnmodifiedType,
-    ): Boolean {
-        if (NadelSchemaUtil.getUnderlyingName(hydrationSourceType) == NadelSchemaUtil.getUnderlyingName(actorArgumentInputType)) {
-            return true
-        }
-        if (actorArgumentInputType.name == Scalars.GraphQLID.name && hydrationSourceType.name == Scalars.GraphQLString.name) {
-            return true
-        }
-        if (actorArgumentInputType is GraphQLInterfaceType && hydrationSourceType is GraphQLImplementingType) {
-            return hydrationSourceType.interfaces.contains(actorArgumentInputType)
-        }
-        return false
     }
 }
