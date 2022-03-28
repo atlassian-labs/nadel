@@ -6,23 +6,21 @@ import graphql.GraphQLError
 import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
+import graphql.nadel.NadelSchemas
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
-import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
 
 val File.parents: Sequence<File>
-    get() = sequence<File> {
+    get() = sequence {
         var file: File? = parentFile
         while (file != null) {
             yield(file)
@@ -96,7 +94,8 @@ suspend fun main() {
             NextgenEngine(nadel)
             // NadelEngine(nadel)
         }
-        .dsl(overallSchemas)
+        .overallSchemas(overallSchemas)
+        .underlyingSchemas(underlyingSchemas)
         .serviceExecutionFactory(object : ServiceExecutionFactory {
             override fun getServiceExecution(serviceName: String): ServiceExecution {
                 return ServiceExecution {
@@ -114,18 +113,19 @@ suspend fun main() {
                     )
                 }
             }
-
-            override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                return SchemaParser().parse(underlyingSchemas[serviceName] ?: return TypeDefinitionRegistry())
-            }
         })
         .overallWiringFactory(GatewaySchemaWiringFactory())
         .underlyingWiringFactory(GatewaySchemaWiringFactory())
         .build()
 
     NadelSchemaValidation(
-        overallSchema = nadel.engineSchema,
-        services = nadel.services.strictAssociateBy { it.name }
+        NadelSchemas.Builder()
+            .overallSchemas(overallSchemas)
+            .underlyingSchemas(underlyingSchemas)
+            .overallWiringFactory(GatewaySchemaWiringFactory())
+            .underlyingWiringFactory(GatewaySchemaWiringFactory())
+            .stubServiceExecution()
+            .build()
     )
         .validate()
         .sortedBy { it.javaClass.name }

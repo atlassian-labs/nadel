@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.hydration.batch
 
-import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -10,7 +9,6 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLOutputType
-import graphql.schema.GraphQLType
 
 /**
  * Builds the field used to identify objects returned by batch hydration e.g.
@@ -95,8 +93,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     ): List<ExecutableNormalizedField> {
         val objectTypeNames = getObjectTypeNamesForIdField(
             executionBlueprint = executionBlueprint,
-            actorService = batchHydrationInstruction.actorService,
-            underlyingParentTypeOfIdField = batchHydrationInstruction.actorFieldDef.type,
+            overallParentTypeOfIdField = batchHydrationInstruction.actorFieldDef.type,
         )
 
         return objectIds
@@ -115,14 +112,11 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
      */
     private fun getObjectTypeNamesForIdField(
         executionBlueprint: NadelOverallExecutionBlueprint,
-        actorService: Service,
-        underlyingParentTypeOfIdField: GraphQLOutputType,
+        overallParentTypeOfIdField: GraphQLOutputType,
     ): List<String> {
-        val overallType = getUnwrappedOverallType(
-            executionBlueprint = executionBlueprint,
-            service = actorService,
-            underlyingType = underlyingParentTypeOfIdField,
-        ) ?: error("Could not find the overall output type for the actor field")
+        val overallTypeName = overallParentTypeOfIdField.unwrapAll().name
+        val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
+            ?: error("Could not find the overall output type for the actor field")
 
         return resolveObjectTypes(
             schema = executionBlueprint.engineSchema,
@@ -131,20 +125,6 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
                 errorForUnsupportedObjectIdParentType()
             },
         ).map { it.name }
-    }
-
-    /**
-     * NOTE: the hydrated field output type must ALWAYS be exposed, otherwise it isn't a valid hydration.
-     * We use this function to get the overall output type of the hydrated field.
-     */
-    private fun getUnwrappedOverallType(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        underlyingType: GraphQLType,
-    ): GraphQLType? {
-        val underlyingTypeName = underlyingType.unwrapAll().name
-        val overallTypeName = executionBlueprint.getOverallTypeName(service, underlyingTypeName)
-        return executionBlueprint.engineSchema.getType(overallTypeName)
     }
 
     private fun errorForUnsupportedObjectIdParentType(): Nothing {

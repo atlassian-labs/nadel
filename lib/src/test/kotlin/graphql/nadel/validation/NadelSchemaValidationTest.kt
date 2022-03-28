@@ -1,6 +1,6 @@
 package graphql.nadel.validation
 
-import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.NadelSchemas.Companion.newNadelSchemas
 import io.kotest.core.spec.style.DescribeSpec
 
 class NadelSchemaValidationTest : DescribeSpec({
@@ -30,7 +30,11 @@ class NadelSchemaValidationTest : DescribeSpec({
 })
 
 fun validate(fixture: NadelValidationTestFixture): Set<NadelSchemaValidationError> {
-    val nadel = fixture.toNadel()
-    val services = nadel.services.strictAssociateBy { it.name }
-    return NadelSchemaValidation(nadel.engineSchema, services).validate()
+    return NadelSchemaValidation(
+        newNadelSchemas()
+            .overallSchemas(fixture.overallSchema)
+            .underlyingSchemas(fixture.underlyingSchema)
+            .stubServiceExecution()
+            .build()
+    ).validate()
 }

@@ -1,21 +1,21 @@
 package graphql.nadel.validation
 
+import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
+import graphql.nadel.engine.util.strictAssociateBy
 import graphql.schema.GraphQLNamedSchemaElement
-import graphql.schema.GraphQLSchema
 
-class NadelSchemaValidation(
-    private val overallSchema: GraphQLSchema,
-    private val services: Map<String, Service>,
-) {
+class NadelSchemaValidation(private val schemas: NadelSchemas) {
     fun validate(): Set<NadelSchemaValidationError> {
+        val (engineSchema, services) = schemas
+
+        val servicesByName = services.strictAssociateBy(Service::name)
         val context = NadelValidationContext()
-        val typeValidation = NadelTypeValidation(context, overallSchema, services)
+        val typeValidation = NadelTypeValidation(context, engineSchema, servicesByName)
+
         return services
             .asSequence()
-            .flatMap { (_, service) ->
-                typeValidation.validate(service)
-            }
+            .flatMap(typeValidation::validate)
             .toSet()
     }
 }

@@ -39,10 +39,6 @@ class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-r
                         else -> serviceExecutionFactory.getServiceExecution(serviceName)
                     }
                 }
-
-                override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
-                    return serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName)
-                }
             })
     }
 
