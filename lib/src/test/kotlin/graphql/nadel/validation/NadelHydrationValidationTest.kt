@@ -5,6 +5,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedF
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatibleOutputType
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleHydrationArgumentType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
@@ -1205,7 +1206,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("fails if hydration argument types are mismatch with actor") {
+        it("fails if hydration argument source type is mismatch with actor field input arguments") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -1214,19 +1215,18 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                         type JiraIssue @renamed(from: "Issue") {
                             id: ID!
-                            creator(someArg: ID!): User @hydrated(
+                            creator: User @hydrated(
                                 service: "users"
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creator"}
-                                    {name: "someArg", value: "$argument.someArg"}
                                 ]
                             )
                         }
                     """.trimIndent(),
                             "users" to """
                         type Query {
-                            user(id: Int!, someArg: Int!): User
+                            user(id: Int!): User
                         }
                         type User {
                             id: ID!
@@ -1246,7 +1246,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                             "users" to """
                         type Query {
-                            user(id: Int!, someArg: Int!): User
+                            user(id: Int!): User
                         }
                         type User {
                             id: ID!
@@ -1257,7 +1257,73 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            assert(errors.isNotEmpty())
+            val error = errors.singleOfType<IncompatibleHydrationArgumentType>()
+            assert(error.parentType.overall.name == "JiraIssue")
+            assert(error.overallField.name == "creator")
+            assert(error.remoteArg.name == "id")
+            assert(error.hydrationType == "ID!")
+            assert(error.actorArgInputType == "Int!")
+        }
+
+        it("fails if hydration argument types are mismatch with actor field input arguments") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                            creator(someArg: ID!): User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "someArg", value: "$argument.someArg"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(someArg: Int!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(someArg: Int!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isNotEmpty())
+            val error = errors.singleOfType<IncompatibleHydrationArgumentType>()
+            assert(error.parentType.overall.name == "JiraIssue")
+            assert(error.overallField.name == "creator")
+            assert(error.remoteArg.name == "someArg")
+            assert(error.hydrationType == "ID!")
+            assert(error.actorArgInputType == "Int!")
         }
     }
 })

@@ -334,9 +334,9 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val hydrationArgName = remoteArg.name
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val uf = "${parentType.underlying.name}.${remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".")}"
+            val remoteArgSource = "${parentType.overall.name}.${remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".")}"
             val s = service.name
-            "Field $of tried to hydrate with argument $hydrationArgName using value from underlying field $uf from " +
+            "Field $of tried to hydrate with argument $hydrationArgName using value from field $remoteArgSource from " +
                     "service $s with an argument of $hydrationType whereas the actor field requires an argument of" +
                     "type $actorArgInputType"
         }

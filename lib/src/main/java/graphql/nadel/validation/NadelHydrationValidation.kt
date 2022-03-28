@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.Scalars
 import graphql.nadel.Service
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
@@ -8,8 +9,11 @@ import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
+import graphql.nadel.engine.util.isNotWrapped
+import graphql.nadel.engine.util.isWrapped
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.engine.util.unwrapOne
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
@@ -21,19 +25,19 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgum
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
+import graphql.nadel.validation.util.NadelSchemaUtil
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLInputType
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
-import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnionType
+import graphql.schema.GraphQLUnmodifiedType
 
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
@@ -211,7 +215,7 @@ internal class NadelHydrationValidation(
                     //check the input types match with hydration and actor fields
                     val fieldOutputType = field.type
                     if (!hydrationArgTypesMatch(fieldOutputType, actorArgInputType)) {
-                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType.toString(), actorArgInputType.toString())
+                        return IncompatibleHydrationArgumentType(parent, overallField, remoteArg, fieldOutputType.toString(), actorArgInputType.toString())
                     }
                     null
                 }
@@ -224,7 +228,7 @@ internal class NadelHydrationValidation(
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
                     if (!hydrationArgTypesMatch(hydrationArgType, actorArgInputType)) {
-                        IncompatibleHydrationArgumentType(parent, overallField, remoteArg, hydrationArgType.toString(), actorArgInputType.toString())
+                        return IncompatibleHydrationArgumentType(parent, overallField, remoteArg, hydrationArgType.toString(), actorArgInputType.toString())
                     }
                     null
                 }
@@ -236,22 +240,49 @@ internal class NadelHydrationValidation(
     }
 
     /*
-    *  Checks the type of a hydration argument derived from source field output against the type of an actor field
-    * argument to see if they match
+    *  Checks the type of a hydration argument derived from either a $source field output type or $argument field input
+    * argument type against the type of an actor field argument to see if they match
     *
     */
-    private fun hydrationArgTypesMatch(fieldOutputType: GraphQLOutputType, inputType: GraphQLInputType): Boolean {
-        //TODO
-        return true
+    private fun hydrationArgTypesMatch(
+        hydrationSourceType: GraphQLType,
+        actorArgumentInputType: GraphQLType,
+    ): Boolean {
+        var hydrationSource: GraphQLType = hydrationSourceType
+        var actorArgument: GraphQLType = actorArgumentInputType
+
+        while (hydrationSource.isWrapped && actorArgument.isWrapped) {
+            if ((hydrationSource.isList && actorArgument.isList) || (hydrationSource.isNonNull && actorArgument.isNonNull)) {
+                hydrationSource = hydrationSource.unwrapOne()
+                actorArgument = actorArgument.unwrapOne()
+            } else {
+                return false
+            }
+        }
+
+        if (hydrationSource.isNotWrapped && actorArgument.isNotWrapped) {
+            return isOutputTypeNameValid(
+                hydrationSourceType = hydrationSource as GraphQLUnmodifiedType,
+                actorArgumentInputType = actorArgument as GraphQLUnmodifiedType,
+            )
+        } else {
+            return false
+        }
     }
 
-    /*
-    *  Checks the type of a hydration argument derived from field input argument against the type of an actor field
-    * argument to see if they match
-    *
-    */
-    private fun hydrationArgTypesMatch(argInputType: GraphQLInputType, inputType: GraphQLInputType): Boolean {
-        //TODO
-        return true
+    private fun isOutputTypeNameValid(
+        hydrationSourceType: GraphQLUnmodifiedType,
+        actorArgumentInputType: GraphQLUnmodifiedType,
+    ): Boolean {
+        if (NadelSchemaUtil.getUnderlyingName(hydrationSourceType) == NadelSchemaUtil.getUnderlyingName(actorArgumentInputType)) {
+            return true
+        }
+        if (actorArgumentInputType.name == Scalars.GraphQLID.name && hydrationSourceType.name == Scalars.GraphQLString.name) {
+            return true
+        }
+        if (actorArgumentInputType is GraphQLInterfaceType && hydrationSourceType is GraphQLImplementingType) {
+            return hydrationSourceType.interfaces.contains(actorArgumentInputType)
+        }
+        return false
     }
 }
