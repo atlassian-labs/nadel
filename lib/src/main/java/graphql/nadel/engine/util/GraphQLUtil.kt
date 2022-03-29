@@ -433,7 +433,7 @@ fun makeNormalizedInputValue(
  *
  * todo: find a better way of doing this? currently it's just a string.replace hack
  */
-fun NormalizedInputValue.replaceTypeName(newTypeName: String): NormalizedInputValue {
+fun NormalizedInputValue.withNewUnwrappedTypeName(newTypeName: String): NormalizedInputValue {
     val newTypenameWithOriginalWrapping = this.typeName.replace(this.unwrappedTypeName, newTypeName)
     return NormalizedInputValue(newTypenameWithOriginalWrapping, this.value)
 }

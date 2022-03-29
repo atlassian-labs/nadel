@@ -1,0 +1,115 @@
+name: chain input rename with object argument transform
+enabled: true
+overallSchema:
+  # language=GraphQL
+  MyService: |
+    type Query {
+      echo: String
+    }
+    type Mutation {
+      startSprint(input: StartSprintInput): Sprint
+    }
+    input StartSprintInput @renamed(from: "SprintInput") {
+      boardId: ID! @ARI(type: "board", owner: "jira-software", interpreted: true)
+      sprintId: ID! @ARI(type: "sprint", owner: "jira-software", interpreted: true)
+      name: String!
+      goal: String
+      startDate: String!
+      endDate: String!
+    }
+    type Sprint {
+      id: ID!
+    }
+    directive @ARI(
+      type: String!
+      owner: String!
+      interpreted: Boolean! = false
+    ) on ARGUMENT_DEFINITION | FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+underlyingSchema:
+  # language=GraphQL
+  MyService: |
+    type Query {
+      echo: String
+    }
+    type Mutation {
+      startSprint(input: SprintInput): Sprint
+    }
+    type Sprint {
+      id: ID!
+    }
+    input SprintInput {
+      boardId: ID!
+      sprintId: ID!
+      name: String!
+      goal: String
+      startDate: String!
+      endDate: String!
+    }
+# language=GraphQL
+query: |
+  mutation mainJiraSoftwareStartSprintModalSubmitMutation(
+    $boardId: ID!
+    $sprintId: ID!
+    $name: String!
+    $goal: String
+    $startDate: String!
+    $endDate: String!
+  ) {
+    startSprint(
+      input: {
+        boardId: $boardId
+        sprintId: $sprintId
+        name: $name
+        goal: $goal
+        startDate: $startDate
+        endDate: $endDate
+      }
+    ) {
+      __typename
+    }
+  }
+variables:
+  boardId: "ari:cloud:jira-software::board/123"
+  sprintId: "ari:cloud:jira-software::sprint/456"
+  name: "Test Input"
+  goal: null
+  startDate: "2022-03-22"
+  endDate: "2022-04-02"
+serviceCalls:
+  - serviceName: MyService
+    request:
+      # language=GraphQL
+      query: |
+        mutation mainJiraSoftwareStartSprintModalSubmitMutation($v0: SprintInput) {
+          startSprint(input: $v0) {
+            __typename
+          }
+        }
+      operationName: mainJiraSoftwareStartSprintModalSubmitMutation
+      variables:
+        v0:
+          boardId: "123"
+          sprintId: "456"
+          name: "Test Input"
+          goal: null
+          startDate: "2022-03-22"
+          endDate: "2022-04-02"
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "startSprint":{
+            "__typename": "Sprint"
+          }
+        }
+      }
+    # language=JSON
+response: |-
+  {
+    "data": {
+      "startSprint":{
+        "__typename": "Sprint"
+      }
+    },
+    "errors": []
+  }

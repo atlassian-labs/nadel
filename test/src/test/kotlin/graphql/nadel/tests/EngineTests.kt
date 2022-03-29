@@ -260,7 +260,13 @@ private suspend fun execute(
                 .variables(fixture.variables)
                 .operationName(fixture.operationName)
                 .let { builder ->
-                    testHook.makeExecutionInput(builder.executionHints(defaultHints.copy()))
+                    testHook.makeExecutionInput(
+                        builder = builder.executionHints(
+                            nadelExecutionHints = testHook
+                                .makeExecutionHints(defaultHints.toBuilder())
+                                .build(),
+                        ),
+                    )
                 }
                 .build(),
         ).await()
