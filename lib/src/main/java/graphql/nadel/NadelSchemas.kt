@@ -12,7 +12,7 @@ import java.io.Reader
 import java.io.StringReader
 import graphql.schema.idl.ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS as graphQLSpecScalars
 
-data class NadelSchemas internal constructor(
+data class NadelSchemas constructor(
     val engineSchema: GraphQLSchema,
     val services: List<Service>,
 ) {
