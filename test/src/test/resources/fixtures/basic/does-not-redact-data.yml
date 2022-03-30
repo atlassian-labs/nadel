@@ -1,0 +1,79 @@
+name: does not redact data
+enabled: true
+overallSchema:
+  # language=GraphQL
+  service: |
+    type Query {
+        myActivities: Activity
+    }
+    type Activity {
+        page: Page
+    }
+    type Page @redactable {
+        id: ID
+        cloudId: ID @CloudId
+    }
+    directive @redactable on OBJECT
+    directive @CloudId on FIELD_DEFINITION
+underlyingSchema:
+  # language=GraphQL
+  service: |
+    type Query {
+        myActivities: Activity
+    }
+    type Activity {
+        page: Page
+    }
+    type Page {
+        id: ID
+        cloudId: ID
+    }
+# language=GraphQL
+query: |
+  query {
+      myActivities {
+          page {
+              id
+          }
+      }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      # language=GraphQL
+      query: |
+        query {
+            myActivities {
+                page {
+                    cloudId
+                    id
+                }
+            }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "myActivities": {
+            "page": {
+              "id": "page-1",
+              "cloudId": "fwang.atlassian.net"
+            }
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "myActivities": {
+        "page": {
+          "id": "page-1"
+        }
+      }
+    },
+    "extensions": {}
+  }
