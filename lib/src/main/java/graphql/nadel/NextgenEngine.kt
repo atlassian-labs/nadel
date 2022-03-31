@@ -35,8 +35,6 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
-import graphql.nadel.util.LogKit.getLogger
-import graphql.nadel.util.LogKit.getNotPrivacySafeLogger
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
@@ -61,8 +59,6 @@ class NextgenEngine @JvmOverloads constructor(
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
-    private val logNotSafe = getNotPrivacySafeLogger<NextgenEngine>()
-    private val log = getLogger<NextgenEngine>()
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
@@ -312,8 +308,6 @@ class NextgenEngine @JvmOverloads constructor(
             val errorMessage = "An exception occurred invoking the service '${service.name}'"
             val errorMessageNotSafe = "$errorMessage: ${e.message}"
             val executionId = serviceExecParams.executionId.toString()
-            logNotSafe.error("$errorMessageNotSafe. Execution ID '$executionId'", e)
-            log.error("$errorMessage. Execution ID '$executionId'", e)
 
             newServiceExecutionResult(
                 errors = mutableListOf(
