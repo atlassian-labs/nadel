@@ -5,11 +5,11 @@ import graphql.nadel.schema.OverallSchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.schema.UnderlyingSchemaGenerator
 import graphql.nadel.util.SchemaUtil
+import graphql.parser.MultiSourceReader
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.WiringFactory
 import java.io.Reader
-import java.io.StringReader
 import graphql.schema.idl.ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS as graphQLSpecScalars
 
 data class NadelSchemas constructor(
@@ -80,16 +80,20 @@ data class NadelSchemas constructor(
         @JvmName("overallSchemasString")
         fun overallSchemas(value: Map<String, String>): Builder = also {
             overallSchemas = value
-                .mapValuesTo(LinkedHashMap()) { (_, schema) ->
-                    StringReader(schema)
+                .mapValuesTo(LinkedHashMap()) { (serviceName, schema) ->
+                    MultiSourceReader.newMultiSourceReader()
+                        .string(schema, serviceName)
+                        .build()
                 }
         }
 
         @JvmName("underlyingSchemasString")
         fun underlyingSchemas(value: Map<String, String>): Builder = also {
             underlyingSchemas = value
-                .mapValuesTo(LinkedHashMap()) { (_, schema) ->
-                    StringReader(schema)
+                .mapValuesTo(LinkedHashMap()) { (serviceName, schema) ->
+                    MultiSourceReader.newMultiSourceReader()
+                        .string(schema, serviceName)
+                        .build()
                 }
         }
 
