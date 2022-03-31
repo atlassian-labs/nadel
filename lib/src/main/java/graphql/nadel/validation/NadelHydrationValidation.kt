@@ -374,8 +374,7 @@ internal class NadelHydrationValidation(
             }
         } else if (hydrationSourceType is GraphQLObjectType && actorArgumentInputType is GraphQLInputObjectType) {
             //todo check fields
-            actorArgumentInputType.fields.map { field ->
-            }
+
             return emptyList()
         } else if (hydrationSourceType is GraphQLInputObjectType && actorArgumentInputType is GraphQLInputObjectType) {
             //todo check fields
