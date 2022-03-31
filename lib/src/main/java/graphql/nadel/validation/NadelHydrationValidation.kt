@@ -258,15 +258,7 @@ internal class NadelHydrationValidation(
         actorArgumentInputType: GraphQLType,
     ): List<NadelSchemaValidationError> {
 
-        val incompatibleHydrationArgError = listOf(
-            IncompatibleHydrationArgumentType(
-                parent,
-                overallField,
-                remoteArg,
-                hydrationSourceType.toString(),
-                actorArgumentInputType.toString()
-            )
-        )
+        var isIncompatible = false
 
         var hydrationSource: GraphQLType = hydrationSourceType
         var actorArgument: GraphQLType = actorArgumentInputType
@@ -285,7 +277,7 @@ internal class NadelHydrationValidation(
                 //could be a batch hydration with list input eg [ID] -> ID
                 hydrationSource = hydrationSource.unwrapOne()
             } else {
-                return incompatibleHydrationArgError
+                isIncompatible = true
             }
         }
 
@@ -318,7 +310,7 @@ internal class NadelHydrationValidation(
                         actorArgument as GraphQLNamedType,
                     )
                 } else {
-                    return incompatibleHydrationArgError
+                    isIncompatible = true
                 }
             } else if (hydrationSource.isNotWrapped && actorArgument.isList) {
                 // this is a case of batch hydration
@@ -331,11 +323,24 @@ internal class NadelHydrationValidation(
                         actorArgument.unwrapOne() as GraphQLNamedType,
                     )
                 } else {
-                    return incompatibleHydrationArgError
+                    isIncompatible = true
                 }
             } else {
-                return incompatibleHydrationArgError
+                isIncompatible = true
             }
+        }
+        if (isIncompatible) {
+            return listOf(
+                IncompatibleHydrationArgumentType(
+                    parent,
+                    overallField,
+                    remoteArg,
+                    hydrationSourceType.toString(),
+                    actorArgumentInputType.toString()
+                )
+            )
+        } else {
+            return emptyList()
         }
     }
 
@@ -353,34 +358,37 @@ internal class NadelHydrationValidation(
         actorArgumentInputType: GraphQLType,
     ): List<NadelSchemaValidationError> {
 
-        val incompatibleHydrationArgError = listOf(
-            IncompatibleHydrationArgumentType(
-                parent,
-                overallField,
-                remoteArg,
-                hydrationSourceType.toString(),
-                actorArgumentInputType.toString()
-            )
-        )
+        var isIncompatible = false
 
         if (hydrationSourceType is GraphQLScalarType && actorArgumentInputType is GraphQLScalarType) {
             if (!typeValidation.isAssignableTo(
                 lhs = actorArgumentInputType,
                 rhs = hydrationSourceType,
             )) {
-                return incompatibleHydrationArgError
+                isIncompatible = true
             } else {
                 return emptyList()
             }
         } else if (hydrationSourceType is GraphQLObjectType && actorArgumentInputType is GraphQLInputObjectType) {
-            //todo check fields
-
             return emptyList()
         } else if (hydrationSourceType is GraphQLInputObjectType && actorArgumentInputType is GraphQLInputObjectType) {
             //todo check fields
             return emptyList()
         } else {
-            return incompatibleHydrationArgError
+            isIncompatible = true
+        }
+
+        if (isIncompatible) {
+            return listOf(
+                IncompatibleHydrationArgumentType(
+                    parent,
+                    overallField,
+                    remoteArg,
+                    hydrationSourceType.toString(),
+                    actorArgumentInputType.toString()
+                ))
+        } else {
+            return emptyList()
         }
     }
 
