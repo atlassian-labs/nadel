@@ -286,7 +286,7 @@ private suspend fun execute(
                         // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
                     ).also {
                         printSyncLine("Overall response")
-                        printSyncLine(it)
+                        printSyncLine(jsonObjectMapper.writeValueAsString(it))
                         printSyncLine()
                     }
                 },
@@ -297,7 +297,7 @@ private suspend fun execute(
                         // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
                     ).also {
                         printSyncLine("Expecting response")
-                        printSyncLine(it)
+                        printSyncLine(jsonObjectMapper.writeValueAsString(it))
                         printSyncLine()
                     }
                 },
