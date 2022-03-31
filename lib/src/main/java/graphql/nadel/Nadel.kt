@@ -18,17 +18,14 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
-import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
-import graphql.nadel.util.LogKit
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.WiringFactory
 import graphql.validation.ValidationError
 import graphql.validation.Validator
-import org.slf4j.Logger
 import java.io.Reader
 import java.io.StringReader
 import java.util.concurrent.CompletableFuture
@@ -134,11 +131,9 @@ class Nadel private constructor(
         var executionInput = executionInputRef.get()!!
 
         val query = executionInput.query
-        logNotSafe.debug("Parsing query: '{}'...", query)
         val parseResult = parse(executionInput, graphQLSchema, instrumentationState)
 
         return if (parseResult.isFailure) {
-            logNotSafe.warn("Query failed to parse : '{}'", executionInput.query)
             PreparsedDocumentEntry(parseResult.syntaxException.toInvalidSyntaxError())
         } else {
             val document = parseResult.document
@@ -149,11 +144,9 @@ class Nadel private constructor(
             }
             executionInputRef.set(executionInput)
 
-            logNotSafe.debug("Validating query: '{}'", query)
             val errors = validate(executionInput, document, graphQLSchema, instrumentationState)
 
             if (errors.isNotEmpty()) {
-                logNotSafe.warn("Query failed to validate : '{}' because of {} ", query, errors)
                 PreparsedDocumentEntry(errors)
             } else {
                 PreparsedDocumentEntry(document)
@@ -382,9 +375,6 @@ class Nadel private constructor(
     }
 
     companion object {
-        private val logNotSafe: Logger = LogKit.getNotPrivacySafeLogger<Nadel>()
-        private val log: Logger = LogKit.getLogger<Nadel>()
-
         /**
          * @return a builder of Nadel objects
          */
