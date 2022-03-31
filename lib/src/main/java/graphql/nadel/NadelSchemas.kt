@@ -8,6 +8,7 @@ import graphql.nadel.util.SchemaUtil
 import graphql.parser.MultiSourceReader
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.SchemaParser
+import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.WiringFactory
 import java.io.Reader
 import graphql.schema.idl.ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS as graphQLSpecScalars
@@ -30,10 +31,11 @@ data class NadelSchemas constructor(
         internal var serviceExecutionFactory: ServiceExecutionFactory? = null
 
         // .nadel files
-        internal var overallSchemas = mutableMapOf<String, Reader>()
+        internal var overallSchemaReaders = mutableMapOf<String, Reader>()
 
         // .graphqls files
-        internal var underlyingSchemas = mutableMapOf<String, Reader>()
+        internal var underlyingSchemaReaders = mutableMapOf<String, Reader>()
+        internal var underlyingTypeDefs = mutableMapOf<String, TypeDefinitionRegistry>()
 
         fun schemaTransformationHook(value: SchemaTransformationHook): Builder = also {
             schemaTransformationHook = value
@@ -52,34 +54,46 @@ data class NadelSchemas constructor(
         }
 
         fun overallSchema(serviceName: String, schema: Reader): Builder = also {
-            overallSchemas[serviceName] = schema
+            overallSchemaReaders[serviceName] = schema
         }
 
         fun underlyingSchema(serviceName: String, schema: Reader): Builder = also {
-            underlyingSchemas[serviceName] = schema
+            underlyingTypeDefs.remove(serviceName) // remove from other Map
+            underlyingSchemaReaders[serviceName] = schema
+        }
+
+        fun underlyingSchema(serviceName: String, schema: TypeDefinitionRegistry): Builder = also {
+            underlyingSchemaReaders.remove(serviceName) // remove from other Map
+            underlyingTypeDefs[serviceName] = schema
         }
 
         fun overallSchema(serviceName: String, schema: String): Builder = also {
-            overallSchemas[serviceName] = schema.reader()
+            overallSchemaReaders[serviceName] = schema.reader()
         }
 
         fun underlyingSchema(serviceName: String, schema: String): Builder = also {
-            underlyingSchemas[serviceName] = schema.reader()
+            underlyingSchema(
+                serviceName,
+                MultiSourceReader.newMultiSourceReader()
+                    .string(schema, serviceName)
+                    .build(),
+            )
         }
 
         @JvmName("overallSchemasReader")
         fun overallSchemas(value: Map<String, Reader>): Builder = also {
-            overallSchemas = value.toMutableMap() // copy
+            overallSchemaReaders = value.toMutableMap() // copy
         }
 
         @JvmName("underlyingSchemasReader")
         fun underlyingSchemas(value: Map<String, Reader>): Builder = also {
-            underlyingSchemas = value.toMutableMap() // copy
+            underlyingSchemaReaders = value.toMutableMap() // copy
+            value.keys.forEach(underlyingTypeDefs::remove) // remove from other Map
         }
 
         @JvmName("overallSchemasString")
         fun overallSchemas(value: Map<String, String>): Builder = also {
-            overallSchemas = value
+            overallSchemaReaders = value
                 .mapValuesTo(LinkedHashMap()) { (serviceName, schema) ->
                     MultiSourceReader.newMultiSourceReader()
                         .string(schema, serviceName)
@@ -89,12 +103,20 @@ data class NadelSchemas constructor(
 
         @JvmName("underlyingSchemasString")
         fun underlyingSchemas(value: Map<String, String>): Builder = also {
-            underlyingSchemas = value
+            val readers = value
                 .mapValuesTo(LinkedHashMap()) { (serviceName, schema) ->
                     MultiSourceReader.newMultiSourceReader()
                         .string(schema, serviceName)
                         .build()
                 }
+
+            underlyingSchemas(readers)
+        }
+
+        @JvmName("underlyingTypeDefs")
+        fun underlyingSchemas(value: Map<String, TypeDefinitionRegistry>): Builder = also {
+            underlyingTypeDefs = value.toMutableMap() // copy
+            value.keys.forEach(underlyingSchemaReaders::remove) // remove from other Map
         }
 
         /**
@@ -113,15 +135,15 @@ data class NadelSchemas constructor(
         }
 
         fun build(): NadelSchemas {
-            require(overallSchemas.isNotEmpty()) { "Nadel schemas must not be empty" }
-            require(underlyingSchemas.isNotEmpty()) { "Underlying schemas must not be empty" }
+            require(overallSchemaReaders.isNotEmpty()) { "Nadel schemas must not be empty" }
+            require(underlyingSchemaReaders.isNotEmpty()) { "Underlying schemas must not be empty" }
 
-            require(overallSchemas.keys == underlyingSchemas.keys) {
-                val extraOverallKeys = overallSchemas.keys - underlyingSchemas.keys
+            require(overallSchemaReaders.keys == underlyingSchemaReaders.keys) {
+                val extraOverallKeys = overallSchemaReaders.keys - underlyingSchemaReaders.keys
                 if (extraOverallKeys.isNotEmpty()) {
                     "There are services in the overall schemas $extraOverallKeys that are not present in the underlying schemas"
                 } else {
-                    val extraUnderlyingKeys = underlyingSchemas.keys - overallSchemas.keys
+                    val extraUnderlyingKeys = underlyingSchemaReaders.keys - overallSchemaReaders.keys
                     "There are extra services in the underlying schemas $extraUnderlyingKeys that are not present in the overall schemas"
                 }
             }
@@ -129,6 +151,19 @@ data class NadelSchemas constructor(
             val serviceExecutionFactory = requireNotNull(serviceExecutionFactory) {
                 "serviceExecutionFactory must be set"
             }
+
+            val schemaParser = SchemaParser()
+
+            // Combine readers & type defs
+            val readersToTypeDefs = underlyingSchemaReaders.mapValues { (_, value) -> schemaParser.parse(value) }
+            val resolvedUnderlyingTypeDefs = readersToTypeDefs + underlyingTypeDefs
+
+            // Ensure we didn't have dupes i.e. we didn't merge and ignore a value
+            require(resolvedUnderlyingTypeDefs.size == underlyingTypeDefs.size + underlyingSchemaReaders.size) {
+                val intersection = underlyingTypeDefs.keys.intersect(underlyingSchemaReaders.keys)
+                "There is an illegal intersection of underlying schema keys $intersection"
+            }
+
 
             return Factory(builder = this, serviceExecutionFactory).create()
         }
@@ -150,12 +185,12 @@ data class NadelSchemas constructor(
         private fun createServices(): List<Service> {
             val underlyingSchemaGenerator = UnderlyingSchemaGenerator()
 
-            return builder.overallSchemas.map { (serviceName, reader) ->
+            return builder.overallSchemaReaders.map { (serviceName, reader) ->
                 val nadelDefinitions = SchemaUtil.parseDefinitions(reader)
                 val nadelDefinitionRegistry = NadelDefinitionRegistry.from(nadelDefinitions)
 
                 // Builder should enforce non-null entry
-                val underlyingSchemaReader = requireNotNull(builder.underlyingSchemas[serviceName])
+                val underlyingSchemaReader = requireNotNull(builder.underlyingSchemaReaders[serviceName])
                 val underlyingTypeDefinitions = SchemaParser().parse(underlyingSchemaReader)
                 val underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(
                     serviceName,
