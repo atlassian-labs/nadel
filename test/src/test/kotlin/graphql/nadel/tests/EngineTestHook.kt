@@ -2,6 +2,7 @@ package graphql.nadel.tests
 
 import graphql.ExecutionResult
 import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.schema.NeverWiringFactory
@@ -41,6 +42,12 @@ interface EngineTestHook {
     fun makeExecutionInput(
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
+        return builder
+    }
+
+    fun makeExecutionHints(
+        builder: NadelExecutionHints.Builder,
+    ): NadelExecutionHints.Builder {
         return builder
     }
 
