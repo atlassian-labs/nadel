@@ -1,4 +1,4 @@
-name: chain input rename with object argument transform
+name: ari argument in renamed input
 enabled: true
 overallSchema:
   # language=GraphQL

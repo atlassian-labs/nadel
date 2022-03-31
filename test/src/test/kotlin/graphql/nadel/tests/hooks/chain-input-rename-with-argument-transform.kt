@@ -20,10 +20,11 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 @UseHook
-class `chain-input-rename-with-object-argument-transform` : EngineTestHook {
+class `ari-argument-in-renamed-input` : EngineTestHook {
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
-            object : NadelTransform<Unit> {
+            // This transform mimics the ARI transform
+            object : NadelTransform<Any> {
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -31,9 +32,11 @@ class `chain-input-rename-with-object-argument-transform` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Unit? {
-                    return Unit.takeIf {
-                        overallField.normalizedArguments.isNotEmpty()
+                ): Any? {
+                    return if (overallField.normalizedArguments.isNotEmpty()) {
+                        overallField
+                    } else {
+                        null
                     }
                 }
 
@@ -43,7 +46,7 @@ class `chain-input-rename-with-object-argument-transform` : EngineTestHook {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: Unit,
+                    state: Any,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult(
                         newField = field.toBuilder()
@@ -52,6 +55,7 @@ class `chain-input-rename-with-object-argument-transform` : EngineTestHook {
                                     .mapValues { (_, value) ->
                                         require(value.typeName == "StartSprintInput")
 
+                                        // Transforms the ARI to just resource ID - Hard coded
                                         NormalizedInputValue(
                                             "StartSprintInput",
                                             mapOf(
@@ -78,7 +82,7 @@ class `chain-input-rename-with-object-argument-transform` : EngineTestHook {
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: Unit,
+                    state: Any,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return emptyList()

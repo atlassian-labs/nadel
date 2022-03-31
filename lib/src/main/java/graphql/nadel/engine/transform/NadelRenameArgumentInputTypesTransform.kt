@@ -19,7 +19,8 @@ import graphql.normalized.NormalizedInputValue
  * when we use _$variable_ printing syntax and the printed document needs
  * to be in the underlying type names since the variable declarations
  * end up referencing the type names
- * ```
+ *
+ * ```graphql
  * query x($var : UnderlyingTypeName!) { ... }
  * ```
  */
@@ -37,8 +38,10 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         // Transform if there's any arguments at all
         // todo: this won't account for cases where a transform before this injected new arguments…
         // But that's not a big deal right now anyway…
-        return State.takeIf {
-            overallField.normalizedArguments.isNotEmpty()
+        return if (overallField.normalizedArguments.isNotEmpty()) {
+            State
+        } else {
+            null
         }
     }
 
