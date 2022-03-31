@@ -1208,8 +1208,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration argument source type is mismatch with actor field input arguments") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: JiraIssue
                         }
@@ -1224,7 +1224,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: Int!): User
                         }
@@ -1233,9 +1233,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -1244,7 +1244,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: Int!): User
                         }
@@ -1253,7 +1253,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -1325,5 +1325,122 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.hydrationType == "ID!")
             assert(error.actorArgInputType == "Int!")
         }
+
+
+        it("passes if hydration argument source types are matching with batch hydration") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                            creators: [User] @hydrated(
+                                service: "users"
+                                field: "usersById"
+                                arguments: [
+                                    {name: "id", value: "$source.creators.id"}
+                                ]
+                                identifiedBy: "id"
+                            )
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            usersById(id: [ID]): [User]
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creators: [CreatorRef]
+                        }
+                        type CreatorRef {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            usersById(id: [ID]): [User]
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isEmpty())
+
+        }
+
+        it("passes if hydration argument source types are matching with batch hydration with list input") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                            creators: [User] @hydrated(
+                                service: "users"
+                                field: "userById"
+                                arguments: [
+                                    {name: "id", value: "$source.creators"}
+                                ]
+                                identifiedBy: "id"
+                            )
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            userById(id: ID): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creators: [ID]
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            userById(id: ID): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isEmpty())
+
+        }
     }
+
 })
