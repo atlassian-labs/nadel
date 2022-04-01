@@ -168,17 +168,18 @@ internal class NadelHydrationValidation(
                 DuplicatedHydrationArgument(parent, overallField, it)
             }
 
-        val remoteArgErrors = hydration.arguments.mapNotNull { remoteArg ->
+        val remoteArgErrors = mutableListOf<NadelSchemaValidationError>()
+        hydration.arguments.mapNotNull { remoteArg ->
             val actorFieldArgument = actorField.getArgument(remoteArg.name)
             if (actorFieldArgument == null) {
-                NonExistentHydrationActorFieldArgument(
+                remoteArgErrors.add(NonExistentHydrationActorFieldArgument(
                     parent,
                     overallField,
                     hydration,
                     argument = remoteArg.name,
-                )
+                ))
             } else {
-                getRemoteArgErrors(parent, overallField, remoteArg, actorField)
+                remoteArgErrors.addAll(getRemoteArgErrors(parent, overallField, remoteArg, actorField))
             }
         }
 
