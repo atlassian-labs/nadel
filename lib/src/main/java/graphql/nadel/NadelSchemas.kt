@@ -164,14 +164,14 @@ data class NadelSchemas constructor(
                 "There is an illegal intersection of underlying schema keys $intersection"
             }
 
-
-            return Factory(builder = this, serviceExecutionFactory).create()
+            return Factory(builder = this, serviceExecutionFactory, resolvedUnderlyingTypeDefs).create()
         }
     }
 
     internal class Factory(
         private val builder: Builder,
-        private var serviceExecutionFactory: ServiceExecutionFactory,
+        private val serviceExecutionFactory: ServiceExecutionFactory,
+        private val underlyingTypeDefs: Map<String, TypeDefinitionRegistry>,
     ) {
         fun create(): NadelSchemas {
             val services = createServices()
@@ -190,11 +190,9 @@ data class NadelSchemas constructor(
                 val nadelDefinitionRegistry = NadelDefinitionRegistry.from(nadelDefinitions)
 
                 // Builder should enforce non-null entry
-                val underlyingSchemaReader = requireNotNull(builder.underlyingSchemaReaders[serviceName])
-                val underlyingTypeDefinitions = SchemaParser().parse(underlyingSchemaReader)
                 val underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(
                     serviceName,
-                    underlyingTypeDefinitions,
+                    requireNotNull(underlyingTypeDefs[serviceName]),
                     builder.underlyingWiringFactory,
                 )
 
