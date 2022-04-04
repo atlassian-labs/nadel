@@ -136,14 +136,15 @@ data class NadelSchemas constructor(
 
         fun build(): NadelSchemas {
             require(overallSchemaReaders.isNotEmpty()) { "Nadel schemas must not be empty" }
-            require(underlyingSchemaReaders.isNotEmpty()) { "Underlying schemas must not be empty" }
+            require(underlyingSchemaReaders.isNotEmpty() || underlyingTypeDefs.isNotEmpty()) { "Underlying schemas must not be empty" }
 
-            require(overallSchemaReaders.keys == underlyingSchemaReaders.keys) {
-                val extraOverallKeys = overallSchemaReaders.keys - underlyingSchemaReaders.keys
+            val underlyingServiceNames = underlyingSchemaReaders.keys + underlyingTypeDefs.keys
+            require(overallSchemaReaders.keys == underlyingServiceNames) {
+                val extraOverallKeys = overallSchemaReaders.keys - underlyingServiceNames
                 if (extraOverallKeys.isNotEmpty()) {
                     "There are services in the overall schemas $extraOverallKeys that are not present in the underlying schemas"
                 } else {
-                    val extraUnderlyingKeys = underlyingSchemaReaders.keys - overallSchemaReaders.keys
+                    val extraUnderlyingKeys = underlyingServiceNames - overallSchemaReaders.keys
                     "There are extra services in the underlying schemas $extraUnderlyingKeys that are not present in the overall schemas"
                 }
             }

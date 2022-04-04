@@ -5,6 +5,8 @@ import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
 import graphql.schema.GraphQLSchema
+import graphql.schema.idl.SchemaParser
+import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.DescribeSpec
 
 val NadelDefinitionRegistry.typeNames: Set<String>
@@ -72,6 +74,118 @@ class NadelSchemasTest : DescribeSpec({
             assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query"))
             val testService = schemas.services.single()
             assert(testService.underlyingSchema.userTypeNames == setOf("World", "Echo", "Query", "Food"))
+        }
+
+        it("works if you exclusively supply type defs") {
+            val overallSchema = mapOf(
+                "test" to """
+                    type Query {
+                        echo: Echo
+                    }
+                    type Echo {
+                        world: World
+                    }
+                    type World {
+                        hello: String
+                    }
+                """.trimIndent(),
+            )
+            val underlyingSchema: Map<String, TypeDefinitionRegistry> = mapOf(
+                "test" to """
+                    type Query {
+                        echo: Echo
+                    }
+                    type Echo {
+                        world: World
+                    }
+                    type World {
+                        hello: String
+                    }
+                    type Food {
+                        isTasty: Boolean
+                    }
+                """.trimIndent(),
+            ).mapValues { (_, schemaText) ->
+                SchemaParser().parse(schemaText)
+            }
+
+            // when
+            val schemas = NadelSchemas.newNadelSchemas()
+                .overallSchemas(overallSchema)
+                .underlyingSchemas(underlyingSchema)
+                .stubServiceExecution()
+                .build()
+
+            // then
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query"))
+            val testService = schemas.services.single()
+            assert(testService.underlyingSchema.userTypeNames == setOf("World", "Echo", "Query", "Food"))
+        }
+
+        it("works if you supply both type defs and readers") {
+            val overallSchema = mapOf(
+                "test" to """
+                    type Query {
+                        echo: Echo
+                    }
+                    type Echo {
+                        world: World
+                    }
+                    type World {
+                        hello: String
+                    }
+                """.trimIndent(),
+                "issue" to """
+                    type Query {
+                        issue: Issue
+                    }
+                    type Issue {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            )
+            val underlyingSchemaDefs: Map<String, TypeDefinitionRegistry> = mapOf(
+                "test" to """
+                    type Query {
+                        echo: Echo
+                    }
+                    type Echo {
+                        world: World
+                    }
+                    type World {
+                        hello: String
+                    }
+                """.trimIndent(),
+            ).mapValues { (_, schemaText) ->
+                SchemaParser().parse(schemaText)
+            }
+            val underlyingSchemaStrings: Map<String, String> = mapOf(
+                "issue" to """
+                    type Query {
+                        issue: Issue
+                    }
+                    type Issue {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            )
+
+            // when
+            val schemas = NadelSchemas.newNadelSchemas()
+                .overallSchemas(overallSchema)
+                .underlyingSchemas(underlyingSchemaDefs)
+                .underlyingSchemas(underlyingSchemaStrings)
+                .stubServiceExecution()
+                .build()
+
+            // then
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue"))
+
+            val issueService = schemas.services.single { it.name == "issue" }
+            assert(issueService.underlyingSchema.userTypeNames == setOf("Query", "Issue"))
+
+            val testService = schemas.services.single { it.name == "test" }
+            assert(testService.underlyingSchema.userTypeNames == setOf("Query", "Echo", "World"))
         }
 
         it("combines the overall schemas") {
