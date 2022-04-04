@@ -25,6 +25,7 @@ import graphql.nadel.util.LogKit
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
+import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.WiringFactory
 import graphql.validation.ValidationError
 import graphql.validation.Validator
@@ -259,6 +260,11 @@ class Nadel private constructor(
             return this
         }
 
+        fun underlyingSchema(serviceName: String, schema: TypeDefinitionRegistry): Builder {
+            schemaBuilder.underlyingSchema(serviceName, schema)
+            return this
+        }
+
         @JvmName("underlyingSchemasReader")
         fun underlyingSchemas(underlyingSchemas: Map<String, Reader>): Builder {
             schemaBuilder.underlyingSchemas(underlyingSchemas)
@@ -268,6 +274,12 @@ class Nadel private constructor(
         @JvmName("underlyingSchemasString")
         fun underlyingSchemas(underlyingSchemas: Map<String, String>): Builder {
             schemaBuilder.underlyingSchemas(underlyingSchemas)
+            return this
+        }
+
+        @JvmName("underlyingTypeDefs")
+        fun underlyingSchemas(value: Map<String, TypeDefinitionRegistry>): Builder = also {
+            schemaBuilder.underlyingSchemas(value)
             return this
         }
 
