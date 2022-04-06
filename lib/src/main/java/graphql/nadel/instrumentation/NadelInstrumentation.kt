@@ -11,7 +11,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.validation.ValidationError
-import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -45,8 +44,7 @@ interface NadelInstrumentation {
      *
      * You can implement this function to record metrics in your Gateway service to determine what part of Nadel is taking up time.
      */
-    fun beginTiming(parameters: NadelInstrumentationTimingParameters): InstrumentationContext<Duration> {
-        return noOp()
+    fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
     }
 
     /**

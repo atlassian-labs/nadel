@@ -1,0 +1,41 @@
+name: monitor emits timings
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo: String
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: String
+    }
+query: |
+  query {
+    foo
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": null
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": null
+    },
+    "extensions": {}
+  }

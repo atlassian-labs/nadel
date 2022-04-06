@@ -14,12 +14,20 @@ import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
 import graphql.nadel.engine.transform.skipInclude.SkipIncludeTransform
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
 import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val transforms: List<NadelTransform<Any>>,
 ) {
+    // This will avoid creating the ChildStep object too many times
+    private val transformsWithTimingStepInfo = transforms
+        .map { transform ->
+            transform to ChildStep(parent = ExecutionPlanning, transform = transform.javaClass)
+        }
+
     /**
      * This derives an execution plan from with the main input parameters being the
      * [rootField] and [executionBlueprint].
@@ -33,25 +41,30 @@ internal class NadelExecutionPlanFactory(
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
-        traverseQuery(rootField) { field ->
-            transforms.forEach { transform ->
-                val state = transform.isApplicable(
-                    executionContext,
-                    executionBlueprint,
-                    services,
-                    service,
-                    field,
-                    serviceHydrationDetails,
-                )
-                if (state != null) {
-                    executionSteps.add(
-                        NadelExecutionPlan.Step(
+        executionContext.timer.batch().use { timer ->
+            traverseQuery(rootField) { field ->
+                transformsWithTimingStepInfo.forEach { (transform, timingStep) ->
+                    val state = timer.time(step = timingStep) {
+                        transform.isApplicable(
+                            executionContext,
+                            executionBlueprint,
+                            services,
                             service,
                             field,
-                            transform,
-                            state,
-                        ),
-                    )
+                            serviceHydrationDetails,
+                        )
+                    }
+
+                    if (state != null) {
+                        executionSteps.add(
+                            NadelExecutionPlan.Step(
+                                service,
+                                field,
+                                transform,
+                                state,
+                            ),
+                        )
+                    }
                 }
             }
         }

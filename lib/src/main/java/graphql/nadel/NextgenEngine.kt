@@ -35,7 +35,7 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.enginekt.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.LogKit.getLogger
 import graphql.nadel.util.LogKit.getNotPrivacySafeLogger
@@ -195,17 +195,17 @@ class NextgenEngine @JvmOverloads constructor(
         executionContext: NadelExecutionContext,
     ): ExecutionResult {
         val timer = executionContext.timer
-        val executionPlan = timer.time(step = Step.ExecutionPlanning) {
+        val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
             executionPlanner.create(executionContext, services, service, topLevelField)
         }
-        val queryTransform = timer.time(step = Step.QueryTransforming) {
+        val queryTransform = timer.time(step = RootStep.QueryTransforming) {
             transformQuery(service, executionContext, executionPlan, topLevelField)
         }
         val transformedQuery = queryTransform.result.single()
         val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
-            else -> timer.time(step = Step.ResultTransforming) {
+            else -> timer.time(step = RootStep.ResultTransforming) {
                 resultTransformer.transform(
                     executionContext = executionContext,
                     executionPlan = executionPlan,
