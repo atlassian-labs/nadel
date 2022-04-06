@@ -121,12 +121,6 @@ internal class NadelHydrationArgumentValidation(
     *  Checks the type of a hydration argument derived from either a $source field output type or $argument field input
     * argument type against the type of an actor field argument to see if they match
     * will also allow for cases of batched hydration eg ID! -> [ID]
-    *
-    * use cases: ID! -> [ID] ok and done
-    *            ID! -> ID   ok and done
-    *            ID  -> [ID] ok and done
-    *            ID! -> [ID!] ok and done
-    *            object to input object ok and not done
     */
     private fun hydrationArgTypesMatch(
         parent: NadelServiceSchemaElement,
@@ -234,7 +228,6 @@ internal class NadelHydrationArgumentValidation(
     *  Checks assignability of a hydration type against actor input argument type to see if either the scalars types
     *  match or if the object type and input object type have the same fields
     *
-    * use cases: maybe renames?
     */
     private fun checkScalarOrObjectTypeAssignability(
         parent: NadelServiceSchemaElement,

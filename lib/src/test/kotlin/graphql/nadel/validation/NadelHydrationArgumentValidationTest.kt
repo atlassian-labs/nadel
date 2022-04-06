@@ -927,15 +927,17 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorFieldType) == "String!")
         }
 
-        context("fails if hydration argument type list wrappings are not equal with actor") {
+        context("passes for acceptable batch hydration cases") {
             withData(
                 nameFn = { (hydration, actor) -> "Hydration=$hydration, actor=$actor" },
-                // "ID!" to "[ID]",
-                // "ID!" to "[ID]",
-                // "ID!" to "[ID!]",
                 "ID" to "ID",
                 "[ID]" to "ID",
-            ) { (hydration, actor) ->
+                "ID" to "[ID]",
+                "ID!" to "[ID]",
+                "ID!" to "[ID]!",
+                "ID!" to "[ID!]",
+
+                ) { (hydration, actor) ->
                 val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                         "issues" to """
@@ -991,13 +993,6 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
                 val errors = validate(fixture)
                 assert(errors.isEmpty())
-
-                // val error = errors.assertSingleOfType<NadelSchemaValidationError.IncompatibleFieldInputType>()
-                // assert(error.service.name == "test")
-                // assert(error.parentType.overall.name == "Role")
-                // assert(error.parentType.underlying.name == error.parentType.overall.name)
-                // assert(error.overallInputField.type.unwrapAll().name == error.underlyingInputField.type.unwrapAll().name)
-                // assert(error.overallInputField.name == "m")
             }
         }
     }
