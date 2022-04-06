@@ -33,7 +33,7 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toBuilder
-import graphql.nadel.enginekt.instrumentation.NadelInstrumentationTimer
+import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.util.ErrorUtil

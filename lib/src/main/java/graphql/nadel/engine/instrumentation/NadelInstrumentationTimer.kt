@@ -1,4 +1,4 @@
-package graphql.nadel.enginekt.instrumentation
+package graphql.nadel.engine.instrumentation
 
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -17,16 +17,11 @@ internal class NadelInstrumentationTimer(
     ): T {
         val start = System.nanoTime()
 
-        try {
-            return function()
-                .also {
-                    val duration = getDurationSince(start)
-                    instrumentation.onStepTimed(newParameters(step, duration))
-                }
+        val result = try {
+            function()
         } catch (e: Throwable) {
             try {
-                val duration = getDurationSince(start)
-                instrumentation.onStepTimed(newParameters(step, duration, exception = e))
+                emit(step, startNs = start, exception = e)
             } catch (e2: Throwable) {
                 e2.addSuppressed(e)
                 throw e2
@@ -34,6 +29,10 @@ internal class NadelInstrumentationTimer(
 
             throw e
         }
+
+        emit(step, startNs = start)
+
+        return result
     }
 
     fun batch(): BatchTimer {
@@ -42,6 +41,18 @@ internal class NadelInstrumentationTimer(
 
     inline fun <T> batch(function: (BatchTimer) -> T): T {
         return BatchTimer(timer = this).use(function)
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // inline anyway
+    private inline fun emit(step: Step, startNs: Long, exception: Throwable? = null) {
+        val endNs = System.nanoTime()
+        val duration = Duration.ofNanos(endNs - startNs)
+        emit(step, duration, exception)
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // inline anyway
+    private inline fun emit(step: Step, duration: Duration, exception: Throwable? = null) {
+        instrumentation.onStepTimed(newParameters(step, duration, exception))
     }
 
     private fun newParameters(
@@ -62,10 +73,15 @@ internal class NadelInstrumentationTimer(
         private val timer: NadelInstrumentationTimer,
         private val timings: MutableMap<Step, Long> = mutableMapOf(),
     ) {
+        private var exception: Throwable? = null
+
         inline fun <T> time(step: Step, function: () -> T): T {
             val start = System.nanoTime()
             return try {
                 function()
+            } catch (e: Throwable) {
+                exception = e
+                throw e
             } finally {
                 val end = System.nanoTime()
                 timings[step] = (timings[step] ?: 0) + (end - start)
@@ -74,8 +90,7 @@ internal class NadelInstrumentationTimer(
 
         fun submit() {
             timings.forEach { (step, durationNs) ->
-                val params = timer.newParameters(step, Duration.ofNanos(durationNs))
-                timer.instrumentation.onStepTimed(params)
+                timer.emit(step, duration = Duration.ofNanos(durationNs), exception)
             }
         }
 
@@ -90,11 +105,5 @@ internal class NadelInstrumentationTimer(
         override fun toString(): String {
             return "BatchTimer(timings=$timings)"
         }
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // inline anyway
-    private inline fun getDurationSince(startNanos: Long): Duration {
-        val end = System.nanoTime()
-        return Duration.ofNanos(end - startNanos)
     }
 }
