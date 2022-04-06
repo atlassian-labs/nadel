@@ -41,7 +41,7 @@ internal class NadelExecutionPlanFactory(
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
-        executionContext.timer.batch().use { timer ->
+        executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
                 transformsWithTimingStepInfo.forEach { (transform, timingStep) ->
                     val state = timer.time(step = timingStep) {

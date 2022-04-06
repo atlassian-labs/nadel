@@ -40,6 +40,10 @@ internal class NadelInstrumentationTimer(
         return BatchTimer(timer = this)
     }
 
+    inline fun <T> batch(function: (BatchTimer) -> T): T {
+        return BatchTimer(timer = this).use(function)
+    }
+
     private fun newParameters(
         step: Step,
         duration: Duration,
