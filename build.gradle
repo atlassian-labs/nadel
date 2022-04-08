@@ -55,6 +55,11 @@ allprojects {
 }
 
 subprojects {
+    // Don't publish test
+    if (project.name == "test") {
+        return
+    }
+
     apply plugin: "java"
     apply plugin: "java-library"
     apply plugin: "signing"
