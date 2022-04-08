@@ -3,7 +3,6 @@ package graphql.nadel.engine.transform.hydration.batch
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -154,12 +153,6 @@ internal class NadelBatchHydrator(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         parentNode: JsonNode,
     ): NadelBatchHydrationFieldInstruction? {
-        if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
-            error(
-                "Cannot decide which hydration instruction should be used. " +
-                    "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
-            )
-        }
         return state.executionContext.hooks.getHydrationInstruction(
             instructions,
             parentNode,

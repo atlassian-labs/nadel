@@ -4,7 +4,6 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -188,8 +187,10 @@ internal class NadelHydrationTransform(
             return emptyList()
         }
 
-        val instruction = getHydrationFieldInstruction(state.aliasHelper, instructions, executionContext.hooks, parentNode)
-            ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName, null))
+        val instruction =
+            getHydrationFieldInstruction(state.aliasHelper, instructions, executionContext.hooks, parentNode)
+                ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName,
+                    null))
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(
@@ -266,16 +267,7 @@ internal class NadelHydrationTransform(
     ): NadelHydrationFieldInstruction? {
         return when (instructions.size) {
             1 -> instructions.single()
-            else -> {
-                if (hooks is NadelEngineExecutionHooks) {
-                    hooks.getHydrationInstruction(instructions, parentNode, aliasHelper)
-                } else {
-                    error(
-                        "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
-                            "to be of type NadelEngineExecutionHooks"
-                    )
-                }
-            }
+            else -> hooks.getHydrationInstruction(instructions, parentNode, aliasHelper)
         }
     }
 }

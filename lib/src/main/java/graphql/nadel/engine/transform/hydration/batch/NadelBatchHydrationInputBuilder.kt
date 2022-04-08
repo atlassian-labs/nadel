@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.hydration.batch
 
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
@@ -69,10 +68,7 @@ internal object NadelBatchHydrationInputBuilder {
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
 
-        val partitionArgumentList = when (hooks) {
-            is NadelEngineExecutionHooks -> hooks.partitionBatchHydrationArgumentList(args, instruction)
-            else -> listOf(args)
-        }
+        val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(args, instruction)
 
         return partitionArgumentList.flatMap { it.chunked(size = batchSize) }
             .map { chunk ->

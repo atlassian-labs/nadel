@@ -1,16 +1,16 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
-private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHooks {
+private class PolymorphicHydrationHookUsingAliasHelper : ServiceExecutionHooks {
 
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
