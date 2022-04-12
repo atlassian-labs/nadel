@@ -1,5 +1,4 @@
-name: one synthetic hydration call with longer path arguments and merged fields and
-  renamed type
+name: one synthetic hydration call with longer path arguments and merged fields and renamed type
 enabled: true
 overallSchema:
   UserService: |

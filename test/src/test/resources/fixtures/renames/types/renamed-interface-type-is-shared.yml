@@ -1,6 +1,7 @@
 name: renamed interface type is shared
 enabled: true
-ignored: true # This is a bug that we cannot fix, we need better syntax to declare the specific services
+# This is a bug that we cannot fix, we need better syntax to declare the specific services
+ignored: true
 overallSchema:
   NextgenIssues: |-
     type Query {
