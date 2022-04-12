@@ -1,4 +1,4 @@
-name: rejects multiple operation defs without explicit op name
+name: "rejects multiple operation defs without explicit op name"
 enabled: true
 overallSchema:
   service: |
@@ -24,7 +24,7 @@ query: |
     cat: foo
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # Assertion done in test hook
 # language=JSON
 response: null

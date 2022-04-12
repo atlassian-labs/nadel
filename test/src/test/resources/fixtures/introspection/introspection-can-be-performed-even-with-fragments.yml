@@ -1,4 +1,4 @@
-name: introspection can be performed even with fragments
+name: "introspection can be performed even with fragments"
 enabled: true
 overallSchema:
   MyService: |
@@ -43,7 +43,7 @@ query: |
     }
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

@@ -1,4 +1,4 @@
-name: renamed type in union
+name: "renamed type in union"
 enabled: true
 overallSchema:
   IssueService: |
@@ -52,7 +52,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

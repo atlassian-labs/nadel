@@ -1,4 +1,4 @@
-name: nested list hydration under a renamed top level field
+name: "nested list hydration under a renamed top level field"
 enabled: true
 overallSchema:
   Foo: |
@@ -77,7 +77,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -98,7 +98,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -125,7 +125,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -146,7 +146,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: extending types via hydration returning a connection
+name: "extending types via hydration returning a connection"
 enabled: true
 overallSchema:
   Issue: |
@@ -92,7 +92,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issue
+  - serviceName: "Issue"
     request:
       query: |
         query {
@@ -117,7 +117,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Association
+  - serviceName: "Association"
     request:
       query: |
         query {
@@ -144,7 +144,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Association
+  - serviceName: "Association"
     request:
       query: |
         query {

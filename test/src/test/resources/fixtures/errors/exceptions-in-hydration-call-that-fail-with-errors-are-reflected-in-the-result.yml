@@ -1,4 +1,4 @@
-name: exceptions in hydration call that fail with errors are reflected in the result
+name: "exceptions in hydration call that fail with errors are reflected in the result"
 enabled: true
 overallSchema:
   Bar: |
@@ -55,7 +55,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

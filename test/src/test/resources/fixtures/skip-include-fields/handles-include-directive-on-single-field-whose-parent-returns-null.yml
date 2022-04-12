@@ -1,4 +1,4 @@
-name: handles include directive on single field whose parent returns null
+name: "handles include directive on single field whose parent returns null"
 enabled: true
 overallSchema:
   service: |
@@ -25,7 +25,7 @@ query: |
 variables:
   test: false
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

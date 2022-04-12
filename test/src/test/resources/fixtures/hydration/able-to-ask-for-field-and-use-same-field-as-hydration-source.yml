@@ -1,4 +1,4 @@
-name: able to ask for field and use same field as hydration source
+name: "able to ask for field and use same field as hydration source"
 enabled: true
 overallSchema:
   Bar: |-
@@ -37,7 +37,7 @@ query: |-
   }
 variables: { }
 serviceCalls:
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {
@@ -62,7 +62,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {
@@ -85,7 +85,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {

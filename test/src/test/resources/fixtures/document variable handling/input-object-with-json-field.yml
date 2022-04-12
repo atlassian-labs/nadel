@@ -1,26 +1,26 @@
-name: input object with json field
+name: "input object with json field"
 enabled: true
 overallSchema:
   MyService: |
     type Query {
       hello(arg: InputWithJson): String
     }
-    
+
     input InputWithJson {
-      payload: JSON 
+      payload: JSON
     }
-    
+
     scalar JSON
 underlyingSchema:
   MyService: |-
     type Query {
       hello(arg: InputWithJson): String
     }
-    
+
     input InputWithJson {
-      payload: JSON 
+      payload: JSON
     }
-    
+
     scalar JSON
 query: |
   query myQuery($var: JSON!) {
@@ -28,9 +28,9 @@ query: |
   }
 variables:
   var:
-    "48x48": "file.jpeg"
+    48x48: "file.jpeg"
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query myQuery($v0: JSON) {
@@ -38,8 +38,8 @@ serviceCalls:
         }
       variables:
         v0:
-          "48x48": "file.jpeg"
-      operationName: myQuery
+          48x48: "file.jpeg"
+      operationName: "myQuery"
     # language=JSON
     response: |-
       {

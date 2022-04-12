@@ -1,4 +1,4 @@
-name: extending types via hydration with variables arguments
+name: "extending types via hydration with variables arguments"
 enabled: true
 overallSchema:
   Issue: |
@@ -54,9 +54,9 @@ query: |
   }
 variables:
   filter:
-    name: value
+    name: "value"
 serviceCalls:
-  - serviceName: Issue
+  - serviceName: "Issue"
     request:
       query: |
         query MyQuery {
@@ -66,7 +66,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: MyQuery
+      operationName: "MyQuery"
     # language=JSON
     response: |-
       {
@@ -78,7 +78,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Association
+  - serviceName: "Association"
     request:
       query: |
         query MyQuery {
@@ -87,7 +87,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: MyQuery
+      operationName: "MyQuery"
     # language=JSON
     response: |-
       {

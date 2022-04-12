@@ -1,4 +1,4 @@
-name: complex identified by input is absent
+name: "complex identified by input is absent"
 enabled: true
 overallSchema:
   UserService: |
@@ -58,7 +58,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

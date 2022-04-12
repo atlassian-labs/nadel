@@ -1,28 +1,28 @@
-name: inlined all arguments
+name: "inlined all arguments"
 enabled: true
 overallSchema:
   MyService: |
     type Query {
       hello(arg: InputWithJson, arg1: JSON!): String
     }
-    
+
     input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
       names : [String!]!
-      payload: JSON 
+      payload: JSON
     }
-    
+
     scalar JSON
 underlyingSchema:
   MyService: |-
     type Query {
       hello(arg: InputWithJsonUnderlying, arg1: JSON!): String
     }
-    
+
     input InputWithJsonUnderlying {
       names : [String!]!
-      payload: JSON 
+      payload: JSON
     }
-    
+
     scalar JSON
 query: |
   query myQuery {
@@ -30,16 +30,25 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query myQuery($v0: InputWithJsonUnderlying, $v1: JSON!) {
           hello(arg: $v0, arg1: $v1)
         }
       variables:
-        v0: { names: [ "Bobba", "Fett" ], payload: { "name": "Bobert", age: "23" } }
-        v1: { interests: [ "photography", "basketball" ] }
-      operationName: myQuery
+        v0:
+          names:
+            - "Bobba"
+            - "Fett"
+          payload:
+            name: "Bobert"
+            age: "23"
+        v1:
+          interests:
+            - "photography"
+            - "basketball"
+      operationName: "myQuery"
     # language=JSON
     response: |-
       {

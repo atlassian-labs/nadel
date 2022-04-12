@@ -1,4 +1,4 @@
-name: __typename is passed on namespaced fields
+name: "__typename is passed on namespaced fields"
 enabled: true
 overallSchema:
   Issues: |
@@ -44,7 +44,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: cannot query hidden fields
+name: "cannot query hidden fields"
 enabled: true
 overallSchema:
   MyService: |
@@ -11,12 +11,11 @@ overallSchema:
       name: String
       area51: Area @hidden
     }
-    
+
     type Area {
       name: String
       coordinates: String
     }
-
 underlyingSchema:
   MyService: |
     type Query {
@@ -28,12 +27,11 @@ underlyingSchema:
       name: String
       area51: Area
     }
-    
+
     type Area {
       name: String
       coordinates: String
     }
-
 query: |
   query {
     hello {
@@ -45,7 +43,6 @@ query: |
       }
     }
   }
-
 variables: { }
 serviceCalls: [ ]
 # language=JSON

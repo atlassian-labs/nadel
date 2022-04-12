@@ -1,4 +1,4 @@
-name: typename is sent to owning service even when no fields are queried
+name: "typename is sent to owning service even when no fields are queried"
 enabled: true
 overallSchema:
   Issues: |
@@ -76,7 +76,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -95,7 +95,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: IssueSearch
+  - serviceName: "IssueSearch"
     request:
       query: |
         query {

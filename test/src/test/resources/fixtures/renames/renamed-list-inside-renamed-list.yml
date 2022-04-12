@@ -1,4 +1,4 @@
-name: renamed list inside renamed list
+name: "renamed list inside renamed list"
 enabled: true
 overallSchema:
   IssuesService: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssuesService
+  - serviceName: "IssuesService"
     request:
       query: |
         query {

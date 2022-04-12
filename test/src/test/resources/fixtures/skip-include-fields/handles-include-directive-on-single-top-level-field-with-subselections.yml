@@ -1,4 +1,4 @@
-name: handles include directive on single top level field with subselections
+name: "handles include directive on single top level field with subselections"
 enabled: true
 overallSchema:
   service: |
@@ -24,7 +24,7 @@ query: |
   }
 variables:
   test: false
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

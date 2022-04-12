@@ -1,4 +1,4 @@
-name: can execute single named operation when operation name is null
+name: "can execute single named operation when operation name is null"
 enabled: true
 overallSchema:
   service: |
@@ -16,14 +16,14 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query Test {
           test: foo
         }
       variables: { }
-      operationName: Test
+      operationName: "Test"
     # language=JSON
     response: |-
       {

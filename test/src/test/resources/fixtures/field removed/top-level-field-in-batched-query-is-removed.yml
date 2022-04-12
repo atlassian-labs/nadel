@@ -1,4 +1,4 @@
-name: top level field in batched query is removed
+name: "top level field in batched query is removed"
 enabled: false
 overallSchema:
   IssueService: |
@@ -101,7 +101,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query nadel_2_IssueService {
@@ -110,7 +110,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_IssueService
+      operationName: "nadel_2_IssueService"
     # language=JSON
     response: |-
       {

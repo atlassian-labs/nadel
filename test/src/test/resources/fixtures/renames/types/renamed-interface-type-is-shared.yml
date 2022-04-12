@@ -1,4 +1,4 @@
-name: renamed interface type is shared
+name: "renamed interface type is shared"
 enabled: true
 # This is a bug that we cannot fix, we need better syntax to declare the specific services
 ignored: true
@@ -47,7 +47,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: NextgenIssues
+  - serviceName: "NextgenIssues"
     request:
       query: |-
         query {
@@ -59,8 +59,6 @@ serviceCalls:
         }
       variables: { }
     # language=JSON
-    response: |-
-      {}
+    response: "{}"
 # language=JSON
-response: |-
-  {}
+response: "{}"

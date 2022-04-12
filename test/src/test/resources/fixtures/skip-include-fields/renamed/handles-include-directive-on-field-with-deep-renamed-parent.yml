@@ -1,4 +1,4 @@
-name: handles include directive on field with deep renamed parent
+name: "handles include directive on field with deep renamed parent"
 enabled: true
 overallSchema:
   service: |
@@ -36,7 +36,7 @@ query: |
 variables:
   test: false
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

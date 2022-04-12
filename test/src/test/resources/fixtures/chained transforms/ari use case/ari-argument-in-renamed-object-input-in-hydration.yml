@@ -1,4 +1,4 @@
-name: ari argument in renamed object input in hydration
+name: "ari argument in renamed object input in hydration"
 enabled: true
 overallSchema:
   # language=GraphQL
@@ -69,7 +69,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       # language=GraphQL
       query: |
@@ -109,7 +109,7 @@ serviceCalls:
           }
         }
       }
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       # language=GraphQL
       query: |

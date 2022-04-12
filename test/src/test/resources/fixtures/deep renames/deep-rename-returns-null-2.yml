@@ -1,4 +1,4 @@
-name: deep rename returns null 2
+name: "deep rename returns null 2"
 enabled: true
 overallSchema:
   Issues: |
@@ -32,7 +32,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

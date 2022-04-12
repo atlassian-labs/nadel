@@ -1,4 +1,4 @@
-name: hydrating using url as arg
+name: "hydrating using url as arg"
 enabled: true
 overallSchema:
   service: |
@@ -48,7 +48,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {
@@ -71,7 +71,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

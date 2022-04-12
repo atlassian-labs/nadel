@@ -1,4 +1,4 @@
-name: query with two services sharing a namespaced field. fragment query
+name: "query with two services sharing a namespaced field. fragment query"
 enabled: true
 overallSchema:
   Issues: |
@@ -67,7 +67,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -90,7 +90,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: IssueSearch
+  - serviceName: "IssueSearch"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: hydration with interfaces
+name: "hydration with interfaces"
 enabled: true
 overallSchema:
   Issues: |
@@ -40,7 +40,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -74,7 +74,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: renamed type is shared even deeper
+name: "renamed type is shared even deeper"
 enabled: true
 overallSchema:
   Nextgen: |-
@@ -80,7 +80,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Nextgen
+  - serviceName: "Nextgen"
     request:
       query: |
         query {

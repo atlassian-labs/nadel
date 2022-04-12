@@ -1,6 +1,7 @@
-name: renamed type shared PageInfo
+name: "renamed type shared PageInfo"
 enabled: true
-ignored: true # We do not allow implicit renames, enable this test once we have explicit renames for shared types
+ignored: # We do not allow implicit renames, enable this test once we have explicit renames for shared types
+  true
 overallSchema:
   IssueService: |-
     type Query {
@@ -63,7 +64,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

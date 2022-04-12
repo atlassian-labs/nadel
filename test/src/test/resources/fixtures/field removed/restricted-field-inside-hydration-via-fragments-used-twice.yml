@@ -1,4 +1,4 @@
-name: restricted field inside hydration via fragments used twice
+name: "restricted field inside hydration via fragments used twice"
 enabled: false
 overallSchema:
   UserService: |
@@ -58,7 +58,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query nadel_2_Issues {
@@ -75,7 +75,7 @@ serviceCalls:
           authorId
         }
       variables: { }
-      operationName: nadel_2_Issues
+      operationName: "nadel_2_Issues"
     # language=JSON
     response: |-
       {
@@ -91,7 +91,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query nadel_2_UserService {
@@ -101,7 +101,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_UserService
+      operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
       {

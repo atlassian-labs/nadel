@@ -1,4 +1,4 @@
-name: renamed type inside deep rename
+name: "renamed type inside deep rename"
 enabled: true
 overallSchema:
   IssueService: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

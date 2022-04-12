@@ -1,4 +1,4 @@
-name: long scalar as input type
+name: "long scalar as input type"
 enabled: true
 overallSchema:
   service: |
@@ -28,7 +28,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

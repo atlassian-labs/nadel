@@ -1,4 +1,4 @@
-name: query with three nested hydrations and simple data and lots of renames
+name: "query with three nested hydrations and simple data and lots of renames"
 enabled: true
 overallSchema:
   Bar: |
@@ -111,7 +111,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -162,7 +162,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {
@@ -191,7 +191,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {
@@ -220,7 +220,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {

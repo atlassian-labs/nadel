@@ -1,4 +1,4 @@
-name: rename nested inside renamed type
+name: "rename nested inside renamed type"
 enabled: true
 overallSchema:
   service1: |
@@ -32,7 +32,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service1
+  - serviceName: "service1"
     request:
       query: |
         query {

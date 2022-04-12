@@ -1,11 +1,11 @@
-name: inlined all arguments with renamed field
+name: "inlined all arguments with renamed field"
 enabled: true
 overallSchema:
   MyService: |
     type Query {
       hello(arg: InputArgType): Output @renamed(from: "helloUnderlying")
     }
-    
+
     input InputArgType @renamed(from: "UnderlyingInputArgType") {
       age : Int
       inputWithJson : InputWithJson
@@ -13,21 +13,20 @@ overallSchema:
 
     input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
       names : [String!]!
-      payload: JSON 
+      payload: JSON
     }
-    
+
     type Output @renamed(from: "OutputUnderlying") {
       value : String
     }
-    
-    scalar JSON
 
+    scalar JSON
 underlyingSchema:
   MyService: |-
     type Query {
       helloUnderlying(arg: UnderlyingInputArgType): OutputUnderlying
     }
-    
+
     input UnderlyingInputArgType {
       age : Int
       inputWithJson : InputWithJsonUnderlying
@@ -35,13 +34,13 @@ underlyingSchema:
 
     input InputWithJsonUnderlying {
       names : [String!]!
-      payload: JSON 
+      payload: JSON
     }
-    
+
     type OutputUnderlying  {
       value : String
     }
-    
+
     scalar JSON
 query: |
   query myQuery($varX : InputWithJson)  {
@@ -49,12 +48,17 @@ query: |
       value
     }
   }
-
 variables:
-  varX: { names: [ "Bobba","Fett" ], payload: { "name": "Bobert", age: "23" } }
+  varX:
+    names:
+      - "Bobba"
+      - "Fett"
+    payload:
+      name: "Bobert"
+      age: "23"
 
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query myQuery($v0: UnderlyingInputArgType) {
@@ -63,8 +67,16 @@ serviceCalls:
           }
         }
       variables:
-        v0: {age : 50, inputWithJson : { names: [ "Bobba","Fett" ], payload: { "name": "Bobert", age: "23" } } }
-      operationName: myQuery
+        v0:
+          age: 50
+          inputWithJson:
+            names:
+              - "Bobba"
+              - "Fett"
+            payload:
+              name: "Bobert"
+              age: "23"
+      operationName: "myQuery"
     # language=JSON
     response: |-
       {

@@ -1,4 +1,4 @@
-name: batch polymorphic hydration when hook returns null
+name: "batch polymorphic hydration when hook returns null"
 enabled: true
 overallSchema:
   pets: |
@@ -73,7 +73,6 @@ underlyingSchema:
       id: ID
       dataId: ID
     }
-
 query: |
   query {
     foo {
@@ -95,7 +94,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: foo
+  - serviceName: "foo"
     request:
       query: |
         query {
@@ -144,7 +143,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: people
+  - serviceName: "people"
     request:
       query: |
         query {

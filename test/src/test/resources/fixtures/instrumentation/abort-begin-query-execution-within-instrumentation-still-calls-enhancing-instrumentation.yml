@@ -1,4 +1,4 @@
-name: abort beginQueryExecution within instrumentation still calls enhancing instrumentation
+name: "abort beginQueryExecution within instrumentation still calls enhancing instrumentation"
 enabled: true
 overallSchema:
   MyService: |
@@ -36,8 +36,8 @@ query: |
     }
   }
 variables:
-  var1: val1
-serviceCalls: []
+  var1: "val1"
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

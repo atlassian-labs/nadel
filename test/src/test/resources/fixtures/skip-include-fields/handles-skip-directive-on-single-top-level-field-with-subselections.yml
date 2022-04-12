@@ -1,4 +1,4 @@
-name: handles skip directive on single top level field with subselections
+name: "handles skip directive on single top level field with subselections"
 enabled: true
 overallSchema:
   service: |
@@ -24,7 +24,7 @@ query: |
   }
 variables:
   test: true
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

@@ -1,4 +1,4 @@
-name: dynamic service resolution handles complex fragments
+name: "dynamic service resolution handles complex fragments"
 enabled: true
 overallSchema:
   shared: |
@@ -88,7 +88,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: RepoService
+  - serviceName: "RepoService"
     request:
       query: |
         query {

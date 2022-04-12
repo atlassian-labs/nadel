@@ -1,4 +1,4 @@
-name: transformer on hydration fields
+name: "transformer on hydration fields"
 enabled: true
 overallSchema:
   service1: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service1
+  - serviceName: "service1"
     request:
       query: |
         query {
@@ -67,7 +67,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service2
+  - serviceName: "service2"
     request:
       query: |
         query {

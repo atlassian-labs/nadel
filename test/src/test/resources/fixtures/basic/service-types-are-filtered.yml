@@ -1,4 +1,4 @@
-name: service types are filtered
+name: "service types are filtered"
 enabled: true
 overallSchema:
   test: |-
@@ -108,7 +108,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: test
+  - serviceName: "test"
     request:
       query: |
         query {

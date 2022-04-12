@@ -1,4 +1,4 @@
-name: interface rename direct works as expected
+name: "interface rename direct works as expected"
 enabled: true
 overallSchema:
   MyService: |
@@ -95,7 +95,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

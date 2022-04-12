@@ -1,4 +1,4 @@
-name: handles include directive on single field with subselection
+name: "handles include directive on single field with subselection"
 enabled: true
 overallSchema:
   service: |
@@ -30,7 +30,7 @@ query: |
 variables:
   test: false
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

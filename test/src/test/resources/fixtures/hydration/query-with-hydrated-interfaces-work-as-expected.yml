@@ -1,4 +1,4 @@
-name: query with hydrated interfaces work as expected
+name: "query with hydrated interfaces work as expected"
 enabled: true
 # todo: handle synthetic fields in interfaces better
 overallSchema:
@@ -144,7 +144,7 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  - serviceName: PetService
+  - serviceName: "PetService"
     request:
       query: |
         query petQ {
@@ -160,7 +160,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: petQ
+      operationName: "petQ"
     # language=JSON
     response: |-
       {
@@ -184,7 +184,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: OwnerService
+  - serviceName: "OwnerService"
     request:
       query: |
         query petQ {
@@ -199,7 +199,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: petQ
+      operationName: "petQ"
     # language=JSON
     response: |-
       {
@@ -211,7 +211,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: OwnerService
+  - serviceName: "OwnerService"
     request:
       query: |
         query petQ {
@@ -226,7 +226,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: petQ
+      operationName: "petQ"
     # language=JSON
     response: |-
       {

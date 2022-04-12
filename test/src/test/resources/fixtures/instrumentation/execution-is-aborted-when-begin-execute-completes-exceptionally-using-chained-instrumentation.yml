@@ -1,4 +1,4 @@
-name: execution is aborted when beginExecute completes exceptionally using chained instrumentation
+name: "execution is aborted when beginExecute completes exceptionally using chained instrumentation"
 enabled: true
 overallSchema:
   MyService: |
@@ -25,7 +25,7 @@ query: |
     }
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

@@ -1,4 +1,4 @@
-name: query to one service with execution input passed down
+name: "query to one service with execution input passed down"
 enabled: true
 overallSchema:
   MyService: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query OpName {
@@ -56,7 +56,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: OpName
+      operationName: "OpName"
     # language=JSON
     response: |-
       {

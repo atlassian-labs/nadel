@@ -1,4 +1,4 @@
-name: custom json scalar as input type
+name: "custom json scalar as input type"
 enabled: true
 overallSchema:
   service: |
@@ -26,7 +26,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query ($v0: JSON) {

@@ -1,4 +1,4 @@
-name: restricted single field via fragments used twice
+name: "restricted single field via fragments used twice"
 enabled: false
 overallSchema:
   Issues: |
@@ -37,7 +37,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query nadel_2_Issues {
@@ -54,7 +54,7 @@ serviceCalls:
           restricted
         }
       variables: { }
-      operationName: nadel_2_Issues
+      operationName: "nadel_2_Issues"
     # language=JSON
     response: |-
       {

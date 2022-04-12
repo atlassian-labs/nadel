@@ -1,4 +1,4 @@
-name: two deep renames merged fields with same path and field rename
+name: "two deep renames merged fields with same path and field rename"
 enabled: true
 overallSchema:
   Issues: |
@@ -43,7 +43,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

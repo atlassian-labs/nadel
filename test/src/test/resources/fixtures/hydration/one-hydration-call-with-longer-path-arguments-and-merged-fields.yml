@@ -1,4 +1,4 @@
-name: one hydration call with longer path arguments and merged fields
+name: "one hydration call with longer path arguments and merged fields"
 enabled: true
 overallSchema:
   UserService: |
@@ -53,7 +53,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -87,7 +87,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {

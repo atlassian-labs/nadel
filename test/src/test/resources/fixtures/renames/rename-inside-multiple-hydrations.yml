@@ -1,4 +1,4 @@
-name: rename inside multiple hydrations
+name: "rename inside multiple hydrations"
 enabled: true
 overallSchema:
   service2: |
@@ -52,7 +52,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service1
+  - serviceName: "service1"
     request:
       query: |
         query {
@@ -79,7 +79,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service2
+  - serviceName: "service2"
     request:
       query: |
         query {
@@ -100,7 +100,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service2
+  - serviceName: "service2"
     request:
       query: |
         query {

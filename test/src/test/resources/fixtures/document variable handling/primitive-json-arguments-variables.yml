@@ -1,41 +1,45 @@
-name: primitive json arguments variables
+name: "primitive json arguments variables"
 enabled: true
 overallSchema:
   MyService: |
     type Query {
       hello(arg: InputWithJson, arg1: JSON!): String
     }
-    
+
     input InputWithJson {
-      payload: JSON 
+      payload: JSON
     }
-    
+
     scalar JSON
 underlyingSchema:
   MyService: |-
     type Query {
       hello(arg: InputWithJson, arg1: JSON!): String
     }
-    
+
     input InputWithJson {
-      payload: JSON 
+      payload: JSON
     }
-    
+
     scalar JSON
 query: |
   query myQuery($var1: JSON!, $var2: JSON!) {
     hello(arg: {payload: $var1}, arg1: $var2)
   }
-variables: { var1: "String JSON input", var2: false }
+variables:
+  var1: "String JSON input"
+  var2: false
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query myQuery($v0: JSON, $v1: JSON!) {
           hello(arg: {payload : $v0}, arg1: $v1)
         }
-      variables: { v0: "String JSON input", v1: false }
-      operationName: myQuery
+      variables:
+        v0: "String JSON input"
+        v1: false
+      operationName: "myQuery"
     # language=JSON
     response: |-
       {

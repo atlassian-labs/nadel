@@ -1,4 +1,4 @@
-name: errors and some data from a service execution are reflected in the result
+name: "errors and some data from a service execution are reflected in the result"
 enabled: true
 overallSchema:
   MyService: |
@@ -36,7 +36,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

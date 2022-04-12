@@ -1,4 +1,4 @@
-name: deep rename of list of list
+name: "deep rename of list of list"
 enabled: true
 overallSchema:
   Issues: |
@@ -29,7 +29,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
