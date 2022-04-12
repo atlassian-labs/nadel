@@ -100,15 +100,19 @@ serviceCalls:
   - serviceName: "service2"
     request:
       query: |
-        query {
+        query ($v0: [ID]) {
           users {
-            usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+            usersByIds(id: $v0) {
               id
               batch_hydration__authors__id: id
             }
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "USER-1"
+          - "USER-2"
+          - "USER-3"
     # language=JSON
     response: |-
       {
@@ -120,15 +124,19 @@ serviceCalls:
   - serviceName: "service2"
     request:
       query: |
-        query {
+        query ($v0: [ID]) {
           users {
-            usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+            usersByIds(id: $v0) {
               id
               batch_hydration__authors__id: id
             }
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "USER-2"
+          - "USER-4"
+          - "USER-5"
     # language=JSON
     response: |-
       {

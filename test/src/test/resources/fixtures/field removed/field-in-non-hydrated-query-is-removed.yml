@@ -36,12 +36,13 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C1") {
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables:
+        v0: "C1"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-

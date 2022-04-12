@@ -28,13 +28,7 @@ query: |-
     }
   }
 variables: { }
-serviceCalls:
-  - serviceName: "RepoService"
-    request:
-      query: ""
-      variables: { }
-    # language=JSON
-    response: ""
+serviceCalls: [ ]
 # language=JSON
 response: null
 exception:

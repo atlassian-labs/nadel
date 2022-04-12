@@ -101,15 +101,16 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query nadel_2_IssueService {
-          issueById(id: "I1") {
-            id
+        query nadel_2_IssueService($v0: String) {
+          issueById(id: $v0) {
             epic {
               empty_selection_set_typename__UUID: __typename
             }
+            id
           }
         }
-      variables: { }
+      variables:
+        v0: "I1"
       operationName: "nadel_2_IssueService"
     # language=JSON
     response: |-

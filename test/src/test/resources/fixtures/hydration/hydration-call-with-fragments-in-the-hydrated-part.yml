@@ -78,13 +78,15 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          usersByIds(id: ["USER-1"]) {
+        query ($v0: [ID]) {
+          usersByIds(id: $v0) {
             id
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "USER-1"
     # language=JSON
     response: |-
       {
@@ -135,14 +137,17 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          usersByIds(id: ["USER-1", "USER-2"]) {
+        query ($v0: [ID]) {
+          usersByIds(id: $v0) {
             id
             batch_hydration__authors__id: id
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "USER-1"
+          - "USER-2"
     # language=JSON
     response: |-
       {

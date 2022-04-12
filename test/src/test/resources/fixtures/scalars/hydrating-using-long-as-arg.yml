@@ -58,12 +58,13 @@ serviceCalls:
   - serviceName: "service"
     request:
       query: |
-        query {
-          successor(after: 3000000000) {
+        query ($v0: Long) {
+          successor(after: $v0) {
             id
           }
         }
-      variables: { }
+      variables:
+        v0: 3000000000
     # language=JSON
     response: |-
       {

@@ -102,13 +102,14 @@ serviceCalls:
   - serviceName: "issues"
     request:
       query: |
-        query {
-          issue(id: "ISSUE-1") {
+        query ($v0: ID!) {
+          issue(id: $v0) {
             __typename__hydration__comments: __typename
             hydration__comments__cloudId: cloudId
           }
         }
-      variables: { }
+      variables:
+        v0: "ISSUE-1"
     # language=JSON
     response: |-
       {
@@ -123,12 +124,14 @@ serviceCalls:
   - serviceName: "comments"
     request:
       query: |
-        query {
-          comments(cloudId: "CLOUD_ID-1", first: 10) {
+        query ($v0: ID!, $v1: Int) {
+          comments(cloudId: $v0, first: $v1) {
             totalCount
           }
         }
-      variables: { }
+      variables:
+        v0: "CLOUD_ID-1"
+        v1: 10
     # language=JSON
     response: |-
       {

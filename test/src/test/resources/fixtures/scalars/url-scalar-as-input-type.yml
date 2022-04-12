@@ -31,12 +31,13 @@ serviceCalls:
   - serviceName: "service"
     request:
       query: |
-        query {
-          foo(input: "https://atlassian.com") {
+        query ($v0: URL) {
+          foo(input: $v0) {
             thing
           }
         }
-      variables: { }
+      variables:
+        v0: "https://atlassian.com"
     # language=JSON
     response: |-
       {

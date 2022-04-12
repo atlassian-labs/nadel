@@ -101,12 +101,13 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query nadel_2_IssueService {
-          issueById(id: "I1") {
+        query nadel_2_IssueService($v0: String) {
+          issueById(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables:
+        v0: "I1"
       operationName: "nadel_2_IssueService"
     # language=JSON
     response: |-

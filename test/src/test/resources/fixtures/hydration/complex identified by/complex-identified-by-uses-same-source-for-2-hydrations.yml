@@ -28,7 +28,7 @@ overallSchema:
       name: String
     }
     type Issue {
-      fooId: ID
+      issueId: ID
       field: String
     }
 underlyingSchema:
@@ -46,7 +46,7 @@ underlyingSchema:
 
     type Issue {
       field: String
-      fooId: ID
+      issueId: ID
     }
 
     type Query {
@@ -109,13 +109,16 @@ serviceCalls:
   - serviceName: "Foo"
     request:
       query: |
-        query {
-          issues(issueIds: ["Foo-1", "Foo-2"]) {
-            batch_hydration__issue__issueId: issueId
+        query ($v0: [ID]) {
+          issues(issueIds: $v0) {
             field
+            batch_hydration__issue__issueId: issueId
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "Foo-1"
+          - "Foo-2"
     # language=JSON
     response: |-
       {
@@ -136,13 +139,15 @@ serviceCalls:
   - serviceName: "Foo"
     request:
       query: |
-        query {
-          issues(issueIds: ["Foo-3"]) {
-            batch_hydration__issue__issueId: issueId
+        query ($v0: [ID]) {
+          issues(issueIds: $v0) {
             field
+            batch_hydration__issue__issueId: issueId
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "Foo-3"
     # language=JSON
     response: |-
       {
@@ -159,13 +164,16 @@ serviceCalls:
   - serviceName: "Foo"
     request:
       query: |
-        query {
-          details(detailIds: ["Foo-1", "Foo-2"]) {
+        query ($v0: [ID]) {
+          details(detailIds: $v0) {
             batch_hydration__detail__detailId: detailId
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "Foo-1"
+          - "Foo-2"
     # language=JSON
     response: |-
       {
@@ -186,13 +194,15 @@ serviceCalls:
   - serviceName: "Foo"
     request:
       query: |
-        query {
-          details(detailIds: ["Foo-4"]) {
+        query ($v0: [ID]) {
+          details(detailIds: $v0) {
             batch_hydration__detail__detailId: detailId
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "Foo-4"
     # language=JSON
     response: |-
       {

@@ -84,13 +84,16 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          usersByIds(extraArg: "extraArg", id: ["USER-1"]) {
+        query ($v0: String, $v1: [ID]) {
+          usersByIds(extraArg: $v0, id: $v1) {
             batch_hydration__author__id: id
             name
           }
         }
-      variables: { }
+      variables:
+        v0: "extraArg"
+        v1:
+          - "USER-1"
     # language=JSON
     response: |-
       {

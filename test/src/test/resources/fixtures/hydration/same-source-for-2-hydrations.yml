@@ -83,12 +83,13 @@ serviceCalls:
   - serviceName: "Foo"
     request:
       query: |
-        query {
-          issue(issueId: "ID") {
+        query ($v0: ID) {
+          issue(issueId: $v0) {
             field
           }
         }
-      variables: { }
+      variables:
+        v0: "ID"
     # language=JSON
     response: |-
       {
@@ -102,12 +103,13 @@ serviceCalls:
   - serviceName: "Foo"
     request:
       query: |
-        query {
-          detail(detailId: "ID") {
+        query ($v0: ID) {
+          detail(detailId: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0: "ID"
     # language=JSON
     response: |-
       {

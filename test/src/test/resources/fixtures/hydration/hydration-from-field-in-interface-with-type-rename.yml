@@ -61,8 +61,8 @@ serviceCalls:
   - serviceName: "issues"
     request:
       query: |
-        query {
-          issue(id: "1") {
+        query ($v0: ID) {
+          issue(id: $v0) {
             __typename__hydration__issueAuthor: __typename
             hydration__issueAuthor__author: author {
               userId
@@ -70,7 +70,8 @@ serviceCalls:
             title
           }
         }
-      variables: { }
+      variables:
+        v0: "1"
     # language=JSON
     response: |-
       {
@@ -88,12 +89,13 @@ serviceCalls:
   - serviceName: "users"
     request:
       query: |
-        query {
-          user(id: "1001") {
+        query ($v0: ID!) {
+          user(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0: "1001"
     # language=JSON
     response: |-
       {

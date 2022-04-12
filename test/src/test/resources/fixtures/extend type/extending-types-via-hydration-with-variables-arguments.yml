@@ -81,12 +81,15 @@ serviceCalls:
   - serviceName: "Association"
     request:
       query: |
-        query MyQuery {
-          association(filter: {name : "value"}, id: "ISSUE-1") {
+        query MyQuery($v0: Filter, $v1: ID) {
+          association(filter: $v0, id: $v1) {
             nameOfAssociation
           }
         }
-      variables: { }
+      variables:
+        v0:
+          name: "value"
+        v1: "ISSUE-1"
       operationName: "MyQuery"
     # language=JSON
     response: |-

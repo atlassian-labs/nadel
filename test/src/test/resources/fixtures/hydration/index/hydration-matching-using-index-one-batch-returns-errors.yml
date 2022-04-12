@@ -91,12 +91,15 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          usersByIds(ids: ["1", "1"]) {
+        query ($v0: [ID]) {
+          usersByIds(ids: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "1"
+          - "1"
     # language=JSON
     response: |-
       {
@@ -113,12 +116,15 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          usersByIds(ids: ["2", "2"]) {
+        query ($v0: [ID]) {
+          usersByIds(ids: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "2"
+          - "2"
     # language=JSON
     response: |-
       {
@@ -135,12 +141,14 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          usersByIds(ids: ["4"]) {
+        query ($v0: [ID]) {
+          usersByIds(ids: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "4"
     # language=JSON
     response: |-
       {

@@ -94,23 +94,15 @@ variables: { }
 serviceCalls:
   - serviceName: "Nextgen"
     request:
-      query: |-
+      query: |
         query {
-          ... on Query {
-            elements {
-              ... on NextgenElementConnection {
+          elements {
+            __typename
+            nodes {
+              __typename
+              other {
                 __typename
-                nodes {
-                  ... on NextgenElement {
-                    __typename
-                    other {
-                      ... on NextgenOther {
-                        __typename
-                        id
-                      }
-                    }
-                  }
-                }
+                id
               }
             }
           }
@@ -137,23 +129,15 @@ serviceCalls:
       }
   - serviceName: "Service"
     request:
-      query: |-
+      query: |
         query {
-          ... on Query {
-            old {
-              ... on ElementConnection {
+          old {
+            __typename
+            nodes {
+              __typename
+              other {
                 __typename
-                nodes {
-                  ... on Element {
-                    __typename
-                    other {
-                      ... on Other {
-                        __typename
-                        id
-                      }
-                    }
-                  }
-                }
+                id
               }
             }
           }

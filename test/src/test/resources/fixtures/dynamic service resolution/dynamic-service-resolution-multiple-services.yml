@@ -72,15 +72,16 @@ serviceCalls:
   - serviceName: "RepoService"
     request:
       query: |
-        query {
-          pr: node(id: "pull-request:id-123") {
+        query ($v0: ID!) {
+          pr: node(id: $v0) {
             id
             ... on PullRequest {
               description
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "pull-request:id-123"
     # language=JSON
     response: |-
       {
@@ -94,15 +95,16 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query {
-          issue: node(id: "issue/id-123") {
+        query ($v0: ID!) {
+          issue: node(id: $v0) {
             id
             ... on Issue {
               issueKey
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "issue/id-123"
     # language=JSON
     response: |-
       {

@@ -140,15 +140,18 @@ serviceCalls:
   - serviceName: "bar"
     request:
       query: |
-        query {
-          petById(ids: ["PET-0", "PET-1"]) {
+        query ($v0: [ID]) {
+          petById(ids: $v0) {
             __typename
             breed
             id
             batch_hydration__data__id: id
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "PET-0"
+          - "PET-1"
     # language=JSON
     response: |-
       {
@@ -172,15 +175,18 @@ serviceCalls:
   - serviceName: "bar"
     request:
       query: |
-        query {
-          humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+        query ($v0: [ID]) {
+          humanById(ids: $v0) {
             __typename
             id
             batch_hydration__data__id: id
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "HUMAN-0"
+          - "HUMAN-1"
     # language=JSON
     response: |-
       {

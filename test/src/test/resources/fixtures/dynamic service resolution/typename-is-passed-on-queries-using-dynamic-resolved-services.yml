@@ -49,8 +49,8 @@ serviceCalls:
   - serviceName: "RepoService"
     request:
       query: |
-        query {
-          node(id: "pull-request:id-123") {
+        query ($v0: ID!) {
+          node(id: $v0) {
             __typename
             id
             ... on PullRequest {
@@ -58,7 +58,8 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "pull-request:id-123"
     # language=JSON
     response: |-
       {

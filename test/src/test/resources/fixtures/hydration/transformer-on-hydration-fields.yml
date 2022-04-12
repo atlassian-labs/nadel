@@ -69,13 +69,15 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # todo: is this allowed? We're providing a String type here but barById expects ID
       query: |
-        query {
-          barById(id: "transformed-id") {
+        query ($v0: String) {
+          barById(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0: "transformed-id"
     # language=JSON
     response: |-
       {

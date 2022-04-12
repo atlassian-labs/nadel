@@ -78,14 +78,15 @@ serviceCalls:
   - serviceName: "Bar"
     request:
       query: |
-        query {
+        query ($v0: ID!) {
           bars {
-            barById(id: "hydrated-bar") {
+            barById(id: $v0) {
               id
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "hydrated-bar"
     # language=JSON
     response: |-
       {

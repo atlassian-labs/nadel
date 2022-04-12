@@ -50,6 +50,7 @@ private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
  * NadelExecutionInput.Builder#transformExecutionHints method in your test hook class.
  */
 private val defaultHints = NadelExecutionHints.newHints()
+    .allDocumentVariablesHint { true }
     .build()
 
 private val sep = "-".repeat(50)

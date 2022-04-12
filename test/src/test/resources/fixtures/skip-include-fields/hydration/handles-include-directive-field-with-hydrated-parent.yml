@@ -60,12 +60,13 @@ serviceCalls:
   - serviceName: "service"
     request:
       query: |
-        query {
-          fooById(id: "Foo-1") {
+        query ($v0: ID) {
+          fooById(id: $v0) {
             __typename__skip_include____skip: __typename
           }
         }
-      variables: { }
+      variables:
+        v0: "Foo-1"
     # language=JSON
     response: |-
       {

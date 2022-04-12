@@ -85,14 +85,15 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query {
+        query ($v0: ID) {
           syntheticIssue {
-            issue(id: "1") {
+            issue(id: $v0) {
               id
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "1"
     # language=JSON
     response: |-
       {

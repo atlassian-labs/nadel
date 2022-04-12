@@ -137,15 +137,16 @@ serviceCalls:
   - serviceName: "PetService"
     request:
       query: |
-        query petQ {
-          pets(isLoyal: true) {
+        query petQ($v0: Boolean) {
+          pets(isLoyal: $v0) {
             collar {
               color
             }
             name
           }
         }
-      variables: { }
+      variables:
+        v0: true
       operationName: "petQ"
     # language=JSON
     response: |-

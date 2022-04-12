@@ -99,15 +99,16 @@ serviceCalls:
   - serviceName: "testing"
     request:
       query: |
-        query {
+        query ($v0: ID) {
           tests {
-            character(id: "C1") {
+            character(id: $v0) {
               id
               name
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "C1"
     # language=JSON
     response: |-
       {

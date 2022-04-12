@@ -112,12 +112,10 @@ serviceCalls:
       query: |
         query nadel_2_IssueService {
           issues {
-            key
-            summary
-            key
-            summary
-            reporterId
             commentIds
+            key
+            reporterId
+            summary
           }
         }
       variables: { }
@@ -154,12 +152,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "fred") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "fred"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
@@ -174,12 +173,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "zed") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "zed"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
@@ -194,13 +194,14 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C1") {
-            text
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             authorId
+            text
           }
         }
-      variables: { }
+      variables:
+        v0: "C1"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
@@ -216,13 +217,14 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C3") {
-            text
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             authorId
+            text
           }
         }
-      variables: { }
+      variables:
+        v0: "C3"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
@@ -238,13 +240,14 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C5") {
-            text
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             authorId
+            text
           }
         }
-      variables: { }
+      variables:
+        v0: "C5"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
@@ -260,13 +263,14 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C2") {
-            text
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             authorId
+            text
           }
         }
-      variables: { }
+      variables:
+        v0: "C2"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
@@ -282,13 +286,14 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C4") {
-            text
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             authorId
+            text
           }
         }
-      variables: { }
+      variables:
+        v0: "C4"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
@@ -304,13 +309,14 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C6") {
-            text
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             authorId
+            text
           }
         }
-      variables: { }
+      variables:
+        v0: "C6"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
@@ -326,12 +332,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "fred") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "fred"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
@@ -346,12 +353,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "zed") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "zed"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
@@ -366,12 +374,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "fred") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "fred"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
@@ -386,12 +395,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "ned") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "ned"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
@@ -406,12 +416,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "jed") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "jed"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
@@ -426,12 +437,13 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          userById(id: "ted") {
+        query nadel_2_UserService($v0: ID) {
+          userById(id: $v0) {
             displayName
           }
         }
-      variables: { }
+      variables:
+        v0: "ted"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-

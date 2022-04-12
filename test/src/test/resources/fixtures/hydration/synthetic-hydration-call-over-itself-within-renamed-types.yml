@@ -114,16 +114,19 @@ serviceCalls:
   - serviceName: "testing"
     request:
       query: |
-        query {
+        query ($v0: [ID!]!) {
           tests {
-            characters(ids: ["C2", "C3"]) {
+            characters(ids: $v0) {
               id
               batch_hydration__characters__id: id
               name
             }
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "C2"
+          - "C3"
     # language=JSON
     response: |-
       {
@@ -148,16 +151,20 @@ serviceCalls:
   - serviceName: "testing"
     request:
       query: |
-        query {
+        query ($v0: [ID!]!) {
           tests {
-            characters(ids: ["C1", "C2", "C1"]) {
+            characters(ids: $v0) {
               id
               batch_hydration__characters__id: id
               name
             }
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "C1"
+          - "C2"
+          - "C1"
     # language=JSON
     response: |-
       {

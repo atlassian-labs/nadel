@@ -63,16 +63,13 @@ serviceCalls:
       query: |
         query nadel_2_Issues {
           issue {
-            ...IssueFragment
             relatedIssue {
-              ...IssueFragment
+              authorId
+              id
             }
+            authorId
+            id
           }
-        }
-        
-        fragment IssueFragment on Issue {
-          id
-          authorId
         }
       variables: { }
       operationName: "nadel_2_Issues"
@@ -94,14 +91,17 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query nadel_2_UserService {
-          usersById(id: ["USER-1", "USER-2"]) {
+        query nadel_2_UserService($v0: [ID]) {
+          usersById(id: $v0) {
             id
-            restricted
             object_identifier__UUID: id
+            restricted
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "USER-1"
+          - "USER-2"
       operationName: "nadel_2_UserService"
     # language=JSON
     response: |-

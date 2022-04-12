@@ -77,10 +77,11 @@ serviceCalls:
   - serviceName: "Issues"
     request:
       query: |
-        query {
-          idByAri(id: "ari:i-always-forget-the-format/1")
+        query ($v0: ID!) {
+          idByAri(id: $v0)
         }
-      variables: { }
+      variables:
+        v0: "ari:i-always-forget-the-format/1"
     # language=JSON
     response: |-
       {
