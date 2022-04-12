@@ -13,7 +13,8 @@ import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
-import graphql.nadel.engine.transform.skipInclude.SkipIncludeTransform
+import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform
+import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.Companion.isSkipIncludeSpecialField
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
 import graphql.normalized.ExecutableNormalizedField
@@ -44,6 +45,13 @@ internal class NadelExecutionPlanFactory(
         executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
                 transformsWithTimingStepInfo.forEach { (transform, timingStep) ->
+                    // This is a patch to prevent errors
+                    // Ideally this should not happen but the proper fix requires more refactoring
+                    // See NadelSkipIncludeTransform.isApplicable for more details
+                    if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*>) !is NadelSkipIncludeTransform)) {
+                        return@forEach
+                    }
+
                     val state = timer.time(step = timingStep) {
                         transform.isApplicable(
                             executionContext,
@@ -93,7 +101,7 @@ internal class NadelExecutionPlanFactory(
             return NadelExecutionPlanFactory(
                 executionBlueprint,
                 transforms = listOfTransforms(
-                    SkipIncludeTransform(),
+                    NadelSkipIncludeTransform(),
                     NadelServiceTypeFilterTransform(),
                     *transforms.toTypedArray(),
                     NadelDeepRenameTransform(),

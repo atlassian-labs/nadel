@@ -1,0 +1,78 @@
+# See test hook for more details
+name: skip include does not affect other transforms
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: String
+      foo: Foo
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      foo: Foo
+      id: String
+    }
+query: |
+  query ($test: Boolean!) {
+    foo {
+      foo {
+        id @skip(if: $test)
+      }
+      bar: foo @include(if: $test) {
+        id
+      }
+    }
+  }
+variables:
+  test: true
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo {
+            foo {
+              __typename__skip_include____skip: __typename
+            }
+            bar: foo {
+              id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "foo": {
+              "__typename__skip_include____skip": "Foo"
+            },
+            "bar": {
+              "id": "FOO-1"
+            }
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "foo": {
+        },
+        "bar": {
+          "id": "FOO-1"
+        }
+      }
+    },
+    "extensions": {}
+  }
