@@ -1,18 +1,12 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import graphql.nadel.engine.transform.result.json.JsonNodePath
 import graphql.nadel.tests.yaml.YamlComment.Position.Block
 import graphql.nadel.tests.yaml.YamlComment.Position.End
 import graphql.nadel.tests.yaml.YamlComment.Position.Inline
 import graphql.nadel.tests.yaml.collectComments
 import graphql.nadel.tests.yaml.traverseYaml
-import org.yaml.snakeyaml.DumperOptions
-import org.yaml.snakeyaml.DumperOptions.FlowStyle
-import org.yaml.snakeyaml.DumperOptions.ScalarStyle
-import org.yaml.snakeyaml.emitter.Emitter
-import org.yaml.snakeyaml.resolver.Resolver
-import org.yaml.snakeyaml.serializer.Serializer
+import graphql.nadel.tests.yaml.writeYamlTo
 import java.io.File
 
 // For autocomplete navigation
@@ -72,25 +66,5 @@ fun writeOut(fixtureFile: File, testFixture: TestFixture) {
         }
     }
 
-    val output = fixtureFile.writer()
-
-    val options = DumperOptions()
-
-    options.defaultScalarStyle = ScalarStyle.PLAIN
-    options.defaultFlowStyle = FlowStyle.BLOCK
-    options.isProcessComments = true
-    options.splitLines = false
-    options.indentWithIndicator = true
-    options.indicatorIndent = 2
-    options.indent = 2
-
-    val serializer = Serializer(Emitter(output, options), Resolver(), options, null)
-    serializer.open()
-
-    rootNodes.forEach { rootNode ->
-        serializer.serialize(rootNode)
-    }
-
-    serializer.close()
-    output.close()
+    writeYamlTo(rootNodes, fixtureFile)
 }

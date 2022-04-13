@@ -2,8 +2,10 @@ package graphql.nadel.tests.yaml
 
 import graphql.nadel.engine.transform.result.json.JsonNodePath
 import graphql.nadel.engine.transform.result.json.JsonNodePathSegment
+import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.comments.CommentLine
 import org.yaml.snakeyaml.composer.Composer
+import org.yaml.snakeyaml.emitter.Emitter
 import org.yaml.snakeyaml.nodes.AnchorNode
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.nodes.Node
@@ -12,7 +14,10 @@ import org.yaml.snakeyaml.nodes.SequenceNode
 import org.yaml.snakeyaml.parser.ParserImpl
 import org.yaml.snakeyaml.reader.StreamReader
 import org.yaml.snakeyaml.resolver.Resolver
+import org.yaml.snakeyaml.serializer.Serializer
 import java.io.File
+import java.io.StringWriter
+import java.io.Writer
 
 data class YamlComment(
     val position: Position,
@@ -22,6 +27,46 @@ data class YamlComment(
         Block,
         Inline,
         End,
+    }
+}
+
+fun writeYamlTo(nodes: List<Node>, file: File) {
+    file.writer().use { writer ->
+        writeYamlTo(nodes, writer)
+    }
+}
+
+fun writeYamlAsString(nodes: List<Node>): String {
+    StringWriter().use { writer ->
+        writeYamlTo(nodes, writer)
+        return writer.toString()
+    }
+}
+
+private fun writeYamlTo(nodes: List<Node>, writer: Writer) {
+    val options = DumperOptions()
+
+    options.defaultScalarStyle = DumperOptions.ScalarStyle.PLAIN
+    options.defaultFlowStyle = DumperOptions.FlowStyle.BLOCK
+    options.isProcessComments = true
+    options.splitLines = false
+    options.indentWithIndicator = true
+    options.indicatorIndent = 2
+    options.indent = 2
+
+    Serializer(Emitter(writer, options), Resolver(), options, null).use { serializer ->
+        nodes.forEach { rootNode ->
+            serializer.serialize(rootNode)
+        }
+    }
+}
+
+private fun Serializer.use(block: (Serializer) -> Unit) {
+    open()
+    try {
+        block(this)
+    } finally {
+        close()
     }
 }
 
