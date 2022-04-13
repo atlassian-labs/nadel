@@ -2,7 +2,17 @@ package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.nadel.engine.transform.result.json.JsonNodePath
-import graphql.nadel.engine.transform.result.json.JsonNodePathSegment
+import graphql.nadel.tests.yaml.YamlComment.Position.Block
+import graphql.nadel.tests.yaml.YamlComment.Position.End
+import graphql.nadel.tests.yaml.YamlComment.Position.Inline
+import graphql.nadel.tests.yaml.collectComments
+import graphql.nadel.tests.yaml.traverseYaml
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.DumperOptions.FlowStyle
+import org.yaml.snakeyaml.DumperOptions.ScalarStyle
+import org.yaml.snakeyaml.emitter.Emitter
+import org.yaml.snakeyaml.resolver.Resolver
+import org.yaml.snakeyaml.serializer.Serializer
 import java.io.File
 
 // For autocomplete navigation
@@ -17,11 +27,6 @@ fun main() {
     update(fixturesDir)
 }
 
-private data class Comment(
-    val data: String,
-    val position: JsonNodePath,
-)
-
 private fun update(fixturesDir: File) {
     val yamlExtensions = setOf("yaml", "yml")
 
@@ -29,81 +34,63 @@ private fun update(fixturesDir: File) {
         .filter {
             it.extension in yamlExtensions
         }
-        // .take(1) // delet
         .forEach { file ->
+            println(file.name)
+
+            // If you don't have trimmed line ends then the writer seems to not want to spit out multi line strings
             val cleanFileContents = file
                 .readLines()
                 .joinToString(separator = "\n", transform = String::trimEnd)
 
             val testFixture = yamlObjectMapper.readValue<TestFixture>(cleanFileContents)
-            update(file, testFixture)
+
+            val newFixture = update(testFixture)
+            writeOut(file, newFixture)
         }
 }
 
-fun update(fixtureFile: File, testFixture: TestFixture) {
-    fixtureFile.writeText(yamlObjectMapper.writeValueAsString(testFixture))
+fun update(testFixture: TestFixture): TestFixture {
+    return testFixture
+}
 
-    // val position = mutableListOf<JsonNodePathSegment<*>>()
-    // var isLineBlockComment = false
-    // var isNextLineBlockComment = false
-    //
-    // fixtureFile.readLines()
-    //     .asSequence()
-    //     .filter(String::isNotBlank)
-    //     .map(String::trimEnd)
-    //     .forEach { line ->
-    //         if (isNextLineBlockComment) {
-    //             isNextLineBlockComment = false
-    //             isLineBlockComment = true
-    //         }
-    //
-    //         val level = line.asSequence()
-    //             .takeWhile(Char::isWhitespace)
-    //             // Count indentation here, where indentation is two spaces
-    //             // So divide by 2 to get level
-    //             .count() / 2
-    //
-    //         // Naive impl, hash count technically be inside String
-    //         val lineWithoutComment = line.substringBefore("#").trim()
-    //         val comment = line.substringAfter("#", missingDelimiterValue = "").trim()
-    //
-    //         // Block comment
-    //         if (lineWithoutComment.endsWith("|-") || lineWithoutComment.endsWith("|")) {
-    //             isNextLineBlockComment = true
-    //         }
-    //
-    //         if (level <= position.size) {
-    //             isLineBlockComment = false
-    //         }
-    //
-    //         if (lineWithoutComment.isNotEmpty()) {
-    //             // Try get out of block comment if possible
-    //             if (!isLineBlockComment) {
-    //                 // println(line)
-    //
-    //                 val newPrefix = position.take(level)
-    //                 position.clear()
-    //                 position.addAll(newPrefix)
-    //
-    //                 if (position.size != level) {
-    //                     error("Not enough")
-    //                 }
-    //
-    //                 if (lineWithoutComment.startsWith("-")) {
-    //                     position.add(JsonNodePathSegment.Int(0))
-    //                 }
-    //
-    //                 // Same level or lower
-    //                 if (lineWithoutComment.endsWith(":")) {
-    //                     val key = lineWithoutComment.substringBefore(":")
-    //                     position.add(JsonNodePathSegment.String(key))
-    //                 }
-    //             }
-    //         }
-    //
-    //         if (!isNextLineBlockComment && comment.isNotBlank()) {
-    //             println("At $position")
-    //             println(comment)
-    //         }
-    //     }
+fun writeOut(fixtureFile: File, testFixture: TestFixture) {
+    val commentsFromOldYaml = collectComments(fixtureFile).toMutableMap()
+
+    val rootNodes = traverseYaml(yamlObjectMapper.writeValueAsString(testFixture)) { path, node ->
+        val comments = commentsFromOldYaml.remove(path)
+
+        node.blockComments = node.blockComments ?: mutableListOf()
+        node.inLineComments = node.inLineComments ?: mutableListOf()
+        node.endComments = node.endComments ?: mutableListOf()
+
+        comments?.forEach {
+            when (it.position) {
+                Block -> node.blockComments.add(it.comment)
+                Inline -> node.inLineComments.add(it.comment)
+                End -> node.endComments.add(it.comment)
+            }
+        }
+    }
+
+    val output = fixtureFile.writer()
+
+    val options = DumperOptions()
+
+    options.defaultScalarStyle = ScalarStyle.PLAIN
+    options.defaultFlowStyle = FlowStyle.BLOCK
+    options.isProcessComments = true
+    options.splitLines = false
+    options.indentWithIndicator = true
+    options.indicatorIndent = 2
+    options.indent = 2
+
+    val serializer = Serializer(Emitter(output, options), Resolver(), options, null)
+    serializer.open()
+
+    rootNodes.forEach { rootNode ->
+        serializer.serialize(rootNode)
+    }
+
+    serializer.close()
+    output.close()
 }
