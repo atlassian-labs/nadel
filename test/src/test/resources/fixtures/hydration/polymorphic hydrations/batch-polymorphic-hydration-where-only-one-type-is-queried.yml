@@ -1,4 +1,4 @@
-name: batch polymorphic hydration where only one type is queried
+name: "batch polymorphic hydration where only one type is queried"
 enabled: true
 overallSchema:
   pets: |
@@ -89,7 +89,6 @@ underlyingSchema:
       id: ID
       dataId: ID
     }
-
 query: |
   query {
     foo {
@@ -104,7 +103,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: foo
+  - serviceName: "foo"
     request:
       query: |
         query {
@@ -148,7 +147,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: pets
+  - serviceName: "pets"
     request:
       query: |
         query {
@@ -191,7 +190,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: people
+  - serviceName: "people"
     request:
       query: |
         query {

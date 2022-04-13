@@ -1,4 +1,4 @@
-name: batch polymorphic hydration actor fields are in the same service
+name: "batch polymorphic hydration actor fields are in the same service"
 enabled: true
 overallSchema:
   foo: |
@@ -37,7 +37,7 @@ overallSchema:
       id: ID
       name: String
     }
-    
+
     type Pet {
       id: ID
       breed: String
@@ -67,7 +67,6 @@ underlyingSchema:
       id: ID
       name: String
     }
-
 query: |
   query {
     foo {
@@ -89,7 +88,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: foo
+  - serviceName: "foo"
     request:
       query: |
         query {
@@ -138,7 +137,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: bar
+  - serviceName: "bar"
     request:
       query: |
         query {
@@ -170,7 +169,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: bar
+  - serviceName: "bar"
     request:
       query: |
         query {

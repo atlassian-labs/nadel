@@ -1,4 +1,4 @@
-name: hydration matching using index result size invariant mismatch
+name: "hydration matching using index result size invariant mismatch"
 enabled: true
 overallSchema:
   UserService: |
@@ -47,7 +47,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -82,7 +82,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -107,5 +107,4 @@ serviceCalls:
 # language=JSON
 response: null
 exception:
-  message: If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments.*
-  ignoreMessageCase: false
+  message: "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments.*"

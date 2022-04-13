@@ -1,4 +1,4 @@
-name: query with pass through interfaces and unions that have aliased __typename in fragments work as expected
+name: "query with pass through interfaces and unions that have aliased __typename in fragments work as expected"
 enabled: true
 overallSchema:
   PetService: |
@@ -141,7 +141,7 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  - serviceName: PetService
+  - serviceName: "PetService"
     request:
       query: |
         query petQ {
@@ -158,7 +158,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: petQ
+      operationName: "petQ"
     # language=JSON
     response: |-
       {

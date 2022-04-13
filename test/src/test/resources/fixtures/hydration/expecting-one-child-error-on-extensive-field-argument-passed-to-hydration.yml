@@ -1,4 +1,4 @@
-name: expecting one child error on extensive field argument passed to hydration
+name: "expecting one child error on extensive field argument passed to hydration"
 enabled: true
 overallSchema:
   TestBoard: |
@@ -66,7 +66,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: TestBoard
+  - serviceName: "TestBoard"
     request:
       query: |
         query {
@@ -125,7 +125,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Users
+  - serviceName: "Users"
     request:
       query: |
         query {

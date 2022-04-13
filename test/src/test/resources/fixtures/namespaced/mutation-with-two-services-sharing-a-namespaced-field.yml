@@ -1,4 +1,4 @@
-name: mutation with two services sharing a namespaced field
+name: "mutation with two services sharing a namespaced field"
 enabled: true
 overallSchema:
   Issues: |
@@ -78,7 +78,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         mutation {
@@ -101,7 +101,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: IssueSearch
+  - serviceName: "IssueSearch"
     request:
       query: |
         mutation {

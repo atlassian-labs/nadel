@@ -1,4 +1,4 @@
-name: typename is sent owning service even when type is extended in it
+name: "typename is sent owning service even when type is extended in it"
 enabled: true
 overallSchema:
   Issues: |
@@ -83,7 +83,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: extending types via hydration with arguments passed on
+name: "extending types via hydration with arguments passed on"
 enabled: true
 overallSchema:
   Issue: |
@@ -54,7 +54,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issue
+  - serviceName: "Issue"
     request:
       query: |
         query {
@@ -75,7 +75,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Association
+  - serviceName: "Association"
     request:
       query: |
         query {

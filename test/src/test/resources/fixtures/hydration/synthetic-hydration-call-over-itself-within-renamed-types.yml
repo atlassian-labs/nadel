@@ -1,4 +1,4 @@
-name: synthetic hydration call over itself within renamed types
+name: "synthetic hydration call over itself within renamed types"
 enabled: true
 overallSchema:
   testing: |
@@ -63,7 +63,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: testing
+  - serviceName: "testing"
     request:
       query: |
         query {
@@ -111,7 +111,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: testing
+  - serviceName: "testing"
     request:
       query: |
         query {
@@ -145,7 +145,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: testing
+  - serviceName: "testing"
     request:
       query: |
         query {

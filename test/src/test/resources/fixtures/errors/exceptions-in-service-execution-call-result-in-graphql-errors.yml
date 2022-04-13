@@ -1,4 +1,4 @@
-name: exceptions in service execution call result in graphql errors
+name: "exceptions in service execution call result in graphql errors"
 enabled: true
 overallSchema:
   MyService: |
@@ -35,6 +35,6 @@ query: |
     }
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: null

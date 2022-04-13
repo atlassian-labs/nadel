@@ -1,4 +1,4 @@
-name: all fields are removed from hydrated field
+name: "all fields are removed from hydrated field"
 enabled: false
 overallSchema:
   UserService: |
@@ -57,7 +57,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: CommentService
+  - serviceName: "CommentService"
     request:
       query: |
         query nadel_2_CommentService {
@@ -66,7 +66,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_CommentService
+      operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
       {
@@ -77,7 +77,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query nadel_2_UserService {
@@ -86,7 +86,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_UserService
+      operationName: "nadel_2_UserService"
     # language=JSON
     response: |-
       {

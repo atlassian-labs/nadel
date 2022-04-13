@@ -1,4 +1,4 @@
-name: query to two services with field rename
+name: "query to two services with field rename"
 enabled: true
 overallSchema:
   Bar: |
@@ -43,7 +43,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -65,7 +65,7 @@ serviceCalls:
           "merged": "m1"
         }
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {

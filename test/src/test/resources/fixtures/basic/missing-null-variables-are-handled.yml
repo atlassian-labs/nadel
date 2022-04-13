@@ -1,4 +1,4 @@
-name: missing null variables are handled
+name: "missing null variables are handled"
 enabled: true
 overallSchema:
   MyService: |
@@ -35,7 +35,7 @@ query: |
     }
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

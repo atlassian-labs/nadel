@@ -1,4 +1,4 @@
-name: execution id is transferred from provider if missing in input
+name: "execution id is transferred from provider if missing in input"
 enabled: true
 overallSchema:
   MyService: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

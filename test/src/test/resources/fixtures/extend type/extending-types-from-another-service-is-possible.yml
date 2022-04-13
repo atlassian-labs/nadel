@@ -1,4 +1,4 @@
-name: extending types from another service is possible
+name: "extending types from another service is possible"
 enabled: true
 overallSchema:
   Service2: |
@@ -65,7 +65,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Service1
+  - serviceName: "Service1"
     request:
       query: |
         query {
@@ -80,7 +80,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Service1
+  - serviceName: "Service1"
     request:
       query: |
         query {
@@ -105,7 +105,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Service2
+  - serviceName: "Service2"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: url scalar as output type
+name: "url scalar as output type"
 enabled: true
 overallSchema:
   service: |
@@ -18,7 +18,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

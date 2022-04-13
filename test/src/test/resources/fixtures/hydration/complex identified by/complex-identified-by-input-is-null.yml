@@ -1,4 +1,4 @@
-name: complex identified by input is null
+name: "complex identified by input is null"
 enabled: true
 overallSchema:
   UserService: |
@@ -57,7 +57,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

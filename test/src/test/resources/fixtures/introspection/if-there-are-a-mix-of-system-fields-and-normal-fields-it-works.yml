@@ -1,4 +1,4 @@
-name: if there are a mix of system fields and normal fields it works
+name: "if there are a mix of system fields and normal fields it works"
 enabled: true
 overallSchema:
   MyService: |
@@ -40,7 +40,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

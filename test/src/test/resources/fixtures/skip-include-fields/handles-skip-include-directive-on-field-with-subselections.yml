@@ -1,4 +1,4 @@
-name: handles skip include directive on field with subselections
+name: "handles skip include directive on field with subselections"
 enabled: true
 overallSchema:
   service: |
@@ -33,7 +33,7 @@ query: |
 variables:
   test: true
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

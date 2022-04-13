@@ -1,4 +1,4 @@
-name: a lot of renames
+name: "a lot of renames"
 enabled: true
 overallSchema:
   Boards: |
@@ -55,7 +55,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Boards
+  - serviceName: "Boards"
     request:
       query: |
         query {

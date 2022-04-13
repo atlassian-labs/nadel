@@ -1,4 +1,4 @@
-name: date time scalar is passthrough and can be anything technically
+name: "date time scalar is passthrough and can be anything technically"
 enabled: true
 overallSchema:
   service: |
@@ -18,7 +18,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

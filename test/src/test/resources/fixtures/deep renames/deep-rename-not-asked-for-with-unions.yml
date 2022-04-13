@@ -1,4 +1,4 @@
-name: deep rename not asked for with unions
+name: "deep rename not asked for with unions"
 enabled: true
 overallSchema:
   Issues: |
@@ -58,7 +58,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

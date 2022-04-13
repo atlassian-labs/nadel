@@ -1,4 +1,4 @@
-name: service context is being set
+name: "service context is being set"
 enabled: true
 overallSchema:
   MyService: |
@@ -16,7 +16,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

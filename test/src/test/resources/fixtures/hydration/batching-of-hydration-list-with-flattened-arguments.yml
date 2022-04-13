@@ -1,4 +1,4 @@
-name: batching of hydration list with flattened arguments
+name: "batching of hydration list with flattened arguments"
 enabled: true
 overallSchema:
   UserService: |
@@ -50,7 +50,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -108,7 +108,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -139,7 +139,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {

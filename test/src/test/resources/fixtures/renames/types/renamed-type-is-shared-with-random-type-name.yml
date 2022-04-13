@@ -1,6 +1,7 @@
-name: renamed type is shared with random type name
+name: "renamed type is shared with random type name"
 enabled: true
-ignored: true # We do not allow implicit renames, enable this test once we have explicit renames for shared types
+# We do not allow implicit renames, enable this test once we have explicit renames for shared types
+ignored: true
 overallSchema:
   Nextgen: |-
     type Query {
@@ -91,7 +92,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Nextgen
+  - serviceName: "Nextgen"
     request:
       query: |-
         query {
@@ -134,7 +135,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Service
+  - serviceName: "Service"
     request:
       query: |-
         query {

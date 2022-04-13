@@ -1,4 +1,4 @@
-name: simple type rename and field rename works as expected
+name: "simple type rename and field rename works as expected"
 enabled: true
 overallSchema:
   MyService: |
@@ -95,7 +95,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

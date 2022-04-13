@@ -1,4 +1,4 @@
-name: batch polymorphic hydration actor fields are in the same service return types implement same interface
+name: "batch polymorphic hydration actor fields are in the same service return types implement same interface"
 enabled: true
 overallSchema:
   foo: |
@@ -32,16 +32,16 @@ overallSchema:
       petById(ids: [ID]): [Pet]
       humanById(ids: [ID]): [Human]
     }
-    
+
     interface Node {
       id: ID
     }
-    
+
     type Human implements Node {
       id: ID
       name: String
     }
-    
+
     type Pet implements Node {
       id: ID
       breed: String
@@ -61,21 +61,20 @@ underlyingSchema:
       petById(ids: [ID]): [Pet]
       humanById(ids: [ID]): [Human]
     }
-    
+
     interface Node {
       id: ID
     }
-    
+
     type Human implements Node {
       id: ID
       name: String
     }
-    
+
     type Pet implements Node {
       id: ID
       breed: String
     }
-
 query: |
   query {
     foo {
@@ -97,7 +96,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: foo
+  - serviceName: "foo"
     request:
       query: |
         query {
@@ -146,7 +145,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: bar
+  - serviceName: "bar"
     request:
       query: |
         query {
@@ -178,7 +177,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: bar
+  - serviceName: "bar"
     request:
       query: |
         query {

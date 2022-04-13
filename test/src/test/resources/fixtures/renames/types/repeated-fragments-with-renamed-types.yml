@@ -1,4 +1,4 @@
-name: repeated fragments with renamed types
+name: "repeated fragments with renamed types"
 enabled: true
 overallSchema:
   Users: |
@@ -123,9 +123,9 @@ query: |
     }
   }
 variables:
-  var1: service-1
+  var1: "service-1"
 serviceCalls:
-  - serviceName: Users
+  - serviceName: "Users"
     request:
       query: |
         query {

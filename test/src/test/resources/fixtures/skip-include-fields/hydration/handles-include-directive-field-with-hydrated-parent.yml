@@ -1,4 +1,4 @@
-name: handles include directive field with hydrated parent
+name: "handles include directive field with hydrated parent"
 enabled: true
 overallSchema:
   service: |
@@ -36,7 +36,7 @@ query: |
 variables:
   test: false
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {
@@ -57,7 +57,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

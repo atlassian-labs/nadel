@@ -1,4 +1,4 @@
-name: rename on shared abstract type
+name: "rename on shared abstract type"
 enabled: true
 overallSchema:
   shared: |
@@ -55,7 +55,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: worlds
+  - serviceName: "worlds"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: dynamic service resolution multiple services with one unmapped node lookup
+name: "dynamic service resolution multiple services with one unmapped node lookup"
 enabled: true
 overallSchema:
   shared: |
@@ -69,7 +69,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

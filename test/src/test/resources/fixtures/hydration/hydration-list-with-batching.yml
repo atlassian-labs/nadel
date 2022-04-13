@@ -1,4 +1,4 @@
-name: hydration list with batching
+name: "hydration list with batching"
 enabled: true
 overallSchema:
   service2: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service1
+  - serviceName: "service1"
     request:
       query: |
         query {
@@ -71,7 +71,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service2
+  - serviceName: "service2"
     request:
       query: |
         query {

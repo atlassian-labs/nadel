@@ -1,4 +1,4 @@
-name: deep rename with interfaces asking typename
+name: "deep rename with interfaces asking typename"
 enabled: true
 overallSchema:
   Issues: |
@@ -43,7 +43,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: all fields in a selection set are removed
+name: "all fields in a selection set are removed"
 enabled: false
 overallSchema:
   IssueService: |
@@ -98,7 +98,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query nadel_2_IssueService {
@@ -110,7 +110,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_IssueService
+      operationName: "nadel_2_IssueService"
     # language=JSON
     response: |-
       {

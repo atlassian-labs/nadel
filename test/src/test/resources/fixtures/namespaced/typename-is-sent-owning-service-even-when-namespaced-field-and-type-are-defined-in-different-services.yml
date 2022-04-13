@@ -1,5 +1,4 @@
-name: typename is sent owning service even when namespaced field and type are defined
-  in different services
+name: "typename is sent owning service even when namespaced field and type are defined in different services"
 enabled: true
 overallSchema:
   Issues: |
@@ -84,7 +83,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

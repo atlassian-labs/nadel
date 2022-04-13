@@ -1,4 +1,4 @@
-name: renamed type inside renamed field
+name: "renamed type inside renamed field"
 enabled: true
 overallSchema:
   IssueService: |
@@ -24,7 +24,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: can query non hidden fields
+name: "can query non hidden fields"
 enabled: true
 overallSchema:
   MyService: |
@@ -11,7 +11,6 @@ overallSchema:
       id: ID
       name: String
     }
-
 underlyingSchema:
   MyService: |
     type Query {
@@ -30,10 +29,9 @@ query: |
         name
       }
   }
-
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

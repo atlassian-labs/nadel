@@ -1,4 +1,4 @@
-name: handles include directive on batch hydrated field
+name: "handles include directive on batch hydrated field"
 enabled: true
 overallSchema:
   service: |
@@ -42,7 +42,7 @@ query: |
 variables:
   test: false
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

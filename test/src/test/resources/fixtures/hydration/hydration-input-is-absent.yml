@@ -1,4 +1,4 @@
-name: hydration input is absent
+name: "hydration input is absent"
 enabled: true
 overallSchema:
   UserService: |
@@ -55,7 +55,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

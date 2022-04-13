@@ -1,4 +1,4 @@
-name: hydration call over itself with renamed types
+name: "hydration call over itself with renamed types"
 enabled: true
 overallSchema:
   testing: |
@@ -59,7 +59,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: testing
+  - serviceName: "testing"
     request:
       query: |
         query {
@@ -103,7 +103,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: testing
+  - serviceName: "testing"
     request:
       query: |
         query {
@@ -133,7 +133,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: testing
+  - serviceName: "testing"
     request:
       query: |
         query {

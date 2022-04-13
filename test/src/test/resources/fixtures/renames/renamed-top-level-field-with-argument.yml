@@ -1,4 +1,4 @@
-name: renamed top level field with argument
+name: "renamed top level field with argument"
 enabled: true
 overallSchema:
   MyService: |
@@ -25,7 +25,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

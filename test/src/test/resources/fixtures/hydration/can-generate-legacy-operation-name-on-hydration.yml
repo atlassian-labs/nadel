@@ -1,4 +1,4 @@
-name: can generate legacy operation name on hydration
+name: "can generate legacy operation name on hydration"
 enabled: true
 overallSchema:
   service2: |
@@ -52,7 +52,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service1
+  - serviceName: "service1"
     request:
       query: |
         query nadel_2_service1_TestFoo {
@@ -62,7 +62,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_service1_TestFoo
+      operationName: "nadel_2_service1_TestFoo"
     # language=JSON
     response: |-
       {
@@ -74,7 +74,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service2
+  - serviceName: "service2"
     request:
       query: |
         query nadel_2_service2_TestFoo {
@@ -83,7 +83,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_service2_TestFoo
+      operationName: "nadel_2_service2_TestFoo"
     # language=JSON
     response: |-
       {

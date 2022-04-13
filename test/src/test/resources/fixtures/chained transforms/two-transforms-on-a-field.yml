@@ -1,4 +1,4 @@
-name: two transforms on a field
+name: "two transforms on a field"
 enabled: true
 overallSchema:
   service: |
@@ -41,7 +41,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

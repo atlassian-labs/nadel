@@ -1,4 +1,4 @@
-name: hydration matching using index with lists
+name: "hydration matching using index with lists"
 enabled: true
 overallSchema:
   UserService: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -76,7 +76,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {

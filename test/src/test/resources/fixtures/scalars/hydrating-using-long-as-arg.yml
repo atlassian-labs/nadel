@@ -1,4 +1,4 @@
-name: hydrating using long as arg
+name: "hydrating using long as arg"
 enabled: true
 overallSchema:
   service: |
@@ -34,7 +34,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {
@@ -55,7 +55,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

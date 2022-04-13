@@ -1,4 +1,4 @@
-name: repeated hydrated fields on the same level. overlapping fields in the query
+name: "repeated hydrated fields on the same level. overlapping fields in the query"
 enabled: true
 overallSchema:
   Foo: |
@@ -47,7 +47,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -68,7 +68,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

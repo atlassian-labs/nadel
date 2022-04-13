@@ -1,4 +1,4 @@
-name: hydration works when an ancestor field has been renamed
+name: "hydration works when an ancestor field has been renamed"
 enabled: true
 overallSchema:
   IssueService: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {
@@ -73,7 +73,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

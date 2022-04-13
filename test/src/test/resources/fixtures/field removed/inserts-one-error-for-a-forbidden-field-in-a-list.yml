@@ -1,4 +1,4 @@
-name: inserts one error for a forbidden field in a list
+name: "inserts one error for a forbidden field in a list"
 enabled: false
 overallSchema:
   Issues: |
@@ -30,7 +30,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query nadel_2_Issues {
@@ -39,7 +39,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_Issues
+      operationName: "nadel_2_Issues"
     # language=JSON
     response: |-
       {

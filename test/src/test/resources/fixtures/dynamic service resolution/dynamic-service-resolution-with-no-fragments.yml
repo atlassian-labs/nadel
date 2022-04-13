@@ -1,4 +1,4 @@
-name: dynamic service resolution with no fragments
+name: "dynamic service resolution with no fragments"
 enabled: true
 overallSchema:
   shared: |
@@ -60,7 +60,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: RepoService
+  - serviceName: "RepoService"
     request:
       query: |
         query {

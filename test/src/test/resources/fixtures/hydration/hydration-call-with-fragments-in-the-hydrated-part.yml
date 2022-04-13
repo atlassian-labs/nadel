@@ -1,4 +1,4 @@
-name: hydration call with fragments in the hydrated part
+name: "hydration call with fragments in the hydrated part"
 enabled: true
 overallSchema:
   UserService: |
@@ -75,7 +75,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -98,7 +98,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -132,7 +132,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {

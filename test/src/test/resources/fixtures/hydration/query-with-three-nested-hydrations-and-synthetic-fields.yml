@@ -1,4 +1,4 @@
-name: query with three nested hydrations and synthetic fields
+name: "query with three nested hydrations and synthetic fields"
 enabled: true
 overallSchema:
   Bar: |
@@ -63,7 +63,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -94,7 +94,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {
@@ -125,7 +125,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {
@@ -162,7 +162,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {
@@ -193,7 +193,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Bar
+  - serviceName: "Bar"
     request:
       query: |
         query {

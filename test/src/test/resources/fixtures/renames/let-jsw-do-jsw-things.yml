@@ -1,5 +1,5 @@
 # We need to permit JSW to do weird things with their schema for the time being
-name: let jsw do jsw things
+name: "let jsw do jsw things"
 enabled: true
 overallSchema:
   service: |
@@ -27,7 +27,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

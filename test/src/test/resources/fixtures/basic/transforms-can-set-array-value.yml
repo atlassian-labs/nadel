@@ -1,4 +1,4 @@
-name: transforms can set array value
+name: "transforms can set array value"
 enabled: true
 overallSchema:
   service: |
@@ -24,7 +24,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {
