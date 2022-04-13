@@ -42,7 +42,7 @@ response: |-
     "data": null,
     "errors": [
       {
-        "message": "Variable 'var1' has coerced Null value for NonNull type 'String!'",
+        "message": "Variable 'var1' has an invalid value: Variable 'var1' has coerced Null value for NonNull type 'String!'",
         "locations": [
           {
             "line": 1,
