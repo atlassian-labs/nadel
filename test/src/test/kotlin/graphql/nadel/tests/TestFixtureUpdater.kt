@@ -111,7 +111,7 @@ private fun getUpdatedServiceCalls(testFixture: TestFixture): List<ServiceCall> 
         }
 }
 
-fun writeOut(fixtureFile: File, testFixture: TestFixture) {
+private fun writeOut(fixtureFile: File, testFixture: TestFixture) {
     val commentsFromOldYaml = collectComments(fixtureFile).toMutableMap()
 
     val rootNodes = traverseYaml(yamlObjectMapper.writeValueAsString(testFixture)) { path, node ->
