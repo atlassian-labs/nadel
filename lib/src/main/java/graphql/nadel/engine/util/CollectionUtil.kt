@@ -44,7 +44,7 @@ inline fun <K, E> Sequence<E>.strictAssociateBy(crossinline keyExtractor: (E) ->
  */
 @JvmName("mapFromPairs")
 fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): Map<K, V> {
-    val map = HashMap<K, V>(entries.size)
+    val map = LinkedHashMap<K, V>(entries.size)
     map.putAll(entries)
     require(map.size == entries.size) {
         @Suppress("SimpleRedundantLet") // For debugging purposes if you want to visit the values
@@ -61,7 +61,7 @@ fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): Map<K, V> {
  */
 @JvmName("mapFromPairs")
 fun <K, V> mapFrom(entries: Sequence<Pair<K, V>>): Map<K, V> {
-    val map = HashMap<K, V>()
+    val map = LinkedHashMap<K, V>()
     var count = 0
     entries.forEach {
         map[it.first] = it.second
@@ -90,7 +90,7 @@ fun <K, V> Collection<Pair<K, V>>.toMapStrictly(): Map<K, V> {
  */
 @JvmName("mapFromEntries")
 fun <K, V> mapFrom(entries: Collection<Map.Entry<K, V>>): Map<K, V> {
-    val map = HashMap<K, V>(entries.size)
+    val map = LinkedHashMap<K, V>(entries.size)
     entries.forEach(map::put)
     require(map.size == entries.size)
     return map
@@ -114,7 +114,7 @@ fun <K, V> MutableMap<K, V>.put(entry: Pair<K, V>) {
  * Inverts the [Map] such that the values are now the keys and the keys are now the values.
  */
 fun <K, V> Map<K, V>.invert(): Map<V, K> {
-    val map = HashMap<V, K>(this.size)
+    val map = LinkedHashMap<V, K>(this.size)
     forEach { (key, value) ->
         map[value] = key
     }
