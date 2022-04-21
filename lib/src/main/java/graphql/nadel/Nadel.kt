@@ -18,7 +18,6 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
-import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.util.LogKit
@@ -54,6 +53,7 @@ class Nadel private constructor(
             .operationName(nadelExecutionInput.operationName)
             .context(nadelExecutionInput.context)
             .variables(nadelExecutionInput.variables)
+            .extensions(nadelExecutionInput.extensions)
             .executionId(nadelExecutionInput.executionId)
             .build()
 
