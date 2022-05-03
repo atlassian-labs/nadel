@@ -21,7 +21,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.beginExecute
-import graphql.nadel.engine.util.copy
 import graphql.nadel.engine.util.fold
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.mergeResults

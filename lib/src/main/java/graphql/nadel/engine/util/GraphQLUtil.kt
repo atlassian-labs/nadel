@@ -273,14 +273,6 @@ fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
     return provide(executionInput.query, executionInput.operationName, executionInput.context)
 }
 
-fun ServiceExecutionResult.copy(
-    data: MutableJsonMap = this.data,
-    errors: MutableList<MutableJsonMap> = this.errors,
-    extensions: MutableJsonMap = this.extensions,
-): ServiceExecutionResult {
-    return newServiceExecutionResult(data, errors, extensions)
-}
-
 fun newServiceExecutionResult(
     data: MutableJsonMap = mutableMapOf(),
     errors: MutableList<MutableJsonMap> = mutableListOf(),
@@ -292,7 +284,7 @@ fun newServiceExecutionResult(
 fun newServiceExecutionResult(
     error: GraphQLError,
 ): ServiceExecutionResult {
-    return newServiceExecutionResult(
+    return ServiceExecutionResult(
         errors = mutableListOf(
             error.toSpecification(),
         ),
