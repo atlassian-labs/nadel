@@ -131,7 +131,7 @@ internal class NadelBatchHydrator(
                 .map { actorQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                        engine.execute(
+                        engine.executeTopLevelField(
                             service = instruction.actorService,
                             topLevelField = actorQuery,
                             executionContext = state.executionContext,

@@ -201,7 +201,7 @@ internal class NadelHydrationTransform(
             ).map { actorQuery ->
                 async {
                     val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                    engine.execute(
+                    engine.executeTopLevelField(
                         service = instruction.actorService,
                         topLevelField = actorQuery,
                         executionContext = executionContext,
