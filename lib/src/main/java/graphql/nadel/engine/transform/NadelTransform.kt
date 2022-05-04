@@ -13,6 +13,12 @@ import graphql.normalized.ExecutableNormalizedField
 
 interface NadelTransform<State : Any> {
     /**
+     * The name of the transform. Used for metrics purposes. Should be short and contain no special characters.
+     */
+    val name: String
+        get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
+
+    /**
      * Determines whether the [NadelTransform] should run. If it should run return a [State].
      *
      * The returned [State] is then fed into [transformField] and [getResultInstructions].

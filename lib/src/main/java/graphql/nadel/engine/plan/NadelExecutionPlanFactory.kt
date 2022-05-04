@@ -25,7 +25,7 @@ internal class NadelExecutionPlanFactory(
     // This will avoid creating the ChildStep object too many times
     private val transformsWithTimingStepInfo = transforms
         .map { transform ->
-            transform to ChildStep(parent = ExecutionPlanning, transform = transform.javaClass)
+            transform to ChildStep(parent = ExecutionPlanning, transform = transform)
         }
 
     /**

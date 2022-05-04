@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 data class NadelExecutionContext internal constructor(
     val executionInput: ExecutionInput,
     val query: ExecutableNormalizedOperation,
-    val hooks: ServiceExecutionHooks,
+    internal val hooks: ServiceExecutionHooks,
     val hints: NadelExecutionHints,
     val instrumentationState: InstrumentationState?,
     internal val timer: NadelInstrumentationTimer,
