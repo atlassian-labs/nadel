@@ -17,12 +17,9 @@ import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.query.DynamicServiceResolution
 import graphql.nadel.engine.transform.query.NadelFieldToService
-import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.beginExecute
-import graphql.nadel.engine.util.copy
-import graphql.nadel.engine.util.fold
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.mergeResults
 import graphql.nadel.engine.util.newExecutionErrorResult
@@ -32,8 +29,8 @@ import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
+import graphql.nadel.engine.util.copy
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.util.ErrorUtil
@@ -193,16 +190,28 @@ class NextgenEngine @JvmOverloads constructor(
         topLevelField: ExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails?=null,
     ): ExecutionResult {
         val timer = executionContext.timer
         val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
-            executionPlanner.create(executionContext, services, service, topLevelField)
+            executionPlanner.create(
+                executionContext = executionContext,
+                services = services,
+                service = service,
+                rootField = topLevelField,
+                serviceHydrationDetails = serviceHydrationDetails,
+            )
         }
         val queryTransform = timer.time(step = RootStep.QueryTransforming) {
             transformQuery(service, executionContext, executionPlan, topLevelField)
         }
         val transformedQuery = queryTransform.result.single()
-        val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
+        val result: ServiceExecutionResult = executeService(
+            service = service,
+            transformedQuery = transformedQuery,
+            executionContext = executionContext,
+            executionHydrationDetails = serviceHydrationDetails
+        )
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
             else -> timer.time(step = RootStep.ResultTransforming) {
@@ -223,75 +232,6 @@ class NextgenEngine @JvmOverloads constructor(
             .errors(ErrorUtil.createGraphQLErrorsFromRawErrors(transformedResult.errors))
             .extensions(transformedResult.extensions as Map<Any, Any>)
             .build()
-    }
-
-    internal suspend fun executeHydration(
-        service: Service,
-        topLevelField: ExecutableNormalizedField,
-        pathToActorField: NadelQueryPath,
-        executionContext: NadelExecutionContext,
-        serviceHydrationDetails: ServiceExecutionHydrationDetails,
-    ): ServiceExecutionResult {
-        val actorField = fold(initial = topLevelField, count = pathToActorField.segments.size - 1) {
-            it.children.single()
-        }
-
-        val (transformResult, executionPlan) = transformHydrationQuery(
-            service,
-            executionContext,
-            actorField,
-            serviceHydrationDetails
-        )
-
-        // Get to the top level field again using .parent N times on the new actor field
-        val transformedQuery: ExecutableNormalizedField = fold(
-            initial = transformResult.result.single(),
-            count = pathToActorField.segments.size - 1,
-        ) {
-            it.parent ?: error("No parent")
-        }
-
-        val result = executeService(
-            service,
-            transformedQuery,
-            executionContext,
-            serviceHydrationDetails,
-        )
-
-        return resultTransformer.transform(
-            executionContext = executionContext,
-            executionPlan = executionPlan,
-            artificialFields = transformResult.artificialFields,
-            overallToUnderlyingFields = transformResult.overallToUnderlyingFields,
-            service = service,
-            result = result,
-        )
-    }
-
-    private suspend fun transformHydrationQuery(
-        service: Service,
-        executionContext: NadelExecutionContext,
-        actorField: ExecutableNormalizedField,
-        serviceHydrationDetails: ServiceExecutionHydrationDetails,
-    ): Pair<NadelQueryTransformer.TransformResult, NadelExecutionPlan> {
-        val executionPlan = executionPlanner.create(
-            executionContext,
-            services,
-            service,
-            rootField = actorField,
-            serviceHydrationDetails,
-        )
-
-        val queryTransform = transformQuery(service, executionContext, executionPlan, actorField)
-
-        // Fix parent of the actor field
-        if (actorField.parent != null) {
-            val fixedParent = actorField.parent.toBuilder().children(queryTransform.result).build()
-            val queryTransformResult = queryTransform.result.single()
-            queryTransformResult.replaceParent(fixedParent)
-        }
-
-        return Pair(queryTransform, executionPlan)
     }
 
     private suspend fun executeService(

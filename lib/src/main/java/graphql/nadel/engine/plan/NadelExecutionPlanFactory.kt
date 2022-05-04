@@ -37,7 +37,7 @@ internal class NadelExecutionPlanFactory(
         services: Map<String, Service>,
         service: Service,
         rootField: ExecutableNormalizedField,
-        serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
