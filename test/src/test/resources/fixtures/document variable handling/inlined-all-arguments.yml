@@ -3,7 +3,14 @@ enabled: true
 overallSchema:
   MyService: |
     type Query {
-      hello(arg: InputWithJson, arg1: JSON!): String
+      hello(
+        arg: InputWithJson, 
+        arg1: JSON!, 
+        arg2 : String, 
+        arg3 : String, 
+        arg4Nullable : String, 
+        arg5Nullable : String
+      ): String
     }
 
     input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
@@ -15,7 +22,8 @@ overallSchema:
 underlyingSchema:
   MyService: |-
     type Query {
-      hello(arg: InputWithJsonUnderlying, arg1: JSON!): String
+      hello(arg: InputWithJsonUnderlying, 
+        arg1: JSON!, arg2 : String, arg3 : String, arg4Nullable : String, arg5Nullable : String): String
     }
 
     input InputWithJsonUnderlying {
@@ -25,16 +33,28 @@ underlyingSchema:
 
     scalar JSON
 query: |
-  query myQuery {
-    hello(arg: { names : ["Bobba", "Fett"] payload: {name: "Bobert", age: "23"}}, arg1: {interests: ["photography", "basketball"]})
+  query myQuery($inputVar1 : String, $inputVar2 : String! = "defaulted", $inputVar3 : String) {
+    hello(
+          arg: { names : ["Bobba", "Fett"] payload: {name: "Bobert", age: "23"}}, 
+          arg1: {interests: ["photography", "basketball"]},
+          arg2: null,
+          arg3: $inputVar1,
+          arg4Nullable: $inputVar2
+          arg5Nullable: $inputVar3
+    )
   }
-variables: { }
+
+variables: {
+  inputVar1 : "input1"
+}
+
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # arg5Nullable will be dropped as this what the ENF code does for nullable args with no value present in variables
       query: |
-        query myQuery($v0: InputWithJsonUnderlying, $v1: JSON!) {
-          hello(arg: $v0, arg1: $v1)
+        query myQuery($v0: InputWithJsonUnderlying, $v1: JSON!, , $v2: String, $v3: String, $v4: String) {
+          hello(arg: $v0, arg1: $v1, arg2: $v2, arg3: $v3, arg4Nullable: $v4)
         }
       variables:
         v0:
@@ -48,6 +68,10 @@ serviceCalls:
           interests:
             - "photography"
             - "basketball"
+        v2: null
+        v3: "input1"
+        v4: "defaulted"
+
       operationName: "myQuery"
     # language=JSON
     response: |-
