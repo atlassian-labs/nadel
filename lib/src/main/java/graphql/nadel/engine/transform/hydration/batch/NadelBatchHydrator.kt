@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.hydration.batch
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -29,7 +28,6 @@ internal class NadelBatchHydrator(
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
         parentNodes: List<JsonNode>,
-        hints: NadelExecutionHints,
     ): List<NadelResultInstruction> {
         val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction?, List<JsonNode>> = parentNodes
             .mapNotNull { parentNode ->
@@ -66,7 +64,7 @@ internal class NadelBatchHydrator(
                                 newValue = null,
                             )
                         }
-                        else -> hydrate(executionBlueprint, state, instruction, parentNodes, hints)
+                        else -> hydrate(executionBlueprint, state, instruction, parentNodes)
                     }
                 }
             }
@@ -80,13 +78,11 @@ internal class NadelBatchHydrator(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-        hints: NadelExecutionHints,
     ): List<NadelResultInstruction> {
         val batches: List<ServiceExecutionResult> = executeBatches(
             state = state,
             instruction = instruction,
-            parentNodes = parentNodes,
-            hints = hints
+            parentNodes = parentNodes
         )
 
         return when (val matchStrategy = instruction.batchHydrationMatchStrategy) {
@@ -119,7 +115,6 @@ internal class NadelBatchHydrator(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-        hints: NadelExecutionHints,
     ): List<ServiceExecutionResult> {
         val executionBlueprint = state.executionBlueprint
         val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
@@ -142,7 +137,7 @@ internal class NadelBatchHydrator(
                             hydrationSourceService,
                             instruction.location
                         )
-                        if (hints.removeHydrationSpecificExecutionCode) {
+                        if (state.executionContext.hints.removeHydrationSpecificExecutionCode) {
                             engine.executeTopLevelField(
                                 service = instruction.actorService,
                                 topLevelField = actorQuery,
