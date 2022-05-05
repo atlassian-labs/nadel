@@ -4,6 +4,7 @@ import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatibleOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationsMismatch
+import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
@@ -95,6 +96,96 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("fails if one of polymorphic hydrations references non existent field") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: AbstractUser
+                            @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creatorId"}
+                                ]
+                            )
+                            @hydrated(
+                                service: "users"
+                                field: "internalUser"
+                                arguments: [
+                                    {name: "id", value: "$source.creatorId"}
+                                ]
+                            )    
+                        }
+                        union AbstractUser = User | ExternalUser
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                            metadata: UserMetadata
+                        }
+                        
+                        type UserMetadata {
+                            payload: String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creatorId: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                            metadata: UserMetadata
+                        }
+                        
+                        type UserMetadata {
+                            payload: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.singleOfType<MissingHydrationActorField>()
+            assert(error.service.name == "issues")
+            assert(error.parentType.overall.name == "Issue")
+            assert(error.overallField.name == "creator")
+            assert(error.hydration.pathToActorField == listOf("internalUser"))
         }
 
         it("fails if a mix of batched and non-batched hydrations is used") {
