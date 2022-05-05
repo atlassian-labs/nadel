@@ -14,7 +14,7 @@ import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.transform.skipInclude.SkipIncludeTransform.State
+import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.State
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
@@ -33,15 +33,30 @@ import graphql.schema.GraphQLSchema
  * This should probably be a more generic "if no subselections add an empty one for removed fields".
  * But we'll deal with that separately.
  */
-internal class SkipIncludeTransform : NadelTransform<State> {
+internal class NadelSkipIncludeTransform : NadelTransform<State> {
     companion object {
         private const val skipFieldName = "__skip"
+
+        fun isSkipIncludeSpecialField(enf: ExecutableNormalizedField): Boolean {
+            return enf.name == skipFieldName
+        }
     }
 
     class State(
         val aliasHelper: NadelAliasHelper,
     )
 
+    /**
+     * So this transform is a bit odd. Normally transform operate on a specific field.
+     *
+     * However, in the case of a `@skip` the field with that directive is automatically removed.
+     *
+     * So in order to execute on the deleted field we insert a fake field back into the midst for
+     * the transform API to pick up on.
+     *
+     * This should really not happen. The real fix is to execute on the parent of the deleted
+     * field and to fix [getResultInstructions] to include `underlyingField` and not just `underlyingParentField`.
+     */
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
