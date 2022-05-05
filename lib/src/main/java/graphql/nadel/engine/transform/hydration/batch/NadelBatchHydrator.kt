@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -28,6 +29,7 @@ internal class NadelBatchHydrator(
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
         parentNodes: List<JsonNode>,
+        hints: NadelExecutionHints,
     ): List<NadelResultInstruction> {
         val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction?, List<JsonNode>> = parentNodes
             .mapNotNull { parentNode ->
@@ -64,7 +66,7 @@ internal class NadelBatchHydrator(
                                 newValue = null,
                             )
                         }
-                        else -> hydrate(executionBlueprint, state, instruction, parentNodes)
+                        else -> hydrate(executionBlueprint, state, instruction, parentNodes, hints)
                     }
                 }
             }
@@ -78,11 +80,13 @@ internal class NadelBatchHydrator(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
+        hints: NadelExecutionHints,
     ): List<NadelResultInstruction> {
         val batches: List<ServiceExecutionResult> = executeBatches(
             state = state,
             instruction = instruction,
             parentNodes = parentNodes,
+            hints = hints
         )
 
         return when (val matchStrategy = instruction.batchHydrationMatchStrategy) {
@@ -115,6 +119,7 @@ internal class NadelBatchHydrator(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
+        hints: NadelExecutionHints,
     ): List<ServiceExecutionResult> {
         val executionBlueprint = state.executionBlueprint
         val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
@@ -131,17 +136,28 @@ internal class NadelBatchHydrator(
                 .map { actorQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                        engine.executeTopLevelField(
-                            service = instruction.actorService,
-                            topLevelField = actorQuery,
-                            executionContext = state.executionContext,
-                            serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                                instruction.timeout,
-                                instruction.batchSize,
-                                hydrationSourceService,
-                                instruction.location
-                            )
+                        val serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                            instruction.timeout,
+                            instruction.batchSize,
+                            hydrationSourceService,
+                            instruction.location
                         )
+                        if (hints.removeHydrationSpecificExecutionCode) {
+                            engine.executeTopLevelField(
+                                service = instruction.actorService,
+                                topLevelField = actorQuery,
+                                executionContext = state.executionContext,
+                                serviceHydrationDetails = serviceHydrationDetails
+                            )
+                        } else {
+                            engine.executeHydration(
+                                service = instruction.actorService,
+                                topLevelField = actorQuery,
+                                pathToActorField = instruction.queryPathToActorField,
+                                executionContext = state.executionContext,
+                                serviceHydrationDetails = serviceHydrationDetails
+                            )
+                        }
                     }
                 }
                 .awaitAll()

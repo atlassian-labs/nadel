@@ -6,6 +6,7 @@ import graphql.nadel.hints.LegacyOperationNamesHint
 data class NadelExecutionHints constructor(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
+    val removeHydrationSpecificExecutionCode: Boolean,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -20,6 +21,7 @@ data class NadelExecutionHints constructor(
     class Builder {
         private var legacyOperationNames: LegacyOperationNamesHint = LegacyOperationNamesHint { false }
         private var allDocumentVariablesHint: AllDocumentVariablesHint = AllDocumentVariablesHint { false }
+        private var removeHydrationSpecificExecutionCode: Boolean = false
 
         constructor()
 
@@ -38,10 +40,16 @@ data class NadelExecutionHints constructor(
             return this
         }
 
+        fun removeHydrationSpecificExecutionCode(flag: Boolean): Builder {
+            removeHydrationSpecificExecutionCode = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
+                removeHydrationSpecificExecutionCode,
             )
         }
     }
