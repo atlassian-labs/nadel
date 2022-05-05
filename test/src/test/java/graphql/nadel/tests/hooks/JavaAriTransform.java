@@ -11,6 +11,7 @@ import graphql.nadel.engine.transform.NadelTransformFieldResult;
 import graphql.nadel.engine.transform.NadelTransformJavaCompat;
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat;
 import graphql.nadel.engine.transform.result.NadelResultInstruction;
+import graphql.nadel.engine.transform.result.json.JsonNodes;
 import graphql.nadel.engine.util.CollectionUtilKt;
 import graphql.normalized.ExecutableNormalizedField;
 import graphql.normalized.NormalizedInputValue;
@@ -61,11 +62,11 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
         var argDefsByName = CollectionUtilKt.strictAssociateBy(fieldDef.getArguments(), GraphQLArgument::getName);
 
         var argsToTransform = overallField.getNormalizedArguments().keySet()
-                .stream()
-                .filter((argName) -> {
-                    return argDefsByName.get(argName).hasDirective("interpretAri");
-                })
-                .collect(Collectors.toSet());
+            .stream()
+            .filter((argName) -> {
+                return argDefsByName.get(argName).hasDirective("interpretAri");
+            })
+            .collect(Collectors.toSet());
 
         if (argsToTransform.isEmpty()) {
             return CompletableFuture.completedFuture(null);
@@ -83,40 +84,40 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                        @NotNull ExecutableNormalizedField field,
                                                                        @NotNull Set<String> fieldsArgsToInterpret) {
         return CompletableFuture.completedFuture(
-                new NadelTransformFieldResult(
-                        field.transform((builder) -> {
-                            LinkedHashMap<String, NormalizedInputValue> newArgs = new LinkedHashMap<>();
+            new NadelTransformFieldResult(
+                field.transform((builder) -> {
+                    LinkedHashMap<String, NormalizedInputValue> newArgs = new LinkedHashMap<>();
 
-                            field.getNormalizedArguments()
-                                    .entrySet()
-                                    .stream()
-                                    .map((entry) -> {
-                                        String name = entry.getKey();
-                                        var value = entry.getValue();
-                                        if (fieldsArgsToInterpret.contains(name)) {
-                                            var str = ((StringValue) value.getValue()).getValue();
+                    field.getNormalizedArguments()
+                        .entrySet()
+                        .stream()
+                        .map((entry) -> {
+                            String name = entry.getKey();
+                            var value = entry.getValue();
+                            if (fieldsArgsToInterpret.contains(name)) {
+                                var str = ((StringValue) value.getValue()).getValue();
 
-                                            return new SimpleEntry<>(
-                                                    name,
-                                                    new NormalizedInputValue(
-                                                            value.getTypeName(),
-                                                            new StringValue(
-                                                                    StringsKt.substringAfterLast(str, "/", str)
-                                                            )
-                                                    )
-                                            );
-                                        } else {
-                                            return entry;
-                                        }
-                                    })
-                                    .forEach((entry) -> {
-                                        newArgs.put(entry.getKey(), entry.getValue());
-                                    });
+                                return new SimpleEntry<>(
+                                    name,
+                                    new NormalizedInputValue(
+                                        value.getTypeName(),
+                                        new StringValue(
+                                            StringsKt.substringAfterLast(str, "/", str)
+                                        )
+                                    )
+                                );
+                            } else {
+                                return entry;
+                            }
+                        })
+                        .forEach((entry) -> {
+                            newArgs.put(entry.getKey(), entry.getValue());
+                        });
 
-                            builder.normalizedArguments(newArgs);
-                        }),
-                        emptyList()
-                )
+                    builder.normalizedArguments(newArgs);
+                }),
+                emptyList()
+            )
         );
     }
 
@@ -128,7 +129,8 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                                  @NotNull ExecutableNormalizedField overallField,
                                                                                  @Nullable ExecutableNormalizedField underlyingParentField,
                                                                                  @NotNull ServiceExecutionResult result,
-                                                                                 @NotNull Set<String> strings) {
+                                                                                 @NotNull Set<String> strings,
+                                                                                 @NotNull JsonNodes nodes) {
         return CompletableFuture.completedFuture(emptyList());
     }
 }

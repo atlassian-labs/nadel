@@ -1,7 +1,6 @@
 package graphql.nadel.engine.instrumentation
 
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
@@ -218,7 +217,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             // when
             val batchResult = timer.batch { batchTimer ->
                 val timeResult = batchTimer.time(
-                    ChildStep(parent = RootStep.ExecutionPlanning, NadelHydrationTransform::class),
+                    ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
                 ) {
                     delay(64)
                     "Hello World"
@@ -251,7 +250,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             val ex = assertThrows<Throwable> {
                 timer.batch { batchTimer ->
                     batchTimer.time(
-                        ChildStep(parent = RootStep.ExecutionPlanning, NadelHydrationTransform::class),
+                        ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
                     ) {
                         delay(64)
                         throw UnsupportedOperationException("Bye")
@@ -288,7 +287,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             // when
             batchTimer.time(
-                ChildStep(parent = RootStep.ExecutionPlanning, NadelHydrationTransform::class),
+                ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
             ) {
                 delay(64)
             }
@@ -322,29 +321,29 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 coroutineScope {
                     launch {
                         batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, NadelHydrationTransform::class),
+                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
                         ) { delay(64) }
                         batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, NadelHydrationTransform::class),
+                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
                         ) { delay(128) }
                         batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, NadelHydrationTransform::class),
+                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
                         ) { delay(128) }
                     }
                     launch {
                         batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, NadelBatchHydrationTransform::class),
+                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
                         ) { delay(32) }
                         batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, NadelBatchHydrationTransform::class),
+                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
                         ) { delay(32) }
                     }
                     launch {
                         batchTimer.time(
-                            ChildStep(parent = RootStep.ResultTransforming, NadelBatchHydrationTransform::class),
+                            ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
                         ) { delay(256) }
                         batchTimer.time(
-                            ChildStep(parent = RootStep.ResultTransforming, NadelBatchHydrationTransform::class),
+                            ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
                         ) { delay(64) }
                     }
                 }

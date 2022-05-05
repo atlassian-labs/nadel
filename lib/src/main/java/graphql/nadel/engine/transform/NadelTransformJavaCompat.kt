@@ -18,6 +18,9 @@ import java.util.concurrent.CompletableFuture
  * See [NadelTransform]
  */
 interface NadelTransformJavaCompat<State : Any> {
+    val name: String
+        get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
+
     /**
      * See [NadelTransform.isApplicable]
      */
@@ -53,12 +56,16 @@ interface NadelTransformJavaCompat<State : Any> {
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
+        nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>>
 
     companion object {
         @JvmStatic
         fun <State : Any> create(compat: NadelTransformJavaCompat<State>): NadelTransform<State> {
             return object : NadelTransform<State> {
+                override val name: String
+                    get() = compat.name
+
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -117,6 +124,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         underlyingParentField = underlyingParentField,
                         result = result,
                         state = state,
+                        nodes = nodes,
                     ).asDeferred().await()
                 }
             }

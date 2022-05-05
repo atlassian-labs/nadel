@@ -67,22 +67,14 @@ data class NadelInstrumentationTimingParameters(
         override val parent: Step,
         override val name: String,
     ) : Step {
-        // Util to create from a NadelTransform::class
         constructor(
             parent: Step,
-            transform: KClass<out NadelTransform<*>>,
+            transform: NadelTransform<*>,
         ) : this(
-            name = transform.simpleName ?: "AnonymousTransform", // If it's null it's an anonymous class
             parent = parent,
+            name = transform.name,
         )
 
-        // Util to create from a NadelTransform::class
-        constructor(
-            parent: Step,
-            transform: Class<out NadelTransform<*>>,
-        ) : this(
-            name = transform.simpleName ?: "AnonymousTransform", // If it's null it's an anonymous class
-            parent = parent,
-        )
+        companion object
     }
 }
