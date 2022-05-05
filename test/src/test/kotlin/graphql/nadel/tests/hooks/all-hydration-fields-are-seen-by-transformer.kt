@@ -1,6 +1,7 @@
 package graphql.nadel.tests.hooks
 
 import graphql.ExecutionResult
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -20,6 +21,11 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
     private val isApplicable = mutableListOf<String>()
     private val transformField = mutableListOf<String>()
     private val getResultInstructions = mutableListOf<String>()
+
+    override fun makeExecutionHints(builder: NadelExecutionHints.Builder): NadelExecutionHints.Builder {
+        return builder
+            .removeHydrationSpecificExecutionCode(true)
+    }
 
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(

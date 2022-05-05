@@ -28,6 +28,7 @@ data class NadelExecutionHints constructor(
         constructor(nadelExecutionHints: NadelExecutionHints) {
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
+            removeHydrationSpecificExecutionCode = nadelExecutionHints.removeHydrationSpecificExecutionCode
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
