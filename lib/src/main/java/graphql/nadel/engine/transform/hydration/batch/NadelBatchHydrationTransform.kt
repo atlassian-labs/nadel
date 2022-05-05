@@ -115,7 +115,7 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        return hydrator.hydrate(state, executionBlueprint, parentNodes, executionContext.hints)
+        return hydrator.hydrate(state, executionBlueprint, parentNodes)
     }
 
     private fun makeTypeNameField(
