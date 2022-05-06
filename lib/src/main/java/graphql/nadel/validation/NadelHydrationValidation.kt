@@ -82,7 +82,7 @@ internal class NadelHydrationValidation(
 
     private fun isBatched(hydration: UnderlyingServiceHydration): Boolean {
         val actorFieldDef = overallSchema.queryType.getFieldAt(hydration.pathToActorField)
-        return hydration.isBatched || /*deprecated*/ actorFieldDef!!.type.unwrapNonNull().isList
+        return hydration.isBatched || /*deprecated*/ actorFieldDef?.type?.unwrapNonNull()?.isList == true
     }
 
     private fun getOutputTypeIssues(
