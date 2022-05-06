@@ -19,6 +19,9 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.asMutableJsonMap
 import graphql.nadel.engine.util.queryPath
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ResultTransforming
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -40,36 +43,41 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
         coroutineScope {
-            for ((field, steps) in executionPlan.transformationSteps) {
-                // This can be null if we did not end up sending the field e.g. for hydration
-                val underlyingFields = overallToUnderlyingFields[field]
-                if (underlyingFields == null || underlyingFields.isEmpty()) {
-                    continue
+            executionContext.timer.batch { timer ->
+                for ((field, steps) in executionPlan.transformationSteps) {
+                    // This can be null if we did not end up sending the field e.g. for hydration
+                    val underlyingFields = overallToUnderlyingFields[field]
+                    if (underlyingFields == null || underlyingFields.isEmpty()) {
+                        continue
+                    }
+
+                    for (step in steps) {
+                        deferredInstructions.add(
+                            async {
+                                val transform = step.transform
+                                timer.time(ChildStep(parent = ResultTransforming, transform)) {
+                                    transform.getResultInstructions(
+                                        executionContext,
+                                        executionBlueprint,
+                                        service,
+                                        field,
+                                        underlyingFields.first().parent,
+                                        result,
+                                        step.state,
+                                        nodes,
+                                    )
+                                }
+                            },
+                        )
+                    }
                 }
 
-                for (step in steps) {
-                    deferredInstructions.add(
-                        async {
-                            step.transform.getResultInstructions(
-                                executionContext,
-                                executionBlueprint,
-                                service,
-                                field,
-                                underlyingFields.first().parent,
-                                result,
-                                step.state,
-                                nodes,
-                            )
-                        },
-                    )
-                }
+                deferredInstructions.add(
+                    async {
+                        getRemoveArtificialFieldInstructions(artificialFields, nodes)
+                    },
+                )
             }
-
-            deferredInstructions.add(
-                async {
-                    getRemoveArtificialFieldInstructions(artificialFields, nodes)
-                },
-            )
         }
 
         val instructions = deferredInstructions

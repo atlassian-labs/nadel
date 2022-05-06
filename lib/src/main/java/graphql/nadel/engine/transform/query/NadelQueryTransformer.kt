@@ -3,10 +3,14 @@ package graphql.nadel.engine.transform.query
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.util.toBuilder
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.QueryTransforming
 import graphql.normalized.ExecutableNormalizedField
 
 class NadelQueryTransformer private constructor(
@@ -15,6 +19,7 @@ class NadelQueryTransformer private constructor(
     private val executionContext: NadelExecutionContext,
     private val executionPlan: NadelExecutionPlan,
     private val transformContext: TransformContext,
+    private val timer: NadelInstrumentationTimer.BatchTimer,
 ) {
     companion object {
         suspend fun transformQuery(
@@ -26,17 +31,21 @@ class NadelQueryTransformer private constructor(
         ): TransformResult {
             val transformContext = TransformContext()
 
-            val transformer = NadelQueryTransformer(
-                executionBlueprint,
-                service,
-                executionContext,
-                executionPlan,
-                transformContext,
-            )
-            val result = transformer.transform(field)
-                .also { rootFields ->
-                    transformer.fixParentRefs(parent = null, rootFields)
-                }
+            val result = executionContext.timer.batch { timer ->
+                val transformer = NadelQueryTransformer(
+                    executionBlueprint,
+                    service,
+                    executionContext,
+                    executionPlan,
+                    transformContext,
+                    timer,
+                )
+
+                transformer.transform(field)
+                    .also { rootFields ->
+                        transformer.fixParentRefs(parent = null, rootFields)
+                    }
+            }
 
             return TransformResult(
                 result = result,
@@ -145,15 +154,21 @@ class NadelQueryTransformer private constructor(
     ): NadelTransformFieldResult {
         var fieldFromPreviousTransform: ExecutableNormalizedField = field
         var aggregatedTransformResult: NadelTransformFieldResult? = null
-        for ((_, _, transform, state) in transformationSteps) {
-            val transformResultForStep = transform.transformField(
-                executionContext,
-                this,
-                executionBlueprint,
-                service,
-                fieldFromPreviousTransform,
-                state,
-            )
+        for (transformationStep in transformationSteps) {
+            val transform = transformationStep.transform
+            val state = transformationStep.state
+
+            val transformResultForStep = timer.time(step = ChildStep(parent = QueryTransforming, transform)) {
+                transform.transformField(
+                    executionContext,
+                    this,
+                    executionBlueprint,
+                    service,
+                    fieldFromPreviousTransform,
+                    state,
+                )
+            }
+
             aggregatedTransformResult = if (aggregatedTransformResult == null) {
                 transformResultForStep
             } else {

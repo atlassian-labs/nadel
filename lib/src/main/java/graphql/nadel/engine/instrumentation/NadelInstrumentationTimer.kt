@@ -84,13 +84,17 @@ internal class NadelInstrumentationTimer(
                 throw e
             } finally {
                 val end = System.nanoTime()
-                timings[step] = (timings[step] ?: 0) + (end - start)
+                synchronized(timings) {
+                    timings[step] = (timings[step] ?: 0) + (end - start)
+                }
             }
         }
 
         fun submit() {
-            timings.forEach { (step, durationNs) ->
-                timer.emit(step, duration = Duration.ofNanos(durationNs), exception)
+            synchronized(timings) {
+                timings.forEach { (step, durationNs) ->
+                    timer.emit(step, duration = Duration.ofNanos(durationNs), exception)
+                }
             }
         }
 
@@ -103,7 +107,9 @@ internal class NadelInstrumentationTimer(
         }
 
         override fun toString(): String {
-            return "BatchTimer(timings=$timings)"
+            synchronized(timings) {
+                return "BatchTimer(timings=$timings)"
+            }
         }
     }
 }
