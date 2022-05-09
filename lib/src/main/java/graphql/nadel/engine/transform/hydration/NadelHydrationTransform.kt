@@ -201,18 +201,28 @@ internal class NadelHydrationTransform(
             ).map { actorQuery ->
                 async {
                     val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                    engine.executeHydration(
-                        service = instruction.actorService,
-                        topLevelField = actorQuery,
-                        pathToActorField = instruction.queryPathToActorField,
-                        executionContext = executionContext,
-                        serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                            instruction.timeout,
-                            1,
-                            hydrationSourceService,
-                            instruction.location
-                        )
+                    val serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                        instruction.timeout,
+                        1,
+                        hydrationSourceService,
+                        instruction.location
                     )
+                    if (executionContext.hints.removeHydrationSpecificExecutionCode) {
+                        engine.executeTopLevelField(
+                            service = instruction.actorService,
+                            topLevelField = actorQuery,
+                            executionContext = executionContext,
+                            serviceHydrationDetails = serviceHydrationDetails
+                        )
+                    } else {
+                        engine.executeHydration(
+                            service = instruction.actorService,
+                            topLevelField = actorQuery,
+                            pathToActorField = instruction.queryPathToActorField,
+                            executionContext = executionContext,
+                            serviceHydrationDetails = serviceHydrationDetails
+                        )
+                    }
                 }
             }.awaitAll()
         }

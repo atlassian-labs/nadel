@@ -5,7 +5,7 @@ import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.language.SourceLocation
 
-typealias  GraphQLErrorBuilder = GraphqlErrorBuilder<*>
+typealias GraphQLErrorBuilder = GraphqlErrorBuilder<*>
 
 /**
  * A helper class that can to deal with graphql errors
