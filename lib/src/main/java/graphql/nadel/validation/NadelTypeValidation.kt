@@ -256,7 +256,7 @@ internal class NadelTypeValidation(
             .filterIsInstance<AnyNamedNode>()
             .filter { def ->
                 if (def.isExtensionDef) {
-                    isNamespacedOperationType(typeName = def.name)
+                    isNamespacedOperationType(typeName = def.name) || isOperationType(typeName = def.name)
                 } else {
                     true
                 }
@@ -265,6 +265,7 @@ internal class NadelTypeValidation(
                 it.name
             }
             .toSet() - namesToIgnore
+
 
         // If it can be reached by using your service, you must own it to return it!
         val referencedTypes = getReachableTypeNames(overallSchema, service, definitionNames)
@@ -276,9 +277,13 @@ internal class NadelTypeValidation(
         return overallSchema.operationTypes.any { operationType ->
             operationType.fields.any { field ->
                 field.hasAppliedDirective(NadelDirectives.namespacedDirectiveDefinition.name) &&
-                    field.type.unwrapAll().name == typeName
+                        field.type.unwrapAll().name == typeName
             }
         }
+    }
+
+    private fun isOperationType(typeName: String): Boolean {
+        return overallSchema.operationTypes.map { it.name }.contains(typeName)
     }
 
     private fun visitElement(schemaElement: NadelServiceSchemaElement): Boolean {
