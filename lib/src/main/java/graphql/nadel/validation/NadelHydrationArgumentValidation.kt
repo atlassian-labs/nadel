@@ -45,18 +45,17 @@ internal class NadelHydrationArgumentValidation(
                 DuplicatedHydrationArgument(parent, overallField, it)
             }
 
-        val remoteArgErrors = mutableListOf<NadelSchemaValidationError>()
-        hydration.arguments.mapNotNull { remoteArg ->
+        val remoteArgErrors = hydration.arguments.flatMap { remoteArg ->
             val actorFieldArgument = actorField.getArgument(remoteArg.name)
             if (actorFieldArgument == null) {
-                remoteArgErrors.add(NonExistentHydrationActorFieldArgument(
+                listOf(NonExistentHydrationActorFieldArgument(
                     parent,
                     overallField,
                     hydration,
                     argument = remoteArg.name,
                 ))
             } else {
-                remoteArgErrors.addAll(getRemoteArgErrors(parent, overallField, remoteArg, actorField))
+                getRemoteArgErrors(parent, overallField, remoteArg, actorField)
             }
         }
 
@@ -98,7 +97,7 @@ internal class NadelHydrationArgumentValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val fieldOutputType = field.type
-                    return hydrationArgTypesMatch(parent, overallField, remoteArg, fieldOutputType, actorArgInputType)
+                    hydrationArgTypesMatch(parent, overallField, remoteArg, fieldOutputType, actorArgInputType)
                 }
             }
             FieldArgument -> {
@@ -108,7 +107,7 @@ internal class NadelHydrationArgumentValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
-                    return hydrationArgTypesMatch(parent, overallField, remoteArg, hydrationArgType, actorArgInputType)
+                    hydrationArgTypesMatch(parent, overallField, remoteArg, hydrationArgType, actorArgInputType)
                 }
             }
             else -> {

@@ -623,7 +623,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
         }
 
-        it("checks if missing hydration argument source type when it is object type") {
+        it("checks if missing hydration source type when it is object type") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "issues" to """
@@ -776,7 +776,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorFieldType) == "String!")
         }
 
-        it("checks if missing hydration argument source type when it is input object type") {
+        it("checks if there is a missing hydration argument source type when the hydration input is an input object type") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "issues" to """
@@ -850,7 +850,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.actorFieldName == "site")
         }
 
-        it("checks when hydration argument source type is input object type") {
+        it("checks if there is a mismatched hydration argument source type when the hydration input is an input object type") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "issues" to """
