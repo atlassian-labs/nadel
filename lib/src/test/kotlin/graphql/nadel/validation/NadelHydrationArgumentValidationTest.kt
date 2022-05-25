@@ -623,7 +623,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
         }
 
-        it("checks if missing hydration source type when it is object type") {
+        it("checks if there is a missing hydration source type when the hydration input type is an object type") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "issues" to """
