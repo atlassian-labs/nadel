@@ -3,7 +3,6 @@ package graphql.nadel
 import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
-import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
@@ -12,6 +11,7 @@ import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.document.DocumentPredicates
+import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
@@ -25,16 +25,16 @@ import graphql.nadel.engine.util.copy
 import graphql.nadel.engine.util.fold
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.mergeResults
-import graphql.nadel.engine.util.newExecutionErrorResult
 import graphql.nadel.engine.util.newExecutionResult
 import graphql.nadel.engine.util.newGraphQLError
+import graphql.nadel.engine.util.newServiceExecutionErrorResult
 import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.util.ErrorUtil
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.util.LogKit.getLogger
 import graphql.nadel.util.LogKit.getNotPrivacySafeLogger
 import graphql.nadel.util.OperationNameUtil
@@ -132,7 +132,19 @@ class NextgenEngine @JvmOverloads constructor(
                 executionInput.variables,
             )
 
-            val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks, executionHints)
+            val timer = NadelInstrumentationTimer(
+                instrumentation,
+                userContext = executionInput.context,
+                instrumentationState,
+            )
+            val executionContext = NadelExecutionContext(
+                executionInput,
+                query,
+                serviceExecutionHooks,
+                executionHints,
+                instrumentationState,
+                timer,
+            )
             val beginExecuteContext = instrumentation.beginExecute(
                 query,
                 queryDocument,
@@ -152,7 +164,7 @@ class NextgenEngine @JvmOverloads constructor(
                                         executeTopLevelField(field, resolvedService, executionContext)
                                     } catch (e: Throwable) {
                                         when (e) {
-                                            is GraphQLError -> newExecutionErrorResult(field, error = e)
+                                            is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
                                             else -> throw e
                                         }
                                     }
@@ -175,33 +187,47 @@ class NextgenEngine @JvmOverloads constructor(
         }
     }
 
-    private suspend fun executeTopLevelField(
+    internal suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
-    ): ExecutionResult {
-        val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
-        val queryTransform = transformQuery(service, executionContext, executionPlan, topLevelField)
-        val transformedQuery = queryTransform.result.single()
-        val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
-        val transformedResult: ServiceExecutionResult = when {
-            topLevelField.name.startsWith("__") -> result
-            else -> resultTransformer.transform(
+        serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
+    ): ServiceExecutionResult {
+        val timer = executionContext.timer
+        val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
+            executionPlanner.create(
                 executionContext = executionContext,
-                executionPlan = executionPlan,
-                artificialFields = queryTransform.artificialFields,
-                overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                services = services,
                 service = service,
-                result = result,
+                rootField = topLevelField,
+                serviceHydrationDetails = serviceHydrationDetails,
             )
         }
+        val queryTransform = timer.time(step = RootStep.QueryTransforming) {
+            transformQuery(service, executionContext, executionPlan, topLevelField)
+        }
+        val transformedQuery = queryTransform.result.single()
+        val result: ServiceExecutionResult = executeService(
+            service = service,
+            transformedQuery = transformedQuery,
+            executionContext = executionContext,
+            executionHydrationDetails = serviceHydrationDetails
+        )
+        val transformedResult: ServiceExecutionResult = when {
+            topLevelField.name.startsWith("__") -> result
+            else -> timer.time(step = RootStep.ResultTransforming) {
+                resultTransformer.transform(
+                    executionContext = executionContext,
+                    executionPlan = executionPlan,
+                    artificialFields = queryTransform.artificialFields,
+                    overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                    service = service,
+                    result = result,
+                )
+            }
+        }
 
-        @Suppress("UNCHECKED_CAST")
-        return newExecutionResult()
-            .data(transformedResult.data)
-            .errors(ErrorUtil.createGraphQLErrorsFromRawErrors(transformedResult.errors))
-            .extensions(transformedResult.extensions as Map<Any, Any>)
-            .build()
+        return transformedResult
     }
 
     internal suspend fun executeHydration(

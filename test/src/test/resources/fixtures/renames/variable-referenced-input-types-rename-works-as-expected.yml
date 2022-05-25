@@ -1,4 +1,4 @@
-name: variable referenced input types rename works as expected
+name: "variable referenced input types rename works as expected"
 enabled: true
 overallSchema:
   MyService: |
@@ -93,16 +93,16 @@ query: |
   }
 variables:
   var1:
-    inputVal: x
+    inputVal: "x"
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query X {
           renameInput(arg1: {inputVal : "x"})
         }
       variables: { }
-      operationName: X
+      operationName: "X"
     # language=JSON
     response: |-
       {

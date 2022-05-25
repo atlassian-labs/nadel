@@ -55,6 +55,11 @@ allprojects {
 }
 
 subprojects {
+    // Don't publish test
+    if (project.name == "test") {
+        return
+    }
+
     apply plugin: "java"
     apply plugin: "java-library"
     apply plugin: "signing"
@@ -83,13 +88,19 @@ subprojects {
                 artifact javadocJar {
                     classifier "javadoc"
                 }
+
+                // This used to be in settings.gradle but it seems that Kotlin gets angry when you rename the project name
+                // It gets angry in the sense that it doesn't think the test/ and main/ src sets are in the same module
+                // And members with internal modifier in main/ can't be seen in test/
+                def projectName = project.name == "lib" ? "nadel" : project.name
+
                 groupId rootProject.group
-                artifactId project.name
+                artifactId projectName
                 version rootProject.version
                 pom.withXml {
                     asNode().children().last() + {
                         resolveStrategy = Closure.DELEGATE_FIRST
-                        name project.name
+                        name projectName
                         description project.description
                         url "https://github.com/atlassian-labs/nadel"
                         scm {

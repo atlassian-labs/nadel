@@ -1,4 +1,4 @@
-name: deep rename inside batch hydration null object
+name: "deep rename inside batch hydration null object"
 enabled: true
 overallSchema:
   IssueService: |
@@ -55,7 +55,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -86,7 +86,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: both of the namespaced services returns error
+name: "both of the namespaced services returns error"
 enabled: true
 overallSchema:
   Issues: |
@@ -65,7 +65,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -89,7 +89,7 @@ serviceCalls:
         ],
         "extensions": {}
       }
-  - serviceName: IssueSearch
+  - serviceName: "IssueSearch"
     request:
       query: |
         query {

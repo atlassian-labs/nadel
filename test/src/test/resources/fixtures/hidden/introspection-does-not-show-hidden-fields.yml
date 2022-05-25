@@ -1,4 +1,4 @@
-name: introspection does not show hidden fields
+name: "introspection does not show hidden fields"
 enabled: true
 overallSchema:
   MyService: |
@@ -12,7 +12,6 @@ overallSchema:
       name: String
       area51: String @hidden
     }
-
 underlyingSchema:
   MyService: |
     type Query {
@@ -34,7 +33,7 @@ query: |
               }
           }
       }
-  
+
       __type(name: "World") {
           name
           fields {

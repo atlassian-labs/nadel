@@ -1,4 +1,4 @@
-name: fragment referenced twice from inside query and inside another fragment
+name: "fragment referenced twice from inside query and inside another fragment"
 enabled: true
 overallSchema:
   Foo: |
@@ -36,7 +36,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

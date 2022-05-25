@@ -1,4 +1,4 @@
-name: one call to one service
+name: "one call to one service"
 enabled: true
 overallSchema:
   service: |
@@ -16,7 +16,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

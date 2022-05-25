@@ -1,4 +1,4 @@
-name: deep rename of an object with transformations inside object
+name: "deep rename of an object with transformations inside object"
 enabled: true
 overallSchema:
   Issues: |
@@ -44,7 +44,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

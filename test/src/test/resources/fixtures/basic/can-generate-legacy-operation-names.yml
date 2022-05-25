@@ -1,4 +1,4 @@
-name: can generate legacy operation names
+name: "can generate legacy operation names"
 enabled: true
 overallSchema:
   test: |
@@ -16,14 +16,14 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: test
+  - serviceName: "test"
     request:
       query: |
         query nadel_2_test {
           foo
         }
       variables: { }
-      operationName: nadel_2_test
+      operationName: "nadel_2_test"
     # language=JSON
     response: |-
       {

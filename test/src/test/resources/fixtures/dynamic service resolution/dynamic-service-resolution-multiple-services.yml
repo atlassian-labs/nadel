@@ -1,4 +1,4 @@
-name: dynamic service resolution multiple services
+name: "dynamic service resolution multiple services"
 enabled: true
 overallSchema:
   shared: |
@@ -69,7 +69,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: RepoService
+  - serviceName: "RepoService"
     request:
       query: |
         query {
@@ -91,7 +91,7 @@ serviceCalls:
           }
         }
       }
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

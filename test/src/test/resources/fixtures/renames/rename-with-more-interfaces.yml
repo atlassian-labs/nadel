@@ -1,4 +1,4 @@
-name: rename with more interfaces
+name: "rename with more interfaces"
 enabled: true
 overallSchema:
   Issues: |
@@ -44,7 +44,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

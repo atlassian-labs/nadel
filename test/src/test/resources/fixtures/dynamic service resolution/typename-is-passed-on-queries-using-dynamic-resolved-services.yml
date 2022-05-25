@@ -1,4 +1,4 @@
-name: __typename is passed on queries using dynamic resolved services
+name: "__typename is passed on queries using dynamic resolved services"
 enabled: true
 overallSchema:
   shared: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: RepoService
+  - serviceName: "RepoService"
     request:
       query: |
         query {

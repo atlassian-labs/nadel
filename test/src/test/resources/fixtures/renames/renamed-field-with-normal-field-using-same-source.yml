@@ -1,4 +1,4 @@
-name: renamed field with normal field using same source
+name: "renamed field with normal field using same source"
 enabled: true
 overallSchema:
   Foo: |
@@ -50,7 +50,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

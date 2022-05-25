@@ -1,6 +1,9 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT
+import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstSorter
@@ -13,15 +16,18 @@ import graphql.parser.Parser
 data class TestFixture(
     val name: String,
     val enabled: Boolean,
+    @JsonInclude(NON_DEFAULT)
     val ignored: Boolean,
     val overallSchema: Map<String, String>,
     val underlyingSchema: Map<String, String>,
     val query: String,
     val variables: Map<String, Any?>,
+    @JsonInclude(NON_NULL)
     val operationName: String? = null,
     val serviceCalls: List<ServiceCall>,
     @JsonProperty("response")
     val responseJsonString: String?,
+    @JsonInclude(NON_NULL)
     val exception: ExpectedException?,
 ) {
     @get:JsonIgnore
@@ -48,6 +54,7 @@ data class ServiceCall(
     data class Request(
         val query: String,
         val variables: Map<String, Any?> = emptyMap(),
+        @JsonInclude(NON_NULL)
         val operationName: String? = null,
     ) {
         @get:JsonIgnore
@@ -67,6 +74,7 @@ data class ServiceCall(
 data class ExpectedException(
     @JsonProperty("message")
     val messageString: String = "",
+    @JsonInclude(NON_DEFAULT)
     val ignoreMessageCase: Boolean = false,
 ) {
     @get:JsonIgnore

@@ -7,7 +7,7 @@ plugins {
     id("com.bnorm.power.kotlin-power-assert")
 }
 
-val graphqlJavaVersion = "0.0.0-2022-03-01T04-16-14-e973c9a1"
+val graphqlJavaVersion = "0.0.0-2022-05-17T23-49-21-15a70e59"
 val slf4jVersion = "1.7.25"
 
 dependencies {
@@ -19,13 +19,6 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.0")
 
-    testImplementation("org.antlr:antlr4-runtime:4.8")
-    testImplementation("junit:junit:4.11")
-    testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
-    testImplementation("org.codehaus.groovy:groovy:3.0.8")
-    testImplementation("org.codehaus.groovy:groovy-json:3.0.8")
-    testImplementation("cglib:cglib-nodep:3.1")
-    testImplementation("org.objenesis:objenesis:2.1")
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.9.6")
     testImplementation("org.openjdk.jmh:jmh-core:1.21")
@@ -34,6 +27,7 @@ dependencies {
     testImplementation("com.graphql-java:graphql-java-extended-scalars:2021-06-29T01-19-32-8e19827")
     testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
     testImplementation("io.kotest:kotest-framework-datatest:5.1.0")
+    testImplementation("io.mockk:mockk:1.12.3")
 }
 
 // compileJava.source file("build/generated-src"), sourceSets.main.java

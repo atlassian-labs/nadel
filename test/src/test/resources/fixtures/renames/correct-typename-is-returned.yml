@@ -1,4 +1,4 @@
-name: correct __typename is returned
+name: "correct __typename is returned"
 enabled: true
 overallSchema:
   MyService: |
@@ -101,7 +101,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: renamed and hydrated query using same underlying source
+name: "renamed and hydrated query using same underlying source"
 enabled: true
 overallSchema:
   Foo: |
@@ -47,7 +47,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -80,7 +80,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

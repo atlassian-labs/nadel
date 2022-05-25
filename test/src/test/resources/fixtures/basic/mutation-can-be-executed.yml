@@ -1,4 +1,4 @@
-name: mutation can be executed
+name: "mutation can be executed"
 enabled: true
 overallSchema:
   MyService: |
@@ -41,14 +41,14 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         mutation M {
           hello
         }
       variables: { }
-      operationName: M
+      operationName: "M"
     # language=JSON
     response: |-
       {

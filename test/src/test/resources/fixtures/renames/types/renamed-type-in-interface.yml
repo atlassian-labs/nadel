@@ -1,4 +1,4 @@
-name: renamed type in interface
+name: "renamed type in interface"
 enabled: true
 overallSchema:
   IssueService: |
@@ -50,7 +50,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueService
+  - serviceName: "IssueService"
     request:
       query: |
         query {

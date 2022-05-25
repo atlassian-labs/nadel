@@ -1,4 +1,4 @@
-name: deep rename inside deep rename
+name: "deep rename inside deep rename"
 enabled: true
 overallSchema:
   Issues: |
@@ -38,7 +38,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

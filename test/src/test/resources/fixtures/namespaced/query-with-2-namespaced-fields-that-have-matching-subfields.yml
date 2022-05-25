@@ -1,4 +1,4 @@
-name: query with 2 namespaced fields that have matching subfields
+name: "query with 2 namespaced fields that have matching subfields"
 enabled: true
 overallSchema:
   Issues: |
@@ -98,7 +98,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: IssueSearch
+  - serviceName: "IssueSearch"
     request:
       query: |
         query {
@@ -121,7 +121,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -144,7 +144,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Pages
+  - serviceName: "Pages"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: hydration within hydration with variables
+name: "hydration within hydration with variables"
 enabled: true
 overallSchema:
   boards: |
@@ -78,7 +78,7 @@ query: |
 variables:
   first: 10
 serviceCalls:
-  - serviceName: boards
+  - serviceName: "boards"
     request:
       query: |
         query {
@@ -99,7 +99,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: issues
+  - serviceName: "issues"
     request:
       query: |
         query {
@@ -120,7 +120,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: comments
+  - serviceName: "comments"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: can execute document with multiple operation definitions
+name: "can execute document with multiple operation definitions"
 enabled: true
 overallSchema:
   service: |
@@ -24,16 +24,16 @@ query: |
     cat: foo
   }
 variables: { }
-operationName: Test
+operationName: "Test"
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query Test {
           test: foo
         }
       variables: { }
-      operationName: Test
+      operationName: "Test"
     # language=JSON
     response: |-
       {

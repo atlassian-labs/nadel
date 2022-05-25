@@ -1,4 +1,4 @@
-name: hydration matching using index returning errors
+name: "hydration matching using index returning errors"
 enabled: true
 overallSchema:
   UserService: |
@@ -45,7 +45,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -80,7 +80,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {

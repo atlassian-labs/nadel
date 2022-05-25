@@ -6,7 +6,7 @@ import kotlinx.coroutines.future.future
 import java.util.concurrent.CompletableFuture
 
 class NadelQueryTransformerJavaCompat(
-    private val queryTransformer: NadelQueryTransformer,
+    internal val queryTransformer: NadelQueryTransformer,
     private val coroutineScope: CoroutineScope,
 ) {
     fun transform(

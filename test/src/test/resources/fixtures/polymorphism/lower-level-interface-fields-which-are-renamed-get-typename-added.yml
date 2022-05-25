@@ -1,4 +1,4 @@
-name: lower level interface fields which are renamed get typename added
+name: "lower level interface fields which are renamed get typename added"
 enabled: true
 overallSchema:
   PetService: |
@@ -134,7 +134,7 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  - serviceName: PetService
+  - serviceName: "PetService"
     request:
       query: |
         query petQ {
@@ -154,7 +154,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: petQ
+      operationName: "petQ"
     # language=JSON
     response: |-
       {

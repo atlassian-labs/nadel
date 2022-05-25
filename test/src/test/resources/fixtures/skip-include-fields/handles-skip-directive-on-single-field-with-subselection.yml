@@ -1,4 +1,4 @@
-name: handles skip directive on single field with subselection
+name: "handles skip directive on single field with subselection"
 enabled: true
 overallSchema:
   service: |
@@ -30,7 +30,7 @@ query: |
 variables:
   test: true
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

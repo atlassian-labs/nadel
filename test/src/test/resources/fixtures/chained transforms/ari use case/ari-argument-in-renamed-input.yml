@@ -1,4 +1,4 @@
-name: ari argument in renamed input
+name: "ari argument in renamed input"
 enabled: true
 overallSchema:
   # language=GraphQL
@@ -76,7 +76,7 @@ variables:
   startDate: "2022-03-22"
   endDate: "2022-04-02"
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       # language=GraphQL
       query: |
@@ -85,7 +85,6 @@ serviceCalls:
             __typename
           }
         }
-      operationName: mainJiraSoftwareStartSprintModalSubmitMutation
       variables:
         v0:
           boardId: "123"
@@ -94,8 +93,9 @@ serviceCalls:
           goal: null
           startDate: "2022-03-22"
           endDate: "2022-04-02"
+      operationName: "mainJiraSoftwareStartSprintModalSubmitMutation"
     # language=JSON
-    response: |-
+    response: |
       {
         "data": {
           "startSprint":{
@@ -103,7 +103,7 @@ serviceCalls:
           }
         }
       }
-    # language=JSON
+# language=JSON
 response: |-
   {
     "data": {

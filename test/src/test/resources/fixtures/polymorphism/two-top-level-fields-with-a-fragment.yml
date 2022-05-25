@@ -1,4 +1,4 @@
-name: two top level fields with a fragment
+name: "two top level fields with a fragment"
 enabled: true
 overallSchema:
   UserService: |
@@ -55,7 +55,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -76,7 +76,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

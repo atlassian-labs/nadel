@@ -1,4 +1,4 @@
-name: deep rename inside another rename of type List
+name: "deep rename inside another rename of type List"
 enabled: true
 overallSchema:
   Issues: |
@@ -55,7 +55,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

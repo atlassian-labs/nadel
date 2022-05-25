@@ -1,4 +1,4 @@
-name: can delete fields and types
+name: "can delete fields and types"
 enabled: true
 overallSchema:
   service: |
@@ -35,6 +35,6 @@ query: |
     }
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: null

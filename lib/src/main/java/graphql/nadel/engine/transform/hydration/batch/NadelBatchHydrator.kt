@@ -82,7 +82,7 @@ internal class NadelBatchHydrator(
         val batches: List<ServiceExecutionResult> = executeBatches(
             state = state,
             instruction = instruction,
-            parentNodes = parentNodes,
+            parentNodes = parentNodes
         )
 
         return when (val matchStrategy = instruction.batchHydrationMatchStrategy) {
@@ -131,18 +131,28 @@ internal class NadelBatchHydrator(
                 .map { actorQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                        engine.executeHydration(
-                            service = instruction.actorService,
-                            topLevelField = actorQuery,
-                            pathToActorField = instruction.queryPathToActorField,
-                            executionContext = state.executionContext,
-                            serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                                instruction.timeout,
-                                instruction.batchSize,
-                                hydrationSourceService,
-                                instruction.location
-                            )
+                        val serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                            instruction.timeout,
+                            instruction.batchSize,
+                            hydrationSourceService,
+                            instruction.location
                         )
+                        if (state.executionContext.hints.removeHydrationSpecificExecutionCode) {
+                            engine.executeTopLevelField(
+                                service = instruction.actorService,
+                                topLevelField = actorQuery,
+                                executionContext = state.executionContext,
+                                serviceHydrationDetails = serviceHydrationDetails
+                            )
+                        } else {
+                            engine.executeHydration(
+                                service = instruction.actorService,
+                                topLevelField = actorQuery,
+                                pathToActorField = instruction.queryPathToActorField,
+                                executionContext = state.executionContext,
+                                serviceHydrationDetails = serviceHydrationDetails
+                            )
+                        }
                     }
                 }
                 .awaitAll()

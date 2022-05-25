@@ -13,13 +13,22 @@ import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
-import graphql.nadel.engine.transform.skipInclude.SkipIncludeTransform
+import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform
+import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.Companion.isSkipIncludeSpecialField
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
 import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val transforms: List<NadelTransform<Any>>,
 ) {
+    // This will avoid creating the ChildStep object too many times
+    private val transformsWithTimingStepInfo = transforms
+        .map { transform ->
+            transform to ChildStep(parent = ExecutionPlanning, transform = transform)
+        }
+
     /**
      * This derives an execution plan from with the main input parameters being the
      * [rootField] and [executionBlueprint].
@@ -29,29 +38,41 @@ internal class NadelExecutionPlanFactory(
         services: Map<String, Service>,
         service: Service,
         rootField: ExecutableNormalizedField,
-        serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
-        traverseQuery(rootField) { field ->
-            transforms.forEach { transform ->
-                val state = transform.isApplicable(
-                    executionContext,
-                    executionBlueprint,
-                    services,
-                    service,
-                    field,
-                    serviceHydrationDetails,
-                )
-                if (state != null) {
-                    executionSteps.add(
-                        NadelExecutionPlan.Step(
+        executionContext.timer.batch { timer ->
+            traverseQuery(rootField) { field ->
+                transformsWithTimingStepInfo.forEach { (transform, timingStep) ->
+                    // This is a patch to prevent errors
+                    // Ideally this should not happen but the proper fix requires more refactoring
+                    // See NadelSkipIncludeTransform.isApplicable for more details
+                    if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*>) !is NadelSkipIncludeTransform)) {
+                        return@forEach
+                    }
+
+                    val state = timer.time(step = timingStep) {
+                        transform.isApplicable(
+                            executionContext,
+                            executionBlueprint,
+                            services,
                             service,
                             field,
-                            transform,
-                            state,
-                        ),
-                    )
+                            serviceHydrationDetails,
+                        )
+                    }
+
+                    if (state != null) {
+                        executionSteps.add(
+                            NadelExecutionPlan.Step(
+                                service,
+                                field,
+                                transform,
+                                state,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -80,7 +101,7 @@ internal class NadelExecutionPlanFactory(
             return NadelExecutionPlanFactory(
                 executionBlueprint,
                 transforms = listOfTransforms(
-                    SkipIncludeTransform(),
+                    NadelSkipIncludeTransform(),
                     NadelServiceTypeFilterTransform(),
                     *transforms.toTypedArray(),
                     NadelDeepRenameTransform(),

@@ -7,6 +7,7 @@ class NadelExecutionInput private constructor(
     val operationName: String?,
     val context: Any?,
     val variables: Map<String, Any?>,
+    val extensions: Map<String, Any?>,
     val executionId: ExecutionId?,
     val nadelExecutionHints: NadelExecutionHints,
 ) {
@@ -15,6 +16,7 @@ class NadelExecutionInput private constructor(
         private var operationName: String? = null
         private var context: Any? = null
         private var variables: Map<String, Any?> = LinkedHashMap()
+        private var extensions: Map<String, Any?> = LinkedHashMap()
         private var executionId: ExecutionId? = null
         private var executionHints = NadelExecutionHints.newHints().build()
 
@@ -35,6 +37,11 @@ class NadelExecutionInput private constructor(
 
         fun variables(variables: Map<String, Any?>?): Builder {
             this.variables = variables ?: emptyMap()
+            return this
+        }
+
+        fun extensions(extensions: Map<String, Any?>?): Builder {
+            this.extensions = extensions ?: emptyMap()
             return this
         }
 
@@ -61,6 +68,7 @@ class NadelExecutionInput private constructor(
                 operationName = operationName,
                 context = context,
                 variables = variables,
+                extensions = extensions,
                 executionId = executionId,
                 nadelExecutionHints = executionHints,
             )

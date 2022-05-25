@@ -1,4 +1,4 @@
-name: hydrated field is removed
+name: "hydrated field is removed"
 enabled: false
 overallSchema:
   UserService: |
@@ -56,7 +56,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: CommentService
+  - serviceName: "CommentService"
     request:
       query: |
         query nadel_2_CommentService {
@@ -65,7 +65,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: nadel_2_CommentService
+      operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-
       {

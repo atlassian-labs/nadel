@@ -1,4 +1,4 @@
-name: subscription can be executed
+name: "subscription can be executed"
 enabled: true
 overallSchema:
   MyService: |
@@ -43,7 +43,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         subscription M {
@@ -52,7 +52,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: M
+      operationName: "M"
     # language=JSON
     response: |-
       {

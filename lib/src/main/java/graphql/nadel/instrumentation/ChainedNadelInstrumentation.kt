@@ -9,6 +9,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateP
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.validation.ValidationError
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
@@ -21,14 +22,16 @@ import java.util.concurrent.CompletableFuture
  *
  * @see graphql.nadel.instrumentation.NadelInstrumentation
  */
-open class ChainedNadelInstrumentation(
+class ChainedNadelInstrumentation(
     private val instrumentations: List<NadelInstrumentation>,
 ) : NadelInstrumentation {
+    constructor(vararg instrumentations: NadelInstrumentation) : this(instrumentations.toList())
+
     fun getInstrumentations(): List<NadelInstrumentation> {
         return Collections.unmodifiableList(instrumentations)
     }
 
-    fun getStateFor(
+    internal fun getStateFor(
         instrumentation: NadelInstrumentation,
         parametersInstrumentationState: ChainedInstrumentationState,
     ): InstrumentationState? {
@@ -37,6 +40,13 @@ open class ChainedNadelInstrumentation(
 
     override fun createState(parameters: NadelInstrumentationCreateStateParameters): InstrumentationState? {
         return ChainedInstrumentationState(instrumentations, parameters)
+    }
+
+    override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
+        instrumentations.forEach { instrumentation: NadelInstrumentation ->
+            val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
+            instrumentation.onStepTimed(parameters.copy(instrumentationState = state))
+        }
     }
 
     override fun beginQueryExecution(parameters: NadelInstrumentationQueryExecutionParameters): InstrumentationContext<ExecutionResult> {
@@ -94,13 +104,14 @@ open class ChainedNadelInstrumentation(
                     parameters = parameters.copy(instrumentationState = state),
                 )
             }
+
         return resultsFuture
             .thenApply { results: List<ExecutionResult> ->
                 results.lastOrNull() ?: executionResult
             }
     }
 
-    class ChainedInstrumentationState internal constructor(
+    internal class ChainedInstrumentationState internal constructor(
         instrumentations: List<NadelInstrumentation>,
         parameters: NadelInstrumentationCreateStateParameters,
     ) : InstrumentationState {
@@ -114,7 +125,7 @@ open class ChainedNadelInstrumentation(
         }
     }
 
-    protected class ChainedInstrumentationContext<T> internal constructor(
+    private class ChainedInstrumentationContext<T>(
         private val contexts: List<InstrumentationContext<T>>,
     ) : InstrumentationContext<T> {
         override fun onDispatched(result: CompletableFuture<T>?) {

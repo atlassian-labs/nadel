@@ -1,4 +1,4 @@
-name: instrumentation is called
+name: "instrumentation is called"
 enabled: true
 overallSchema:
   MyService: |
@@ -36,9 +36,9 @@ query: |
     }
   }
 variables:
-  var1: val1
+  var1: "val1"
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query OpName {
@@ -48,7 +48,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: OpName
+      operationName: "OpName"
     # language=JSON
     response: |-
       {

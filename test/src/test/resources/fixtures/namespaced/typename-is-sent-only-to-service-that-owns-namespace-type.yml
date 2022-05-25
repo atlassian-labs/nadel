@@ -1,4 +1,4 @@
-name: typename is sent only to service that owns namespace type
+name: "typename is sent only to service that owns namespace type"
 enabled: true
 overallSchema:
   Issues: |
@@ -75,7 +75,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

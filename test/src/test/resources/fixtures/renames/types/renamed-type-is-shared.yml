@@ -1,4 +1,4 @@
-name: renamed type is shared
+name: "renamed type is shared"
 # Not supported, currently blocked by validation
 enabled: false
 overallSchema:
@@ -37,7 +37,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: NextgenIssues
+  - serviceName: "NextgenIssues"
     request:
       query: |
         query {

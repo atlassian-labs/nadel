@@ -1,4 +1,4 @@
-name: dynamic service resolution simple success case
+name: "dynamic service resolution simple success case"
 enabled: true
 overallSchema:
   shared: |
@@ -45,7 +45,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: RepoService
+  - serviceName: "RepoService"
     request:
       query: |
         query {

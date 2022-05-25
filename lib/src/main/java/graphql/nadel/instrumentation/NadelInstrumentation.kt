@@ -3,12 +3,13 @@ package graphql.nadel.instrumentation
 import graphql.ExecutionResult
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.execution.instrumentation.SimpleInstrumentationContext
+import graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import graphql.language.Document
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.validation.ValidationError
 import java.util.concurrent.CompletableFuture
 
@@ -37,13 +38,23 @@ interface NadelInstrumentation {
     }
 
     /**
+     * This is called just before timing some specific Nadel code. See [NadelInstrumentationTimingParameters.step].
+     *
+     * After the timing of the step is complete [InstrumentationContext.onCompleted] is invoked.
+     *
+     * You can implement this function to record metrics in your Gateway service to determine what part of Nadel is taking up time.
+     */
+    fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
+    }
+
+    /**
      * This is called right at the start of query execution and its the first step in the instrumentation chain.
      *
      * @param parameters the parameters to this step
      * @return a non null [InstrumentationContext] object that will be called back when the step ends
      */
     fun beginQueryExecution(parameters: NadelInstrumentationQueryExecutionParameters): InstrumentationContext<ExecutionResult> {
-        return SimpleInstrumentationContext.noOp()
+        return noOp()
     }
 
     /**
@@ -53,7 +64,7 @@ interface NadelInstrumentation {
      * @return a non null [InstrumentationContext] object that will be called back when the step ends
      */
     fun beginParse(parameters: NadelInstrumentationQueryExecutionParameters): InstrumentationContext<Document> {
-        return SimpleInstrumentationContext.noOp()
+        return noOp()
     }
 
     /**
@@ -63,7 +74,7 @@ interface NadelInstrumentation {
      * @return a non null [InstrumentationContext] object that will be called back when the step ends
      */
     fun beginValidation(parameters: NadelInstrumentationQueryValidationParameters): InstrumentationContext<List<ValidationError>> {
-        return SimpleInstrumentationContext.noOp()
+        return noOp()
     }
 
     /**
@@ -73,7 +84,7 @@ interface NadelInstrumentation {
      * @return a non null [InstrumentationContext] object that will be called back when the step ends
      */
     fun beginExecute(parameters: NadelInstrumentationExecuteOperationParameters): CompletableFuture<InstrumentationContext<ExecutionResult>> {
-        return CompletableFuture.completedFuture(SimpleInstrumentationContext.noOp())
+        return CompletableFuture.completedFuture(noOp())
     }
 
     /**

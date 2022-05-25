@@ -1,4 +1,4 @@
-name: renamed type is shared deeper
+name: "renamed type is shared deeper"
 # Doesn't even get past validation
 enabled: false
 overallSchema:
@@ -50,7 +50,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: NextgenIssues
+  - serviceName: "NextgenIssues"
     request:
       query: |
         query {

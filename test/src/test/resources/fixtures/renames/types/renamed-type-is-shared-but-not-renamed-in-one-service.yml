@@ -1,4 +1,4 @@
-name: renamed type is shared but not renamed in one service
+name: "renamed type is shared but not renamed in one service"
 # Not supported
 enabled: false
 overallSchema:
@@ -37,7 +37,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: NextgenIssues
+  - serviceName: "NextgenIssues"
     request:
       query: |
         query TestyMctest {
@@ -47,7 +47,7 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: TestyMctest
+      operationName: "TestyMctest"
     # language=JSON
     response: |-
       {

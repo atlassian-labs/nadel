@@ -1,4 +1,4 @@
-name: rename with interfaces
+name: "rename with interfaces"
 enabled: true
 overallSchema:
   Issues: |
@@ -6,10 +6,10 @@ overallSchema:
       nodes: [Node]
     }
     type JiraIssue implements Node @renamed(from: "Issue") {
-      id: ID! 
+      id: ID!
     }
     interface Node {
-      id: ID! 
+      id: ID!
     }
     type User implements Node {
       id: ID! @renamed(from: "ari")
@@ -38,7 +38,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {

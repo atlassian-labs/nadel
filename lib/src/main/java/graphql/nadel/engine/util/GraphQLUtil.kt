@@ -42,6 +42,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.util.ErrorUtil.createGraphQLErrorsFromRawErrors
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.NormalizedInputValue
@@ -218,7 +219,7 @@ val AnyAstType.isNonNull: Boolean get() = TypeUtil.isNonNull(this)
 val AnyAstType.isWrapped: Boolean get() = TypeUtil.isWrapped(this)
 val AnyAstType.isNotWrapped: Boolean get() = !isWrapped
 
-internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
+internal fun mergeResults(results: List<ServiceExecutionResult>): ExecutionResult {
     val data: MutableJsonMap = mutableMapOf()
     val extensions: MutableJsonMap = mutableMapOf()
     val errors: MutableList<GraphQLError> = mutableListOf()
@@ -241,12 +242,10 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     }
 
     for (result in results) {
-        val resultData = result.getData<JsonMap?>()
-        if (resultData != null) {
-            putAndMergeTopLevelData(resultData)
-        }
-        errors.addAll(result.errors)
-        result.extensions?.asJsonMap()?.let(extensions::putAll)
+        val resultData = result.data
+        putAndMergeTopLevelData(resultData)
+        errors.addAll(createGraphQLErrorsFromRawErrors(result.errors))
+        extensions.putAll(result.extensions)
     }
 
     return newExecutionResult()
@@ -318,6 +317,20 @@ fun newExecutionErrorResult(
             field.resultKey to null,
         ),
         error = error,
+    )
+}
+
+fun newServiceExecutionErrorResult(
+    field: ExecutableNormalizedField,
+    error: GraphQLError,
+): ServiceExecutionResult {
+    return ServiceExecutionResult(
+        data = mutableMapOf(
+            field.resultKey to null,
+        ),
+        errors = mutableListOf(
+            error.toSpecification(),
+        ),
     )
 }
 

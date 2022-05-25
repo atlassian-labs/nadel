@@ -1,4 +1,4 @@
-name: chain rename transform
+name: "chain rename transform"
 enabled: true
 overallSchema:
   MyService: |
@@ -47,7 +47,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       # Notice the changed values to "aaarrg" and "Asia"
       query: |

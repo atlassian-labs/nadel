@@ -1,4 +1,4 @@
-name: repeated hydrated fields on the same level when using batch hydration
+name: "repeated hydrated fields on the same level when using batch hydration"
 enabled: true
 overallSchema:
   Foo: |
@@ -43,7 +43,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -64,7 +64,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

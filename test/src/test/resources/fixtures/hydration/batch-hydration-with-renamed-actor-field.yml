@@ -1,4 +1,4 @@
-name: batch hydration with renamed actor field
+name: "batch hydration with renamed actor field"
 enabled: true
 overallSchema:
   service2: |
@@ -46,7 +46,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service1
+  - serviceName: "service1"
     request:
       query: |
         query {
@@ -71,7 +71,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: service2
+  - serviceName: "service2"
     request:
       query: |
         query {

@@ -1,4 +1,4 @@
-name: renaming url typed field
+name: "renaming url typed field"
 enabled: true
 overallSchema:
   service: |
@@ -9,7 +9,7 @@ overallSchema:
 underlyingSchema:
   service: |
     type Query {
-      test: URL 
+      test: URL
     }
     scalar URL
 query: |
@@ -18,7 +18,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query {

@@ -3,11 +3,13 @@ package graphql.nadel
 import graphql.language.NamedNode
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.makeFieldCoordinates
+import graphql.nadel.schema.ServiceSchemaProblem
 import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.DescribeSpec
+import org.junit.jupiter.api.assertThrows
 
 val NadelDefinitionRegistry.typeNames: Set<String>
     get() = definitions
@@ -74,6 +76,36 @@ class NadelSchemasTest : DescribeSpec({
             assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query"))
             val testService = schemas.services.single()
             assert(testService.underlyingSchema.userTypeNames == setOf("World", "Echo", "Query", "Food"))
+        }
+
+        it("throws wrapping ServiceSchemaProblem") {
+            val overallSchema = mapOf(
+                "test" to """
+                    type Query {
+                        echo: String
+                    }
+                """.trimIndent(),
+            )
+            val underlyingSchema = mapOf(
+                "test" to """
+                    type QueryMissing {
+                        echo: String
+                    }
+                """.trimIndent(),
+            )
+
+            // when
+            val ex = assertThrows<ServiceSchemaProblem> {
+                NadelSchemas.newNadelSchemas()
+                    .overallSchemas(overallSchema)
+                    .underlyingSchemas(underlyingSchema)
+                    .stubServiceExecution()
+                    .build()
+            }
+
+            // then
+            assert(ex.serviceName == "test")
+            assert(ex.message.contains("A schema MUST have a 'query' operation defined"))
         }
 
         it("works if you exclusively supply type defs") {

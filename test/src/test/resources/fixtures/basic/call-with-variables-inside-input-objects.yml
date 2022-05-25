@@ -1,4 +1,4 @@
-name: call with variables inside input objects
+name: "call with variables inside input objects"
 enabled: true
 overallSchema:
   MyService: |
@@ -23,14 +23,14 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query myQuery {
           hello(arg: {})
         }
       variables: { }
-      operationName: myQuery
+      operationName: "myQuery"
     # language=JSON
     response: |-
       {

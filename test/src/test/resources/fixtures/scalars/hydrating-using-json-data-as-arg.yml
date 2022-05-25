@@ -1,4 +1,4 @@
-name: hydrating using json data as arg
+name: "hydrating using json data as arg"
 enabled: true
 overallSchema:
   service: |
@@ -54,7 +54,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: service
+  - serviceName: "service"
     request:
       query: |
         query ($v0: JSON) {
@@ -84,7 +84,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Baz
+  - serviceName: "Baz"
     request:
       query: |
         query ($v0: JSON!) {

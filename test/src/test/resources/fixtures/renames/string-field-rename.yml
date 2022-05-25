@@ -1,4 +1,4 @@
-name: string field rename
+name: "string field rename"
 enabled: true
 overallSchema:
   MyService: |
@@ -93,7 +93,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: MyService
+  - serviceName: "MyService"
     request:
       query: |
         query {

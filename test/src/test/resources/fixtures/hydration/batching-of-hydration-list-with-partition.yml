@@ -1,4 +1,4 @@
-name: batching of hydration list with partition
+name: "batching of hydration list with partition"
 enabled: true
 overallSchema:
   UserService: |
@@ -45,7 +45,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -56,7 +56,6 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: null
     # language=JSON
     response: |-
       {
@@ -89,7 +88,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -99,7 +98,6 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: null
     # language=JSON
     response: |-
       {
@@ -117,7 +115,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -127,7 +125,6 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: null
     # language=JSON
     response: |-
       {
@@ -141,7 +138,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -151,7 +148,6 @@ serviceCalls:
           }
         }
       variables: { }
-      operationName: null
     # language=JSON
     response: |-
       {

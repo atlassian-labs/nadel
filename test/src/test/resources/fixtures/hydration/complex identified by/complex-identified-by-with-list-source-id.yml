@@ -1,16 +1,16 @@
-name: complex identified by with list source id
+name: "complex identified by with list source id"
 enabled: true
 overallSchema:
   UserService: |
     type Query {
       users(id: [UserInput]): [User]
     }
-    
+
     input UserInput {
       userId: ID
       site: String
     }
-    
+
     type User {
       id: ID
       name: String
@@ -37,7 +37,7 @@ underlyingSchema:
     type Query {
       users(id: [UserInput]): [User]
     }
-    
+
     input UserInput {
       userId: ID
       site: String
@@ -52,12 +52,12 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
-    
+
     type UserRef {
       userId: ID
       site: String
     }
-    
+
     type Issue {
       authorIds: [UserRef]
       id: ID
@@ -74,7 +74,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Issues
+  - serviceName: "Issues"
     request:
       query: |
         query {
@@ -141,7 +141,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {
@@ -180,7 +180,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: UserService
+  - serviceName: "UserService"
     request:
       query: |
         query {

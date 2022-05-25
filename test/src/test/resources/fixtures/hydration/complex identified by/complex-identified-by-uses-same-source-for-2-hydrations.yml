@@ -1,4 +1,4 @@
-name: complex identified by uses same source for 2 hydrations
+name: "complex identified by uses same source for 2 hydrations"
 enabled: true
 overallSchema:
   Foo: |
@@ -67,7 +67,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -106,7 +106,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -133,7 +133,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -156,7 +156,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {
@@ -183,7 +183,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: Foo
+  - serviceName: "Foo"
     request:
       query: |
         query {

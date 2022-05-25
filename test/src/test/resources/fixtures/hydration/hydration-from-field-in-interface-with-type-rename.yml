@@ -1,4 +1,4 @@
-name: hydration from field in interface with type rename
+name: "hydration from field in interface with type rename"
 enabled: true
 overallSchema:
   issues: |
@@ -58,7 +58,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: issues
+  - serviceName: "issues"
     request:
       query: |
         query {
@@ -85,7 +85,7 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: users
+  - serviceName: "users"
     request:
       query: |
         query {
