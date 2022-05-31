@@ -558,5 +558,123 @@ class NadelFieldValidationTest : DescribeSpec({
 
             assert(errors.count { it is MissingUnderlyingField } == 3)
         }
+
+        it("passes if hydrated type is not present in underlying") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            fieldA(id: ID!): TypeA
+                        }
+
+                        type TypeA {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                    "test-2" to """
+                        type Query {
+                            fieldB: TypeB
+                        }
+
+                        type TypeB {
+                            fieldA: TypeA @hydrated(
+                                service: "test",
+                                field: "fieldA",
+                                arguments : [{ name:"id", value:"${'$'}source.aId"}],
+                            )
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            fieldA(id: ID!): TypeA
+                        }
+
+                        type TypeA {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                    "test-2" to """
+                        type Query {
+                            fieldB: TypeB
+                        }
+
+                        type TypeB {
+                            aId: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isEmpty())
+        }
+
+        it("fails if fields declared in extensions are missing in underlying") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            fieldA(id: ID!): TypeA
+                        }
+
+                        type TypeA {
+                            echo: String
+                        }
+
+                        extend type TypeA {
+                            fieldFromExtension: String
+                        }
+
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            fieldA(id: ID!): TypeA
+                        }
+
+                        type TypeA {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.size == 1)
+
+            val error = errors.assertSingleOfType<NadelSchemaValidationError>()
+            assert(error.message == "Could not find overall field TypeA.fieldFromExtension on the underlying type TypeA on service test")
+        }
+
+        it("fails if fields in extended Query are missing in underlying") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        extend type Query {
+                            fieldA(id: ID!): String
+                        }
+
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            fieldA: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+
+            assert(errors.size == 1)
+
+            val error = errors.assertSingleOfType<NadelSchemaValidationError>()
+
+            assert(error.message == "The overall field Query.fieldA defines argument id which does not exist in service test field Query.fieldA")
+        }
     }
 })
