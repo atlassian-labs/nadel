@@ -15,7 +15,8 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper
+        aliasHelper: NadelAliasHelper,
+        userContext: Any?
     ): T? {
         return instructions.firstOrNull {
             val (_, _, valueSource) = it.actorInputValueDefs.single()

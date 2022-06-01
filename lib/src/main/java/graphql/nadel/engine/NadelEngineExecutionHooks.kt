@@ -10,7 +10,8 @@ interface NadelEngineExecutionHooks : ServiceExecutionHooks {
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper
+        aliasHelper: NadelAliasHelper,
+        userContext: Any?
     ): T?
 
     /**

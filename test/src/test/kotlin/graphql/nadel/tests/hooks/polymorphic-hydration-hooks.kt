@@ -15,7 +15,8 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper
+        aliasHelper: NadelAliasHelper,
+        userContext: Any?
     ): T? {
 
         val dataIdFieldName = if (instructions.any { it is NadelHydrationFieldInstruction })
