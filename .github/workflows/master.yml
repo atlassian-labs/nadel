@@ -7,9 +7,11 @@ on:
 jobs:
   buildAndPublish:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
     env:
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-      ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
       SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
@@ -19,5 +21,12 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: '11.0.9'
+        # Populates ARTIFACTORY_USERNAME and ARTIFACTORY_API_KEY with
+        # temporary username/password for publishing to packages.atlassian.com
+      - name: Get publish token
+        id: publish-token
+        uses: atlassian-labs/artifact-publish-token@v1.0.1
+        with:
+          output-modes: environment
       - name: build test and publish
         run: ./gradlew assemble && ./gradlew check --info && ./gradlew artifactoryPublish -x check --info
