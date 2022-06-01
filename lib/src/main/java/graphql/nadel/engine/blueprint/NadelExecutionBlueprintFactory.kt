@@ -345,10 +345,10 @@ private class Factory(
                     NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
                     is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
                     is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
-                } + hydrationArgs.mapNotNull {
-                    when (it.valueSource) {
-                        is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
-                        is FieldResultValue -> it.valueSource.queryPathToField
+                } + hydrationArgs.flatMap {
+                    when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
+                        is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
+                        is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
                     }
                 }).toSet()
 
@@ -376,6 +376,18 @@ private class Factory(
             },
             actorFieldDef = actorFieldDef
         )
+    }
+
+    private fun selectSourceFieldQueryPaths(hydrationValueSource: FieldResultValue): List<NadelQueryPath> {
+        val hydrationSourceType = hydrationValueSource.fieldDefinition.type.unwrapAll()
+        if (hydrationSourceType is GraphQLObjectType) {
+            // When the argument of the hydration actor field is an input type and not a primitive
+            // we need to add all the input fields to the source fields
+            return hydrationSourceType.fields.map { field ->
+                hydrationValueSource.queryPathToField.plus(field.name)
+            }
+        }
+        return listOf(hydrationValueSource.queryPathToField)
     }
 
     private fun makeRenameInstruction(
