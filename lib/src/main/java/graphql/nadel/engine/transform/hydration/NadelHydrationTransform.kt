@@ -58,6 +58,7 @@ internal class NadelHydrationTransform(
          */
         val hydratedField: ExecutableNormalizedField,
         val aliasHelper: NadelAliasHelper,
+        val executionContext: NadelExecutionContext,
     )
 
     override suspend fun isApplicable(
@@ -79,6 +80,7 @@ internal class NadelHydrationTransform(
                 hydratedFieldService = service,
                 hydratedField = overallField,
                 aliasHelper = NadelAliasHelper.forField(tag = "hydration", overallField),
+                executionContext = executionContext
             )
         }
     }
@@ -188,7 +190,7 @@ internal class NadelHydrationTransform(
             return emptyList()
         }
 
-        val instruction = getHydrationFieldInstruction(state.aliasHelper, instructions, executionContext.hooks, parentNode)
+        val instruction = getHydrationFieldInstruction(state, instructions, executionContext.hooks, parentNode)
             ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName, null))
 
         val actorQueryResults = coroutineScope {
@@ -269,7 +271,7 @@ internal class NadelHydrationTransform(
     }
 
     private fun getHydrationFieldInstruction(
-        aliasHelper: NadelAliasHelper,
+        state: State,
         instructions: List<NadelHydrationFieldInstruction>,
         hooks: ServiceExecutionHooks,
         parentNode: JsonNode,
@@ -278,7 +280,12 @@ internal class NadelHydrationTransform(
             1 -> instructions.single()
             else -> {
                 if (hooks is NadelEngineExecutionHooks) {
-                    hooks.getHydrationInstruction(instructions, parentNode, aliasHelper)
+                    hooks.getHydrationInstruction(
+                        instructions,
+                        parentNode,
+                        state.aliasHelper,
+                        state.executionContext.userContext
+                    )
                 } else {
                     error(
                         "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +

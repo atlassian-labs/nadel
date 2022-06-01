@@ -13,7 +13,8 @@ private class BatchHydrationHooks : NadelEngineExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper
+        aliasHelper: NadelAliasHelper,
+        userContext: Any?
     ): T {
         return instructions[0]
     }
