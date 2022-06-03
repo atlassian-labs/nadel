@@ -1,0 +1,63 @@
+name: "introspection with variables FF on"
+enabled: true
+overallSchema:
+  MyService: |
+    type Query {
+      earth: Planet 
+      pluto: Planet @deprecated(reason: "Oh no")
+    }
+    type Planet {
+      id: ID
+    }
+    type Mutation {
+      hello: String
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      earth: Planet 
+      pluto: Planet @deprecated(reason: "Oh no")
+    }
+
+    type Planet {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    __schema {
+      queryType {
+        fields(includeDeprecated: true) {
+          name
+          isDeprecated
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls: [ ]
+# language=JSON
+response: |-
+  {
+    "data": {
+      "__schema": {
+        "queryType": {
+          "fields": [
+            {
+              "name": "earth",
+              "isDeprecated": false
+            },
+            {
+              "name": "pluto",
+              "isDeprecated": true
+            }
+          ]
+        }
+      }
+    },
+    "errors": []
+  }

@@ -33,11 +33,12 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
             .executeAsync(
                 ExecutionInput.newExecutionInput()
                     .query(AstPrinter.printAstCompact(serviceExecutionParameters.query))
+                    .variables(serviceExecutionParameters.variables)
                     .build()
             )
             .thenApply {
                 ServiceExecutionResult(
-                    data = it.getData(),
+                    data = it.getData() ?: mutableMapOf(),
                     errors = it.errors.mapTo(ArrayList(), ::toSpecification),
                 )
             }
