@@ -129,7 +129,7 @@ class NextgenEngine @JvmOverloads constructor(
                 querySchema,
                 queryDocument,
                 executionInput.operationName,
-                executionInput.variables,
+                executionInput.rawVariables,
             )
 
             val timer = NadelInstrumentationTimer(
