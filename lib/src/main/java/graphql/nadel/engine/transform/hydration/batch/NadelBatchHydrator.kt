@@ -16,6 +16,7 @@ import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationByObjec
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
+import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -131,11 +132,15 @@ internal class NadelBatchHydrator(
                 .map { actorQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
+                        val hydrationActorField =
+                            FieldCoordinates.coordinates(instruction.actorFieldContainer, instruction.actorFieldDef)
+
                         val serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                            instruction.timeout,
-                            instruction.batchSize,
-                            hydrationSourceService,
-                            instruction.location
+                            timeout = instruction.timeout,
+                            batchSize = instruction.batchSize,
+                            hydrationSourceService = hydrationSourceService,
+                            hydrationSourceField = instruction.location,
+                            hydrationActorField = hydrationActorField
                         )
                         if (state.executionContext.hints.removeHydrationSpecificExecutionCode) {
                             engine.executeTopLevelField(

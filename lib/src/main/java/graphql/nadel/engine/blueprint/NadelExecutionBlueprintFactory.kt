@@ -23,6 +23,7 @@ import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.AnyNamedNode
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.getFieldAt
+import graphql.nadel.engine.util.getFieldContainerAt
 import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.getOperationType
 import graphql.nadel.engine.util.isExtensionDef
@@ -218,6 +219,7 @@ private class Factory(
         val hydrationActorService = services.single { it.name == hydration.serviceName }
         val queryPathToActorField = hydration.pathToActorField
         val actorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)!!
+        val actorFieldContainer = engineSchema.queryType.getFieldContainerAt(queryPathToActorField)!!
 
         if (hydration.isBatched || /*deprecated*/ actorFieldDef.type.unwrapNonNull().isList) {
             require(actorFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
@@ -226,7 +228,8 @@ private class Factory(
                 hydratedFieldDef = hydratedFieldDef,
                 hydration = hydration,
                 actorService = hydrationActorService,
-                actorFieldDef = actorFieldDef
+                actorFieldDef = actorFieldDef,
+                actorFieldContainer = actorFieldContainer
             )
         }
 
@@ -242,6 +245,7 @@ private class Factory(
             actorService = hydrationActorService,
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
+            actorFieldContainer = actorFieldContainer,
             actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(
@@ -298,6 +302,7 @@ private class Factory(
         parentType: GraphQLObjectType,
         hydratedFieldDef: GraphQLFieldDefinition,
         actorFieldDef: GraphQLFieldDefinition,
+        actorFieldContainer: GraphQLFieldsContainer,
         hydration: UnderlyingServiceHydration,
         actorService: Service,
     ): NadelFieldInstruction {
@@ -340,6 +345,8 @@ private class Factory(
             timeout = hydration.timeout,
             batchSize = batchSize,
             batchHydrationMatchStrategy = matchStrategy,
+            actorFieldDef = actorFieldDef,
+            actorFieldContainer = actorFieldContainer,
             sourceFields = Unit.let {
                 val paths = (when (matchStrategy) {
                     NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
@@ -374,7 +381,6 @@ private class Factory(
                         !prefixes.contains(it.segments + "*")
                     }
             },
-            actorFieldDef = actorFieldDef
         )
     }
 

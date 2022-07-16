@@ -7,6 +7,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLFieldsContainer
 
 sealed class NadelFieldInstruction {
     /**
@@ -76,6 +77,11 @@ interface NadelGenericHydrationInstruction {
      * The field definition in the overall schema referenced by [queryPathToActorField].
      */
     val actorFieldDef: GraphQLFieldDefinition
+
+    /**
+     * The container of the actor field in the overall schema referenced by [queryPathToActorField].
+     */
+    val actorFieldContainer: GraphQLFieldsContainer
 }
 
 data class NadelHydrationFieldInstruction(
@@ -88,6 +94,7 @@ data class NadelHydrationFieldInstruction(
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
     override val actorFieldDef: GraphQLFieldDefinition,
+    override val actorFieldContainer: GraphQLFieldsContainer,
     val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
@@ -101,6 +108,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
     override val actorFieldDef: GraphQLFieldDefinition,
+    override val actorFieldContainer: GraphQLFieldsContainer,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
