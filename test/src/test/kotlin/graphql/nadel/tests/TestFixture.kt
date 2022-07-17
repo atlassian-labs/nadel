@@ -13,6 +13,10 @@ import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.engine.util.JsonMap
 import graphql.parser.Parser
 
+/**
+ * Each test YAML file is parsed into this TextFixture class.  Hence, the properties specified here are the properties
+ * allowable in the test YAML.
+ */
 data class TestFixture(
     val name: String,
     val enabled: Boolean,
@@ -45,6 +49,7 @@ data class ServiceCall(
     val request: Request,
     @JsonProperty("response")
     val responseJsonString: String,
+    val hydrationDetails : HydrationDetails?
 ) {
     @get:JsonIgnore
     val response: JsonMap by lazy {
@@ -69,6 +74,12 @@ data class ServiceCall(
             private val documentParser = Parser()
         }
     }
+
+    data class HydrationDetails(
+        val hydrationSourceService : String,
+        val hydrationSourceField : String,
+        val hydrationActorField : String,
+    )
 }
 
 data class ExpectedException(

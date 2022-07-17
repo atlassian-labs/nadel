@@ -10,6 +10,7 @@ import graphql.nadel.NadelSchemas
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
@@ -185,7 +186,9 @@ private suspend fun execute(
                                     .takeIf { it != -1 }
 
                                 if (indexOfCall != null) {
-                                    serviceCalls.removeAt(indexOfCall).response
+                                    val serviceCall = serviceCalls.removeAt(indexOfCall)
+                                    assertHydrationDetails(serviceCall.hydrationDetails, params.hydrationDetails)
+                                    serviceCall.response
                                 } else {
                                     fail(
                                         """Unable to match service call 
@@ -210,6 +213,25 @@ private suspend fun execute(
                         } catch (e: Throwable) {
                             fail("Unable to invoke service '$serviceName'", e)
                         }
+                    }
+                }
+
+                private fun assertHydrationDetails(
+                    expectedHydrationDetails: ServiceCall.HydrationDetails?,
+                    actualHydrationDetails: ServiceExecutionHydrationDetails?,
+                ) {
+                    if (expectedHydrationDetails == null) {
+                        if (actualHydrationDetails != null) {
+                            fail("No expected hydration details specified but the service call has actual hydration details present")
+                        }
+                        return // nothing expected and nothing present
+                    } else {
+                        if (actualHydrationDetails == null) {
+                            fail("Actual hydration details are not present to match expected ones")
+                        }
+                        assert(actualHydrationDetails.hydrationActorField.toString() == expectedHydrationDetails.hydrationActorField)
+                        assert(actualHydrationDetails.hydrationSourceField.toString() == expectedHydrationDetails.hydrationSourceField)
+                        assert(actualHydrationDetails.hydrationSourceService.name == expectedHydrationDetails.hydrationSourceService)
                     }
                 }
 
