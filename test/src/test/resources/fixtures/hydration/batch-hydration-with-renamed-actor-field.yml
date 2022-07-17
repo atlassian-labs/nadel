@@ -84,7 +84,7 @@ serviceCalls:
     hydrationDetails:
       hydrationSourceService: "service1"
       hydrationSourceField: "Foo.bar"
-      hydrationActorField: "Query.barById"
+      hydrationActorField: "Query.barsByIdOverall"
 
     # language=JSON
     response: |-

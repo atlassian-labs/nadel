@@ -221,10 +221,7 @@ private suspend fun execute(
                     actualHydrationDetails: ServiceExecutionHydrationDetails?,
                 ) {
                     if (expectedHydrationDetails == null) {
-                        if (actualHydrationDetails != null) {
-                            fail("No expected hydration details specified but the service call has actual hydration details present")
-                        }
-                        return // nothing expected and nothing present
+                        return // nothing expected - we don't enforce a test to specify all hydration details
                     } else {
                         if (actualHydrationDetails == null) {
                             fail("Actual hydration details are not present to match expected ones")
