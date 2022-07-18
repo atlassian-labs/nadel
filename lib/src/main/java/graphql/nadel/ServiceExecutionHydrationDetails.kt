@@ -10,4 +10,5 @@ data class ServiceExecutionHydrationDetails(
     val batchSize: Int,
     val hydrationSourceService: Service,
     val hydrationSourceField: FieldCoordinates,
+    val hydrationActorField: FieldCoordinates,
 )

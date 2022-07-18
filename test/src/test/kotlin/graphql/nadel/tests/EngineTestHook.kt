@@ -4,6 +4,7 @@ import graphql.ExecutionResult
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
+import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.SchemaTransformationHook
@@ -60,6 +61,13 @@ interface EngineTestHook {
 
     fun assertFailure(throwable: Throwable): Boolean {
         return false
+    }
+
+    /**
+     * Allows you to wrap the base test service execution call, so you can do things before or after it
+     */
+    fun wrapServiceExecution(baseTestServiceExecution: ServiceExecution) : ServiceExecution {
+        return baseTestServiceExecution
     }
 }
 

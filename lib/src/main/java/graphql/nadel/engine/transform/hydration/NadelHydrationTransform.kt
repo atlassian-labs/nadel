@@ -203,11 +203,14 @@ internal class NadelHydrationTransform(
             ).map { actorQuery ->
                 async {
                     val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
+                    val hydrationActorField =
+                        FieldCoordinates.coordinates(instruction.actorFieldContainer, instruction.actorFieldDef)
                     val serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                        instruction.timeout,
-                        1,
-                        hydrationSourceService,
-                        instruction.location
+                        timeout = instruction.timeout,
+                        batchSize = 1,
+                        hydrationSourceService = hydrationSourceService,
+                        hydrationSourceField = instruction.location,
+                        hydrationActorField = hydrationActorField
                     )
                     if (executionContext.hints.removeHydrationSpecificExecutionCode) {
                         engine.executeTopLevelField(

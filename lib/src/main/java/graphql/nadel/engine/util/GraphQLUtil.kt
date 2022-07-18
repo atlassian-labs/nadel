@@ -108,6 +108,9 @@ fun GraphQLSchema.getOperationType(kind: NadelOperationKind): GraphQLObjectType?
     }
 }
 
+/**
+ * Can find a field from a given field container via a field path syntax
+ */
 fun GraphQLFieldsContainer.getFieldAt(
     pathToField: List<String>,
 ): GraphQLFieldDefinition? {
@@ -135,8 +138,38 @@ private fun GraphQLFieldsContainer.getFieldAt(
     return if (pathIndex == pathToField.lastIndex) {
         field
     } else {
-        val fieldOutputType = field.type.unwrapAll() as GraphQLFieldsContainer
-        fieldOutputType.getFieldAt(pathToField, pathIndex + 1)
+        val possibleFieldContainer = field.type.unwrapAll()
+        if (possibleFieldContainer is GraphQLFieldsContainer) {
+            possibleFieldContainer.getFieldAt(pathToField, pathIndex + 1)
+        } else {
+            null
+        }
+    }
+}
+
+/**
+ * Can find field containers via a field path syntax
+ */
+fun GraphQLFieldsContainer.getFieldContainerAt(
+    pathToField: List<String>,
+): GraphQLFieldsContainer? {
+    return getFieldContainerAt(pathToField, pathIndex = 0)
+}
+
+private fun GraphQLFieldsContainer.getFieldContainerAt(
+    pathToField: List<String>,
+    pathIndex: Int,
+): GraphQLFieldsContainer? {
+    val field = getField(pathToField[pathIndex]) ?: return null
+    return if (pathIndex == pathToField.lastIndex) {
+        this
+    } else {
+        val possibleFieldContainer = field.type.unwrapAll()
+        if (possibleFieldContainer is GraphQLFieldsContainer) {
+            possibleFieldContainer.getFieldContainerAt(pathToField, pathIndex + 1)
+        } else {
+            null
+        }
     }
 }
 

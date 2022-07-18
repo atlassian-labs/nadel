@@ -13,6 +13,10 @@ import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.engine.util.JsonMap
 import graphql.parser.Parser
 
+/**
+ * Each test YAML file is parsed into this TextFixture class.  Hence, the properties specified here are the properties
+ * allowable in the test YAML.
+ */
 data class TestFixture(
     val name: String,
     val enabled: Boolean,

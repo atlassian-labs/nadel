@@ -164,7 +164,7 @@ private suspend fun execute(
                 private val serviceCalls = fixture.serviceCalls.toMutableList()
 
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    return ServiceExecution { params ->
+                    val serviceExecution = ServiceExecution { params ->
                         try {
                             val incomingQuery = params.query
                             val actualVariables = fixVariables(params.variables)
@@ -185,7 +185,8 @@ private suspend fun execute(
                                     .takeIf { it != -1 }
 
                                 if (indexOfCall != null) {
-                                    serviceCalls.removeAt(indexOfCall).response
+                                    val serviceCall = serviceCalls.removeAt(indexOfCall)
+                                    serviceCall.response
                                 } else {
                                     fail(
                                         """Unable to match service call 
@@ -211,6 +212,7 @@ private suspend fun execute(
                             fail("Unable to invoke service '$serviceName'", e)
                         }
                     }
+                    return testHook.wrapServiceExecution(serviceExecution)
                 }
 
                 private fun fixVariables(variables: JsonMap): JsonMap {
