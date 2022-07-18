@@ -81,11 +81,6 @@ serviceCalls:
           }
         }
       variables: { }
-    hydrationDetails:
-      hydrationSourceService: "service1"
-      hydrationSourceField: "Foo.bar"
-      hydrationActorField: "Query.barsByIdOverall"
-
     # language=JSON
     response: |-
       {

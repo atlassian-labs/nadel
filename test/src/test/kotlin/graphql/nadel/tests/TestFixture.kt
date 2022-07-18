@@ -49,7 +49,6 @@ data class ServiceCall(
     val request: Request,
     @JsonProperty("response")
     val responseJsonString: String,
-    val hydrationDetails : HydrationDetails?
 ) {
     @get:JsonIgnore
     val response: JsonMap by lazy {
@@ -74,12 +73,6 @@ data class ServiceCall(
             private val documentParser = Parser()
         }
     }
-
-    data class HydrationDetails(
-        val hydrationSourceService : String,
-        val hydrationSourceField : String,
-        val hydrationActorField : String,
-    )
 }
 
 data class ExpectedException(
