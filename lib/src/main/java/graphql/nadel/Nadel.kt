@@ -31,6 +31,7 @@ import graphql.validation.Validator
 import org.slf4j.Logger
 import java.io.Reader
 import java.io.StringReader
+import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.concurrent.atomic.AtomicReference
@@ -213,7 +214,7 @@ class Nadel private constructor(
             ),
         )
         val validator = Validator()
-        val validationErrors = validator.validateDocument(graphQLSchema, document)
+        val validationErrors = validator.validateDocument(graphQLSchema, document, Locale.getDefault())
         validationCtx.onCompleted(validationErrors, null)
         return validationErrors
     }
