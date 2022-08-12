@@ -53,7 +53,7 @@ class `chained-instrumentation-works-as-expected` : EngineTestHook {
                         val document = Parser.parse(query)
                         AstPrinter.printAstCompact(document)
                     }
-                    .isEqualTo("query OpName {hello {name} hello {id}}")
+                    .isEqualTo("query OpName{hello{name}hello{id}}")
 
                 expectThat(parameters).get { variables }
                     .hasSize(1)
