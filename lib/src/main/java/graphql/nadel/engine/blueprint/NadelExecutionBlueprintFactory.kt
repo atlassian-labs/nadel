@@ -8,6 +8,7 @@ import graphql.Scalars.GraphQLString
 import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
+import graphql.language.Value
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
@@ -29,11 +30,14 @@ import graphql.nadel.engine.util.getOperationType
 import graphql.nadel.engine.util.isExtensionDef
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.makeFieldCoordinates
+import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.mapFrom
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.util.AnyAstValue
+import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -455,10 +459,21 @@ private class Factory(
             val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource.sourceType) {
                 FieldArgument -> {
                     val argumentName = remoteArgDef.remoteArgumentSource.argumentName!!
+                    val argumentDef = hydratedFieldDef.getArgument(argumentName)
+                        ?: error("No argument '$argumentName' on field ${hydratedFieldParentType.name}.${hydratedFieldDef.name}")
+                    val defaultValue = if (argumentDef.argumentDefaultValue.isLiteral) {
+                        makeNormalizedInputValue(
+                            argumentDef.type,
+                            argumentDef.argumentDefaultValue.value as AnyAstValue,
+                        )
+                    } else {
+                        null
+                    }
+
                     NadelHydrationActorInputDef.ValueSource.ArgumentValue(
                         argumentName = argumentName,
-                        argumentDefinition = hydratedFieldDef.getArgument(argumentName)
-                            ?: error("No argument '$argumentName' on field ${hydratedFieldParentType.name}.${hydratedFieldDef.name}"),
+                        argumentDefinition = argumentDef,
+                        defaultValue = defaultValue,
                     )
                 }
                 ObjectField -> {

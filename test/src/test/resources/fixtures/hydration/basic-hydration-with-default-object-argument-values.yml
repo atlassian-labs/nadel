@@ -1,0 +1,129 @@
+name: "basic hydration with default object argument values"
+enabled: true
+overallSchema:
+  # language=GraphQL
+  service2: |
+    type Query {
+      barById(id: ID, test: Test): Bar
+    }
+    type Bar {
+      id: ID
+      name: String
+    }
+    input Test {
+      string: String = "Test"
+      int: Int = 42
+      bool: Boolean = false
+      number: Int
+      echo: String
+    }
+  # language=GraphQL
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar(test: Test = {echo: "Hello World"}): Bar @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {name: "id" value: "$source.barId"}
+          {name: "test" value: "$argument.test"}
+        ]
+      )
+    }
+underlyingSchema:
+  # language=GraphQL
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID, test: Test = {}): Bar
+    }
+   
+    input Test {
+      string: String = "Test"
+      int: Int = 42
+      bool: Boolean = false
+      number: Int
+      echo: String
+    }
+  # language=GraphQL
+  service1: |
+    type Foo {
+      barId: ID
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+# language=GraphQL
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": "barId",
+            "__typename__hydration__bar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          barById(id: "barId" test: {echo: "Hello World"}) {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "name": "Bar1"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar1"
+        }
+      }
+    },
+    "extensions": {}
+  }

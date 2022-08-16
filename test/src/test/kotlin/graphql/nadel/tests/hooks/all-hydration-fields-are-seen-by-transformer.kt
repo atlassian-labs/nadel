@@ -15,12 +15,13 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
+import java.util.Collections.synchronizedSet
 
 @UseHook
 class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
-    private val isApplicable = mutableListOf<String>()
-    private val transformField = mutableListOf<String>()
-    private val getResultInstructions = mutableListOf<String>()
+    private val isApplicable = synchronizedSet(mutableSetOf<String>())
+    private val transformField = synchronizedSet(mutableSetOf<String>())
+    private val getResultInstructions = synchronizedSet(mutableSetOf<String>())
 
     override fun makeExecutionHints(builder: NadelExecutionHints.Builder): NadelExecutionHints.Builder {
         return builder
@@ -38,7 +39,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Unit? {
-                    isApplicable.add(overallField.resultKey)
+                    isApplicable.add("${service.name}.${overallField.resultKey}")
                     return Unit
                 }
 
@@ -50,7 +51,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     field: ExecutableNormalizedField,
                     state: Unit,
                 ): NadelTransformFieldResult {
-                    transformField.add(field.resultKey)
+                    transformField.add("${service.name}.${field.resultKey}")
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
@@ -64,16 +65,35 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     state: Unit,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
-                    getResultInstructions.add(overallField.resultKey)
+                    getResultInstructions.add("${service.name}.${overallField.resultKey}")
                     return emptyList()
                 }
             },
         )
 
     override fun assertResult(result: ExecutionResult) {
-        assert(isApplicable == listOf("foo", "bar", "name", "bars", "barById", "name"))
-        // // name is missing because it's removed as part of the hydration query
-        assert(transformField == listOf("foo", "bar", "bars", "barById", "name"))
-        assert(getResultInstructions == listOf("foo", "bar", "bars", "barById", "name"))
+        assert(isApplicable == setOf(
+            "service1.foo",
+            "service1.bar",
+            "service1.name",
+            "service2.bars",
+            "service2.barById",
+            "service2.name",
+        ))
+        // service1.name is missing because it's removed as part of the hydration query
+        assert(transformField == setOf(
+            "service1.foo",
+            "service1.bar",
+            "service2.bars",
+            "service2.barById",
+            "service2.name",
+        ))
+        assert(getResultInstructions == setOf(
+            "service1.foo",
+            "service1.bar",
+            "service2.bars",
+            "service2.barById",
+            "service2.name",
+        ))
     }
 }
