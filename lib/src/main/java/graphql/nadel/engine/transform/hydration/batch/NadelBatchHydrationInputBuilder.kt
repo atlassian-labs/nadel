@@ -44,9 +44,12 @@ internal object NadelBatchHydrationInputBuilder {
             instruction.actorInputValueDefs.mapNotNull { actorFieldArg ->
                 when (val valueSource = actorFieldArg.valueSource) {
                     is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> {
-                        when (val argValue = hydrationField.normalizedArguments[valueSource.argumentName]) {
-                            null -> null
-                            else -> actorFieldArg to argValue
+                        val argValue = hydrationField.normalizedArguments[valueSource.argumentName]
+                            ?: valueSource.defaultValue
+                        if (argValue != null) {
+                            actorFieldArg to argValue
+                        } else {
+                            null
                         }
                     }
                     // These are batch values, ignore them

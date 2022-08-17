@@ -122,7 +122,7 @@ internal class NadelHydrationInputBuilder private constructor(
         inputDef: NadelHydrationActorInputDef,
     ): NormalizedInputValue? {
         return when (val valueSource = inputDef.valueSource) {
-            is ValueSource.ArgumentValue -> fieldToHydrate.getNormalizedArgument(valueSource.argumentName)
+            is ValueSource.ArgumentValue -> getArgumentValue(valueSource)
             is ValueSource.FieldResultValue -> makeInputValue(
                 inputDef,
                 value = getResultValue(valueSource),
@@ -138,6 +138,12 @@ internal class NadelHydrationInputBuilder private constructor(
             type = inputDef.actorArgumentDef.type,
             value = javaValueToAstValue(value),
         )
+    }
+
+    private fun getArgumentValue(
+        valueSource: ValueSource.ArgumentValue,
+    ): NormalizedInputValue? {
+        return fieldToHydrate.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
     }
 
     private fun getResultValue(

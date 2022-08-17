@@ -1,6 +1,7 @@
 package graphql.nadel.engine.blueprint.hydration
 
 import graphql.nadel.engine.transform.query.NadelQueryPath
+import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 
@@ -41,6 +42,7 @@ data class NadelHydrationActorInputDef(
         data class ArgumentValue(
             val argumentName: String,
             val argumentDefinition: GraphQLArgument,
+            val defaultValue: NormalizedInputValue?,
         ) : ValueSource()
     }
 }
