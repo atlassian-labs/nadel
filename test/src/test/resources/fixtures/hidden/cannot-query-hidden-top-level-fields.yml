@@ -34,7 +34,7 @@ response: |-
     "data": null,
     "errors": [
       {
-        "message": "Validation error of type FieldUndefined: Field 'hiddenField' in type 'Query' is undefined @ 'hiddenField'",
+        "message": "Validation error (FieldUndefined@[hiddenField]) : Field 'hiddenField' in type 'Query' is undefined",
         "locations":[
           {
             "line":2,

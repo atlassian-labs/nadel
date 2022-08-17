@@ -73,7 +73,7 @@ response: |-
     },
     "errors": [
       {
-        "message": "Validation error of type WrongType: null",
+        "message": "null",
         "locations": [],
         "extensions": {
           "classification": "ValidationError"

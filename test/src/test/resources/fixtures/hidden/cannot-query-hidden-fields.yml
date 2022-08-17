@@ -51,7 +51,7 @@ response: |-
     "data": null,
     "errors": [
       {
-        "message": "Validation error of type FieldUndefined: Field 'area51' in type 'World' is undefined @ 'hello/area51'",
+        "message": "Validation error (FieldUndefined@[hello/area51]) : Field 'area51' in type 'World' is undefined",
         "locations":[
           {
             "line":5,
