@@ -7,7 +7,7 @@ plugins {
     id("com.bnorm.power.kotlin-power-assert")
 }
 
-val graphqlJavaVersion = "19.1"
+val graphqlJavaVersion = "0.0.0-2022-08-22T23-28-51-f5b123fb"
 val slf4jVersion = "1.7.25"
 
 dependencies {
@@ -24,7 +24,6 @@ dependencies {
     testImplementation("org.openjdk.jmh:jmh-core:1.21")
     testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.21")
     testImplementation("com.google.guava:guava:28.0-jre")
-    testImplementation("com.graphql-java:graphql-java-extended-scalars:18.1")
     testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
     testImplementation("io.kotest:kotest-framework-datatest:5.1.0")
     testImplementation("io.mockk:mockk:1.12.3")

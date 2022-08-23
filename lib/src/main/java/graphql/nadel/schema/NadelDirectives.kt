@@ -1,5 +1,6 @@
 package graphql.nadel.schema
 
+import graphql.GraphQLContext
 import graphql.Scalars
 import graphql.Scalars.GraphQLString
 import graphql.execution.ValuesResolver
@@ -36,6 +37,7 @@ import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
+import java.util.Locale
 
 /**
  * If you update this file please add to NadelBuiltInTypes
@@ -459,6 +461,6 @@ object NadelDirectives {
 
     private fun <T> resolveArgumentValue(graphQLArgument: GraphQLAppliedDirectiveArgument): T {
         @Suppress("UNCHECKED_CAST") // Trust caller. Can't do much
-        return ValuesResolver.valueToInternalValue(graphQLArgument.argumentValue, graphQLArgument.type) as T
+        return ValuesResolver.valueToInternalValue(graphQLArgument.argumentValue, graphQLArgument.type, GraphQLContext.getDefault(), Locale.getDefault()) as T
     }
 }

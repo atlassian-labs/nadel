@@ -8,7 +8,7 @@ plugins {
 dependencies {
     implementation(project(":lib"))
     testImplementation("com.graphql-java:graphql-java-extended-scalars:18.1") {
-        exclude(group = "com.graphql-java", module = "com.graphql-java")
+        exclude(group = "com.graphql-java", module = "graphql-java")
     }
     testImplementation("org.reflections:reflections:0.9.12")
     testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.6")
