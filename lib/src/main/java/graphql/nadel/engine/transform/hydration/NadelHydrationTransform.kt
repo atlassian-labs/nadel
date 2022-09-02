@@ -212,22 +212,12 @@ internal class NadelHydrationTransform(
                         hydrationSourceField = instruction.location,
                         hydrationActorField = hydrationActorField
                     )
-                    if (executionContext.hints.removeHydrationSpecificExecutionCode) {
-                        engine.executeTopLevelField(
-                            service = instruction.actorService,
-                            topLevelField = actorQuery,
-                            executionContext = executionContext,
-                            serviceHydrationDetails = serviceHydrationDetails
-                        )
-                    } else {
-                        engine.executeHydration(
-                            service = instruction.actorService,
-                            topLevelField = actorQuery,
-                            pathToActorField = instruction.queryPathToActorField,
-                            executionContext = executionContext,
-                            serviceHydrationDetails = serviceHydrationDetails
-                        )
-                    }
+                    engine.executeTopLevelField(
+                        service = instruction.actorService,
+                        topLevelField = actorQuery,
+                        executionContext = executionContext,
+                        serviceHydrationDetails = serviceHydrationDetails
+                    )
                 }
             }.awaitAll()
         }
@@ -253,6 +243,7 @@ internal class NadelHydrationTransform(
                     ),
                 ) + errors
             }
+
             is NadelHydrationStrategy.ManyToOne -> {
                 val data = actorQueryResults.map { result ->
                     JsonNodeExtractor.getNodesAt(
