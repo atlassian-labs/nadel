@@ -23,11 +23,6 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
     private val transformField = synchronizedSet(mutableSetOf<String>())
     private val getResultInstructions = synchronizedSet(mutableSetOf<String>())
 
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder): NadelExecutionHints.Builder {
-        return builder
-            .removeHydrationSpecificExecutionCode(true)
-    }
-
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
             object : NadelTransform<Unit> {
@@ -72,28 +67,34 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
         )
 
     override fun assertResult(result: ExecutionResult) {
-        assert(isApplicable == setOf(
-            "service1.foo",
-            "service1.bar",
-            "service1.name",
-            "service2.bars",
-            "service2.barById",
-            "service2.name",
-        ))
+        assert(
+            isApplicable == setOf(
+                "service1.foo",
+                "service1.bar",
+                "service1.name",
+                "service2.bars",
+                "service2.barById",
+                "service2.name",
+            )
+        )
         // service1.name is missing because it's removed as part of the hydration query
-        assert(transformField == setOf(
-            "service1.foo",
-            "service1.bar",
-            "service2.bars",
-            "service2.barById",
-            "service2.name",
-        ))
-        assert(getResultInstructions == setOf(
-            "service1.foo",
-            "service1.bar",
-            "service2.bars",
-            "service2.barById",
-            "service2.name",
-        ))
+        assert(
+            transformField == setOf(
+                "service1.foo",
+                "service1.bar",
+                "service2.bars",
+                "service2.barById",
+                "service2.name",
+            )
+        )
+        assert(
+            getResultInstructions == setOf(
+                "service1.foo",
+                "service1.bar",
+                "service2.bars",
+                "service2.barById",
+                "service2.name",
+            )
+        )
     }
 }
