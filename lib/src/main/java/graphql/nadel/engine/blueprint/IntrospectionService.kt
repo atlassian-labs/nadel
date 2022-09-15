@@ -17,6 +17,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.AnyIterable
+import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.newServiceExecutionResult
@@ -73,9 +74,40 @@ open class NadelDefaultIntrospectionRunner(
                             GraphQLIntrospectionDataFetcher<Any> {
                                 schema.queryType.name
                             }
+
+                        also {
+                            val coords = makeFieldCoordinates("__Type", "kind")
+                            val defaultImpl = copy[coords]
+                                ?: throw IllegalStateException("No __Type.kind data fetcher")
+                            copy[coords] =
+                                GraphQLIntrospectionDataFetcher<Any> { env ->
+                                    defaultImpl.get(env)?.toString()
+                                }
+                        }
+
+                        also {
+                            val coords = makeFieldCoordinates("__Directive", "locations")
+                            val defaultImpl = copy[coords]
+                                ?: throw IllegalStateException("No __Directive.locations data fetcher")
+                            copy[coords] =
+                                GraphQLIntrospectionDataFetcher<Any> { env ->
+                                    defaultImpl.get(env)
+                                        .let { value ->
+                                            if (value is AnyList) {
+                                                value.map {
+                                                    it.toString()
+                                                }
+                                            } else {
+                                                value
+                                            }
+                                        }
+                                }
+                        }
                     }
             }
     }
+
+    private val propertyDfs = mutableMapOf<FieldCoordinates, DataFetcher<Any?>>()
 
     override fun execute(serviceExecutionParameters: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> {
         return CompletableFuture.completedFuture(
@@ -117,7 +149,9 @@ open class NadelDefaultIntrospectionRunner(
         )
 
         return (dataFetchers[coords] as DataFetcher<Any?>?)
-            ?: PropertyDataFetcher(field.name)
+            ?: propertyDfs.computeIfAbsent(coords) {
+                PropertyDataFetcher(field.name)
+            }
     }
 
     private fun evaluateValue(
@@ -200,7 +234,7 @@ class StubDataFetchingEnvironment(
     }
 
     override fun getGraphQlContext(): GraphQLContext {
-        throw UnsupportedOperationException()
+        return GraphQLContext.getDefault()
     }
 
     override fun <T : Any?> getLocalContext(): T {
@@ -264,7 +298,7 @@ class StubDataFetchingEnvironment(
     }
 
     override fun getLocale(): Locale {
-        throw UnsupportedOperationException()
+        return Locale.getDefault()
     }
 
     override fun getOperationDefinition(): OperationDefinition {
