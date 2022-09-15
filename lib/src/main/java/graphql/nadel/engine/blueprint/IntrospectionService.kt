@@ -184,7 +184,7 @@ open class NadelDefaultIntrospectionRunner(
         children: List<ExecutableNormalizedField>,
         value: Any?,
     ): Any {
-        val data: MutableJsonMap = LinkedHashMap()
+        val data: MutableJsonMap = LinkedHashMap(children.size)
         children.forEach { child ->
             data[child.name] = getValue(field = child, parentValue = value)
         }
