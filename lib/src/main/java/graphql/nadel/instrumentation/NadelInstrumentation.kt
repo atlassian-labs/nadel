@@ -7,6 +7,7 @@ import graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import graphql.language.Document
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
@@ -99,5 +100,8 @@ interface NadelInstrumentation {
         parameters: NadelInstrumentationQueryExecutionParameters,
     ): CompletableFuture<ExecutionResult> {
         return CompletableFuture.completedFuture(executionResult)
+    }
+
+    fun onError(parameters: NadelInstrumentationOnErrorParameters<*>) {
     }
 }

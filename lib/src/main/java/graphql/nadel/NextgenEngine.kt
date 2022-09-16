@@ -31,6 +31,8 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.parameters.ExecutionErrorData
+import graphql.nadel.instrumentation.parameters.OnServiceExecutionErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
@@ -262,6 +264,12 @@ class NextgenEngine @JvmOverloads constructor(
             val errorMessage = "An exception occurred invoking the service '${service.name}'"
             val errorMessageNotSafe = "$errorMessage: ${e.message}"
             val executionId = serviceExecParams.executionId.toString()
+
+            instrumentation.onError(OnServiceExecutionErrorParameters(
+                message = errorMessage,
+                exception = e,
+                errorData = ExecutionErrorData(executionId)
+            ))
 
             newServiceExecutionResult(
                 errors = mutableListOf(
