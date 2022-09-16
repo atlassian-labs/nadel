@@ -26,6 +26,7 @@ import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.getReachableTypeNames
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLImplementingType
+import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedType
@@ -116,7 +117,7 @@ internal class NadelTypeValidation(
      * Note: this assumes both types are from the same schema. This does NOT
      * deal with differences between overall and underlying schema.
      */
-    fun isAssignableTo(lhs: GraphQLNamedOutputType, rhs: GraphQLNamedOutputType): Boolean {
+    fun isAssignableTo(lhs: GraphQLNamedType, rhs: GraphQLNamedType): Boolean {
         if (lhs.name == rhs.name) {
             return true
         }
