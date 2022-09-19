@@ -7,6 +7,7 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
@@ -46,6 +47,13 @@ class ChainedNadelInstrumentation(
         instrumentations.forEach { instrumentation: NadelInstrumentation ->
             val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
             instrumentation.onStepTimed(parameters.copy(instrumentationState = state))
+        }
+    }
+
+    override fun  onError(parameters: NadelInstrumentationOnErrorParameters) {
+        instrumentations.forEach { instrumentation: NadelInstrumentation ->
+            val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
+            instrumentation.onError(parameters.copy(instrumentationState = state))
         }
     }
 

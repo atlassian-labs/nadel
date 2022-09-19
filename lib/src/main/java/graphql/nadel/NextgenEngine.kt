@@ -31,9 +31,9 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.instrumentation.parameters.ExecutionErrorData
-import graphql.nadel.instrumentation.parameters.OnServiceExecutionErrorParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
+import graphql.nadel.instrumentation.parameters.OnServiceExecutionErrorData
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
@@ -156,7 +156,12 @@ class NextgenEngine @JvmOverloads constructor(
                                 async {
                                     try {
                                         val resolvedService = fieldToService.resolveDynamicService(field, service)
-                                        executeTopLevelField(field, resolvedService, executionContext)
+                                        executeTopLevelField(
+                                            topLevelField = field,
+                                            service = resolvedService,
+                                            executionContext = executionContext,
+                                            instrumentationState = instrumentationState
+                                        )
                                     } catch (e: Throwable) {
                                         when (e) {
                                             is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
@@ -186,6 +191,7 @@ class NextgenEngine @JvmOverloads constructor(
         topLevelField: ExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
+        instrumentationState: InstrumentationState?,
         serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
@@ -206,7 +212,8 @@ class NextgenEngine @JvmOverloads constructor(
             service = service,
             transformedQuery = transformedQuery,
             executionContext = executionContext,
-            executionHydrationDetails = serviceHydrationDetails
+            executionHydrationDetails = serviceHydrationDetails,
+            instrumentationState = instrumentationState,
         )
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
@@ -229,6 +236,7 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
         executionContext: NadelExecutionContext,
+        instrumentationState: InstrumentationState?,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
@@ -265,11 +273,17 @@ class NextgenEngine @JvmOverloads constructor(
             val errorMessageNotSafe = "$errorMessage: ${e.message}"
             val executionId = serviceExecParams.executionId.toString()
 
-            instrumentation.onError(OnServiceExecutionErrorParameters(
-                message = errorMessage,
-                exception = e,
-                errorData = ExecutionErrorData(executionId)
-            ))
+            instrumentation.onError(
+                NadelInstrumentationOnErrorParameters(
+                    message = errorMessage,
+                    exception = e,
+                    instrumentationState = instrumentationState,
+                    errorData = OnServiceExecutionErrorData(
+                        executionId = executionId,
+                        serviceName = service.name
+                    )
+                )
+            )
 
             newServiceExecutionResult(
                 errors = mutableListOf(

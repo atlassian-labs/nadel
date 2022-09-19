@@ -102,6 +102,6 @@ interface NadelInstrumentation {
         return CompletableFuture.completedFuture(executionResult)
     }
 
-    fun onError(parameters: NadelInstrumentationOnErrorParameters<*>) {
+    fun onError(parameters: NadelInstrumentationOnErrorParameters) {
     }
 }

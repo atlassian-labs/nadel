@@ -1,19 +1,20 @@
 package graphql.nadel.instrumentation.parameters
 
-open class NadelInstrumentationOnErrorParameters(
+import graphql.execution.instrumentation.InstrumentationState
+
+data class NadelInstrumentationOnErrorParameters(
     val message: String,
     val exception: Throwable,
-)
+    val errorData: Any?,
+    private val instrumentationState: InstrumentationState?,
+) {
+    fun <T : InstrumentationState?> getInstrumentationState(): T? {
+        @Suppress("UNCHECKED_CAST") // trust the caller
+        return instrumentationState as T?
+    }
+}
 
-class OnServiceExecutionErrorParameters(
-    message: String,
-    exception: Throwable,
-    val errorData: ExecutionErrorData
-) : NadelInstrumentationOnErrorParameters(
-    message, exception
+data class OnServiceExecutionErrorData(
+    val executionId: String,
+    val serviceName: String
 )
-
-data class ExecutionErrorData(
-    val executionId: String
-)
-
