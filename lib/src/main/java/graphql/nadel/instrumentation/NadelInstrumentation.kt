@@ -102,6 +102,13 @@ interface NadelInstrumentation {
         return CompletableFuture.completedFuture(executionResult)
     }
 
+    /**
+     * Called when Nadel encounters an error that can be useful for the caller code - for logging or metrics, for example.
+     *
+     * The nature of the error can be obtained by looking at the value of [NadelInstrumentationOnErrorParameters.errorType].
+     *
+     *  @param parameters to this step
+     */
     fun onError(parameters: NadelInstrumentationOnErrorParameters) {
     }
 }

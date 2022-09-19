@@ -5,6 +5,7 @@ import graphql.execution.instrumentation.InstrumentationState
 data class NadelInstrumentationOnErrorParameters(
     val message: String,
     val exception: Throwable,
+    val errorType: ErrorType,
     val errorData: Any?,
     private val instrumentationState: InstrumentationState?,
 ) {
@@ -18,3 +19,7 @@ data class OnServiceExecutionErrorData(
     val executionId: String,
     val serviceName: String
 )
+
+enum class ErrorType {
+    ServiceExecutionError
+}

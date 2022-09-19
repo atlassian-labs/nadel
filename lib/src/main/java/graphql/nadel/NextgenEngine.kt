@@ -31,6 +31,7 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.instrumentation.parameters.OnServiceExecutionErrorData
@@ -278,6 +279,7 @@ class NextgenEngine @JvmOverloads constructor(
                     message = errorMessage,
                     exception = e,
                     instrumentationState = instrumentationState,
+                    errorType = ServiceExecutionError,
                     errorData = OnServiceExecutionErrorData(
                         executionId = executionId,
                         serviceName = service.name
