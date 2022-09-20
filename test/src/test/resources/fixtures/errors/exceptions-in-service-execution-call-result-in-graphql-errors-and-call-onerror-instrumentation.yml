@@ -1,4 +1,4 @@
-name: "exceptions in service execution call result in graphql errors"
+name: "exceptions in service execution call result in graphql errors and call onerror instrumentation"
 enabled: true
 overallSchema:
   MyService: |

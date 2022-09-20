@@ -8,6 +8,7 @@ import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.instrumentation.ChainedNadelInstrumentation.ChainedInstrumentationState
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
@@ -317,6 +318,41 @@ class ChainedNadelInstrumentationTest : DescribeSpec({
                     assert(params.captured.getInstrumentationState<State>()?.something == instrumentation.key)
                 }
         }
+
+        it("passes on correct state for onError") {
+            // when
+            chainedInstrumentation.onError(mock { params ->
+                every {
+                    params.getInstrumentationState<InstrumentationState>()
+                } returns chainedState
+
+                every {
+                    params.copy(any(), any(), any(), any(), any())
+                } answers { copyCall ->
+                    val newState = copyCall.invocation.args.singleOfType<InstrumentationState>()
+                    mock { newParams ->
+                        every {
+                            newParams.getInstrumentationState<InstrumentationState>()
+                        } answers {
+                            newState
+                        }
+                    }
+                }
+            })
+
+            // then
+            chainedInstrumentation.getInstrumentations()
+                .map { it as TestInstrumentation }
+                .forEach { instrumentation ->
+                    val params = slot<NadelInstrumentationOnErrorParameters>()
+                    verify(exactly = 1) {
+                        instrumentation.onError(capture(params))
+                    }
+
+                    assert(params.isCaptured)
+                    assert(params.captured.getInstrumentationState<State>()?.something == instrumentation.key)
+                }
+        }
     }
 
     describe("parameter delegation") {
@@ -447,6 +483,26 @@ class ChainedNadelInstrumentationTest : DescribeSpec({
                 .forEach { instrumentation ->
                     verify(exactly = 1) {
                         instrumentation.instrumentExecutionResult(any(), paramsCopy)
+                    }
+                }
+        }
+
+        it("passes on correct parameters for onError") {
+            // given
+            val paramsCopy = mock<NadelInstrumentationOnErrorParameters>()
+            val params = mock<NadelInstrumentationOnErrorParameters> { params ->
+                every { params.getInstrumentationState<InstrumentationState>() } returns chainedState
+                every { params.copy(any(), any(), any(), any(), any()) } returns paramsCopy
+            }
+
+            // when
+            chainedInstrumentation.onError(params)
+
+            // then
+            chainedInstrumentation.getInstrumentations()
+                .forEach { instrumentation ->
+                    verify(exactly = 1) {
+                        instrumentation.onError(paramsCopy)
                     }
                 }
         }
