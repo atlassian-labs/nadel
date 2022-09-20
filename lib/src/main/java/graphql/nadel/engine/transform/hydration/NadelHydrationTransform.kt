@@ -217,7 +217,6 @@ internal class NadelHydrationTransform(
                         topLevelField = actorQuery,
                         executionContext = executionContext,
                         serviceHydrationDetails = serviceHydrationDetails,
-                        instrumentationState = executionContext.instrumentationState
                     )
                 }
             }.awaitAll()

@@ -31,10 +31,10 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
-import graphql.nadel.instrumentation.parameters.OnServiceExecutionErrorData
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
@@ -161,7 +161,6 @@ class NextgenEngine @JvmOverloads constructor(
                                             topLevelField = field,
                                             service = resolvedService,
                                             executionContext = executionContext,
-                                            instrumentationState = instrumentationState
                                         )
                                     } catch (e: Throwable) {
                                         when (e) {
@@ -192,7 +191,6 @@ class NextgenEngine @JvmOverloads constructor(
         topLevelField: ExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
-        instrumentationState: InstrumentationState?,
         serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
@@ -214,7 +212,6 @@ class NextgenEngine @JvmOverloads constructor(
             transformedQuery = transformedQuery,
             executionContext = executionContext,
             executionHydrationDetails = serviceHydrationDetails,
-            instrumentationState = instrumentationState,
         )
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
@@ -237,7 +234,6 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
         executionContext: NadelExecutionContext,
-        instrumentationState: InstrumentationState?,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
@@ -278,9 +274,9 @@ class NextgenEngine @JvmOverloads constructor(
                 NadelInstrumentationOnErrorParameters(
                     message = errorMessage,
                     exception = e,
-                    instrumentationState = instrumentationState,
+                    instrumentationState = executionContext.instrumentationState,
                     errorType = ServiceExecutionError,
-                    errorData = OnServiceExecutionErrorData(
+                    errorData = ErrorData.ServiceExecutionErrorData(
                         executionId = executionId,
                         serviceName = service.name
                     )

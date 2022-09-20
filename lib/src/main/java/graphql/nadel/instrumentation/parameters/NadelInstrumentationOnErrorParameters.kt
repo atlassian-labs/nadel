@@ -6,7 +6,7 @@ data class NadelInstrumentationOnErrorParameters(
     val message: String,
     val exception: Throwable,
     val errorType: ErrorType,
-    val errorData: Any?,
+    val errorData: ErrorData,
     private val instrumentationState: InstrumentationState?,
 ) {
     fun <T : InstrumentationState?> getInstrumentationState(): T? {
@@ -15,10 +15,12 @@ data class NadelInstrumentationOnErrorParameters(
     }
 }
 
-data class OnServiceExecutionErrorData(
-    val executionId: String,
-    val serviceName: String
-)
+sealed interface ErrorData {
+    data class ServiceExecutionErrorData(
+        val executionId: String,
+        val serviceName: String,
+    ) : ErrorData
+}
 
 enum class ErrorType {
     ServiceExecutionError

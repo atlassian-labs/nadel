@@ -50,7 +50,7 @@ class ChainedNadelInstrumentation(
         }
     }
 
-    override fun  onError(parameters: NadelInstrumentationOnErrorParameters) {
+    override fun onError(parameters: NadelInstrumentationOnErrorParameters) {
         instrumentations.forEach { instrumentation: NadelInstrumentation ->
             val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
             instrumentation.onError(parameters.copy(instrumentationState = state))

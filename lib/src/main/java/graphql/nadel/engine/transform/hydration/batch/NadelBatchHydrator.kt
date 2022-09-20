@@ -150,7 +150,6 @@ internal class NadelBatchHydrator(
                             topLevelField = actorQuery,
                             executionContext = state.executionContext,
                             serviceHydrationDetails = serviceHydrationDetails,
-                            instrumentationState = state.executionContext.instrumentationState
                         )
                     }
                 }
