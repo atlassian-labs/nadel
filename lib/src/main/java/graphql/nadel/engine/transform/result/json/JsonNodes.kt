@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.result.json
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
@@ -13,7 +12,6 @@ import java.util.Collections
  */
 class JsonNodes(
     private val data: JsonMap,
-    private val executionFlags: NadelExecutionHints,
 ) {
     private val nodes = Collections.synchronizedMap(
         mutableMapOf<NadelQueryPath, List<JsonNode>>(),

@@ -35,7 +35,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val nodes = JsonNodes(result.data, executionContext.hints)
+        val nodes = JsonNodes(result.data)
 
         val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
@@ -43,7 +43,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             for ((field, steps) in executionPlan.transformationSteps) {
                 // This can be null if we did not end up sending the field e.g. for hydration
                 val underlyingFields = overallToUnderlyingFields[field]
-                if (underlyingFields == null || underlyingFields.isEmpty()) {
+                if (underlyingFields.isNullOrEmpty()) {
                     continue
                 }
 

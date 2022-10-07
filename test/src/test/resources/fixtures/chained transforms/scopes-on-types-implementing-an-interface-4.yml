@@ -1,0 +1,107 @@
+name: scopes on types implementing an interface 4
+enabled: true
+overallSchema:
+  service: |
+    directive @toBeDeleted on FIELD_DEFINITION | OBJECT
+
+    type Query {
+      issue: [Issue]
+    }
+
+    interface Issue {
+      id: ID
+      title: String
+    }
+
+    type JiraIssue implements Issue @toBeDeleted {
+      id: ID
+      title: String
+      assignee: ID
+    }
+
+    type ThirdPartyIssue implements Issue {
+      id: ID
+      title: String
+      description: String
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      issue: [Issue]
+    }
+
+    interface Issue {
+      id: ID
+      title: String
+    }
+
+    type JiraIssue implements Issue {
+      id: ID
+      title: String
+      assignee: ID
+    }
+
+    type ThirdPartyIssue implements Issue {
+      id: ID
+      title: String
+      description: String
+    }
+query: |
+  query {
+    issue {
+      id
+      title
+    }
+  }
+variables: { }
+serviceCalls:
+    - serviceName: service
+      request:
+        query: |
+          {
+            issue {
+              uuid_typename: __typename
+              ... on ThirdPartyIssue {
+                id
+                title
+              }
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": [{
+              "uuid_typename": "JiraIssue"
+            }, {
+              "uuid_typename": "ThirdPartyIssue",
+              "id":  "ISSUE-0",
+              "title":  "New Issue"
+            }]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": [
+        null,
+        {
+          "id": "ISSUE-0",
+          "title": "New Issue"
+        }
+      ]
+    },
+    "errors": [
+      {
+        "message": "aint gonna work",
+        "locations": [],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ],
+    "extensions": {}
+  }

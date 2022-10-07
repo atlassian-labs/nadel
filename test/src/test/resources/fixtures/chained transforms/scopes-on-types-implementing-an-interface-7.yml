@@ -1,0 +1,96 @@
+name: scopes on types implementing an interface 7
+enabled: true
+overallSchema:
+  service: |
+    directive @toBeDeleted on FIELD_DEFINITION | OBJECT
+
+    type Query {
+      issue: Issue
+    }
+
+    type JiraIssue @toBeDeleted {
+      id: ID
+      title: String
+      assignee: ID
+    }
+
+    type ThirdPartyIssue {
+      id: ID
+      title: String
+      description: String
+    }
+
+    union Issue = JiraIssue | ThirdPartyIssue
+
+underlyingSchema:
+  service: |
+    type Query {
+      issue: Issue
+    }
+
+    type JiraIssue {
+      id: ID
+      title: String
+      assignee: ID
+    }
+
+    type ThirdPartyIssue {
+      id: ID
+      title: String
+      description: String
+    }
+
+    union Issue = JiraIssue | ThirdPartyIssue
+
+query: |
+  query {
+    issue {
+      ... on JiraIssue {
+        uuid_typename: __typename
+      }
+      ... on ThirdPartyIssue {
+        id
+        title
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            issue {
+              ... on JiraIssue {
+                uuid_typename: __typename
+              }
+              ... on ThirdPartyIssue {
+                id
+                title
+              }
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "ISSUE-0",
+              "title": "New Issue"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "id": "ISSUE-0",
+        "title": "New Issue"
+      }
+    },
+    "errors": [],
+    "extensions": {}
+  }
