@@ -3,7 +3,6 @@ package graphql.nadel.engine.util
 import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
-import graphql.ExecutionResultImpl
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder.newError
@@ -334,7 +333,7 @@ fun newServiceExecutionResult(
 fun newExecutionResult(
     data: Any? = null,
     error: GraphQLError,
-): ExecutionResultImpl {
+): ExecutionResult {
     return newExecutionResult()
         .data(data)
         .addError(error)
@@ -344,7 +343,7 @@ fun newExecutionResult(
 fun newExecutionErrorResult(
     field: ExecutableNormalizedField,
     error: GraphQLError,
-): ExecutionResultImpl {
+): ExecutionResult {
     return newExecutionResult(
         data = mutableMapOf(
             field.resultKey to null,
