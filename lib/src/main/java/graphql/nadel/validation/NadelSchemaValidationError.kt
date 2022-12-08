@@ -403,6 +403,20 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class MultipleSourceArgsInBatchHydration(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val fieldCoordinates = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Multiple \$source.xxx arguments are not supported for batch hydration. Field: $fieldCoordinates"
+        }
+
+        override val subject = overallField
+    }
+
     data class MissingArgumentOnUnderlying(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
@@ -464,6 +478,7 @@ sealed interface NadelSchemaValidationError {
                     null -> "field ${location.name}"
                     else -> "field ${makeFieldCoordinates(parent.overall.name, location.name)}"
                 }
+
                 is GraphQLType -> "type ${location.name}"
                 else -> "${location.javaClass.simpleName} ${location.name}"
             }

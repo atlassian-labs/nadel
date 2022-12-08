@@ -19,6 +19,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActor
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.MultipleSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
@@ -185,7 +186,21 @@ internal class NadelHydrationValidation(
                 }
             }
 
-        return duplicatedArgumentsErrors + remoteArgErrors + missingActorArgErrors
+        val isBatchHydration = actorField.type.unwrapNonNull().isList
+        val batchHydrationArgumentErrors: List<NadelSchemaValidationError> = when {
+            isBatchHydration -> {
+                val numberOfSourceArgs = hydration.arguments.count { it.remoteArgumentSource.sourceType == ObjectField }
+                when {
+                    numberOfSourceArgs > 1 ->
+                        listOf(MultipleSourceArgsInBatchHydration(parent, overallField))
+
+                    else -> emptyList()
+                }
+            }
+
+            else -> emptyList()
+        }
+        return duplicatedArgumentsErrors + remoteArgErrors + missingActorArgErrors + batchHydrationArgumentErrors
     }
 
     private fun getRemoteArgErrors(
@@ -203,6 +218,7 @@ internal class NadelHydrationValidation(
                     null
                 }
             }
+
             FieldArgument -> {
                 val argument = overallField.getArgument(remoteArgSource.argumentName!!)
                 if (argument == null) {
@@ -212,6 +228,7 @@ internal class NadelHydrationValidation(
                     null
                 }
             }
+
             else -> {
                 null
             }
