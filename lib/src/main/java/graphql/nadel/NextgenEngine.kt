@@ -152,7 +152,7 @@ class NextgenEngine @JvmOverloads constructor(
             val result: ExecutionResult = try {
                 mergeResults(
                     coroutineScope {
-                        fieldToService.getServicesForTopLevelFields(query)
+                        fieldToService.getServicesForTopLevelFields(query, executionHints)
                             .map { (field, service) ->
                                 async {
                                     try {

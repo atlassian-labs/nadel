@@ -1,0 +1,118 @@
+name: "typename is resolved even when no fields are queried from declaring service"
+enabled: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  IssueComments: |
+    extend type IssueQuery {
+      commentsCount: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  IssueComments: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      commentsCount: Int
+    }
+query: |
+  {
+    issue {
+      __typename
+      search {
+        id
+        count
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "IssueSearch"
+    request:
+      # Query does not have __typename as it is resolved by internal GraphQL
+      query: |
+        query {
+          issue {
+            search {
+              count
+              id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "search": {
+              "count": 1001,
+              "id": "search-id"
+            }
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "__typename": "IssueQuery",
+        "search": {
+          "id": "search-id",
+          "count": 1001
+        }
+      }
+    },
+    "extensions": {}
+  }

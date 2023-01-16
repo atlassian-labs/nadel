@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform.query
 
 import graphql.introspection.Introspection
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
@@ -22,10 +23,13 @@ internal class NadelFieldToService(
 ) {
     private val introspectionService = IntrospectionService(querySchema, introspectionRunnerFactory)
 
-    fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
+    fun getServicesForTopLevelFields(
+        query: ExecutableNormalizedOperation,
+        executionHints: NadelExecutionHints,
+    ): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
             if (isNamespacedField(topLevelField)) {
-                getServicePairsForNamespacedFields(topLevelField)
+                getServicePairsForNamespacedFields(topLevelField, executionHints)
             } else {
                 listOf(getServicePairFor(field = topLevelField))
             }
@@ -49,9 +53,12 @@ internal class NadelFieldToService(
 
     private fun getServicePairsForNamespacedFields(
         topLevelField: ExecutableNormalizedField,
+        executionHints: NadelExecutionHints,
     ): List<NadelFieldAndService> {
         return topLevelField.children
-            .groupBy(::getServiceForNamespacedField)
+            .groupBy { childField ->
+                getServiceForNamespacedField(childField, executionHints)
+            }
             .map { (service, childTopLevelFields) ->
                 NadelFieldAndService(
                     field = topLevelField.copyWithChildren(childTopLevelFields),
@@ -67,9 +74,20 @@ internal class NadelFieldToService(
         )
     }
 
-    private fun getServiceForNamespacedField(overallField: ExecutableNormalizedField): Service {
+    private fun getServiceForNamespacedField(
+        overallField: ExecutableNormalizedField,
+        executionHints: NadelExecutionHints,
+    ): Service {
         if (overallField.name == Introspection.TypeNameMetaFieldDef.name) {
-            return introspectionService
+            val namespaceTypeName = overallField.objectTypeNames.single()
+
+            return if (executionHints.internalNamespaceTypenameResolution(namespaceTypeName)) {
+                introspectionService
+            } else {
+                services.values.first { service ->
+                    serviceOwnsNamespacedField(namespaceTypeName, service)
+                }
+            }
         }
 
         return getService(overallField)
