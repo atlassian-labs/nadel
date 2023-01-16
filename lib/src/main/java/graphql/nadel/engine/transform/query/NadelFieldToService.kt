@@ -69,12 +69,7 @@ internal class NadelFieldToService(
 
     private fun getServiceForNamespacedField(overallField: ExecutableNormalizedField): Service {
         if (overallField.name == Introspection.TypeNameMetaFieldDef.name) {
-            // TODO: replace this logic with internal handling via IntrospectionService
-            // See https://github.com/atlassian-labs/nadel/pull/324
-            val operationTypeName = overallField.objectTypeNames.single()
-            return services.values.first { service ->
-                serviceOwnsNamespacedField(operationTypeName, service)
-            }
+            return introspectionService
         }
 
         return getService(overallField)
