@@ -1,0 +1,122 @@
+name: "typename is resolved when namespaced field and type are defined in different services"
+enabled: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    extend type IssueQuery {
+      getIssues: [Issue]
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  IssueComments: |
+    extend type IssueQuery {
+      commentsCount: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    extend type IssueQuery {
+      getIssues: [Issue]
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  IssueComments: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      commentsCount: Int
+    }
+query: |
+  {
+    issue {
+      __typename
+      getIssue {
+        text
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      # Query does not have __typename as it is resolved by internal GraphQL
+      query: |
+        query {
+          issue {
+            getIssue {
+              text
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "getIssue": {
+              "text": "Foo"
+            }
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "__typename": "IssueQuery",
+        "getIssue": {
+          "text": "Foo"
+        }
+      }
+    },
+    "extensions": {}
+  }

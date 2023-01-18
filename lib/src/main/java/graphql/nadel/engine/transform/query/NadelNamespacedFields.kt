@@ -2,6 +2,7 @@ package graphql.nadel.engine.transform.query
 
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.normalized.ExecutableNormalizedField
+import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
 
 object NadelNamespacedFields {
@@ -9,7 +10,11 @@ object NadelNamespacedFields {
         return overallField
             .getFieldDefinitions(schema)
             .any {
-                it.hasAppliedDirective(namespacedDirectiveDefinition.name)
+                isNamespacedField(it)
             }
+    }
+
+    fun isNamespacedField(definition: GraphQLFieldDefinition): Boolean {
+        return definition.hasAppliedDirective(namespacedDirectiveDefinition.name)
     }
 }

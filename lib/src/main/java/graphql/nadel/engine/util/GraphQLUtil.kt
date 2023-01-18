@@ -46,6 +46,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputType
@@ -175,6 +176,24 @@ private fun GraphQLFieldsContainer.getFieldContainerAt(
 fun ExecutableNormalizedField.toBuilder(): ExecutableNormalizedField.Builder {
     var builder: ExecutableNormalizedField.Builder? = null
     transform { builder = it }
+    return builder!!
+}
+
+fun GraphQLCodeRegistry.toBuilder(): GraphQLCodeRegistry.Builder {
+    var builder: GraphQLCodeRegistry.Builder? = null
+    transform { builder = it }
+    return builder!!
+}
+
+fun GraphQLSchema.toBuilder(): GraphQLSchema.Builder {
+    var builder: GraphQLSchema.Builder? = null
+    transform { builder = it }
+    return builder!!
+}
+
+fun GraphQLSchema.toBuilderWithoutTypes(): GraphQLSchema.BuilderWithoutTypes {
+    var builder: GraphQLSchema.BuilderWithoutTypes? = null
+    transformWithoutTypes { builder = it }
     return builder!!
 }
 
