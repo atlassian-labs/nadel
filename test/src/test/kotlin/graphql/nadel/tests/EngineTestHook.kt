@@ -66,7 +66,7 @@ interface EngineTestHook {
     /**
      * Allows you to wrap the base test service execution call, so you can do things before or after it
      */
-    fun wrapServiceExecution(baseTestServiceExecution: ServiceExecution) : ServiceExecution {
+    fun wrapServiceExecution(baseTestServiceExecution: ServiceExecution): ServiceExecution {
         return baseTestServiceExecution
     }
 }
@@ -103,7 +103,7 @@ private object Util {
         @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
         val allFixtureFileNames = File(javaClass.classLoader.getResource("fixtures").path)
             .walkTopDown()
-            .filter { it.extension == "yml" }
+            .filter { it.extension == "yml" || it.extension == "yaml" }
             .map { it.nameWithoutExtension }
             .toHashSet()
 
