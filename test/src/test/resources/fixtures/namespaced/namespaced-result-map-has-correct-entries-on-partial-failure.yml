@@ -1,0 +1,140 @@
+name: "namespaced result map has correct entries on partial failure"
+enabled: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+query: |
+  { ...F }
+
+  fragment F on Query {
+    issue {
+      getIssue {
+        text
+      }
+      search {
+        count
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      query: |
+        query {
+          issue {
+            getIssue {
+              text
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "getIssue": {
+              "text": "Foo"
+            }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "IssueSearch"
+    request:
+      query: |
+        query {
+          issue {
+            search {
+              count
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+        },
+        "errors": [
+          {
+            "message": "Error",
+            "locations": [],
+            "extensions": {
+              "classification": "DataFetchingException"
+            }
+          }
+        ]
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "getIssue": {
+          "text": "Foo"
+        },
+        "search": null
+      }
+    },
+    "errors": [
+      {
+        "message": "Error",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "extensions": {}
+  }

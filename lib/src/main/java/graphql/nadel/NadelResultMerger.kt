@@ -58,10 +58,10 @@ internal class NadelResultMerger {
             if (children.isNotEmpty()) {
                 val hasNotTypenameFields = children.any { it.name != Introspection.TypeNameMetaFieldDef.name }
 
+                // todo: could this be an array?
                 val childrenData = data[resultKey] as MutableJsonMap?
 
                 if (hasNotTypenameFields) {
-                    // todo: could this be an array?
                     val dataOnlyHasTypenameFields = childrenData
                         ?.keys
                         ?.all { key ->

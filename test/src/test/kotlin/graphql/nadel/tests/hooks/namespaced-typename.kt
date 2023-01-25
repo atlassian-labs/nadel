@@ -38,3 +38,12 @@ class `typename-is-kept-when-nothing-else-is-asked-for` : TurnTheFlagOn
 
 @UseHook
 class `typename-is-kept-when-data-is-partially-returned` : TurnTheFlagOn
+
+@UseHook
+class `multiple-typenames-are-wiped-when-other-data-fails` : TurnTheFlagOn
+
+@UseHook
+class `multiple-typename-is-kept-when-nothing-else-is-asked-for` : TurnTheFlagOn
+
+@UseHook
+class `aliased-typename-is-wiped-when-other-data-fails` : TurnTheFlagOn
