@@ -120,7 +120,8 @@ response: |-
         "__typename": "IssueQuery",
         "search": {
           "count": 10
-        }
+        },
+        "getIssue": null
       }
     },
     "errors": [

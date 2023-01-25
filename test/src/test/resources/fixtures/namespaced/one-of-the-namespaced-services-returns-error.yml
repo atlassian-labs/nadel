@@ -119,7 +119,8 @@ response: |-
       "issue": {
         "getIssue": {
           "text": "Foo"
-        }
+        },
+        "search": null
       }
     },
     "errors": [
