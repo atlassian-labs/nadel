@@ -5,13 +5,14 @@ import graphql.ExecutionResultImpl
 import graphql.GraphQLError
 import graphql.introspection.Introspection
 import graphql.nadel.engine.transform.query.NadelFieldAndService
-import graphql.nadel.engine.transform.query.NadelNamespacedFields.isNamespacedField
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.asJsonMap
 import graphql.nadel.engine.util.asMutableJsonMap
+import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.util.ErrorUtil
+import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLSchema
 
@@ -50,10 +51,19 @@ internal class NadelResultMerger {
         fields: List<NadelFieldAndService>,
         engineSchema: GraphQLSchema,
         data: MutableJsonMap,
-    ): MutableJsonMap {
+    ): MutableJsonMap? {
         val requiredFieldMap = buildRequiredFieldMap(fields, engineSchema)
 
         for ((resultKey, children) in requiredFieldMap) {
+            val topLevelFieldDef by lazy {
+                fields
+                    .first { (field) -> field.resultKey == resultKey.value }
+                    .field
+                    .getFieldDefinitions(engineSchema)
+                    .single() // This is under Query, Mutation etc. so there is only one field
+            }
+
+            // Ensure field is present in result
             if (resultKey.value !in data) {
                 data[resultKey.value] = null
             }
@@ -86,8 +96,19 @@ internal class NadelResultMerger {
                         if (child.resultKey !in childrenData) {
                             childrenData[child.resultKey] = null
                         }
+
+                        // Handle non-null case
+                        val childFieldDef = child.getFieldDefinitions(engineSchema).single()
+                        if (childFieldDef.type.isNonNull && childrenData[child.resultKey] == null) {
+                            data[resultKey.value] = null
+                        }
                     }
                 }
+            }
+
+            // Handle non-null case
+            if (topLevelFieldDef.type.isNonNull && data[resultKey.value] == null) {
+                return null
             }
         }
 
@@ -100,6 +121,8 @@ internal class NadelResultMerger {
     ): MutableMap<ResultKey, MutableList<ExecutableNormalizedField>> {
         val requiredFields = mutableMapOf<ResultKey, MutableList<ExecutableNormalizedField>>()
 
+        // NOTE: please ensure all fields are from object types and will NOT have multiple field defs
+        // Other code in this file relies on this contract
         for ((field) in fields) {
             val requiredChildFields = requiredFields
                 .computeIfAbsent(ResultKey(field.resultKey)) {

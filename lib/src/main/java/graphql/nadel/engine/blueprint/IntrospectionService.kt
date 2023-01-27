@@ -9,10 +9,10 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.transform.query.NadelNamespacedFields.isNamespacedField
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toBuilderWithoutTypes
+import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition

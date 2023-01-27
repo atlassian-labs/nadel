@@ -6,9 +6,9 @@ import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.transform.query.NadelNamespacedFields.isNamespacedField
 import graphql.nadel.engine.util.copyWithChildren
 import graphql.nadel.engine.util.makeFieldCoordinates
+import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.nadel.util.NamespacedUtil.serviceOwnsNamespacedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation

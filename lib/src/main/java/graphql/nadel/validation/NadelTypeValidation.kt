@@ -14,7 +14,6 @@ import graphql.nadel.engine.util.operationTypes
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.unwrapOne
-import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
@@ -45,6 +44,7 @@ internal class NadelTypeValidation(
     private val unionValidation = NadelUnionValidation(this)
     private val enumValidation = NadelEnumValidation()
     private val interfaceValidation = NadelInterfaceValidation()
+    private val namespaceValidation = NadelNamespaceValidation(overallSchema)
 
     fun validate(
         service: Service,
@@ -75,6 +75,7 @@ internal class NadelTypeValidation(
             inputValidation.validate(schemaElement) +
             unionValidation.validate(schemaElement) +
             interfaceValidation.validate(schemaElement) +
+            namespaceValidation.validate(schemaElement) +
             enumValidation.validate(schemaElement)
     }
 
@@ -274,12 +275,7 @@ internal class NadelTypeValidation(
     }
 
     private fun isNamespacedOperationType(typeName: String): Boolean {
-        return overallSchema.operationTypes.any { operationType ->
-            operationType.fields.any { field ->
-                field.hasAppliedDirective(NadelDirectives.namespacedDirectiveDefinition.name) &&
-                        field.type.unwrapAll().name == typeName
-            }
-        }
+        return namespaceValidation.isNamespacedOperationType(typeName)
     }
 
     private fun isOperationType(typeName: String): Boolean {

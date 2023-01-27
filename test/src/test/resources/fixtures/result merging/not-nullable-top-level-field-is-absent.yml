@@ -1,0 +1,52 @@
+name: "not nullable top level field is absent"
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo: String!
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: String!
+    }
+query: |
+  query {
+    foo
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service"
+    request:
+      query: |
+        query {
+          foo
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+        },
+        "errors": [
+          {
+            "message": "Test"
+          }
+        ],
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [
+      {
+        "message": "Test",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "extensions": {}
+  }
