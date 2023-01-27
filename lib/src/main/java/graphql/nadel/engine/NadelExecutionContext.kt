@@ -3,6 +3,7 @@ package graphql.nadel.engine
 import graphql.ExecutionInput
 import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.language.Document
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
@@ -14,11 +15,12 @@ import java.util.concurrent.ConcurrentHashMap
 
 data class NadelExecutionContext internal constructor(
     val executionInput: ExecutionInput,
-    val query: ExecutableNormalizedOperation,
-    internal val hooks: ServiceExecutionHooks,
-    val hints: NadelExecutionHints,
+    val inputOperation: ExecutableNormalizedOperation,
+    val inputQueryDocument: Document,
+    internal val serviceExecutionHooks: ServiceExecutionHooks,
+    val executionHints: NadelExecutionHints,
     val instrumentationState: InstrumentationState?,
-    internal val timer: NadelInstrumentationTimer,
+    internal val nadelTimer: NadelInstrumentationTimer,
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
 
@@ -37,7 +39,7 @@ data class NadelExecutionContext internal constructor(
      */
     fun getContextForService(service: Service): CompletableFuture<Any?> {
         return serviceContexts.getOrPut(service.name) {
-            hooks.createServiceContext(
+            serviceExecutionHooks.createServiceContext(
                 CreateServiceContextParams(service)
             )
         }

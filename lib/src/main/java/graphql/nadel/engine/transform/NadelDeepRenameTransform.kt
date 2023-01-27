@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -81,6 +82,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      *
      * Creates a state with the deep rename instructions and the transform alias.
      */
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -152,6 +154,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * }
      * ```
      */
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -285,6 +288,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * Remove(subjectPath=/collar)
      * ```
      */
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

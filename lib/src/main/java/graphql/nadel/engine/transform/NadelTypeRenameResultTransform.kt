@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform
 
 import graphql.introspection.Introspection
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -22,6 +23,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         val typeRenamePath: NadelQueryPath,
     )
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -39,6 +41,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -50,6 +53,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         return NadelTransformFieldResult.unmodified(field)
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

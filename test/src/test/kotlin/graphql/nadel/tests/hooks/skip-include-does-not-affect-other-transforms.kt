@@ -1,5 +1,6 @@
 package graphql.nadel.tests.hooks
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -20,6 +21,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
             object : NadelTransform<Any> {
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -35,6 +37,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     return null
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
@@ -48,6 +51,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,

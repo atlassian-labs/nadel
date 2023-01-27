@@ -1,42 +1,46 @@
 package graphql.nadel.engine.transform.query
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.util.toBuilder
-import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedField as ENF
 
-class NadelQueryTransformer private constructor(
-    private val executionBlueprint: NadelOverallExecutionBlueprint,
-    private val service: Service,
-    private val executionContext: NadelExecutionContext,
-    private val executionPlan: NadelExecutionPlan,
-    private val transformContext: TransformContext,
-) {
+private data class NadelQueryTransformerContext(
+    val service: Service,
+    val executionPlan: NadelExecutionPlan,
+
+    val artificialFields: MutableList<ENF>,
+    val overallToUnderlyingFields: MutableMap<ENF, List<ENF>>,
+)
+
+context(NadelEngineContext, NadelExecutionContext, NadelQueryTransformerContext)
+class NadelQueryTransformer private constructor() {
     companion object {
+        context(NadelEngineContext, NadelExecutionContext)
         suspend fun transformQuery(
-            executionBlueprint: NadelOverallExecutionBlueprint,
             service: Service,
-            executionContext: NadelExecutionContext,
             executionPlan: NadelExecutionPlan,
-            field: ExecutableNormalizedField,
-        ): TransformResult {
-            val transformContext = TransformContext()
 
-            val transformer = NadelQueryTransformer(
-                executionBlueprint,
-                service,
-                executionContext,
-                executionPlan,
-                transformContext,
+            field: ENF,
+        ): TransformResult {
+            val transformContext = NadelQueryTransformerContext(
+                service = service,
+                executionPlan = executionPlan,
+                artificialFields = mutableListOf(),
+                overallToUnderlyingFields = mutableMapOf(),
             )
-            val result = transformer.transform(field)
-                .also { rootFields ->
-                    transformer.fixParentRefs(parent = null, rootFields)
-                }
+
+            val result = with(transformContext) {
+                val transformer = NadelQueryTransformer()
+                transformer.transform(field)
+                    .also { rootFields ->
+                        transformer.fixParentRefs(parent = null, rootFields)
+                    }
+            }
 
             return TransformResult(
                 result = result,
@@ -46,41 +50,40 @@ class NadelQueryTransformer private constructor(
         }
     }
 
-    private data class TransformContext(
-        val artificialFields: MutableList<ExecutableNormalizedField> = mutableListOf(),
-        val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, List<ExecutableNormalizedField>> = mutableMapOf(),
-    )
-
     data class TransformResult(
         /**
          * The transformed fields.
          */
-        val result: List<ExecutableNormalizedField>,
+        val result: List<ENF>,
         /**
          * A list of fields that were added to the query that do not belong in the overall result.
          */
-        val artificialFields: List<ExecutableNormalizedField>,
-        val overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        val artificialFields: List<ENF>,
+        val overallToUnderlyingFields: Map<ENF, List<ENF>>,
     )
 
-    fun markArtificial(field: ExecutableNormalizedField) {
-        transformContext.artificialFields.add(field)
+    fun markArtificial(field: ENF) {
+        artificialFields.add(field)
+    }
+
+    private fun trackArtificialFields(fields: List<ENF>) {
+        artificialFields.addAll(fields)
     }
 
     /**
      * Helper for calling [transform] for all the given [fields].
      */
     suspend fun transform(
-        fields: List<ExecutableNormalizedField>,
-    ): List<ExecutableNormalizedField> {
+        fields: List<ENF>,
+    ): List<ENF> {
         return fields.flatMap {
             transform(it)
         }
     }
 
     suspend fun transform(
-        field: ExecutableNormalizedField,
-    ): List<ExecutableNormalizedField> {
+        field: ENF,
+    ): List<ENF> {
         val transformationSteps: List<NadelExecutionPlan.Step<Any>> = executionPlan.transformationSteps[field]
             ?: return listOf(
                 transformPlain(field)
@@ -90,9 +93,9 @@ class NadelQueryTransformer private constructor(
     }
 
     private suspend fun transform(
-        field: ExecutableNormalizedField,
+        field: ENF,
         transformationSteps: List<NadelExecutionPlan.Step<Any>>,
-    ): List<ExecutableNormalizedField> {
+    ): List<ENF> {
         val transformResult = applyTransformationSteps(field, transformationSteps)
 
         val artificialFields = transformResult.artificialFields.map {
@@ -112,10 +115,10 @@ class NadelQueryTransformer private constructor(
             },
         )
 
-        transformContext.artificialFields.addAll(artificialFields)
+        trackArtificialFields(artificialFields)
 
         // Track overall -> underlying fields
-        transformContext.overallToUnderlyingFields.compute(field) { _, oldValue ->
+        overallToUnderlyingFields.compute(field) { _, oldValue ->
             (oldValue ?: emptyList()) + newField + artificialFields
         }
 
@@ -125,7 +128,7 @@ class NadelQueryTransformer private constructor(
     /**
      * Transforms a field with no [NadelTransform]s associated with it.
      */
-    private suspend fun transformPlain(field: ExecutableNormalizedField): ExecutableNormalizedField {
+    private suspend fun transformPlain(field: ENF): ENF {
         return field.toBuilder()
             .clearObjectTypesNames()
             .objectTypeNames(getUnderlyingTypeNames(field.objectTypeNames))
@@ -133,23 +136,23 @@ class NadelQueryTransformer private constructor(
             .build()
             .also { newField ->
                 // Track overall -> underlying fields
-                transformContext.overallToUnderlyingFields.compute(field) { _, oldValue ->
+                overallToUnderlyingFields.compute(field) { _, oldValue ->
                     (oldValue ?: emptyList()) + newField
                 }
             }
     }
 
     private suspend fun applyTransformationSteps(
-        field: ExecutableNormalizedField,
+        field: ENF,
         transformationSteps: List<NadelExecutionPlan.Step<Any>>,
     ): NadelTransformFieldResult {
-        var fieldFromPreviousTransform: ExecutableNormalizedField = field
+        var fieldFromPreviousTransform: ENF = field
         var aggregatedTransformResult: NadelTransformFieldResult? = null
         for ((_, _, transform, state) in transformationSteps) {
             val transformResultForStep = transform.transformField(
-                executionContext,
+                executionContext = this@NadelExecutionContext,
                 this,
-                executionBlueprint,
+                overallExecutionBlueprint,
                 service,
                 fieldFromPreviousTransform,
                 state,
@@ -169,13 +172,13 @@ class NadelQueryTransformer private constructor(
 
     private fun getUnderlyingTypeNames(objectTypeNames: Collection<String>): List<String> {
         return objectTypeNames.map {
-            executionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
+            overallExecutionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
         }
     }
 
     private fun fixParentRefs(
-        parent: ExecutableNormalizedField?,
-        transformFields: List<ExecutableNormalizedField>,
+        parent: ENF?,
+        transformFields: List<ENF>,
     ) {
         transformFields.forEach {
             it.replaceParent(parent)

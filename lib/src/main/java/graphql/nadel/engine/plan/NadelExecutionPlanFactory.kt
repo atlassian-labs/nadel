@@ -1,5 +1,6 @@
 package graphql.nadel.engine.plan
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -33,16 +34,15 @@ internal class NadelExecutionPlanFactory(
      * This derives an execution plan from with the main input parameters being the
      * [rootField] and [executionBlueprint].
      */
+    context(NadelEngineContext, NadelExecutionContext)
     suspend fun create(
-        executionContext: NadelExecutionContext,
-        services: Map<String, Service>,
         service: Service,
         rootField: ExecutableNormalizedField,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
-        executionContext.timer.batch { timer ->
+        nadelTimer.batch { timer ->
             traverseQuery(rootField) { field ->
                 transformsWithTimingStepInfo.forEach { (transform, timingStep) ->
                     // This is a patch to prevent errors
@@ -54,7 +54,7 @@ internal class NadelExecutionPlanFactory(
 
                     val state = timer.time(step = timingStep) {
                         transform.isApplicable(
-                            executionContext,
+                            executionContext = this@NadelExecutionContext,
                             executionBlueprint,
                             services,
                             service,

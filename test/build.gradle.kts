@@ -11,11 +11,11 @@ dependencies {
         exclude(group = "com.graphql-java", module = "graphql-java")
     }
     testImplementation("org.reflections:reflections:0.9.12")
-    testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.6")
-    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.6")
-    testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
+    testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.1")
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.1")
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
     testImplementation("io.strikt:strikt-jvm:0.31.0")
-    testImplementation("org.yaml:snakeyaml:1.30")
+    testImplementation("org.yaml:snakeyaml:1.33")
 }
 
 tasks.withType<Test> {
@@ -30,8 +30,7 @@ tasks.withType<KotlinCompile>().configureEach {
             "-java-parameters",
             "-Xopt-in=kotlin.RequiresOptIn",
             "-Xjvm-default=all",
+            "-Xcontext-receivers",
         )
     }
-    sourceCompatibility = JavaVersion.VERSION_11.toString()
-    targetCompatibility = JavaVersion.VERSION_11.toString()
 }

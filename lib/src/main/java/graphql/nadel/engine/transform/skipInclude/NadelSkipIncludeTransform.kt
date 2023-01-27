@@ -3,6 +3,7 @@ package graphql.nadel.engine.transform.skipInclude
 import graphql.execution.MergedField
 import graphql.introspection.Introspection
 import graphql.language.Field
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -57,6 +58,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
      * This should really not happen. The real fix is to execute on the parent of the deleted
      * field and to fix [getResultInstructions] to include `underlyingField` and not just `underlyingParentField`.
      */
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -67,7 +69,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
     ): State? {
         // This hacks together a child that will pass through here
         if (overallField.children.isEmpty()) {
-            val mergedField = executionContext.query.getMergedField(overallField)
+            val mergedField = executionContext.inputOperation.getMergedField(overallField)
             if (hasAnyChildren(mergedField)) {
                 // Adds a field so we can transform it
                 overallField.children.add(createSkipField(executionBlueprint.engineSchema, overallField))
@@ -86,6 +88,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -105,6 +108,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

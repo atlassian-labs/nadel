@@ -2,6 +2,7 @@ package graphql.nadel.tests.transforms
 
 import graphql.GraphQLError
 import graphql.introspection.Introspection
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -22,6 +23,7 @@ import graphql.validation.ValidationError
 import graphql.validation.ValidationErrorType
 
 class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -45,6 +47,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         return null
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -67,6 +70,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

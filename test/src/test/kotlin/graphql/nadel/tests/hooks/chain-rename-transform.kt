@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.language.EnumValue
 import graphql.language.StringValue
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -19,6 +20,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 private class ChainRenameTransform : NadelTransform<Any> {
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -30,6 +32,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         return overallField.takeIf { it.name == "test" || it.name == "cities" }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -61,6 +64,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         error("Did not match transform conditions")
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

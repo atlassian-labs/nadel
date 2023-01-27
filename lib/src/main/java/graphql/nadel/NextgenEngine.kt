@@ -4,12 +4,14 @@ import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQLError
+import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.document.DocumentPredicates
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
@@ -27,10 +29,9 @@ import graphql.nadel.engine.util.newExecutionResult
 import graphql.nadel.engine.util.newGraphQLError
 import graphql.nadel.engine.util.newServiceExecutionErrorResult
 import graphql.nadel.engine.util.newServiceExecutionResult
-import graphql.nadel.engine.util.provide
-import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
@@ -41,6 +42,7 @@ import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
+import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -51,17 +53,23 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.concurrent.CompletableFuture
+
+data class NadelEngineContext(
+    val services: Map<String, Service>,
+    val instrumentation: NadelInstrumentation,
+    val overallSchema: GraphQLSchema,
+    val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
+    val executionIdProvider: ExecutionIdProvider,
+)
 
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
-
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val engineSchema = nadel.engineSchema
@@ -92,6 +100,17 @@ class NextgenEngine @JvmOverloads constructor(
     )
     private val executionIdProvider = nadel.executionIdProvider
 
+    private val engineContext = NadelEngineContext(
+        services = services,
+        // .mapKeys { (key) ->
+        //     ServiceName(key)
+        // },
+        instrumentation = instrumentation,
+        overallSchema = engineSchema,
+        overallExecutionBlueprint = overallExecutionBlueprint,
+        executionIdProvider = executionIdProvider,
+    )
+
     override fun execute(
         executionInput: ExecutionInput,
         queryDocument: Document,
@@ -121,7 +140,7 @@ class NextgenEngine @JvmOverloads constructor(
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
         executionHints: NadelExecutionHints,
-    ): ExecutionResult {
+    ): ExecutionResult = with(engineContext) {
         try {
             val timer = NadelInstrumentationTimer(
                 instrumentation,
@@ -143,54 +162,51 @@ class NextgenEngine @JvmOverloads constructor(
             val executionContext = NadelExecutionContext(
                 executionInput,
                 query,
+                queryDocument,
                 serviceExecutionHooks,
                 executionHints,
                 instrumentationState,
                 timer,
             )
-            val beginExecuteContext = instrumentation.beginExecute(
-                query,
-                queryDocument,
-                executionInput,
-                engineSchema,
-                instrumentationState,
-            )
 
-            val result: ExecutionResult = try {
-                val fields = fieldToService.getServicesForTopLevelFields(query, executionHints)
-                val results = coroutineScope {
-                    fields
-                        .map { (field, service) ->
-                            async {
-                                try {
-                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
-                                    executeTopLevelField(
-                                        topLevelField = field,
-                                        service = resolvedService,
-                                        executionContext = executionContext,
-                                    )
-                                } catch (e: Throwable) {
-                                    when (e) {
-                                        is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
-                                        else -> throw e
+            with(executionContext) {
+                val beginExecuteContext = instrumentation.beginExecute()
+
+                try {
+                    val fields = fieldToService.getServicesForTopLevelFields(query)
+                    val results = coroutineScope {
+                        fields
+                            .map { (field, service) ->
+                                async {
+                                    try {
+                                        val resolvedService = fieldToService.resolveDynamicService(field, service)
+                                        executeTopLevelField(
+                                            topLevelField = field,
+                                            service = resolvedService,
+                                        )
+                                    } catch (e: Throwable) {
+                                        when (e) {
+                                            is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
+                                            else -> throw e
+                                        }
                                     }
                                 }
                             }
-                        }
-                }.awaitAll()
+                    }.awaitAll()
 
-                if (executionHints.newResultMergerAndNamespacedTypename()) {
-                    NadelResultMerger.mergeResults(fields, engineSchema, results)
-                } else {
-                    graphql.nadel.engine.util.mergeResults(results)
+                    val result = if (executionHints.newResultMergerAndNamespacedTypename()) {
+                        NadelResultMerger.mergeResults(fields, engineSchema, results)
+                    } else {
+                        graphql.nadel.engine.util.mergeResults(results)
+                    }
+
+                    beginExecuteContext?.onCompleted(result, null)
+                    return result
+                } catch (e: Throwable) {
+                    beginExecuteContext?.onCompleted(null, e)
+                    throw e
                 }
-            } catch (e: Throwable) {
-                beginExecuteContext?.onCompleted(null, e)
-                throw e
             }
-
-            beginExecuteContext?.onCompleted(result, null)
-            return result
         } catch (e: Throwable) {
             when (e) {
                 is GraphQLError -> return newExecutionResult(error = e)
@@ -200,38 +216,49 @@ class NextgenEngine @JvmOverloads constructor(
     }
 
     internal suspend fun executeTopLevelField(
+        engineContext: NadelEngineContext,
+        executionContext: NadelExecutionContext,
+
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionContext: NadelExecutionContext,
         serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
-        val timer = executionContext.timer
-        val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
+        return with(engineContext) {
+            with(executionContext) {
+                executeTopLevelField(topLevelField, service, serviceHydrationDetails)
+            }
+        }
+    }
+
+    context(NadelEngineContext, NadelExecutionContext)
+    @JvmName("contextualExecuteTopLevelField")
+    internal suspend fun executeTopLevelField(
+        topLevelField: ExecutableNormalizedField,
+        service: Service,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
+    ): ServiceExecutionResult {
+        val executionPlan = nadelTimer.time(step = RootStep.ExecutionPlanning) {
             executionPlanner.create(
-                executionContext = executionContext,
-                services = services,
                 service = service,
                 rootField = topLevelField,
                 serviceHydrationDetails = serviceHydrationDetails,
             )
         }
-        val queryTransform = timer.time(step = RootStep.QueryTransforming) {
-            transformQuery(service, executionContext, executionPlan, topLevelField)
+        val queryTransform = nadelTimer.time(step = RootStep.QueryTransforming) {
+            transformQuery(service, executionPlan, topLevelField)
         }
         val transformedQuery = queryTransform.result.single()
-        val result: ServiceExecutionResult = timer.time(step = RootStep.ServiceExecution.child(service.name)) {
+        val result: ServiceExecutionResult = nadelTimer.time(step = RootStep.ServiceExecution.child(service.name)) {
             executeService(
                 service = service,
                 transformedQuery = transformedQuery,
-                executionContext = executionContext,
                 executionHydrationDetails = serviceHydrationDetails,
             )
         }
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
-            else -> timer.time(step = RootStep.ResultTransforming) {
+            else -> nadelTimer.time(step = RootStep.ResultTransforming) {
                 resultTransformer.transform(
-                    executionContext = executionContext,
                     executionPlan = executionPlan,
                     artificialFields = queryTransform.artificialFields,
                     overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
@@ -244,38 +271,29 @@ class NextgenEngine @JvmOverloads constructor(
         return transformedResult
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     private suspend fun executeService(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
-        executionContext: NadelExecutionContext,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
-        val timer = executionContext.timer
+        val jsonPredicate: VariablePredicate = getDocumentVariablePredicate(service)
 
-        val executionInput = executionContext.executionInput
-
-        val jsonPredicate: VariablePredicate = getDocumentVariablePredicate(executionContext.hints, service)
-
-        val compileResult = timer.time(step = DocumentCompilation) {
+        val compileResult = nadelTimer.time(step = DocumentCompilation) {
             compileToDocument(
                 schema = service.underlyingSchema,
                 operationKind = transformedQuery.getOperationKind(engineSchema),
-                operationName = getOperationName(service, executionContext),
+                operationName = getOperationName(service),
                 topLevelFields = listOf(transformedQuery),
                 variablePredicate = jsonPredicate
             )
         }
 
-        val serviceExecParams = ServiceExecutionParameters(
-            query = compileResult.document,
-            context = executionInput.context,
-            graphQLContext = executionInput.graphQLContext,
-            executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
-            variables = compileResult.variables,
-            operationDefinition = compileResult.document.definitions.singleOfType(),
-            serviceContext = executionContext.getContextForService(service).await(),
+        val serviceExecParams = ServiceExecutionParameters.Factory.get(
+            service = service,
+            compileResult = compileResult,
             hydrationDetails = executionHydrationDetails,
-            executableNormalizedField = transformedQuery,
+            query = transformedQuery,
         )
 
         val serviceExecResult = try {
@@ -292,7 +310,7 @@ class NextgenEngine @JvmOverloads constructor(
                 NadelInstrumentationOnErrorParameters(
                     message = errorMessage,
                     exception = e,
-                    instrumentationState = executionContext.instrumentationState,
+                    instrumentationState = instrumentationState,
                     errorType = ServiceExecutionError,
                     errorData = ErrorData.ServiceExecutionErrorData(
                         executionId = executionId,
@@ -322,42 +340,35 @@ class NextgenEngine @JvmOverloads constructor(
         )
     }
 
-    private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
-        return if (hints.allDocumentVariablesHint.invoke(service)) {
+    context(NadelEngineContext, NadelExecutionContext)
+    private fun getDocumentVariablePredicate(service: Service): VariablePredicate {
+        return if (executionHints.allDocumentVariablesHint.invoke(service)) {
             DocumentPredicates.allVariablesPredicate
         } else {
             DocumentPredicates.jsonPredicate
         }
     }
 
-    private fun getOperationName(service: Service, executionContext: NadelExecutionContext): String? {
-        val originalOperationName = executionContext.query.operationName
-        return if (executionContext.hints.legacyOperationNames(service)) {
+    context(NadelEngineContext, NadelExecutionContext)
+    private fun getOperationName(service: Service): String? {
+        val originalOperationName = inputOperation.operationName
+        return if (executionHints.legacyOperationNames(service)) {
             return OperationNameUtil.getLegacyOperationName(service.name, originalOperationName)
         } else {
             originalOperationName
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     private suspend fun transformQuery(
         service: Service,
-        executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
         field: ExecutableNormalizedField,
     ): NadelQueryTransformer.TransformResult {
         return NadelQueryTransformer.transformQuery(
-            overallExecutionBlueprint,
-            service,
-            executionContext,
-            executionPlan,
-            field,
+            service = service,
+            executionPlan = executionPlan,
+            field = field,
         )
-    }
-
-    companion object {
-        @JvmStatic
-        fun newNadel(): Nadel.Builder {
-            return Nadel.Builder().engineFactory(::NextgenEngine)
-        }
     }
 }

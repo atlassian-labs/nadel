@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform
 
 import graphql.introspection.Introspection
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -69,6 +70,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         val overallField: ExecutableNormalizedField,
     )
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -117,6 +119,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -172,6 +175,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

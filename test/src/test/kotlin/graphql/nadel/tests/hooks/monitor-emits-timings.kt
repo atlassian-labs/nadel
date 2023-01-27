@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.ExecutionResult
 import graphql.nadel.Nadel
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -29,6 +30,7 @@ import kotlinx.coroutines.delay
 import java.util.concurrent.CompletableFuture
 
 private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -41,6 +43,7 @@ private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
         return Unit
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -53,6 +56,7 @@ private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
         return NadelTransformFieldResult.unmodified(field)
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

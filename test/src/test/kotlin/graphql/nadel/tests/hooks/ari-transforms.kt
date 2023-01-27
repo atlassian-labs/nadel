@@ -1,6 +1,7 @@
 package graphql.nadel.tests.hooks
 
 import graphql.language.StringValue
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -22,6 +23,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 private class AriTestTransform : NadelTransform<Set<String>> {
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -47,6 +49,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
             }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -81,6 +84,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

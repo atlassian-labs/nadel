@@ -1,6 +1,7 @@
 package graphql.nadel.tests.hooks
 
 import graphql.ExecutionResult
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -25,7 +26,8 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
 
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
-            object : NadelTransform<Unit> {
+            object : NadelTransform<String> {
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -33,23 +35,25 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Unit? {
+                ): String? {
                     isApplicable.add("${service.name}.${overallField.resultKey}")
-                    return Unit
+                    return ""
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: Unit,
+                    state: String,
                 ): NadelTransformFieldResult {
                     transformField.add("${service.name}.${field.resultKey}")
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -57,7 +61,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: Unit,
+                    state: String,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     getResultInstructions.add("${service.name}.${overallField.resultKey}")

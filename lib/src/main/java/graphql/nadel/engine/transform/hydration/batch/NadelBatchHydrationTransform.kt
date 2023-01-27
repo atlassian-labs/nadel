@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -37,6 +38,7 @@ internal class NadelBatchHydrationTransform(
         val aliasHelper: NadelAliasHelper,
     )
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -62,6 +64,7 @@ internal class NadelBatchHydrationTransform(
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -100,6 +103,7 @@ internal class NadelBatchHydrationTransform(
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

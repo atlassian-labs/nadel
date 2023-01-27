@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.language.NullValue
 import graphql.language.StringValue
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -25,6 +26,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
         get() = listOf(
             // This transform mimics the ARI transform
             object : NadelTransform<Any> {
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -40,6 +42,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     }
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
@@ -75,6 +78,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     )
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,

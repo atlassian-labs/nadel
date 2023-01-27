@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.hydration
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -62,6 +63,7 @@ internal class NadelHydrationTransform(
         val executionContext: NadelExecutionContext,
     )
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -86,6 +88,7 @@ internal class NadelHydrationTransform(
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -140,6 +143,7 @@ internal class NadelHydrationTransform(
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -172,6 +176,7 @@ internal class NadelHydrationTransform(
         return jobs.awaitAll().flatten()
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     private suspend fun hydrate(
         parentNode: JsonNode,
         state: State,
@@ -191,7 +196,7 @@ internal class NadelHydrationTransform(
             return emptyList()
         }
 
-        val instruction = getHydrationFieldInstruction(state, instructions, executionContext.hooks, parentNode)
+        val instruction = getHydrationFieldInstruction(state, instructions, executionContext.serviceExecutionHooks, parentNode)
             ?: return listOf(
                 NadelResultInstruction.Set(
                     subject = parentNode,
@@ -199,6 +204,9 @@ internal class NadelHydrationTransform(
                     newValue = null,
                 ),
             )
+
+        val engineContext = this@NadelEngineContext
+        val executionContext = this@NadelExecutionContext
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(
@@ -220,9 +228,10 @@ internal class NadelHydrationTransform(
                         hydrationActorField = hydrationActorField
                     )
                     engine.executeTopLevelField(
+                        engineContext,
+                        executionContext,
                         service = instruction.actorService,
                         topLevelField = actorQuery,
-                        executionContext = executionContext,
                         serviceHydrationDetails = serviceHydrationDetails,
                     )
                 }

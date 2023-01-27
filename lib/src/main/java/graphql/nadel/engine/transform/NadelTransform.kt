@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform
 
 import graphql.language.Directive
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -38,6 +39,7 @@ interface NadelTransform<State : Any> {
      *
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
+    context(NadelEngineContext, NadelExecutionContext)
     suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -54,6 +56,7 @@ interface NadelTransform<State : Any> {
      * This lets you transform a field. You may add extra fields, modify the [field], or
      * ever delete the [field] from the query. See [NadelTransformFieldResult] for more.
      */
+    context(NadelEngineContext, NadelExecutionContext)
     suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -69,6 +72,7 @@ interface NadelTransform<State : Any> {
      *
      * Return a [List] of [NadelResultInstruction]s to modify the result.
      */
+    context(NadelEngineContext, NadelExecutionContext)
     suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

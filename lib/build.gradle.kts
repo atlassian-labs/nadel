@@ -16,16 +16,16 @@ dependencies {
 
     api(kotlin("stdlib"))
     api(kotlin("reflect"))
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.0")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
 
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.9.6")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.12.7.1")
     testImplementation("org.openjdk.jmh:jmh-core:1.21")
     testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.21")
-    testImplementation("com.google.guava:guava:28.0-jre")
-    testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
-    testImplementation("io.kotest:kotest-framework-datatest:5.1.0")
+    testImplementation("com.google.guava:guava:30.0-jre")
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
+    testImplementation("io.kotest:kotest-framework-datatest:5.5.4")
     testImplementation("io.mockk:mockk:1.12.3")
 }
 
@@ -46,10 +46,9 @@ tasks.withType<KotlinCompile>().configureEach {
             "-java-parameters",
             "-Xopt-in=kotlin.RequiresOptIn",
             "-Xjvm-default=all",
+            "-Xcontext-receivers",
         )
     }
-    sourceCompatibility = JavaVersion.VERSION_11.toString()
-    targetCompatibility = JavaVersion.VERSION_11.toString()
 }
 
 configure<PowerAssertGradleExtension> {

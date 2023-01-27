@@ -1,6 +1,7 @@
 package graphql.nadel.tests.hooks
 
 import graphql.language.StringValue
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -36,6 +37,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
              * executed in the test fixture.
              */
             object : NadelTransform<Any> {
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -56,6 +58,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     }
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
@@ -78,6 +81,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                         }
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,

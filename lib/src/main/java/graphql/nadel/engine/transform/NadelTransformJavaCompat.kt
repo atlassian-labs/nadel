@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -66,6 +67,7 @@ interface NadelTransformJavaCompat<State : Any> {
                 override val name: String
                     get() = compat.name
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -84,6 +86,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     ).asDeferred().await()
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
@@ -106,6 +109,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     }
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,

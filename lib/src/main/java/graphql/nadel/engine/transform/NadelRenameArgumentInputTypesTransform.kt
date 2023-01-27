@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -27,6 +28,7 @@ import graphql.normalized.NormalizedInputValue
 internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
     object State
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -45,6 +47,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
@@ -61,6 +64,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

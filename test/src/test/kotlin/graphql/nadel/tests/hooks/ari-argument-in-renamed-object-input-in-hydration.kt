@@ -5,6 +5,7 @@ import graphql.language.ObjectField.newObjectField
 import graphql.language.ObjectValue
 import graphql.language.ObjectValue.newObjectValue
 import graphql.language.StringValue
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -35,6 +36,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
         get() = listOf(
             // Transforms arguments in IssueInput
             object : NadelTransform<Any> {
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -45,12 +47,13 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                 ): Any? {
                     // Transforms arguments in IssueInput
                     return if (overallField.name == "issues") {
-                        Unit
+                        ""
                     } else {
                         null
                     }
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
@@ -95,6 +98,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     )
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -110,6 +114,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
             },
             // Transforms result ids
             object : NadelTransform<GraphQLAppliedDirective> {
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -124,6 +129,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                         .getAppliedDirective("ARI")
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
@@ -135,6 +141,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
+                context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,

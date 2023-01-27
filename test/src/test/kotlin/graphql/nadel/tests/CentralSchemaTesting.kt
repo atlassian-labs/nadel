@@ -13,8 +13,11 @@ import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
+import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
+import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLTypeUtil
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture

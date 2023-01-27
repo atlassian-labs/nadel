@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
@@ -16,15 +17,15 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
+    context(NadelEngineContext, NadelExecutionContext)
     suspend fun transform(
-        executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val nodes = JsonNodes(result.data, executionContext.hints)
+        val nodes = JsonNodes(result.data, executionHints)
 
         val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
@@ -40,7 +41,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                     deferredInstructions.add(
                         async {
                             step.transform.getResultInstructions(
-                                executionContext,
+                                executionContext = this@NadelExecutionContext,
                                 executionBlueprint,
                                 service,
                                 field,

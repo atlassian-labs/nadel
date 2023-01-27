@@ -1,9 +1,11 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelEngineExecutionHooks
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -26,6 +28,7 @@ import kotlinx.coroutines.coroutineScope
 internal class NadelBatchHydrator(
     private val engine: NextgenEngine,
 ) {
+    context(NadelEngineContext, NadelExecutionContext)
     suspend fun hydrate(
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -77,6 +80,7 @@ internal class NadelBatchHydrator(
         return jobs.awaitAll().flatten()
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     private suspend fun hydrate(
         executionBlueprint: NadelOverallExecutionBlueprint,
         state: State,
@@ -117,6 +121,7 @@ internal class NadelBatchHydrator(
         } + getInstructionsToAddErrors(batches)
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     private suspend fun executeBatches(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
@@ -129,8 +134,11 @@ internal class NadelBatchHydrator(
             aliasHelper = state.aliasHelper,
             hydratedField = state.hydratedField,
             parentNodes = parentNodes,
-            hooks = state.executionContext.hooks
+            hooks = state.executionContext.serviceExecutionHooks
         )
+
+        val engineContext = this@NadelEngineContext
+        val executionContext = this@NadelExecutionContext
 
         return coroutineScope {
             actorQueries
@@ -147,10 +155,12 @@ internal class NadelBatchHydrator(
                             hydrationSourceField = instruction.location,
                             hydrationActorField = hydrationActorField
                         )
+
                         engine.executeTopLevelField(
+                            engineContext,
+                            executionContext,
                             service = instruction.actorService,
                             topLevelField = actorQuery,
-                            executionContext = state.executionContext,
                             serviceHydrationDetails = serviceHydrationDetails,
                         )
                     }
@@ -164,13 +174,13 @@ internal class NadelBatchHydrator(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         parentNode: JsonNode,
     ): NadelBatchHydrationFieldInstruction? {
-        if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
+        if (state.executionContext.serviceExecutionHooks !is NadelEngineExecutionHooks) {
             error(
                 "Cannot decide which hydration instruction should be used. " +
                     "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
             )
         }
-        return state.executionContext.hooks.getHydrationInstruction(
+        return state.executionContext.serviceExecutionHooks.getHydrationInstruction(
             instructions,
             parentNode,
             state.aliasHelper,

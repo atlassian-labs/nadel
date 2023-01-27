@@ -10,7 +10,6 @@ import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationContext
-import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.ArrayValue
 import graphql.language.BooleanValue
 import graphql.language.Definition
@@ -36,14 +35,15 @@ import graphql.language.Type
 import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.util.ErrorUtil.createGraphQLErrorsFromRawErrors
 import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult
 import graphql.normalized.NormalizedInputValue
@@ -62,7 +62,6 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
-import java.util.Arrays
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
@@ -437,7 +436,7 @@ fun ExecutableNormalizedField.getOperationKind(
  * operation and fragment definitions in [Map]s.
  */
 internal fun Document.getOperationDefinitionOrNull(operationName: String?): OperationDefinition? {
-    if (operationName == null || operationName.isEmpty()) {
+    if (operationName.isNullOrEmpty()) {
         return definitions.singleOfTypeOrNull()
     }
 
@@ -446,22 +445,17 @@ internal fun Document.getOperationDefinitionOrNull(operationName: String?): Oper
     }
 }
 
-internal suspend fun NadelInstrumentation.beginExecute(
-    query: ExecutableNormalizedOperation,
-    queryDocument: Document,
-    executionInput: ExecutionInput,
-    graphQLSchema: GraphQLSchema,
-    instrumentationState: InstrumentationState?,
-): InstrumentationContext<ExecutionResult>? {
+context(NadelEngineContext, NadelExecutionContext)
+internal suspend fun NadelInstrumentation.beginExecute(): InstrumentationContext<ExecutionResult>? {
     val nadelInstrumentationExecuteOperationParameters = NadelInstrumentationExecuteOperationParameters(
-        query,
-        queryDocument,
-        graphQLSchema,
+        inputOperation,
+        inputQueryDocument,
+        overallSchema,
         executionInput.variables,
-        queryDocument.getOperationDefinitionOrNull(executionInput.operationName)
+        inputQueryDocument.getOperationDefinitionOrNull(executionInput.operationName)
             ?: error("Unable to find operation. This should not happen. Query document should be valid by now."),
         instrumentationState,
-        executionInput.context,
+        userContext,
     )
 
     return beginExecute(nadelInstrumentationExecuteOperationParameters)
