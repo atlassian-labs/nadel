@@ -126,7 +126,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                         }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, ARIState)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     service: Service,
@@ -136,7 +136,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, ARIState)
                 override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
