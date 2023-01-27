@@ -88,7 +88,6 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
@@ -104,7 +103,6 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
 
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

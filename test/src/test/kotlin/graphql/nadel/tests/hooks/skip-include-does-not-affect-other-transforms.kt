@@ -38,7 +38,6 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    service: Service,
                     field: ExecutableNormalizedField,
                 ): NadelTransformFieldResult {
                     throw UnsupportedOperationException("Should never be invoked")
@@ -46,7 +45,6 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
 
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun getResultInstructions(
-                    service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,

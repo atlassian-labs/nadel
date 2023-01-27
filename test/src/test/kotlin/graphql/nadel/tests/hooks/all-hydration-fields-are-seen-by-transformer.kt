@@ -23,7 +23,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
     private val transformField = synchronizedSet(mutableSetOf<String>())
     private val getResultInstructions = synchronizedSet(mutableSetOf<String>())
 
-    private object State : NadelTransformState
+    private data class State(val service: Service) : NadelTransformState
 
     override val customTransforms: List<NadelTransform<out NadelTransformState>>
         get() = listOf(
@@ -35,13 +35,12 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): State {
                     isApplicable.add("${service.name}.${overallField.resultKey}")
-                    return State
+                    return State(service)
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    service: Service,
                     field: ExecutableNormalizedField,
                 ): NadelTransformFieldResult {
                     transformField.add("${service.name}.${field.resultKey}")
@@ -50,7 +49,6 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
 
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun getResultInstructions(
-                    service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,

@@ -154,7 +154,6 @@ class NadelQueryTransformer private constructor() {
             val transformResultForStep = with(state) {
                 transform.transformField(
                     this@NadelQueryTransformer,
-                    service,
                     fieldFromPreviousTransform,
                 )
             }

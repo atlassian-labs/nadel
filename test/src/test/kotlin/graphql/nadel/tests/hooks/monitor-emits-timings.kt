@@ -46,7 +46,6 @@ private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsT
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
         delay(256)
@@ -55,7 +54,6 @@ private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsT
 
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
@@ -84,7 +82,6 @@ private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
         state: State,
     ): CompletableFuture<NadelTransformFieldResult> {
@@ -94,7 +91,6 @@ private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform
     override fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

@@ -26,7 +26,7 @@ import graphql.normalized.NormalizedInputValue
  * ```
  */
 internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
-    object State : NadelTransformState
+    data class State(val service: Service) : NadelTransformState
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
@@ -38,7 +38,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         // todo: this won't account for cases where a transform before this injected new arguments…
         // But that's not a big deal right now anyway…
         return if (overallField.normalizedArguments.isNotEmpty()) {
-            State
+            State(service)
         } else {
             null
         }
@@ -47,7 +47,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
@@ -60,7 +59,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
 
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

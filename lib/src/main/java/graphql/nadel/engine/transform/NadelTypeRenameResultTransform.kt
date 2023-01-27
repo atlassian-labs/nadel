@@ -20,7 +20,8 @@ import graphql.normalized.ExecutableNormalizedField
 internal class NadelTypeRenameResultTransform : NadelTransform<State> {
     data class State(
         val typeRenamePath: NadelQueryPath,
-    ):NadelTransformState
+        val service: Service,
+    ) : NadelTransformState
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
@@ -31,6 +32,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
             State(
                 typeRenamePath = overallField.queryPath,
+                service = service,
             )
         } else {
             null
@@ -40,7 +42,6 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
@@ -48,7 +49,6 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
 
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

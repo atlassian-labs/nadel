@@ -42,7 +42,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                         async {
                             with(step.state) {
                                 step.transform.getResultInstructions(
-                                    service,
                                     field,
                                     underlyingFields.first().parent,
                                     result,

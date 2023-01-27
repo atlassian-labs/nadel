@@ -43,6 +43,7 @@ typealias GraphQLObjectTypeName = String
  */
 internal class NadelDeepRenameTransform : NadelTransform<State> {
     data class State(
+        val service: Service,
         /**
          * The instructions for the a [ExecutableNormalizedField].
          *
@@ -96,6 +97,7 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
         }
 
         return State(
+            service,
             deepRenameInstructions,
             NadelAliasHelper.forField(tag = "deep_rename", overallField),
             overallField,
@@ -155,7 +157,6 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
         val objectTypesNoRenames = field.objectTypeNames.filterNot { it in instructionsByObjectTypeNames }
@@ -285,7 +286,6 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
      */
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
         result: ServiceExecutionResult,

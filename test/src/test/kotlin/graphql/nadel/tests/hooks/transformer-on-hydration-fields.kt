@@ -60,7 +60,6 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    service: Service,
                     field: ExecutableNormalizedField,
                 ): NadelTransformFieldResult {
                     val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
@@ -79,7 +78,6 @@ class `transformer-on-hydration-fields` : EngineTestHook {
 
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun getResultInstructions(
-                    service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,

@@ -25,14 +25,12 @@ interface NadelTransformAdapter : NadelTransform<State> {
 
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
     }
 
     override suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

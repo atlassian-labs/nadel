@@ -41,7 +41,6 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
         state: State,
     ): CompletableFuture<NadelTransformFieldResult>
@@ -52,7 +51,6 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
     fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
@@ -86,7 +84,6 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    service: Service,
                     field: ExecutableNormalizedField,
                 ): NadelTransformFieldResult {
                     return coroutineScope {
@@ -96,7 +93,6 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
                             executionContext = this@NadelExecutionContext,
                             transformer = NadelQueryTransformerJavaCompat(transformer, scope),
                             executionBlueprint = executionBlueprint,
-                            service = service,
                             field = field,
                             state = this@State,
                         ).asDeferred().await()
@@ -105,7 +101,6 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
 
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun getResultInstructions(
-                    service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
@@ -114,7 +109,6 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
                     return compat.getResultInstructions(
                         executionContext = this@NadelExecutionContext,
                         executionBlueprint = executionBlueprint,
-                        service = service,
                         overallField = overallField,
                         underlyingParentField = underlyingParentField,
                         result = result,

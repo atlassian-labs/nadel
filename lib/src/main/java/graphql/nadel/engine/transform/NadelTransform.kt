@@ -58,7 +58,6 @@ interface NadelTransform<State : NadelTransformState> {
     context(NadelEngineContext, NadelExecutionContext, State)
     suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult
 
@@ -70,7 +69,6 @@ interface NadelTransform<State : NadelTransformState> {
      */
     context(NadelEngineContext, NadelExecutionContext, State)
     suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

@@ -57,7 +57,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    service: Service,
                     field: ExecutableNormalizedField,
                 ): NadelTransformFieldResult {
                     fun newInputObjectValue(projectId: String, issueId: String): ObjectValue {
@@ -98,7 +97,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
 
                 context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun getResultInstructions(
-                    service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
@@ -127,7 +125,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                 context(NadelEngineContext, NadelExecutionContext, ARIState)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    service: Service,
                     field: ExecutableNormalizedField,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult.unmodified(field)
@@ -135,7 +132,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
 
                 context(NadelEngineContext, NadelExecutionContext, ARIState)
                 override suspend fun getResultInstructions(
-                    service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,

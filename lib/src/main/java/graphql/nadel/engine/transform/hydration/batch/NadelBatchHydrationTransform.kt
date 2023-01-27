@@ -60,7 +60,6 @@ internal class NadelBatchHydrationTransform(
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
-        service: Service,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
         val objectTypesNoRenames = field.objectTypeNames.filterNot { it in instructionsByObjectTypeNames }
@@ -77,7 +76,7 @@ internal class NadelBatchHydrationTransform(
             artificialFields = instructionsByObjectTypeNames
                 .flatMap { (objectTypeName, instructions) ->
                     NadelHydrationFieldsBuilder.makeRequiredSourceFields(
-                        service = service,
+                        service = hydratedFieldService,
                         executionBlueprint = executionBlueprint,
                         aliasHelper = aliasHelper,
                         objectTypeName = objectTypeName,
@@ -95,7 +94,6 @@ internal class NadelBatchHydrationTransform(
 
     context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

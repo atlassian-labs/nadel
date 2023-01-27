@@ -33,7 +33,6 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<State> {
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
         state: State,
     ): CompletableFuture<NadelTransformFieldResult> {
@@ -43,7 +42,6 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<State> {
     override fun getResultInstructions(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

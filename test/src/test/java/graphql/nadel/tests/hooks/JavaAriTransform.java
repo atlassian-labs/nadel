@@ -89,7 +89,6 @@ public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransfo
     public CompletableFuture<NadelTransformFieldResult> transformField(@NotNull NadelExecutionContext executionContext,
                                                                        @NotNull NadelQueryTransformerJavaCompat transformer,
                                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
-                                                                       @NotNull Service service,
                                                                        @NotNull ExecutableNormalizedField field,
                                                                        @NotNull State state) {
         Set<String> fieldsArgsToInterpret = state.data;
@@ -136,7 +135,6 @@ public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransfo
     @Override
     public CompletableFuture<List<NadelResultInstruction>> getResultInstructions(@NotNull NadelExecutionContext executionContext,
                                                                                  @NotNull NadelOverallExecutionBlueprint executionBlueprint,
-                                                                                 @NotNull Service service,
                                                                                  @NotNull ExecutableNormalizedField overallField,
                                                                                  @Nullable ExecutableNormalizedField underlyingParentField,
                                                                                  @NotNull ServiceExecutionResult result,
