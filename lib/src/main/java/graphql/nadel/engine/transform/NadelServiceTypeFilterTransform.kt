@@ -120,11 +120,10 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         // Nothing to query if there are no fields, we need to add selection
-        if (state.fieldObjectTypeNamesOwnedByService.isEmpty()) {
-            val objectTypeNames = state.overallField.parent.getFieldDefinitions(executionBlueprint.engineSchema)
+        if (fieldObjectTypeNamesOwnedByService.isEmpty()) {
+            val objectTypeNames = overallField.parent.getFieldDefinitions(executionBlueprint.engineSchema)
                 .asSequence()
                 .flatMap { fieldDef ->
                     resolveObjectTypes(
@@ -139,7 +138,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                     it.name
                 }
                 .filter {
-                    it in state.typeNamesOwnedByService
+                    it in typeNamesOwnedByService
                 }
                 .toSet()
                 .toList()
@@ -153,7 +152,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                 artificialFields = listOf(
                     newNormalizedField()
                         .objectTypeNames(objectTypeNames)
-                        .alias(state.aliasHelper.typeNameResultKey)
+                        .alias(aliasHelper.typeNameResultKey)
                         .fieldName(Introspection.TypeNameMetaFieldDef.name)
                         .build(),
                 ),
@@ -164,7 +163,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             newField = field
                 .toBuilder()
                 .clearObjectTypesNames()
-                .objectTypeNames(state.fieldObjectTypeNamesOwnedByService)
+                .objectTypeNames(fieldObjectTypeNamesOwnedByService)
                 .build(),
         )
     }
@@ -175,7 +174,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()

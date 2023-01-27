@@ -27,7 +27,6 @@ interface NadelTransformAdapter : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
     }
@@ -37,7 +36,6 @@ interface NadelTransformAdapter : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()

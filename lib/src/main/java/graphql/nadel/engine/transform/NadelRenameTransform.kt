@@ -9,6 +9,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.NadelRenameTransform.State
+import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NFUtil.createField
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -68,19 +69,18 @@ internal class NadelRenameTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
-            newField = if (state.objectTypesWithoutRename.isNotEmpty()) {
+            newField = if (objectTypesWithoutRename.isNotEmpty()) {
                 field.toBuilder()
                     .clearObjectTypesNames()
-                    .objectTypeNames(field.objectTypeNames.filter { it in state.objectTypesWithoutRename })
+                    .objectTypeNames(field.objectTypeNames.filter { it in objectTypesWithoutRename })
                     .build()
             } else {
                 null
             },
-            artificialFields = makeRenamedFields(state, transformer, field, executionBlueprint).let {
-                when (val typeNameField = makeTypeNameField(state, field)) {
+            artificialFields = makeRenamedFields(transformer, field, executionBlueprint).let {
+                when (val typeNameField = makeTypeNameField(field)) {
                     null -> it
                     else -> it + typeNameField
                 }
@@ -97,35 +97,35 @@ internal class NadelRenameTransform : NadelTransform<State> {
      *
      * This detail is omitted from most examples in this file for simplicity.
      */
+    context(State)
     private fun makeTypeNameField(
-        state: State,
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
         // No need for typename on top level field
-        if (state.overallField.queryPath.size == 1) {
+        if (overallField.queryPath.size == 1) {
             return null
         }
 
-        val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val typeNamesWithInstructions = instructionsByObjectTypeNames.keys
         val objectTypeNames = field.objectTypeNames
             .filter { it in typeNamesWithInstructions }
             .takeIf { it.isNotEmpty() }
             ?: return null
 
-        return NadelTransformUtil.makeTypeNameField(
-            aliasHelper = state.aliasHelper,
+        return makeTypeNameField(
+            aliasHelper = aliasHelper,
             objectTypeNames = objectTypeNames,
         )
     }
 
+    context(State)
     private suspend fun makeRenamedFields(
-        state: State,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
         val setOfFieldObjectTypeNames = field.objectTypeNames.toSet()
-        return state.instructionsByObjectTypeNames
+        return instructionsByObjectTypeNames
             .asSequence()
             .asFlow() // For coroutines
             .filter { (typeName) ->
@@ -134,10 +134,9 @@ internal class NadelRenameTransform : NadelTransform<State> {
             }
             .map { (typeName, instruction) ->
                 makeRenamedField(
-                    state,
                     transformer,
                     executionBlueprint,
-                    state.service,
+                    service,
                     field,
                     typeName,
                     rename = instruction,
@@ -146,8 +145,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
             .toList()
     }
 
+    context(State)
     private suspend fun makeRenamedField(
-        state: State,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
@@ -158,7 +157,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
-        return state.aliasHelper.toArtificial(
+        return aliasHelper.toArtificial(
             createField(
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
@@ -175,7 +174,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
@@ -185,12 +183,12 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
             val instruction = getInstructionForNode(
-                state = state,
+                state = this@State,
                 executionBlueprint = executionBlueprint,
                 parentNode = parentNode,
             ) ?: return@instruction null
 
-            val queryPathForSourceField = NadelQueryPath(state.aliasHelper.getResultKey(instruction.underlyingName))
+            val queryPathForSourceField = NadelQueryPath(aliasHelper.getResultKey(instruction.underlyingName))
             val sourceFieldNode = JsonNodeExtractor.getNodesAt(parentNode, queryPathForSourceField)
                 .emptyOrSingle() ?: return@instruction null
 

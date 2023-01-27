@@ -84,11 +84,10 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun transformField(
+                override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: State,
                 ): NadelTransformFieldResult {
                     return coroutineScope {
                         val scope = this@coroutineScope
@@ -99,18 +98,17 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
                             executionBlueprint = executionBlueprint,
                             service = service,
                             field = field,
-                            state = state,
+                            state = this@State,
                         ).asDeferred().await()
                     }
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun getResultInstructions(
+                override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return compat.getResultInstructions(
@@ -120,7 +118,7 @@ interface NadelTransformJavaCompat<State : NadelTransformState> {
                         overallField = overallField,
                         underlyingParentField = underlyingParentField,
                         result = result,
-                        state = state,
+                        state = this@State,
                         nodes = nodes,
                     ).asDeferred().await()
                 }

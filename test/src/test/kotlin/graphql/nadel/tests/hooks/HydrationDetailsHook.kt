@@ -28,6 +28,7 @@ class `basic-hydration` : HydrationDetailsHook() {
         assert(actualHydrationDetails.hydrationSourceService.name == "service1")
     }
 }
+
 @UseHook
 class `batch-hydration-with-renamed-actor-field` : HydrationDetailsHook() {
     override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {

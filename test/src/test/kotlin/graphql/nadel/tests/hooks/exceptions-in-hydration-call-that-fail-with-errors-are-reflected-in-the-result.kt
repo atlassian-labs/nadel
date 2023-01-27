@@ -36,6 +36,7 @@ class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-r
                         "Bar" -> ServiceExecution {
                             throw RuntimeException("Pop goes the weasel")
                         }
+
                         else -> serviceExecutionFactory.getServiceExecution(serviceName)
                     }
                 }

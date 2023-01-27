@@ -90,13 +90,12 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
             artificialFields = listOf(
                 field.toBuilder()
-                    .alias(state.aliasHelper.typeNameResultKey)
+                    .alias(aliasHelper.typeNameResultKey)
                     .fieldName(Introspection.TypeNameMetaFieldDef.name)
                     .build(),
             ),
@@ -109,7 +108,6 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()

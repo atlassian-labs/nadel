@@ -39,23 +39,21 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun transformField(
+                override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: State,
                 ): NadelTransformFieldResult {
                     transformField.add("${service.name}.${field.resultKey}")
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun getResultInstructions(
+                override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     getResultInstructions.add("${service.name}.${overallField.resultKey}")

@@ -16,7 +16,7 @@ class Hooks : ServiceExecutionHooks {
     private fun resolveServiceGeneric(
         services: Collection<Service>,
         idArgument: Any,
-        resultPath: ResultPath
+        resultPath: ResultPath,
     ): ServiceOrError {
         if (idArgument.toString().contains("pull-request")) {
             return ServiceOrError(
@@ -40,12 +40,11 @@ class Hooks : ServiceExecutionHooks {
                 .path(resultPath)
                 .build()
         )
-
     }
 
     override fun resolveServiceForField(
         services: List<Service>,
-        executableNormalizedField: ExecutableNormalizedField
+        executableNormalizedField: ExecutableNormalizedField,
     ): ServiceOrError {
         return resolveServiceGeneric(
             services,

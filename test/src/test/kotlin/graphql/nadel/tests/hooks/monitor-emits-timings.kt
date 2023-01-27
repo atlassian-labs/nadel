@@ -48,7 +48,6 @@ private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsT
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         delay(256)
         return NadelTransformFieldResult.unmodified(field)
@@ -60,7 +59,6 @@ private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsT
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         delay(32)

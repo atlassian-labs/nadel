@@ -156,7 +156,6 @@ class NadelQueryTransformer private constructor() {
                     this@NadelQueryTransformer,
                     service,
                     fieldFromPreviousTransform,
-                    state,
                 )
             }
             aggregatedTransformResult = if (aggregatedTransformResult == null) {

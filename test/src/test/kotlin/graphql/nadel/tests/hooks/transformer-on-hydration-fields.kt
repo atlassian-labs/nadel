@@ -58,11 +58,10 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun transformField(
+                override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: State,
                 ): NadelTransformFieldResult {
                     val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
                     return transformer.transform(field.children)
@@ -79,12 +78,11 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun getResultInstructions(
+                override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return emptyList()

@@ -42,11 +42,10 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun transformField(
+                override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: State,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult(
                         newField = field.toBuilder()
@@ -80,12 +79,11 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun getResultInstructions(
+                override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return emptyList()

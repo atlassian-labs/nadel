@@ -49,7 +49,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = field
@@ -65,7 +64,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()

@@ -157,9 +157,8 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
-        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
+        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in instructionsByObjectTypeNames }
 
         return NadelTransformFieldResult(
             newField = objectTypesNoRenames
@@ -170,10 +169,10 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
                         .objectTypeNames(it)
                         .build()
                 },
-            artificialFields = state.instructionsByObjectTypeNames
+            artificialFields = instructionsByObjectTypeNames
                 .map { (objectTypeWithRename, instruction) ->
                     makeDeepField(
-                        state,
+                        this@State,
                         transformer,
                         executionBlueprint,
                         service,
@@ -183,7 +182,7 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
                     )
                 }
                 .let { deepFields ->
-                    when (val typeNameField = makeTypeNameField(state, field)) {
+                    when (val typeNameField = makeTypeNameField(field)) {
                         null -> deepFields
                         else -> deepFields + typeNameField
                     }
@@ -200,18 +199,18 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
      *
      * This detail is omitted from most examples in this file for simplicity.
      */
+    context(State)
     private fun makeTypeNameField(
-        state: State,
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
-        val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val typeNamesWithInstructions = instructionsByObjectTypeNames.keys
         val objectTypeNames = field.objectTypeNames
             .filter { it in typeNamesWithInstructions }
             .takeIf { it.isNotEmpty() }
             ?: return null
 
         return NadelTransformUtil.makeTypeNameField(
-            aliasHelper = state.aliasHelper,
+            aliasHelper = aliasHelper,
             objectTypeNames = objectTypeNames,
         )
     }
@@ -290,7 +289,6 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
@@ -299,14 +297,14 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
         )
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
-            val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
+            val instruction = instructionsByObjectTypeNames.getInstructionForNode(
                 executionBlueprint = executionBlueprint,
                 service = service,
-                aliasHelper = state.aliasHelper,
+                aliasHelper = aliasHelper,
                 parentNode = parentNode,
             ) ?: return@instruction null
 
-            val queryPathForSourceField = state.aliasHelper.getQueryPath(instruction.queryPathToField)
+            val queryPathForSourceField = aliasHelper.getQueryPath(instruction.queryPathToField)
             val sourceFieldNode = JsonNodeExtractor.getNodesAt(parentNode, queryPathForSourceField)
                 .emptyOrSingle()
 
@@ -316,7 +314,6 @@ internal class NadelDeepRenameTransform : NadelTransform<State> {
                     key = NadelResultKey(overallField.resultKey),
                     newValue = null,
                 )
-
                 else -> NadelResultInstruction.Set(
                     subject = parentNode,
                     key = NadelResultKey(overallField.resultKey),

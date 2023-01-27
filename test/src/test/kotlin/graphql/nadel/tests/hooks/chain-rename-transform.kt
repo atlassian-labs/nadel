@@ -36,7 +36,6 @@ private class ChainRenameTransform : NadelTransform<ChainRenameTransform.State> 
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         if (field.normalizedArguments["arg"] != null) {
             return NadelTransformFieldResult(
@@ -67,7 +66,6 @@ private class ChainRenameTransform : NadelTransform<ChainRenameTransform.State> 
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()

@@ -59,9 +59,8 @@ private class AriTestTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
-        val fieldsArgsToInterpret = state.keys
+        val fieldsArgsToInterpret = keys
 
         return NadelTransformFieldResult(
             newField = field.toBuilder()
@@ -93,7 +92,6 @@ private class AriTestTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()

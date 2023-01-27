@@ -55,7 +55,6 @@ class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> 
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
@@ -77,7 +76,6 @@ class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> 
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
@@ -92,6 +90,6 @@ class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> 
                 key = NadelResultKey(overallField.resultKey),
                 newValue = null,
             )
-        } + NadelResultInstruction.AddError(state.error)
+        } + NadelResultInstruction.AddError(error)
     }
 }

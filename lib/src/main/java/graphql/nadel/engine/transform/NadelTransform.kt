@@ -60,7 +60,6 @@ interface NadelTransform<State : NadelTransformState> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult
 
     /**
@@ -75,7 +74,6 @@ interface NadelTransform<State : NadelTransformState> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction>
 }

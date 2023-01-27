@@ -16,7 +16,7 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
-        userContext: Any?
+        userContext: Any?,
     ): T? {
         return instructions.firstOrNull {
             val (_, _, valueSource) = it.actorInputValueDefs.single()
@@ -32,7 +32,7 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
 
     private fun <T : NadelGenericHydrationInstruction> hydrationInstructionMatchesArgumentValue(
         instruction: T,
-        hydrationArgumentValue: String
+        hydrationArgumentValue: String,
     ): Boolean {
         return instruction.actorFieldDef.name.contains("pet") && hydrationArgumentValue.startsWith(
             "pet", ignoreCase = true

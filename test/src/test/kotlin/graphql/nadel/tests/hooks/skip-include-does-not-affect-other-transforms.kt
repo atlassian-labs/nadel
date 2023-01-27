@@ -1,7 +1,6 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.NadelEngineContext
-import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -37,22 +36,20 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun transformField(
+                override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: State,
                 ): NadelTransformFieldResult {
                     throw UnsupportedOperationException("Should never be invoked")
                 }
 
                 context(NadelEngineContext, NadelExecutionContext, State)
-    override suspend fun getResultInstructions(
+                override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     throw UnsupportedOperationException("Should never be invoked")

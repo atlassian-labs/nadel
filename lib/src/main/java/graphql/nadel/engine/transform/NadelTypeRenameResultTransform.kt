@@ -42,7 +42,6 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
     }
@@ -53,7 +52,6 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(

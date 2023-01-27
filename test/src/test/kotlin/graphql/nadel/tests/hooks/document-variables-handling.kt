@@ -46,7 +46,7 @@ open class AllDocumentVariablesHintHook : EngineTestHook {
     override val wiringFactory = NeverWiringFactoryWithExtendedJsonScalar()
 
     override fun makeExecutionInput(
-        builder: NadelExecutionInput.Builder
+        builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
         return builder.transformExecutionHints {
             it.allDocumentVariablesHint {
@@ -68,6 +68,7 @@ class `inlined-all-arguments-with-mixed-literals-and-variables` : AllDocumentVar
 class `inlined-all-arguments-with-renamed-field` : AllDocumentVariablesHintHook() {
 
 }
+
 @UseHook
 class `inlined-all-arguments-with-renamed-field-input-is-wrapped-in-a-list` : AllDocumentVariablesHintHook() {
 }

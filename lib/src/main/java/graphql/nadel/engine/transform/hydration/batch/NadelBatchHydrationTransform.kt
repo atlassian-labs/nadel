@@ -62,9 +62,8 @@ internal class NadelBatchHydrationTransform(
         transformer: NadelQueryTransformer,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State,
     ): NadelTransformFieldResult {
-        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
+        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in instructionsByObjectTypeNames }
 
         return NadelTransformFieldResult(
             newField = objectTypesNoRenames
@@ -75,18 +74,18 @@ internal class NadelBatchHydrationTransform(
                         .objectTypeNames(it)
                         .build()
                 },
-            artificialFields = state.instructionsByObjectTypeNames
+            artificialFields = instructionsByObjectTypeNames
                 .flatMap { (objectTypeName, instructions) ->
                     NadelHydrationFieldsBuilder.makeRequiredSourceFields(
                         service = service,
                         executionBlueprint = executionBlueprint,
-                        aliasHelper = state.aliasHelper,
+                        aliasHelper = aliasHelper,
                         objectTypeName = objectTypeName,
                         instructions = instructions
                     )
                 }
                 .let { fields ->
-                    when (val typeNameField = makeTypeNameField(state, field)) {
+                    when (val typeNameField = makeTypeNameField(field)) {
                         null -> fields
                         else -> fields + typeNameField
                     }
@@ -100,7 +99,6 @@ internal class NadelBatchHydrationTransform(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
@@ -108,21 +106,21 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        return hydrator.hydrate(state, executionBlueprint, parentNodes)
+        return hydrator.hydrate(this@State, executionBlueprint, parentNodes)
     }
 
+    context(State)
     private fun makeTypeNameField(
-        state: State,
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
-        val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val typeNamesWithInstructions = instructionsByObjectTypeNames.keys
         val objectTypeNames = field.objectTypeNames
             .filter { it in typeNamesWithInstructions }
             .takeIf { it.isNotEmpty() }
             ?: return null
 
         return makeTypeNameField(
-            aliasHelper = state.aliasHelper,
+            aliasHelper = aliasHelper,
             objectTypeNames = objectTypeNames,
         )
     }

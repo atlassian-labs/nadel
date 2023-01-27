@@ -59,7 +59,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     transformer: NadelQueryTransformer,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: State,
                 ): NadelTransformFieldResult {
                     fun newInputObjectValue(projectId: String, issueId: String): ObjectValue {
                         return newObjectValue()
@@ -103,7 +102,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return emptyList()
@@ -131,7 +129,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     transformer: NadelQueryTransformer,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: ARIState,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult.unmodified(field)
                 }
@@ -142,7 +139,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: ARIState,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     val parentNodes = nodes.getNodesAt(
@@ -159,9 +155,9 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                             } else {
                                 val value = parentNodeAsMap[overallField.resultKey]
                                 val type =
-                                    (state.directive.getArgument("type").argumentValue.value as StringValue).value
+                                    (directive.getArgument("type").argumentValue.value as StringValue).value
                                 val owner =
-                                    (state.directive.getArgument("owner").argumentValue.value as StringValue).value
+                                    (directive.getArgument("owner").argumentValue.value as StringValue).value
 
                                 NadelResultInstruction.Set(
                                     subject = parentNode,

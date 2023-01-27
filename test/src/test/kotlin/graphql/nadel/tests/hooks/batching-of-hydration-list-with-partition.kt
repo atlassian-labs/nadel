@@ -14,14 +14,14 @@ private class BatchHydrationHooks : NadelEngineExecutionHooks {
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
-        userContext: Any?
+        userContext: Any?,
     ): T {
         return instructions[0]
     }
 
     override fun <T> partitionBatchHydrationArgumentList(
         argumentValues: List<T>,
-        instruction: NadelBatchHydrationFieldInstruction
+        instruction: NadelBatchHydrationFieldInstruction,
     ): List<List<T>> {
         return argumentValues.groupBy { (it as String).substringBefore("/") }
             .values

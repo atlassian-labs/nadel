@@ -46,7 +46,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                                     field,
                                     underlyingFields.first().parent,
                                     result,
-                                    step.state,
                                     nodes,
                                 )
                             }
