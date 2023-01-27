@@ -1,0 +1,105 @@
+name: "typename is wiped when other data fails includes not nullable field"
+enabled: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search: SearchResult!
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult!
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+query: |
+  {
+    issue {
+      __typename
+      search {
+        count
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "IssueSearch"
+    request:
+      query: |
+        query {
+          issue {
+            search {
+              count
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+        },
+        "errors": [
+          {
+            "message": "Error"
+          }
+        ],
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": null
+    },
+    "errors": [
+      {
+        "message": "Error",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "extensions": {}
+  }

@@ -1,0 +1,131 @@
+name: "not nullable namespaced child is absent"
+enabled: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search: SearchResult!
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult!
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+query: |
+  {
+    issue {
+      getIssue {
+        text
+      }
+      search {
+        count
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      query: |
+        query {
+          issue {
+            getIssue {
+              text
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "getIssue": {
+              "text": "Foo"
+            }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "IssueSearch"
+    request:
+      query: |
+        query {
+          issue {
+            search {
+              count
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": null
+        },
+        "errors": [
+          {
+            "message": "Error on IssueSearch"
+          }
+        ],
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": null
+    },
+    "errors": [
+      {
+        "message": "Error on IssueSearch",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "extensions": {}
+  }

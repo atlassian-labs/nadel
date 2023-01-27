@@ -47,3 +47,6 @@ class `multiple-typename-is-kept-when-nothing-else-is-asked-for` : TurnTheFlagOn
 
 @UseHook
 class `aliased-typename-is-wiped-when-other-data-fails` : TurnTheFlagOn
+
+@UseHook
+class `typename-is-wiped-when-other-data-fails-includes-not-nullable-field` : TurnTheFlagOn
