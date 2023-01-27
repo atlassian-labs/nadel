@@ -15,6 +15,9 @@ import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLSchema
 
+@JvmInline
+private value class ResultKey(val value: String)
+
 internal class NadelResultMerger {
     fun mergeResults(
         fields: List<NadelFieldAndService>,
@@ -51,12 +54,13 @@ internal class NadelResultMerger {
         val requiredFieldMap = buildRequiredFieldMap(fields, engineSchema)
 
         for ((resultKey, children) in requiredFieldMap) {
-            if (resultKey !in data) {
-                data[resultKey] = null
+            if (resultKey.value !in data) {
+                data[resultKey.value] = null
             }
 
             if (children.isNotEmpty()) {
-                val childrenData = data[resultKey] as? MutableJsonMap?
+                @Suppress("UNCHECKED_CAST")
+                val childrenData = data[resultKey.value] as? MutableJsonMap?
 
                 if (childrenData != null) {
                     val hasNonTypenameFields = children.any { it.name != Introspection.TypeNameMetaFieldDef.name }
@@ -73,7 +77,7 @@ internal class NadelResultMerger {
                             }
 
                         if (dataOnlyHasTypenameFields) {
-                            data[resultKey] = null
+                            data[resultKey.value] = null
                         }
                     }
 
@@ -93,13 +97,12 @@ internal class NadelResultMerger {
     private fun buildRequiredFieldMap(
         fields: List<NadelFieldAndService>,
         engineSchema: GraphQLSchema,
-    ): MutableMap<String, MutableList<ExecutableNormalizedField>> {
-        // key is resultKey I think??
-        val requiredFields = mutableMapOf<String, MutableList<ExecutableNormalizedField>>()
+    ): MutableMap<ResultKey, MutableList<ExecutableNormalizedField>> {
+        val requiredFields = mutableMapOf<ResultKey, MutableList<ExecutableNormalizedField>>()
 
         for ((field) in fields) {
             val requiredChildFields = requiredFields
-                .computeIfAbsent(field.resultKey) {
+                .computeIfAbsent(ResultKey(field.resultKey)) {
                     mutableListOf()
                 }
 
