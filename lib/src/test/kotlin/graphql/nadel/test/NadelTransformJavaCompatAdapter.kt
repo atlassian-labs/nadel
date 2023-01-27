@@ -7,16 +7,16 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.test.NadelTransformJavaCompatAdapter.State
+import graphql.nadel.test.NadelTransformJavaCompatAdapter.TransformContext
 import graphql.normalized.ExecutableNormalizedField
 import java.util.concurrent.CompletableFuture
 
-interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<State> {
-    object State : NadelTransformState
+interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<TransformContext> {
+    object TransformContext : NadelTransformContext
 
     override fun isApplicable(
         executionContext: NadelExecutionContext,
@@ -25,8 +25,8 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<State> {
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): CompletableFuture<State?> {
-        return CompletableFuture.completedFuture(State)
+    ): CompletableFuture<TransformContext?> {
+        return CompletableFuture.completedFuture(TransformContext)
     }
 
     override fun transformField(
@@ -34,7 +34,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<State> {
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
         field: ExecutableNormalizedField,
-        state: State,
+        state: TransformContext,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
@@ -45,7 +45,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
+        state: TransformContext,
         nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())

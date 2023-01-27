@@ -15,12 +15,11 @@ import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.GraphQLSchema
 
 internal object NadelResultMerger {
+    context(NadelEngineContext)
     fun mergeResults(
         fields: List<NadelFieldAndService>,
-        engineSchema: GraphQLSchema,
         results: List<ServiceExecutionResult>,
     ): ExecutionResult {
         val data: MutableJsonMap = mutableMapOf()
@@ -34,7 +33,7 @@ internal object NadelResultMerger {
         }
 
         return ExecutionResultImpl.newExecutionResult()
-            .data(fixData(fields, engineSchema, data))
+            .data(fixData(fields, data))
             .extensions(extensions.let {
                 @Suppress("UNCHECKED_CAST") // .extensions should take in a Map<*, *> instead of strictly Map<Any?, Any?>
                 it as Map<Any?, Any?>
@@ -45,19 +44,19 @@ internal object NadelResultMerger {
             .build()
     }
 
+    context(NadelEngineContext)
     private fun fixData(
         fields: List<NadelFieldAndService>,
-        engineSchema: GraphQLSchema,
         data: MutableJsonMap,
     ): MutableJsonMap? {
-        val requiredFieldMap = buildRequiredFieldMap(fields, engineSchema)
+        val requiredFieldMap = buildRequiredFieldMap(fields)
 
         for ((topLevelResultKey, children) in requiredFieldMap) {
             val topLevelFieldDef by lazy {
                 fields
                     .first { (field) -> field.resultKey == topLevelResultKey.value }
                     .field
-                    .getFieldDefinitions(engineSchema)
+                    .getFieldDefinitions(overallSchema)
                     .single() // This is under Query, Mutation etc. so there is only one field
             }
 
@@ -96,7 +95,7 @@ internal object NadelResultMerger {
                         }
 
                         // Handle non-null case
-                        val childFieldDef = child.getFieldDefinitions(engineSchema).single()
+                        val childFieldDef = child.getFieldDefinitions(overallSchema).single()
                         if (childFieldDef.type.isNonNull && childrenData[child.resultKey] == null) {
                             data[topLevelResultKey.value] = null
                         }
@@ -113,9 +112,9 @@ internal object NadelResultMerger {
         return data
     }
 
+    context(NadelEngineContext)
     private fun buildRequiredFieldMap(
         fields: List<NadelFieldAndService>,
-        engineSchema: GraphQLSchema,
     ): MutableMap<NadelResultKey, MutableList<ExecutableNormalizedField>> {
         val requiredFields = mutableMapOf<NadelResultKey, MutableList<ExecutableNormalizedField>>()
 
@@ -127,7 +126,7 @@ internal object NadelResultMerger {
                     mutableListOf()
                 }
 
-            if (isNamespacedField(field, engineSchema)) {
+            if (isNamespacedField(field, overallSchema)) {
                 requiredChildFields.addAll(field.children)
             }
         }

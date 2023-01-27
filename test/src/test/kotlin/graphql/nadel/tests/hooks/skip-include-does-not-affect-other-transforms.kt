@@ -7,7 +7,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -17,17 +17,17 @@ import graphql.normalized.ExecutableNormalizedField
 
 @UseHook
 class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
-    object State : NadelTransformState
+    object TransformContext : NadelTransformContext
 
-    override val customTransforms: List<NadelTransform<out NadelTransformState>>
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = listOf(
-            object : NadelTransform<State> {
+            object : NadelTransform<TransformContext> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): State? {
+                ): TransformContext? {
                     // All fields exist, no __skip field from NadelSkipIncludeTransform
                     assert(overallField.name != "__skip")
                     assert(overallField.getFieldDefinitions(executionBlueprint.engineSchema).isNotEmpty())
@@ -35,7 +35,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     return null
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     field: ExecutableNormalizedField,
@@ -43,7 +43,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     throw UnsupportedOperationException("Should never be invoked")
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun getResultInstructions(
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,

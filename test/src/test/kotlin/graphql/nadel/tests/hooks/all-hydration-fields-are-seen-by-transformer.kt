@@ -8,7 +8,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -23,22 +23,22 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
     private val transformField = synchronizedSet(mutableSetOf<String>())
     private val getResultInstructions = synchronizedSet(mutableSetOf<String>())
 
-    private data class State(val service: Service) : NadelTransformState
+    private data class TransformContext(val service: Service) : NadelTransformContext
 
-    override val customTransforms: List<NadelTransform<out NadelTransformState>>
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = listOf(
-            object : NadelTransform<State> {
+            object : NadelTransform<TransformContext> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): State {
+                ): TransformContext {
                     isApplicable.add("${service.name}.${overallField.resultKey}")
-                    return State(service)
+                    return TransformContext(service)
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     field: ExecutableNormalizedField,
@@ -47,7 +47,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun getResultInstructions(
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,

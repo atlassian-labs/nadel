@@ -12,9 +12,9 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.normalized.ExecutableNormalizedField
 
-interface NadelTransformState
+interface NadelTransformContext
 
-interface NadelTransform<State : NadelTransformState> {
+interface NadelTransform<TransformContext : NadelTransformContext> {
     /**
      * The name of the transform. Used for metrics purposes. Should be short and contain no special characters.
      */
@@ -22,31 +22,30 @@ interface NadelTransform<State : NadelTransformState> {
         get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
 
     /**
-     * Determines whether the [NadelTransform] should run. If it should run return a [State].
+     * Determines whether the [NadelTransform] should run. If it should run return a [TransformContext].
      *
-     * The returned [State] is then fed into [transformField] and [getResultInstructions].
+     * The returned [TransformContext] is then fed into [transformField] and [getResultInstructions].
      *
      * So here you will want to check whether the [overallField] has a specific [Directive] or
      * if the field has an instruction inside [NadelOverallExecutionBlueprint] etc.
      *
      * The state should hold data that is shared between [transformField] and [getResultInstructions]
-     * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
+     * e.g. the names of fields that will be added etc. The implementation of [TransformContext] is completely up
      * to you. You can make it mutable if that makes your life easier etc.
      *
-     * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
      * @param service the [Service] the [overallField] belongs to
      * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms
      * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
      * hydrations, `null` otherwise
      *
-     * @return null if the [NadelTransform] should not run, non-null [State] otherwise
+     * @return null if the [NadelTransform] should not run, non-null [TransformContext] otherwise
      */
     context(NadelEngineContext, NadelExecutionContext)
     suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails? = null,
-    ): State?
+    ): TransformContext?
 
     /**
      * Override this function to rewrite the result. If you do not wish to rewrite the field,
@@ -55,7 +54,7 @@ interface NadelTransform<State : NadelTransformState> {
      * This lets you transform a field. You may add extra fields, modify the [field], or
      * ever delete the [field] from the query. See [NadelTransformFieldResult] for more.
      */
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -67,7 +66,7 @@ interface NadelTransform<State : NadelTransformState> {
      *
      * Return a [List] of [NadelResultInstruction]s to modify the result.
      */
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

@@ -13,7 +13,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -31,30 +31,30 @@ import graphql.schema.GraphQLAppliedDirective
 
 @UseHook
 class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
-    private object State : NadelTransformState
+    private object TransformContext : NadelTransformContext
 
-    private data class ARIState(val directive: GraphQLAppliedDirective) : NadelTransformState
+    private data class ARITransformContext(val directive: GraphQLAppliedDirective) : NadelTransformContext
 
     // Add hardcoded transforms to change arguments and result resource IDs to ARIs etc.
-    override val customTransforms: List<NadelTransform<out NadelTransformState>>
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = listOf(
             // Transforms arguments in IssueInput
-            object : NadelTransform<State> {
+            object : NadelTransform<TransformContext> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): State? {
+                ): TransformContext? {
                     // Transforms arguments in IssueInput
                     return if (overallField.name == "issues") {
-                        State
+                        TransformContext
                     } else {
                         null
                     }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     field: ExecutableNormalizedField,
@@ -95,7 +95,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     )
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun getResultInstructions(
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
@@ -106,23 +106,23 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                 }
             },
             // Transforms result ids
-            object : NadelTransform<ARIState> {
+            object : NadelTransform<ARITransformContext> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): ARIState? {
+                ): ARITransformContext? {
                     return overallField
                         .getFieldDefinitions(executionBlueprint.engineSchema)
                         .single()
                         .getAppliedDirective("ARI")
                         ?.let {
-                            ARIState(it)
+                            ARITransformContext(it)
                         }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, ARIState)
+                context(NadelEngineContext, NadelExecutionContext, ARITransformContext)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     field: ExecutableNormalizedField,
@@ -130,7 +130,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, ARIState)
+                context(NadelEngineContext, NadelExecutionContext, ARITransformContext)
                 override suspend fun getResultInstructions(
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,

@@ -6,7 +6,7 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform.State
+import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform.TransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -25,26 +25,26 @@ import graphql.normalized.NormalizedInputValue
  * query x($var : UnderlyingTypeName!) { ... }
  * ```
  */
-internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
-    data class State(val service: Service) : NadelTransformState
+internal class NadelRenameArgumentInputTypesTransform : NadelTransform<TransformContext> {
+    data class TransformContext(val service: Service) : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         // Transform if there's any arguments at all
         // todo: this won't account for cases where a transform before this injected new arguments…
         // But that's not a big deal right now anyway…
         return if (overallField.normalizedArguments.isNotEmpty()) {
-            State(service)
+            TransformContext(service)
         } else {
             null
         }
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -57,7 +57,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

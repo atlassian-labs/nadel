@@ -10,7 +10,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -22,26 +22,26 @@ import graphql.normalized.NormalizedInputValue
 
 @UseHook
 class `ari-argument-in-renamed-input` : EngineTestHook {
-    private data class State(val field: ExecutableNormalizedField) : NadelTransformState
+    private data class TransformContext(val field: ExecutableNormalizedField) : NadelTransformContext
 
-    override val customTransforms: List<NadelTransform<out NadelTransformState>>
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = listOf(
             // This transform mimics the ARI transform
-            object : NadelTransform<State> {
+            object : NadelTransform<TransformContext> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): State? {
+                ): TransformContext? {
                     return if (overallField.normalizedArguments.isNotEmpty()) {
-                        State(overallField)
+                        TransformContext(overallField)
                     } else {
                         null
                     }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     field: ExecutableNormalizedField,
@@ -77,7 +77,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     )
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun getResultInstructions(
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,

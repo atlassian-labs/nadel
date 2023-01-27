@@ -9,7 +9,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -19,19 +19,19 @@ import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
-private class ChainRenameTransform : NadelTransform<ChainRenameTransform.State> {
-    object State : NadelTransformState
+private class ChainRenameTransform : NadelTransform<ChainRenameTransform.TransformContext> {
+    object TransformContext : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
-        return State.takeIf { overallField.name == "test" || overallField.name == "cities" }
+    ): TransformContext? {
+        return TransformContext.takeIf { overallField.name == "test" || overallField.name == "cities" }
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -59,7 +59,7 @@ private class ChainRenameTransform : NadelTransform<ChainRenameTransform.State> 
         error("Did not match transform conditions")
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
@@ -72,14 +72,14 @@ private class ChainRenameTransform : NadelTransform<ChainRenameTransform.State> 
 
 @UseHook
 class `chain-rename-transform` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out NadelTransformState>> = listOf(
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>> = listOf(
         ChainRenameTransform(),
     )
 }
 
 @UseHook
 class `chain-rename-transform-with-type-rename` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out NadelTransformState>> = listOf(
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>> = listOf(
         ChainRenameTransform(),
     )
 }

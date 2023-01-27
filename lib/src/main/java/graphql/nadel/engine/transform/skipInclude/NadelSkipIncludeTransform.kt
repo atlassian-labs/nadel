@@ -10,12 +10,12 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.State
+import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.TransformContext
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
@@ -34,7 +34,7 @@ import graphql.schema.GraphQLSchema
  * This should probably be a more generic "if no subselections add an empty one for removed fields".
  * But we'll deal with that separately.
  */
-internal class NadelSkipIncludeTransform : NadelTransform<State> {
+internal class NadelSkipIncludeTransform : NadelTransform<TransformContext> {
     companion object {
         private const val skipFieldName = "__skip"
 
@@ -43,9 +43,9 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         }
     }
 
-    class State(
+    class TransformContext(
         val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformState
+    ) : NadelTransformContext
 
     /**
      * So this transform is a bit odd. Normally transform operate on a specific field.
@@ -63,7 +63,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         // This hacks together a child that will pass through here
         if (overallField.children.isEmpty()) {
             val mergedField = inputOperation.getMergedField(overallField)
@@ -74,7 +74,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         }
 
         return if (overallField.name == skipFieldName) {
-            State(
+            TransformContext(
                 aliasHelper = NadelAliasHelper.forField(
                     tag = "skip_include",
                     field = overallField,
@@ -85,7 +85,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         }
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -101,7 +101,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

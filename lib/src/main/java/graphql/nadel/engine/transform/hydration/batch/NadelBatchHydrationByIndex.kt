@@ -25,7 +25,7 @@ internal class NadelBatchHydrationByIndex private constructor(
 ) {
     companion object {
         fun getHydrateInstructionsMatchingIndex(
-            state: NadelBatchHydrationTransform.State,
+            state: NadelBatchHydrationTransform.TransformContext,
             instruction: NadelBatchHydrationFieldInstruction,
             parentNodes: List<JsonNode>,
             batches: List<ServiceExecutionResult>,

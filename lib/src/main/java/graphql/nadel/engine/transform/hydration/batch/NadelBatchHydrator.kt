@@ -15,7 +15,7 @@ import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructio
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationByIndex.Companion.getHydrateInstructionsMatchingIndex
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationByObjectId.getHydrateInstructionsMatchingObjectId
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationByObjectId.getHydrateInstructionsMatchingObjectIds
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -30,7 +30,7 @@ internal class NadelBatchHydrator(
 ) {
     context(NadelEngineContext, NadelExecutionContext)
     suspend fun hydrate(
-        state: State,
+        state: TransformContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
@@ -83,7 +83,7 @@ internal class NadelBatchHydrator(
     context(NadelEngineContext, NadelExecutionContext)
     private suspend fun hydrate(
         executionBlueprint: NadelOverallExecutionBlueprint,
-        state: State,
+        state: TransformContext,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
@@ -123,7 +123,7 @@ internal class NadelBatchHydrator(
 
     context(NadelEngineContext, NadelExecutionContext)
     private suspend fun executeBatches(
-        state: State,
+        state: TransformContext,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<ServiceExecutionResult> {
@@ -169,7 +169,7 @@ internal class NadelBatchHydrator(
 
     context(NadelEngineContext, NadelExecutionContext)
     private fun getHydrationInstruction(
-        state: State,
+        state: TransformContext,
         instructions: List<NadelBatchHydrationFieldInstruction>,
         parentNode: JsonNode,
     ): NadelBatchHydrationFieldInstruction? {

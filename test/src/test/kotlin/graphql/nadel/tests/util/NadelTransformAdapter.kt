@@ -5,22 +5,22 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.tests.util.NadelTransformAdapter.State
+import graphql.nadel.tests.util.NadelTransformAdapter.TransformContext
 import graphql.normalized.ExecutableNormalizedField
 
-interface NadelTransformAdapter : NadelTransform<State> {
-    object State : NadelTransformState
+interface NadelTransformAdapter : NadelTransform<TransformContext> {
+    object TransformContext : NadelTransformContext
 
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
-        return State
+    ): TransformContext? {
+        return TransformContext
     }
 
     override suspend fun transformField(

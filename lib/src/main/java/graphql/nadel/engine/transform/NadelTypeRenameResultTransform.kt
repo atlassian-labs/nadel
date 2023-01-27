@@ -6,7 +6,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.State
+import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.TransformContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -17,20 +17,20 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 
-internal class NadelTypeRenameResultTransform : NadelTransform<State> {
-    data class State(
+internal class NadelTypeRenameResultTransform : NadelTransform<TransformContext> {
+    data class TransformContext(
         val typeRenamePath: NadelQueryPath,
         val service: Service,
-    ) : NadelTransformState
+    ) : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
-            State(
+            TransformContext(
                 typeRenamePath = overallField.queryPath,
                 service = service,
             )
@@ -39,7 +39,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         }
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -47,7 +47,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         return NadelTransformFieldResult.unmodified(field)
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

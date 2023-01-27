@@ -1,14 +1,14 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.transforms.RemoveFieldTestTransform
 
 @UseHook
 class `two-transforms-on-a-field` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out NadelTransformState>>
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = listOf(
             RemoveFieldTestTransform()
         )

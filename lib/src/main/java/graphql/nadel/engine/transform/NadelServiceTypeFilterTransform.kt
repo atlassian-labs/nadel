@@ -7,7 +7,7 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
-import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform.State
+import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform.TransformContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -61,20 +61,20 @@ import graphql.normalized.ExecutableNormalizedField.newNormalizedField
  * - service-types-are-filtered.yml
  * - service-types-are-completely-filtered.yml
  */
-class NadelServiceTypeFilterTransform : NadelTransform<State> {
-    data class State(
+class NadelServiceTypeFilterTransform : NadelTransform<TransformContext> {
+    data class TransformContext(
         val aliasHelper: NadelAliasHelper,
         val typeNamesOwnedByService: Set<String>,
         val fieldObjectTypeNamesOwnedByService: List<String>,
         val overallField: ExecutableNormalizedField,
-    ) : NadelTransformState
+    ) : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         when {
             // Ignore top level fields, they won't belong to multiple services
             // Do not randomly remove this, we rely on this later on too.
@@ -104,7 +104,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         }
 
 
-        return State(
+        return TransformContext(
             aliasHelper = NadelAliasHelper.forField(
                 tag = "type_filter",
                 field = overallField,
@@ -115,7 +115,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -167,7 +167,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

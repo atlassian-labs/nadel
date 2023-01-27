@@ -11,7 +11,7 @@ import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
@@ -23,7 +23,7 @@ import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
-    private val transforms: List<NadelTransform<NadelTransformState>>,
+    private val transforms: List<NadelTransform<NadelTransformContext>>,
 ) {
     // This will avoid creating the ChildStep object too many times
     private val transformsWithTimingStepInfo = transforms
@@ -93,7 +93,7 @@ internal class NadelExecutionPlanFactory(
     companion object {
         fun create(
             executionBlueprint: NadelOverallExecutionBlueprint,
-            transforms: List<NadelTransform<out NadelTransformState>>,
+            transforms: List<NadelTransform<out NadelTransformContext>>,
             engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
@@ -113,11 +113,11 @@ internal class NadelExecutionPlanFactory(
         }
 
         private fun listOfTransforms(
-            vararg elements: NadelTransform<out NadelTransformState>,
-        ): List<NadelTransform<NadelTransformState>> {
+            vararg elements: NadelTransform<out NadelTransformContext>,
+        ): List<NadelTransform<NadelTransformContext>> {
             return elements.map {
                 @Suppress("UNCHECKED_CAST") // Ssh it's okay
-                it as NadelTransform<NadelTransformState>
+                it as NadelTransform<NadelTransformContext>
             }
         }
     }

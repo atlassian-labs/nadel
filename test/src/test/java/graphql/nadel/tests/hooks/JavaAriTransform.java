@@ -9,7 +9,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint;
 import graphql.nadel.engine.transform.NadelTransform;
 import graphql.nadel.engine.transform.NadelTransformFieldResult;
 import graphql.nadel.engine.transform.NadelTransformJavaCompat;
-import graphql.nadel.engine.transform.NadelTransformState;
+import graphql.nadel.engine.transform.NadelTransformContext;
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat;
 import graphql.nadel.engine.transform.result.NadelResultInstruction;
 import graphql.nadel.engine.transform.result.json.JsonNodes;
@@ -36,11 +36,11 @@ import java.util.stream.Collectors;
 import static graphql.nadel.engine.util.GraphQLUtilKt.makeFieldCoordinates;
 import static java.util.Collections.emptyList;
 
-public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransform.State> {
-    static class State implements NadelTransformState {
+public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransform.TransformContext> {
+    static class TransformContext implements NadelTransformContext {
         final Set<String> data;
 
-        State(Set<String> data) {
+        TransformContext(Set<String> data) {
             this.data = data;
         }
     }
@@ -56,12 +56,12 @@ public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransfo
 
     @NotNull
     @Override
-    public CompletableFuture<State> isApplicable(@NotNull NadelExecutionContext executionContext,
-                                                 @NotNull NadelOverallExecutionBlueprint executionBlueprint,
-                                                 @NotNull Map<String, ? extends Service> services,
-                                                 @NotNull Service service,
-                                                 @NotNull ExecutableNormalizedField overallField,
-                                                 @Nullable ServiceExecutionHydrationDetails hydrationDetails) {
+    public CompletableFuture<TransformContext> isApplicable(@NotNull NadelExecutionContext executionContext,
+                                                            @NotNull NadelOverallExecutionBlueprint executionBlueprint,
+                                                            @NotNull Map<String, ? extends Service> services,
+                                                            @NotNull Service service,
+                                                            @NotNull ExecutableNormalizedField overallField,
+                                                            @Nullable ServiceExecutionHydrationDetails hydrationDetails) {
 
         String singleObjectTypeName = getSingleObjectTypeName(overallField);
         FieldCoordinates fieldCoordinates = makeFieldCoordinates(singleObjectTypeName, overallField.getName());
@@ -81,7 +81,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransfo
             return CompletableFuture.completedFuture(null);
         }
 
-        return CompletableFuture.completedFuture(new State(argsToTransform));
+        return CompletableFuture.completedFuture(new TransformContext(argsToTransform));
     }
 
     @NotNull
@@ -90,7 +90,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransfo
                                                                        @NotNull NadelQueryTransformerJavaCompat transformer,
                                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                        @NotNull ExecutableNormalizedField field,
-                                                                       @NotNull State state) {
+                                                                       @NotNull TransformContext state) {
         Set<String> fieldsArgsToInterpret = state.data;
 
         return CompletableFuture.completedFuture(
@@ -138,7 +138,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransfo
                                                                                  @NotNull ExecutableNormalizedField overallField,
                                                                                  @Nullable ExecutableNormalizedField underlyingParentField,
                                                                                  @NotNull ServiceExecutionResult result,
-                                                                                 @NotNull State strings,
+                                                                                 @NotNull TransformContext strings,
                                                                                  @NotNull JsonNodes nodes) {
         return CompletableFuture.completedFuture(emptyList());
     }

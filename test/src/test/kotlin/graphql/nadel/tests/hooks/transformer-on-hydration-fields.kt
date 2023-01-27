@@ -8,7 +8,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -28,9 +28,9 @@ class `transformer-on-hydration-fields` : EngineTestHook {
         } else hasParentWithName(field.parent, parentName)
     }
 
-    object State : NadelTransformState
+    object TransformContext : NadelTransformContext
 
-    override val customTransforms: List<NadelTransform<out NadelTransformState>>
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = listOf(
             /**
              * This transform will modify the arguments of the "barById" field.
@@ -38,16 +38,16 @@ class `transformer-on-hydration-fields` : EngineTestHook {
              * It will force a new value for the "id" argument, so we can assert that the transform was
              * executed in the test fixture.
              */
-            object : NadelTransform<State> {
+            object : NadelTransform<TransformContext> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): State? {
+                ): TransformContext? {
                     return if (overallField.name == "barById") {
                         assert(hydrationDetails != null)
-                        State
+                        TransformContext
                     } else if (hasParentWithName(overallField, "barById")) {
                         assert(hydrationDetails != null)
                         null
@@ -57,7 +57,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun transformField(
                     transformer: NadelQueryTransformer,
                     field: ExecutableNormalizedField,
@@ -76,7 +76,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                         }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext, State)
+                context(NadelEngineContext, NadelExecutionContext, TransformContext)
                 override suspend fun getResultInstructions(
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,

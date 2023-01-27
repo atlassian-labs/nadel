@@ -23,7 +23,7 @@ import graphql.nadel.engine.util.unwrapNonNull
 internal object NadelBatchHydrationByObjectId {
     fun getHydrateInstructionsMatchingObjectIds(
         executionBlueprint: NadelOverallExecutionBlueprint,
-        state: NadelBatchHydrationTransform.State,
+        state: NadelBatchHydrationTransform.TransformContext,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         batches: List<ServiceExecutionResult>,
@@ -41,7 +41,7 @@ internal object NadelBatchHydrationByObjectId {
 
     fun getHydrateInstructionsMatchingObjectId(
         executionBlueprint: NadelOverallExecutionBlueprint,
-        state: NadelBatchHydrationTransform.State,
+        state: NadelBatchHydrationTransform.TransformContext,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         batches: List<ServiceExecutionResult>,
@@ -59,7 +59,7 @@ internal object NadelBatchHydrationByObjectId {
 
     private fun getHydrateInstructionsMatchingObjectIds(
         executionBlueprint: NadelOverallExecutionBlueprint,
-        state: NadelBatchHydrationTransform.State,
+        state: NadelBatchHydrationTransform.TransformContext,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         batches: List<ServiceExecutionResult>,
@@ -129,7 +129,7 @@ internal object NadelBatchHydrationByObjectId {
 
     private fun getHydrateInstructionsForNodeMatchingObjectId(
         executionBlueprint: NadelOverallExecutionBlueprint,
-        state: NadelBatchHydrationTransform.State,
+        state: NadelBatchHydrationTransform.TransformContext,
         sourceNode: JsonNode,
         sourceIds: List<List<Any?>>,
         resultNodesByObjectId: Map<List<Any?>, JsonMap>,

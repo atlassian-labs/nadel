@@ -6,7 +6,7 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.tests.util.join
@@ -28,7 +28,7 @@ interface EngineTestHook {
         val noOp = object : EngineTestHook {}
     }
 
-    val customTransforms: List<NadelTransform<out NadelTransformState>>
+    val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = emptyList()
 
     val schemaTransformationHook: SchemaTransformationHook

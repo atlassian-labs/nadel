@@ -17,7 +17,7 @@ import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.DynamicServiceResolution
 import graphql.nadel.engine.transform.query.NadelFieldToService
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -68,7 +68,7 @@ data class NadelEngineContext(
 
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
-    transforms: List<NadelTransform<out NadelTransformState>> = emptyList(),
+    transforms: List<NadelTransform<out NadelTransformContext>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -196,7 +196,7 @@ class NextgenEngine @JvmOverloads constructor(
                     }.awaitAll()
 
                     val result = if (executionHints.newResultMergerAndNamespacedTypename()) {
-                        NadelResultMerger.mergeResults(fields, engineSchema, results)
+                        NadelResultMerger.mergeResults(fields, results)
                     } else {
                         graphql.nadel.engine.util.mergeResults(results)
                     }

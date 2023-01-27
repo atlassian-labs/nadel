@@ -11,7 +11,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -30,20 +30,20 @@ import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.delay
 import java.util.concurrent.CompletableFuture
 
-private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsTransform.State> {
-    object State : NadelTransformState
+private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsTransform.TransformContext> {
+    object TransformContext : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         delay(128)
-        return State
+        return TransformContext
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -52,7 +52,7 @@ private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsT
         return NadelTransformFieldResult.unmodified(field)
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
@@ -64,8 +64,8 @@ private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsT
     }
 }
 
-private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform.State> {
-    object State : NadelTransformState
+private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform.TransformContext> {
+    object TransformContext : NadelTransformContext
 
     override fun isApplicable(
         executionContext: NadelExecutionContext,
@@ -74,8 +74,8 @@ private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): CompletableFuture<State?> {
-        return CompletableFuture.completedFuture(State)
+    ): CompletableFuture<TransformContext?> {
+        return CompletableFuture.completedFuture(TransformContext)
     }
 
     override fun transformField(
@@ -83,7 +83,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
         field: ExecutableNormalizedField,
-        state: State,
+        state: TransformContext,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
@@ -94,7 +94,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State,
+        state: TransformContext,
         nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())
@@ -105,7 +105,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform
 class `monitor-emits-timings` : EngineTestHook {
     private val stepsWitnessed = mutableSetOf<Step>()
 
-    override val customTransforms: List<NadelTransform<out NadelTransformState>>
+    override val customTransforms: List<NadelTransform<out NadelTransformContext>>
         get() = listOf(
             MonitorEmitsTimingsTransform(),
             NadelTransformJavaCompat.create(JavaTimingTransform()),

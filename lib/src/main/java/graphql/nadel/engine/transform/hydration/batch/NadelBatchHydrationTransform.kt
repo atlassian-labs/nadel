@@ -11,11 +11,11 @@ import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -26,27 +26,27 @@ import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
-) : NadelTransform<State> {
+) : NadelTransform<TransformContext> {
     private val hydrator = NadelBatchHydrator(engine)
 
-    data class State(
+    data class TransformContext(
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
         val hydratedField: ExecutableNormalizedField,
         val hydratedFieldService: Service,
         val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformState
+    ) : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionsMap<NadelBatchHydrationFieldInstruction>(overallField)
 
         return if (instructionsByObjectTypeName.isNotEmpty()) {
-            return State(
+            return TransformContext(
                 instructionsByObjectTypeNames = instructionsByObjectTypeName,
                 hydratedField = overallField,
                 hydratedFieldService = service,
@@ -57,7 +57,7 @@ internal class NadelBatchHydrationTransform(
         }
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -92,7 +92,7 @@ internal class NadelBatchHydrationTransform(
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
@@ -104,10 +104,10 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        return hydrator.hydrate(this@State, executionBlueprint, parentNodes)
+        return hydrator.hydrate(this@TransformContext, executionBlueprint, parentNodes)
     }
 
-    context(State)
+    context(TransformContext)
     private fun makeTypeNameField(
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {

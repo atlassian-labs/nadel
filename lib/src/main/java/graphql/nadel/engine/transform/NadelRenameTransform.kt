@@ -8,7 +8,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
-import graphql.nadel.engine.transform.NadelRenameTransform.State
+import graphql.nadel.engine.transform.NadelRenameTransform.TransformContext
 import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NFUtil.createField
@@ -29,21 +29,21 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 
-internal class NadelRenameTransform : NadelTransform<State> {
-    data class State(
+internal class NadelRenameTransform : NadelTransform<TransformContext> {
+    data class TransformContext(
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelRenameFieldInstruction>,
         val objectTypesWithoutRename: Set<String>,
         val aliasHelper: NadelAliasHelper,
         val overallField: ExecutableNormalizedField,
         val service: Service,
-    ) : NadelTransformState
+    ) : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         val renameInstructions = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionMap<NadelRenameFieldInstruction>(overallField)
         if (renameInstructions.isEmpty()) {
@@ -55,7 +55,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             .filterNot { it in renameInstructions }
             .toHashSet()
 
-        return State(
+        return TransformContext(
             renameInstructions,
             objectsWithoutRename,
             NadelAliasHelper.forField(tag = "rename", overallField),
@@ -64,7 +64,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -88,7 +88,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     }
 
     /**
-     * Read [State.instructionsByObjectTypeNames]
+     * Read [TransformContext.instructionsByObjectTypeNames]
      *
      * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
@@ -96,7 +96,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
      *
      * This detail is omitted from most examples in this file for simplicity.
      */
-    context(State)
+    context(TransformContext)
     private fun makeTypeNameField(
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
@@ -117,7 +117,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         )
     }
 
-    context(State)
+    context(TransformContext)
     private suspend fun makeRenamedFields(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -144,7 +144,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             .toList()
     }
 
-    context(State)
+    context(TransformContext)
     private suspend fun makeRenamedField(
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -167,7 +167,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
@@ -181,7 +181,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
             val instruction = getInstructionForNode(
-                state = this@State,
+                state = this@TransformContext,
                 executionBlueprint = executionBlueprint,
                 parentNode = parentNode,
             ) ?: return@instruction null
@@ -199,7 +199,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     }
 
     private fun getInstructionForNode(
-        state: State,
+        state: TransformContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         parentNode: JsonNode,
     ): NadelRenameFieldInstruction? {

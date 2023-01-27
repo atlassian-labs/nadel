@@ -6,7 +6,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField as ENF
 
@@ -85,7 +85,7 @@ class NadelQueryTransformer private constructor() {
     suspend fun transform(
         field: ENF,
     ): List<ENF> {
-        val transformationSteps: List<NadelExecutionPlan.Step<NadelTransformState>> =
+        val transformationSteps: List<NadelExecutionPlan.Step<NadelTransformContext>> =
             executionPlan.transformationSteps[field]
                 ?: return listOf(
                     transformPlain(field)
@@ -96,7 +96,7 @@ class NadelQueryTransformer private constructor() {
 
     private suspend fun transform(
         field: ENF,
-        transformationSteps: List<NadelExecutionPlan.Step<NadelTransformState>>,
+        transformationSteps: List<NadelExecutionPlan.Step<NadelTransformContext>>,
     ): List<ENF> {
         val transformResult = applyTransformationSteps(field, transformationSteps)
 
@@ -146,7 +146,7 @@ class NadelQueryTransformer private constructor() {
 
     private suspend fun applyTransformationSteps(
         field: ENF,
-        transformationSteps: List<NadelExecutionPlan.Step<NadelTransformState>>,
+        transformationSteps: List<NadelExecutionPlan.Step<NadelTransformContext>>,
     ): NadelTransformFieldResult {
         var fieldFromPreviousTransform: ENF = field
         var aggregatedTransformResult: NadelTransformFieldResult? = null

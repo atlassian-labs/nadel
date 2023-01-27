@@ -9,7 +9,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformState
+import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -22,15 +22,15 @@ import graphql.schema.GraphQLObjectType
 import graphql.validation.ValidationError.newValidationError
 import graphql.validation.ValidationErrorType
 
-class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> {
-    data class State(val error: GraphQLError) : NadelTransformState
+class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.TransformContext> {
+    data class TransformContext(val error: GraphQLError) : NadelTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformContext? {
         val objectType = overallField.objectTypeNames.asSequence()
             .map {
                 executionBlueprint.engineSchema.getType(it) as GraphQLObjectType?
@@ -40,7 +40,7 @@ class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> 
             ?: return null
 
         if (objectType.getField(overallField.name)?.getDirective("toBeDeleted") != null) {
-            return State(
+            return TransformContext(
                 newValidationError()
                     .validationErrorType(ValidationErrorType.WrongType)
                     .build(),
@@ -50,7 +50,7 @@ class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> 
         return null
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun transformField(
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
@@ -69,7 +69,7 @@ class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> 
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext, State)
+    context(NadelEngineContext, NadelExecutionContext, TransformContext)
     override suspend fun getResultInstructions(
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
