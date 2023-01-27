@@ -11,9 +11,9 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -31,36 +31,35 @@ import graphql.schema.GraphQLAppliedDirective
 
 @UseHook
 class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
+    private object State : NadelTransformState
+
+    private data class ARIState(val directive: GraphQLAppliedDirective) : NadelTransformState
+
     // Add hardcoded transforms to change arguments and result resource IDs to ARIs etc.
-    override val customTransforms: List<NadelTransform<out Any>>
+    override val customTransforms: List<NadelTransform<out NadelTransformState>>
         get() = listOf(
             // Transforms arguments in IssueInput
-            object : NadelTransform<Any> {
+            object : NadelTransform<State> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Any? {
+                ): State? {
                     // Transforms arguments in IssueInput
                     return if (overallField.name == "issues") {
-                        ""
+                        State
                     } else {
                         null
                     }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
+                context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: Any,
+                    state: State,
                 ): NadelTransformFieldResult {
                     fun newInputObjectValue(projectId: String, issueId: String): ObjectValue {
                         return newObjectValue()
@@ -98,58 +97,52 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     )
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
+                context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: Any,
+                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return emptyList()
                 }
             },
             // Transforms result ids
-            object : NadelTransform<GraphQLAppliedDirective> {
+            object : NadelTransform<ARIState> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): GraphQLAppliedDirective? {
+                ): ARIState? {
                     return overallField
                         .getFieldDefinitions(executionBlueprint.engineSchema)
                         .single()
                         .getAppliedDirective("ARI")
+                        ?.let {
+                            ARIState(it)
+                        }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
+                context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: GraphQLAppliedDirective,
+                    state: ARIState,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
+                context(NadelEngineContext, NadelExecutionContext, State)
                 override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: GraphQLAppliedDirective,
+                    state: ARIState,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     val parentNodes = nodes.getNodesAt(
@@ -165,8 +158,10 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                                 null
                             } else {
                                 val value = parentNodeAsMap[overallField.resultKey]
-                                val type = (state.getArgument("type").argumentValue.value as StringValue).value
-                                val owner = (state.getArgument("owner").argumentValue.value as StringValue).value
+                                val type =
+                                    (state.directive.getArgument("type").argumentValue.value as StringValue).value
+                                val owner =
+                                    (state.directive.getArgument("owner").argumentValue.value as StringValue).value
 
                                 NadelResultInstruction.Set(
                                     subject = parentNode,

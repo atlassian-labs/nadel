@@ -8,9 +8,9 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -45,7 +45,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
 
     class State(
         val aliasHelper: NadelAliasHelper,
-    )
+    ) : NadelTransformState
 
     /**
      * So this transform is a bit odd. Normally transform operate on a specific field.
@@ -60,19 +60,16 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
      */
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         // This hacks together a child that will pass through here
         if (overallField.children.isEmpty()) {
-            val mergedField = executionContext.inputOperation.getMergedField(overallField)
+            val mergedField = inputOperation.getMergedField(overallField)
             if (hasAnyChildren(mergedField)) {
                 // Adds a field so we can transform it
-                overallField.children.add(createSkipField(executionBlueprint.engineSchema, overallField))
+                overallField.children.add(createSkipField(overallSchema, overallField))
             }
         }
 
@@ -88,11 +85,9 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         }
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -108,10 +103,8 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

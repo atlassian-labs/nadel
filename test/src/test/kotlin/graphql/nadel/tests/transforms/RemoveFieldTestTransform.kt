@@ -7,9 +7,9 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -19,19 +19,18 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLObjectType
-import graphql.validation.ValidationError
+import graphql.validation.ValidationError.newValidationError
 import graphql.validation.ValidationErrorType
 
-class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
+class RemoveFieldTestTransform : NadelTransform<RemoveFieldTestTransform.State> {
+    data class State(val error: GraphQLError) : NadelTransformState
+
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): GraphQLError? {
+    ): State? {
         val objectType = overallField.objectTypeNames.asSequence()
             .map {
                 executionBlueprint.engineSchema.getType(it) as GraphQLObjectType?
@@ -41,20 +40,22 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
             ?: return null
 
         if (objectType.getField(overallField.name)?.getDirective("toBeDeleted") != null) {
-            return ValidationError(ValidationErrorType.WrongType)
+            return State(
+                newValidationError()
+                    .validationErrorType(ValidationErrorType.WrongType)
+                    .build(),
+            )
         }
 
         return null
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        state: GraphQLError,
+        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
@@ -70,15 +71,13 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: GraphQLError,
+        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
@@ -93,6 +92,6 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
                 key = NadelResultKey(overallField.resultKey),
                 newValue = null,
             )
-        } + NadelResultInstruction.AddError(state)
+        } + NadelResultInstruction.AddError(state.error)
     }
 }

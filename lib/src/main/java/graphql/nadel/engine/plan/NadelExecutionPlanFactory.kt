@@ -11,6 +11,7 @@ import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
@@ -22,7 +23,7 @@ import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
-    private val transforms: List<NadelTransform<Any>>,
+    private val transforms: List<NadelTransform<NadelTransformState>>,
 ) {
     // This will avoid creating the ChildStep object too many times
     private val transformsWithTimingStepInfo = transforms
@@ -54,9 +55,6 @@ internal class NadelExecutionPlanFactory(
 
                     val state = timer.time(step = timingStep) {
                         transform.isApplicable(
-                            executionContext = this@NadelExecutionContext,
-                            executionBlueprint,
-                            services,
                             service,
                             field,
                             serviceHydrationDetails,
@@ -95,7 +93,7 @@ internal class NadelExecutionPlanFactory(
     companion object {
         fun create(
             executionBlueprint: NadelOverallExecutionBlueprint,
-            transforms: List<NadelTransform<out Any>>,
+            transforms: List<NadelTransform<out NadelTransformState>>,
             engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
@@ -114,10 +112,12 @@ internal class NadelExecutionPlanFactory(
             )
         }
 
-        private fun listOfTransforms(vararg elements: NadelTransform<out Any>): List<NadelTransform<Any>> {
+        private fun listOfTransforms(
+            vararg elements: NadelTransform<out NadelTransformState>,
+        ): List<NadelTransform<NadelTransformState>> {
             return elements.map {
                 @Suppress("UNCHECKED_CAST") // Ssh it's okay
-                it as NadelTransform<Any>
+                it as NadelTransform<NadelTransformState>
             }
         }
     }

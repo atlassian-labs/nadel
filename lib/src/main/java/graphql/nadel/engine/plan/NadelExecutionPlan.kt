@@ -2,15 +2,16 @@ package graphql.nadel.engine.plan
 
 import graphql.nadel.Service
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.normalized.ExecutableNormalizedField
 
-internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
+internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<NadelTransformState>
 
 data class NadelExecutionPlan(
     // this is a map for overall Fields
     val transformationSteps: Map<ExecutableNormalizedField, List<AnyNadelExecutionPlanStep>>,
 ) {
-    data class Step<T : Any>(
+    data class Step<T : NadelTransformState>(
         val service: Service,
         val field: ExecutableNormalizedField,
         val transform: NadelTransform<T>,

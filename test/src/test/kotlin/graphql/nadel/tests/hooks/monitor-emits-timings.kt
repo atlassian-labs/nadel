@@ -11,6 +11,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -29,42 +30,37 @@ import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.delay
 import java.util.concurrent.CompletableFuture
 
-private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
+private class MonitorEmitsTimingsTransform : NadelTransform<MonitorEmitsTimingsTransform.State> {
+    object State : NadelTransformState
+
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): Unit? {
+    ): State? {
         delay(128)
-        return Unit
+        return State
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        state: Unit,
+        state: State,
     ): NadelTransformFieldResult {
         delay(256)
         return NadelTransformFieldResult.unmodified(field)
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: Unit,
+        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         delay(32)
@@ -72,7 +68,9 @@ private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
     }
 }
 
-private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
+private class JavaTimingTransform : NadelTransformJavaCompat<JavaTimingTransform.State> {
+    object State : NadelTransformState
+
     override fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -80,8 +78,8 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): CompletableFuture<Unit?> {
-        return CompletableFuture.completedFuture(Unit)
+    ): CompletableFuture<State?> {
+        return CompletableFuture.completedFuture(State)
     }
 
     override fun transformField(
@@ -90,7 +88,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        state: Unit,
+        state: State,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
@@ -102,7 +100,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: Unit,
+        state: State,
         nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())
@@ -113,7 +111,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
 class `monitor-emits-timings` : EngineTestHook {
     private val stepsWitnessed = mutableSetOf<Step>()
 
-    override val customTransforms: List<NadelTransform<out Any>>
+    override val customTransforms: List<NadelTransform<out NadelTransformState>>
         get() = listOf(
             MonitorEmitsTimingsTransform(),
             NadelTransformJavaCompat.create(JavaTimingTransform()),

@@ -12,7 +12,9 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.normalized.ExecutableNormalizedField
 
-interface NadelTransform<State : Any> {
+interface NadelTransformState
+
+interface NadelTransform<State : NadelTransformState> {
     /**
      * The name of the transform. Used for metrics purposes. Should be short and contain no special characters.
      */
@@ -41,9 +43,6 @@ interface NadelTransform<State : Any> {
      */
     context(NadelEngineContext, NadelExecutionContext)
     suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails? = null,
@@ -56,11 +55,9 @@ interface NadelTransform<State : Any> {
      * This lets you transform a field. You may add extra fields, modify the [field], or
      * ever delete the [field] from the query. See [NadelTransformFieldResult] for more.
      */
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     suspend fun transformField(
-        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -72,10 +69,8 @@ interface NadelTransform<State : Any> {
      *
      * Return a [List] of [NadelResultInstruction]s to modify the result.
      */
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

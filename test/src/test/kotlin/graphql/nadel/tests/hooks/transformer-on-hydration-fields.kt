@@ -6,9 +6,9 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -28,7 +28,9 @@ class `transformer-on-hydration-fields` : EngineTestHook {
         } else hasParentWithName(field.parent, parentName)
     }
 
-    override val customTransforms: List<NadelTransform<out Any>>
+    object State : NadelTransformState
+
+    override val customTransforms: List<NadelTransform<out NadelTransformState>>
         get() = listOf(
             /**
              * This transform will modify the arguments of the "barById" field.
@@ -36,19 +38,16 @@ class `transformer-on-hydration-fields` : EngineTestHook {
              * It will force a new value for the "id" argument, so we can assert that the transform was
              * executed in the test fixture.
              */
-            object : NadelTransform<Any> {
+            object : NadelTransform<State> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Any? {
+                ): State? {
                     return if (overallField.name == "barById") {
                         assert(hydrationDetails != null)
-                        overallField
+                        State
                     } else if (hasParentWithName(overallField, "barById")) {
                         assert(hydrationDetails != null)
                         null
@@ -58,14 +57,12 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
-                override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
+                context(NadelEngineContext, NadelExecutionContext, State)
+    override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: Any,
+                    state: State,
                 ): NadelTransformFieldResult {
                     val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
                     return transformer.transform(field.children)
@@ -81,15 +78,13 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                         }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
-                override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
+                context(NadelEngineContext, NadelExecutionContext, State)
+    override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: Any,
+                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return emptyList()

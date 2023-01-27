@@ -7,13 +7,17 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.test.NadelTransformJavaCompatAdapter.State
 import graphql.normalized.ExecutableNormalizedField
 import java.util.concurrent.CompletableFuture
 
-interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
+interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<State> {
+    object State : NadelTransformState
+
     override fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -21,8 +25,8 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): CompletableFuture<Any?> {
-        return CompletableFuture.completedFuture(Unit)
+    ): CompletableFuture<State?> {
+        return CompletableFuture.completedFuture(State)
     }
 
     override fun transformField(
@@ -31,7 +35,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        state: Any,
+        state: State,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
@@ -43,7 +47,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: Any,
+        state: State,
         nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())

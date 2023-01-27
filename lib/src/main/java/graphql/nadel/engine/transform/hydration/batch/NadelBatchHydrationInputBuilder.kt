@@ -1,6 +1,8 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.engine.NadelEngineExecutionHooks
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
@@ -23,15 +25,15 @@ import graphql.schema.GraphQLTypeUtil
  * This is required for [NadelBatchHydrationMatchStrategy.MatchIndex].
  */
 internal object NadelBatchHydrationInputBuilder {
+    context(NadelEngineContext, NadelExecutionContext)
     fun getInputValueBatches(
         aliasHelper: NadelAliasHelper,
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
-        hooks: ServiceExecutionHooks,
     ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper, hooks)
+        val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper)
 
         return batchArgs.map { nonBatchArgs + it }
     }
@@ -59,11 +61,11 @@ internal object NadelBatchHydrationInputBuilder {
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     private fun getBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         aliasHelper: NadelAliasHelper,
-        hooks: ServiceExecutionHooks,
     ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
@@ -72,8 +74,8 @@ internal object NadelBatchHydrationInputBuilder {
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
 
-        val partitionArgumentList = when (hooks) {
-            is NadelEngineExecutionHooks -> hooks.partitionBatchHydrationArgumentList(args, instruction)
+        val partitionArgumentList = when (serviceExecutionHooks) {
+            is NadelEngineExecutionHooks -> serviceExecutionHooks.partitionBatchHydrationArgumentList(args, instruction)
             else -> listOf(args)
         }
 

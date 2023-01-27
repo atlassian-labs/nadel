@@ -6,6 +6,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField as ENF
 
@@ -84,17 +85,18 @@ class NadelQueryTransformer private constructor() {
     suspend fun transform(
         field: ENF,
     ): List<ENF> {
-        val transformationSteps: List<NadelExecutionPlan.Step<Any>> = executionPlan.transformationSteps[field]
-            ?: return listOf(
-                transformPlain(field)
-            )
+        val transformationSteps: List<NadelExecutionPlan.Step<NadelTransformState>> =
+            executionPlan.transformationSteps[field]
+                ?: return listOf(
+                    transformPlain(field)
+                )
 
         return transform(field, transformationSteps)
     }
 
     private suspend fun transform(
         field: ENF,
-        transformationSteps: List<NadelExecutionPlan.Step<Any>>,
+        transformationSteps: List<NadelExecutionPlan.Step<NadelTransformState>>,
     ): List<ENF> {
         val transformResult = applyTransformationSteps(field, transformationSteps)
 
@@ -144,19 +146,19 @@ class NadelQueryTransformer private constructor() {
 
     private suspend fun applyTransformationSteps(
         field: ENF,
-        transformationSteps: List<NadelExecutionPlan.Step<Any>>,
+        transformationSteps: List<NadelExecutionPlan.Step<NadelTransformState>>,
     ): NadelTransformFieldResult {
         var fieldFromPreviousTransform: ENF = field
         var aggregatedTransformResult: NadelTransformFieldResult? = null
         for ((_, _, transform, state) in transformationSteps) {
-            val transformResultForStep = transform.transformField(
-                executionContext = this@NadelExecutionContext,
-                this,
-                overallExecutionBlueprint,
-                service,
-                fieldFromPreviousTransform,
-                state,
-            )
+            val transformResultForStep = with(state) {
+                transform.transformField(
+                    this@NadelQueryTransformer,
+                    service,
+                    fieldFromPreviousTransform,
+                    state,
+                )
+            }
             aggregatedTransformResult = if (aggregatedTransformResult == null) {
                 transformResultForStep
             } else {
@@ -172,7 +174,7 @@ class NadelQueryTransformer private constructor() {
 
     private fun getUnderlyingTypeNames(objectTypeNames: Collection<String>): List<String> {
         return objectTypeNames.map {
-            overallExecutionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
+            executionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
         }
     }
 

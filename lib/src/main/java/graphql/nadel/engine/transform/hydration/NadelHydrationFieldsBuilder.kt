@@ -1,6 +1,8 @@
 package graphql.nadel.engine.transform.hydration
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.Service
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -43,20 +45,19 @@ internal object NadelHydrationFieldsBuilder {
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     fun makeBatchActorQueries(
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
-        hooks: ServiceExecutionHooks,
     ): List<ExecutableNormalizedField> {
         val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
             aliasHelper = aliasHelper,
             hydrationField = hydratedField,
             parentNodes = parentNodes,
-            hooks = hooks
         )
 
         val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction, executionBlueprint)

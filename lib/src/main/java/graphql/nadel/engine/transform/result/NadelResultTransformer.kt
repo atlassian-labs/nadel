@@ -40,16 +40,16 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 for (step in steps) {
                     deferredInstructions.add(
                         async {
-                            step.transform.getResultInstructions(
-                                executionContext = this@NadelExecutionContext,
-                                executionBlueprint,
-                                service,
-                                field,
-                                underlyingFields.first().parent,
-                                result,
-                                step.state,
-                                nodes,
-                            )
+                            with(step.state) {
+                                step.transform.getResultInstructions(
+                                    service,
+                                    field,
+                                    underlyingFields.first().parent,
+                                    result,
+                                    step.state,
+                                    nodes,
+                                )
+                            }
                         },
                     )
                 }

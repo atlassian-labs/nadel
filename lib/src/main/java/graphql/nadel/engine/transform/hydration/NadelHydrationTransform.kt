@@ -15,6 +15,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
@@ -60,14 +61,10 @@ internal class NadelHydrationTransform(
          */
         val hydratedField: ExecutableNormalizedField,
         val aliasHelper: NadelAliasHelper,
-        val executionContext: NadelExecutionContext,
-    )
+    ) : NadelTransformState
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
@@ -83,16 +80,13 @@ internal class NadelHydrationTransform(
                 hydratedFieldService = service,
                 hydratedField = overallField,
                 aliasHelper = NadelAliasHelper.forField(tag = "hydration", overallField),
-                executionContext = executionContext
             )
         }
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -143,10 +137,8 @@ internal class NadelHydrationTransform(
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
@@ -167,7 +159,6 @@ internal class NadelHydrationTransform(
                         state = state,
                         executionBlueprint = executionBlueprint,
                         fieldToHydrate = overallField,
-                        executionContext = executionContext,
                     )
                 }
             }
@@ -182,7 +173,6 @@ internal class NadelHydrationTransform(
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
         fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
-        executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
         val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
             executionBlueprint = executionBlueprint,
@@ -196,7 +186,7 @@ internal class NadelHydrationTransform(
             return emptyList()
         }
 
-        val instruction = getHydrationFieldInstruction(state, instructions, executionContext.serviceExecutionHooks, parentNode)
+        val instruction = getHydrationFieldInstruction(state, instructions, serviceExecutionHooks, parentNode)
             ?: return listOf(
                 NadelResultInstruction.Set(
                     subject = parentNode,
@@ -282,6 +272,7 @@ internal class NadelHydrationTransform(
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext)
     private fun getHydrationFieldInstruction(
         state: State,
         instructions: List<NadelHydrationFieldInstruction>,
@@ -296,7 +287,7 @@ internal class NadelHydrationTransform(
                         instructions,
                         parentNode,
                         state.aliasHelper,
-                        state.executionContext.userContext
+                        userContext
                     )
                 } else {
                     error(

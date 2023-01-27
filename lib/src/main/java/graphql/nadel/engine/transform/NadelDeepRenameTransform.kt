@@ -8,6 +8,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
+import graphql.nadel.engine.transform.NadelDeepRenameTransform.State
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -40,7 +41,7 @@ typealias GraphQLObjectTypeName = String
  * }
  * ```
  */
-internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransform.State> {
+internal class NadelDeepRenameTransform : NadelTransform<State> {
     data class State(
         /**
          * The instructions for the a [ExecutableNormalizedField].
@@ -75,7 +76,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          * Stored for easy access in other functions.
          */
         val overallField: ExecutableNormalizedField,
-    )
+    ) : NadelTransformState
 
     /**
      * Determines whether a deep rename is applicable for the given [overallField].
@@ -84,9 +85,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
@@ -154,11 +152,9 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * }
      * ```
      */
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -288,10 +284,8 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * Remove(subjectPath=/collar)
      * ```
      */
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field

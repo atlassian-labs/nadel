@@ -1,35 +1,34 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.NadelEngineContext
+import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.util.getField
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 
 @UseHook
 class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out Any>>
+    object State : NadelTransformState
+
+    override val customTransforms: List<NadelTransform<out NadelTransformState>>
         get() = listOf(
-            object : NadelTransform<Any> {
+            object : NadelTransform<State> {
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Any? {
+                ): State? {
                     // All fields exist, no __skip field from NadelSkipIncludeTransform
                     assert(overallField.name != "__skip")
                     assert(overallField.getFieldDefinitions(executionBlueprint.engineSchema).isNotEmpty())
@@ -37,34 +36,26 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     return null
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
-                override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
+                context(NadelEngineContext, NadelExecutionContext, State)
+    override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
-                    state: Any,
+                    state: State,
                 ): NadelTransformFieldResult {
-                    assert(field.name != "__skip")
-
-                    return NadelTransformFieldResult.unmodified(field)
+                    throw UnsupportedOperationException("Should never be invoked")
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
-                override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
+                context(NadelEngineContext, NadelExecutionContext, State)
+    override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
-                    state: Any,
+                    state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
-                    assert(overallField.name != "__skip")
-
-                    return emptyList()
+                    throw UnsupportedOperationException("Should never be invoked")
                 }
             }
         )

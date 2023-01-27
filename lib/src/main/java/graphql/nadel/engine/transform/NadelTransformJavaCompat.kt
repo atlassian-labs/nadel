@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture
 /**
  * See [NadelTransform]
  */
-interface NadelTransformJavaCompat<State : Any> {
+interface NadelTransformJavaCompat<State : NadelTransformState> {
     val name: String
         get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
 
@@ -62,22 +62,19 @@ interface NadelTransformJavaCompat<State : Any> {
 
     companion object {
         @JvmStatic
-        fun <State : Any> create(compat: NadelTransformJavaCompat<State>): NadelTransform<State> {
+        fun <State : NadelTransformState> create(compat: NadelTransformJavaCompat<State>): NadelTransform<State> {
             return object : NadelTransform<State> {
                 override val name: String
                     get() = compat.name
 
                 context(NadelEngineContext, NadelExecutionContext)
                 override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): State? {
                     return compat.isApplicable(
-                        executionContext = executionContext,
+                        executionContext = this@NadelExecutionContext,
                         executionBlueprint = executionBlueprint,
                         services = services,
                         service = service,
@@ -86,11 +83,9 @@ interface NadelTransformJavaCompat<State : Any> {
                     ).asDeferred().await()
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
-                override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
+                context(NadelEngineContext, NadelExecutionContext, State)
+    override suspend fun transformField(
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: State,
@@ -99,7 +94,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         val scope = this@coroutineScope
 
                         compat.transformField(
-                            executionContext = executionContext,
+                            executionContext = this@NadelExecutionContext,
                             transformer = NadelQueryTransformerJavaCompat(transformer, scope),
                             executionBlueprint = executionBlueprint,
                             service = service,
@@ -109,10 +104,8 @@ interface NadelTransformJavaCompat<State : Any> {
                     }
                 }
 
-                context(NadelEngineContext, NadelExecutionContext)
-                override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
+                context(NadelEngineContext, NadelExecutionContext, State)
+    override suspend fun getResultInstructions(
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
@@ -121,7 +114,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return compat.getResultInstructions(
-                        executionContext = executionContext,
+                        executionContext = this@NadelExecutionContext,
                         executionBlueprint = executionBlueprint,
                         service = service,
                         overallField = overallField,

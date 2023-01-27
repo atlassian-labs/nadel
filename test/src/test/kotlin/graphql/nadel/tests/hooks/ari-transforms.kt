@@ -6,9 +6,9 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -19,19 +19,21 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toMapStrictly
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
+import graphql.nadel.tests.hooks.AriTestTransform.State
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
-private class AriTestTransform : NadelTransform<Set<String>> {
+private class AriTestTransform : NadelTransform<State> {
+    data class State(
+        val keys: Set<String>,
+    ) : NadelTransformState
+
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): Set<String>? {
+    ): State? {
         // Let's not bother with abstract types in a test
         val fieldCoords = makeFieldCoordinates(overallField.objectTypeNames.single(), overallField.name)
         val fieldDef = executionBlueprint.engineSchema.getField(fieldCoords)
@@ -47,18 +49,19 @@ private class AriTestTransform : NadelTransform<Set<String>> {
             .takeIf {
                 it.isNotEmpty()
             }
+            ?.let {
+                State(it)
+            }
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        state: Set<String>,
+        state: State,
     ): NadelTransformFieldResult {
-        val fieldsArgsToInterpret = state
+        val fieldsArgsToInterpret = state.keys
 
         return NadelTransformFieldResult(
             newField = field.toBuilder()
@@ -84,15 +87,13 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, State)
     override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: Set<String>,
+        state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()
@@ -101,14 +102,14 @@ private class AriTestTransform : NadelTransform<Set<String>> {
 
 @UseHook
 class `ari-argument-transform` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out Any>> = listOf(
+    override val customTransforms: List<NadelTransform<out NadelTransformState>> = listOf(
         AriTestTransform(),
     )
 }
 
 @UseHook
 class `ari-argument-transform-on-renamed-field` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out Any>> = listOf(
+    override val customTransforms: List<NadelTransform<out NadelTransformState>> = listOf(
         AriTestTransform(),
     )
 }

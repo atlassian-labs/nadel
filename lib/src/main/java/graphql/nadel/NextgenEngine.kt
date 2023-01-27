@@ -17,6 +17,7 @@ import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformState
 import graphql.nadel.engine.transform.query.DynamicServiceResolution
 import graphql.nadel.engine.transform.query.NadelFieldToService
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -61,13 +62,13 @@ data class NadelEngineContext(
     val services: Map<String, Service>,
     val instrumentation: NadelInstrumentation,
     val overallSchema: GraphQLSchema,
-    val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
+    val executionBlueprint: NadelOverallExecutionBlueprint,
     val executionIdProvider: ExecutionIdProvider,
 )
 
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
-    transforms: List<NadelTransform<out Any>> = emptyList(),
+    transforms: List<NadelTransform<out NadelTransformState>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -107,7 +108,7 @@ class NextgenEngine @JvmOverloads constructor(
         // },
         instrumentation = instrumentation,
         overallSchema = engineSchema,
-        overallExecutionBlueprint = overallExecutionBlueprint,
+        executionBlueprint = overallExecutionBlueprint,
         executionIdProvider = executionIdProvider,
     )
 
