@@ -8,7 +8,7 @@ import graphql.schema.FieldCoordinates
 data class ServiceExecutionHydrationDetails(
     val timeout: Int,
     val batchSize: Int,
-    val hydrationSourceService: Service,
-    val hydrationSourceField: FieldCoordinates,
-    val hydrationActorField: FieldCoordinates,
+    val hydrationCauseService: Service,
+    val hydrationCauseField: FieldCoordinates,
+    val hydrationEffectField: FieldCoordinates,
 )

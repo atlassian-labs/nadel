@@ -10,11 +10,12 @@ import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformContext
+import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
-import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
+import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder.makeRequiredJoiningFields
+import graphql.nadel.engine.transform.hydration.NadelHydrationTransformContext
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -30,11 +31,11 @@ internal class NadelBatchHydrationTransform(
     private val hydrator = NadelBatchHydrator(engine)
 
     data class TransformContext(
-        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
-        val hydratedField: ExecutableNormalizedField,
-        val hydratedFieldService: Service,
-        val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformContext
+        override val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
+        override val hydrationCauseField: ExecutableNormalizedField,
+        override val hydrationCauseService: Service,
+        override val aliasHelper: NadelAliasHelper,
+    ) : NadelTransformContext, NadelHydrationTransformContext
 
     context(NadelEngineContext, NadelExecutionContext)
     override suspend fun isApplicable(
@@ -48,8 +49,8 @@ internal class NadelBatchHydrationTransform(
         return if (instructionsByObjectTypeName.isNotEmpty()) {
             return TransformContext(
                 instructionsByObjectTypeNames = instructionsByObjectTypeName,
-                hydratedField = overallField,
-                hydratedFieldService = service,
+                hydrationCauseField = overallField,
+                hydrationCauseService = service,
                 aliasHelper = NadelAliasHelper.forField(tag = "batch_hydration", overallField),
             )
         } else {
@@ -75,10 +76,7 @@ internal class NadelBatchHydrationTransform(
                 },
             artificialFields = instructionsByObjectTypeNames
                 .flatMap { (objectTypeName, instructions) ->
-                    NadelHydrationFieldsBuilder.makeRequiredSourceFields(
-                        service = hydratedFieldService,
-                        executionBlueprint = executionBlueprint,
-                        aliasHelper = aliasHelper,
+                    makeRequiredJoiningFields(
                         objectTypeName = objectTypeName,
                         instructions = instructions
                     )
@@ -104,7 +102,7 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        return hydrator.hydrate(this@TransformContext, executionBlueprint, parentNodes)
+        return hydrator.hydrate(parentNodes)
     }
 
     context(TransformContext)

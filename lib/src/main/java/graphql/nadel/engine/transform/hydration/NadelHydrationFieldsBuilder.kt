@@ -1,15 +1,13 @@
 package graphql.nadel.engine.transform.hydration
 
 import graphql.nadel.NadelEngineContext
-import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
-import graphql.nadel.engine.transform.artificial.NadelAliasHelper
+import graphql.nadel.engine.transform.hydration.NadelHydrationInputBuilder.Companion.getInputValues
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationObjectIdFieldBuilder.makeObjectIdFields
 import graphql.nadel.engine.transform.query.NFUtil
@@ -18,60 +16,50 @@ import graphql.nadel.engine.util.deepClone
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
 
 internal object NadelHydrationFieldsBuilder {
-    fun makeActorQueries(
+    context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)
+    fun makeEffectQueries(
         instruction: NadelHydrationFieldInstruction,
-        aliasHelper: NadelAliasHelper,
-        fieldToHydrate: ExecutableNormalizedField,
         parentNode: JsonNode,
-        executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
-        return NadelHydrationInputBuilder.getInputValues(
+        return getInputValues(
             instruction = instruction,
-            aliasHelper = aliasHelper,
-            fieldToHydrate = fieldToHydrate,
             parentNode = parentNode,
         ).map { args ->
-            makeActorQueries(
+            makeEffectQuery(
                 instruction = instruction,
                 fieldArguments = args,
-                fieldChildren = deepClone(fields = fieldToHydrate.children),
-                executionBlueprint = executionBlueprint,
+                fieldChildren = deepClone(fields = hydrationCauseField.children),
             )
         }
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
-    fun makeBatchActorQueries(
-        executionBlueprint: NadelOverallExecutionBlueprint,
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
+    fun makeBatchEffectQueries(
         instruction: NadelBatchHydrationFieldInstruction,
-        aliasHelper: NadelAliasHelper,
-        hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
     ): List<ExecutableNormalizedField> {
         val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
-            aliasHelper = aliasHelper,
-            hydrationField = hydratedField,
             parentNodes = parentNodes,
         )
 
-        val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction, executionBlueprint)
-        val fieldChildren = deepClone(fields = hydratedField.children)
+        val effectFieldOverallObjectTypeNames = getEffectFieldOverallObjectTypenames(instruction)
+        val fieldChildren = deepClone(fields = hydrationCauseField.children)
             .mapNotNull { childField ->
-                val objectTypesAreNotReturnedByActorField =
-                    actorFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
+                val objectTypesAreNotReturnedByEffectField =
+                    effectFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
 
-                if (objectTypesAreNotReturnedByActorField) {
+                if (objectTypesAreNotReturnedByEffectField) {
                     null
                 } else {
                     childField.toBuilder()
                         .clearObjectTypesNames()
-                        .objectTypeNames(childField.objectTypeNames.filter { it in actorFieldOverallObjectTypeNames })
+                        .objectTypeNames(childField.objectTypeNames.filter { it in effectFieldOverallObjectTypeNames })
                         .build()
                 }
             }
@@ -80,52 +68,52 @@ internal object NadelHydrationFieldsBuilder {
             }
 
         return argBatches.map { argBatch ->
-            makeActorQueries(
+            makeEffectQuery(
                 instruction = instruction,
-                fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationActorInputDef) -> inputDef.name },
+                fieldArguments = argBatch.mapKeys { (inputDef: EffectFieldArgumentDef) -> inputDef.name },
                 fieldChildren = fieldChildren,
-                executionBlueprint = executionBlueprint,
             )
         }
     }
 
-    private fun getActorFieldOverallObjectTypenames(
+    context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)
+    private fun getEffectFieldOverallObjectTypenames(
         instruction: NadelBatchHydrationFieldInstruction,
-        executionBlueprint: NadelOverallExecutionBlueprint,
     ): Set<String> {
-        val overallTypeName = instruction.actorFieldDef.type.unwrapAll().name
+        val overallTypeName = instruction.effectFieldDef.type.unwrapAll().name
 
-        val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
+        val overallType = overallSchema.getType(overallTypeName)
             ?: error("Unable to find overall type $overallTypeName")
 
-        val actorFieldOverallObjectTypes = resolveObjectTypes(executionBlueprint.engineSchema, overallType) { type ->
+        val effectFieldOverallObjectTypes = resolveObjectTypes(overallSchema, overallType) { type ->
             error("Unable to resolve to object type: $type")
         }
 
-        return actorFieldOverallObjectTypes
+        return effectFieldOverallObjectTypes
             .asSequence()
             .map { it.name }
             .toSet()
     }
 
-    fun makeRequiredSourceFields(
-        service: Service,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        aliasHelper: NadelAliasHelper,
+    context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)
+    fun makeRequiredJoiningFields(
         objectTypeName: GraphQLObjectTypeName,
         instructions: List<NadelGenericHydrationInstruction>,
     ): List<ExecutableNormalizedField> {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
-        val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(
+            service = hydrationCauseService,
+            overallTypeName = objectTypeName,
+        )
+        val underlyingObjectType = hydrationCauseService.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
         return instructions
             .asSequence()
-            .flatMap { it.sourceFields }
+            .flatMap { it.joiningFields }
             .map {
                 aliasHelper.toArtificial(
                     NFUtil.createField(
-                        schema = service.underlyingSchema,
+                        schema = hydrationCauseService.underlyingSchema,
                         parentType = underlyingObjectType,
                         queryPathToField = it,
                         fieldArguments = emptyMap(),
@@ -136,16 +124,16 @@ internal object NadelHydrationFieldsBuilder {
             .toList()
     }
 
-    private fun makeActorQueries(
+    context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)
+    private fun makeEffectQuery(
         instruction: NadelGenericHydrationInstruction,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
-        executionBlueprint: NadelOverallExecutionBlueprint,
     ): ExecutableNormalizedField {
         return NFUtil.createField(
-            schema = executionBlueprint.engineSchema,
-            parentType = executionBlueprint.engineSchema.queryType,
-            queryPathToField = instruction.queryPathToActorField,
+            schema = overallSchema,
+            parentType = overallSchema.queryType,
+            queryPathToField = instruction.queryPathToEffectField,
             fieldArguments = fieldArguments,
             fieldChildren = fieldChildren,
         )

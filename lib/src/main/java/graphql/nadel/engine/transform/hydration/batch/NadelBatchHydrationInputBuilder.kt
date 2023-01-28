@@ -4,19 +4,17 @@ import graphql.nadel.NadelEngineContext
 import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
+import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.javaValueToAstValue
 import graphql.nadel.engine.util.mapFrom
-import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
 
 /**
  * README
@@ -25,28 +23,26 @@ import graphql.schema.GraphQLTypeUtil
  * This is required for [NadelBatchHydrationMatchStrategy.MatchIndex].
  */
 internal object NadelBatchHydrationInputBuilder {
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     fun getInputValueBatches(
-        aliasHelper: NadelAliasHelper,
         instruction: NadelBatchHydrationFieldInstruction,
-        hydrationField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
-    ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
-        val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper)
+    ): List<Map<EffectFieldArgumentDef, NormalizedInputValue>> {
+        val nonBatchArgs = getNonBatchInputValues(instruction)
+        val batchArgs = getBatchInputValues(instruction, parentNodes)
 
         return batchArgs.map { nonBatchArgs + it }
     }
 
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     private fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
-        hydrationField: ExecutableNormalizedField,
-    ): Map<NadelHydrationActorInputDef, NormalizedInputValue> {
+    ): Map<EffectFieldArgumentDef, NormalizedInputValue> {
         return mapFrom(
-            instruction.actorInputValueDefs.mapNotNull { actorFieldArg ->
+            instruction.effectFieldArgDefs.mapNotNull { actorFieldArg ->
                 when (val valueSource = actorFieldArg.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> {
-                        val argValue = hydrationField.normalizedArguments[valueSource.argumentName]
+                    is EffectFieldArgumentDef.ValueSource.FromArgumentValue -> {
+                        val argValue = hydrationCauseField.normalizedArguments[valueSource.argumentName]
                             ?: valueSource.defaultValue
                         if (argValue != null) {
                             actorFieldArg to argValue
@@ -55,24 +51,23 @@ internal object NadelBatchHydrationInputBuilder {
                         }
                     }
                     // These are batch values, ignore them
-                    is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> null
+                    is EffectFieldArgumentDef.ValueSource.FromResultValue -> null
                 }
             },
         )
     }
 
-    context(NadelEngineContext, NadelExecutionContext)
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     private fun getBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-        aliasHelper: NadelAliasHelper,
-    ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
+    ): List<Pair<EffectFieldArgumentDef, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
         val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
-        val actorBatchArgDef = instruction.actorFieldDef.getArgument(batchInputDef.name)
+        val actorBatchArgDef = instruction.effectFieldDef.getArgument(batchInputDef.name)
 
-        val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
+        val args = getFieldResultValues(batchInputValueSource, parentNodes)
 
         val partitionArgumentList = when (serviceExecutionHooks) {
             is NadelEngineExecutionHooks -> serviceExecutionHooks.partitionBatchHydrationArgumentList(args, instruction)
@@ -112,37 +107,36 @@ internal object NadelBatchHydrationInputBuilder {
      */
     internal fun getBatchInputDef(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): Pair<NadelHydrationActorInputDef, NadelHydrationActorInputDef.ValueSource.FieldResultValue>? {
-        return instruction.actorInputValueDefs
+    ): Pair<EffectFieldArgumentDef, EffectFieldArgumentDef.ValueSource.FromResultValue>? {
+        return instruction.effectFieldArgDefs
             .asSequence()
             .mapNotNull {
                 when (val valueSource = it.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> it to valueSource
+                    is EffectFieldArgumentDef.ValueSource.FromResultValue -> it to valueSource
                     else -> null
                 }
             }
             .emptyOrSingle()
     }
 
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     private fun getFieldResultValues(
-        valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
+        valueSource: EffectFieldArgumentDef.ValueSource.FromResultValue,
         parentNodes: List<JsonNode>,
-        aliasHelper: NadelAliasHelper,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             getFieldResultValues(
                 valueSource = valueSource,
                 parentNode = parentNode,
-                aliasHelper = aliasHelper,
                 filterNull = true,
             )
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     internal fun getFieldResultValues(
-        valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
+        valueSource: EffectFieldArgumentDef.ValueSource.FromResultValue,
         parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper,
         filterNull: Boolean,
     ): List<Any?> {
         val nodes = JsonNodeExtractor.getNodesAt(

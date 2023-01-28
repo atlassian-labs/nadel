@@ -1,11 +1,12 @@
 package graphql.nadel.engine.transform.hydration
 
 import graphql.language.NullValue
+import graphql.nadel.NadelEngineContext
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource
+import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
+import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef.ValueSource
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.util.emptyOrSingle
@@ -13,23 +14,20 @@ import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.javaValueToAstValue
 import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.toMapStrictly
-import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
+context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)
 internal class NadelHydrationInputBuilder private constructor(
     private val instruction: NadelHydrationFieldInstruction,
-    private val aliasHelper: NadelAliasHelper,
-    private val fieldToHydrate: ExecutableNormalizedField,
     private val parentNode: JsonNode,
 ) {
     companion object {
+        context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)
         fun getInputValues(
             instruction: NadelHydrationFieldInstruction,
-            aliasHelper: NadelAliasHelper,
-            fieldToHydrate: ExecutableNormalizedField,
             parentNode: JsonNode,
         ): List<Map<String, NormalizedInputValue>> {
-            return NadelHydrationInputBuilder(instruction, aliasHelper, fieldToHydrate, parentNode)
+            return NadelHydrationInputBuilder(instruction, parentNode)
                 .build()
         }
     }
@@ -51,7 +49,7 @@ internal class NadelHydrationInputBuilder private constructor(
         hydrationStrategy: NadelHydrationStrategy.ManyToOne,
     ): List<Map<String, NormalizedInputValue>> {
         val inputDefToSplit = hydrationStrategy.inputDefToSplit
-        val valueSourceToSplit = inputDefToSplit.valueSource as ValueSource.FieldResultValue
+        val valueSourceToSplit = inputDefToSplit.valueSource as ValueSource.FromResultValue
         val sharedArgs = makeInputMap(inputDefToSplit)
 
         return getResultNodes(valueSourceToSplit)
@@ -78,9 +76,9 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputMap(
-        excluding: NadelHydrationActorInputDef? = null,
+        excluding: EffectFieldArgumentDef? = null,
     ): Map<String, NormalizedInputValue> {
-        return instruction.actorInputValueDefs
+        return instruction.effectFieldArgDefs
             .asSequence()
             .filter {
                 it != excluding
@@ -97,10 +95,10 @@ internal class NadelHydrationInputBuilder private constructor(
      * If all field values are null, then it doesn't makes sense to actually send the query.
      */
     private fun isInputMapValid(inputMap: Map<String, NormalizedInputValue>): Boolean {
-        val fieldInputsNames = instruction.actorInputValueDefs
+        val fieldInputsNames = instruction.effectFieldArgDefs
             .asSequence()
             .filter {
-                it.valueSource is ValueSource.FieldResultValue
+                it.valueSource is ValueSource.FromResultValue
             }
             .map { it.name }
             .toList()
@@ -112,18 +110,18 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValuePair(
-        inputDef: NadelHydrationActorInputDef,
+        inputDef: EffectFieldArgumentDef,
     ): Pair<String, NormalizedInputValue>? {
         val inputValue = makeInputValue(inputDef) ?: return null
         return inputDef.name to inputValue
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationActorInputDef,
+        inputDef: EffectFieldArgumentDef,
     ): NormalizedInputValue? {
         return when (val valueSource = inputDef.valueSource) {
-            is ValueSource.ArgumentValue -> getArgumentValue(valueSource)
-            is ValueSource.FieldResultValue -> makeInputValue(
+            is ValueSource.FromArgumentValue -> getArgumentValue(valueSource)
+            is ValueSource.FromResultValue -> makeInputValue(
                 inputDef,
                 value = getResultValue(valueSource),
             )
@@ -131,7 +129,7 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationActorInputDef,
+        inputDef: EffectFieldArgumentDef,
         value: Any?,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(
@@ -141,13 +139,14 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun getArgumentValue(
-        valueSource: ValueSource.ArgumentValue,
+        valueSource: ValueSource.FromArgumentValue,
     ): NormalizedInputValue? {
-        return fieldToHydrate.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
+        return hydrationCauseField.getNormalizedArgument(valueSource.argumentName)
+            ?: valueSource.defaultValue
     }
 
     private fun getResultValue(
-        valueSource: ValueSource.FieldResultValue,
+        valueSource: ValueSource.FromResultValue,
     ): Any? {
         return getResultNodes(valueSource)
             .emptyOrSingle()
@@ -155,7 +154,7 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun getResultNodes(
-        valueSource: ValueSource.FieldResultValue,
+        valueSource: ValueSource.FromResultValue,
     ): List<JsonNode> {
         return JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,

@@ -54,7 +54,7 @@ internal object NadelHydrationUtil {
     ): JsonNode? {
         return JsonNodeExtractor.getNodesAt(
             data = batch.data ?: return null,
-            queryPath = instruction.queryPathToActorField,
+            queryPath = instruction.queryPathToEffectField,
         ).emptyOrSingle()
     }
 }

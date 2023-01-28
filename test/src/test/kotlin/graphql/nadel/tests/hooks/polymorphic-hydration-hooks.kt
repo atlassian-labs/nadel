@@ -27,7 +27,7 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
             dataIdValue.startsWith("null", ignoreCase = true) -> null
             else -> "petById"
         }
-        return instructions.singleOrNull { it.actorFieldDef.name == actorFieldName }
+        return instructions.singleOrNull { it.effectFieldDef.name == actorFieldName }
     }
 }
 

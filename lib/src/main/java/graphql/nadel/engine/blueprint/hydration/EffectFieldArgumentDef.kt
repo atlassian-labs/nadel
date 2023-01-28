@@ -5,7 +5,7 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 
-data class NadelHydrationActorInputDef(
+data class EffectFieldArgumentDef(
     val name: String,
     val actorArgumentDef: GraphQLArgument,
     val valueSource: ValueSource,
@@ -23,7 +23,7 @@ data class NadelHydrationActorInputDef(
          * }
          * ```
          */
-        data class FieldResultValue(
+        data class FromResultValue(
             val queryPathToField: NadelQueryPath,
             val fieldDefinition: GraphQLFieldDefinition,
         ) : ValueSource()
@@ -39,7 +39,7 @@ data class NadelHydrationActorInputDef(
          * }
          * ```
          */
-        data class ArgumentValue(
+        data class FromArgumentValue(
             val argumentName: String,
             val argumentDefinition: GraphQLArgument,
             val defaultValue: NormalizedInputValue?,

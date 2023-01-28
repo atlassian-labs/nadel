@@ -3,7 +3,7 @@ package graphql.nadel.tests.hooks
 import graphql.nadel.Nadel
 import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
@@ -19,8 +19,8 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
         userContext: Any?,
     ): T? {
         return instructions.firstOrNull {
-            val (_, _, valueSource) = it.actorInputValueDefs.single()
-            if (valueSource !is NadelHydrationActorInputDef.ValueSource.FieldResultValue) {
+            val (_, _, valueSource) = it.effectFieldArgDefs.single()
+            if (valueSource !is EffectFieldArgumentDef.ValueSource.FromResultValue) {
                 return@firstOrNull false
             }
             val actorFieldName = valueSource.fieldDefinition.name
@@ -34,10 +34,10 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
         instruction: T,
         hydrationArgumentValue: String,
     ): Boolean {
-        return instruction.actorFieldDef.name.contains("pet") && hydrationArgumentValue.startsWith(
+        return instruction.effectFieldDef.name.contains("pet") && hydrationArgumentValue.startsWith(
             "pet", ignoreCase = true
         ) ||
-            instruction.actorFieldDef.name.contains("human") && hydrationArgumentValue.startsWith(
+            instruction.effectFieldDef.name.contains("human") && hydrationArgumentValue.startsWith(
             "human", ignoreCase = true
         )
     }

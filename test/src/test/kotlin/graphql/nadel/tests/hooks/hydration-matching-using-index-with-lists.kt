@@ -6,7 +6,6 @@ import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.serviceExecutionFactory
-import graphql.schema.idl.TypeDefinitionRegistry
 
 /**
  * Checks that the hydration source is being set during hydration calls on new engine only
@@ -24,10 +23,10 @@ class `hydration-matching-using-index-with-lists` : EngineTestHook {
                     return if (serviceName == "UserService") {
                         ServiceExecution { serviceExecutionParameters ->
                             val hydrationDetails = serviceExecutionParameters.hydrationDetails
-                            if (hydrationDetails?.hydrationSourceService != null) {
-                                assert(hydrationDetails.hydrationSourceField.fieldName == "authors")
-                                assert(hydrationDetails.hydrationSourceField.typeName == "Issue")
-                                assert(hydrationDetails.hydrationSourceService.name == "Issues")
+                            if (hydrationDetails?.hydrationCauseService != null) {
+                                assert(hydrationDetails.hydrationCauseField.fieldName == "authors")
+                                assert(hydrationDetails.hydrationCauseField.typeName == "Issue")
+                                assert(hydrationDetails.hydrationCauseService.name == "Issues")
                             }
                             serviceExecution.execute(serviceExecutionParameters)
                         }

@@ -23,17 +23,17 @@ abstract class HydrationDetailsHook : EngineTestHook {
 @UseHook
 class `basic-hydration` : HydrationDetailsHook() {
     override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {
-        assert(actualHydrationDetails.hydrationActorField.toString() == "Query.barById")
-        assert(actualHydrationDetails.hydrationSourceField.toString() == "Foo.bar")
-        assert(actualHydrationDetails.hydrationSourceService.name == "service1")
+        assert(actualHydrationDetails.hydrationEffectField.toString() == "Query.barById")
+        assert(actualHydrationDetails.hydrationCauseField.toString() == "Foo.bar")
+        assert(actualHydrationDetails.hydrationCauseService.name == "service1")
     }
 }
 
 @UseHook
 class `batch-hydration-with-renamed-actor-field` : HydrationDetailsHook() {
     override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {
-        assert(actualHydrationDetails.hydrationActorField.toString() == "Query.barsByIdOverall")
-        assert(actualHydrationDetails.hydrationSourceField.toString() == "Foo.bar")
-        assert(actualHydrationDetails.hydrationSourceService.name == "service1")
+        assert(actualHydrationDetails.hydrationEffectField.toString() == "Query.barsByIdOverall")
+        assert(actualHydrationDetails.hydrationCauseField.toString() == "Foo.bar")
+        assert(actualHydrationDetails.hydrationCauseService.name == "service1")
     }
 }

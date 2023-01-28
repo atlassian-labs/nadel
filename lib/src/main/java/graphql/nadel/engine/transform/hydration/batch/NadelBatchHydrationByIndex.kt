@@ -1,9 +1,10 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.nadel.NadelEngineContext
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.engine.transform.artificial.NadelAliasHelper
+import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchInputDef
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -14,25 +15,22 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.listOfNulls
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
 
+context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
 internal class NadelBatchHydrationByIndex private constructor(
-    private val fieldToHydrate: ExecutableNormalizedField,
-    private val aliasHelper: NadelAliasHelper,
     private val instruction: NadelBatchHydrationFieldInstruction,
     private val parentNodes: List<JsonNode>,
     private val batches: List<ServiceExecutionResult>,
 ) {
     companion object {
+        context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
         fun getHydrateInstructionsMatchingIndex(
-            state: NadelBatchHydrationTransform.TransformContext,
             instruction: NadelBatchHydrationFieldInstruction,
             parentNodes: List<JsonNode>,
             batches: List<ServiceExecutionResult>,
         ): List<NadelResultInstruction> {
             return NadelBatchHydrationByIndex(
-                fieldToHydrate = state.hydratedField,
-                aliasHelper = state.aliasHelper,
                 instruction = instruction,
                 parentNodes = parentNodes,
                 batches = batches,
@@ -50,7 +48,7 @@ internal class NadelBatchHydrationByIndex private constructor(
 
                 NadelResultInstruction.Set(
                     subject = parentNode,
-                    key = NadelResultKey(fieldToHydrate.resultKey),
+                    key = NadelResultKey(hydrationCauseField.resultKey),
                     newValue = JsonNode(
                         if (isManyInputNodesToParentNodes) {
                             chunker.take(inputValues)
@@ -72,7 +70,6 @@ internal class NadelBatchHydrationByIndex private constructor(
         return NadelBatchHydrationInputBuilder.getFieldResultValues(
             batchInputValueSource,
             parentNode,
-            aliasHelper,
             filterNull = false, // We want nulls
         )
     }
@@ -107,7 +104,7 @@ internal class NadelBatchHydrationByIndex private constructor(
 
     private fun getBatchInputValueSource(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): NadelHydrationActorInputDef.ValueSource.FieldResultValue {
+    ): EffectFieldArgumentDef.ValueSource.FromResultValue {
         val (_, batchInputValueSource) = getBatchInputDef(instruction)
             ?: error("Batch hydration is missing batch input arg") // TODO: we should bake this into the instruction
 
