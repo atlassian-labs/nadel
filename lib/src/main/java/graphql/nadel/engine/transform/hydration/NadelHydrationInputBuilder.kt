@@ -133,7 +133,7 @@ internal class NadelHydrationInputBuilder private constructor(
         value: Any?,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(
-            type = inputDef.actorArgumentDef.type,
+            type = inputDef.effectArgumentDef.type,
             value = javaValueToAstValue(value),
         )
     }

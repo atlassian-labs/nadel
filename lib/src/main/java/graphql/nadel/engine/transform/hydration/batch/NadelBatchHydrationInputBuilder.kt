@@ -39,13 +39,13 @@ internal object NadelBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
     ): Map<EffectFieldArgumentDef, NormalizedInputValue> {
         return mapFrom(
-            instruction.effectFieldArgDefs.mapNotNull { actorFieldArg ->
-                when (val valueSource = actorFieldArg.valueSource) {
+            instruction.effectFieldArgDefs.mapNotNull { effectFieldArg ->
+                when (val valueSource = effectFieldArg.valueSource) {
                     is EffectFieldArgumentDef.ValueSource.FromArgumentValue -> {
                         val argValue = hydrationCauseField.normalizedArguments[valueSource.argumentName]
                             ?: valueSource.defaultValue
                         if (argValue != null) {
-                            actorFieldArg to argValue
+                            effectFieldArg to argValue
                         } else {
                             null
                         }
@@ -65,7 +65,7 @@ internal object NadelBatchHydrationInputBuilder {
         val batchSize = instruction.batchSize
 
         val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
-        val actorBatchArgDef = instruction.effectFieldDef.getArgument(batchInputDef.name)
+        val effectBatchArgDef = instruction.effectFieldDef.getArgument(batchInputDef.name)
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes)
 
@@ -77,7 +77,7 @@ internal object NadelBatchHydrationInputBuilder {
         return partitionArgumentList.flatMap { it.chunked(size = batchSize) }
             .map { chunk ->
                 batchInputDef to NormalizedInputValue(
-                    GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
+                    GraphQLTypeUtil.simplePrint(effectBatchArgDef.type),
                     javaValueToAstValue(chunk),
                 )
             }

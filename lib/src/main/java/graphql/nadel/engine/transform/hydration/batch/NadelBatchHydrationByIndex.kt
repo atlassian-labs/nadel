@@ -137,8 +137,8 @@ internal class NadelBatchHydrationByIndex private constructor(
         private fun getValues(batches: List<ServiceExecutionResult>): List<Any?> {
             return batches
                 .flatMapIndexed { index, batch ->
-                    val actorNode = NadelHydrationUtil.getHydrationActorNode(instruction, batch)
-                    when (val value = actorNode?.value) {
+                    val effectNode = NadelHydrationUtil.getHydrationEffectNode(instruction, batch)
+                    when (val value = effectNode?.value) {
                         null -> listOfNulls(instruction.batchSize)
                         is AnyList -> value.also {
                             // Ensure API returned correct number of elements

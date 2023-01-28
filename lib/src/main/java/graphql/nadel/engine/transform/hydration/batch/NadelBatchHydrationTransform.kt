@@ -14,7 +14,7 @@ import graphql.nadel.engine.transform.NadelTransformContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
-import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder.makeRequiredJoiningFields
+import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder.makeJoiningFields
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransformContext
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -76,7 +76,7 @@ internal class NadelBatchHydrationTransform(
                 },
             artificialFields = instructionsByObjectTypeNames
                 .flatMap { (objectTypeName, instructions) ->
-                    makeRequiredJoiningFields(
+                    makeJoiningFields(
                         objectTypeName = objectTypeName,
                         instructions = instructions
                     )

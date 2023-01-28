@@ -7,7 +7,7 @@ import graphql.schema.GraphQLFieldDefinition
 
 data class EffectFieldArgumentDef(
     val name: String,
-    val actorArgumentDef: GraphQLArgument,
+    val effectArgumentDef: GraphQLArgument,
     val valueSource: ValueSource,
 ) {
     sealed class ValueSource {

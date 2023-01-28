@@ -64,7 +64,7 @@ internal object NadelHydrationFieldsBuilder {
                 }
             }
             .let { children ->
-                children + makeObjectIdFields(executionBlueprint, aliasHelper, instruction)
+                children + makeObjectIdFields(instruction)
             }
 
         return argBatches.map { argBatch ->
@@ -96,7 +96,7 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)
-    fun makeRequiredJoiningFields(
+    fun makeJoiningFields(
         objectTypeName: GraphQLObjectTypeName,
         instructions: List<NadelGenericHydrationInstruction>,
     ): List<ExecutableNormalizedField> {

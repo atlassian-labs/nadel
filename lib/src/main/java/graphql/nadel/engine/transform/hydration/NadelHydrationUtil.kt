@@ -36,24 +36,24 @@ internal object NadelHydrationUtil {
             .map(NadelResultInstruction::AddError)
     }
 
-    fun getHydrationActorNodes(
+    fun getHydrationEffectNodes(
         instruction: NadelGenericHydrationInstruction,
         batches: List<ServiceExecutionResult>,
     ): List<JsonNode> {
         return batches
             .asSequence()
             .mapNotNull { batch ->
-                getHydrationActorNode(instruction, batch)
+                getHydrationEffectNode(instruction, batch)
             }
             .toList()
     }
 
-    fun getHydrationActorNode(
+    fun getHydrationEffectNode(
         instruction: NadelGenericHydrationInstruction,
         batch: ServiceExecutionResult,
     ): JsonNode? {
         return JsonNodeExtractor.getNodesAt(
-            data = batch.data ?: return null,
+            data = batch.data,
             queryPath = instruction.queryPathToEffectField,
         ).emptyOrSingle()
     }

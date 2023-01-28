@@ -488,7 +488,7 @@ private class Factory(
 
             EffectFieldArgumentDef(
                 name = remoteArgDef.name,
-                actorArgumentDef = actorFieldDef.getArgument(remoteArgDef.name),
+                effectArgumentDef = actorFieldDef.getArgument(remoteArgDef.name),
                 valueSource = valueSource,
             )
         }

@@ -6,7 +6,7 @@ import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.transform.NadelTransformUtil
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransformContext
-import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getHydrationActorNodes
+import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getHydrationEffectNodes
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.asMutable
@@ -60,14 +60,14 @@ internal object NadelBatchHydrationByObjectId {
         objectIds: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>,
     ): List<NadelResultInstruction> {
         // Associate by does not need to be strict here
-        val resultNodesByObjectId = getHydrationActorNodes(instruction, batches)
+        val resultNodesByObjectId = getHydrationEffectNodes(instruction, batches)
             .asSequence()
             .map(JsonNode::value)
             .flatten(recursively = true)
             .mapNotNull {
                 when (it) {
                     is AnyMap? -> it.asNullableJsonMap()
-                    else -> error("Hydration actor result must be an object")
+                    else -> error("Hydration effect result must be an object")
                 }
             }
             .associateBy { resultNode ->
@@ -125,7 +125,7 @@ internal object NadelBatchHydrationByObjectId {
         sourceIds: List<List<Any?>>,
         resultNodesByObjectId: Map<List<Any?>, JsonMap>,
     ): NadelResultInstruction {
-        val hydratedFieldDef = NadelTransformUtil.getOverallFieldDef(
+        val causeFieldDef = NadelTransformUtil.getOverallFieldDef(
             overallField = hydrationCauseField,
             parentNode = sourceNode,
             service = hydrationCauseService,
@@ -133,7 +133,7 @@ internal object NadelBatchHydrationByObjectId {
             aliasHelper = aliasHelper,
         ) ?: error("Unable to find field definition for ${hydrationCauseField.queryPath}")
 
-        val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
+        val newValue: Any? = if (causeFieldDef.type.unwrapNonNull().isList) {
             // Set to null if there were no identifier nodes
             if (isAllNull(sourceIds)) {
                 null

@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.nadel.NadelEngineContext
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -9,6 +11,7 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLOutputType
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
 
 /**
  * Builds the field used to identify objects returned by batch hydration e.g.
@@ -49,50 +52,42 @@ import graphql.schema.GraphQLOutputType
  * i.e. this code inserts the selection for the `id` field
  */
 internal object NadelBatchHydrationObjectIdFieldBuilder {
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     fun makeObjectIdFields(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
     ): List<ExecutableNormalizedField> {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> makeObjectIdFields(
-                executionBlueprint,
-                aliasHelper,
                 batchHydrationInstruction,
                 matchStrategy,
             )
+
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> makeObjectIdFields(
-                executionBlueprint,
-                aliasHelper,
                 batchHydrationInstruction,
                 matchStrategy.objectIds,
             )
+
             else -> emptyList()
         }
     }
 
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     private fun makeObjectIdFields(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<ExecutableNormalizedField> {
         return makeObjectIdFields(
-            executionBlueprint,
-            aliasHelper,
             batchHydrationInstruction,
             listOf(matchStrategy),
         )
     }
 
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     private fun makeObjectIdFields(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         objectIds: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>,
     ): List<ExecutableNormalizedField> {
         val objectTypeNames = getObjectTypeNamesForIdField(
-            executionBlueprint = executionBlueprint,
             overallParentTypeOfIdField = batchHydrationInstruction.effectFieldDef.type,
         )
 
@@ -110,16 +105,16 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
      * Gets the type names for the parent of the object id field. Note that this
      * must be the OVERALL type names.
      */
+    context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
     private fun getObjectTypeNamesForIdField(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         overallParentTypeOfIdField: GraphQLOutputType,
     ): List<String> {
         val overallTypeName = overallParentTypeOfIdField.unwrapAll().name
-        val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
-            ?: error("Could not find the overall output type for the actor field")
+        val overallType = overallSchema.getType(overallTypeName)
+            ?: error("Could not find the overall output type for the effect field")
 
         return resolveObjectTypes(
-            schema = executionBlueprint.engineSchema,
+            schema = overallSchema,
             type = overallType,
             onNotObjectType = {
                 errorForUnsupportedObjectIdParentType()
@@ -128,6 +123,6 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     }
 
     private fun errorForUnsupportedObjectIdParentType(): Nothing {
-        error("When matching by object identifier, the output type of actor field must be an object")
+        error("When matching by object identifier, the output type of effect field must be an object")
     }
 }

@@ -18,7 +18,7 @@ import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
-import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder.makeRequiredJoiningFields
+import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder.makeJoiningFields
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform.TransformContext
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -29,6 +29,7 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.emptyOrSingle
+import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
@@ -101,7 +102,7 @@ internal class NadelHydrationTransform(
                 },
             artificialFields = instructionsByObjectTypeNames
                 .flatMap { (typeName, instructions) ->
-                    makeRequiredJoiningFields(
+                    makeJoiningFields(
                         objectTypeName = typeName,
                         instructions = instructions,
                     )
@@ -186,21 +187,21 @@ internal class NadelHydrationTransform(
         val engineContext = this@NadelEngineContext
         val executionContext = this@NadelExecutionContext
 
-        val actorQueryResults = coroutineScope {
+        val effectQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeEffectQueries(
                 instruction = instruction,
                 parentNode = parentNode,
             ).map { actorQuery ->
                 async {
-                    val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                    val hydrationActorField =
-                        FieldCoordinates.coordinates(instruction.effectFieldContainer, instruction.effectFieldDef)
                     val serviceHydrationDetails = ServiceExecutionHydrationDetails(
                         timeout = instruction.timeout,
                         batchSize = 1,
-                        hydrationCauseService = hydrationSourceService,
+                        hydrationCauseService = hydrationCauseService,
                         hydrationCauseField = instruction.location,
-                        hydrationEffectField = hydrationActorField
+                        hydrationEffectField = makeFieldCoordinates(
+                            parentType = instruction.effectFieldContainer,
+                            field = instruction.effectFieldDef
+                        ),
                     )
                     engine.executeTopLevelField(
                         engineContext,
@@ -216,7 +217,7 @@ internal class NadelHydrationTransform(
         when (instruction.hydrationStrategy) {
             is NadelHydrationStrategy.OneToOne -> {
                 // Should not have more than one query for one to one
-                val result = actorQueryResults.emptyOrSingle()
+                val result = effectQueryResults.emptyOrSingle()
 
                 val data = result?.data?.let { data ->
                     JsonNodeExtractor.getNodesAt(
@@ -237,14 +238,14 @@ internal class NadelHydrationTransform(
             }
 
             is NadelHydrationStrategy.ManyToOne -> {
-                val data = actorQueryResults.map { result ->
+                val data = effectQueryResults.map { result ->
                     JsonNodeExtractor.getNodesAt(
                         data = result.data,
                         queryPath = instruction.queryPathToEffectField,
                     ).emptyOrSingle()?.value
                 }
 
-                val addErrors = getInstructionsToAddErrors(actorQueryResults)
+                val addErrors = getInstructionsToAddErrors(effectQueryResults)
 
                 return listOf(
                     NadelResultInstruction.Set(
