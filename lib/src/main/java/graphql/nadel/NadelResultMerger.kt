@@ -54,23 +54,23 @@ internal class NadelResultMerger {
     ): MutableJsonMap? {
         val requiredFieldMap = buildRequiredFieldMap(fields, engineSchema)
 
-        for ((resultKey, children) in requiredFieldMap) {
+        for ((topLevelResultKey, children) in requiredFieldMap) {
             val topLevelFieldDef by lazy {
                 fields
-                    .first { (field) -> field.resultKey == resultKey.value }
+                    .first { (field) -> field.resultKey == topLevelResultKey.value }
                     .field
                     .getFieldDefinitions(engineSchema)
                     .single() // This is under Query, Mutation etc. so there is only one field
             }
 
             // Ensure field is present in result
-            if (resultKey.value !in data) {
-                data[resultKey.value] = null
+            if (topLevelResultKey.value !in data) {
+                data[topLevelResultKey.value] = null
             }
 
             if (children.isNotEmpty()) {
                 @Suppress("UNCHECKED_CAST")
-                val childrenData = data[resultKey.value] as? MutableJsonMap?
+                val childrenData = data[topLevelResultKey.value] as? MutableJsonMap?
 
                 if (childrenData != null) {
                     val queryHasNonTypenameFields = children.any { it.name != Introspection.TypeNameMetaFieldDef.name }
@@ -87,7 +87,7 @@ internal class NadelResultMerger {
                             }
 
                         if (dataOnlyHasTypenameFields) {
-                            data[resultKey.value] = null
+                            data[topLevelResultKey.value] = null
                         }
                     }
 
@@ -100,14 +100,14 @@ internal class NadelResultMerger {
                         // Handle non-null case
                         val childFieldDef = child.getFieldDefinitions(engineSchema).single()
                         if (childFieldDef.type.isNonNull && childrenData[child.resultKey] == null) {
-                            data[resultKey.value] = null
+                            data[topLevelResultKey.value] = null
                         }
                     }
                 }
             }
 
             // Handle non-null case
-            if (topLevelFieldDef.type.isNonNull && data[resultKey.value] == null) {
+            if (topLevelFieldDef.type.isNonNull && data[topLevelResultKey.value] == null) {
                 return null
             }
         }
