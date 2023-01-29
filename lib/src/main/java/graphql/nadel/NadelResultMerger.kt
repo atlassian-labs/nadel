@@ -73,11 +73,11 @@ internal class NadelResultMerger {
                 val childrenData = data[resultKey.value] as? MutableJsonMap?
 
                 if (childrenData != null) {
-                    val hasNonTypenameFields = children.any { it.name != Introspection.TypeNameMetaFieldDef.name }
+                    val queryHasNonTypenameFields = children.any { it.name != Introspection.TypeNameMetaFieldDef.name }
 
                     // This portion mutates the result if the __typename is the only field successfully resolved
                     // This is to simulate the __typename being resolved by an underlying service
-                    if (hasNonTypenameFields) {
+                    if (queryHasNonTypenameFields) {
                         val dataOnlyHasTypenameFields = childrenData
                             .keys
                             .all { key ->
