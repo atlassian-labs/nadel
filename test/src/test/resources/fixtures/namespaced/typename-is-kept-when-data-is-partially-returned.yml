@@ -1,4 +1,4 @@
-name: "one of the namespaced services returns error"
+name: "typename is kept when data is partially returned"
 enabled: true
 overallSchema:
   Issues: |
@@ -55,8 +55,9 @@ underlyingSchema:
 query: |
   {
     issue {
+      __typename
       getIssue {
-        text
+        id
       }
       search {
         count
@@ -68,10 +69,10 @@ serviceCalls:
   - serviceName: "Issues"
     request:
       query: |
-        query {
+        {
           issue {
             getIssue {
-              text
+              id
             }
           }
         }
@@ -80,18 +81,18 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "issue": {
-            "getIssue": {
-              "text": "Foo"
-            }
-          }
         },
+        "errors": [
+          {
+            "message": "Error"
+          }
+        ],
         "extensions": {}
       }
   - serviceName: "IssueSearch"
     request:
       query: |
-        query {
+        {
           issue {
             search {
               count
@@ -103,13 +104,12 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "issue": null
-        },
-        "errors": [
-          {
-            "message": "Error on IssueSearch"
+          "issue": {
+            "search": {
+              "count": 10
+            }
           }
-        ],
+        },
         "extensions": {}
       }
 # language=JSON
@@ -117,20 +117,20 @@ response: |-
   {
     "data": {
       "issue": {
-        "getIssue": {
-          "text": "Foo"
+        "__typename": "IssueQuery",
+        "search": {
+          "count": 10
         },
-        "search": null
+        "getIssue": null
       }
     },
     "errors": [
       {
-        "message": "Error on IssueSearch",
+        "message": "Error",
         "locations": [],
         "extensions": {
           "classification": "DataFetchingException"
         }
       }
-    ],
-    "extensions": {}
+    ]
   }

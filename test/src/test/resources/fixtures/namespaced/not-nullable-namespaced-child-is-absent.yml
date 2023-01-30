@@ -1,4 +1,4 @@
-name: "one of the namespaced services returns error"
+name: "not nullable namespaced child is absent"
 enabled: true
 overallSchema:
   Issues: |
@@ -18,7 +18,7 @@ overallSchema:
     }
   IssueSearch: |
     extend type IssueQuery {
-      search: SearchResult
+      search: SearchResult!
     }
 
     type SearchResult {
@@ -45,7 +45,7 @@ underlyingSchema:
     }
 
     type IssueQuery {
-      search: SearchResult
+      search: SearchResult!
     }
 
     type SearchResult {
@@ -116,12 +116,7 @@ serviceCalls:
 response: |-
   {
     "data": {
-      "issue": {
-        "getIssue": {
-          "text": "Foo"
-        },
-        "search": null
-      }
+      "issue": null
     },
     "errors": [
       {

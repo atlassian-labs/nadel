@@ -117,6 +117,7 @@ response: |-
   {
     "data": {
       "issue": {
+        "getIssue": null,
         "search": {
           "count": 1
         }

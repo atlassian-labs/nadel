@@ -1,4 +1,4 @@
-name: "one of the namespaced services returns error"
+name: "aliased typename is wiped when other data fails"
 enabled: true
 overallSchema:
   Issues: |
@@ -55,11 +55,9 @@ underlyingSchema:
 query: |
   {
     issue {
+      test: __typename
       getIssue {
         text
-      }
-      search {
-        count
       }
     }
   }
@@ -80,34 +78,10 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "issue": {
-            "getIssue": {
-              "text": "Foo"
-            }
-          }
-        },
-        "extensions": {}
-      }
-  - serviceName: "IssueSearch"
-    request:
-      query: |
-        query {
-          issue {
-            search {
-              count
-            }
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issue": null
         },
         "errors": [
           {
-            "message": "Error on IssueSearch"
+            "message": "Error"
           }
         ],
         "extensions": {}
@@ -116,16 +90,11 @@ serviceCalls:
 response: |-
   {
     "data": {
-      "issue": {
-        "getIssue": {
-          "text": "Foo"
-        },
-        "search": null
-      }
+      "issue": null
     },
     "errors": [
       {
-        "message": "Error on IssueSearch",
+        "message": "Error",
         "locations": [],
         "extensions": {
           "classification": "DataFetchingException"

@@ -520,6 +520,19 @@ sealed interface NadelSchemaValidationError {
 
         override val subject = overallField
     }
+
+    data class NamespacedTypeMustBeObject(
+        val type: NadelServiceSchemaElement,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = type.service
+
+        override val message: String = run {
+            val tn = type.overall.name
+            "Namespaced type $tn must be an object type"
+        }
+
+        override val subject = type.overall
+    }
 }
 
 private fun toString(element: GraphQLNamedSchemaElement): String {

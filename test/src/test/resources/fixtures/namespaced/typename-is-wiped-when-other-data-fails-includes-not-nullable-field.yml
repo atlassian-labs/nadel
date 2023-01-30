@@ -1,4 +1,4 @@
-name: "one of the namespaced services returns error"
+name: "typename is wiped when other data fails includes not nullable field"
 enabled: true
 overallSchema:
   Issues: |
@@ -18,7 +18,7 @@ overallSchema:
     }
   IssueSearch: |
     extend type IssueQuery {
-      search: SearchResult
+      search: SearchResult!
     }
 
     type SearchResult {
@@ -45,7 +45,7 @@ underlyingSchema:
     }
 
     type IssueQuery {
-      search: SearchResult
+      search: SearchResult!
     }
 
     type SearchResult {
@@ -55,9 +55,7 @@ underlyingSchema:
 query: |
   {
     issue {
-      getIssue {
-        text
-      }
+      __typename
       search {
         count
       }
@@ -65,29 +63,6 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: "Issues"
-    request:
-      query: |
-        query {
-          issue {
-            getIssue {
-              text
-            }
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issue": {
-            "getIssue": {
-              "text": "Foo"
-            }
-          }
-        },
-        "extensions": {}
-      }
   - serviceName: "IssueSearch"
     request:
       query: |
@@ -103,11 +78,10 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "issue": null
         },
         "errors": [
           {
-            "message": "Error on IssueSearch"
+            "message": "Error"
           }
         ],
         "extensions": {}
@@ -116,16 +90,11 @@ serviceCalls:
 response: |-
   {
     "data": {
-      "issue": {
-        "getIssue": {
-          "text": "Foo"
-        },
-        "search": null
-      }
+      "issue": null
     },
     "errors": [
       {
-        "message": "Error on IssueSearch",
+        "message": "Error",
         "locations": [],
         "extensions": {
           "classification": "DataFetchingException"

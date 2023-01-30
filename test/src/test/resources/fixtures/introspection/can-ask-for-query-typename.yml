@@ -1,0 +1,42 @@
+name: "can ask for query typename"
+enabled: true
+overallSchema:
+  MyService: |
+    type Query {
+      hello: World
+    }
+    type World {
+      id: ID
+      name: String
+    }
+    type Mutation {
+      hello: String
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    __typename
+  }
+variables: { }
+serviceCalls: []
+# language=JSON
+response: |-
+  {
+    "data": {
+      "__typename": "Query"
+    },
+    "errors": []
+  }

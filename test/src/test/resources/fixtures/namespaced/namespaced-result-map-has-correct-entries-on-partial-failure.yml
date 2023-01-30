@@ -1,4 +1,4 @@
-name: "one of the namespaced services returns error"
+name: "namespaced result map has correct entries on partial failure"
 enabled: true
 overallSchema:
   Issues: |
@@ -53,7 +53,9 @@ underlyingSchema:
       count: Int
     }
 query: |
-  {
+  { ...F }
+
+  fragment F on Query {
     issue {
       getIssue {
         text
@@ -103,14 +105,16 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "issue": null
         },
         "errors": [
           {
-            "message": "Error on IssueSearch"
+            "message": "Error",
+            "locations": [],
+            "extensions": {
+              "classification": "DataFetchingException"
+            }
           }
-        ],
-        "extensions": {}
+        ]
       }
 # language=JSON
 response: |-
@@ -125,7 +129,7 @@ response: |-
     },
     "errors": [
       {
-        "message": "Error on IssueSearch",
+        "message": "Error",
         "locations": [],
         "extensions": {
           "classification": "DataFetchingException"

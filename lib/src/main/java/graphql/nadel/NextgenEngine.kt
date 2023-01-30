@@ -22,7 +22,6 @@ import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.copy
 import graphql.nadel.engine.util.getOperationKind
-import graphql.nadel.engine.util.mergeResults
 import graphql.nadel.engine.util.newExecutionResult
 import graphql.nadel.engine.util.newGraphQLError
 import graphql.nadel.engine.util.newServiceExecutionErrorResult
@@ -150,28 +149,29 @@ class NextgenEngine @JvmOverloads constructor(
             )
 
             val result: ExecutionResult = try {
-                mergeResults(
-                    coroutineScope {
-                        fieldToService.getServicesForTopLevelFields(query, executionHints)
-                            .map { (field, service) ->
-                                async {
-                                    try {
-                                        val resolvedService = fieldToService.resolveDynamicService(field, service)
-                                        executeTopLevelField(
-                                            topLevelField = field,
-                                            service = resolvedService,
-                                            executionContext = executionContext,
-                                        )
-                                    } catch (e: Throwable) {
-                                        when (e) {
-                                            is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
-                                            else -> throw e
-                                        }
+                val fields = fieldToService.getServicesForTopLevelFields(query, executionHints)
+                val results = coroutineScope {
+                    fields
+                        .map { (field, service) ->
+                            async {
+                                try {
+                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
+                                    executeTopLevelField(
+                                        topLevelField = field,
+                                        service = resolvedService,
+                                        executionContext = executionContext,
+                                    )
+                                } catch (e: Throwable) {
+                                    when (e) {
+                                        is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
+                                        else -> throw e
                                     }
                                 }
                             }
-                    }.awaitAll()
-                )
+                        }
+                }.awaitAll()
+
+                NadelResultMerger().mergeResults(fields, engineSchema, results)
             } catch (e: Throwable) {
                 beginExecuteContext?.onCompleted(null, e)
                 throw e
@@ -296,12 +296,7 @@ class NextgenEngine @JvmOverloads constructor(
             )
         }
 
-        return serviceExecResult.copy(
-            data = serviceExecResult.data.let { data ->
-                data?.takeIf { transformedQuery.resultKey in data }
-                    ?: mutableMapOf(transformedQuery.resultKey to null)
-            },
-        )
+        return serviceExecResult
     }
 
     private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
