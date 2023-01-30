@@ -9,8 +9,7 @@ private interface TurnFlagOn : EngineTestHook {
         return super.makeExecutionInput(builder)
             .transformExecutionHints {
                 it
-                    .internalNamespaceTypenameResolution { true }
-                    .newResultMerger { true }
+                    .newResultMergerAndNamespacedTypename { true }
             }
     }
 }

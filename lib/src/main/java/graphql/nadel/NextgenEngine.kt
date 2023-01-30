@@ -171,7 +171,7 @@ class NextgenEngine @JvmOverloads constructor(
                         }
                 }.awaitAll()
 
-                if (executionHints.newResultMerger()) {
+                if (executionHints.newResultMergerAndNamespacedTypename()) {
                     NadelResultMerger.mergeResults(fields, engineSchema, results)
                 } else {
                     graphql.nadel.engine.util.mergeResults(results)

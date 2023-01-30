@@ -1,15 +1,13 @@
 package graphql.nadel
 
 import graphql.nadel.hints.AllDocumentVariablesHint
-import graphql.nadel.hints.InternalNamespaceTypenameResolutionHint
 import graphql.nadel.hints.LegacyOperationNamesHint
-import graphql.nadel.hints.NewResultMergerHint
+import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
 data class NadelExecutionHints constructor(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
-    val internalNamespaceTypenameResolution: InternalNamespaceTypenameResolutionHint,
-    val newResultMerger: NewResultMergerHint,
+    val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -24,17 +22,14 @@ data class NadelExecutionHints constructor(
     class Builder {
         private var legacyOperationNames: LegacyOperationNamesHint = LegacyOperationNamesHint { false }
         private var allDocumentVariablesHint: AllDocumentVariablesHint = AllDocumentVariablesHint { false }
-        private var internalNamespaceTypenameResolution: InternalNamespaceTypenameResolutionHint =
-            InternalNamespaceTypenameResolutionHint { false }
-        private var newResultMerger: NewResultMergerHint = NewResultMergerHint { false }
+        private var newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
 
         constructor()
 
         constructor(nadelExecutionHints: NadelExecutionHints) {
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
-            internalNamespaceTypenameResolution = nadelExecutionHints.internalNamespaceTypenameResolution
-            newResultMerger = nadelExecutionHints.newResultMerger
+            newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -47,13 +42,8 @@ data class NadelExecutionHints constructor(
             return this
         }
 
-        fun internalNamespaceTypenameResolution(flag: InternalNamespaceTypenameResolutionHint): Builder {
-            internalNamespaceTypenameResolution = flag
-            return this
-        }
-
-        fun newResultMerger(flag: NewResultMergerHint): Builder {
-            newResultMerger = flag
+        fun newResultMergerAndNamespacedTypename(flag: NewResultMergerAndNamespacedTypename): Builder {
+            newResultMergerAndNamespacedTypename = flag
             return this
         }
 
@@ -61,8 +51,7 @@ data class NadelExecutionHints constructor(
             return NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
-                internalNamespaceTypenameResolution,
-                newResultMerger,
+                newResultMergerAndNamespacedTypename,
             )
         }
     }
