@@ -19,7 +19,7 @@ import graphql.schema.GraphQLSchema
 @JvmInline
 private value class ResultKey(val value: String)
 
-internal class NadelResultMerger {
+internal object NadelResultMerger {
     fun mergeResults(
         fields: List<NadelFieldAndService>,
         engineSchema: GraphQLSchema,

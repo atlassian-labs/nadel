@@ -8,9 +8,9 @@ private interface TurnTheFlagOn : EngineTestHook {
     override fun makeExecutionInput(builder: NadelExecutionInput.Builder): NadelExecutionInput.Builder {
         return super.makeExecutionInput(builder)
             .transformExecutionHints {
-                it.internalNamespaceTypenameResolution {
-                    true
-                }
+                it
+                    .internalNamespaceTypenameResolution { true }
+                    .newResultMerger { true }
             }
     }
 }
@@ -50,3 +50,12 @@ class `aliased-typename-is-wiped-when-other-data-fails` : TurnTheFlagOn
 
 @UseHook
 class `typename-is-wiped-when-other-data-fails-includes-not-nullable-field` : TurnTheFlagOn
+
+@UseHook
+class `namespaced-result-map-has-correct-entries-on-partial-failure` : TurnTheFlagOn
+
+@UseHook
+class `one-of-the-namespaced-services-returns-error-reversed` : TurnTheFlagOn
+
+@UseHook
+class `one-of-the-namespaced-services-returns-error` : TurnTheFlagOn

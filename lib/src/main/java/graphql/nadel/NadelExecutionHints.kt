@@ -3,11 +3,13 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.InternalNamespaceTypenameResolutionHint
 import graphql.nadel.hints.LegacyOperationNamesHint
+import graphql.nadel.hints.NewResultMergerHint
 
 data class NadelExecutionHints constructor(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val internalNamespaceTypenameResolution: InternalNamespaceTypenameResolutionHint,
+    val newResultMerger: NewResultMergerHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -24,6 +26,7 @@ data class NadelExecutionHints constructor(
         private var allDocumentVariablesHint: AllDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var internalNamespaceTypenameResolution: InternalNamespaceTypenameResolutionHint =
             InternalNamespaceTypenameResolutionHint { false }
+        private var newResultMerger: NewResultMergerHint = NewResultMergerHint { false }
 
         constructor()
 
@@ -31,6 +34,7 @@ data class NadelExecutionHints constructor(
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             internalNamespaceTypenameResolution = nadelExecutionHints.internalNamespaceTypenameResolution
+            newResultMerger = nadelExecutionHints.newResultMerger
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -48,11 +52,17 @@ data class NadelExecutionHints constructor(
             return this
         }
 
+        fun newResultMerger(flag: NewResultMergerHint): Builder {
+            newResultMerger = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
                 internalNamespaceTypenameResolution,
+                newResultMerger,
             )
         }
     }
