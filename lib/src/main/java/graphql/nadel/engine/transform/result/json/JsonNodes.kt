@@ -49,7 +49,7 @@ class JsonNodes(
             val hasMore = index < queryPath.segments.lastIndex
             val pathSegment = queryPath.segments[index]
 
-            queue = if (hasMore) {
+            queue = if (hasMore || flatten) {
                 nodes.computeIfAbsent(subPath) {
                     queue.flatMap { node ->
                         getNodes(node, pathSegment, flattenLists = true)
@@ -74,12 +74,15 @@ class JsonNodes(
                 is AnyMap -> currentNode.value[segment.value]?.let {
                     JsonNode(currentNode.resultPath + segment, it)
                 }
+
                 is AnyList -> when (segment) {
                     is JsonNodePathSegment.Int -> currentNode.value.getOrNull(segment.value)?.let {
                         JsonNode(currentNode.resultPath + segment, it)
                     }
+
                     else -> null
                 }
+
                 else -> null
             }
         }
