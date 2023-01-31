@@ -81,7 +81,7 @@ internal class NadelFieldToService(
         if (overallField.name == Introspection.TypeNameMetaFieldDef.name) {
             val namespaceTypeName = overallField.objectTypeNames.single()
 
-            return if (executionHints.internalNamespaceTypenameResolution(namespaceTypeName)) {
+            return if (executionHints.newResultMergerAndNamespacedTypename()) {
                 introspectionService
             } else {
                 services.values.first { service ->

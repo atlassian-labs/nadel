@@ -39,7 +39,6 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.normalized.VariablePredicate
-import java.util.concurrent.CompletableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -52,6 +51,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
@@ -171,7 +171,11 @@ class NextgenEngine @JvmOverloads constructor(
                         }
                 }.awaitAll()
 
-                NadelResultMerger().mergeResults(fields, engineSchema, results)
+                if (executionHints.newResultMergerAndNamespacedTypename()) {
+                    NadelResultMerger.mergeResults(fields, engineSchema, results)
+                } else {
+                    graphql.nadel.engine.util.mergeResults(results)
+                }
             } catch (e: Throwable) {
                 beginExecuteContext?.onCompleted(null, e)
                 throw e
@@ -296,7 +300,12 @@ class NextgenEngine @JvmOverloads constructor(
             )
         }
 
-        return serviceExecResult
+        return serviceExecResult.copy(
+            data = serviceExecResult.data.let { data ->
+                data.takeIf { transformedQuery.resultKey in data }
+                    ?: mutableMapOf(transformedQuery.resultKey to null)
+            },
+        )
     }
 
     private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
