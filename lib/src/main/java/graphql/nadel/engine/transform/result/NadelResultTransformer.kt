@@ -6,18 +6,14 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.result.NadelResultTransformer.DataMutation
-import graphql.nadel.engine.transform.result.json.AnyJsonNodePathSegment
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodePath
 import graphql.nadel.engine.transform.result.json.JsonNodePathSegment
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
-import graphql.nadel.engine.util.AnyMutableList
-import graphql.nadel.engine.util.AnyMutableMap
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
-import graphql.nadel.engine.util.asMutableJsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.Deferred
@@ -91,7 +87,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             when (transformation) {
                 is NadelResultInstruction.Set -> prepareSet(result.data, transformation)
                 is NadelResultInstruction.Remove -> prepareRemove(result.data, transformation)
-                is NadelResultInstruction.Copy -> prepareCopy(result.data, transformation)
                 is NadelResultInstruction.AddError -> prepareAddError(result.errors, transformation)
             }
         }
@@ -106,69 +101,23 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         data: JsonMap,
         instruction: NadelResultInstruction.Set,
     ): DataMutation? {
-        return prepareSet(
-            data,
-            destPath = instruction.subjectPath,
-            newValue = instruction.newValue,
-        )
+        @Suppress("UNCHECKED_CAST")
+        val map = instruction.subject.value as? MutableJsonMap ?: return null
+
+        return DataMutation {
+            map[instruction.key.value] = instruction.newValue
+        }
     }
 
     private fun prepareRemove(
         data: JsonMap,
         instruction: NadelResultInstruction.Remove,
     ): DataMutation? {
-        val parentPath = instruction.subjectPath.dropLast(1)
-        val parentMap = data.getJsonMapAt(parentPath) ?: return null
-        val subjectKey = instruction.subjectKey
+        @Suppress("UNCHECKED_CAST")
+        val map = instruction.subject.value as? MutableJsonMap ?: return null
 
-        val dataToDelete = parentMap[subjectKey]
-
-        return DataMutation { context ->
-            // Ensure that the node is still the same before removing it, ensures we don't remove the wrong thing
-            if (parentMap[subjectKey] === dataToDelete) {
-                modifyMap(context, parentPath, parentMap) {
-                    it.remove(subjectKey)
-                }
-            }
-        }
-    }
-
-    private fun prepareCopy(
-        data: JsonMap,
-        instruction: NadelResultInstruction.Copy,
-    ): DataMutation? {
-        val dataToCopy = data.getAt(instruction.subjectPath)
-        return prepareSet(
-            data,
-            destPath = instruction.destinationPath,
-            newValue = dataToCopy.value,
-        )
-    }
-
-    private fun prepareSet(
-        data: JsonMap,
-        destPath: JsonNodePath,
-        newValue: Any?,
-    ): DataMutation? {
-        val destParentPath = destPath.dropLast(1)
-        val destParentValue = data.getAt(destParentPath).value
-        val destKey = destPath.segments.last().value
-
-        return when (destParentValue) {
-            is AnyMap -> DataMutation {
-                when (destKey) {
-                    is String -> destParentValue.asMutableJsonMap()[destKey] = newValue
-                    else -> error("Set instruction expected string key for JSON object")
-                }
-            }
-            is AnyList -> DataMutation {
-                when (destKey) {
-                    is Int -> destParentValue.asMutable()[destKey] = newValue
-                    else -> error("Set instruction expected integer key for JSON array")
-                }
-            }
-            null -> null
-            else -> error("Set instruction had leaf value as parent of destination path")
+        return DataMutation {
+            map.remove(instruction.key.value)
         }
     }
 
@@ -214,10 +163,12 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             .asSequence()
             .flatMap { field ->
                 nodes.getNodesAt(
-                    queryPath = field.queryPath,
-                ).map { jsonNode ->
+                    queryPath = field.queryPath.dropLast(1),
+                    flatten = true,
+                ).map { parentNode ->
                     NadelResultInstruction.Remove(
-                        subjectPath = jsonNode.resultPath,
+                        subject = parentNode,
+                        key = ResultKey(field.resultKey),
                     )
                 }
             }
@@ -262,6 +213,7 @@ private fun JsonMap.getAt(path: JsonNodePath): JsonNode {
                     error("Requires List")
                 }
             }
+
             is JsonNodePathSegment.String -> {
                 if (cursor is AnyMap) {
                     cursor[segment.value]
@@ -269,99 +221,13 @@ private fun JsonMap.getAt(path: JsonNodePath): JsonNode {
                     error("Requires List")
                 }
             }
-        } ?: return JsonNode(path, null)
+        } ?: return JsonNode(null)
     }
 
     return JsonNode(
-        path,
         cursor,
     )
     // return path.segments.fold(JsonNode(JsonNodePath.root, this), JsonNode::get)
-}
-
-/**
- * This cleans up a the GraphQL response when a field is removed.
- *
- * If we remove a field from the tree and it is has no siblings, then we need to remove
- * the parent field too, and so on.
- */
-private fun JsonMap.cleanup(path: JsonNodePath) {
-    // This gets the node at every path segment up until the node specified by the path
-    val items = path.segments.runningFold(JsonNode(JsonNodePath.root, this), JsonNode::get)
-
-    // We work backwards here and see if a child has been deleted from the Map
-    // If the map is empty, we want to remove it from the
-    var childKeyToDelete: AnyJsonNodePathSegment? = null
-    for (item in items.asReversed()) {
-        when (val value = item.value) {
-            is AnyMutableMap -> {
-                when (childKeyToDelete) {
-                    null -> {
-                    }
-                    is JsonNodePathSegment.String -> {
-                        value.remove(key = childKeyToDelete.value)
-                    }
-                    else -> throw UnsupportedOperationException("Unsupported key to delete from Map")
-                }
-                if (value.isEmpty()) {
-                    childKeyToDelete = item.resultPath.segments.lastOrNull()
-                } else {
-                    break
-                }
-            }
-            is AnyMutableList -> {
-                when (childKeyToDelete) {
-                    null -> {
-                    }
-                    is JsonNodePathSegment.Int -> break
-                    else -> throw UnsupportedOperationException("Unsupported key to delete from List")
-                }
-            }
-            is AnyMap, is AnyList -> {
-                throw NotMutableError()
-            }
-            null -> {
-            }
-            else -> break
-        }
-    }
-}
-
-private fun JsonNode.get(segment: AnyJsonNodePathSegment): JsonNode {
-    return getNextNode(this, segment)
-}
-
-private fun getNextNode(current: JsonNode, segment: AnyJsonNodePathSegment): JsonNode {
-    return when (segment) {
-        is JsonNodePathSegment.String -> {
-            val path = current.resultPath + segment.value
-            when (val value = current.value) {
-                is AnyMap? -> JsonNode(
-                    resultPath = path,
-                    value = value?.get(segment.value),
-                )
-                else -> throw UnexpectedDataType(
-                    path,
-                    expected = Map::class,
-                    actual = value?.javaClass,
-                )
-            }
-        }
-        is JsonNodePathSegment.Int -> {
-            val path = current.resultPath + segment.value
-            when (val value = current.value) {
-                is AnyList? -> JsonNode(
-                    resultPath = path,
-                    value = value?.get(segment.value),
-                )
-                else -> throw UnexpectedDataType(
-                    path,
-                    expected = List::class,
-                    actual = value?.javaClass,
-                )
-            }
-        }
-    }
 }
 
 private class NotMutableError : RuntimeException("Data was required to be mutable but was not")

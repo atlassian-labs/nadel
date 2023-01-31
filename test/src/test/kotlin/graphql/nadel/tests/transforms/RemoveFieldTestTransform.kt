@@ -12,6 +12,7 @@ import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.ResultKey
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.queryPath
@@ -83,9 +84,9 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         )
 
         return parentNodes.map { parentNode ->
-            val destinationPath = parentNode.resultPath + overallField.resultKey
             NadelResultInstruction.Set(
-                subjectPath = destinationPath,
+                subject = parentNode,
+                key = ResultKey(overallField.resultKey),
                 newValue = null,
             )
         } + NadelResultInstruction.AddError(state)

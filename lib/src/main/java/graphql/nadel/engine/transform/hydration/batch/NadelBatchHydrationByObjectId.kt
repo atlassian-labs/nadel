@@ -7,6 +7,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.transform.NadelTransformUtil
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getHydrationActorNodes
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.ResultKey
 import graphql.nadel.engine.transform.result.asMutable
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
@@ -160,7 +161,8 @@ internal object NadelBatchHydrationByObjectId {
         }
 
         return NadelResultInstruction.Set(
-            subjectPath = sourceNode.resultPath + state.hydratedField.resultKey,
+            subject = sourceNode,
+            key = ResultKey(state.hydratedField.resultKey),
             newValue = newValue,
         )
     }

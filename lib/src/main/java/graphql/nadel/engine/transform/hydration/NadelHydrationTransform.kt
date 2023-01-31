@@ -22,6 +22,7 @@ import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructio
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.ResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -191,7 +192,13 @@ internal class NadelHydrationTransform(
         }
 
         val instruction = getHydrationFieldInstruction(state, instructions, executionContext.hooks, parentNode)
-            ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName, null))
+            ?: return listOf(
+                NadelResultInstruction.Set(
+                    subject = parentNode,
+                    key = ResultKey(state.hydratedField.resultKey),
+                    newValue = null,
+                ),
+            )
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(
@@ -238,7 +245,8 @@ internal class NadelHydrationTransform(
 
                 return listOf(
                     NadelResultInstruction.Set(
-                        subjectPath = parentNode.resultPath + fieldToHydrate.resultKey,
+                        subject = parentNode,
+                        key = ResultKey(fieldToHydrate.resultKey),
                         newValue = data?.value,
                     ),
                 ) + errors
@@ -256,7 +264,8 @@ internal class NadelHydrationTransform(
 
                 return listOf(
                     NadelResultInstruction.Set(
-                        subjectPath = parentNode.resultPath + fieldToHydrate.resultKey,
+                        subject = parentNode,
+                        key = ResultKey(fieldToHydrate.resultKey),
                         newValue = data,
                     ),
                 ) + addErrors

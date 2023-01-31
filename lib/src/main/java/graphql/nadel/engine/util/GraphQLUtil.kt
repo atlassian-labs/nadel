@@ -62,6 +62,7 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
+import java.util.Arrays
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
@@ -225,7 +226,33 @@ fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormaliz
         }
 }
 
-val ExecutableNormalizedField.queryPath: NadelQueryPath get() = NadelQueryPath(listOfResultKeys)
+val ExecutableNormalizedField.queryPath: NadelQueryPath
+    get() = NadelQueryPath(
+        run {
+            var count = 0
+            run {
+                var cursor: ExecutableNormalizedField = this
+                while (true) {
+                    count++
+                    cursor = cursor.parent ?: break
+                }
+            }
+
+            val array = arrayOfNulls<String>(count)
+            run {
+                var cursor: ExecutableNormalizedField = this
+                var index = count - 1
+                while (true) {
+                    array[index] = cursor.resultKey
+                    index--
+                    cursor = cursor.parent ?: break
+                }
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            array.asList() as List<String>
+        },
+    )
 
 inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<T> {
     return getDefinitionsOfType(T::class.java)

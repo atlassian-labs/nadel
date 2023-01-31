@@ -75,40 +75,6 @@ object NadelTransformUtil {
         val coordinates = makeFieldCoordinates(overallTypeName, overallField.name)
         return executionBlueprint.engineSchema.getField(coordinates)
     }
-
-    /**
-     * Creates a list of Set instructions that will be used to modified the values of the result data
-     * for a particular field.
-     *
-     * This function will call the transformerFunction for all result nodes associated with the overallField. So the
-     * caller doesn't need to worry about whether the overallField is a collection or an individual field.
-     *
-     * Note that the transformer will only be called for non-null values.
-     */
-    fun createSetInstructions(
-        nodes: JsonNodes,
-        underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        overallField: ExecutableNormalizedField,
-        transformerFunction: (Any) -> Any?,
-    ): List<NadelResultInstruction> {
-        val parentQueryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root
-
-        val valueNodes: List<JsonNode> = nodes.getNodesAt(
-            queryPath = parentQueryPath + overallField.resultKey,
-            flatten = true
-        )
-
-        return valueNodes
-            .mapNotNull { valueNode ->
-                nodes.getNodeAt(valueNode.resultPath)?.let { jsonNode ->
-                    NadelResultInstruction.Set(
-                        valueNode.resultPath,
-                        jsonNode.value?.let { value -> transformerFunction(value) },
-                    )
-                }
-            }
-    }
 }
 
 /**

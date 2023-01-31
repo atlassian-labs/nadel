@@ -7,6 +7,7 @@ import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchInputDef
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.ResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.emptyOrSingle
@@ -48,7 +49,8 @@ internal class NadelBatchHydrationByIndex private constructor(
                 val inputValues = getInputValues(parentNode)
 
                 NadelResultInstruction.Set(
-                    subjectPath = parentNode.resultPath + fieldToHydrate.resultKey,
+                    subject = parentNode,
+                    key = ResultKey(fieldToHydrate.resultKey),
                     newValue = if (isManyInputNodesToParentNodes) {
                         chunker.take(inputValues)
                     } else {
@@ -145,6 +147,7 @@ internal class NadelBatchHydrationByIndex private constructor(
                                 badCount()
                             }
                         }
+
                         else -> error("Unsupported batch result type")
                     }
                 }
