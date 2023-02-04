@@ -1,7 +1,5 @@
 package graphql.nadel.tests.yaml
 
-import graphql.nadel.engine.transform.result.json.JsonNodePath
-import graphql.nadel.engine.transform.result.json.JsonNodePathSegment
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.comments.CommentLine
 import org.yaml.snakeyaml.composer.Composer

@@ -6,8 +6,7 @@ import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
-import graphql.nadel.engine.transform.result.json.JsonNodePath
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
@@ -16,15 +15,13 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
-        userContext: Any?
+        userContext: Any?,
     ): T? {
-
         val dataIdFieldName = if (instructions.any { it is NadelHydrationFieldInstruction })
             "hydration__data__dataId"
         else "batch_hydration__data__dataId"
 
-        val dataIdValue = JsonNodeExtractor.getNodeAt(parentNode, JsonNodePath.root + dataIdFieldName)!!
-            .value as String
+        val dataIdValue = (parentNode.value as JsonMap)[dataIdFieldName] as String
         val actorFieldName = when {
             dataIdValue.startsWith("human", ignoreCase = true) -> "humanById"
             dataIdValue.startsWith("null", ignoreCase = true) -> null

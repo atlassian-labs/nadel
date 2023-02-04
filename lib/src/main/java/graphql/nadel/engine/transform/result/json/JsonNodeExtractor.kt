@@ -4,7 +4,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
-import graphql.nadel.engine.util.foldWhileNotNull
 
 @Deprecated("Start moving to JsonNodes for performance reasons")
 object JsonNodeExtractor {
@@ -32,37 +31,6 @@ object JsonNodeExtractor {
             queue.flatMap { node ->
                 // At the end when we see lists we do NOT want to flatten them for BFS queue
                 getNodes(node, pathSegment, flattenLists = !atEnd || flatten)
-            }
-        }
-    }
-
-    /**
-     * Extract the node at the given json node path.
-     */
-    fun getNodeAt(data: JsonMap, path: JsonNodePath): JsonNode? {
-        val rootNode = JsonNode(data)
-        return getNodeAt(rootNode, path)
-    }
-
-    /**
-     * Extract the node at the given json node path.
-     */
-    fun getNodeAt(rootNode: JsonNode, path: JsonNodePath): JsonNode? {
-        return path.segments.foldWhileNotNull(rootNode as JsonNode?) { currentNode, segment ->
-            when (currentNode?.value) {
-                is AnyMap -> currentNode.value[segment.value]?.let {
-                    JsonNode(it)
-                }
-
-                is AnyList -> when (segment) {
-                    is JsonNodePathSegment.Int -> currentNode.value.getOrNull(segment.value)?.let {
-                        JsonNode(it)
-                    }
-
-                    else -> null
-                }
-
-                else -> null
             }
         }
     }

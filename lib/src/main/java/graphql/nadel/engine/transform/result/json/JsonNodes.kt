@@ -5,7 +5,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
-import graphql.nadel.engine.util.foldWhileNotNull
 import java.util.Collections
 
 /**
@@ -25,14 +24,6 @@ class JsonNodes(
     fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
         val rootNode = JsonNode(data)
         return getNodesAt(rootNode, queryPath, flatten)
-    }
-
-    /**
-     * Extract the node at the given json node path.
-     */
-    fun getNodeAt(path: JsonNodePath): JsonNode? {
-        val rootNode = JsonNode(data)
-        return getNodeAt(rootNode, path)
     }
 
     /**
@@ -63,29 +54,6 @@ class JsonNodes(
         }
 
         return queue
-    }
-
-    /**
-     * Extract the node at the given json node path.
-     */
-    private fun getNodeAt(rootNode: JsonNode, path: JsonNodePath): JsonNode? {
-        return path.segments.foldWhileNotNull(rootNode as JsonNode?) { currentNode, segment ->
-            when (currentNode?.value) {
-                is AnyMap -> currentNode.value[segment.value]?.let {
-                    JsonNode(it)
-                }
-
-                is AnyList -> when (segment) {
-                    is JsonNodePathSegment.Int -> currentNode.value.getOrNull(segment.value)?.let {
-                        JsonNode(it)
-                    }
-
-                    else -> null
-                }
-
-                else -> null
-            }
-        }
     }
 
     private fun getNodes(node: JsonNode, segment: String, flattenLists: Boolean): Sequence<JsonNode> {

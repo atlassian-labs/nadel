@@ -1,4 +1,4 @@
-package graphql.nadel.engine.transform.result.json
+package graphql.nadel.tests.yaml
 
 typealias AnyJsonNodePathSegment = JsonNodePathSegment<*>
 
