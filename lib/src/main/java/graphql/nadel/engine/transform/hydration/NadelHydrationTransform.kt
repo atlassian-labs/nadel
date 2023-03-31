@@ -210,7 +210,8 @@ internal class NadelHydrationTransform(
                         batchSize = 1,
                         hydrationSourceService = hydrationSourceService,
                         hydrationSourceField = instruction.location,
-                        hydrationActorField = hydrationActorField
+                        hydrationActorField = hydrationActorField,
+                        hydrationPath = fieldToHydrate.listOfResultKeys
                     )
                     engine.executeTopLevelField(
                         service = instruction.actorService,
