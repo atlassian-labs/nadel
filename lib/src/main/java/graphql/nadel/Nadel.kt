@@ -53,6 +53,12 @@ class Nadel private constructor(
             .query(nadelExecutionInput.query)
             .operationName(nadelExecutionInput.operationName)
             .context(nadelExecutionInput.context)
+            .graphQLContext { builder ->
+                // we need to transfer over all the keys - ExecutionInput does not allow for setting it direct
+                nadelExecutionInput.graphqlContext.stream().forEach {
+                    builder.put(it.key, it.value)
+                }
+            }
             .variables(nadelExecutionInput.variables)
             .extensions(nadelExecutionInput.extensions)
             .executionId(nadelExecutionInput.executionId)

@@ -1,11 +1,14 @@
 package graphql.nadel
 
+import graphql.GraphQLContext
 import graphql.execution.ExecutionId
+import java.util.function.Consumer
 
 class NadelExecutionInput private constructor(
     val query: String,
     val operationName: String?,
     val context: Any?,
+    val graphqlContext: GraphQLContext,
     val variables: Map<String, Any?>,
     val extensions: Map<String, Any?>,
     val executionId: ExecutionId?,
@@ -15,6 +18,7 @@ class NadelExecutionInput private constructor(
         private var query: String? = null
         private var operationName: String? = null
         private var context: Any? = null
+        private var graphqlContextBuilder: GraphQLContext.Builder = GraphQLContext.newContext()
         private var variables: Map<String, Any?> = LinkedHashMap()
         private var extensions: Map<String, Any?> = LinkedHashMap()
         private var executionId: ExecutionId? = null
@@ -32,6 +36,16 @@ class NadelExecutionInput private constructor(
 
         fun context(context: Any?): Builder {
             this.context = context
+            return this
+        }
+
+        fun graphqlContext(contextConsumer: Consumer<GraphQLContext.Builder>): Builder {
+            contextConsumer.accept(this.graphqlContextBuilder)
+            return this
+        }
+
+        fun graphqlContext(key: Any, value: Any): Builder {
+            this.graphqlContextBuilder.put(key, value)
             return this
         }
 
@@ -67,6 +81,7 @@ class NadelExecutionInput private constructor(
                 query = requireNotNull(query) { "Query must be provided" },
                 operationName = operationName,
                 context = context,
+                graphqlContext = graphqlContextBuilder.build(),
                 variables = variables,
                 extensions = extensions,
                 executionId = executionId,

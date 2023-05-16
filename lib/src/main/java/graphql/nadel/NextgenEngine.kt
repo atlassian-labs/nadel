@@ -51,6 +51,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import java.util.Locale
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(
@@ -125,6 +126,8 @@ class NextgenEngine @JvmOverloads constructor(
                 queryDocument,
                 executionInput.operationName,
                 executionInput.rawVariables,
+                executionInput.graphQLContext,
+                Locale.getDefault()
             )
 
             val timer = NadelInstrumentationTimer(
@@ -255,6 +258,7 @@ class NextgenEngine @JvmOverloads constructor(
         val serviceExecParams = ServiceExecutionParameters(
             query = compileResult.document,
             context = executionInput.context,
+            graphQLContext = executionInput.graphQLContext,
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
             cacheControl = executionInput.cacheControl,
             variables = compileResult.variables,
