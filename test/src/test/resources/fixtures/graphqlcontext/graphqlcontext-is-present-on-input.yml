@@ -1,0 +1,74 @@
+name: "graphqlcontext-is-present-on-input"
+enabled: true
+overallSchema:
+  MyService: |
+    type Query {
+      hello: World
+    }
+    type World {
+      id: ID
+      name: String
+    }
+    type Mutation {
+      hello: String
+    }
+    type Subscription {
+      onWorldUpdate: World
+      onAnotherUpdate: World
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type Subscription {
+      onAnotherUpdate: World
+      onWorldUpdate: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    hello {
+      name
+    }
+    hello {
+      id
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "MyService"
+    request:
+      query: |
+        query {
+          hello {
+            id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "hello": null
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "hello": null
+    },
+    "extensions": {}
+  }

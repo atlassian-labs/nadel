@@ -1,6 +1,7 @@
 package graphql.nadel.engine
 
 import graphql.ExecutionInput
+import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
@@ -24,6 +25,11 @@ data class NadelExecutionContext internal constructor(
     val userContext: Any?
         get() {
             return executionInput.context
+        }
+
+    val graphQLContext: GraphQLContext
+        get() {
+            return executionInput.graphQLContext!!
         }
 
     /**

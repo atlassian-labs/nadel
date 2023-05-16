@@ -258,6 +258,7 @@ class NextgenEngine @JvmOverloads constructor(
         val serviceExecParams = ServiceExecutionParameters(
             query = compileResult.document,
             context = executionInput.context,
+            graphQLContext = executionInput.graphQLContext,
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
             cacheControl = executionInput.cacheControl,
             variables = compileResult.variables,
