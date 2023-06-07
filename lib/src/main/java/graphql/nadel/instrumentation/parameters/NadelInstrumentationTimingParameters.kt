@@ -2,11 +2,17 @@ package graphql.nadel.instrumentation.parameters
 
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
 import java.time.Duration
-import kotlin.reflect.KClass
+import java.time.Instant
 
 data class NadelInstrumentationTimingParameters(
     val step: Step,
+    /**
+     * Can be null for batched timings which don't really have a start time.
+     */
+    val startedAt: Instant?,
     val duration: Duration,
     /**
      * If an exception occurred during the timing of the step, then it is passed in here.
@@ -57,10 +63,15 @@ data class NadelInstrumentationTimingParameters(
         }
     }
 
-    enum class RootStep(override val parent: Step? = null) : Step {
+    enum class RootStep : Step {
+        ExecutableOperationParsing,
         ExecutionPlanning,
         QueryTransforming,
         ResultTransforming,
+        ServiceExecution,
+        ;
+
+        override val parent: Step? = null
     }
 
     data class ChildStep internal constructor(
@@ -75,6 +86,12 @@ data class NadelInstrumentationTimingParameters(
             name = transform.name,
         )
 
-        companion object
+        companion object {
+            val DocumentCompilation = RootStep.ServiceExecution.child("DocumentCompilation")
+        }
     }
+}
+
+internal fun Step.child(name: String): ChildStep {
+    return ChildStep(parent = this, name = name)
 }

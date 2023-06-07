@@ -20,6 +20,7 @@ import graphql.nadel.engine.transform.query.NadelFieldToService
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.beginExecute
+import graphql.nadel.engine.util.compileToDocument
 import graphql.nadel.engine.util.copy
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
@@ -33,11 +34,12 @@ import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep.Companion.DocumentCompilation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
+import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.normalized.VariablePredicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -121,20 +123,23 @@ class NextgenEngine @JvmOverloads constructor(
         executionHints: NadelExecutionHints,
     ): ExecutionResult {
         try {
-            val query = createExecutableNormalizedOperationWithRawVariables(
-                querySchema,
-                queryDocument,
-                executionInput.operationName,
-                executionInput.rawVariables,
-                executionInput.graphQLContext,
-                Locale.getDefault()
-            )
-
             val timer = NadelInstrumentationTimer(
                 instrumentation,
                 userContext = executionInput.context,
                 instrumentationState,
             )
+
+            val query = timer.time(step = RootStep.ExecutableOperationParsing) {
+                createExecutableNormalizedOperationWithRawVariables(
+                    querySchema,
+                    queryDocument,
+                    executionInput.operationName,
+                    executionInput.rawVariables,
+                    executionInput.graphQLContext,
+                    Locale.getDefault()
+                )
+            }
+
             val executionContext = NadelExecutionContext(
                 executionInput,
                 query,
@@ -214,12 +219,14 @@ class NextgenEngine @JvmOverloads constructor(
             transformQuery(service, executionContext, executionPlan, topLevelField)
         }
         val transformedQuery = queryTransform.result.single()
-        val result: ServiceExecutionResult = executeService(
-            service = service,
-            transformedQuery = transformedQuery,
-            executionContext = executionContext,
-            executionHydrationDetails = serviceHydrationDetails,
-        )
+        val result: ServiceExecutionResult = timer.time(step = RootStep.ServiceExecution.child(service.name)) {
+            executeService(
+                service = service,
+                transformedQuery = transformedQuery,
+                executionContext = executionContext,
+                executionHydrationDetails = serviceHydrationDetails,
+            )
+        }
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
             else -> timer.time(step = RootStep.ResultTransforming) {
@@ -243,24 +250,27 @@ class NextgenEngine @JvmOverloads constructor(
         executionContext: NadelExecutionContext,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
+        val timer = executionContext.timer
+
         val executionInput = executionContext.executionInput
 
         val jsonPredicate: VariablePredicate = getDocumentVariablePredicate(executionContext.hints, service)
 
-        val compileResult = compileToDocument(
-            service.underlyingSchema,
-            transformedQuery.getOperationKind(engineSchema),
-            getOperationName(service, executionContext),
-            listOf(transformedQuery),
-            jsonPredicate
-        )
+        val compileResult = timer.time(step = DocumentCompilation) {
+            compileToDocument(
+                schema = service.underlyingSchema,
+                operationKind = transformedQuery.getOperationKind(engineSchema),
+                operationName = getOperationName(service, executionContext),
+                topLevelFields = listOf(transformedQuery),
+                variablePredicate = jsonPredicate
+            )
+        }
 
         val serviceExecParams = ServiceExecutionParameters(
             query = compileResult.document,
             context = executionInput.context,
             graphQLContext = executionInput.graphQLContext,
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
-            cacheControl = executionInput.cacheControl,
             variables = compileResult.variables,
             operationDefinition = compileResult.document.definitions.singleOfType(),
             serviceContext = executionContext.getContextForService(service).await(),

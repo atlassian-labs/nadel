@@ -5,6 +5,7 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
 import java.time.Duration
+import java.time.Instant
 
 internal class NadelInstrumentationTimer(
     private val instrumentation: NadelInstrumentation,
@@ -15,13 +16,14 @@ internal class NadelInstrumentationTimer(
         step: Step,
         function: () -> T,
     ): T {
-        val start = System.nanoTime()
+        val start = Instant.now()
+        val startNs = System.nanoTime()
 
         val result = try {
             function()
         } catch (e: Throwable) {
             try {
-                emit(step, startNs = start, exception = e)
+                emit(step, start = start, startNs = startNs, exception = e)
             } catch (e2: Throwable) {
                 e2.addSuppressed(e)
                 throw e2
@@ -30,7 +32,7 @@ internal class NadelInstrumentationTimer(
             throw e
         }
 
-        emit(step, startNs = start)
+        emit(step, start, startNs = startNs)
 
         return result
     }
@@ -44,28 +46,31 @@ internal class NadelInstrumentationTimer(
     }
 
     @Suppress("NOTHING_TO_INLINE") // inline anyway
-    private inline fun emit(step: Step, startNs: Long, exception: Throwable? = null) {
+    private inline fun emit(step: Step, start: Instant, startNs: Long, exception: Throwable? = null) {
         val endNs = System.nanoTime()
         val duration = Duration.ofNanos(endNs - startNs)
-        emit(step, duration, exception)
+
+        instrumentation.onStepTimed(newParameters(step, start, duration, exception))
     }
 
     @Suppress("NOTHING_TO_INLINE") // inline anyway
     private inline fun emit(step: Step, duration: Duration, exception: Throwable? = null) {
-        instrumentation.onStepTimed(newParameters(step, duration, exception))
+        instrumentation.onStepTimed(newParameters(step, null, duration, exception))
     }
 
     private fun newParameters(
         step: Step,
+        startedAt: Instant?,
         duration: Duration,
         exception: Throwable? = null,
     ): NadelInstrumentationTimingParameters {
         return NadelInstrumentationTimingParameters(
-            step,
-            duration,
+            step = step,
+            startedAt = startedAt,
+            duration = duration,
             exception = exception,
-            userContext,
-            instrumentationState
+            context = userContext,
+            instrumentationState = instrumentationState,
         )
     }
 

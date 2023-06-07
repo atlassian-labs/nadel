@@ -44,7 +44,10 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.util.ErrorUtil.createGraphQLErrorsFromRawErrors
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
+import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
+import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult
 import graphql.normalized.NormalizedInputValue
+import graphql.normalized.VariablePredicate
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLFieldDefinition
@@ -549,3 +552,19 @@ internal fun javaValueToAstValue(value: Any?): AnyAstValue {
 
 val GraphQLSchema.operationTypes
     get() = listOfNotNull(queryType, mutationType, subscriptionType)
+
+fun compileToDocument(
+    schema: GraphQLSchema,
+    operationKind: OperationDefinition.Operation,
+    operationName: String?,
+    topLevelFields: List<ExecutableNormalizedField>,
+    variablePredicate: VariablePredicate?,
+): CompilerResult {
+    return ExecutableNormalizedOperationToAstCompiler.compileToDocument(
+        schema,
+        operationKind,
+        operationName,
+        topLevelFields,
+        variablePredicate,
+    )
+}

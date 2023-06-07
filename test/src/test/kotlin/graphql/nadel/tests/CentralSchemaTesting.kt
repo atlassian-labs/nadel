@@ -49,34 +49,24 @@ const val runQuery = false
  */
 suspend fun main() {
     val schema = File(
-        "/Users/fwang/Documents/GraphQL/graphql-central-schema/schema/",
+        "/Users/fwang/Documents/Atlassian/graphql-central-schema/schema/",
     )
     val overallSchemas = mutableMapOf<String, String>()
     val underlyingSchemas = mutableMapOf<String, String>()
 
     schema.walkTopDown()
+        .filter {
+            it.isFile
+        }
         .mapNotNull { file ->
-            val serviceName = file.parents
-                .takeWhile {
-                    it.absolutePath != schema.absolutePath
-                }
-                .firstOrNull { parent ->
-                    parent.listFiles()?.any { it.name == "config.yaml" || it.name == "config.yml" } ?: false
-                }
-                ?.name
+            val relativeFilePath = file.absolutePath.removePrefix(schema.absolutePath).trimStart('/')
+            val serviceName = getServiceName(File(relativeFilePath))
 
             file to (serviceName ?: return@mapNotNull null)
         }
         .forEach { (file, serviceName) ->
-            if (file.extension == "nadel") {
-                if (file.parentFile.name in overallSchemas) {
-                    overallSchemas[serviceName] += file.readText()
-                } else {
-                    overallSchemas[serviceName] = file.readText()
-                }
-            } else if (file.extension == "graphqls" || file.extension == "graphql") {
-                val text = file.readText()
-                underlyingSchemas.compute(serviceName) { _, oldValue ->
+            fun MutableMap<String, String>.append(text: String) {
+                compute(serviceName) { _, oldValue ->
                     if (oldValue == null) {
                         text + "\n"
                     } else {
@@ -84,15 +74,17 @@ suspend fun main() {
                     }
                 }
             }
-        }
 
-    require(overallSchemas.keys == underlyingSchemas.keys)
-    // println(overallSchemas.keys)
+            if (file.extension == "nadel") {
+                overallSchemas.append(file.readText())
+            } else if (file.extension == "graphqls" || file.extension == "graphql") {
+                underlyingSchemas.append(file.readText())
+            }
+        }
 
     val nadel = Nadel.newNadel()
         .engineFactory { nadel ->
             NextgenEngine(nadel)
-            // NadelEngine(nadel)
         }
         .overallSchemas(overallSchemas)
         .underlyingSchemas(underlyingSchemas)
@@ -153,3 +145,62 @@ suspend fun main() {
 }
 
 const val query = ""
+
+private fun getServiceName(file: File): String? {
+    val parts: List<File> = splitFileParts(file)
+    val partCount = parts.size
+
+    if (partCount <= 1 || partCount > 4) {
+        return null
+    }
+
+    if (partCount == 4) {
+        // it might be a <serviceGroup>/<serviceName>/underlying|overall/some.file
+        val underlyingOrOverallDirPart = parts[2].name
+        return if (underlyingOrOverallDirPart == UNDERLYING || underlyingOrOverallDirPart == OVERALL) {
+            parts[1].name
+        } else null
+    }
+
+    if (partCount == 3) {
+        // it might be a <serviceGroup>/<serviceName>/some.file
+        // OR
+        // <serviceName>/underlying|overall/some.file
+        val name = parts[1].name
+        return if (name == UNDERLYING || name == OVERALL) {
+            parts[0].name
+        } else name
+    }
+
+    return if (parts[1].name == SHARED_DOT_NADEL) {
+        // it might be a <serviceGroup>/shared.nadel
+        SHARED
+    } else {
+        // it must be a <serviceName>/some.file
+        parts[0].name
+    }
+}
+
+const val UNDERLYING = "underlying"
+const val OVERALL = "overall"
+const val SHARED_DOT_NADEL = "shared.nadel"
+const val SHARED = "shared"
+const val CONFIG_DOT_YAML = "config.yaml"
+const val DOT_GRAPHQLS = ".graphqls"
+const val DOT_GRAPHQL = ".graphql"
+const val DOT_NADEL = ".nadel"
+
+private fun splitFileParts(file: File): List<File> {
+    var cursor = file
+
+    val parts: MutableList<File> = ArrayList()
+    parts.add(File(cursor.name))
+
+    while (cursor.parentFile != null) {
+        parts.add(cursor.parentFile)
+        cursor = cursor.parentFile
+    }
+
+    parts.reverse()
+    return parts
+}
