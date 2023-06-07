@@ -20,6 +20,7 @@ import graphql.nadel.engine.transform.query.NadelFieldToService
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.beginExecute
+import graphql.nadel.engine.util.compileToDocument
 import graphql.nadel.engine.util.copy
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
@@ -39,7 +40,6 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.normalized.VariablePredicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -258,21 +258,19 @@ class NextgenEngine @JvmOverloads constructor(
 
         val compileResult = timer.time(step = DocumentCompilation) {
             compileToDocument(
-                service.underlyingSchema,
-                transformedQuery.getOperationKind(engineSchema),
-                getOperationName(service, executionContext),
-                listOf(transformedQuery),
-                jsonPredicate
+                schema = service.underlyingSchema,
+                operationKind = transformedQuery.getOperationKind(engineSchema),
+                operationName = getOperationName(service, executionContext),
+                topLevelFields = listOf(transformedQuery),
+                variablePredicate = jsonPredicate
             )
         }
 
         val serviceExecParams = ServiceExecutionParameters(
-            inputOperation = executionContext.query,
             query = compileResult.document,
             context = executionInput.context,
             graphQLContext = executionInput.graphQLContext,
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
-            cacheControl = executionInput.cacheControl,
             variables = compileResult.variables,
             operationDefinition = compileResult.document.definitions.singleOfType(),
             serviceContext = executionContext.getContextForService(service).await(),
