@@ -89,7 +89,7 @@ class ChainedNadelInstrumentation(
 
     override fun beginExecute(parameters: NadelInstrumentationExecuteOperationParameters): CompletableFuture<InstrumentationContext<ExecutionResult>> {
         val listCompletableFuture = Async
-            .eachSequentially(instrumentations) { instrumentation: NadelInstrumentation, _: Int, _: List<InstrumentationContext<ExecutionResult>> ->
+            .eachSequentially(instrumentations) { instrumentation: NadelInstrumentation, _: List<InstrumentationContext<ExecutionResult>> ->
                 val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
                 instrumentation.beginExecute(parameters.copy(instrumentationState = state))
             }
@@ -104,7 +104,7 @@ class ChainedNadelInstrumentation(
         parameters: NadelInstrumentationQueryExecutionParameters,
     ): CompletableFuture<ExecutionResult> {
         val resultsFuture = Async
-            .eachSequentially(instrumentations) { instrumentation: NadelInstrumentation, _: Int, prevResults: List<ExecutionResult> ->
+            .eachSequentially(instrumentations) { instrumentation: NadelInstrumentation, prevResults: List<ExecutionResult> ->
                 val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
                 val lastResult = prevResults.lastOrNull() ?: executionResult
                 instrumentation.instrumentExecutionResult(
