@@ -40,7 +40,6 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
-import graphql.normalized.VariablePredicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -179,11 +178,7 @@ class NextgenEngine @JvmOverloads constructor(
                         }
                 }.awaitAll()
 
-                if (executionHints.newResultMergerAndNamespacedTypename()) {
-                    NadelResultMerger.mergeResults(fields, engineSchema, results)
-                } else {
-                    graphql.nadel.engine.util.mergeResults(results)
-                }
+                NadelResultMerger.mergeResults(fields, engineSchema, results)
             } catch (e: Throwable) {
                 beginExecuteContext?.onCompleted(null, e)
                 throw e
@@ -254,15 +249,13 @@ class NextgenEngine @JvmOverloads constructor(
 
         val executionInput = executionContext.executionInput
 
-        val jsonPredicate: VariablePredicate = getDocumentVariablePredicate(executionContext.hints, service)
-
         val compileResult = timer.time(step = DocumentCompilation) {
             compileToDocument(
                 schema = service.underlyingSchema,
                 operationKind = transformedQuery.getOperationKind(engineSchema),
                 operationName = getOperationName(service, executionContext),
                 topLevelFields = listOf(transformedQuery),
-                variablePredicate = jsonPredicate
+                variablePredicate = DocumentPredicates.allVariablesPredicate,
             )
         }
 
@@ -320,14 +313,6 @@ class NextgenEngine @JvmOverloads constructor(
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
         )
-    }
-
-    private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
-        return if (hints.allDocumentVariablesHint.invoke(service)) {
-            DocumentPredicates.allVariablesPredicate
-        } else {
-            DocumentPredicates.jsonPredicate
-        }
     }
 
     private fun getOperationName(service: Service, executionContext: NadelExecutionContext): String? {

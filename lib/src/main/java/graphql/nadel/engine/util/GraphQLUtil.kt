@@ -41,7 +41,6 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
-import graphql.nadel.util.ErrorUtil.createGraphQLErrorsFromRawErrors
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
@@ -272,48 +271,6 @@ val AnyAstType.isList: Boolean get() = TypeUtil.isList(this)
 val AnyAstType.isNonNull: Boolean get() = TypeUtil.isNonNull(this)
 val AnyAstType.isWrapped: Boolean get() = TypeUtil.isWrapped(this)
 val AnyAstType.isNotWrapped: Boolean get() = !isWrapped
-
-@Deprecated("Use NadelResultMerger instead")
-internal fun mergeResults(results: List<ServiceExecutionResult>): ExecutionResult {
-    val data: MutableJsonMap = mutableMapOf()
-    val extensions: MutableJsonMap = mutableMapOf()
-    val errors: MutableList<GraphQLError> = mutableListOf()
-
-    fun putAndMergeTopLevelData(oneData: JsonMap) {
-        for ((topLevelFieldName: String, newTopLevelFieldValue: Any?) in oneData) {
-            if (topLevelFieldName in data) {
-                val existingValue = data[topLevelFieldName]
-                if (existingValue == null) {
-                    data[topLevelFieldName] = newTopLevelFieldValue
-                } else if (existingValue is AnyMap && newTopLevelFieldValue is AnyMap) {
-                    existingValue.asMutableJsonMap().putAll(
-                        newTopLevelFieldValue.asJsonMap(),
-                    )
-                }
-            } else {
-                data[topLevelFieldName] = newTopLevelFieldValue
-            }
-        }
-    }
-
-    for (result in results) {
-        val resultData = result.data
-        putAndMergeTopLevelData(resultData)
-        errors.addAll(createGraphQLErrorsFromRawErrors(result.errors))
-        extensions.putAll(result.extensions)
-    }
-
-    return newExecutionResult()
-        .data(data)
-        .extensions(extensions.let {
-            @Suppress("UNCHECKED_CAST") // .extensions should take in a Map<*, *> instead of strictly Map<Any?, Any?>
-            it as Map<Any?, Any?>
-        }.takeIf {
-            it.isNotEmpty()
-        })
-        .errors(errors)
-        .build()
-}
 
 fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates {
     return FieldCoordinates.coordinates(typeName, fieldName)
