@@ -711,7 +711,7 @@ private class SharedTypesAnalysis(
 
         val renameInstruction = if (overallOutputTypeName !in serviceDefinedTypes) {
             // Service does not own type, it is shared
-            // If the name is  different than the overall type, then we mark the rename
+            // If the name is different than the overall type, then we mark the rename
             when (val underlyingOutputTypeName = underlyingField.type.unwrapAll().name) {
                 overallOutputTypeName -> null
                 in scalarTypeNames -> null

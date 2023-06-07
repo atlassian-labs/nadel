@@ -13,6 +13,7 @@ import graphql.execution.preparsed.NoOpPreparsedDocumentProvider
 import graphql.execution.preparsed.PreparsedDocumentEntry
 import graphql.execution.preparsed.PreparsedDocumentProvider
 import graphql.language.Document
+import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters

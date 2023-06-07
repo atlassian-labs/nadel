@@ -6,8 +6,10 @@ import graphql.execution.ExecutionId
 import graphql.language.Document
 import graphql.language.OperationDefinition
 import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedOperation
 
 class ServiceExecutionParameters internal constructor(
+    val inputOperation: ExecutableNormalizedOperation,
     val query: Document,
     val context: Any?,
     val graphQLContext: GraphQLContext,
