@@ -30,3 +30,10 @@ jobs:
           output-modes: environment
       - name: build test and publish
         run: ./gradlew assemble && ./gradlew check --info && ./gradlew artifactoryPublish -x check --info
+      - uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: lib/build
+          retention-days: 1
+      - name: debug files
+        run: find ./ -type f -name "*.jar" -ls
