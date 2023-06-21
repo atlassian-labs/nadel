@@ -71,7 +71,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     }
 
     private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
-        val mutations = instructions.mapNotNull { transformation ->
+        instructions.forEach { transformation ->
             when (transformation) {
                 is NadelResultInstruction.Set -> process(transformation)
                 is NadelResultInstruction.Remove -> process(transformation)
