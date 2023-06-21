@@ -244,8 +244,8 @@ fun <T> sequenceOfNulls(size: Int): Sequence<T?> {
 fun <T> Sequence<T>.all(min: Int, predicate: (T) -> Boolean): Boolean {
     var count = 0
     for (element in this) {
-        count++
         if (!predicate(element)) return false
+        count++
     }
 
     return count >= min
