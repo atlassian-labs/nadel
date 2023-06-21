@@ -5,11 +5,14 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
 import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
+import graphql.schema.GraphQLAppliedDirective
+import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLCompositeType
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
+import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputFieldsContainer
@@ -222,6 +225,15 @@ internal fun getReachableTypeNames(
         ): TraversalControl {
             add(node.name)
             return CONTINUE
+        }
+
+        override fun visitGraphQLAppliedDirective(
+            node: GraphQLAppliedDirective,
+            context: TraverserContext<GraphQLSchemaElement>,
+        ): TraversalControl {
+            // Don't look into applied directives. Could be a shared directive.
+            // As long as the schema compiled then we don't care.
+            return ABORT
         }
     }
 
