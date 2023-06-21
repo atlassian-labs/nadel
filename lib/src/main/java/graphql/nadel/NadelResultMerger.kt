@@ -5,6 +5,7 @@ import graphql.ExecutionResultImpl
 import graphql.GraphQLError
 import graphql.introspection.Introspection
 import graphql.nadel.engine.transform.query.NadelFieldAndService
+import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
@@ -15,9 +16,6 @@ import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLSchema
-
-@JvmInline
-private value class ResultKey(val value: String)
 
 internal object NadelResultMerger {
     fun mergeResults(
@@ -118,14 +116,14 @@ internal object NadelResultMerger {
     private fun buildRequiredFieldMap(
         fields: List<NadelFieldAndService>,
         engineSchema: GraphQLSchema,
-    ): MutableMap<ResultKey, MutableList<ExecutableNormalizedField>> {
-        val requiredFields = mutableMapOf<ResultKey, MutableList<ExecutableNormalizedField>>()
+    ): MutableMap<NadelResultKey, MutableList<ExecutableNormalizedField>> {
+        val requiredFields = mutableMapOf<NadelResultKey, MutableList<ExecutableNormalizedField>>()
 
         // NOTE: please ensure all fields are from object types and will NOT have multiple field defs
         // Other code in this file relies on this contract
         for ((field) in fields) {
             val requiredChildFields = requiredFields
-                .computeIfAbsent(ResultKey(field.resultKey)) {
+                .computeIfAbsent(NadelResultKey(field.resultKey)) {
                     mutableListOf()
                 }
 

@@ -15,7 +15,7 @@ import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationByObjec
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationByObjectId.getHydrateInstructionsMatchingObjectIds
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.ResultKey
+import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.Deferred
@@ -63,7 +63,7 @@ internal class NadelBatchHydrator(
                         null -> parentNodes.map {
                             NadelResultInstruction.Set(
                                 subject = it,
-                                key = ResultKey(state.hydratedField.resultKey),
+                                key = NadelResultKey(state.hydratedField.resultKey),
                                 newValue = null,
                             )
                         }

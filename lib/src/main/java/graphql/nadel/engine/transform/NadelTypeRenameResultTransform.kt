@@ -10,7 +10,8 @@ import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.State
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.ResultKey
+import graphql.nadel.engine.transform.result.NadelResultKey
+import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
@@ -78,8 +79,8 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
 
             NadelResultInstruction.Set(
                 subject = parentNode,
-                key = ResultKey(overallField.resultKey),
-                newValue = overallTypeName,
+                key = NadelResultKey(overallField.resultKey),
+                newValue = JsonNode(overallTypeName),
             )
         }
     }

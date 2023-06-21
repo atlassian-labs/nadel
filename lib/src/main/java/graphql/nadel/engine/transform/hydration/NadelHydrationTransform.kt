@@ -22,7 +22,7 @@ import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructio
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.ResultKey
+import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -195,7 +195,7 @@ internal class NadelHydrationTransform(
             ?: return listOf(
                 NadelResultInstruction.Set(
                     subject = parentNode,
-                    key = ResultKey(state.hydratedField.resultKey),
+                    key = NadelResultKey(state.hydratedField.resultKey),
                     newValue = null,
                 ),
             )
@@ -246,8 +246,8 @@ internal class NadelHydrationTransform(
                 return listOf(
                     NadelResultInstruction.Set(
                         subject = parentNode,
-                        key = ResultKey(fieldToHydrate.resultKey),
-                        newValue = data?.value,
+                        key = NadelResultKey(fieldToHydrate.resultKey),
+                        newValue = JsonNode(data?.value),
                     ),
                 ) + errors
             }
@@ -265,8 +265,8 @@ internal class NadelHydrationTransform(
                 return listOf(
                     NadelResultInstruction.Set(
                         subject = parentNode,
-                        key = ResultKey(fieldToHydrate.resultKey),
-                        newValue = data,
+                        key = NadelResultKey(fieldToHydrate.resultKey),
+                        newValue = JsonNode(data),
                     ),
                 ) + addErrors
             }

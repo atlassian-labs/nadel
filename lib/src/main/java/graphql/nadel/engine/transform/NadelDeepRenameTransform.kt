@@ -12,7 +12,8 @@ import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.ResultKey
+import graphql.nadel.engine.transform.result.NadelResultKey
+import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.emptyOrSingle
@@ -314,14 +315,14 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
             when (sourceFieldNode) {
                 null -> NadelResultInstruction.Set(
                     subject = parentNode,
-                    key = ResultKey(overallField.resultKey),
+                    key = NadelResultKey(overallField.resultKey),
                     newValue = null,
                 )
 
                 else -> NadelResultInstruction.Set(
                     subject = parentNode,
-                    key = ResultKey(overallField.resultKey),
-                    newValue = sourceFieldNode.value,
+                    key = NadelResultKey(overallField.resultKey),
+                    newValue = sourceFieldNode,
                 )
             }
         }

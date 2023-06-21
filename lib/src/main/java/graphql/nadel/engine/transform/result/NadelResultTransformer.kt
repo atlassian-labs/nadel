@@ -85,7 +85,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     ) {
         @Suppress("UNCHECKED_CAST")
         val map = instruction.subject.value as? MutableJsonMap ?: return
-        map[instruction.key.value] = instruction.newValue
+        map[instruction.key.value] = instruction.newValue?.value
     }
 
     private fun process(
@@ -120,7 +120,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 ).map { parentNode ->
                     NadelResultInstruction.Remove(
                         subject = parentNode,
-                        key = ResultKey(field.resultKey),
+                        key = NadelResultKey(field.resultKey),
                     )
                 }
             }

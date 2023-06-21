@@ -16,7 +16,8 @@ import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.ResultKey
+import graphql.nadel.engine.transform.result.NadelResultKey
+import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
@@ -162,8 +163,8 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
 
                                 NadelResultInstruction.Set(
                                     subject = parentNode,
-                                    key = ResultKey(overallField.resultKey),
-                                    newValue = "ari:cloud:$owner::$type/$value",
+                                    key = NadelResultKey(overallField.resultKey),
+                                    newValue = JsonNode("ari:cloud:$owner::$type/$value"),
                                 )
                             }
                         }

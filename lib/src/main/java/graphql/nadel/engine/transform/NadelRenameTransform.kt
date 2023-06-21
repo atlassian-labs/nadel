@@ -13,7 +13,7 @@ import graphql.nadel.engine.transform.query.NFUtil.createField
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.ResultKey
+import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -199,8 +199,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
             NadelResultInstruction.Set(
                 subject = parentNode,
-                key = ResultKey(overallField.resultKey),
-                newValue = sourceFieldNode.value,
+                key = NadelResultKey(overallField.resultKey),
+                newValue = sourceFieldNode,
             )
         }
     }
