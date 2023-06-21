@@ -8,11 +8,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInpu
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class NadelTypeValidationTest : DescribeSpec({
     describe("validate") {
         it("passes if types are valid") {
@@ -169,6 +166,89 @@ class NadelTypeValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
+        }
+
+        it("allows synthetic union if exclusively used for @hydrated fields") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                        }
+                        type World {
+                            hello: Something @hydrated(
+                                service: "test"
+                                field: "echo.world"
+                                arguments: []
+                            )
+                        }
+                        union Something = Echo | World
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                        }
+                        type World {
+                            hello: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("prohibits synthetic union if not exclusively used for @hydrated fields") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                            test: Something
+                        }
+                        type World {
+                            hello: Something @hydrated(
+                                service: "test"
+                                field: "echo.world"
+                                arguments: []
+                            )
+                        }
+                        union Something = Echo | World
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                        }
+                        type World {
+                            hello: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<MissingUnderlyingType>()
+            assert(error.service.name == "test")
+            assert(error.overallType.name == "Something")
         }
 
         it("tracks visited types to avoid stack overflow").config(timeout = 1.seconds) {
