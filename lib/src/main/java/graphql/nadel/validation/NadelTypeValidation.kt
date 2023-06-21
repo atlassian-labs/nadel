@@ -2,8 +2,10 @@ package graphql.nadel.validation
 
 import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLString
+import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.engine.util.AnyNamedNode
+import graphql.nadel.engine.util.all
 import graphql.nadel.engine.util.isExtensionDef
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
@@ -13,6 +15,7 @@ import graphql.nadel.engine.util.operationTypes
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.unwrapOne
+import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
@@ -233,8 +236,9 @@ internal class NadelTypeValidation(
         return service.definitionRegistry
             .definitions
             .asSequence()
-            .filterIsInstance<GraphQLUnionType>()
+            .filterIsInstance<UnionTypeDefinition>()
             .filter { union ->
+                // Check that ALL fields that output the union are annotated with @hydrated
                 overallSchema.typeMap
                     .values
                     .asSequence()
@@ -245,9 +249,12 @@ internal class NadelTypeValidation(
                     .filter {
                         it.type.unwrapAll().name == union.name
                     }
-                    .all {
+                    .all(min = 1) {
                         it.hasAppliedDirective(hydratedDirectiveDefinition.name)
                     }
+            }
+            .map {
+                overallSchema.typeMap[it.name] as GraphQLUnionType
             }
             .toSet()
     }

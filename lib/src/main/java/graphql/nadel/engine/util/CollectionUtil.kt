@@ -237,3 +237,16 @@ fun <T> sequenceOfNulls(size: Int): Sequence<T?> {
         }
     }
 }
+
+/**
+ * Similar to [Sequence.all] but it requires at least [min] matching elements to pass.
+ */
+fun <T> Sequence<T>.all(min: Int, predicate: (T) -> Boolean): Boolean {
+    var count = 0
+    for (element in this) {
+        count++
+        if (!predicate(element)) return false
+    }
+
+    return count >= min
+}
