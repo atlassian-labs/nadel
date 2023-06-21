@@ -20,6 +20,10 @@ object JsonNodeExtractor {
      * Extracts the nodes at the given query selection path.
      */
     fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
+        if (queryPath.size == 1) {
+            return getNodes(rootNode, queryPath.last(), flattenLists = flatten)
+        }
+
         // This is a breadth-first search
         return queryPath.segments.foldIndexed(listOf(rootNode)) { index, queue, pathSegment ->
             val atEnd = index == queryPath.segments.lastIndex

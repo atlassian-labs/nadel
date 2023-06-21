@@ -2,18 +2,13 @@ package graphql.nadel.engine.transform
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.blueprint.NadelFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
-import graphql.nadel.engine.transform.query.NadelQueryPath
-import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.makeFieldCoordinates
-import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLFieldDefinition
