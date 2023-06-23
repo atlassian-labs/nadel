@@ -62,7 +62,6 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
-import java.util.Arrays
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>

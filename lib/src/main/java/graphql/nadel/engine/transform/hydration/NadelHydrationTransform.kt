@@ -247,7 +247,7 @@ internal class NadelHydrationTransform(
                     NadelResultInstruction.Set(
                         subject = parentNode,
                         key = NadelResultKey(fieldToHydrate.resultKey),
-                        newValue = JsonNode(data?.value),
+                        newValue = data,
                     ),
                 ) + errors
             }

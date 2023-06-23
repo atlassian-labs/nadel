@@ -5,7 +5,7 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
-import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Utility class to extract data out of the given
@@ -14,9 +14,7 @@ class JsonNodes(
     private val data: JsonMap,
     private val executionFlags: NadelExecutionHints,
 ) {
-    private val nodes = Collections.synchronizedMap(
-        mutableMapOf<NadelQueryPath, List<JsonNode>>(),
-    )
+    private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
 
     /**
      * Extracts the nodes at the given query selection path.
