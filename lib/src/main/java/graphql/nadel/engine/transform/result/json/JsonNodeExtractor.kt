@@ -4,7 +4,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
-import graphql.nadel.engine.util.foldWhileNotNull
 
 @Deprecated("Start moving to JsonNodes for performance reasons")
 object JsonNodeExtractor {
@@ -12,7 +11,7 @@ object JsonNodeExtractor {
      * Extracts the nodes at the given query selection path.
      */
     fun getNodesAt(data: JsonMap, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
-        val rootNode = JsonNode(JsonNodePath.root, data)
+        val rootNode = JsonNode(data)
         return getNodesAt(rootNode, queryPath, flatten)
     }
 
@@ -20,6 +19,10 @@ object JsonNodeExtractor {
      * Extracts the nodes at the given query selection path.
      */
     fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
+        if (queryPath.size == 1) {
+            return getNodes(rootNode, queryPath.last(), flattenLists = flatten)
+        }
+
         // This is a breadth-first search
         return queryPath.segments.foldIndexed(listOf(rootNode)) { index, queue, pathSegment ->
             val atEnd = index == queryPath.segments.lastIndex
@@ -32,57 +35,27 @@ object JsonNodeExtractor {
         }
     }
 
-    /**
-     * Extract the node at the given json node path.
-     */
-    fun getNodeAt(data: JsonMap, path: JsonNodePath): JsonNode? {
-        val rootNode = JsonNode(JsonNodePath.root, data)
-        return getNodeAt(rootNode, path)
-    }
-
-    /**
-     * Extract the node at the given json node path.
-     */
-    fun getNodeAt(rootNode: JsonNode, path: JsonNodePath): JsonNode? {
-        return path.segments.foldWhileNotNull(rootNode as JsonNode?) { currentNode, segment ->
-            when (currentNode?.value) {
-                is AnyMap -> currentNode.value[segment.value]?.let {
-                    JsonNode(currentNode.resultPath + segment, it)
-                }
-                is AnyList -> when (segment) {
-                    is JsonNodePathSegment.Int -> currentNode.value.getOrNull(segment.value)?.let {
-                        JsonNode(currentNode.resultPath + segment, it)
-                    }
-                    else -> null
-                }
-                else -> null
-            }
-        }
-    }
-
     private fun getNodes(node: JsonNode, segment: String, flattenLists: Boolean): List<JsonNode> {
         return when (node.value) {
-            is AnyMap -> getNodes(node.resultPath, node.value, segment, flattenLists)
+            is AnyMap -> getNodes(node.value, segment, flattenLists)
             null -> emptyList()
             else -> throw IllegalNodeTypeException(node)
         }
     }
 
     private fun getNodes(
-        parentPath: JsonNodePath,
         map: AnyMap,
         segment: String,
         flattenLists: Boolean,
     ): List<JsonNode> {
-        val newPath = parentPath + segment
         val value = map[segment]
 
         // We flatten lists as these nodes contribute to the BFS queue
         if (value is AnyList && flattenLists) {
-            return getFlatNodes(parentPath = newPath, value)
+            return getFlatNodes(value)
         }
 
-        return listOf(JsonNode(newPath, value))
+        return listOf(JsonNode(value))
     }
 
     /**
@@ -97,12 +70,11 @@ object JsonNodeExtractor {
      *
      * etc.
      */
-    private fun getFlatNodes(parentPath: JsonNodePath, values: AnyList): List<JsonNode> {
-        return values.flatMapIndexed { index, value ->
-            val newPath = parentPath + index
+    private fun getFlatNodes(values: AnyList): List<JsonNode> {
+        return values.flatMap { value ->
             when (value) {
-                is AnyList -> getFlatNodes(newPath, value)
-                else -> listOf(JsonNode(newPath, value))
+                is AnyList -> getFlatNodes(value)
+                else -> listOf(JsonNode(value))
             }
         }
     }
@@ -112,11 +84,11 @@ class IllegalNodeTypeException private constructor(message: String) : RuntimeExc
     companion object {
         operator fun invoke(node: JsonNode): IllegalNodeTypeException {
             val nodeType = node.value?.javaClass?.name ?: "null"
-            val pathString = node.resultPath.segments.joinToString("/") {
-                it.value.toString()
-            }
+            // val pathString = node.resultPath.segments.joinToString("/") {
+            //     it.value.toString()
+            // }
 
-            return IllegalNodeTypeException("Unknown node type '$nodeType' at '$pathString' was not a map")
+            return IllegalNodeTypeException("Unknown node type '$nodeType' was not a map")
         }
     }
 }

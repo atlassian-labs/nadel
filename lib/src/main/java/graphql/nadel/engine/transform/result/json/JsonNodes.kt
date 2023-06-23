@@ -5,7 +5,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
-import graphql.nadel.engine.util.foldWhileNotNull
 import java.util.Collections
 
 /**
@@ -23,16 +22,8 @@ class JsonNodes(
      * Extracts the nodes at the given query selection path.
      */
     fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
-        val rootNode = JsonNode(JsonNodePath.root, data)
+        val rootNode = JsonNode(data)
         return getNodesAt(rootNode, queryPath, flatten)
-    }
-
-    /**
-     * Extract the node at the given json node path.
-     */
-    fun getNodeAt(path: JsonNodePath): JsonNode? {
-        val rootNode = JsonNode(JsonNodePath.root, data)
-        return getNodeAt(rootNode, path)
     }
 
     /**
@@ -49,7 +40,7 @@ class JsonNodes(
             val hasMore = index < queryPath.segments.lastIndex
             val pathSegment = queryPath.segments[index]
 
-            queue = if (hasMore) {
+            queue = if (hasMore || flatten) {
                 nodes.computeIfAbsent(subPath) {
                     queue.flatMap { node ->
                         getNodes(node, pathSegment, flattenLists = true)
@@ -65,50 +56,28 @@ class JsonNodes(
         return queue
     }
 
-    /**
-     * Extract the node at the given json node path.
-     */
-    private fun getNodeAt(rootNode: JsonNode, path: JsonNodePath): JsonNode? {
-        return path.segments.foldWhileNotNull(rootNode as JsonNode?) { currentNode, segment ->
-            when (currentNode?.value) {
-                is AnyMap -> currentNode.value[segment.value]?.let {
-                    JsonNode(currentNode.resultPath + segment, it)
-                }
-                is AnyList -> when (segment) {
-                    is JsonNodePathSegment.Int -> currentNode.value.getOrNull(segment.value)?.let {
-                        JsonNode(currentNode.resultPath + segment, it)
-                    }
-                    else -> null
-                }
-                else -> null
-            }
-        }
-    }
-
     private fun getNodes(node: JsonNode, segment: String, flattenLists: Boolean): Sequence<JsonNode> {
         return when (node.value) {
-            is AnyMap -> getNodes(node.resultPath, node.value, segment, flattenLists)
+            is AnyMap -> getNodes(node.value, segment, flattenLists)
             null -> emptySequence()
             else -> throw IllegalNodeTypeException(node)
         }
     }
 
     private fun getNodes(
-        parentPath: JsonNodePath,
         map: AnyMap,
         segment: String,
         flattenLists: Boolean,
     ): Sequence<JsonNode> {
-        val newPath = parentPath + segment
         val value = map[segment]
 
         // We flatten lists as these nodes contribute to the BFS queue
         if (value is AnyList && flattenLists) {
-            return getFlatNodes(parentPath = newPath, value)
+            return getFlatNodes(value)
         }
 
         return sequenceOf(
-            JsonNode(newPath, value),
+            JsonNode(value),
         )
     }
 
@@ -124,15 +93,14 @@ class JsonNodes(
      *
      * etc.
      */
-    private fun getFlatNodes(parentPath: JsonNodePath, values: AnyList): Sequence<JsonNode> {
+    private fun getFlatNodes(values: AnyList): Sequence<JsonNode> {
         return values
             .asSequence()
-            .flatMapIndexed { index, value ->
-                val newPath = parentPath + index
+            .flatMap { value ->
                 when (value) {
-                    is AnyList -> getFlatNodes(newPath, value)
+                    is AnyList -> getFlatNodes(value)
                     else -> sequenceOf(
-                        JsonNode(newPath, value),
+                        JsonNode(value),
                     )
                 }
             }

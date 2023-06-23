@@ -10,6 +10,8 @@ import graphql.nadel.engine.transform.NadelTransformJavaCompat
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.NadelResultKey
+import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.test.NadelTransformJavaCompatAdapter
 import graphql.nadel.test.mock
@@ -155,8 +157,9 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             // given
             val expectedResult = listOf<NadelResultInstruction>(
                 NadelResultInstruction.Set(
-                    mock(),
-                    newValue = 1,
+                    subject = JsonNode(mutableMapOf<String, Any?>()),
+                    key = NadelResultKey("hello"),
+                    newValue = JsonNode(1),
                 )
             )
             val compat = spy(object : NadelTransformJavaCompatAdapter {

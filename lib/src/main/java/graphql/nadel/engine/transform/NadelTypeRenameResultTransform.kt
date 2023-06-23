@@ -10,7 +10,10 @@ import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.State
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.NadelResultKey
+import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 
@@ -57,21 +60,27 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val typeNameNodes = nodes.getNodesAt(
-            (underlyingParentField?.queryPath ?: NadelQueryPath.root) + overallField.resultKey,
+        val parentNodes = nodes.getNodesAt(
+            underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
 
-        return typeNameNodes.mapNotNull { typeNameNode ->
-            val underlyingTypeName = typeNameNode.value as String?
+        return parentNodes.mapNotNull { parentNode ->
+            @Suppress("UNCHECKED_CAST")
+            val parentMap = parentNode.value as? JsonMap
                 ?: return@mapNotNull null
+            val underlyingTypeName = parentMap[overallField.resultKey] as String?
+                ?: return@mapNotNull null
+
             val overallTypeName = executionBlueprint.getOverallTypeName(
                 service = service,
                 underlyingTypeName = underlyingTypeName,
             )
+
             NadelResultInstruction.Set(
-                subjectPath = typeNameNode.resultPath,
-                newValue = overallTypeName,
+                subject = parentNode,
+                key = NadelResultKey(overallField.resultKey),
+                newValue = JsonNode(overallTypeName),
             )
         }
     }

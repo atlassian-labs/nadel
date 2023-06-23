@@ -16,6 +16,8 @@ import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.NadelResultKey
+import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
@@ -160,8 +162,9 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                                 val owner = (state.getArgument("owner").argumentValue.value as StringValue).value
 
                                 NadelResultInstruction.Set(
-                                    subjectPath = parentNode.resultPath + overallField.resultKey,
-                                    newValue = "ari:cloud:$owner::$type/$value",
+                                    subject = parentNode,
+                                    key = NadelResultKey(overallField.resultKey),
+                                    newValue = JsonNode("ari:cloud:$owner::$type/$value"),
                                 )
                             }
                         }
