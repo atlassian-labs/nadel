@@ -4,7 +4,7 @@ import graphql.nadel.NadelEngineContext
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchInputDef
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -104,7 +104,7 @@ internal class NadelBatchHydrationByIndex private constructor(
 
     private fun getBatchInputValueSource(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): EffectFieldArgumentDef.ValueSource.FromResultValue {
+    ): NadelHydrationArgumentDef.ValueSource.FromResultValue {
         val (_, batchInputValueSource) = getBatchInputDef(instruction)
             ?: error("Batch hydration is missing batch input arg") // TODO: we should bake this into the instruction
 

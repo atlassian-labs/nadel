@@ -3,7 +3,7 @@ package graphql.nadel.tests.hooks
 import graphql.nadel.Nadel
 import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
@@ -20,7 +20,7 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
     ): T? {
         return instructions.firstOrNull {
             val (_, _, valueSource) = it.effectFieldArgDefs.single()
-            if (valueSource !is EffectFieldArgumentDef.ValueSource.FromResultValue) {
+            if (valueSource !is NadelHydrationArgumentDef.ValueSource.FromResultValue) {
                 return@firstOrNull false
             }
             val actorFieldName = valueSource.fieldDefinition.name

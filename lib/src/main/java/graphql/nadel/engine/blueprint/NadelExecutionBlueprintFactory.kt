@@ -15,8 +15,8 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef.ValueSource.FromResultValue
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef.ValueSource.FromResultValue
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyImplementingTypeDefinition
@@ -258,7 +258,7 @@ private class Factory(
             ),
             joiningFields = hydrationArgs.mapNotNull {
                 when (it.valueSource) {
-                    is EffectFieldArgumentDef.ValueSource.FromArgumentValue -> null
+                    is NadelHydrationArgumentDef.ValueSource.FromArgumentValue -> null
                     is FromResultValue -> it.valueSource.queryPathToField
                 }
             },
@@ -269,7 +269,7 @@ private class Factory(
         hydratedFieldParentType: GraphQLObjectType,
         hydratedFieldDef: GraphQLFieldDefinition,
         actorFieldDef: GraphQLFieldDefinition,
-        actorInputValueDefs: List<EffectFieldArgumentDef>,
+        actorInputValueDefs: List<NadelHydrationArgumentDef>,
     ): NadelHydrationStrategy {
         val manyToOneInputDef = actorInputValueDefs
             .asSequence()
@@ -330,7 +330,7 @@ private class Factory(
             NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
                 sourceId = hydrationArgs
                     .asSequence()
-                    .map(EffectFieldArgumentDef::valueSource)
+                    .map(NadelHydrationArgumentDef::valueSource)
                     .filterIsInstance<FromResultValue>()
                     .single()
                     .queryPathToField,
@@ -355,8 +355,8 @@ private class Factory(
                     is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
                     is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
                 } + hydrationArgs.flatMap {
-                    when (val hydrationValueSource: EffectFieldArgumentDef.ValueSource = it.valueSource) {
-                        is EffectFieldArgumentDef.ValueSource.FromArgumentValue -> emptyList()
+                    when (val hydrationValueSource: NadelHydrationArgumentDef.ValueSource = it.valueSource) {
+                        is NadelHydrationArgumentDef.ValueSource.FromArgumentValue -> emptyList()
                         is FromResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
                     }
                 }).toSet()
@@ -452,7 +452,7 @@ private class Factory(
         hydratedFieldParentType: GraphQLObjectType,
         hydratedFieldDef: GraphQLFieldDefinition,
         actorFieldDef: GraphQLFieldDefinition,
-    ): List<EffectFieldArgumentDef> {
+    ): List<NadelHydrationArgumentDef> {
         return hydration.arguments.map { remoteArgDef ->
             val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource.sourceType) {
                 FieldArgument -> {
@@ -468,7 +468,7 @@ private class Factory(
                         null
                     }
 
-                    EffectFieldArgumentDef.ValueSource.FromArgumentValue(
+                    NadelHydrationArgumentDef.ValueSource.FromArgumentValue(
                         argumentName = argumentName,
                         argumentDefinition = argumentDef,
                         defaultValue = defaultValue,
@@ -486,7 +486,7 @@ private class Factory(
                 else -> error("Unsupported remote argument source type: '$argSourceType'")
             }
 
-            EffectFieldArgumentDef(
+            NadelHydrationArgumentDef(
                 name = remoteArgDef.name,
                 effectArgumentDef = actorFieldDef.getArgument(remoteArgDef.name),
                 valueSource = valueSource,

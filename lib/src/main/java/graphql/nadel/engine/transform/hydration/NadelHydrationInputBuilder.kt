@@ -4,8 +4,8 @@ import graphql.language.NullValue
 import graphql.nadel.NadelEngineContext
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef.ValueSource
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
@@ -76,7 +76,7 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputMap(
-        excluding: EffectFieldArgumentDef? = null,
+        excluding: NadelHydrationArgumentDef? = null,
     ): Map<String, NormalizedInputValue> {
         return instruction.effectFieldArgDefs
             .asSequence()
@@ -110,14 +110,14 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValuePair(
-        inputDef: EffectFieldArgumentDef,
+        inputDef: NadelHydrationArgumentDef,
     ): Pair<String, NormalizedInputValue>? {
         val inputValue = makeInputValue(inputDef) ?: return null
         return inputDef.name to inputValue
     }
 
     private fun makeInputValue(
-        inputDef: EffectFieldArgumentDef,
+        inputDef: NadelHydrationArgumentDef,
     ): NormalizedInputValue? {
         return when (val valueSource = inputDef.valueSource) {
             is ValueSource.FromArgumentValue -> getArgumentValue(valueSource)
@@ -129,7 +129,7 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValue(
-        inputDef: EffectFieldArgumentDef,
+        inputDef: NadelHydrationArgumentDef,
         value: Any?,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(

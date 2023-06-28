@@ -5,7 +5,7 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 
-data class EffectFieldArgumentDef(
+data class NadelHydrationArgumentDef(
     val name: String,
     val effectArgumentDef: GraphQLArgument,
     val valueSource: ValueSource,

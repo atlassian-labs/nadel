@@ -2,7 +2,7 @@ package graphql.nadel.engine.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.schema.FieldCoordinates
@@ -57,9 +57,9 @@ interface NadelGenericHydrationInstruction {
      * }
      * ```
      *
-     * then the [EffectFieldArgumentDef] would be for the `id` argument.
+     * then the [NadelHydrationArgumentDef] would be for the `id` argument.
      */
-    val effectFieldArgDefs: List<EffectFieldArgumentDef>
+    val effectFieldArgDefs: List<NadelHydrationArgumentDef>
 
     /**
      * Maximum time the client should wait for the hydration call before timing out.
@@ -68,7 +68,7 @@ interface NadelGenericHydrationInstruction {
 
     /**
      * The fields required to be queried on the source object in order to complete the hydration.
-     * This can be the fields described in [EffectFieldArgumentDef.ValueSource.FromResultValue.queryPathToField]
+     * This can be the fields described in [NadelHydrationArgumentDef.ValueSource.FromResultValue.queryPathToField]
      * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
      */
     val joiningFields: List<NadelQueryPath>
@@ -90,7 +90,7 @@ data class NadelHydrationFieldInstruction(
     override val causeFieldDef: GraphQLFieldDefinition,
     override val effectService: Service,
     override val queryPathToEffectField: NadelQueryPath,
-    override val effectFieldArgDefs: List<EffectFieldArgumentDef>,
+    override val effectFieldArgDefs: List<NadelHydrationArgumentDef>,
     override val timeout: Int,
     override val joiningFields: List<NadelQueryPath>,
     override val effectFieldDef: GraphQLFieldDefinition,
@@ -104,7 +104,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val causeFieldDef: GraphQLFieldDefinition,
     override val effectService: Service,
     override val queryPathToEffectField: NadelQueryPath,
-    override val effectFieldArgDefs: List<EffectFieldArgumentDef>,
+    override val effectFieldArgDefs: List<NadelHydrationArgumentDef>,
     override val timeout: Int,
     override val joiningFields: List<NadelQueryPath>,
     override val effectFieldDef: GraphQLFieldDefinition,

@@ -5,7 +5,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.EffectFieldArgumentDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgumentDef
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.hydration.NadelHydrationInputBuilder.Companion.getInputValues
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder
@@ -70,7 +70,7 @@ internal object NadelHydrationFieldsBuilder {
         return argBatches.map { argBatch ->
             makeEffectQuery(
                 instruction = instruction,
-                fieldArguments = argBatch.mapKeys { (inputDef: EffectFieldArgumentDef) -> inputDef.name },
+                fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationArgumentDef) -> inputDef.name },
                 fieldChildren = fieldChildren,
             )
         }
