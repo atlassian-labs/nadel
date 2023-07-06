@@ -7,6 +7,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.transform.NadelTransformUtil
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransformContext
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getHydrationEffectNodes
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.NadelBatchHydrationContext
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.asMutable
@@ -22,7 +23,7 @@ import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.unwrapNonNull
 
 internal object NadelBatchHydrationByObjectId {
-    context(NadelEngineContext, NadelHydrationTransformContext)
+    context(NadelEngineContext, NadelBatchHydrationContext)
     fun getHydrateInstructionsMatchingObjectIds(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -37,7 +38,7 @@ internal object NadelBatchHydrationByObjectId {
         )
     }
 
-    context(NadelEngineContext, NadelHydrationTransformContext)
+    context(NadelEngineContext, NadelBatchHydrationContext)
     fun getHydrateInstructionsMatchingObjectId(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -52,7 +53,7 @@ internal object NadelBatchHydrationByObjectId {
         )
     }
 
-    context(NadelEngineContext, NadelHydrationTransformContext)
+    context(NadelEngineContext, NadelBatchHydrationContext)
     private fun getHydrateInstructionsMatchingObjectIds(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -86,7 +87,7 @@ internal object NadelBatchHydrationByObjectId {
         return parentNodes.map { sourceNode ->
             // [
             //   [page-1, page-2, page-1], // page id
-            //   [draft,  posted, posted] // union of [draft posted]
+            //   [draft,  posted, posted], // union of [draft posted]
             // ]
             val sourceIdNodes = pathsToSourceIds
                 .map { path ->
@@ -101,14 +102,21 @@ internal object NadelBatchHydrationByObjectId {
             // [
             //   [page-1, draft],
             //   [page-2, posted],
-            //   [page-1, posted]
+            //   [page-1, posted],
             // ]
-            val sourceIds = (0 until sourceIdNodes.first().size)
-                .map { keyIndex ->
-                    sourceIdNodes
+            val sourceIds = (0..sourceIdNodes.first().lastIndex)
+                .map { column ->
+                    sourceIdNodes // row
                         .map {
-                            it[keyIndex]
+                            it[column]
                         }
+                }
+                .flatMap { id ->
+                    if (sourceIdNodes.size == 1) {
+                        hydrationIdMapping?.get(id.single())?.map { listOf(it) } ?: listOf(id)
+                    } else {
+                        listOf(id)
+                    }
                 }
 
             getHydrateInstructionsForNodeMatchingObjectId(
@@ -139,11 +147,9 @@ internal object NadelBatchHydrationByObjectId {
                 null
             } else {
                 sourceIds
-                    .asSequence()
                     .map { id ->
                         resultNodesByObjectId[id]
                     }
-                    .toList()
             }
         } else {
             sourceIds.emptyOrSingle()?.let { sourceId ->

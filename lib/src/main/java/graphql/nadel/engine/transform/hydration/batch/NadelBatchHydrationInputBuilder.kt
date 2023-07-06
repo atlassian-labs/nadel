@@ -14,7 +14,7 @@ import graphql.nadel.engine.util.javaValueToAstValue
 import graphql.nadel.engine.util.mapFrom
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.NadelBatchHydrationContext as BatchTransformContext
 
 /**
  * README
@@ -28,14 +28,16 @@ internal object NadelBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<Map<NadelHydrationArgumentDef, NormalizedInputValue>> {
-        val nonBatchArgs = getNonBatchInputValues(instruction)
-        val batchArgs = getBatchInputValues(instruction, parentNodes)
+        val nonBatchArgs = getNonBatchedArguments(instruction)
+        val batchArgs = getBatchedArgumentSequence(instruction, parentNodes)
 
-        return batchArgs.map { nonBatchArgs + it }
+        return batchArgs
+            .map { nonBatchArgs + it }
+            .toList()
     }
 
     context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
-    private fun getNonBatchInputValues(
+    private fun getNonBatchedArguments(
         instruction: NadelBatchHydrationFieldInstruction,
     ): Map<NadelHydrationArgumentDef, NormalizedInputValue> {
         return mapFrom(
@@ -58,23 +60,48 @@ internal object NadelBatchHydrationInputBuilder {
     }
 
     context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
-    private fun getBatchInputValues(
+    private fun getBatchedArgumentSequence(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-    ): List<Pair<NadelHydrationArgumentDef, NormalizedInputValue>> {
+    ): Sequence<Pair<NadelHydrationArgumentDef, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
-        val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
+        val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction)
+            ?: return emptySequence()
+
         val effectBatchArgDef = instruction.effectFieldDef.getArgument(batchInputDef.name)
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes)
+            .let { ids ->
+                when (serviceExecutionHooks) {
+                    is NadelEngineExecutionHooks -> serviceExecutionHooks.mapHydrationIds(userContext, ids, instruction)
+                        .let { mapping ->
+                            if (mapping == NadelEngineExecutionHooks.noMapping) {
+                                ids
+                            } else {
+                                // todo: what happens if it's null and the effect field is non-nullable
+                                hydrationIdMapping = mapping
+                                ids
+                                    // todo: is this behavior correct?
+                                    .flatMap {
+                                        mapping[it] ?: emptyList()
+                                    }
+                            }
+                        }
+                    else -> ids
+                }
+            }
 
         val partitionArgumentList = when (serviceExecutionHooks) {
             is NadelEngineExecutionHooks -> serviceExecutionHooks.partitionBatchHydrationArgumentList(args, instruction)
             else -> listOf(args)
         }
 
-        return partitionArgumentList.flatMap { it.chunked(size = batchSize) }
+        return partitionArgumentList
+            .asSequence()
+            .flatMap {
+                it.chunked(size = batchSize)
+            }
             .map { chunk ->
                 batchInputDef to NormalizedInputValue(
                     GraphQLTypeUtil.simplePrint(effectBatchArgDef.type),

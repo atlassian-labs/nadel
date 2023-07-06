@@ -3,15 +3,13 @@ package graphql.nadel.engine.transform.hydration.batch
 import graphql.nadel.NadelEngineContext
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLOutputType
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.NadelBatchHydrationContext as BatchTransformContext
 
 /**
  * Builds the field used to identify objects returned by batch hydration e.g.

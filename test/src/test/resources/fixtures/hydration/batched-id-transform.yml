@@ -1,0 +1,158 @@
+name: "batched id transform"
+enabled: true
+overallSchema:
+  # language=GraphQL
+  service2: |
+    type Query {
+      barsByIdOverall(id: [ID]): [Bar] @renamed(from: "barsById")
+    }
+    type Bar {
+      id: ID
+      name: String
+    }
+  # language=GraphQL
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: [Bar]
+        @hydrated(
+          service: "service2"
+          field: "barsByIdOverall"
+          arguments: [{name: "id" value: "$source.barId"}]
+          identifiedBy: "id"
+        )
+    }
+underlyingSchema:
+  # language=GraphQL
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barsById(id: [ID]): [Bar]
+    }
+  # language=GraphQL
+  service1: |
+    type Foo {
+      barId: [ID]
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+# language=GraphQL
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          foo {
+            __typename__batch_hydration__bar: __typename
+            batch_hydration__bar__barId: barId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__batch_hydration__bar": "Foo",
+            "batch_hydration__bar__barId": [
+              "barId1",
+              "barId2",
+              "barId3"
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          rename__barsByIdOverall__barsById: barsById(id: ["barId1-MEMES-1", "barId1-MEMES-2", "barId2-MEMES-1", "barId2-MEMES-2", "barId3-MEMES-1", "barId3-MEMES-2"]) {
+            batch_hydration__bar__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__barsByIdOverall__barsById": [
+            {
+              "name": "Bar1",
+              "batch_hydration__bar__id": "barId1-MEMES-1"
+            },
+            {
+              "name": "Bar2",
+              "batch_hydration__bar__id": "barId2-MEMES-1"
+            },
+            {
+              "name": "Bar3",
+              "batch_hydration__bar__id": "barId3-MEMES-1"
+            },
+            {
+              "name": "Bar1-Two",
+              "batch_hydration__bar__id": "barId1-MEMES-2"
+            },
+            {
+              "name": "Bar2-Two",
+              "batch_hydration__bar__id": "barId2-MEMES-2"
+            },
+            {
+              "name": "Bar3-Two",
+              "batch_hydration__bar__id": "barId3-MEMES-2"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": [
+          {
+            "name": "Bar1"
+          },
+          {
+            "name": "Bar1-Two"
+          },
+          {
+            "name": "Bar2"
+          },
+          {
+            "name": "Bar2-Two"
+          },
+          {
+            "name": "Bar3"
+          },
+          {
+            "name": "Bar3-Two"
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

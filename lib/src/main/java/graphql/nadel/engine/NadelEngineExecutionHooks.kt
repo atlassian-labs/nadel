@@ -7,11 +7,23 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.hooks.ServiceExecutionHooks
 
 interface NadelEngineExecutionHooks : ServiceExecutionHooks {
+    companion object {
+        internal val noMapping: Map<Any?, List<Any?>> = mapOf("BEEG CHUNGUS" to emptyList())
+    }
+
+    fun mapHydrationIds(
+        userContext: Any?,
+        ids: List<Any?>,
+        instruction: NadelGenericHydrationInstruction,
+    ): Map<Any?, List<Any?>> {
+        return noMapping
+    }
+
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
-        userContext: Any?
+        userContext: Any?,
     ): T?
 
     /**
@@ -40,7 +52,7 @@ interface NadelEngineExecutionHooks : ServiceExecutionHooks {
      */
     fun <T> partitionBatchHydrationArgumentList(
         argumentValues: List<T>,
-        instruction: NadelBatchHydrationFieldInstruction
+        instruction: NadelBatchHydrationFieldInstruction,
     ): List<List<T>> {
         return listOf(argumentValues)
     }

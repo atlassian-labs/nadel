@@ -77,6 +77,7 @@ internal class NadelInstrumentationTimer(
     class BatchTimer(
         private val timer: NadelInstrumentationTimer,
         private val timings: MutableMap<Step, Long> = mutableMapOf(),
+        private val scraps: MutableMap<Step, Long> = mutableMapOf(),
     ) {
         private var exception: Throwable? = null
 
@@ -89,6 +90,11 @@ internal class NadelInstrumentationTimer(
                 throw e
             } finally {
                 val end = System.nanoTime()
+                val duration = end - start
+                if (duration < 1000000) {
+                    scraps[step] = (timings[step] ?: 0) + (end - start)
+                }
+
                 timings[step] = (timings[step] ?: 0) + (end - start)
             }
         }

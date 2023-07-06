@@ -18,7 +18,7 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.NadelBatchHydrationContext as BatchTransformContext
 
 internal object NadelHydrationFieldsBuilder {
     context(NadelEngineContext, NadelExecutionContext, NadelHydrationTransformContext)

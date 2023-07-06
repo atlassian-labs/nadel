@@ -15,7 +15,7 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.listOfNulls
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformContext as BatchTransformContext
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.NadelBatchHydrationContext as BatchTransformContext
 
 context(NadelEngineContext, NadelExecutionContext, BatchTransformContext)
 internal class NadelBatchHydrationByIndex private constructor(
