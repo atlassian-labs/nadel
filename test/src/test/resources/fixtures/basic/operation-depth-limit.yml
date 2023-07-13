@@ -1,0 +1,62 @@
+name: "operation depth limit"
+enabled: true
+overallSchema:
+  # language=GraphQL
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      child: Foo
+    }
+underlyingSchema:
+  # language=GraphQL
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      child: Foo
+    }
+# language=GraphQL
+query: |
+  query {
+    foo { # 1
+      child { # 2
+        child { # 3
+          child { # 4
+            child { # 5
+              child { # 6
+                child { # 7
+                  child { # 8
+                    child { # 9
+                      child { # 10
+                        name # 11
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls: [ ]
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [
+      {
+        "message": "Maximum query depth exceeded 11 > 10",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ]
+  }
