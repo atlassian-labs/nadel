@@ -8,8 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstSorter
 import graphql.language.Document
-import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.engine.util.JsonMap
 import graphql.parser.Parser
 
@@ -38,10 +36,6 @@ data class TestFixture(
     val response: JsonMap? by lazy {
         responseJsonString?.let(jsonObjectMapper::readValue)
     }
-}
-
-fun interface TestEngineFactory {
-    fun make(nadel: Nadel, testHook: EngineTestHook): NadelExecutionEngine
 }
 
 data class ServiceCall(

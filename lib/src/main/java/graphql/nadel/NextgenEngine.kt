@@ -4,6 +4,7 @@ import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQLError
+import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.engine.NadelExecutionContext
@@ -31,6 +32,7 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
@@ -41,6 +43,7 @@ import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
+import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,23 +56,25 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
-import java.util.Locale
 import java.util.concurrent.CompletableFuture
+import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
-class NextgenEngine @JvmOverloads constructor(
-    nadel: Nadel,
+internal class NextgenEngine(
+    private val engineSchema: GraphQLSchema,
+    private val querySchema: GraphQLSchema,
+    private val instrumentation: NadelInstrumentation,
+    private val serviceExecutionHooks: ServiceExecutionHooks,
+    private val executionIdProvider: ExecutionIdProvider,
+    maxQueryDepth: Int,
+    services: List<Service>,
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
-) : NadelExecutionEngine {
-
+) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
-    private val engineSchema = nadel.engineSchema
-    private val querySchema = nadel.querySchema
-    private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
+    private val services: Map<String, Service> = services.strictAssociateBy { it.name }
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
-        engineSchema = nadel.engineSchema,
-        services = nadel.services,
+        engineSchema = engineSchema,
+        services = services,
     )
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
@@ -77,22 +82,23 @@ class NextgenEngine @JvmOverloads constructor(
         transforms = transforms,
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
-    private val instrumentation = nadel.instrumentation
     private val dynamicServiceResolution = DynamicServiceResolution(
         engineSchema = engineSchema,
         serviceExecutionHooks = serviceExecutionHooks,
-        services = nadel.services,
+        services = services,
     )
     private val fieldToService = NadelFieldToService(
-        querySchema = nadel.querySchema,
+        querySchema = querySchema,
         overallExecutionBlueprint = overallExecutionBlueprint,
         introspectionRunnerFactory = introspectionRunnerFactory,
         dynamicServiceResolution = dynamicServiceResolution,
-        services,
+        services = this.services,
     )
-    private val executionIdProvider = nadel.executionIdProvider
 
-    override fun execute(
+    private val operationParseOptions = executableNormalizedOperationFactoryOptions()
+        .maxChildrenDepth(maxQueryDepth)
+
+    fun execute(
         executionInput: ExecutionInput,
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
@@ -108,7 +114,7 @@ class NextgenEngine @JvmOverloads constructor(
         }.asCompletableFuture()
     }
 
-    override fun close() {
+    fun close() {
         // Closes the scope after letting in flight requests go through
         coroutineScope.launch {
             delay(60_000) // Wait a minute
@@ -135,8 +141,8 @@ class NextgenEngine @JvmOverloads constructor(
                     queryDocument,
                     executionInput.operationName,
                     executionInput.rawVariables,
-                    executionInput.graphQLContext,
-                    Locale.getDefault()
+                    operationParseOptions
+                        .graphQLContext(executionInput.graphQLContext),
                 )
             }
 
@@ -352,12 +358,5 @@ class NextgenEngine @JvmOverloads constructor(
             executionPlan,
             field,
         )
-    }
-
-    companion object {
-        @JvmStatic
-        fun newNadel(): Nadel.Builder {
-            return Nadel.Builder().engineFactory(::NextgenEngine)
-        }
     }
 }

@@ -1,0 +1,216 @@
+name: "large query but not deep"
+enabled: true
+overallSchema:
+  # language=GraphQL
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      child: Foo
+    }
+underlyingSchema:
+  # language=GraphQL
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      child: Foo
+    }
+# language=GraphQL
+query: |
+  query {
+    foo { # 1
+      child { # 2
+        child { # 3
+          child { # 4
+            child { # 5
+              child { # 6
+                child { # 7
+                  child { # 8
+                    child { # 9
+                      name # 10
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    bar: foo { # 1
+      child { # 2
+        child { # 3
+          child { # 4
+            child { # 5
+              child { # 6
+                child { # 7
+                  child { # 8
+                    child { # 9
+                      name # 10
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        two: child { # 3
+          child { # 4
+            child { # 5
+              child { # 6
+                child { # 7
+                  child { # 8
+                    child { # 9
+                      name # 10
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        three: child { # 3
+          child { # 4
+            child { # 5
+              child { # 6
+                child { # 7
+                  child { # 8
+                    child { # 9
+                      name # 10
+                    }
+                  }
+                }
+                four: child { # 7
+                  child { # 8
+                    child { # 9
+                      name # 10
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service"
+    request:
+      query: |
+        {
+          foo {
+            child {
+              child {
+                child {
+                  child {
+                    child {
+                      child {
+                        child {
+                          child {
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": null
+        },
+        "extensions": {}
+      }
+  - serviceName: "service"
+    request:
+      query: |
+        {
+          bar: foo {
+            child {
+              child {
+                child {
+                  child {
+                    child {
+                      child {
+                        child {
+                          child {
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              two: child {
+                child {
+                  child {
+                    child {
+                      child {
+                        child {
+                          child {
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              three: child {
+                child {
+                  child {
+                    child {
+                      child {
+                        child {
+                          child {
+                            name
+                          }
+                        }
+                      }
+                      four: child {
+                        child {
+                          child {
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bar": null
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": null,
+      "bar": null
+    },
+    "errors": [
+    ]
+  }
