@@ -7,7 +7,7 @@ plugins {
     id("com.bnorm.power.kotlin-power-assert")
 }
 
-val graphqlJavaVersion = "0.0.0-2023-06-07T00-38-50-5b19375"
+val graphqlJavaVersion = "0.0.0-2023-07-12T23-55-39-fa8cf1b"
 val slf4jVersion = "1.7.25"
 
 dependencies {

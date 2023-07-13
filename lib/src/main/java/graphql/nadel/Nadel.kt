@@ -13,6 +13,9 @@ import graphql.execution.preparsed.NoOpPreparsedDocumentProvider
 import graphql.execution.preparsed.PreparsedDocumentEntry
 import graphql.execution.preparsed.PreparsedDocumentProvider
 import graphql.language.Document
+import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
+import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
+import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -38,15 +41,12 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
 class Nadel private constructor(
-    private val engine: NadelExecutionEngine,
+    private val engine: NextgenEngine,
     val services: List<Service>,
     val engineSchema: GraphQLSchema,
     val querySchema: GraphQLSchema,
-    internal val serviceExecutionFactory: ServiceExecutionFactory,
-    internal val instrumentation: NadelInstrumentation,
-    internal val serviceExecutionHooks: ServiceExecutionHooks,
-    internal val preparsedDocumentProvider: PreparsedDocumentProvider,
-    internal val executionIdProvider: ExecutionIdProvider,
+    private val instrumentation: NadelInstrumentation,
+    private val preparsedDocumentProvider: PreparsedDocumentProvider,
 ) {
     fun execute(nadelExecutionInput: NadelExecutionInput): CompletableFuture<ExecutionResult> {
         val executionInput: ExecutionInput = newExecutionInput()
@@ -226,14 +226,16 @@ class Nadel private constructor(
     }
 
     class Builder {
-        private var serviceExecutionFactory: ServiceExecutionFactory? = null
         private var instrumentation: NadelInstrumentation = object : NadelInstrumentation {}
         private var serviceExecutionHooks: ServiceExecutionHooks = object : ServiceExecutionHooks {}
         private var preparsedDocumentProvider: PreparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE
         private var executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER
-        private var engineFactory: NadelExecutionEngineFactory = NadelExecutionEngineFactory(::NextgenEngine)
+        private var transforms = emptyList<NadelTransform<out Any>>()
+        private var introspectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner)
 
         private var schemaBuilder = NadelSchemas.Builder()
+
+        private var maxQueryDepth = Integer.MAX_VALUE
 
         fun overallSchema(serviceName: String, nsdl: Reader): Builder {
             schemaBuilder.overallSchema(serviceName, nsdl)
@@ -306,7 +308,6 @@ class Nadel private constructor(
         }
 
         fun serviceExecutionFactory(serviceExecutionFactory: ServiceExecutionFactory): Builder {
-            this.serviceExecutionFactory = serviceExecutionFactory
             schemaBuilder.serviceExecutionFactory(serviceExecutionFactory)
             return this
         }
@@ -331,50 +332,44 @@ class Nadel private constructor(
             return this
         }
 
-        fun engineFactory(engineFactory: NadelExecutionEngineFactory): Builder {
-            this.engineFactory = engineFactory
+        fun transforms(transforms: List<NadelTransform<out Any>>): Builder {
+            this.transforms = transforms
+            return this
+        }
+
+        fun introspectionRunnerFactory(introspectionRunnerFactory: NadelIntrospectionRunnerFactory): Builder {
+            this.introspectionRunnerFactory = introspectionRunnerFactory
+            return this
+        }
+
+        fun maxQueryDepth(maxQueryDepth: Int): Builder {
+            this.maxQueryDepth = maxQueryDepth
             return this
         }
 
         fun build(): Nadel {
-            val serviceExecutionFactory = requireNotNull(serviceExecutionFactory) {
-                "Must set serviceExecutionFactory on the builder"
-            }
-
             val (engineSchema, services) = schemaBuilder.build()
 
             val querySchema = QuerySchemaGenerator.generateQuerySchema(engineSchema)
 
-            lateinit var nadel: Nadel
             return Nadel(
-                engine = object : NadelExecutionEngine {
-                    val real by lazy {
-                        // Dumb hack because the engine factory takes in a Nadel object, but we haven't created one yet
-                        // This used to work because we created two Nadel instances but now we only create one
-                        // Todo: we can remove this at some point with some refactoring
-                        engineFactory.create(nadel)
-                    }
-
-                    override fun execute(
-                        executionInput: ExecutionInput,
-                        queryDocument: Document,
-                        instrumentationState: InstrumentationState?,
-                        nadelExecutionParams: NadelExecutionParams,
-                    ): CompletableFuture<ExecutionResult> {
-                        return real.execute(executionInput, queryDocument, instrumentationState, nadelExecutionParams)
-                    }
-                },
-                serviceExecutionFactory = serviceExecutionFactory,
+                engine = NextgenEngine(
+                    engineSchema = engineSchema,
+                    querySchema = querySchema,
+                    instrumentation = instrumentation,
+                    serviceExecutionHooks = serviceExecutionHooks,
+                    executionIdProvider = executionIdProvider,
+                    services = services,
+                    transforms = transforms,
+                    introspectionRunnerFactory = introspectionRunnerFactory,
+                    maxQueryDepth = maxQueryDepth,
+                ),
                 services = services,
                 engineSchema = engineSchema,
                 querySchema = querySchema,
                 instrumentation = instrumentation,
-                serviceExecutionHooks = serviceExecutionHooks,
                 preparsedDocumentProvider = preparsedDocumentProvider,
-                executionIdProvider = executionIdProvider,
-            ).also {
-                nadel = it
-            }
+            )
         }
 
         @Deprecated("Use overallSchema instead", replaceWith = ReplaceWith("overallSchema(serviceName, nsdl)"))

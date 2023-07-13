@@ -7,7 +7,6 @@ import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NadelSchemas
-import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
@@ -149,12 +148,7 @@ private suspend fun execute(
 
         val nadel: Nadel = Nadel.newNadel()
             .schemaTransformationHook(testHook.schemaTransformationHook)
-            .engineFactory { nadel ->
-                NextgenEngine(
-                    nadel = nadel,
-                    transforms = testHook.customTransforms,
-                )
-            }
+            .transforms(testHook.customTransforms)
             .overallSchemas(fixture.overallSchema)
             .underlyingSchemas(fixture.underlyingSchema)
             .overallWiringFactory(testHook.wiringFactory)

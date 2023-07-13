@@ -7,7 +7,6 @@ import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NadelSchemas
-import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
@@ -83,9 +82,6 @@ suspend fun main() {
         }
 
     val nadel = Nadel.newNadel()
-        .engineFactory { nadel ->
-            NextgenEngine(nadel)
-        }
         .overallSchemas(overallSchemas)
         .underlyingSchemas(underlyingSchemas)
         .serviceExecutionFactory(object : ServiceExecutionFactory {

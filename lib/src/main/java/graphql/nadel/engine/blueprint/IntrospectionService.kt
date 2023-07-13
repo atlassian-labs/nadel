@@ -20,7 +20,7 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import java.util.concurrent.CompletableFuture
 
-internal class IntrospectionService constructor(
+internal class IntrospectionService(
     schema: GraphQLSchema,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
 ) : Service(name, schema, introspectionRunnerFactory.make(schema), NadelDefinitionRegistry()) {
