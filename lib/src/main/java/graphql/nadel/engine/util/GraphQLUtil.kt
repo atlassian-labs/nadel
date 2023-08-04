@@ -88,7 +88,7 @@ fun toGraphQLError(
     raw: JsonMap,
 ): GraphQLError {
     val errorBuilder = newError()
-        .message(raw["message"] as String?)
+        .message((raw["message"] as String?) ?: "An error has occurred")
     raw["extensions"]?.let { extensions ->
         errorBuilder.extensions(extensions as JsonMap)
     }
