@@ -1,13 +1,14 @@
-name: "basic hydration"
+name: "basic hydration with static args"
 enabled: true
 overallSchema:
   service2: |
     type Query {
-      barById(id: ID): Bar
+      barById(id: ID, private: Boolean): Bar
     }
     type Bar {
       id: ID
       name: String
+      private: Boolean
     }
   service1: |
     type Query {
@@ -15,8 +16,12 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
+      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{
+          name: "id" value: "$source.barId"
+          name: "private" value: true
+        }])
     }
+
 underlyingSchema:
   service2: |
     type Bar {
