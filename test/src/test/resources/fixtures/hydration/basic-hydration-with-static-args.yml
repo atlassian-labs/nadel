@@ -3,12 +3,11 @@ enabled: true
 overallSchema:
   service2: |
     type Query {
-      barById(id: ID, private: Boolean): Bar
+      barById(id: ID): Bar
     }
     type Bar {
       id: ID
       name: String
-      private: Boolean
     }
   service1: |
     type Query {
@@ -16,12 +15,9 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{
-          name: "id" value: "$source.barId"
-          name: "private" value: true
-        }])
+      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "barId"}])
+      barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
     }
-
 underlyingSchema:
   service2: |
     type Bar {
@@ -35,7 +31,12 @@ underlyingSchema:
   service1: |
     type Foo {
       barId: ID
+      fooDetails: FooDetails
       id: ID
+    }
+
+    type FooDetails {
+      externalBarId: ID
     }
 
     type Query {
