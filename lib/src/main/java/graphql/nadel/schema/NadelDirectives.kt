@@ -11,6 +11,7 @@ import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
 import graphql.language.EnumValueDefinition.newEnumValueDefinition
 import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
 import graphql.language.StringValue
+import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
@@ -38,6 +39,7 @@ import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
 import java.util.Locale
+import kotlin.reflect.typeOf
 
 /**
  * If you update this file please add to NadelBuiltInTypes
@@ -343,7 +345,7 @@ object NadelDirectives {
                 val argMap = arg as Map<String, String>
                 val remoteArgName = argMap.requireArgument("name")
                 val remoteArgValue = argMap.requireArgument("value")
-                val remoteArgumentSource = createRemoteArgumentSource(remoteArgValue)
+                val remoteArgumentSource = createRemoteArgumentSource(StringValue(remoteArgValue))
                 RemoteArgumentDefinition(remoteArgName, remoteArgumentSource)
             }
     }
@@ -363,21 +365,40 @@ object NadelDirectives {
         }
     }
 
-    private fun createRemoteArgumentSource(value: String): RemoteArgumentSource {
-        val values = listFromDottedString(value)
+    private fun createRemoteArgumentSource(value: Value<*>): RemoteArgumentSource { //needs to be graphql.language "Value"
+        if (value  is StringValue) {
+            val values = listFromDottedString(value.toString())
+            return when (values.first()) {
+                "\$source" -> RemoteArgumentSource(
+                    argumentName = null,
+                    pathToField = values.subList(1, values.size),
+                    staticValue = null,
+                    sourceType = SourceType.ObjectField,
+                )
 
-        return when (values.first()) {
-            "\$source" -> RemoteArgumentSource(
+                "\$argument" -> RemoteArgumentSource(
+                    argumentName = values.subList(1, values.size).single(),
+                    pathToField = null,
+                    staticValue = null,
+                    sourceType = SourceType.FieldArgument,
+                )
+
+                else ->
+                    RemoteArgumentSource(
+                        argumentName = null,
+                        pathToField = null,
+                        staticValue = value,
+                        sourceType = SourceType.StaticArgument,
+                        )
+            }
+        }
+        else {
+            return RemoteArgumentSource(
                 argumentName = null,
-                pathToField = values.subList(1, values.size),
-                sourceType = SourceType.ObjectField,
-            )
-            "\$argument" -> RemoteArgumentSource(
-                argumentName = values.subList(1, values.size).single(),
                 pathToField = null,
-                sourceType = SourceType.FieldArgument,
-            )
-            else -> throw IllegalArgumentException("$value must begin with \$source. or \$argument.")
+                staticValue = value,
+                sourceType = SourceType.StaticArgument,
+                )
         }
     }
 
@@ -420,12 +441,14 @@ object NadelDirectives {
 
         var argumentName: String? = null
         var path: List<String>? = null
+        var value: Value<*>? = null
         when (argumentType) {
             SourceType.ObjectField -> path = values
             SourceType.FieldArgument -> argumentName = values.single()
+            SourceType.StaticArgument -> value = value
         }
 
-        return RemoteArgumentSource(argumentName, path, argumentType)
+        return RemoteArgumentSource(argumentName, path, value, argumentType)
     }
 
     fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {

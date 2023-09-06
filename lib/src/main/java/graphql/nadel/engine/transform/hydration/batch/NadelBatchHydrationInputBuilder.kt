@@ -10,6 +10,7 @@ import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.javaValueToAstValue
+import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.mapFrom
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
@@ -44,7 +45,7 @@ internal object NadelBatchHydrationInputBuilder {
             instruction.actorInputValueDefs.mapNotNull { actorFieldArg ->
                 when (val valueSource = actorFieldArg.valueSource) {
                     is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> {
-                        val argValue = hydrationField.normalizedArguments[valueSource.argumentName]
+                        val argValue: NormalizedInputValue? = hydrationField.normalizedArguments[valueSource.argumentName]
                             ?: valueSource.defaultValue
                         if (argValue != null) {
                             actorFieldArg to argValue
@@ -54,8 +55,19 @@ internal object NadelBatchHydrationInputBuilder {
                     }
                     // These are batch values, ignore them
                     is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> null
+                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> {
+                        val staticValue: NormalizedInputValue? = makeNormalizedInputValue(
+                            type = actorFieldArg.actorArgumentDef.type,
+                            value = valueSource.value,
+                        )
+                        if (staticValue != null) {
+                            actorFieldArg to staticValue
+                        } else {
+                            null
+                        }
+                    }
                 }
-            },
+            }
         )
     }
 

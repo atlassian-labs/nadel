@@ -1,5 +1,6 @@
 package graphql.nadel.engine.blueprint.hydration
 
+import graphql.language.Value
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
@@ -23,7 +24,7 @@ data class NadelHydrationActorInputDef(
          * }
          * ```
          */
-        data class FieldResultValue(
+        data class FieldResultValue(    // $source
             val queryPathToField: NadelQueryPath,
             val fieldDefinition: GraphQLFieldDefinition,
         ) : ValueSource()
@@ -39,11 +40,28 @@ data class NadelHydrationActorInputDef(
          * }
          * ```
          */
-        data class ArgumentValue(
+        data class ArgumentValue(       // $args
             val argumentName: String,
             val argumentDefinition: GraphQLArgument,
             val defaultValue: NormalizedInputValue?,
         ) : ValueSource()
+
+        /**
+         * Represents a static argument value, which is hardcoded in the source code. e.g.
+         *
+         * ```graphql
+         * type Issue {
+         *   id: ID! # Value used as argument to issueId
+         *   owner: User @hydrated(from: ["issueOwner"], args: [
+         *      {name: "issueId" value: "issue123"}
+         *   ])
+         * }
+         * ```
+         */
+        data class StaticValue (
+            val value: Value<*>,
+        ): ValueSource()
+
     }
 }
 

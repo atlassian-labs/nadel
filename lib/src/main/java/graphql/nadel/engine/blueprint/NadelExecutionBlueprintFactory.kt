@@ -8,10 +8,12 @@ import graphql.Scalars.GraphQLString
 import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
+import graphql.language.StringValue
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
+import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -260,6 +262,7 @@ private class Factory(
                 when (it.valueSource) {
                     is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
                     is FieldResultValue -> it.valueSource.queryPathToField
+                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> null //check this (but should be right as only need fields for FieldResultValue ($source)
                 }
             },
         )
@@ -358,6 +361,7 @@ private class Factory(
                     when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
                         is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
                         is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
+                        is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList() //check this (but should be right as only need fields for FieldResultValue ($source)
                     }
                 }).toSet()
 
@@ -483,7 +487,11 @@ private class Factory(
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
-                else -> error("Unsupported remote argument source type: '$argSourceType'")
+                StaticArgument -> {
+                    NadelHydrationActorInputDef.ValueSource.StaticValue(
+                        value =  remoteArgDef.remoteArgumentSource.staticValue!!
+                    )
+                }
             }
 
             NadelHydrationActorInputDef(

@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform.hydration
 
 import graphql.language.NullValue
+import graphql.language.Value
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource
@@ -127,6 +128,7 @@ internal class NadelHydrationInputBuilder private constructor(
                 inputDef,
                 value = getResultValue(valueSource),
             )
+            is ValueSource.StaticValue -> makeInputValue(inputDef, valueSource as Value<*>)
         }
     }
 
@@ -137,6 +139,16 @@ internal class NadelHydrationInputBuilder private constructor(
         return makeNormalizedInputValue(
             type = inputDef.actorArgumentDef.type,
             value = javaValueToAstValue(value),
+        )
+    }
+
+    private fun makeInputValue(
+        inputDef: NadelHydrationActorInputDef,
+        value: Value<*>,
+    ): NormalizedInputValue {
+        return makeNormalizedInputValue(
+            type = inputDef.actorArgumentDef.type,
+            value = value,
         )
     }
 
