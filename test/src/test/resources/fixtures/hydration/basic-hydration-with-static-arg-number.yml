@@ -1,12 +1,12 @@
-name: "basic hydration with static args"
+name: "basic hydration with static arg number"
 enabled: true
 overallSchema:
   service2: |
     type Query {
-      barById(id: ID): Bar
+      barById(id: Int): Bar
     }
     type Bar {
-      id: ID
+      id: Int
       name: String
     }
   service1: |
@@ -15,21 +15,21 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "barId"}])
+      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: 12345}])
     }
 underlyingSchema:
   service2: |
     type Bar {
-      id: ID
+      id: Int
       name: String
     }
 
     type Query {
-      barById(id: ID): Bar
+      barById(id: Int): Bar
     }
   service1: |
     type Foo {
-      barId: ID
+      barId: Int
       id: ID
     }
 
@@ -69,7 +69,7 @@ serviceCalls:
     request:
       query: |
         query {
-          barById(id: "barId") {
+          barById(id: 12345) {
             name
           }
         }
@@ -79,7 +79,7 @@ serviceCalls:
       {
         "data": {
           "barById": {
-            "name": "Bar1"
+            "name": "Bar12345"
           }
         },
         "extensions": {}
@@ -90,7 +90,7 @@ response: |-
     "data": {
       "foo": {
         "bar": {
-          "name": "Bar1"
+          "name": "Bar12345"
         }
       }
     },

@@ -1,5 +1,6 @@
 package graphql.nadel.schema
 
+import graphql.scalars.ExtendedScalars
 import graphql.GraphQLContext
 import graphql.Scalars
 import graphql.Scalars.GraphQLString
@@ -32,6 +33,7 @@ import graphql.nadel.util.onInterface
 import graphql.nadel.util.onObject
 import graphql.nadel.util.onScalar
 import graphql.nadel.util.onUnion
+import graphql.scalars.`object`.JsonScalar
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
@@ -74,7 +76,7 @@ object NadelDirectives {
         )
         .inputValueDefinition(
             name = "value",
-            type = nonNull(GraphQLString),
+            type = nonNull(ExtendedScalars.Json),
         )
         .build()
 

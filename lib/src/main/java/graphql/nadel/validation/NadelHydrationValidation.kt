@@ -25,9 +25,11 @@ import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnionType
 
 internal class NadelHydrationValidation(
@@ -215,7 +217,9 @@ internal class NadelHydrationValidation(
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
                     // TODO: check argument type is correct
-                    null
+                    val fieldOutputType = field.type
+                    hydrationArgTypesMatch(fieldOutputType)
+
                 }
             }
 
@@ -225,7 +229,8 @@ internal class NadelHydrationValidation(
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {
                     // TODO: check argument type is correct
-                    null
+                    val hydrationArgType = argument.type
+                    hydrationArgTypesMatch(hydrationArgType)
                 }
             }
 
@@ -233,5 +238,10 @@ internal class NadelHydrationValidation(
                 null
             }
         }
+    }
+
+    private fun hydrationArgTypesMatch(type: GraphQLType): NadelSchemaValidationError? { //getHydrationArgumentErrors
+        // if type matches, return null, otherwise return error
+        return null
     }
 }

@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform.hydration
 
 import graphql.language.NullValue
+import graphql.language.StringValue
 import graphql.language.Value
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
@@ -9,6 +10,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
+import graphql.nadel.engine.util.AnyAstValue
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.javaValueToAstValue
@@ -128,7 +130,7 @@ internal class NadelHydrationInputBuilder private constructor(
                 inputDef,
                 value = getResultValue(valueSource),
             )
-            is ValueSource.StaticValue -> makeInputValue(inputDef, valueSource as Value<*>)
+            is ValueSource.StaticValue -> makeInputValue(inputDef, valueSource.value)
         }
     }
 
