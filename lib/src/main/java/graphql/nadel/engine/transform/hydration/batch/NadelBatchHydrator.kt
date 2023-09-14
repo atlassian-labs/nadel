@@ -145,7 +145,8 @@ internal class NadelBatchHydrator(
                             batchSize = instruction.batchSize,
                             hydrationSourceService = hydrationSourceService,
                             hydrationSourceField = instruction.location,
-                            hydrationActorField = hydrationActorField
+                            hydrationActorField = hydrationActorField,
+                            fieldPath = state.hydratedField.listOfResultKeys,
                         )
                         engine.executeTopLevelField(
                             service = instruction.actorService,
