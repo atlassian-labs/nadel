@@ -28,14 +28,7 @@ class `basic-hydration` : HydrationDetailsHook() {
         assert(actualHydrationDetails.hydrationSourceService.name == "service1")
     }
 }
-@UseHook
-class `basic-hydration-with-static-args` : HydrationDetailsHook() {
-    override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {
-        assert(actualHydrationDetails.hydrationActorField.toString() == "Query.barById")
-        assert(actualHydrationDetails.hydrationSourceField.toString() == "Foo.bar")
-        assert(actualHydrationDetails.hydrationSourceService.name == "service1")
-    }
-}
+
 @UseHook
 class `batch-hydration-with-renamed-actor-field` : HydrationDetailsHook() {
     override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {

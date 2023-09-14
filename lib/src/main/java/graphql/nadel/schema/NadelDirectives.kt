@@ -367,7 +367,7 @@ object NadelDirectives {
         }
     }
 
-    private fun createRemoteArgumentSource(value: Value<*>): RemoteArgumentSource { //needs to be graphql.language "Value"
+    private fun createRemoteArgumentSource(value: Value<*>): RemoteArgumentSource {
         if (value  is StringValue) {
             val values = listFromDottedString(value.value)
             return when (values.first()) {

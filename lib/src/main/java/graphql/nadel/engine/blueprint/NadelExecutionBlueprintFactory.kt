@@ -262,7 +262,7 @@ private class Factory(
                 when (it.valueSource) {
                     is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
                     is FieldResultValue -> it.valueSource.queryPathToField
-                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> null //check this (but should be right as only need fields for FieldResultValue ($source)
+                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
                 }
             },
         )
@@ -361,7 +361,7 @@ private class Factory(
                     when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
                         is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
                         is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
-                        is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList() //check this (but should be right as only need fields for FieldResultValue ($source)
+                        is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList()
                     }
                 }).toSet()
 

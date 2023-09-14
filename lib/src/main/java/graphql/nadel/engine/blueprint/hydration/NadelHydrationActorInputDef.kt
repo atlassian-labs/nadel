@@ -24,7 +24,7 @@ data class NadelHydrationActorInputDef(
          * }
          * ```
          */
-        data class FieldResultValue(    // $source
+        data class FieldResultValue(
             val queryPathToField: NadelQueryPath,
             val fieldDefinition: GraphQLFieldDefinition,
         ) : ValueSource()
@@ -40,7 +40,7 @@ data class NadelHydrationActorInputDef(
          * }
          * ```
          */
-        data class ArgumentValue(       // $args
+        data class ArgumentValue(
             val argumentName: String,
             val argumentDefinition: GraphQLArgument,
             val defaultValue: NormalizedInputValue?,

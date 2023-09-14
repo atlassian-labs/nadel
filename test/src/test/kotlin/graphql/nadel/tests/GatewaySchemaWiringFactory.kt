@@ -59,18 +59,11 @@ class GatewaySchemaWiringFactory : NeverWiringFactory() {
             .coercing(Scalars.GraphQLString.coercing)
             .build()
 
-//        private val jsonScalar = GraphQLScalarType.newScalar()
-//            .name("JSON")
-//            .description("JSON Scalar type")
-//            .coercing(ExtendedScalars.Json.coercing)
-//            .build()
-
         private val defaultScalars = mapOf(
             urlScalar.name to urlScalar,
             ExtendedScalars.Json.name to ExtendedScalars.Json,
             ExtendedScalars.GraphQLLong.name to ExtendedScalars.GraphQLLong,
             dateTimeScalar.name to dateTimeScalar,
-//            jsonScalar.name to jsonScalar,
         )
     }
 }

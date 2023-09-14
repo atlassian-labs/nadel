@@ -1,4 +1,4 @@
-name: "basic hydration with static arg number"
+name: "basic hydration with static arg integer"
 enabled: true
 overallSchema:
   service2: |
