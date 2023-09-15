@@ -11,4 +11,5 @@ data class ServiceExecutionHydrationDetails(
     val hydrationSourceService: Service,
     val hydrationSourceField: FieldCoordinates,
     val hydrationActorField: FieldCoordinates,
+    val fieldPath: List<String>,
 )
