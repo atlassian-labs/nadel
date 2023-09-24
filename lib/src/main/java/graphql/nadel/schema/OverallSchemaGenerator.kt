@@ -4,6 +4,7 @@ import graphql.GraphQLException
 import graphql.language.FieldDefinition
 import graphql.language.ObjectTypeDefinition
 import graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
+import graphql.language.ScalarTypeDefinition.newScalarTypeDefinition
 import graphql.language.SchemaDefinition
 import graphql.language.SourceLocation
 import graphql.nadel.NadelDefinitionRegistry
@@ -12,6 +13,7 @@ import graphql.nadel.util.AnyNamedNode
 import graphql.nadel.util.AnySDLDefinition
 import graphql.nadel.util.AnySDLNamedDefinition
 import graphql.nadel.util.isExtensionDef
+import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -70,6 +72,9 @@ internal class OverallSchemaGenerator {
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationTemplateEnumDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedFromDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedTemplateDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, newScalarTypeDefinition()
+            .name(ExtendedScalars.Json.name)
+            .build())
 
         for (definition in allDefinitions) {
             val error = overallRegistry.add(definition)

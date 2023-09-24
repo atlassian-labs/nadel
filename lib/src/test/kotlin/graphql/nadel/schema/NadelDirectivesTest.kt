@@ -10,7 +10,8 @@ import graphql.nadel.schema.NadelDirectives.nadelHydrationComplexIdentifiedBy
 import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.RuntimeWiring.MOCKED_WIRING
+import graphql.schema.idl.MockedWiringFactory
+import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import io.kotest.core.spec.style.DescribeSpec
@@ -29,11 +30,14 @@ class NadelDirectivesTest : DescribeSpec({
         ${AstPrinter.printAst(nadelHydrationTemplateEnumDefinition)}
         ${AstPrinter.printAst(hydratedFromDirectiveDefinition)}
         ${AstPrinter.printAst(hydratedTemplateDirectiveDefinition)}
+        scalar JSON
     """
 
     fun getSchema(schemaText: String): GraphQLSchema {
         val typeDefs = SchemaParser().parse(commonDefs + "\n" + schemaText)
-        return SchemaGenerator().makeExecutableSchema(typeDefs, MOCKED_WIRING)
+        return SchemaGenerator().makeExecutableSchema(typeDefs, RuntimeWiring
+            .newRuntimeWiring()
+            .wiringFactory(NeverWiringFactory()).build())
     }
 
     describe("@hydrated") {

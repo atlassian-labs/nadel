@@ -11,6 +11,7 @@ import graphql.language.DirectiveDefinition.newDirectiveDefinition
 import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
 import graphql.language.EnumValueDefinition.newEnumValueDefinition
 import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
+import graphql.language.ObjectValue
 import graphql.language.StringValue
 import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
@@ -33,7 +34,6 @@ import graphql.nadel.util.onInterface
 import graphql.nadel.util.onObject
 import graphql.nadel.util.onScalar
 import graphql.nadel.util.onUnion
-import graphql.scalars.`object`.JsonScalar
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
@@ -41,7 +41,6 @@ import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
 import java.util.Locale
-import kotlin.reflect.typeOf
 
 /**
  * If you update this file please add to NadelBuiltInTypes
@@ -255,8 +254,7 @@ object NadelDirectives {
         val hydrations = fieldDefinition.getAppliedDirectives(hydratedDirectiveDefinition.name)
             .asSequence()
             .map { directive ->
-                val argumentValues = resolveArgumentValue<List<Any>>(directive.getArgument("arguments"))
-                val arguments = createRemoteArgs(argumentValues)
+                val arguments = createRemoteArgs(directive.getArgument("arguments").argumentValue.value as ArrayValue)
 
                 val inputIdentifiedBy = directive.getArgument("inputIdentifiedBy")
                 val identifiedByValues = resolveArgumentValue<List<Any>>(inputIdentifiedBy)
@@ -334,20 +332,20 @@ object NadelDirectives {
         )
     }
 
-    private fun createRemoteArgs(arguments: List<Any>): List<RemoteArgumentDefinition> {
+    private fun createRemoteArgs(arguments: ArrayValue): List<RemoteArgumentDefinition> {
         fun Map<String, String>.requireArgument(key: String): String {
             return requireNotNull(this[key]) {
                 "${nadelHydrationArgumentDefinition.name} definition requires '$key' to be not-null"
             }
         }
 
-        return arguments
+        return arguments.values
             .map { arg ->
                 @Suppress("UNCHECKED_CAST") // trust GraphQL type system and caller
-                val argMap = arg as Map<String, String>
-                val remoteArgName = argMap.requireArgument("name")
-                val remoteArgValue = argMap.requireArgument("value")
-                val remoteArgumentSource = createRemoteArgumentSource(StringValue(remoteArgValue))
+                val argMap = arg as ObjectValue
+                val remoteArgName = (argMap.objectFields.single { it.name == "name" }.value as StringValue).value
+                val remoteArgValue = argMap.objectFields.single { it.name == "value" }.value
+                val remoteArgumentSource = createRemoteArgumentSource(remoteArgValue)
                 RemoteArgumentDefinition(remoteArgName, remoteArgumentSource)
             }
     }

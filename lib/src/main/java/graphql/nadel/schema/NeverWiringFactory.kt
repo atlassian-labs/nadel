@@ -1,6 +1,7 @@
 package graphql.nadel.schema
 
 import graphql.Assert.assertShouldNeverHappen
+import graphql.scalars.ExtendedScalars
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLScalarType
@@ -24,6 +25,9 @@ open class NeverWiringFactory : WiringFactory {
 
     override fun getScalar(environment: ScalarWiringEnvironment): GraphQLScalarType? {
         val scalarName = environment.scalarTypeDefinition.name
+        if (scalarName == ExtendedScalars.Json.name){
+            return ExtendedScalars.Json
+        }
         return GraphQLScalarType
             .newScalar()
             .name(scalarName)
