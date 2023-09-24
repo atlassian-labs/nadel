@@ -73,7 +73,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "JSON"))
             val testService = schemas.services.single()
             assert(testService.underlyingSchema.userTypeNames == setOf("World", "Echo", "Query", "Food"))
         }
@@ -149,7 +149,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "JSON"))
             val testService = schemas.services.single()
             assert(testService.underlyingSchema.userTypeNames == setOf("World", "Echo", "Query", "Food"))
         }
@@ -211,7 +211,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue", "JSON"))
 
             val issueService = schemas.services.single { it.name == "issue" }
             assert(issueService.underlyingSchema.userTypeNames == setOf("Query", "Issue"))
@@ -272,7 +272,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue", "JSON"))
         }
 
         it("does not validate the schemas") {
@@ -321,7 +321,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("Query", "World", "Echo", "Issue"))
+            assert(schemas.engineSchema.userTypeNames == setOf("Query", "World", "Echo", "Issue", "JSON"))
 
             val testService = schemas.services.first { it.name == "test" }
             assert(testService.definitionRegistry.typeNames == setOf("Query", "Echo", "World"))
