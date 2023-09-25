@@ -1,0 +1,100 @@
+name: "basic hydration with static arg float"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barWithSomeFloat(someFloat: Float): Bar
+    }
+    type Bar {
+      id: ID
+      name: String
+      someFloat: Float
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: Bar @hydrated(service: "service2" field: "barWithSomeFloat" arguments: [{name: "someFloat" value: 123.45}])
+    }
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+      someFloat: Float
+    }
+
+    type Query {
+      barWithSomeFloat(someFloat: Float): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__hydration__bar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      query: |
+        query {
+          barWithSomeFloat(someFloat: 123.45) {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barWithSomeFloat": {
+            "name": "Bar12345"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar12345"
+        }
+      }
+    },
+    "extensions": {}
+  }
