@@ -20,6 +20,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgum
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.MultipleSourceArgsInBatchHydration
+import graphql.nadel.validation.NadelSchemaValidationError.NoSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
@@ -193,6 +194,8 @@ internal class NadelHydrationValidation(
                 when {
                     numberOfSourceArgs > 1 ->
                         listOf(MultipleSourceArgsInBatchHydration(parent, overallField))
+                    numberOfSourceArgs == 0 ->
+                        listOf(NoSourceArgsInBatchHydration(parent, overallField))
 
                     else -> emptyList()
                 }

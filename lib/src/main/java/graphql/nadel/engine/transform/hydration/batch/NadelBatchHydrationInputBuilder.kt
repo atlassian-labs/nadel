@@ -56,15 +56,11 @@ internal object NadelBatchHydrationInputBuilder {
                     // These are batch values, ignore them
                     is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> null
                     is NadelHydrationActorInputDef.ValueSource.StaticValue -> {
-                        val staticValue: NormalizedInputValue? = makeNormalizedInputValue(
+                        val staticValue: NormalizedInputValue = makeNormalizedInputValue(
                             type = actorFieldArg.actorArgumentDef.type,
                             value = valueSource.value,
                         )
-                        if (staticValue != null) {
-                            actorFieldArg to staticValue
-                        } else {
-                            null
-                        }
+                        actorFieldArg to staticValue
                     }
                 }
             }

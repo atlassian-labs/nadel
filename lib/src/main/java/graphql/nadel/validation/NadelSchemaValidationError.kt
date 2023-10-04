@@ -417,6 +417,20 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class NoSourceArgsInBatchHydration(
+            val parentType: NadelServiceSchemaElement,
+            val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val fieldCoordinates = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "No \$source.xxx arguments for batch hydration. Field: $fieldCoordinates"
+        }
+
+        override val subject = overallField
+    }
+
     data class MissingArgumentOnUnderlying(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
