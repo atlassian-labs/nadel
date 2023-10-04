@@ -1,10 +1,8 @@
 package graphql.nadel.dsl
 
-import graphql.language.Argument
 import graphql.language.AstTransformer
 import graphql.language.Node
 import graphql.language.NodeVisitorStub
-import graphql.language.ObjectField
 import graphql.language.StringValue
 import graphql.language.Value
 import graphql.util.TraversalControl
@@ -29,26 +27,13 @@ class AstValueReplacer {
                 return null;
             }
 
-            override fun visitArgument(
-                node: Argument,
+            override fun visitStringValue(
+                node: StringValue,
                 context: TraverserContext<Node<*>>,
             ): TraversalControl {
-                val newAstValue = possiblyReplaceValue(node.value)
+                val newAstValue = possiblyReplaceValue(node)
                 if (newAstValue != null) {
-                    val transformedNode = node.transform { it.value(newAstValue) }
-                    return changeNode(context, transformedNode)
-                }
-                return TraversalControl.CONTINUE
-            }
-
-            override fun visitObjectField(
-                node: ObjectField,
-                context: TraverserContext<Node<*>>,
-            ): TraversalControl {
-                val newAstValue = possiblyReplaceValue(node.value)
-                if (newAstValue != null) {
-                    val transformedNode = node.transform { it.value(newAstValue) }
-                    return changeNode(context, transformedNode)
+                    return changeNode(context, newAstValue)
                 }
                 return TraversalControl.CONTINUE
             }
