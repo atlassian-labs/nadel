@@ -1,18 +1,17 @@
 package graphql.nadel.validation
 
+import graphql.Scalars
 import graphql.nadel.Service
-import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.UnderlyingServiceHydration
-import graphql.nadel.engine.util.getFieldAt
-import graphql.nadel.engine.util.isList
-import graphql.nadel.engine.util.isNonNull
-import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.engine.util.*
+import graphql.nadel.validation.NadelHydrationArgumentValidation.Companion.getHydrationInputErrors
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentTypeForActorField
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
@@ -23,12 +22,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MultipleSourceArgsInB
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
-import graphql.schema.GraphQLInterfaceType
-import graphql.schema.GraphQLNamedOutputType
-import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLUnionType
+import graphql.schema.*
 
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
@@ -158,6 +152,7 @@ internal class NadelHydrationValidation(
         val remoteArgErrors = hydration.arguments.mapNotNull { remoteArg ->
             val actorFieldArgument = actorField.getArgument(remoteArg.name)
             if (actorFieldArgument == null) {
+                //LIKE THIS
                 NonExistentHydrationActorFieldArgument(
                     parent,
                     overallField,
@@ -166,7 +161,7 @@ internal class NadelHydrationValidation(
                 )
             } else {
                 val remoteArgSource = remoteArg.remoteArgumentSource
-                getRemoteArgErrors(parent, overallField, remoteArgSource)
+                getRemoteArgErrors(parent, overallField, remoteArg, actorField, hydration)
             }
         }
 
@@ -206,16 +201,31 @@ internal class NadelHydrationValidation(
     private fun getRemoteArgErrors(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArgSource: RemoteArgumentSource,
+        remoteArgDef: RemoteArgumentDefinition,
+        actorField: GraphQLFieldDefinition,
+        hydration: UnderlyingServiceHydration
     ): NadelSchemaValidationError? {
+        val remoteArgSource = remoteArgDef.remoteArgumentSource
+        val actorFieldArg = actorField.getArgument(remoteArgDef.name)
         return when (remoteArgSource.sourceType) {
             ObjectField -> {
                 val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField!!)
                 if (field == null) {
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
-                    // TODO: check argument type is correct
-                    null
+                    // check the input types match with hydration and actor fields
+                    val fieldOutputType = field.type
+//                    return getHydrationInputErrors(
+//                            hydrationSourceField = field,
+//                            actorArg = actorArg )
+                    return getHydrationInputErrors(
+                            field.type,
+                            actorFieldArg.type,
+                            parent,
+                            overallField,
+                            remoteArgDef,
+                            hydration
+                    )
                 }
             }
 
@@ -224,8 +234,9 @@ internal class NadelHydrationValidation(
                 if (argument == null) {
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {
-                    // TODO: check argument type is correct
-                    null
+                    //check the input types match with hydration and actor fields
+                    val hydrationArgType = argument.type
+                    return null //getHydrationInputErrors()
                 }
             }
 
@@ -234,4 +245,6 @@ internal class NadelHydrationValidation(
             }
         }
     }
+
+
 }

@@ -354,6 +354,23 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class IncompatibleArgumentTypeForActorField(
+            val parentType: NadelServiceSchemaElement,
+            val overallField: GraphQLFieldDefinition,
+            val hydration: UnderlyingServiceHydration,
+            val argument: String,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val af = hydration.pathToActorField.joinToString(separator = ".")
+            "The type for field $of is not assignable to the type for the input argument $argument in query $af"
+        }
+
+        override val subject = overallField
+    }
+
     data class MissingRequiredHydrationActorFieldArgument(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
