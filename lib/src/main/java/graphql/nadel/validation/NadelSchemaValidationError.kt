@@ -371,7 +371,7 @@ sealed interface NadelSchemaValidationError {
             val ht = GraphQLTypeUtil.simplePrint(hydrationType)
             val at = GraphQLTypeUtil.simplePrint(actorArgInputType)
             "Field $of tried to hydrate with argument $hydrationArgName using value from field $remoteArgSource from " +
-                    "service $s of type $ht whereas the actor field requires the argument to be of " +
+                    "service $s of type $ht was not assignable to the argument of " +
                     "type $at"
         }
 

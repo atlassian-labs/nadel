@@ -6,7 +6,7 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.*
-import graphql.nadel.validation.NadelHydrationArgumentValidation.Companion.getHydrationInputErrors
+import graphql.nadel.validation.NadelHydrationArgumentValidation.Companion.validateHydrationInputArg
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
@@ -205,6 +205,7 @@ internal class NadelHydrationValidation(
     ): NadelSchemaValidationError? {
         val remoteArgSource = remoteArgDef.remoteArgumentSource
         val actorFieldArg = actorField.getArgument(remoteArgDef.name)
+        val isBatchHydration = actorField.type.unwrapNonNull().isList
         return when (remoteArgSource.sourceType) {
             ObjectField -> {
                 val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField!!)
@@ -212,13 +213,14 @@ internal class NadelHydrationValidation(
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
                     // check the input types match with hydration and actor fields
-                    return getHydrationInputErrors(
+                    return validateHydrationInputArg(
                             field.type,
                             actorFieldArg.type,
                             parent,
                             overallField,
                             remoteArgDef,
-                            hydration
+                            hydration,
+                            isBatchHydration
                     )
                 }
             }
@@ -230,19 +232,20 @@ internal class NadelHydrationValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
-                    return getHydrationInputErrors(
+                    return validateHydrationInputArg(
                             hydrationArgType,
                             actorFieldArg.type,
                             parent,
                             overallField,
                             remoteArgDef,
-                            hydration
+                            hydration,
+                            isBatchHydration
                     )
                 }
             }
 
             else -> {
-                null
+                null // Will add static arg validation after the static arg PR is merged
             }
         }
     }
