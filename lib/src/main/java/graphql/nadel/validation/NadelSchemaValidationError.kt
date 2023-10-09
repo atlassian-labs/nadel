@@ -418,8 +418,8 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class NoSourceArgsInBatchHydration(
-            val parentType: NadelServiceSchemaElement,
-            val overallField: GraphQLFieldDefinition,
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
