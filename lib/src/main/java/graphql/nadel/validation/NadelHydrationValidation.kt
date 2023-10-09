@@ -1,6 +1,5 @@
 package graphql.nadel.validation
 
-import graphql.Scalars
 import graphql.nadel.Service
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
@@ -11,7 +10,6 @@ import graphql.nadel.validation.NadelHydrationArgumentValidation.Companion.getHy
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentTypeForActorField
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
@@ -214,10 +212,6 @@ internal class NadelHydrationValidation(
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
                     // check the input types match with hydration and actor fields
-                    val fieldOutputType = field.type
-//                    return getHydrationInputErrors(
-//                            hydrationSourceField = field,
-//                            actorArg = actorArg )
                     return getHydrationInputErrors(
                             field.type,
                             actorFieldArg.type,
@@ -236,7 +230,14 @@ internal class NadelHydrationValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
-                    return null //getHydrationInputErrors()
+                    return getHydrationInputErrors(
+                            hydrationArgType,
+                            actorFieldArg.type,
+                            parent,
+                            overallField,
+                            remoteArgDef,
+                            hydration
+                    )
                 }
             }
 
