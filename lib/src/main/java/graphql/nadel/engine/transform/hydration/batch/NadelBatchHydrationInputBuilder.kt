@@ -63,7 +63,7 @@ internal object NadelBatchHydrationInputBuilder {
                         actorFieldArg to staticValue
                     }
                 }
-            }
+            },
         )
     }
 

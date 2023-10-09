@@ -51,17 +51,16 @@ data class NadelHydrationActorInputDef(
          *
          * ```graphql
          * type Issue {
-         *   id: ID! # Value used as argument to issueId
+         *   id: ID!
          *   owner: User @hydrated(from: ["issueOwner"], args: [
          *      {name: "issueId" value: "issue123"}
          *   ])
          * }
          * ```
          */
-        data class StaticValue (
+        data class StaticValue(
             val value: Value<*>,
-        ): ValueSource()
-
+        ) : ValueSource()
     }
 }
 

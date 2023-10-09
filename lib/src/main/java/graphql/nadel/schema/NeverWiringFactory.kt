@@ -25,7 +25,7 @@ open class NeverWiringFactory : WiringFactory {
 
     override fun getScalar(environment: ScalarWiringEnvironment): GraphQLScalarType? {
         val scalarName = environment.scalarTypeDefinition.name
-        if (scalarName == ExtendedScalars.Json.name){
+        if (scalarName == ExtendedScalars.Json.name) {
             return ExtendedScalars.Json
         }
         return GraphQLScalarType

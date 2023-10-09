@@ -366,7 +366,7 @@ object NadelDirectives {
     }
 
     private fun createRemoteArgumentSource(value: Value<*>): RemoteArgumentSource {
-        if (value  is StringValue) {
+        if (value is StringValue) {
             val values = listFromDottedString(value.value)
             return when (values.first()) {
                 "\$source" -> RemoteArgumentSource(
@@ -383,22 +383,20 @@ object NadelDirectives {
                     sourceType = SourceType.FieldArgument,
                 )
 
-                else ->
-                    RemoteArgumentSource(
-                        argumentName = null,
-                        pathToField = null,
-                        staticValue = value,
-                        sourceType = SourceType.StaticArgument,
-                        )
+                else -> RemoteArgumentSource(
+                    argumentName = null,
+                    pathToField = null,
+                    staticValue = value,
+                    sourceType = SourceType.StaticArgument,
+                )
             }
-        }
-        else {
+        } else {
             return RemoteArgumentSource(
                 argumentName = null,
                 pathToField = null,
                 staticValue = value,
                 sourceType = SourceType.StaticArgument,
-                )
+            )
         }
     }
 
