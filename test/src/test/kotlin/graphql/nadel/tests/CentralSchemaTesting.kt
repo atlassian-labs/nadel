@@ -48,7 +48,7 @@ const val runQuery = false
  */
 suspend fun main() {
     val schema = File(
-        "/Users/fwang/Documents/Atlassian/graphql-central-schema/schema/",
+        "/Users/sbarker2/git/graphql-central-schema/schema/",
     )
     val overallSchemas = mutableMapOf<String, String>()
     val underlyingSchemas = mutableMapOf<String, String>()

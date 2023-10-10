@@ -1014,7 +1014,6 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-
         it("checks the output type of the actor field against the output type of the hydrated field") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
