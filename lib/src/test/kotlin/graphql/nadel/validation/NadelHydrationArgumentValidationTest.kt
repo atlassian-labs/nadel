@@ -1567,13 +1567,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[UserRef]")
         }
 
-
-        /*
-
-        // THIS IS THE BATCH HYDRATION EDGE CASE THAT NEEDS A CHECK
-        // hydrationSourceFieldType ID!
-        // actorFieldArgType [ID]
-        it("passes if hydration argument source types are matching with batch hydration") {
+        it("Batch hydration edge case - feeding an ID into an [ID] arg") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -1632,10 +1626,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
         }
 
-        // THIS IS THE
-        // hydrationSourceFieldType [ID]
-        // actorFieldArgType ID
-        it("passes if hydration argument source types are matching with batch hydration with list input") {
+        it("non-batch ManyToOne edge case - feeding an [ID] into an ID arg") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -1690,7 +1681,5 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.isEmpty())
 
         }
-
-        */
     }
 })
