@@ -204,13 +204,10 @@ internal class NadelHydrationArgumentValidation private constructor() {
             val unwrappedHydrationSourceFieldType = hydrationSourceFieldType.unwrapNonNull() as GraphQLObjectType
             val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull() as GraphQLInputObjectType
 
-            val hydrationInnerFields: Map<String, GraphQLType> = unwrappedHydrationSourceFieldType.fields.associate { it.name to it.type as GraphQLType }
-            val actorInnerFields: Map<String, GraphQLType> = unwrappedActorFieldArgType.fields.associate { it.name to it.type as GraphQLType }
-
-            for (innerField in actorInnerFields){
-                val actorInnerFieldName = innerField.key
-                val actorInnerFieldType = innerField.value
-                val hydrationType = hydrationInnerFields.get(actorInnerFieldName)
+            for (actorInnerField in unwrappedActorFieldArgType.fields) {
+                val actorInnerFieldName = actorInnerField.name
+                val actorInnerFieldType = actorInnerField.type
+                val hydrationType = unwrappedHydrationSourceFieldType.getField(actorField.name)?.type
                 if (hydrationType == null) {
                     if (actorInnerFieldType.isNonNull) {
                         return NadelSchemaValidationError.MissingFieldInHydratedInputObject(
