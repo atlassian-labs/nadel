@@ -1,13 +1,13 @@
-name: "basic hydration"
+name: "basic hydration with static arg array"
 enabled: true
 overallSchema:
   service2: |
     type Query {
-      barById(id: ID): Bar
+      barById(id: ID, friendIds: [ID]): Bar
     }
     type Bar {
       id: ID
-      name: String
+      name: String  
     }
   service1: |
     type Query {
@@ -15,8 +15,10 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
-      barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
+      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [
+    { name: "id" value: "$source.id" }, 
+    { name: "friendIds" value: ["barId2", "barId3", "barId4"] }
+    ])
     }
 underlyingSchema:
   service2: |
@@ -26,17 +28,12 @@ underlyingSchema:
     }
 
     type Query {
-      barById(id: ID): Bar
+      barById(id: ID, friendIds: [ID]): Bar
     }
   service1: |
     type Foo {
-      barId: ID
-      fooDetails: FooDetails
+      barId: ID 
       id: ID
-    }
-
-    type FooDetails {
-      externalBarId: ID
     }
 
     type Query {
@@ -56,10 +53,10 @@ serviceCalls:
     request:
       query: |
         query {
-          foo {
-            __typename__hydration__bar: __typename
-            hydration__bar__barId: barId
-          }
+            foo {
+                __typename__hydration__bar: __typename
+                hydration__bar__id: id
+            }
         }
       variables: { }
     # language=JSON
@@ -67,8 +64,8 @@ serviceCalls:
       {
         "data": {
           "foo": {
-            "hydration__bar__barId": "barId",
-            "__typename__hydration__bar": "Foo"
+            "__typename__hydration__bar": "Foo",
+            "hydration__bar__id": "barId"
           }
         },
         "extensions": {}
@@ -77,8 +74,8 @@ serviceCalls:
     request:
       query: |
         query {
-          barById(id: "barId") {
-            name
+          barById(id: "barId", friendIds: ["barId2", "barId3", "barId4"]) {
+              name
           }
         }
       variables: { }

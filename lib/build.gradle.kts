@@ -13,6 +13,9 @@ val slf4jVersion = "1.7.25"
 dependencies {
     api("com.graphql-java:graphql-java:$graphqlJavaVersion")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    implementation("com.graphql-java:graphql-java-extended-scalars:21.0") {
+        exclude("com.graphql-java", "graphql-java")
+    }
 
     api(kotlin("stdlib"))
     api(kotlin("reflect"))
