@@ -201,10 +201,10 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 remoteArg: RemoteArgumentDefinition,
                 hydration: UnderlyingServiceHydration
         ): NadelSchemaValidationError? {
-            for (actorInnerField in unwrappedActorFieldArgType.fields) {
+            for (actorInnerField in actorFieldArgType.fields) {
                 val actorInnerFieldName = actorInnerField.name
                 val actorInnerFieldType = actorInnerField.type
-                val hydrationType = unwrappedHydrationSourceFieldType.getField(actorField.name)?.type
+                val hydrationType = hydrationSourceFieldType.getField(actorInnerField.name)?.type
                 if (hydrationType == null) {
                     if (actorInnerFieldType.isNonNull) {
                         return NadelSchemaValidationError.MissingFieldInHydratedInputObject(
