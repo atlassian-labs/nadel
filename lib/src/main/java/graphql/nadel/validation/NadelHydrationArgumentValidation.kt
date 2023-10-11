@@ -32,8 +32,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         parent,
                         overallField,
                         remoteArg,
-                        hydration,
-                        true
+                        hydration
                 )
                 if(error != null){
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -54,8 +53,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         parent,
                         overallField,
                         remoteArg,
-                        hydration,
-                        true
+                        hydration
                 )
                 if(error != null){
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -76,8 +74,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         parent,
                         overallField,
                         remoteArg,
-                        hydration,
-                        true
+                        hydration
                 )
             }
             return null
@@ -88,27 +85,19 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
                 remoteArg: RemoteArgumentDefinition,
-                hydration: UnderlyingServiceHydration,
-                firstPass: Boolean = false
+                hydration: UnderlyingServiceHydration
         ): NadelSchemaValidationError? {
 
             //need to check null compatibility for inner types (as this is recursive)
             if (actorFieldArgType.isNonNull && !hydrationSourceFieldType.isNonNull) {
                 // source must be at least as strict as field argument
-                if (firstPass) {
-                    //outermost null check already returns an error elsewhere,
-                    // this check is just for the inner types for objects/lists
-                    return null
-                }
-                else {
-                    return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
-                            parent,
-                            overallField,
-                            remoteArg,
-                            hydrationSourceFieldType,
-                            actorFieldArgType,
-                    )
-                }
+                return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
+                        parent,
+                        overallField,
+                        remoteArg,
+                        hydrationSourceFieldType,
+                        actorFieldArgType,
+                )
             }
             val unwrappedHydrationSourceFieldType = hydrationSourceFieldType.unwrapNonNull()
             val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull()
