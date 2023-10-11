@@ -1,13 +1,14 @@
-name: "basic hydration"
+name: "basic hydration with static arg float"
 enabled: true
 overallSchema:
   service2: |
     type Query {
-      barById(id: ID): Bar
+      barWithSomeFloat(someFloat: Float): Bar
     }
     type Bar {
       id: ID
       name: String
+      someFloat: Float
     }
   service1: |
     type Query {
@@ -15,28 +16,23 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
-      barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
+      bar: Bar @hydrated(service: "service2" field: "barWithSomeFloat" arguments: [{name: "someFloat" value: 123.45}])
     }
 underlyingSchema:
   service2: |
     type Bar {
       id: ID
       name: String
+      someFloat: Float
     }
 
     type Query {
-      barById(id: ID): Bar
+      barWithSomeFloat(someFloat: Float): Bar
     }
   service1: |
     type Foo {
       barId: ID
-      fooDetails: FooDetails
       id: ID
-    }
-
-    type FooDetails {
-      externalBarId: ID
     }
 
     type Query {
@@ -58,7 +54,6 @@ serviceCalls:
         query {
           foo {
             __typename__hydration__bar: __typename
-            hydration__bar__barId: barId
           }
         }
       variables: { }
@@ -67,7 +62,6 @@ serviceCalls:
       {
         "data": {
           "foo": {
-            "hydration__bar__barId": "barId",
             "__typename__hydration__bar": "Foo"
           }
         },
@@ -77,7 +71,7 @@ serviceCalls:
     request:
       query: |
         query {
-          barById(id: "barId") {
+          barWithSomeFloat(someFloat: 123.45) {
             name
           }
         }
@@ -86,8 +80,8 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "barById": {
-            "name": "Bar1"
+          "barWithSomeFloat": {
+            "name": "Bar12345"
           }
         },
         "extensions": {}
@@ -98,7 +92,7 @@ response: |-
     "data": {
       "foo": {
         "bar": {
-          "name": "Bar1"
+          "name": "Bar12345"
         }
       }
     },

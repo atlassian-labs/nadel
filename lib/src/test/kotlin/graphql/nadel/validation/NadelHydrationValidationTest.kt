@@ -132,6 +132,63 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.single().message == "Multiple \$source.xxx arguments are not supported for batch hydration. Field: JiraIssue.creator")
         }
 
+        it("fails when batch hydration with no \$source args") {
+            val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                            creator(siteId: ID!): User @hydrated(
+                                service: "users"
+                                field: "users"
+                                arguments: [
+                                    {name: "id", value: "creatorId123"}
+                                    {name: "siteId", value: "$argument.siteId"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            users(id: ID!, siteId: ID!): [User]
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            users(id: ID!, siteId: ID!): [User]
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.size == 1)
+            assert(errors.single() is NadelSchemaValidationError.NoSourceArgsInBatchHydration)
+            assert(errors.single().message == "No \$source.xxx arguments for batch hydration. Field: JiraIssue.creator")
+        }
+
         it("passes when batch hydration with a single \$source arg and an \$argument arg") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(

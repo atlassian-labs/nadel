@@ -29,6 +29,7 @@ class `basic-hydration` : HydrationDetailsHook() {
         assert(actualHydrationDetails.fieldPath.toString() == "[foo, bar]")
     }
 }
+
 @UseHook
 class `batch-hydration-with-renamed-actor-field` : HydrationDetailsHook() {
     override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {

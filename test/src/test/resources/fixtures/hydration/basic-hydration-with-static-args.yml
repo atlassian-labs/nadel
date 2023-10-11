@@ -1,4 +1,4 @@
-name: "basic hydration"
+name: "basic hydration with static args"
 enabled: true
 overallSchema:
   service2: |
@@ -15,8 +15,7 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
-      barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
+      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "barId"}])
     }
 underlyingSchema:
   service2: |
@@ -31,12 +30,7 @@ underlyingSchema:
   service1: |
     type Foo {
       barId: ID
-      fooDetails: FooDetails
       id: ID
-    }
-
-    type FooDetails {
-      externalBarId: ID
     }
 
     type Query {
@@ -58,7 +52,6 @@ serviceCalls:
         query {
           foo {
             __typename__hydration__bar: __typename
-            hydration__bar__barId: barId
           }
         }
       variables: { }
@@ -67,7 +60,6 @@ serviceCalls:
       {
         "data": {
           "foo": {
-            "hydration__bar__barId": "barId",
             "__typename__hydration__bar": "Foo"
           }
         },
