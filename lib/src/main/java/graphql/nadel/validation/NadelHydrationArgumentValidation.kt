@@ -112,7 +112,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
             }
             // object feed into inputObject
             else if (unwrappedHydrationSourceFieldType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
-                return validateInputObjectArg(hydrationSourceFieldType, actorFieldArgType, parent, overallField, remoteArg, hydration)
+                return validateInputObjectArg(unwrappedHydrationSourceFieldType, unwrappedActorFieldArgType, parent, overallField, remoteArg, hydration)
             }
             else {
                 return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -194,16 +194,13 @@ internal class NadelHydrationArgumentValidation private constructor() {
         }
 
         private fun validateInputObjectArg(
-                hydrationSourceFieldType: GraphQLType,
-                actorFieldArgType: GraphQLType,
+                hydrationSourceFieldType: GraphQLObjectType,
+                actorFieldArgType: GraphQLInputObjectType,
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
                 remoteArg: RemoteArgumentDefinition,
                 hydration: UnderlyingServiceHydration
         ): NadelSchemaValidationError? {
-            val unwrappedHydrationSourceFieldType = hydrationSourceFieldType.unwrapNonNull() as GraphQLObjectType
-            val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull() as GraphQLInputObjectType
-
             for (actorInnerField in unwrappedActorFieldArgType.fields) {
                 val actorInnerFieldName = actorInnerField.name
                 val actorInnerFieldType = actorInnerField.type
