@@ -378,6 +378,28 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class StaticArgIsNotAssignable(
+            val parentType: NadelServiceSchemaElement,
+            val overallField: GraphQLFieldDefinition,
+            val remoteArg: RemoteArgumentDefinition,
+            val actorArgInputType: GraphQLType,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val hydrationArgName = remoteArg.name
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val at = GraphQLTypeUtil.simplePrint(actorArgInputType)
+
+            // "the static argument supplied is not compatible"
+            "Field $of tried to hydrate with argument $hydrationArgName of type $at using a statically supplied argument - " +
+                    "but the type of the supplied static argument is incompatible "
+        }
+
+        override val subject = overallField
+    }
+
+
     data class IncompatibleFieldInHydratedInputObject(
             val parentType: NadelServiceSchemaElement,
             val overallField: GraphQLFieldDefinition,
