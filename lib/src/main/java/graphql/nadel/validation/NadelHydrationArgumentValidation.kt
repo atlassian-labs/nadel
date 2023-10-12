@@ -3,7 +3,7 @@ package graphql.nadel.validation
 import graphql.Scalars
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
-import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
@@ -114,11 +114,11 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 return validateListArg(hydrationSourceFieldType, actorFieldArgType, parent, overallField, remoteArg, hydration)
             }
             // object feed into inputObject (i.e. hydrating with a $source object)
-            else if (unwrappedHydrationSourceFieldType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
+            else if (sourceType == ObjectField && unwrappedHydrationSourceFieldType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
                 return validateInputObjectArg(unwrappedHydrationSourceFieldType, unwrappedActorFieldArgType, parent, overallField, remoteArg, hydration)
             }
             // inputObject feed into inputObject (i.e. hydrating with a $argument object)
-            else if (unwrappedHydrationSourceFieldType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
+            else if (sourceType == FieldArgument && unwrappedHydrationSourceFieldType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
                 if (unwrappedHydrationSourceFieldType.name != unwrappedActorFieldArgType.name) {
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                             parent,
@@ -131,15 +131,13 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 return null
             }
             // Any other types are not assignable
-            else {
-                return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
-                        parent,
-                        overallField,
-                        remoteArg,
-                        hydrationSourceFieldType,
-                        actorFieldArgType,
-                )
-            }
+            return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
+                    parent,
+                    overallField,
+                    remoteArg,
+                    hydrationSourceFieldType,
+                    actorFieldArgType,
+            )
         }
 
         private fun validateScalarArg(
@@ -169,7 +167,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
             if (typeToAssign.name == targetType.name) {
                 return true
             }
-            if (targetType.name == Scalars.GraphQLID.name && typeToAssign.name == Scalars.GraphQLString.name) {
+            if (targetType.name == Scalars.GraphQLID.name &&
+                    (typeToAssign.name == Scalars.GraphQLString.name || typeToAssign.name == Scalars.GraphQLInt.name)) {
                 return true
             }
             return false

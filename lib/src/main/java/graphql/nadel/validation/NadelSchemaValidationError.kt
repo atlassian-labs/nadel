@@ -8,6 +8,7 @@ import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
@@ -370,9 +371,13 @@ sealed interface NadelSchemaValidationError {
             val s = service.name
             val ht = GraphQLTypeUtil.simplePrint(hydrationType)
             val at = GraphQLTypeUtil.simplePrint(actorArgInputType)
-            "Field $of tried to hydrate with argument $hydrationArgName using value from field $remoteArgSource from " +
-                    "service $s of type $ht was not assignable to the argument of " +
-                    "type $at"
+
+            val argumentSuppliedFromSubString = if (remoteArg.remoteArgumentSource.sourceType == ObjectField)
+                "the value from field \"$remoteArgSource\" from service \"$s\""
+            else "the supplied argument called \"${remoteArg.remoteArgumentSource.argumentName}\""
+
+            "Field \"$of\" tried to hydrate with argument \"$hydrationArgName\" using $argumentSuppliedFromSubString" +
+                    " of type $ht but it was not assignable to the expected type $at"
         }
 
         override val subject = overallField
@@ -392,7 +397,7 @@ sealed interface NadelSchemaValidationError {
             val at = GraphQLTypeUtil.simplePrint(actorArgInputType)
 
             // "the static argument supplied is not compatible"
-            "Field $of tried to hydrate with argument $hydrationArgName of type $at using a statically supplied argument - " +
+            "Field $of tried to hydrate with argument $hydrationArgName of type $at using a statically supplied argument, " +
                     "but the type of the supplied static argument is incompatible "
         }
 
