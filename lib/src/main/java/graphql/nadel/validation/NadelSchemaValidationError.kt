@@ -396,9 +396,8 @@ sealed interface NadelSchemaValidationError {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val at = GraphQLTypeUtil.simplePrint(actorArgInputType)
 
-            // "the static argument supplied is not compatible"
             "Field $of tried to hydrate with argument $hydrationArgName of type $at using a statically supplied argument, " +
-                    "but the type of the supplied static argument is incompatible "
+                    "but the type of the supplied static argument is incompatible"
         }
 
         override val subject = overallField
