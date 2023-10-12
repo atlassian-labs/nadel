@@ -169,12 +169,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
             if (typeToAssign.name == targetType.name) {
                 return true
             }
-            if (targetType.name == Scalars.GraphQLID.name &&
-                    (typeToAssign.name == Scalars.GraphQLString.name || typeToAssign.name == Scalars.GraphQLInt.name)) {
+            if (targetType.name == Scalars.GraphQLID.name && typeToAssign.name == Scalars.GraphQLString.name) {
                 return true
-            }
-            if (targetType is GraphQLInterfaceType && typeToAssign is GraphQLImplementingType) {
-                return typeToAssign.interfaces.contains(targetType)
             }
             return false
         }
