@@ -24,7 +24,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
         ): NadelSchemaValidationError? {
             val unwrappedHydrationSourceFieldType = hydrationSourceFieldType.unwrapNonNull()
             val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull()
-            
+
             //could have ID feed into [ID] (as a possible batch hydration case).
             // in this case we need to unwrap the list and check types
             if (isBatchHydration && (!unwrappedHydrationSourceFieldType.isList && unwrappedActorFieldArgType.isList)) {
@@ -36,7 +36,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         remoteArg,
                         hydration
                 )
-                if(error != null){
+                if (error != null) {
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                             parent,
                             overallField,
@@ -57,7 +57,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         remoteArg,
                         hydration
                 )
-                if(error != null){
+                if (error != null) {
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                             parent,
                             overallField,
@@ -81,6 +81,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
             }
             return null
         }
+
         private fun getHydrationInputErrors(
                 hydrationSourceFieldType: GraphQLType,
                 actorFieldArgType: GraphQLType,
@@ -227,13 +228,13 @@ internal class NadelHydrationArgumentValidation private constructor() {
                     }
                 } else {
                     val thisFieldHasError = getHydrationInputErrors(
-                                    hydrationType,
-                                    actorInnerFieldType,
-                                    parent,
-                                    overallField,
-                                    remoteArg,
-                                    hydration
-                            ) != null
+                            hydrationType,
+                            actorInnerFieldType,
+                            parent,
+                            overallField,
+                            remoteArg,
+                            hydration
+                    ) != null
                     if (thisFieldHasError) { // want to return top level type to user
                         return NadelSchemaValidationError.IncompatibleFieldInHydratedInputObject(
                                 parent,

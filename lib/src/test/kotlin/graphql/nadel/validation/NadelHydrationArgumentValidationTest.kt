@@ -845,7 +845,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creator")
         }
 
-        it("input object - validation allows a valid array nested inside object"){
+        it("input object - validation allows a valid array nested inside object") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -916,7 +916,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("input object - allows a valid input nested inside an input"){
+        it("input object - allows a valid input nested inside an input") {
             // argument requires last name, but we are supplying a type with an optional last name
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
@@ -998,7 +998,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("input object - fails validation an invalid type inside input inside another input"){
+        it("input object - fails validation an invalid type inside input inside another input") {
             // argument requires last name, but we are supplying a type with an optional last name
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
@@ -1093,7 +1093,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
         }
 
-        it("testing array - allows a compatible array of objects")  {
+        it("testing array - allows a compatible array of objects") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -1161,7 +1161,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("testing array - validation fails on incompatible array of objects")  {
+        it("testing array - validation fails on incompatible array of objects") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -2017,7 +2017,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "FullNameInput!")
         }
 
-        it("validation allows a valid array nested inside object"){
+        it("validation allows a valid array nested inside object") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -2095,7 +2095,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("allows a valid object nested inside an object"){
+        it("allows a valid object nested inside an object") {
             // argument requires last name, but we are supplying a type with an optional last name
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
@@ -2186,7 +2186,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("fails validation an invalid scalar type inside object inside another object"){
+        it("fails validation an invalid scalar type inside object inside another object") {
             // argument requires last name, but we are supplying a type with an optional last name
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
@@ -2290,7 +2290,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
         }
 
-        it("testing array - allows a compatible array of objects")  {
+        it("testing array - allows a compatible array of objects") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
@@ -2374,7 +2374,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("testing array - validation fails on incompatible array of objects")  {
+        it("testing array - validation fails on incompatible array of objects") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """

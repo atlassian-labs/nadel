@@ -28,9 +28,9 @@ import graphql.validation.ValidationUtil
 import java.util.*
 
 internal class NadelHydrationValidation(
-    private val services: Map<String, Service>,
-    private val typeValidation: NadelTypeValidation,
-    private val overallSchema: GraphQLSchema,
+        private val services: Map<String, Service>,
+        private val typeValidation: NadelTypeValidation,
+        private val overallSchema: GraphQLSchema,
 ) {
     private val validationUtil = ValidationUtil()
     fun validate(
