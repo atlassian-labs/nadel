@@ -113,10 +113,24 @@ internal class NadelHydrationArgumentValidation private constructor() {
             else if (unwrappedHydrationSourceFieldType.isList && unwrappedActorFieldArgType.isList) {
                 return validateListArg(hydrationSourceFieldType, actorFieldArgType, parent, overallField, remoteArg, hydration)
             }
-            // object feed into inputObject
+            // object feed into inputObject (i.e. hydrating with a $source object)
             else if (unwrappedHydrationSourceFieldType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
                 return validateInputObjectArg(unwrappedHydrationSourceFieldType, unwrappedActorFieldArgType, parent, overallField, remoteArg, hydration)
             }
+            // inputObject feed into inputObject (i.e. hydrating with a $argument object)
+            else if (unwrappedHydrationSourceFieldType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
+                if (unwrappedHydrationSourceFieldType.name != unwrappedActorFieldArgType.name) {
+                    return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
+                            parent,
+                            overallField,
+                            remoteArg,
+                            hydrationSourceFieldType,
+                            actorFieldArgType,
+                    )
+                }
+                return null
+            }
+            // Any other types are not assignable
             else {
                 return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                         parent,
