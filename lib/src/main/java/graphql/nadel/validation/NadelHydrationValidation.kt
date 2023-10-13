@@ -229,7 +229,8 @@ internal class NadelHydrationValidation(
                             overallField,
                             remoteArgDef,
                             hydration,
-                            isBatchHydration
+                            isBatchHydration,
+                            actorField.name
                     )
                 }
             }
@@ -248,7 +249,8 @@ internal class NadelHydrationValidation(
                             overallField,
                             remoteArgDef,
                             hydration,
-                            isBatchHydration
+                            isBatchHydration,
+                            actorField.name
                     )
                 }
             }
@@ -267,6 +269,7 @@ internal class NadelHydrationValidation(
                             overallField,
                             remoteArgDef,
                             actorFieldArg.type,
+                            actorField.name
                     )
                 }
                 return null

@@ -20,7 +20,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 overallField: GraphQLFieldDefinition,
                 remoteArg: RemoteArgumentDefinition,
                 hydration: UnderlyingServiceHydration,
-                isBatchHydration: Boolean
+                isBatchHydration: Boolean,
+                actorFieldName: String
         ): NadelSchemaValidationError? {
             val unwrappedHydrationSourceFieldType = hydrationSourceFieldType.unwrapNonNull()
             val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull()
@@ -34,7 +35,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         parent,
                         overallField,
                         remoteArg,
-                        hydration
+                        hydration,
+                        actorFieldName
                 )
                 if (error != null) {
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -43,6 +45,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                             remoteArg,
                             hydrationSourceFieldType,
                             actorFieldArgType,
+                            actorFieldName
                     )
                 }
             }
@@ -55,7 +58,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         parent,
                         overallField,
                         remoteArg,
-                        hydration
+                        hydration,
+                        actorFieldName
                 )
                 if (error != null) {
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -64,6 +68,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                             remoteArg,
                             hydrationSourceFieldType,
                             actorFieldArgType,
+                            actorFieldName
                     )
                 }
 
@@ -76,7 +81,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         parent,
                         overallField,
                         remoteArg,
-                        hydration
+                        hydration,
+                        actorFieldName
                 )
             }
             return null
@@ -88,7 +94,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
                 remoteArg: RemoteArgumentDefinition,
-                hydration: UnderlyingServiceHydration
+                hydration: UnderlyingServiceHydration,
+                actorFieldName: String
         ): NadelSchemaValidationError? {
 
             //need to check null compatibility
@@ -101,6 +108,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         remoteArg,
                         hydrationSourceFieldType,
                         actorFieldArgType,
+                        actorFieldName
                 )
             }
             val unwrappedHydrationSourceFieldType = hydrationSourceFieldType.unwrapNonNull()
@@ -108,15 +116,15 @@ internal class NadelHydrationArgumentValidation private constructor() {
 
             // scalar feed into scalar
             if (unwrappedHydrationSourceFieldType is GraphQLScalarType && unwrappedActorFieldArgType is GraphQLScalarType) {
-                return validateScalarArg(hydrationSourceFieldType, actorFieldArgType, parent, overallField, remoteArg)
+                return validateScalarArg(hydrationSourceFieldType, actorFieldArgType, parent, overallField, remoteArg, actorFieldName)
             }
             // list feed into list
             else if (unwrappedHydrationSourceFieldType.isList && unwrappedActorFieldArgType.isList) {
-                return validateListArg(hydrationSourceFieldType, actorFieldArgType, parent, overallField, remoteArg, hydration)
+                return validateListArg(hydrationSourceFieldType, actorFieldArgType, parent, overallField, remoteArg, hydration, actorFieldName)
             }
             // object feed into inputObject (i.e. hydrating with a $source object)
             else if (sourceType == ObjectField && unwrappedHydrationSourceFieldType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
-                return validateInputObjectArg(unwrappedHydrationSourceFieldType, unwrappedActorFieldArgType, parent, overallField, remoteArg, hydration)
+                return validateInputObjectArg(unwrappedHydrationSourceFieldType, unwrappedActorFieldArgType, parent, overallField, remoteArg, hydration, actorFieldName)
             }
             // inputObject feed into inputObject (i.e. hydrating with a $argument object)
             else if (sourceType == FieldArgument && unwrappedHydrationSourceFieldType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
@@ -127,6 +135,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                             remoteArg,
                             hydrationSourceFieldType,
                             actorFieldArgType,
+                            actorFieldName
                     )
                 }
                 return null
@@ -138,6 +147,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                     remoteArg,
                     hydrationSourceFieldType,
                     actorFieldArgType,
+                    actorFieldName
             )
         }
 
@@ -146,7 +156,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 actorFieldArgType: GraphQLType,
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
-                remoteArg: RemoteArgumentDefinition
+                remoteArg: RemoteArgumentDefinition,
+                actorFieldName: String
         ): NadelSchemaValidationError? {
             if (hydrationSourceFieldType.unwrapNonNull() is GraphQLScalarType && actorFieldArgType.unwrapNonNull() is GraphQLScalarType) {
                 if (isScalarAssignable(hydrationSourceFieldType.unwrapNonNull() as GraphQLScalarType, actorFieldArgType.unwrapNonNull() as GraphQLScalarType)) {
@@ -158,6 +169,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                             remoteArg,
                             hydrationSourceFieldType,
                             actorFieldArgType,
+                            actorFieldName
                     )
                 }
             }
@@ -181,7 +193,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
                 remoteArg: RemoteArgumentDefinition,
-                hydration: UnderlyingServiceHydration
+                hydration: UnderlyingServiceHydration,
+                actorFieldName: String
         ): NadelSchemaValidationError? {
             var hydrationSourceFieldInnerType: GraphQLType = hydrationSourceFieldType.unwrapNonNull().unwrapOne()
             var actorFieldArgInnerType: GraphQLType = actorFieldArgType.unwrapNonNull().unwrapOne()
@@ -191,7 +204,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                     parent,
                     overallField,
                     remoteArg,
-                    hydration
+                    hydration,
+                    actorFieldName
             ) != null
             if (errorExists) {
                 return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -200,6 +214,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                         remoteArg,
                         hydrationSourceFieldType,
                         actorFieldArgType,
+                        actorFieldName
                 )
             }
             return null
@@ -211,7 +226,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
                 remoteArg: RemoteArgumentDefinition,
-                hydration: UnderlyingServiceHydration
+                hydration: UnderlyingServiceHydration,
+                actorFieldName: String
         ): NadelSchemaValidationError? {
             for (actorInnerField in actorFieldArgType.fields) {
                 val actorInnerFieldName = actorInnerField.name
@@ -223,7 +239,8 @@ internal class NadelHydrationArgumentValidation private constructor() {
                                 parent,
                                 overallField,
                                 remoteArg,
-                                actorInnerFieldName
+                                actorInnerFieldName,
+                                actorFieldName
                         )
                     }
                 } else {
@@ -233,16 +250,17 @@ internal class NadelHydrationArgumentValidation private constructor() {
                             parent,
                             overallField,
                             remoteArg,
-                            hydration
+                            hydration,
+                            actorFieldName
                     ) != null
-                    if (thisFieldHasError) { // want to return top level type to user
+                    if (thisFieldHasError) {
                         return NadelSchemaValidationError.IncompatibleFieldInHydratedInputObject(
                                 parent,
                                 overallField,
                                 remoteArg,
                                 hydrationSourceFieldType,
                                 actorFieldArgType,
-                                actorInnerFieldName
+                                actorInnerFieldName,
                         )
                     }
                 }

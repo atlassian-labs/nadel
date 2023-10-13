@@ -360,6 +360,7 @@ sealed interface NadelSchemaValidationError {
             val remoteArg: RemoteArgumentDefinition,
             val hydrationType: GraphQLType,
             val actorArgInputType: GraphQLType,
+            val actorFieldName: String
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -374,10 +375,11 @@ sealed interface NadelSchemaValidationError {
 
             val argumentSuppliedFromSubString = if (remoteArg.remoteArgumentSource.sourceType == ObjectField)
                 "the value from field \"$remoteArgSource\" from service \"$s\""
-            else "the supplied argument called \"${remoteArg.remoteArgumentSource.argumentName}\""
+            else "a supplied argument called \"${remoteArg.remoteArgumentSource.argumentName}\""
 
-            "Field \"$of\" tried to hydrate with argument \"$hydrationArgName\" using $argumentSuppliedFromSubString" +
-                    " of type $ht but it was not assignable to the expected type $at"
+            "Field \"$of\" tried to hydrate using the actor field \"$actorFieldName\" and argument \"$hydrationArgName\"." +
+                    "However, you are supplying actor field argument with $argumentSuppliedFromSubString " +
+                    "of type $ht which is not assignable to the expected type $at"
         }
 
         override val subject = overallField
@@ -388,6 +390,7 @@ sealed interface NadelSchemaValidationError {
             val overallField: GraphQLFieldDefinition,
             val remoteArg: RemoteArgumentDefinition,
             val actorArgInputType: GraphQLType,
+            val actorFieldName: String
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -396,8 +399,9 @@ sealed interface NadelSchemaValidationError {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val at = GraphQLTypeUtil.simplePrint(actorArgInputType)
 
-            "Field $of tried to hydrate with argument $hydrationArgName of type $at using a statically supplied argument, " +
-                    "but the type of the supplied static argument is incompatible"
+            "Field $of tried to hydrate using actor field \"$actorFieldName\". " +
+                    "However, the type of the static argument you are supplying actor field arg \"$hydrationArgName\" with " +
+                    "is not assignable to the expected type $at"
         }
 
         override val subject = overallField
@@ -419,8 +423,10 @@ sealed interface NadelSchemaValidationError {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val remoteArgSource =
                     "${parentType.underlying.name}.${remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".")}"
-            "Field $of tried to hydrate with argument \"$hydrationArgName\" using value from $remoteArgSource " +
-                    "but the types are not compatible"
+
+            "Field \"$of\" tried to hydrate using the actor field \"$actorFieldName\" and argument \"$hydrationArgName\"." +
+                    "However, you are supplying actor field argument with the value from $remoteArgSource " +
+                    "and the types are incompatible"
         }
 
         override val subject = overallField
@@ -431,6 +437,7 @@ sealed interface NadelSchemaValidationError {
             val overallField: GraphQLFieldDefinition,
             val remoteArg: RemoteArgumentDefinition,
             val missingFieldName: String,
+            val actorFieldName: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -440,8 +447,8 @@ sealed interface NadelSchemaValidationError {
             val remoteArgSource =
                     "${parentType.underlying.name}.${remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".")}"
             val s = service.name
-            "Field $of tried to hydrate with argument \"$hydrationArgName\" using value from $remoteArgSource in service $s" +
-                    " but it was missing the field $missingFieldName"
+            "Field $of tried to hydrate using field \"$actorFieldName\" with argument \"$hydrationArgName\" using value from $remoteArgSource in service $s" +
+                    " but it was missing the required field $missingFieldName"
         }
 
         override val subject = overallField
