@@ -258,7 +258,7 @@ internal class NadelHydrationValidation(
                 if (!validationUtil.isValidLiteralValue(
                                 staticArg,
                                 actorFieldArg.type,
-                                parent.service.underlyingSchema,
+                                overallSchema,
                                 GraphQLContext.getDefault(),
                                 Locale.getDefault()
                         )) {
