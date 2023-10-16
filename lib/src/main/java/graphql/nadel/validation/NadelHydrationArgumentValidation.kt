@@ -14,7 +14,7 @@ import graphql.schema.*
 internal class NadelHydrationArgumentValidation private constructor() {
     companion object {
         fun validateHydrationInputArg(
-                hydrationSourceFieldType: GraphQLOutputType,
+                hydrationSourceFieldType: GraphQLType,
                 actorFieldArgType: GraphQLInputType,
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
