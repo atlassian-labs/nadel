@@ -172,8 +172,10 @@ internal class NadelHydrationArgumentValidation() {
             remoteArg: RemoteArgumentDefinition,
             actorFieldName: String
     ): NadelSchemaValidationError? {
-        if (hydrationSourceFieldType.unwrapNonNull() is GraphQLScalarType && actorFieldArgType.unwrapNonNull() is GraphQLScalarType) {
-            if (isScalarAssignable(hydrationSourceFieldType.unwrapNonNull() as GraphQLScalarType, actorFieldArgType.unwrapNonNull() as GraphQLScalarType)) {
+        val unwrappedHydrationSourceFieldType = hydrationSourceFieldType.unwrapNonNull()
+        val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull()
+        if (unwrappedHydrationSourceFieldType is GraphQLScalarType && unwrappedActorFieldArgType is GraphQLScalarType) {
+            if (isScalarAssignable(unwrappedHydrationSourceFieldType, unwrappedActorFieldArgType)) {
                 return null
             } else {
                 return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
