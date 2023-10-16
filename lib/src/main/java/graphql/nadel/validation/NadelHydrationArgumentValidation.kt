@@ -126,8 +126,22 @@ internal class NadelHydrationArgumentValidation private constructor() {
             else if (sourceType == ObjectField && unwrappedHydrationSourceFieldType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
                 return validateInputObjectArg(unwrappedHydrationSourceFieldType, unwrappedActorFieldArgType, parent, overallField, remoteArg, hydration, actorFieldName)
             }
-            // inputObject feed into inputObject (i.e. hydrating with a $argument object)
+            // inputObject feed into inputObject (i.e. hydrating with an $argument object)
             else if (sourceType == FieldArgument && unwrappedHydrationSourceFieldType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
+                if (unwrappedHydrationSourceFieldType.name != unwrappedActorFieldArgType.name) {
+                    return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
+                            parent,
+                            overallField,
+                            remoteArg,
+                            hydrationSourceFieldType,
+                            actorFieldArgType,
+                            actorFieldName
+                    )
+                }
+                return null
+            }
+            // if enums they must be the same
+            else if (unwrappedHydrationSourceFieldType is GraphQLEnumType && unwrappedActorFieldArgType is GraphQLEnumType){
                 if (unwrappedHydrationSourceFieldType.name != unwrappedActorFieldArgType.name) {
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                             parent,

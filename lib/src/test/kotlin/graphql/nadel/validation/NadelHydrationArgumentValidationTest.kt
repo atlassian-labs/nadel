@@ -1513,6 +1513,201 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.isEmpty())
         }
+
+        it("passes a valid enum hydration argument") {
+            val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(
+                                id: ID!
+                                providerType: ProviderType
+                            ): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        enum ProviderType {
+                            DEV_INFO
+                            BUILD
+                            DEPLOYMENT
+                            FEATURE_FLAG
+                            REMOTE_LINKS
+                            SECURITY
+                            DOCUMENTATION
+                            DESIGN
+                            OPERATIONS
+                        }
+                        extend type JiraIssue {
+                            creator: User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"},
+                                    { name: "providerType", value: "$source.providerType" },
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: String!
+                            providerType: ProviderType   
+                        }
+                        enum ProviderType {
+                            DEV_INFO
+                            BUILD
+                            DEPLOYMENT
+                            FEATURE_FLAG
+                            REMOTE_LINKS
+                            SECURITY
+                            DOCUMENTATION
+                            DESIGN
+                            OPERATIONS
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(
+                                id: ID!, 
+                                providerType: ProviderType
+                            ): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                            providerType: ProviderType
+                        }
+                        enum ProviderType {
+                            DEV_INFO,
+                            BUILD,
+                            DEPLOYMENT,
+                            FEATURE_FLAG,
+                            REMOTE_LINKS,
+                            SECURITY,
+                            DOCUMENTATION,
+                            DESIGN,
+                            OPERATIONS
+                        }
+                    """.trimIndent(),
+                    ),
+            )
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("fails validation on mismatching enums hydration argument") {
+            val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(
+                                id: ID!
+                                providerType: SomeOtherEnumType
+                            ): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        enum SomeOtherEnumType {
+                            DEV_INFO
+                            BUILD
+                        }
+                        extend type JiraIssue {
+                            creator: User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"},
+                                    { name: "providerType", value: "$source.providerType" },
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: String!
+                            providerType: ProviderType   
+                        }
+                        enum ProviderType {
+                            DEV_INFO
+                            BUILD
+                            DEPLOYMENT
+                            FEATURE_FLAG
+                            REMOTE_LINKS
+                            SECURITY
+                            DOCUMENTATION
+                            DESIGN
+                            OPERATIONS
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(
+                                id: ID!
+                                name: String  
+                                providerType: SomeOtherEnumType
+                            ): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        enum SomeOtherEnumType {
+                            DEV_INFO,
+                            BUILD,
+                        }
+                    """.trimIndent(),
+                    ),
+            )
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            // Field "JiraIssue.creator" tried to hydrate using the actor field "user" and argument "providerType".
+            // However, you are supplying actor field argument with the value from field "Issue.providerType" from service "issues" of type ProviderType
+            // which is not assignable to the expected type SomeOtherEnumType
+
+            val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
+            //actor field arg:
+            assert(error.parentType.overall.name == "JiraIssue")
+            assert(error.overallField.name == "creator")
+            assert(error.remoteArg.name == "providerType")
+            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "SomeOtherEnumType")
+            // supplied hydration for arg:
+            assert(error.parentType.underlying.name == "Issue")
+            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "providerType")
+            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ProviderType")
+        }
     }
     describe("Hydration static arg validation") {
         it("fails if the required actor field argument type does not match the supplied source field type") {

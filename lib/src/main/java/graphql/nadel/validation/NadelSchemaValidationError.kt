@@ -378,7 +378,7 @@ sealed interface NadelSchemaValidationError {
             else "a supplied argument called \"${remoteArg.remoteArgumentSource.argumentName}\""
 
             "Field \"$of\" tried to hydrate using the actor field \"$actorFieldName\" and argument \"$hydrationArgName\"." +
-                    "However, you are supplying actor field argument with $argumentSuppliedFromSubString " +
+                    " However, you are supplying actor field argument with $argumentSuppliedFromSubString " +
                     "of type $ht which is not assignable to the expected type $at"
         }
 
@@ -400,7 +400,7 @@ sealed interface NadelSchemaValidationError {
             val at = GraphQLTypeUtil.simplePrint(actorArgInputType)
 
             "Field $of tried to hydrate using actor field \"$actorFieldName\". " +
-                    "However, the type of the static argument you are supplying actor field arg \"$hydrationArgName\" with " +
+                    " However, the type of the static argument you are supplying actor field arg \"$hydrationArgName\" with " +
                     "is not assignable to the expected type $at"
         }
 
@@ -425,7 +425,7 @@ sealed interface NadelSchemaValidationError {
                     "${parentType.underlying.name}.${remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".")}"
 
             "Field \"$of\" tried to hydrate using the actor field \"$actorFieldName\" and argument \"$hydrationArgName\"." +
-                    "However, you are supplying actor field argument with the value from $remoteArgSource " +
+                    " However, you are supplying actor field argument with the value from $remoteArgSource " +
                     "and the types are incompatible"
         }
 
