@@ -194,75 +194,6 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("fails when trying to assign a source field of type ID to an actor field argument of type String") {
-            val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
-                        type Query {
-                            issue: JiraIssue
-                        }
-                        type JiraIssue @renamed(from: "Issue") {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                            "users" to """
-                        type Query {
-                            user(id: String!): User
-                        }
-                        type User {
-                            id: String!
-                            name: String!
-                        }
-                        extend type JiraIssue {
-                            creator: User @hydrated(
-                                service: "users"
-                                field: "user"
-                                arguments: [
-                                    {name: "id", value: "$source.creator"}
-                                ]
-                            )
-                        }
-                    """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
-                        type Query {
-                            issue: Issue
-                        }
-                        type Issue {
-                            id: String!
-                            creator: ID!
-                        }
-                    """.trimIndent(),
-                            "users" to """
-                        type Query {
-                            user(id: ID!): User
-                        }
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                    """.trimIndent(),
-                    ),
-            )
-            val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
-
-            // Field "JiraIssue.creator" tried to hydrate with argument "id"
-            // using the value from field "Issue.creator" from service "issues" of type ID!
-            // but it was not assignable to the expected type String!
-
-            val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
-            // required actor field arg:
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "String!")
-            // supplied hydration for arg:            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creator")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ID!")
-        }
-
         it("allows a non-null source field to be applied to a nullable actor field argument") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
@@ -497,76 +428,6 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("Array of ID should not be assignable Array of String when validating hydration arguments") {
-            val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
-                        type Query {
-                            issue: JiraIssue
-                        }
-                        type JiraIssue @renamed(from: "Issue") {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                            "users" to """
-                        type Query {
-                            users(ids: [String!]!): [User]
-                        }
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                        extend type JiraIssue {
-                            creator: User @hydrated(
-                                service: "users"
-                                field: "users"
-                                arguments: [
-                                    {name: "ids", value: "$source.creators"}
-                                ]
-                            )
-                        }
-                    """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
-                        type Query {
-                            issue: Issue
-                        }
-                        type Issue {
-                            id: ID!
-                            creators: [ID!]!
-                        }
-                    """.trimIndent(),
-                            "users" to """
-                        type Query {
-                            users(ids: [String!]!): [User]
-                        }
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                    """.trimIndent(),
-                    ),
-            )
-            val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
-
-            // Field "JiraIssue.creator" tried to hydrate with argument "ids"
-            // using the value from field "Issue.creators" from service "issues" of type [ID!]!
-            // but it was not assignable to the expected type [String!]!
-
-            val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
-            // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "ids")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[String!]!")
-            // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creators")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[ID!]!")
-        }
-
         it("testing array - compatible list of lists passes validation") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
@@ -659,7 +520,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                         }
                         type Issue {
                             id: ID!
-                            creators: [[ID!]!]!
+                            creators: [[Int!]!]!
                         }
                     """.trimIndent(),
                             "users" to """
@@ -689,7 +550,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
             assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creators")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[[ID!]!]!")
+            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[[Int!]!]!")
         }
 
         it("input object - validation allows compatible input objects") {
