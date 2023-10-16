@@ -14,8 +14,8 @@ import graphql.schema.*
 internal class NadelHydrationArgumentValidation private constructor() {
     companion object {
         fun validateHydrationInputArg(
-                hydrationSourceFieldType: GraphQLType,
-                actorFieldArgType: GraphQLType,
+                hydrationSourceFieldType: GraphQLOutputType,
+                actorFieldArgType: GraphQLInputType,
                 parent: NadelServiceSchemaElement,
                 overallField: GraphQLFieldDefinition,
                 remoteArg: RemoteArgumentDefinition,
@@ -141,7 +141,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
                 return null
             }
             // if enums they must be the same
-            else if (unwrappedHydrationSourceFieldType is GraphQLEnumType && unwrappedActorFieldArgType is GraphQLEnumType){
+            else if (unwrappedHydrationSourceFieldType is GraphQLEnumType && unwrappedActorFieldArgType is GraphQLEnumType) {
                 if (unwrappedHydrationSourceFieldType.name != unwrappedActorFieldArgType.name) {
                     return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                             parent,
@@ -194,6 +194,7 @@ internal class NadelHydrationArgumentValidation private constructor() {
             if (typeToAssign.name == targetType.name) {
                 return true
             }
+            // Per the spec, when ID is used as an input type, it accepts both Strings and Ints
             if (targetType.name == Scalars.GraphQLID.name &&
                     (typeToAssign.name == Scalars.GraphQLString.name || typeToAssign.name == Scalars.GraphQLInt.name)) {
                 return true
