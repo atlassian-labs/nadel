@@ -156,7 +156,6 @@ internal class NadelHydrationValidation(
         val remoteArgErrors = hydration.arguments.mapNotNull { remoteArg ->
             val actorFieldArgument = actorField.getArgument(remoteArg.name)
             if (actorFieldArgument == null) {
-                //LIKE THIS
                 NonExistentHydrationActorFieldArgument(
                         parent,
                         overallField,
