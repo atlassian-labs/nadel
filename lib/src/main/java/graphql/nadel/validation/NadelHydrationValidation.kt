@@ -8,7 +8,6 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.*
-import graphql.nadel.validation.NadelHydrationArgumentValidation.Companion.validateHydrationInputArg
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
@@ -33,6 +32,7 @@ internal class NadelHydrationValidation(
         private val overallSchema: GraphQLSchema,
 ) {
     private val validationUtil = ValidationUtil()
+    private val nadelHydrationArgumentValidation = NadelHydrationArgumentValidation()
     fun validate(
             parent: NadelServiceSchemaElement,
             overallField: GraphQLFieldDefinition,
@@ -221,7 +221,7 @@ internal class NadelHydrationValidation(
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
                     // check the input types match with hydration and actor fields
-                    return validateHydrationInputArg(
+                    return nadelHydrationArgumentValidation.validateHydrationInputArg(
                             field.type,
                             actorFieldArg.type,
                             parent,
@@ -241,7 +241,7 @@ internal class NadelHydrationValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
-                    return validateHydrationInputArg(
+                    return nadelHydrationArgumentValidation.validateHydrationInputArg(
                             hydrationArgType,
                             actorFieldArg.type,
                             parent,
