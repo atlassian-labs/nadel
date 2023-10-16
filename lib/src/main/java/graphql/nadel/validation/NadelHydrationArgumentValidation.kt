@@ -275,8 +275,6 @@ internal class NadelHydrationArgumentValidation() {
                             parent,
                             overallField,
                             remoteArg,
-                            hydrationSourceFieldType,
-                            actorFieldArgType,
                             actorInnerFieldName,
                     )
                 }

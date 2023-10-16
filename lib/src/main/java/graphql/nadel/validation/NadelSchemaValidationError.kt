@@ -412,8 +412,6 @@ sealed interface NadelSchemaValidationError {
             val parentType: NadelServiceSchemaElement,
             val overallField: GraphQLFieldDefinition,
             val remoteArg: RemoteArgumentDefinition,
-            val hydrationType: GraphQLType,
-            val actorArgInputType: GraphQLType,
             val actorFieldName: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
