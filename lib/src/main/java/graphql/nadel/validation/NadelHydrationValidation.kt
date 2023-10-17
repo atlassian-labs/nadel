@@ -1,15 +1,13 @@
 package graphql.nadel.validation
 
+import graphql.GraphQLContext
 import graphql.nadel.Service
-import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
+import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
 import graphql.nadel.dsl.UnderlyingServiceHydration
-import graphql.nadel.engine.util.getFieldAt
-import graphql.nadel.engine.util.isList
-import graphql.nadel.engine.util.isNonNull
-import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.engine.util.*
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
@@ -24,18 +22,17 @@ import graphql.nadel.validation.NadelSchemaValidationError.NoSourceArgsInBatchHy
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
-import graphql.schema.GraphQLInterfaceType
-import graphql.schema.GraphQLNamedOutputType
-import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLUnionType
+import graphql.schema.*
+import graphql.validation.ValidationUtil
+import java.util.*
 
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
     private val overallSchema: GraphQLSchema,
 ) {
+    private val validationUtil = ValidationUtil()
+    private val nadelHydrationArgumentValidation = NadelHydrationArgumentValidation()
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
@@ -167,7 +164,7 @@ internal class NadelHydrationValidation(
                 )
             } else {
                 val remoteArgSource = remoteArg.remoteArgumentSource
-                getRemoteArgErrors(parent, overallField, remoteArgSource)
+                getRemoteArgErrors(parent, overallField, remoteArg, actorField, hydration)
             }
         }
 
@@ -194,6 +191,7 @@ internal class NadelHydrationValidation(
                 when {
                     numberOfSourceArgs > 1 ->
                         listOf(MultipleSourceArgsInBatchHydration(parent, overallField))
+
                     numberOfSourceArgs == 0 ->
                         listOf(NoSourceArgsInBatchHydration(parent, overallField))
 
@@ -209,16 +207,30 @@ internal class NadelHydrationValidation(
     private fun getRemoteArgErrors(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArgSource: RemoteArgumentSource,
+        remoteArgDef: RemoteArgumentDefinition,
+        actorField: GraphQLFieldDefinition,
+        hydration: UnderlyingServiceHydration,
     ): NadelSchemaValidationError? {
+        val remoteArgSource = remoteArgDef.remoteArgumentSource
+        val actorFieldArg = actorField.getArgument(remoteArgDef.name)
+        val isBatchHydration = actorField.type.unwrapNonNull().isList
         return when (remoteArgSource.sourceType) {
             ObjectField -> {
                 val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField!!)
                 if (field == null) {
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
-                    // TODO: check argument type is correct
-                    null
+                    // check the input types match with hydration and actor fields
+                    return nadelHydrationArgumentValidation.validateHydrationInputArg(
+                        field.type,
+                        actorFieldArg.type,
+                        parent,
+                        overallField,
+                        remoteArgDef,
+                        hydration,
+                        isBatchHydration,
+                        actorField.name
+                    )
                 }
             }
 
@@ -227,13 +239,40 @@ internal class NadelHydrationValidation(
                 if (argument == null) {
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {
-                    // TODO: check argument type is correct
-                    null
+                    //check the input types match with hydration and actor fields
+                    val hydrationArgType = argument.type
+                    return nadelHydrationArgumentValidation.validateHydrationInputArg(
+                        hydrationArgType,
+                        actorFieldArg.type,
+                        parent,
+                        overallField,
+                        remoteArgDef,
+                        hydration,
+                        isBatchHydration,
+                        actorField.name
+                    )
                 }
             }
 
-            else -> {
-                null
+            StaticArgument -> {
+                val staticArg = remoteArgSource.staticValue
+                if (!validationUtil.isValidLiteralValue(
+                        staticArg,
+                        actorFieldArg.type,
+                        overallSchema,
+                        GraphQLContext.getDefault(),
+                        Locale.getDefault()
+                    )
+                ) {
+                    return NadelSchemaValidationError.StaticArgIsNotAssignable(
+                        parent,
+                        overallField,
+                        remoteArgDef,
+                        actorFieldArg.type,
+                        actorField.name
+                    )
+                }
+                return null
             }
         }
     }
