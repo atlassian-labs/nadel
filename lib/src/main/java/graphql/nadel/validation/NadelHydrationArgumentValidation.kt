@@ -9,6 +9,7 @@ import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.unwrapOne
+import graphql.scalars.ExtendedScalars
 import graphql.schema.*
 
 internal class NadelHydrationArgumentValidation() {
@@ -222,7 +223,7 @@ internal class NadelHydrationArgumentValidation() {
         }
         // Per the spec, when ID is used as an input type, it accepts both Strings and Ints
         if (targetType.name == Scalars.GraphQLID.name &&
-            (typeToAssign.name == Scalars.GraphQLString.name || typeToAssign.name == Scalars.GraphQLInt.name)
+            (typeToAssign.name == Scalars.GraphQLString.name || typeToAssign.name == Scalars.GraphQLInt.name || typeToAssign.name == ExtendedScalars.GraphQLLong.name)
         ) {
             return true
         }
