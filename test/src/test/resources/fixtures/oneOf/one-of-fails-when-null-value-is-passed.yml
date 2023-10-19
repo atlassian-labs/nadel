@@ -1,0 +1,38 @@
+name: "oneOf fails when null value is passed"
+enabled: true
+overallSchema:
+  MyService: |
+    type Query {
+      search(by: SearchInput): String
+    }
+    input SearchInput @oneOf {
+      name: String
+      id: ID
+    }
+underlyingSchema:
+  MyService: |-
+    type Query {
+      search(by: SearchInput): String
+    }
+    input SearchInput @oneOf {
+      name: String
+      id: ID
+    }
+query: |
+  query myQuery {
+    search(by: {name: null})
+  }
+variables: { }
+serviceCalls: []
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [{
+      "message":"OneOf type field 'SearchInput.name' must be non-null.",
+      "extensions":{
+        "classification":"ValidationError"
+      }
+    }],
+    "extensions": {}
+  }
