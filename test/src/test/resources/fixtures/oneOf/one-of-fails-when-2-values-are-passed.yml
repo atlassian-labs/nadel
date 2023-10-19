@@ -6,8 +6,8 @@ overallSchema:
       search(by: SearchInput): String
     }
     input SearchInput @oneOf {
-      name: String!
-      id: ID!
+      name: String
+      id: ID
     }
 underlyingSchema:
   MyService: |-
@@ -15,8 +15,8 @@ underlyingSchema:
       search(by: SearchInput): String
     }
     input SearchInput @oneOf {
-      name: String!
-      id: ID!
+      name: String
+      id: ID
     }
 query: |
   query myQuery {
