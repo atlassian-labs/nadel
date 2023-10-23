@@ -1,0 +1,38 @@
+name: "oneOf fails when 2 values are passed"
+enabled: true
+overallSchema:
+  MyService: |
+    type Query {
+      search(by: SearchInput!): String
+    }
+    input SearchInput @oneOf {
+      name: String
+      id: ID
+    }
+underlyingSchema:
+  MyService: |-
+    type Query {
+      search(by: SearchInput!): String
+    }
+    input SearchInput @oneOf {
+      name: String
+      id: ID
+    }
+query: |
+  query myQuery {
+    search(by: {name: "Figaro", id: "1001"})
+  }
+variables: { }
+serviceCalls: []
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [{
+      "message":"Exactly one key must be specified for OneOf type 'SearchInput'.",
+      "extensions":{
+        "classification":"ValidationError"
+      }
+    }],
+    "extensions": {}
+  }
