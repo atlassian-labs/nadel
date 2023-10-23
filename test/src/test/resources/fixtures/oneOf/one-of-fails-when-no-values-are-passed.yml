@@ -1,9 +1,9 @@
-name: "oneOf fails when 2 values are passed"
+name: "oneOf fails when no values are passed"
 enabled: true
 overallSchema:
   MyService: |
     type Query {
-      search(by: SearchInput!): String
+      search(by: SearchInput): String
     }
     input SearchInput @oneOf {
       name: String
@@ -12,7 +12,7 @@ overallSchema:
 underlyingSchema:
   MyService: |-
     type Query {
-      search(by: SearchInput!): String
+      search(by: SearchInput): String
     }
     input SearchInput @oneOf {
       name: String
@@ -20,7 +20,7 @@ underlyingSchema:
     }
 query: |
   query myQuery {
-    search(by: {name: "Figaro", id: "1001"})
+    search(by: {})
   }
 variables: { }
 serviceCalls: []
