@@ -26,10 +26,11 @@ serviceCalls:
   - serviceName: "MyService"
     request:
       query: |
-        query myQuery {
-          hello(arg: {})
+        query myQuery($v0: Arg) {
+          hello(arg: $v0)
         }
-      variables: { }
+      variables:
+        v0: { }
       operationName: "myQuery"
     # language=JSON
     response: |-

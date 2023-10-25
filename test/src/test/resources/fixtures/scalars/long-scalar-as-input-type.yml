@@ -31,12 +31,13 @@ serviceCalls:
   - serviceName: "service"
     request:
       query: |
-        query {
-          foo(input: 3000000000) {
+        query ($v0: Long) {
+          foo(input: $v0) {
             thing
           }
         }
-      variables: { }
+      variables:
+        v0: 3000000000
     # language=JSON
     response: |-
       {

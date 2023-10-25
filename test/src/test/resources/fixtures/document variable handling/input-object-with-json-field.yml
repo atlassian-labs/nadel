@@ -33,12 +33,13 @@ serviceCalls:
   - serviceName: "MyService"
     request:
       query: |
-        query myQuery($v0: JSON) {
-          hello(arg: {payload : $v0})
+        query myQuery($v0: InputWithJson) {
+          hello(arg: $v0)
         }
       variables:
         v0:
-          48x48: "file.jpeg"
+          payload:
+            48x48: "file.jpeg"
       operationName: "myQuery"
     # language=JSON
     response: |-

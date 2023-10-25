@@ -76,12 +76,13 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query {
-          issue(id: "1") {
+        query ($v0: ID) {
+          issue(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables:
+        v0: "1"
     # language=JSON
     response: |-
       {

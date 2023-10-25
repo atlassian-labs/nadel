@@ -95,8 +95,8 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query {
-          issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
+        query ($v0: [ID!]) {
+          issuesByIds(id: $v0) {
             details {
               __typename
               name
@@ -104,7 +104,11 @@ serviceCalls:
             batch_hydration__issue__id: id
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "issue-1"
+          - "issue-2"
+          - "issue-3"
     # language=JSON
     response: |-
       {

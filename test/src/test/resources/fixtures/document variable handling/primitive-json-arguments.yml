@@ -31,11 +31,12 @@ serviceCalls:
   - serviceName: "MyService"
     request:
       query: |
-        query myQuery($v0: JSON, $v1: JSON!) {
-          hello(arg: {payload : $v0}, arg1: $v1)
+        query myQuery($v0: InputWithJson, $v1: JSON!) {
+          hello(arg: $v0, arg1: $v1)
         }
       variables:
-        v0: "String JSON input"
+        v0:
+          payload: "String JSON input"
         v1: false
       operationName: "myQuery"
     # language=JSON

@@ -1,3 +1,4 @@
+# Pretty sure this test doesn't actually make any sense, we should delete it if so
 name: "deep rename with more unions"
 enabled: true
 overallSchema:

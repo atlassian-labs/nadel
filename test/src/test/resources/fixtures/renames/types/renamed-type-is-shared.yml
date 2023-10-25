@@ -40,13 +40,14 @@ serviceCalls:
   - serviceName: "NextgenIssues"
     request:
       query: |
-        query {
-          fastIssue(id: "ISSUE-1") {
+        query ($v0: ID!) {
+          fastIssue(id: $v0) {
             __typename
             id
           }
         }
-      variables: { }
+      variables:
+        v0: "ISSUE-1"
     # language=JSON
     response: |-
       {

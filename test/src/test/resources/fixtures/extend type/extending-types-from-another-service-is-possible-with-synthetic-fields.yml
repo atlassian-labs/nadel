@@ -115,15 +115,16 @@ serviceCalls:
   - serviceName: "Service2"
     request:
       query: |
-        query {
+        query ($v0: ID) {
           lookUpQuery {
-            lookup(id: "rootId") {
+            lookup(id: $v0) {
               id
               name
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "rootId"
     # language=JSON
     response: |-
       {

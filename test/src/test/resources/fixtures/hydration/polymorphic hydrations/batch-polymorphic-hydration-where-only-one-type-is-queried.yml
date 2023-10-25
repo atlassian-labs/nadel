@@ -150,8 +150,8 @@ serviceCalls:
   - serviceName: "pets"
     request:
       query: |
-        query {
-          petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
+        query ($v0: [ID]) {
+          petById(ids: $v0) {
             ... on Dog {
               batch_hydration__data__id: id
             }
@@ -163,7 +163,12 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "DOG-0"
+          - "FISH-0"
+          - "DOG-1"
+          - "FISH-1"
     # language=JSON
     response: |-
       {
@@ -193,12 +198,14 @@ serviceCalls:
   - serviceName: "people"
     request:
       query: |
-        query {
-          humanById(ids: ["HUMAN-0"]) {
+        query ($v0: [ID]) {
+          humanById(ids: $v0) {
             batch_hydration__data__id: id
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "HUMAN-0"
     # language=JSON
     response: |-
       {

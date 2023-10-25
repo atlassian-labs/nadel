@@ -77,14 +77,15 @@ serviceCalls:
   - serviceName: "service2"
     request:
       query: |
-        query {
+        query ($v0: ID) {
           projects {
-            project(id: "project1") {
+            project(id: $v0) {
               name
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "project1"
     # language=JSON
     response: |-
       {

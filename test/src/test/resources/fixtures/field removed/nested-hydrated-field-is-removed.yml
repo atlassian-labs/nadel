@@ -101,12 +101,13 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query nadel_2_IssueService {
-          issueById(id: "I1") {
+        query nadel_2_IssueService($v0: String) {
+          issueById(id: $v0) {
             commentIds
           }
         }
-      variables: { }
+      variables:
+        v0: "I1"
       operationName: "nadel_2_IssueService"
     # language=JSON
     response: |-
@@ -123,12 +124,13 @@ serviceCalls:
   - serviceName: "CommentService"
     request:
       query: |
-        query nadel_2_CommentService {
-          commentById(id: "C1") {
+        query nadel_2_CommentService($v0: ID) {
+          commentById(id: $v0) {
             empty_selection_set_typename__UUID: __typename
           }
         }
-      variables: { }
+      variables:
+        v0: "C1"
       operationName: "nadel_2_CommentService"
     # language=JSON
     response: |-

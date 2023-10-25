@@ -98,10 +98,12 @@ serviceCalls:
   - serviceName: "MyService"
     request:
       query: |
-        query X {
-          renameInput(arg1: {inputVal : "x"})
+        query X($v0: InputUnderlying!) {
+          renameInput(arg1: $v0)
         }
-      variables: { }
+      variables:
+        v0:
+          inputVal: "x"
       operationName: "X"
     # language=JSON
     response: |-

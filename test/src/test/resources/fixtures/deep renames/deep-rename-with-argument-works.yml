@@ -32,15 +32,16 @@ serviceCalls:
   - serviceName: "IssueService"
     request:
       query: |
-        query {
+        query ($v0: ID!) {
           issue {
             __typename__deep_rename__name: __typename
             deep_rename__name__detail: detail {
-              detailName(userId: "USER-01")
+              detailName(userId: $v0)
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "USER-01"
     # language=JSON
     response: |-
       {

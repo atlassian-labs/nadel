@@ -1,4 +1,4 @@
-name: "complex-identified-by-with-rename"
+name: "complex identified by with rename"
 enabled: true
 overallSchema:
   UserService: |
@@ -157,21 +157,21 @@ serviceCalls:
     request:
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            batch_hydration__author__id: id
+            name
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:
         v0:
-          - site: "hello"
-            userId: "USER-5"
-          - site: "jdog"
-            userId: "USER-2"
-          - site: "hello"
-            userId: "USER-2"
+          - userId: "USER-5"
+            site: "hello"
+          - userId: "USER-2"
+            site: "jdog"
+          - userId: "USER-2"
+            site: "hello"
     # language=JSON
     response: |-
       {
@@ -203,23 +203,23 @@ serviceCalls:
     request:
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            batch_hydration__author__id: id
+            name
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:
         v0:
-          - site: "hello"
-            userId: "USER-1"
-          - site: "hello"
-            userId: "USER-3"
-          - site: "jdog"
-            userId: "USER-2"
-          - site: "hello"
-            userId: "USER-4"
+          - userId: "USER-1"
+            site: "hello"
+          - userId: "USER-3"
+            site: "hello"
+          - userId: "USER-2"
+            site: "jdog"
+          - userId: "USER-4"
+            site: "hello"
     # language=JSON
     response: |-
       {

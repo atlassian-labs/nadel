@@ -20,6 +20,9 @@ overallSchema:
     }
 underlyingSchema:
   NextgenIssues: |-
+    interface Node {
+      id: ID
+    }
     type Query {
       node(id: ID!): Node
     }
@@ -49,15 +52,14 @@ variables: { }
 serviceCalls:
   - serviceName: "NextgenIssues"
     request:
-      query: |-
-        query {
-          node(id: "ISSUE-1") {
-            ... on NextgenIssue {
-              id
-            }
+      query: |
+        query ($v0: ID!) {
+          node(id: $v0) {
+            id
           }
         }
-      variables: { }
+      variables:
+        v0: "ISSUE-1"
     # language=JSON
     response: "{}"
 # language=JSON

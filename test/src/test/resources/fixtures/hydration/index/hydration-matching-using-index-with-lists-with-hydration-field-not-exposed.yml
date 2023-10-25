@@ -81,12 +81,15 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
+        query ($v0: [ID]) {
+          usersByIssueIds(issueIds: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "ISSUE-1"
+          - "ISSUE-2"
     # language=JSON
     response: |-
       {

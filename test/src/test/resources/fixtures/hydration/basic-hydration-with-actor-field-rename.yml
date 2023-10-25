@@ -76,12 +76,13 @@ serviceCalls:
   - serviceName: "service2"
     request:
       query: |
-        query {
-          rename__barByIdOverall__barById: barById(id: "barId") {
+        query ($v0: ID) {
+          rename__barByIdOverall__barById: barById(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables:
+        v0: "barId"
     # language=JSON
     response: |-
       {

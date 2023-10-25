@@ -68,22 +68,14 @@ serviceCalls:
     request:
       query: |
         query {
-          ... on Query {
-            issues {
-              ... on IssueConnection {
-                __typename
-                nodes {
-                  ... on Issue {
-                    id
-                  }
-                }
-                pageInfo {
-                  ... on IssuePageInfo {
-                    __typename
-                    endCursor
-                  }
-                }
-              }
+          issues {
+            __typename
+            nodes {
+              id
+            }
+            pageInfo {
+              __typename
+              endCursor
             }
           }
         }

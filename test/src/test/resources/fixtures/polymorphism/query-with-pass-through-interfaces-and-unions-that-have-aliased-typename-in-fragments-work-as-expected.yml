@@ -144,8 +144,8 @@ serviceCalls:
   - serviceName: "PetService"
     request:
       query: |
-        query petQ {
-          pets(isLoyal: true) {
+        query petQ($v0: Boolean) {
+          pets(isLoyal: $v0) {
             name
             ... on Cat {
               aliasedCatTypeName: __typename
@@ -157,7 +157,8 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables:
+        v0: true
       operationName: "petQ"
     # language=JSON
     response: |-

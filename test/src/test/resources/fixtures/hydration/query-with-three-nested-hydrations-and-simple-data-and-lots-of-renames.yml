@@ -165,8 +165,8 @@ serviceCalls:
   - serviceName: "Bar"
     request:
       query: |
-        query {
-          barsById(id: ["bar1"]) {
+        query ($v0: [ID]) {
+          barsById(id: $v0) {
             __typename__rename__barName: __typename
             __typename__batch_hydration__nestedBar: __typename
             batch_hydration__bar__barId: barId
@@ -174,7 +174,9 @@ serviceCalls:
             batch_hydration__nestedBar__nestedBarId: nestedBarId
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "bar1"
     # language=JSON
     response: |-
       {
@@ -194,8 +196,8 @@ serviceCalls:
   - serviceName: "Bar"
     request:
       query: |
-        query {
-          barsById(id: ["nestedBar1"]) {
+        query ($v0: [ID]) {
+          barsById(id: $v0) {
             __typename__rename__barName: __typename
             __typename__batch_hydration__nestedBar: __typename
             batch_hydration__nestedBar__barId: barId
@@ -203,7 +205,9 @@ serviceCalls:
             batch_hydration__nestedBar__nestedBarId: nestedBarId
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "nestedBar1"
     # language=JSON
     response: |-
       {
@@ -223,8 +227,8 @@ serviceCalls:
   - serviceName: "Bar"
     request:
       query: |
-        query {
-          barsById(id: ["nestedBarId456"]) {
+        query ($v0: [ID]) {
+          barsById(id: $v0) {
             __typename__rename__barName: __typename
             __typename__rename__barDetails: __typename
             batch_hydration__nestedBar__barId: barId
@@ -242,7 +246,9 @@ serviceCalls:
             rename__barName__name: name
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "nestedBarId456"
     # language=JSON
     response: |-
       {

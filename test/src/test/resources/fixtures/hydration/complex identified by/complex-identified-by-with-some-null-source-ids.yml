@@ -136,15 +136,22 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          users(id: [{site : "hello", userId : "USER-2"}, {site : "hello", userId : "USER-3"}, {site : "jdog", userId : "USER-2"}]) {
+        query ($v0: [UserInput]) {
+          users(id: $v0) {
             id
             batch_hydration__authors__id: id
             name
             batch_hydration__authors__siteId: siteId
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - userId: "USER-2"
+            site: "hello"
+          - userId: "USER-3"
+            site: "hello"
+          - userId: "USER-2"
+            site: "jdog"
     # language=JSON
     response: |-
       {
@@ -175,15 +182,18 @@ serviceCalls:
   - serviceName: "UserService"
     request:
       query: |
-        query {
-          users(id: [{site : "hello", userId : "USER-5"}]) {
+        query ($v0: [UserInput]) {
+          users(id: $v0) {
             id
             batch_hydration__authors__id: id
             name
             batch_hydration__authors__siteId: siteId
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - userId: "USER-5"
+            site: "hello"
     # language=JSON
     response: |-
       {

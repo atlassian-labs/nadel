@@ -65,14 +65,15 @@ serviceCalls:
   - serviceName: "Bar"
     request:
       query: |
-        query {
-          barById(id: "1") {
+        query ($v0: ID) {
+          barById(id: $v0) {
             __typename__hydration__nestedBar: __typename
             hydration__nestedBar__barId: barId
             barId
           }
         }
-      variables: { }
+      variables:
+        v0: "1"
     # language=JSON
     response: |-
       {
@@ -88,12 +89,13 @@ serviceCalls:
   - serviceName: "Bar"
     request:
       query: |
-        query {
-          barById(id: "1") {
+        query ($v0: ID) {
+          barById(id: $v0) {
             barId
           }
         }
-      variables: { }
+      variables:
+        v0: "1"
     # language=JSON
     response: |-
       {

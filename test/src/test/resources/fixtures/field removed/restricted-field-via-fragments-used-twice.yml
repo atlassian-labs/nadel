@@ -42,15 +42,11 @@ serviceCalls:
       query: |
         query nadel_2_Issues {
           issue {
-            ...IssueFragment
             relatedIssue {
-              ...IssueFragment
+              id
             }
+            id
           }
-        }
-        
-        fragment IssueFragment on Issue {
-          id
         }
       variables: { }
       operationName: "nadel_2_Issues"

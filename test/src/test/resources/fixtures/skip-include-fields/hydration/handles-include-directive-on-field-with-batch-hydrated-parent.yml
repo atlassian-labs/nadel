@@ -72,13 +72,16 @@ serviceCalls:
   - serviceName: "service"
     request:
       query: |
-        query {
-          tests(ids: ["Foo-3", "Foo-4"]) {
+        query ($v0: [ID]) {
+          tests(ids: $v0) {
             __typename__skip_include____skip: __typename
             batch_hydration__test__id: id
           }
         }
-      variables: { }
+      variables:
+        v0:
+          - "Foo-3"
+          - "Foo-4"
     # language=JSON
     response: |-
       {

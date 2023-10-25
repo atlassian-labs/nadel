@@ -31,12 +31,13 @@ serviceCalls:
   - serviceName: "service"
     request:
       query: |
-        query {
-          foo(input: "2022-03-09T05:01:50Z") {
+        query ($v0: DateTime) {
+          foo(input: $v0) {
             thing
           }
         }
-      variables: { }
+      variables:
+        v0: "2022-03-09T05:01:50Z"
     # language=JSON
     response: |-
       {

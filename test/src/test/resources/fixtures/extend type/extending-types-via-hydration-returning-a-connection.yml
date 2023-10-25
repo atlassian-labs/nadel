@@ -120,15 +120,18 @@ serviceCalls:
   - serviceName: "Association"
     request:
       query: |
-        query {
-          association(filter: {name : "value"}, id: "ISSUE-1") {
+        query ($v0: Filter, $v1: ID) {
+          association(filter: $v0, id: $v1) {
             nodes {
               __typename__hydration__page: __typename
               hydration__page__pageId: pageId
             }
           }
         }
-      variables: { }
+      variables:
+        v0:
+          name: "value"
+        v1: "ISSUE-1"
     # language=JSON
     response: |-
       {
@@ -147,14 +150,15 @@ serviceCalls:
   - serviceName: "Association"
     request:
       query: |
-        query {
+        query ($v0: ID) {
           pages {
-            page(id: "1") {
+            page(id: $v0) {
               id
             }
           }
         }
-      variables: { }
+      variables:
+        v0: "1"
     # language=JSON
     response: |-
       {

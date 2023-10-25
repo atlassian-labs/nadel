@@ -77,12 +77,13 @@ serviceCalls:
   - serviceName: "Baz"
     request:
       query: |
-        query {
-          otherFoo(id: "10000") {
+        query ($v0: ID!) {
+          otherFoo(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables:
+        v0: "10000"
     # language=JSON
     response: |-
       {

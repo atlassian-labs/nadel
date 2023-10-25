@@ -28,13 +28,14 @@ serviceCalls:
   - serviceName: "service"
     request:
       query: |
-        query {
-          issue(id: "57") {
+        query ($v0: ID) {
+          issue(id: $v0) {
             __typename__rename__key: __typename
             rename__key__id: id
           }
         }
-      variables: { }
+      variables:
+        v0: "57"
     # language=JSON
     response: |-
       {
