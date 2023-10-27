@@ -50,13 +50,15 @@ internal object NadelHydrationFieldsBuilder {
         hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
         hooks: ServiceExecutionHooks,
+        userContext: Any?,
     ): List<ExecutableNormalizedField> {
         val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
             aliasHelper = aliasHelper,
             hydrationField = hydratedField,
             parentNodes = parentNodes,
-            hooks = hooks
+            hooks = hooks,
+            userContext = userContext,
         )
 
         val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction, executionBlueprint)
