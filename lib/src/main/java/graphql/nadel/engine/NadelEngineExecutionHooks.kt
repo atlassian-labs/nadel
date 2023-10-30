@@ -11,7 +11,7 @@ interface NadelEngineExecutionHooks : ServiceExecutionHooks {
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
-        userContext: Any?
+        userContext: Any?,
     ): T?
 
     /**
@@ -35,12 +35,14 @@ interface NadelEngineExecutionHooks : ServiceExecutionHooks {
      *
      * @param argumentValues list of argument values for this batch hydration
      * @param instruction batch hydration instruction for this hydration
+     * @param instruction user context supplied to the execution input
      * @return list of argument values partitioned accordingly. If no partitioning needed, return
      * `listOf(argumentValues)`
      */
     fun <T> partitionBatchHydrationArgumentList(
         argumentValues: List<T>,
-        instruction: NadelBatchHydrationFieldInstruction
+        instruction: NadelBatchHydrationFieldInstruction,
+        userContext: Any?,
     ): List<List<T>> {
         return listOf(argumentValues)
     }
