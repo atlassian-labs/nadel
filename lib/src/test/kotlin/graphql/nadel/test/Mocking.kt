@@ -18,7 +18,7 @@ inline fun <reified T : Any> mock(
     MockKDsl.internalMockk(
         name,
         relaxed,
-        *moreInterfaces,
+        moreInterfaces,
         relaxUnitFun = relaxUnitFun,
         block = block
     )
@@ -44,7 +44,7 @@ inline fun <reified T : Any> spy(
 ): T = MockK.useImpl {
     MockKDsl.internalSpyk(
         name,
-        *moreInterfaces,
+        moreInterfaces,
         recordPrivateCalls = recordPrivateCalls,
         block = block
     )
@@ -67,7 +67,7 @@ inline fun <reified T : Any> spy(
     MockKDsl.internalSpyk(
         objToCopy,
         name,
-        *moreInterfaces,
+        moreInterfaces,
         recordPrivateCalls = recordPrivateCalls,
         block = block
     )

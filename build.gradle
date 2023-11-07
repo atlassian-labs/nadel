@@ -4,13 +4,20 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "1.9.20"
     id "com.jfrog.artifactory" version "4.29.2"
     id "biz.aQute.bnd.builder" version "6.3.1"
-    id "com.bnorm.power.kotlin-power-assert" version "0.11.0"
+    id "com.bnorm.power.kotlin-power-assert" version "0.13.0"
 }
 
-if (JavaVersion.current() != JavaVersion.VERSION_11) {
-    def msg = String.format("This build must be run with Java 11 - you are running %s - Gradle finds the JDK via JAVA_HOME=%s",
-            JavaVersion.current(), System.getenv("JAVA_HOME"))
-    throw new GradleException(msg)
+allprojects {
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+    }
+    kotlin {
+        jvmToolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+    }
 }
 
 def getDevelopmentVersion() {
