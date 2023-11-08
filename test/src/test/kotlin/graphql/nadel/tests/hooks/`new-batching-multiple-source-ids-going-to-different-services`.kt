@@ -9,7 +9,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
 @UseHook
-class `new-hydrator-multiple-source-ids-going-to-different-services` : EngineTestHook {
+class `new-batching-multiple-source-ids-going-to-different-services` : EngineTestHook {
     override fun makeExecutionHints(builder: NadelExecutionHints.Builder): NadelExecutionHints.Builder {
         return super.makeExecutionHints(builder)
             .newBatchHydrationGrouping { true }

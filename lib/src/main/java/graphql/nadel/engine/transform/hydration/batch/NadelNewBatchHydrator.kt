@@ -15,7 +15,7 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
-import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.isList
@@ -119,8 +119,9 @@ internal class NadelNewBatchHydrator(
                         JsonNodeExtractor.getNodesAt(result.data, instruction.queryPathToActorField, flatten = true)
                     }
                     .groupBy { node ->
+                        // Remove result ID after using it to create this index to stop it showing up in end result
                         @Suppress("UNCHECKED_CAST")
-                        ObjectIdentifier((node.value as JsonMap)[strategy.resultId])
+                        ObjectIdentifier((node.value as MutableJsonMap).remove(strategy.resultId))
                     }
                     .mapValues { (_, values) ->
                         // todo: stop doing stupid here
