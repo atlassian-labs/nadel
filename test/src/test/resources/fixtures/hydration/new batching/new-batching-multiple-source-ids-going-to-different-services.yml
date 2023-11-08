@@ -13,23 +13,23 @@ overallSchema:
       content: [ActivityContent]
         @hydrated(
           service: "comments"
-          field: "commentById"
+          field: "commentsByIds"
           arguments: [
-            {name: "id" value: "$source.id"}
+            {name: "ids" value: "$source.contentIds"}
           ]
         )
         @hydrated(
           service: "issues"
-          field: "issueById"
+          field: "issuesByIds"
           arguments: [
-            {name: "id" value: "$source.id"}
+            {name: "ids" value: "$source.contentIds"}
           ]
         )
     }
   # language=GraphQL
   issues: |
     type Query {
-      issueById(id: ID!): [Issue!]
+      issuesByIds(ids: [ID!]!): [Issue!]
     }
     type Issue {
       id: ID!
@@ -38,7 +38,7 @@ overallSchema:
   # language=GraphQL
   comments: |
     type Query {
-      commentById(id: ID!): [Comment!]
+      commentsByIds(ids: [ID!]!): [Comment!]
     }
     type Comment {
       id: ID!
@@ -57,7 +57,7 @@ underlyingSchema:
   # language=GraphQL
   issues: |
     type Query {
-      issueById(id: ID!): [Issue!]
+      issuesByIds(ids: [ID!]!): [Issue!]
     }
     type Issue {
       id: ID!
@@ -66,7 +66,7 @@ underlyingSchema:
   # language=GraphQL
   comments: |
     type Query {
-      commentById(id: ID!): [Comment!]
+      commentsByIds(ids: [ID!]!): [Comment!]
     }
     type Comment {
       id: ID!
@@ -98,8 +98,8 @@ serviceCalls:
         {
           activity {
             __typename__batch_hydration__content: __typename
-            batch_hydration__content__id: id
-            batch_hydration__content__id: id
+            batch_hydration__content__contentIds: contentIds
+            batch_hydration__content__contentIds: contentIds
           }
         }
       variables: { }
@@ -110,7 +110,7 @@ serviceCalls:
           "activity": [
             {
               "__typename__batch_hydration__content": "Activity",
-              "batch_hydration__content__id": [
+              "batch_hydration__content__contentIds": [
                 "issue/4000",
                 "comment/5000",
                 "comment/6000"
@@ -118,20 +118,20 @@ serviceCalls:
             },
             {
               "__typename__batch_hydration__content": "Activity",
-              "batch_hydration__content__id": [
+              "batch_hydration__content__contentIds": [
                 "issue/8080"
               ]
             },
             {
               "__typename__batch_hydration__content": "Activity",
-              "batch_hydration__content__id": [
+              "batch_hydration__content__contentIds": [
                 "issue/7496",
                 "comment/9001"
               ]
             },
             {
               "__typename__batch_hydration__content": "Activity",
-              "batch_hydration__content__id": [
+              "batch_hydration__content__contentIds": [
                 "issue/1234",
                 "comment/1234"
               ]
@@ -145,7 +145,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         {
-          issueById(id: ["issue/4000", "issue/8080", "issue/7496", "issue/1234"]) {
+          issuesByIds(ids: ["issue/4000", "issue/8080", "issue/7496", "issue/1234"]) {
             __typename
             id
             batch_hydration__content__id: id
@@ -157,7 +157,7 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "issueById": [
+          "issuesByIds": [
             {
               "__typename": "Issue",
               "id": "issue/4000",
@@ -191,7 +191,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         {
-          commentById(id: ["comment/5000", "comment/6000", "comment/9001", "comment/1234"]) {
+          commentsByIds(ids: ["comment/5000", "comment/6000", "comment/9001", "comment/1234"]) {
             __typename
             content
             id
@@ -203,7 +203,7 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "commentById": [
+          "commentsByIds": [
             {
               "__typename": "Comment",
               "id": "comment/5000",

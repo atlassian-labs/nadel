@@ -70,7 +70,7 @@ internal class NadelNewBatchHydrator(
                     sourceIds = sourceIds,
                 )
 
-                indexResults(instruction, results)
+                indexResults(state.aliasHelper, instruction, results)
             }
 
         val isHydratedFieldListOutput = executionBlueprint.engineSchema
@@ -106,6 +106,7 @@ internal class NadelNewBatchHydrator(
     }
 
     private fun indexResults(
+        aliasHelper: NadelAliasHelper,
         instruction: NadelBatchHydrationFieldInstruction,
         results: List<ServiceExecutionResult>,
     ): Map<ObjectIdentifier, JsonNode> {
@@ -119,9 +120,11 @@ internal class NadelNewBatchHydrator(
                         JsonNodeExtractor.getNodesAt(result.data, instruction.queryPathToActorField, flatten = true)
                     }
                     .groupBy { node ->
-                        // Remove result ID after using it to create this index to stop it showing up in end result
                         @Suppress("UNCHECKED_CAST")
-                        ObjectIdentifier((node.value as MutableJsonMap).remove(strategy.resultId))
+                        ObjectIdentifier(
+                            // Remove result ID after using it to create this index to stop it showing up in end result
+                            (node.value as MutableJsonMap).remove(aliasHelper.getResultKey(strategy.resultId)),
+                        )
                     }
                     .mapValues { (_, values) ->
                         // todo: stop doing stupid here
