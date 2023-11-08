@@ -1,4 +1,4 @@
-name: "new hydrator multiple source ids going to different services"
+name: "new batching multiple source ids going to different services"
 enabled: true
 overallSchema:
   # language=GraphQL
@@ -205,28 +205,28 @@ serviceCalls:
         "data": {
           "commentById": [
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/5000",
               "batch_hydration__content__id": "comment/5000",
-              "title": "Five Thousand"
+              "content": "Five Thousand"
             },
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/6000",
               "batch_hydration__content__id": "comment/6000",
-              "title": "Six Thousand"
+              "content": "Six Thousand"
             },
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/9001",
               "batch_hydration__content__id": "comment/9001",
-              "title": "It's over 9000"
+              "content": "It's over 9000"
             },
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/1234",
               "batch_hydration__content__id": "comment/1234",
-              "title": "One Two Three Four"
+              "content": "One Two Three Four"
             }
           ]
         },
@@ -242,20 +242,17 @@ response: |-
             {
               "__typename": "Issue",
               "id": "issue/4000",
-              "batch_hydration__content__id": "issue/4000",
               "title": "Four Thousand"
             },
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/5000",
-              "batch_hydration__content__id": "comment/5000",
-              "title": "Five Thousand"
+              "content": "Five Thousand"
             },
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/6000",
-              "batch_hydration__content__id": "comment/6000",
-              "title": "Six Thousand"
+              "content": "Six Thousand"
             }
           ]
         },
@@ -264,7 +261,6 @@ response: |-
             {
               "__typename": "Issue",
               "id": "issue/8080",
-              "batch_hydration__content__id": "issue/8080",
               "title": "Eighty Eighty"
             }
           ]
@@ -274,14 +270,12 @@ response: |-
             {
               "__typename": "Issue",
               "id": "issue/7496",
-              "batch_hydration__content__id": "issue/7496",
               "title": "Seven Four Nine Six"
             },
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/9001",
-              "batch_hydration__content__id": "comment/9001",
-              "title": "It's over 9000"
+              "content": "It's over 9000"
             }
           ]
         },
@@ -290,14 +284,12 @@ response: |-
             {
               "__typename": "Issue",
               "id": "issue/1234",
-              "batch_hydration__content__id": "issue/1234",
               "title": "One Two Three Four"
             },
             {
-              "__typename": "Issue",
+              "__typename": "Comment",
               "id": "comment/1234",
-              "batch_hydration__content__id": "comment/1234",
-              "title": "One Two Three Four"
+              "content": "One Two Three Four"
             }
           ]
         }
