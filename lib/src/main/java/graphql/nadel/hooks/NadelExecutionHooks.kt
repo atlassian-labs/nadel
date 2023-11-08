@@ -51,6 +51,14 @@ interface NadelExecutionHooks {
         return instructions.single()
     }
 
+    fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+        instructions: List<T>,
+        sourceId: JsonNode,
+        userContext: Any?,
+    ): T? {
+        throw UnsupportedOperationException()
+    }
+
     /**
      * This method should be used when the list of hydration arguments needs to be split in batches. The batches will be
      * executed separately. One example is partitioning the list of arguments when different arguments cannot be
