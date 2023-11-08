@@ -86,58 +86,6 @@ object NadelDirectives {
         )
         .build()
 
-    // val nadelWhenConditionPredicateStartsWithDefinition = newInputObjectDefinition()
-    //     .name("NadelWhenConditionPredicateStartsWith")
-    //     .description("When condition predicate for startsWith")
-    //     .inputValueDefinition(
-    //         name = "startsWith",
-    //         type = nonNull(GraphQLString),
-    //     )
-    //     .build()
-    //
-    // val nadelWhenConditionPredicateEqualsDefinition = newInputObjectDefinition()
-    //     .name("NadelWhenConditionPredicateEquals")
-    //     .description("When condition predicate for equals")
-    //     .inputValueDefinition(
-    //         name = "equals",
-    //         type = nonNull(ExtendedScalars.Json),
-    //     )
-    //     .build()
-    //
-    // val nadelWhenConditionPredicateMatchesDefinition = newInputObjectDefinition()
-    //     .name("NadelWhenConditionPredicateMatches")
-    //     .description("When condition predicate for matches")
-    //     .inputValueDefinition(
-    //         name = "matches",
-    //         type = nonNull(GraphQLString),
-    //     )
-    //     .build()
-    //
-    // val nadelWhenConditionPredicateUnion = GraphQLUnionType.newUnionType()
-    //     .name("NadelWhenConditionPredicateUnion")
-    //     .description("Union of when condition predicates")
-    //     .possibleType(nadelWhenConditionPredicateStartsWithDefinition)
-    //     .possibleType(nadelWhenConditionPredicateEqualsDefinition)
-    //     .possibleType(nadelWhenConditionPredicateMatchesDefinition)
-    //     .build()
-
-    // val nadelWhenConditionPredicateDefinition = newInputObjectDefinition()
-    //     .name("NadelWhenConditionPredicate")
-    //     .description("This allows you to specify a when condition to filter hydrations")
-    //     .inputValueDefinition(
-    //         name = "startsWith",
-    //         type = nonNull(GraphQLString),
-    //     )
-    //     .inputValueDefinition(
-    //         name = "equals",
-    //         type = nonNull(ExtendedScalars.Json),
-    //     )
-    //     .inputValueDefinition(
-    //         name = "matches",
-    //         type = nonNull(GraphQLString),
-    //     )
-    //     .build()
-
     val nadelWhenConditionPredicateDefinition = Parser.parse(
         """
         input NadelWhenConditionPredicate @oneOf {
