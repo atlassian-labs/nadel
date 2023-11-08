@@ -10,9 +10,12 @@ import graphql.language.BooleanValue
 import graphql.language.DirectiveDefinition.newDirectiveDefinition
 import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
 import graphql.language.EnumValueDefinition.newEnumValueDefinition
+import graphql.language.InputObjectTypeDefinition
 import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
+import graphql.language.ObjectField
 import graphql.language.ObjectValue
 import graphql.language.StringValue
+import graphql.language.TypeName
 import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
@@ -20,6 +23,7 @@ import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.util.IntValue
 import graphql.nadel.util.description
 import graphql.nadel.util.emptyArrayValue
@@ -34,13 +38,16 @@ import graphql.nadel.util.onInterface
 import graphql.nadel.util.onObject
 import graphql.nadel.util.onScalar
 import graphql.nadel.util.onUnion
+import graphql.parser.Parser
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLUnionType
 import java.util.Locale
+import java.util.Objects
 
 /**
  * If you update this file please add to NadelBuiltInTypes
@@ -77,6 +84,91 @@ object NadelDirectives {
             name = "value",
             type = nonNull(ExtendedScalars.Json),
         )
+        .build()
+
+    // val nadelWhenConditionPredicateStartsWithDefinition = newInputObjectDefinition()
+    //     .name("NadelWhenConditionPredicateStartsWith")
+    //     .description("When condition predicate for startsWith")
+    //     .inputValueDefinition(
+    //         name = "startsWith",
+    //         type = nonNull(GraphQLString),
+    //     )
+    //     .build()
+    //
+    // val nadelWhenConditionPredicateEqualsDefinition = newInputObjectDefinition()
+    //     .name("NadelWhenConditionPredicateEquals")
+    //     .description("When condition predicate for equals")
+    //     .inputValueDefinition(
+    //         name = "equals",
+    //         type = nonNull(ExtendedScalars.Json),
+    //     )
+    //     .build()
+    //
+    // val nadelWhenConditionPredicateMatchesDefinition = newInputObjectDefinition()
+    //     .name("NadelWhenConditionPredicateMatches")
+    //     .description("When condition predicate for matches")
+    //     .inputValueDefinition(
+    //         name = "matches",
+    //         type = nonNull(GraphQLString),
+    //     )
+    //     .build()
+    //
+    // val nadelWhenConditionPredicateUnion = GraphQLUnionType.newUnionType()
+    //     .name("NadelWhenConditionPredicateUnion")
+    //     .description("Union of when condition predicates")
+    //     .possibleType(nadelWhenConditionPredicateStartsWithDefinition)
+    //     .possibleType(nadelWhenConditionPredicateEqualsDefinition)
+    //     .possibleType(nadelWhenConditionPredicateMatchesDefinition)
+    //     .build()
+
+    // val nadelWhenConditionPredicateDefinition = newInputObjectDefinition()
+    //     .name("NadelWhenConditionPredicate")
+    //     .description("This allows you to specify a when condition to filter hydrations")
+    //     .inputValueDefinition(
+    //         name = "startsWith",
+    //         type = nonNull(GraphQLString),
+    //     )
+    //     .inputValueDefinition(
+    //         name = "equals",
+    //         type = nonNull(ExtendedScalars.Json),
+    //     )
+    //     .inputValueDefinition(
+    //         name = "matches",
+    //         type = nonNull(GraphQLString),
+    //     )
+    //     .build()
+
+    val nadelWhenConditionPredicateDefinition = Parser.parse(
+        """
+        input NadelWhenConditionPredicate @oneOf {
+          startsWith: String
+          equals: JSON
+          matches: String
+        }
+    """.trimIndent()
+    ).definitions.singleOfType<InputObjectTypeDefinition>()
+
+    val nadelWhenConditionResultDefinition = newInputObjectDefinition()
+        .name("NadelWhenConditionResult")
+        .description("This allows you to specify a when condition to filter hydrations")
+        .inputValueDefinition(
+            name = "sourceField",
+            type = nonNull(GraphQLString),
+        )
+        .inputValueDefinition(
+            name = "predicate",
+            type = nonNull(nadelWhenConditionPredicateDefinition),
+        )
+        .build()
+
+    val nadelWhenConditionDefinition = newInputObjectDefinition()
+        .name("NadelWhenCondition")
+        .description("This allows you to specify a when condition to filter hydrations")
+        .inputValueDefinition(
+            name = "result",
+            type = nonNull(nadelWhenConditionResultDefinition),
+
+            )
         .build()
 
     val hydratedDirectiveDefinition = newDirectiveDefinition()
@@ -134,6 +226,13 @@ object NadelDirectives {
             name = "arguments",
             description = "The arguments to the hydrated field",
             type = nonNull(list(nonNull(nadelHydrationArgumentDefinition))),
+        )
+        .inputValueDefinition(
+            name = "when",
+            description = "The arguments to the hydrated field",
+            type = TypeName.newTypeName()
+                .name(nadelWhenConditionDefinition.name)
+                .build()
         )
         .build()
 
@@ -482,6 +581,11 @@ object NadelDirectives {
 
     private fun <T> resolveArgumentValue(graphQLArgument: GraphQLAppliedDirectiveArgument): T {
         @Suppress("UNCHECKED_CAST") // Trust caller. Can't do much
-        return ValuesResolver.valueToInternalValue(graphQLArgument.argumentValue, graphQLArgument.type, GraphQLContext.getDefault(), Locale.getDefault()) as T
+        return ValuesResolver.valueToInternalValue(
+            graphQLArgument.argumentValue,
+            graphQLArgument.type,
+            GraphQLContext.getDefault(),
+            Locale.getDefault()
+        ) as T
     }
 }

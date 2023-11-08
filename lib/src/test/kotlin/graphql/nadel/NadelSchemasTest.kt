@@ -73,7 +73,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "JSON"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "JSON", "NadelWhenCondition", "NadelWhenConditionPredicate", "NadelWhenConditionResult"))
             val testService = schemas.services.single()
             assert(testService.underlyingSchema.userTypeNames == setOf("World", "Echo", "Query", "Food"))
         }
@@ -149,7 +149,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "JSON"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "JSON", "NadelWhenCondition", "NadelWhenConditionPredicate", "NadelWhenConditionResult"))
             val testService = schemas.services.single()
             assert(testService.underlyingSchema.userTypeNames == setOf("World", "Echo", "Query", "Food"))
         }
@@ -211,7 +211,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue", "JSON"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue", "JSON", "NadelWhenCondition", "NadelWhenConditionPredicate", "NadelWhenConditionResult"))
 
             val issueService = schemas.services.single { it.name == "issue" }
             assert(issueService.underlyingSchema.userTypeNames == setOf("Query", "Issue"))
@@ -272,7 +272,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue", "JSON"))
+            assert(schemas.engineSchema.userTypeNames == setOf("World", "Echo", "Query", "Issue", "JSON", "NadelWhenCondition", "NadelWhenConditionPredicate", "NadelWhenConditionResult"))
         }
 
         it("does not validate the schemas") {
@@ -321,7 +321,7 @@ class NadelSchemasTest : DescribeSpec({
                 .build()
 
             // then
-            assert(schemas.engineSchema.userTypeNames == setOf("Query", "World", "Echo", "Issue", "JSON"))
+            assert(schemas.engineSchema.userTypeNames == setOf("Query", "World", "Echo", "Issue", "JSON", "NadelWhenCondition", "NadelWhenConditionPredicate", "NadelWhenConditionResult"))
 
             val testService = schemas.services.first { it.name == "test" }
             assert(testService.definitionRegistry.typeNames == setOf("Query", "Echo", "World"))
