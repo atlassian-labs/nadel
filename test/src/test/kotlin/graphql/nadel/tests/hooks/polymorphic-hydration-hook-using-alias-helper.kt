@@ -1,22 +1,21 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
-private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHooks {
-
+private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
-        userContext: Any?
+        userContext: Any?,
     ): T? {
         return instructions.firstOrNull {
             val (_, _, valueSource) = it.actorInputValueDefs.single()
@@ -32,7 +31,7 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
 
     private fun <T : NadelGenericHydrationInstruction> hydrationInstructionMatchesArgumentValue(
         instruction: T,
-        hydrationArgumentValue: String
+        hydrationArgumentValue: String,
     ): Boolean {
         return instruction.actorFieldDef.name.contains("pet") && hydrationArgumentValue.startsWith(
             "pet", ignoreCase = true
@@ -45,7 +44,7 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
 
 open class PolymorphicHydrationWithAliasTestHook : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHookUsingAliasHelper())
+        return builder.executionHooks(PolymorphicHydrationHookUsingAliasHelper())
     }
 }
 
