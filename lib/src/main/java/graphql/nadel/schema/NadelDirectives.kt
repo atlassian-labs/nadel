@@ -83,7 +83,7 @@ object NadelDirectives {
         )
         .build()
 
-    val nadelWhenConditionPredicateDefinition = Parser.parse(
+    val nadelWhenConditionPredicateDefinition = parseType(
         """
         input NadelWhenConditionPredicate @oneOf {
           startsWith: String
@@ -91,7 +91,7 @@ object NadelDirectives {
           matches: String
         }
         """.trimIndent(),
-    ).definitions.singleOfType<InputObjectTypeDefinition>()
+    )
 
     val nadelWhenConditionResultDefinition = newInputObjectDefinition()
         .name("NadelWhenConditionResult")
@@ -531,5 +531,9 @@ object NadelDirectives {
             GraphQLContext.getDefault(),
             Locale.getDefault()
         ) as T
+    }
+
+    inline fun parseType(sdl: String): InputObjectTypeDefinition {
+        return Parser.parse(sdl).definitions.singleOfType<InputObjectTypeDefinition>()
     }
 }
