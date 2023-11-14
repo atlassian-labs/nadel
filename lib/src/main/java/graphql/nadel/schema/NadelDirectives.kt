@@ -12,7 +12,6 @@ import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
 import graphql.language.EnumValueDefinition.newEnumValueDefinition
 import graphql.language.InputObjectTypeDefinition
 import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
-import graphql.language.ObjectField
 import graphql.language.ObjectValue
 import graphql.language.StringValue
 import graphql.language.TypeName
@@ -45,9 +44,7 @@ import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLUnionType
 import java.util.Locale
-import java.util.Objects
 
 /**
  * If you update this file please add to NadelBuiltInTypes
@@ -93,12 +90,12 @@ object NadelDirectives {
           equals: JSON
           matches: String
         }
-    """.trimIndent()
+        """.trimIndent(),
     ).definitions.singleOfType<InputObjectTypeDefinition>()
 
     val nadelWhenConditionResultDefinition = newInputObjectDefinition()
         .name("NadelWhenConditionResult")
-        .description("This allows you to specify a when condition to filter hydrations")
+        .description("Specify a condition for the hydration to activate based on the result")
         .inputValueDefinition(
             name = "sourceField",
             type = nonNull(GraphQLString),
@@ -111,12 +108,11 @@ object NadelDirectives {
 
     val nadelWhenConditionDefinition = newInputObjectDefinition()
         .name("NadelWhenCondition")
-        .description("This allows you to specify a when condition to filter hydrations")
+        .description("Specify a condition for the hydration to activate")
         .inputValueDefinition(
             name = "result",
             type = nonNull(nadelWhenConditionResultDefinition),
-
-            )
+        )
         .build()
 
     val hydratedDirectiveDefinition = newDirectiveDefinition()
@@ -177,7 +173,7 @@ object NadelDirectives {
         )
         .inputValueDefinition(
             name = "when",
-            description = "The arguments to the hydrated field",
+            description = "Specify a condition for the hydration to activate",
             type = TypeName.newTypeName()
                 .name(nadelWhenConditionDefinition.name)
                 .build()
