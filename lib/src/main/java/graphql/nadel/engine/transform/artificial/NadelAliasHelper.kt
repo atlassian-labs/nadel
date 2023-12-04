@@ -58,6 +58,7 @@ class NadelAliasHelper private constructor(private val alias: String) {
     fun getQueryPath(
         path: NadelQueryPath,
     ): NadelQueryPath {
+        // todo: why not just clone and set first index here?
         return path.mapIndexed { index, segment ->
             when (index) {
                 0 -> getResultKey(segment)
