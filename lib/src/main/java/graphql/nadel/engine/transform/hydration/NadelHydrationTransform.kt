@@ -4,7 +4,6 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -29,7 +28,7 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.Deferred
@@ -277,26 +276,14 @@ internal class NadelHydrationTransform(
     private fun getHydrationFieldInstruction(
         state: State,
         instructions: List<NadelHydrationFieldInstruction>,
-        hooks: ServiceExecutionHooks,
+        hooks: NadelExecutionHooks,
         parentNode: JsonNode,
     ): NadelHydrationFieldInstruction? {
-        return when (instructions.size) {
-            1 -> instructions.single()
-            else -> {
-                if (hooks is NadelEngineExecutionHooks) {
-                    hooks.getHydrationInstruction(
-                        instructions,
-                        parentNode,
-                        state.aliasHelper,
-                        state.executionContext.userContext
-                    )
-                } else {
-                    error(
-                        "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
-                            "to be of type NadelEngineExecutionHooks"
-                    )
-                }
-            }
-        }
+        return hooks.getHydrationInstruction(
+            instructions,
+            parentNode,
+            state.aliasHelper,
+            state.executionContext.userContext
+        )
     }
 }

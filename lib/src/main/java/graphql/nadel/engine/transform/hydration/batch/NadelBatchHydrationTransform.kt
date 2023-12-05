@@ -27,6 +27,7 @@ internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
 ) : NadelTransform<State> {
     private val hydrator = NadelBatchHydrator(engine)
+    private val newHydrator = NadelNewBatchHydrator(engine)
 
     data class State(
         val executionBlueprint: NadelOverallExecutionBlueprint,
@@ -115,7 +116,11 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        return hydrator.hydrate(state, executionBlueprint, parentNodes)
+        if (executionContext.hints.newBatchHydrationGrouping()) {
+            return newHydrator.hydrate(state, executionBlueprint, parentNodes)
+        } else {
+            return hydrator.hydrate(state, executionBlueprint, parentNodes)
+        }
     }
 
     private fun makeTypeNameField(

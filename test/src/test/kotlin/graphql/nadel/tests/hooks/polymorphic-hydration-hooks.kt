@@ -1,16 +1,16 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
-private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
+private class PolymorphicHydrationHooks : NadelExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,
@@ -33,33 +33,33 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
 
 open class PolymorphicHydrationTestHook : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
+        return builder.executionHooks(PolymorphicHydrationHooks())
     }
 }
 
 @UseHook
-class `solitary-polymorphic-hydration` : PolymorphicHydrationTestHook() {}
+class `solitary-polymorphic-hydration` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-with-interfaces` : PolymorphicHydrationTestHook() {}
+class `batch-polymorphic-hydration-with-interfaces` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-with-unions` : PolymorphicHydrationTestHook() {}
+class `batch-polymorphic-hydration-with-unions` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-with-rename` : PolymorphicHydrationTestHook() {}
+class `batch-polymorphic-hydration-with-rename` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-where-only-one-type-is-queried` : PolymorphicHydrationTestHook() {}
+class `batch-polymorphic-hydration-where-only-one-type-is-queried` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook() {}
+class `batch-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-when-hook-returns-null-1` : PolymorphicHydrationTestHook() {}
+class `batch-polymorphic-hydration-when-hook-returns-null-1` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `solitary-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook() {}
+class `solitary-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-with-lots-of-renames` : PolymorphicHydrationTestHook() {}
+class `batch-polymorphic-hydration-with-lots-of-renames` : PolymorphicHydrationTestHook()

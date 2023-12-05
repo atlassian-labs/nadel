@@ -2,12 +2,14 @@ package graphql.nadel
 
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
+import graphql.nadel.hints.NewBatchHydrationGroupingHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
-data class NadelExecutionHints constructor(
+data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
+    val newBatchHydrationGrouping: NewBatchHydrationGroupingHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -20,9 +22,10 @@ data class NadelExecutionHints constructor(
     }
 
     class Builder {
-        private var legacyOperationNames: LegacyOperationNamesHint = LegacyOperationNamesHint { false }
-        private var allDocumentVariablesHint: AllDocumentVariablesHint = AllDocumentVariablesHint { false }
-        private var newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
+        private var legacyOperationNames = LegacyOperationNamesHint { false }
+        private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
+        private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
+        private var newBatchHydrationGrouping = NewBatchHydrationGroupingHint { false }
 
         constructor()
 
@@ -47,11 +50,17 @@ data class NadelExecutionHints constructor(
             return this
         }
 
+        fun newBatchHydrationGrouping(flag: NewBatchHydrationGroupingHint): Builder {
+            newBatchHydrationGrouping = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
                 newResultMergerAndNamespacedTypename,
+                newBatchHydrationGrouping,
             )
         }
     }

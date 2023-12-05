@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.hydration.batch
 
-import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
@@ -12,7 +11,7 @@ import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.javaValueToAstValue
 import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.mapFrom
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
@@ -29,7 +28,7 @@ internal object NadelBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
-        hooks: ServiceExecutionHooks,
+        hooks: NadelExecutionHooks,
         userContext: Any?,
     ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
@@ -73,7 +72,7 @@ internal object NadelBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         aliasHelper: NadelAliasHelper,
-        hooks: ServiceExecutionHooks,
+        hooks: NadelExecutionHooks,
         userContext: Any?,
     ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
@@ -83,10 +82,7 @@ internal object NadelBatchHydrationInputBuilder {
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
 
-        val partitionArgumentList = when (hooks) {
-            is NadelEngineExecutionHooks -> hooks.partitionBatchHydrationArgumentList(args, instruction, userContext)
-            else -> listOf(args)
-        }
+        val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(args, instruction, userContext)
 
         return partitionArgumentList.flatMap { it.chunked(size = batchSize) }
             .map { chunk ->

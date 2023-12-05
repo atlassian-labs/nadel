@@ -5,13 +5,13 @@ import graphql.GraphqlErrorBuilder
 import graphql.execution.ResultPath
 import graphql.nadel.Nadel
 import graphql.nadel.Service
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 
-class Hooks : ServiceExecutionHooks {
+class Hooks : NadelExecutionHooks {
 
     private fun resolveServiceGeneric(
         services: Collection<Service>,
@@ -58,55 +58,55 @@ class Hooks : ServiceExecutionHooks {
 @UseHook
 class `dynamic-service-resolution-multiple-services` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }
 
 @UseHook
 class `dynamic-service-resolution-simple-success-case` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }
 
 @UseHook
 class `dynamic-service-resolution-multiple-services-with-one-unmapped-node-lookup` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }
 
 @UseHook
 class `dynamic-service-resolution-handles-inline-fragments-from-multiple-services` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }
 
 @UseHook
 class `dynamic-service-resolution-handles-complex-fragments` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }
 
 @UseHook
 class `dynamic-service-resolution-with-no-fragments` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }
 
 @UseHook
 class `dynamic-service-resolution-directive-not-in-interface` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }
 
 @UseHook
 class `typename-is-passed-on-queries-using-dynamic-resolved-services` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(Hooks())
+        return builder.executionHooks(Hooks())
     }
 }

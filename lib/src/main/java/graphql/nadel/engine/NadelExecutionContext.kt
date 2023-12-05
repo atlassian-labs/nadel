@@ -7,7 +7,7 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.CreateServiceContextParams
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedOperation
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 data class NadelExecutionContext internal constructor(
     val executionInput: ExecutionInput,
     val query: ExecutableNormalizedOperation,
-    internal val hooks: ServiceExecutionHooks,
+    internal val hooks: NadelExecutionHooks,
     val hints: NadelExecutionHints,
     val instrumentationState: InstrumentationState?,
     internal val timer: NadelInstrumentationTimer,
