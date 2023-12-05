@@ -153,6 +153,7 @@ internal class NadelNewBatchHydrator(
         val executionContext: NadelExecutionContext,
         val sourceField: ExecutableNormalizedField,
         val sourceFieldService: Service,
+        val isSourceFieldListOutput: Boolean,
         val isSourceInputFieldListOutput: Boolean,
         val isIndexHydration: Boolean,
         val aliasHelper: NadelAliasHelper,
@@ -172,6 +173,7 @@ internal class NadelNewBatchHydrator(
             executionContext = state.executionContext,
             sourceField = state.hydratedField,
             sourceFieldService = state.hydratedFieldService,
+            isSourceFieldListOutput = isSourceFieldListOutput(executionBlueprint, state.hydratedField),
             isSourceInputFieldListOutput = isSourceInputFieldListOutput(state.instructionsByObjectTypeNames),
             isIndexHydration = isIndexBasedHydration(state.instructionsByObjectTypeNames),
             aliasHelper = state.aliasHelper,
@@ -219,8 +221,6 @@ internal class NadelNewBatchHydrator(
         sourceObjectsMetadata: List<SourceObjectMetadata>,
         resultsByInstruction: Map<NadelBatchHydrationFieldInstruction, List<NadelResolvedObjectBatch>>,
     ): List<NadelResultInstruction> {
-        val isHydratedFieldListOutput = isHydratedFieldListOutput()
-
         val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
 
         return sourceObjectsMetadata
@@ -229,7 +229,6 @@ internal class NadelNewBatchHydrator(
                     subject = parentNode,
                     field = sourceField,
                     newValue = getHydrationValueForSourceNode(
-                        isHydratedFieldListOutput,
                         indexedResultsByInstruction,
                         sourceIdsPairedWithInstruction,
                     ),
@@ -239,7 +238,6 @@ internal class NadelNewBatchHydrator(
 
     context(BatchHydratorContext)
     private fun getHydrationValueForSourceNode(
-        isHydratedFieldListOutput: Boolean,
         indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
         sourceIdsPairedWithInstruction: PairList<JsonNode, NadelBatchHydrationFieldInstruction?>?,
     ): JsonNode {
@@ -257,7 +255,7 @@ internal class NadelNewBatchHydrator(
             if (isIndexHydration) {
                 if (sourceIdsPairedWithInstruction == null) {
                     null
-                } else if (isHydratedFieldListOutput) {
+                } else if (isSourceFieldListOutput) {
                     if (isSourceInputFieldListOutput) {
                         sourceIdsPairedWithInstruction
                             .map { (sourceId, instruction) ->
@@ -274,7 +272,7 @@ internal class NadelNewBatchHydrator(
             } else {
                 if (sourceIdsPairedWithInstruction == null) {
                     null
-                } else if (isHydratedFieldListOutput) {
+                } else if (isSourceFieldListOutput) {
                     sourceIdsPairedWithInstruction
                         .map { (sourceId, instruction) ->
                             extractNode(sourceId, instruction)?.value
@@ -517,11 +515,10 @@ internal class NadelNewBatchHydrator(
             .toList()
     }
 
-    /**
-     * Store in context itself.
-     */
-    context(BatchHydratorContext)
-    private fun isHydratedFieldListOutput(): Boolean {
+    private fun isSourceFieldListOutput(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        sourceField: ExecutableNormalizedField,
+    ): Boolean {
         return executionBlueprint.engineSchema
             .getField(
                 makeFieldCoordinates(
