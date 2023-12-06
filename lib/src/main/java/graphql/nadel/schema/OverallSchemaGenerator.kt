@@ -72,6 +72,10 @@ internal class OverallSchemaGenerator {
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationTemplateEnumDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedFromDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedTemplateDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelWhenConditionPredicateDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelWhenConditionDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelWhenConditionResultDefinition)
+
         addIfNotPresent(overallRegistry, allDefinitions, newScalarTypeDefinition()
             .name(ExtendedScalars.Json.name)
             .build())
