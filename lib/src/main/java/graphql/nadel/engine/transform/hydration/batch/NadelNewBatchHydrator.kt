@@ -177,6 +177,7 @@ internal class NadelNewBatchHydrator(
 
     context(NadelBatchHydratorContext)
     suspend fun hydrate(sourceObjects: List<JsonNode>): List<NadelResultInstruction> {
+        // Gets source IDs, instructions info etc.
         val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects)
         val sourceIdsByInstruction = getSourceIdsByInstruction(sourceObjectsMetadata)
 
@@ -210,11 +211,11 @@ internal class NadelNewBatchHydrator(
         indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
     ): List<NadelResultInstruction> {
         return sourceObjectsMetadata
-            .map { (parentNode, sourceIdsPairedWithInstruction) ->
+            .map { (sourceObject, sourceIdsPairedWithInstruction) ->
                 NadelResultInstruction.Set(
-                    subject = parentNode,
+                    subject = sourceObject,
                     field = sourceField,
-                    newValue = getHydrationValueForSourceNode(
+                    newValue = getHydrationValueForSourceObject(
                         indexedResultsByInstruction,
                         sourceIdsPairedWithInstruction,
                     ),
@@ -223,7 +224,7 @@ internal class NadelNewBatchHydrator(
     }
 
     context(NadelBatchHydratorContext)
-    private fun getHydrationValueForSourceNode(
+    private fun getHydrationValueForSourceObject(
         indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
         sourceIdsPairedWithInstruction: PairList<JsonNode, NadelBatchHydrationFieldInstruction?>?,
     ): JsonNode {
@@ -248,7 +249,7 @@ internal class NadelNewBatchHydrator(
                     JsonNode(
                         sourceIdsPairedWithInstruction
                             .map { (sourceId, instruction) ->
-                                extractNode(sourceId, instruction)?.value
+                                extractNode(sourceId, instruction).value
                             },
                     )
                 } else {
@@ -266,7 +267,7 @@ internal class NadelNewBatchHydrator(
                 JsonNode(
                     sourceIdsPairedWithInstruction
                         .map { (sourceId, instruction) ->
-                            extractNode(sourceId, instruction)?.value
+                            extractNode(sourceId, instruction).value
                         },
                 )
             } else {
@@ -369,21 +370,21 @@ internal class NadelNewBatchHydrator(
         sourceObjects: List<JsonNode>,
     ): List<SourceObjectMetadata> {
         return sourceObjects
-            .map { parentNode ->
+            .map { sourceObject ->
                 val instructions = instructionsByObjectTypeNames.getInstructionsForNode(
                     executionBlueprint = executionBlueprint,
                     service = sourceFieldService,
                     aliasHelper = aliasHelper,
-                    parentNode = parentNode,
+                    parentNode = sourceObject,
                 )
 
                 val sourceIdsPairedWithInstructions = getInstructionParingForSourceIds(
-                    parentNode = parentNode,
+                    sourceObject = sourceObject,
                     instructions = instructions,
                 )
 
                 SourceObjectMetadata(
-                    parentNode,
+                    sourceObject,
                     sourceIdsPairedWithInstructions,
                 )
             }
@@ -391,7 +392,7 @@ internal class NadelNewBatchHydrator(
 
     context(NadelBatchHydratorContext)
     private fun getInstructionParingForSourceIds(
-        parentNode: JsonNode,
+        sourceObject: JsonNode,
         instructions: List<NadelBatchHydrationFieldInstruction>,
     ): PairList<JsonNode, NadelBatchHydrationFieldInstruction?>? {
         val coords = makeFieldCoordinates(
@@ -409,7 +410,7 @@ internal class NadelNewBatchHydrator(
             .singleOfType<ValueSource.FieldResultValue>()
 
         return if (executionBlueprint.engineSchema.getField(coords)!!.type.unwrapNonNull().isList) {
-            getSourceInputs(parentNode, fieldSource, aliasHelper, includeNulls = isIndexHydration)
+            getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceId ->
                     val instruction = executionContext.hooks.getHydrationInstruction(
                         instructions = instructions,
@@ -423,7 +424,7 @@ internal class NadelNewBatchHydrator(
             // todo: determine what to do here in the longer term, this hook should probably be replaced
             val instruction = executionContext.hooks.getHydrationInstruction(
                 instructions = instructions,
-                parentNode = parentNode,
+                parentNode = sourceObject,
                 aliasHelper = aliasHelper,
                 userContext = executionContext.userContext,
             )
@@ -431,7 +432,7 @@ internal class NadelNewBatchHydrator(
             if (instruction == null) {
                 null
             } else {
-                getSourceInputs(parentNode, fieldSource, aliasHelper, includeNulls = isIndexHydration)
+                getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                     ?.map { sourceId ->
                         sourceId to instruction
                     }
@@ -465,17 +466,17 @@ internal class NadelNewBatchHydrator(
     }
 
     /**
-     * Gets the source inputs for [parentNode]
+     * Gets the source inputs for [sourceObject]
      */
     private fun getSourceInputs(
-        parentNode: JsonNode,
+        sourceObject: JsonNode,
         valueSource: ValueSource.FieldResultValue,
         aliasHelper: NadelAliasHelper,
         includeNulls: Boolean,
     ): List<JsonNode>? {
         val resultPath = aliasHelper.getQueryPath(valueSource.queryPathToField)
         @Suppress("DEPRECATION") // todo: maybe un-deprecate this or move to new JsonNodes
-        return JsonNodeExtractor.getNodesAt(parentNode, resultPath, flatten = true)
+        return JsonNodeExtractor.getNodesAt(sourceObject, resultPath, flatten = true)
             .also {
                 // Do nothing
                 if (it.isNotEmpty() && it.all { it.value == null }) {
