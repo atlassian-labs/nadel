@@ -231,15 +231,16 @@ internal class NadelNewBatchHydrator(
             fieldName = state.hydratedField.name,
         )
 
+        val fieldSource = instructions
+            .first()
+            .actorInputValueDefs
+            .asSequence()
+            .map {
+                it.valueSource
+            }
+            .singleOfType<ValueSource.FieldResultValue>()
+
         return if (executionBlueprint.engineSchema.getField(coords)!!.type.unwrapNonNull().isList) {
-            val fieldSource = instructions
-                .first()
-                .actorInputValueDefs
-                .asSequence()
-                .map {
-                    it.valueSource
-                }
-                .singleOfType<ValueSource.FieldResultValue>()
 
             // todo: move this to validation
             instructions
@@ -261,7 +262,18 @@ internal class NadelNewBatchHydrator(
                     sourceId to instruction
                 }
         } else {
-            throw UnsupportedOperationException("todo")
+            // todo: determine what to do here in the longer term, this hook should probably be replaced
+            val instruction = state.executionContext.hooks.getHydrationInstruction(
+                instructions = instructions,
+                parentNode = parentNode,
+                aliasHelper = state.aliasHelper,
+                userContext = state.executionContext.userContext,
+            )!!
+
+            extractValues(parentNode, fieldSource, state.aliasHelper)
+                .map { sourceId ->
+                    sourceId to instruction
+                }
         }
     }
 
