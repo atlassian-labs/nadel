@@ -1,32 +1,15 @@
-package graphql.nadel.engine.transform.hydration.batch
+package graphql.nadel.engine.transform.hydration.batch.indexing
 
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
+import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
-import graphql.nadel.engine.util.AnyIterable
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.singleOfType
-
-@Suppress("DataClassPrivateConstructor") // Whatever, no matter
-internal data class NadelBatchHydrationIndexKey private constructor(private val key: Any?) {
-    constructor(node: JsonNode?) : this(key = node)
-    constructor(nodes: List<JsonNode?>) : this(key = nodes)
-}
-
-/**
- * Interface to define a process to index the result objects.
- */
-internal interface NadelBatchHydrationIndexer {
-    fun getSourceKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey
-
-    fun getIndex(
-        batches: List<NadelResolvedObjectBatch>,
-    ): Map<NadelBatchHydrationIndexKey, JsonNode>
-}
 
 internal class NadelBatchHydrationObjectIdentifiedIndexer(
     private val aliasHelper: NadelAliasHelper,
@@ -84,8 +67,7 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
         return batches
             .asSequence()
             .flatMap { batch ->
-                JsonNodeExtractor
-                    .getNodesAt(batch.result.data, instruction.queryPathToActorField, flatten = true)
+                JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToActorField, flatten = true)
                     // Ignore nulls in result
                     .filter {
                         it.value != null
@@ -93,71 +75,20 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
             }
             .groupBy { node ->
                 @Suppress("UNCHECKED_CAST")
-                NadelBatchHydrationIndexKey(
+                (NadelBatchHydrationIndexKey(
                     strategy.objectIds
                         .map { objectId ->
                             val resultKey = aliasHelper.getResultKey(objectId.resultId)
-                            JsonNode((node.value as MutableJsonMap).remove(resultKey))
+                            JsonNode(
+                                (node.value as MutableJsonMap).remove(
+                                    resultKey
+                                )
+                            )
                         }
-                )
+                ))
             }
             .mapValues { (_, values) ->
                 // todo: stop doing stupid here
-                values.first()
-            }
-    }
-}
-
-internal class NadelBatchHydrationIndexBasedIndexer(
-    private val instruction: NadelBatchHydrationFieldInstruction,
-) : NadelBatchHydrationIndexer {
-    override fun getSourceKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey {
-        return NadelBatchHydrationIndexKey(sourceInput)
-    }
-
-    override fun getIndex(
-        batches: List<NadelResolvedObjectBatch>,
-    ): Map<NadelBatchHydrationIndexKey, JsonNode> {
-        return batches
-            .flatMap { batch ->
-                val data = JsonNodeExtractor
-                    .getNodesAt(batch.result.data, instruction.queryPathToActorField, flatten = false)
-
-                if (data.emptyOrSingle()?.value == null) {
-                    emptyList()
-                } else {
-                    JsonNodeExtractor
-                        .getNodesAt(batch.result.data, instruction.queryPathToActorField)
-                        .asSequence()
-                        .flatMap {
-                            when (val value = it.value) {
-                                is AnyIterable -> value.asSequence()
-                                else -> sequenceOf(value)
-                            }
-                        }
-                        .map {
-                            JsonNode(it)
-                        }
-                        .toList()
-                        .let { resolvedObjects ->
-                            // Must be 1-1 with inputs
-                            require(resolvedObjects.size == batch.sourceInputs.size) {
-                                "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments"
-                            }
-                            batch.sourceInputs.zip(resolvedObjects)
-                        }
-                }
-            }
-            .groupBy(
-                keySelector = { (sourceId, _) ->
-                    NadelBatchHydrationIndexKey(sourceId)
-                },
-                valueTransform = { (_, resolvedObject) ->
-                    resolvedObject
-                },
-            )
-            .mapValues { (_, values) ->
-                // It's possible there are multiple, but there really shouldn't be
                 values.first()
             }
     }

@@ -266,3 +266,14 @@ fun <T> Sequence<T>.all(min: Int, predicate: (T) -> Boolean): Boolean {
 
     return count >= min
 }
+
+fun <A, B : Any> Sequence<Pair<A, B?>>.filterPairSecondNotNull(): Sequence<Pair<A, B>> {
+    return mapNotNull { pair ->
+        if (pair.second == null) {
+            null
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            pair as Pair<A, B>
+        }
+    }
+}
