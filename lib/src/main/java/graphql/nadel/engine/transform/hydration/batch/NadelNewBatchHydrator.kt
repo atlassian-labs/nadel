@@ -177,11 +177,7 @@ internal class NadelNewBatchHydrator(
 
     context(NadelBatchHydratorContext)
     suspend fun hydrate(sourceObjects: List<JsonNode>): List<NadelResultInstruction> {
-        val sourceObjectsMetadata = getSourceObjectsMetadata(
-            executionBlueprint = executionBlueprint,
-            parentNodes = sourceObjects,
-        )
-
+        val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects)
         val sourceIdsByInstruction = getSourceIdsByInstruction(sourceObjectsMetadata)
 
         val resultsByInstruction = sourceIdsByInstruction
@@ -193,9 +189,11 @@ internal class NadelNewBatchHydrator(
                 )
             }
 
-        val setData = makeSetDataInstructions(
+        val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
+
+        val setData = getSetDataInstructions(
             sourceObjectsMetadata = sourceObjectsMetadata,
-            resultsByInstruction = resultsByInstruction,
+            indexedResultsByInstruction = indexedResultsByInstruction,
         )
 
         val addErrors = resultsByInstruction
@@ -207,12 +205,10 @@ internal class NadelNewBatchHydrator(
     }
 
     context(NadelBatchHydratorContext)
-    private fun makeSetDataInstructions(
+    private fun getSetDataInstructions(
         sourceObjectsMetadata: List<SourceObjectMetadata>,
-        resultsByInstruction: Map<NadelBatchHydrationFieldInstruction, List<NadelResolvedObjectBatch>>,
+        indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
     ): List<NadelResultInstruction> {
-        val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
-
         return sourceObjectsMetadata
             .map { (parentNode, sourceIdsPairedWithInstruction) ->
                 NadelResultInstruction.Set(
@@ -231,48 +227,53 @@ internal class NadelNewBatchHydrator(
         indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
         sourceIdsPairedWithInstruction: PairList<JsonNode, NadelBatchHydrationFieldInstruction?>?,
     ): JsonNode {
-        fun extractNode(sourceId: JsonNode, instruction: NadelBatchHydrationFieldInstruction?): JsonNode? {
+        fun extractNode(
+            sourceId: JsonNode,
+            instruction: NadelBatchHydrationFieldInstruction?,
+        ): JsonNode {
             return if (instruction == null) {
-                null
+                JsonNode.Null
             } else {
-                indexedResultsByInstruction[instruction]!![
-                    getIndexer(instruction).getSourceKey(sourceId)
-                ]
+                val key = getIndexer(instruction).getSourceKey(sourceId)
+                // todo: could this ever be null say if response failed?
+                indexedResultsByInstruction[instruction]!![key] ?: JsonNode.Null
             }
         }
 
-        return JsonNode(
-            if (isIndexHydration) {
-                if (sourceIdsPairedWithInstruction == null) {
-                    null
-                } else if (isSourceFieldListOutput) {
-                    if (isSourceInputFieldListOutput) {
+        return if (isIndexHydration) {
+            if (sourceIdsPairedWithInstruction == null) {
+                JsonNode.Null
+            } else if (isSourceFieldListOutput) {
+                if (isSourceInputFieldListOutput) {
+                    JsonNode(
                         sourceIdsPairedWithInstruction
                             .map { (sourceId, instruction) ->
                                 extractNode(sourceId, instruction)?.value
-                            }
-                    } else {
-                        val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                        extractNode(sourceId, instruction)?.value
-                    }
+                            },
+                    )
                 } else {
                     val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                    extractNode(sourceId, instruction)?.value
+                    extractNode(sourceId, instruction)
                 }
             } else {
-                if (sourceIdsPairedWithInstruction == null) {
-                    null
-                } else if (isSourceFieldListOutput) {
+                val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
+                extractNode(sourceId, instruction)
+            }
+        } else {
+            if (sourceIdsPairedWithInstruction == null) {
+                JsonNode.Null
+            } else if (isSourceFieldListOutput) {
+                JsonNode(
                     sourceIdsPairedWithInstruction
                         .map { (sourceId, instruction) ->
                             extractNode(sourceId, instruction)?.value
-                        }
-                } else {
-                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                    extractNode(sourceId, instruction)?.value
-                }
-            },
-        )
+                        },
+                )
+            } else {
+                val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
+                extractNode(sourceId, instruction)
+            }
+        }
     }
 
     context(NadelBatchHydratorContext)
@@ -354,6 +355,7 @@ internal class NadelNewBatchHydrator(
                 }
                 .awaitAll()
                 .asSequence()
+                // todo: needs fix as this will not work if the data is partitioned
                 .zip(uniqueSourceIds.asSequence().chunked(instruction.batchSize))
                 .map { (result, sourceIds) ->
                     NadelResolvedObjectBatch(sourceIds, result)
@@ -364,10 +366,9 @@ internal class NadelNewBatchHydrator(
 
     context(NadelBatchHydratorContext)
     private fun getSourceObjectsMetadata(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        parentNodes: List<JsonNode>,
+        sourceObjects: List<JsonNode>,
     ): List<SourceObjectMetadata> {
-        return parentNodes
+        return sourceObjects
             .map { parentNode ->
                 val instructions = instructionsByObjectTypeNames.getInstructionsForNode(
                     executionBlueprint = executionBlueprint,

@@ -12,4 +12,8 @@ data class JsonNode(val value: Any?) {
     init {
         require(value == null || value is AnyMap || value is AnyList || value is Number || value is Boolean || value is String)
     }
+
+    companion object {
+        internal val Null = JsonNode(null)
+    }
 }
