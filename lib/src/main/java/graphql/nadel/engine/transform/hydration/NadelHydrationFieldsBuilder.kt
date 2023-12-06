@@ -61,6 +61,22 @@ internal object NadelHydrationFieldsBuilder {
             userContext = userContext,
         )
 
+        return makeBatchActorQueries(
+            executionBlueprint = executionBlueprint,
+            instruction = instruction,
+            aliasHelper = aliasHelper,
+            hydratedField = hydratedField,
+            argBatches = argBatches,
+        )
+    }
+
+    fun makeBatchActorQueries(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        instruction: NadelBatchHydrationFieldInstruction,
+        aliasHelper: NadelAliasHelper,
+        hydratedField: ExecutableNormalizedField,
+        argBatches: List<Map<NadelHydrationActorInputDef, NormalizedInputValue>>,
+    ): List<ExecutableNormalizedField> {
         val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction, executionBlueprint)
         val fieldChildren = deepClone(fields = hydratedField.children)
             .mapNotNull { childField ->

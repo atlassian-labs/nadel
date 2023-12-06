@@ -24,7 +24,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val nodes = JsonNodes(result.data, executionContext.hints)
+        val nodes = JsonNodes(result.data)
 
         val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
