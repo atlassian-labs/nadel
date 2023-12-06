@@ -1,0 +1,140 @@
+name: "new basic hydration with static arg object array"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barById(id: ID, friends: [FullName]): Bar
+    }
+    type Bar {
+      id: ID
+      name: String  
+    }
+    input FullName {
+      firstName: String
+      lastName: String
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [
+        { name: "id" value: "$source.id" }, 
+        { name: "friends" 
+          value: [
+            {
+              firstName: "first"
+              lastName: "last"
+            },
+            {
+              firstName: "first2"
+              lastName: "last2"
+            },
+            {
+              firstName: "first3"
+              lastName: "last3"
+            }
+        ]
+        }
+    ])
+    }
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID, friends: [FullName]): Bar
+    }
+    
+    input FullName {
+      firstName: String
+      lastName: String
+    }
+  service1: |
+    type Foo {
+      barId: ID 
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query {
+            foo {
+                __typename__hydration__bar: __typename
+                hydration__bar__id: id
+            }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__hydration__bar": "Foo",
+            "hydration__bar__id": "barId"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      query: |
+        query {
+          barById(id: "barId", friends: [
+            {
+              firstName: "first"
+              lastName: "last"
+            },
+            {
+              firstName: "first2"
+              lastName: "last2"
+            },
+            {
+              firstName: "first3"
+              lastName: "last3"
+            }
+        ]) {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "name": "Bar1"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar1"
+        }
+      }
+    },
+    "extensions": {}
+  }

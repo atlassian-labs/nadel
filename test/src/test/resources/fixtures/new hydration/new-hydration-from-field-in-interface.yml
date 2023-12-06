@@ -1,0 +1,119 @@
+name: "new hydration from field in interface"
+enabled: true
+overallSchema:
+  issues: |
+    type Query {
+      issue(id: ID): Issue
+    }
+    type Issue {
+      id: ID
+      title: String
+      issueAuthor: User @hydrated(service: "users" field: "user" arguments: [{name: "id" value: "$source.author.userId"}])
+    }
+  users: |
+    type Query {
+      user(id: ID!): User
+    }
+    type User {
+      id: ID!
+      name: String
+    }
+underlyingSchema:
+  issues: |
+    type Issue {
+      id: ID!
+      title: String
+      author: User
+    }
+
+    interface User {
+      userId: ID!
+    }
+
+    type ProductUser implements User {
+      userId: ID!
+      email: String
+    }
+
+    type Query {
+      issue(id: ID): Issue
+    }
+  users: |
+    type User {
+      id: ID!
+      name: String
+    }
+
+    type Query {
+      user(id: ID!): User
+    }
+query: |
+  query {
+    issue(id: "1") {
+      title
+      issueAuthor {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "issues"
+    request:
+      query: |
+        query {
+          issue(id: "1") {
+            __typename__hydration__issueAuthor: __typename
+            hydration__issueAuthor__author: author {
+              userId
+            }
+            title
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "title": "Issue 1",
+            "hydration__issueAuthor__author" : {
+              "userId": "1001"
+            },
+            "__typename__hydration__issueAuthor": "Issue"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "users"
+    request:
+      query: |
+        query {
+          user(id: "1001") {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "user": {
+            "name": "McUser Face"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "title": "Issue 1",
+        "issueAuthor": {
+          "name": "McUser Face"
+        }
+      }
+    },
+    "extensions": {}
+  }

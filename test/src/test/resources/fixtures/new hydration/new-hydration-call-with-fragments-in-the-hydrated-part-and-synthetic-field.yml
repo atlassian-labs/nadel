@@ -1,0 +1,211 @@
+name: "new hydration call with fragments in the hydrated part and synthetic field"
+enabled: true
+overallSchema:
+  UserService: |
+    type Query {
+      userQuery: UserQuery
+    }
+    type UserQuery {
+      usersByIds(id: [ID]): [User]
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authorDetails: [AuthorDetail]
+      authors: [User] @hydrated(service: "UserService" field: "userQuery.usersByIds" arguments: [{name: "id" value: "$source.authorDetails.authorId"}] identifiedBy: "id")
+    }
+    type AuthorDetail {
+      name: String
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      userQuery: UserQuery
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+
+    type UserQuery {
+      usersByIds(id: [ID]): [User]
+    }
+  Issues: |
+    type AuthorDetail {
+      authorId: ID
+      name: String
+    }
+
+    type Issue {
+      authorDetails: [AuthorDetail]
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  fragment IssueFragment on Issue {
+    id
+  }
+
+  query {
+    issues {
+      ...IssueFragment
+      id
+      authors {
+        id
+        ...UserFragment1
+      }
+    }
+    userQuery {
+      usersByIds(id: ["USER-1"]) {
+        ...UserFragment1
+      }
+    }
+  }
+
+  fragment UserFragment1 on User {
+    id
+    name
+    ...UserFragment2
+  }
+
+  fragment UserFragment2 on User {
+    name
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "UserService"
+    request:
+      query: |
+        query {
+          userQuery {
+            usersByIds(id: ["USER-1"]) {
+              id
+              name
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userQuery": {
+            "usersByIds": [
+              {
+                "name": "User 1",
+                "id": "USER-1"
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Issues"
+    request:
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            batch_hydration__authors__authorDetails: authorDetails {
+              authorId
+            }
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "batch_hydration__authors__authorDetails": [
+                {
+                  "authorId": "USER-1"
+                },
+                {
+                  "authorId": "USER-2"
+                }
+              ],
+              "__typename__batch_hydration__authors": "Issue",
+              "id": "ISSUE-1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      query: |
+        query {
+          userQuery {
+            usersByIds(id: ["USER-1", "USER-2"]) {
+              id
+              batch_hydration__authors__id: id
+              name
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userQuery": {
+            "usersByIds": [
+              {
+                "name": "User 1",
+                "id": "USER-1",
+                "batch_hydration__authors__id": "USER-1"
+              },
+              {
+                "name": "User 2",
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2"
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "id": "USER-1",
+              "name": "User 1"
+            },
+            {
+              "id": "USER-2",
+              "name": "User 2"
+            }
+          ]
+        }
+      ],
+      "userQuery": {
+        "usersByIds": [
+          {
+            "id": "USER-1",
+            "name": "User 1"
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

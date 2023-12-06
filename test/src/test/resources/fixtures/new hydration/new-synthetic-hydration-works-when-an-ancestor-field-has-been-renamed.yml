@@ -1,0 +1,123 @@
+name: "new synthetic hydration works when an ancestor field has been renamed"
+enabled: true
+overallSchema:
+  IssueService: |
+    type DevOpsIssue @renamed(from: "Issue") {
+      id: ID
+    }
+    type DevOpsRelationship @renamed(from: "Relationship") {
+      devOpsIssue: DevOpsIssue @hydrated(service: "IssueService" field: "syntheticIssue.issue" arguments: [{name: "id" value: "$source.issueId"}])
+    }
+    type DevOpsRelationshipConnection @renamed(from: "RelationshipConnection") {
+      devOpsNodes: [DevOpsRelationship] @renamed(from: "nodes")
+    }
+    type SyntheticIssue {
+      devOpsIssue(id: ID): DevOpsIssue @renamed(from: "issue")
+      issue(id: ID): DevOpsIssue
+    }
+    type Query {
+      devOpsRelationships: DevOpsRelationshipConnection @renamed(from: "relationships")
+      syntheticIssue: SyntheticIssue
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      id: ID
+    }
+
+    type Query {
+      relationships: RelationshipConnection
+      syntheticIssue: SyntheticIssue
+    }
+
+    type Relationship {
+      issueId: ID
+    }
+
+    type RelationshipConnection {
+      nodes: [Relationship]
+    }
+
+    type SyntheticIssue {
+      issue(id: ID): Issue
+    }
+query: |
+  query {
+    devOpsRelationships {
+      devOpsNodes {
+        devOpsIssue {
+          id
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "IssueService"
+    request:
+      query: |
+        query {
+          rename__devOpsRelationships__relationships: relationships {
+            __typename__rename__devOpsNodes: __typename
+            rename__devOpsNodes__nodes: nodes {
+              __typename__hydration__devOpsIssue: __typename
+              hydration__devOpsIssue__issueId: issueId
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__devOpsRelationships__relationships": {
+            "__typename__rename__devOpsNodes": "RelationshipConnection",
+            "rename__devOpsNodes__nodes": [
+              {
+                "__typename__hydration__devOpsIssue": "Relationship",
+                "hydration__devOpsIssue__issueId": "1"
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "IssueService"
+    request:
+      query: |
+        query {
+          syntheticIssue {
+            issue(id: "1") {
+              id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "syntheticIssue": {
+            "issue": {
+              "id": "1"
+            }
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "devOpsRelationships": {
+        "devOpsNodes": [
+          {
+            "devOpsIssue": {
+              "id": "1"
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }
