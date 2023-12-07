@@ -235,14 +235,9 @@ internal class NadelHydrationValidation(
                             actorField.name
                         ),
                         nadelHydrationWhenConditionValidation.validateHydrationWhenConditionInput(
-                            field.type,
-                            actorFieldArg.type,
                             parent,
                             overallField,
-                            remoteArgDef,
-                            hydration,
-                            isBatchHydration,
-                            actorField.name
+                            hydration
                         ),
                     )
                 }
@@ -255,7 +250,8 @@ internal class NadelHydrationValidation(
                 } else {
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
-                    val validationError = nadelHydrationArgumentValidation.validateHydrationInputArg(
+                    return listOfNotNull(
+                    nadelHydrationArgumentValidation.validateHydrationInputArg(
                         hydrationArgType,
                         actorFieldArg.type,
                         parent,
@@ -264,11 +260,7 @@ internal class NadelHydrationValidation(
                         hydration,
                         isBatchHydration,
                         actorField.name
-                    )
-                    if (validationError != null) {
-                        return listOf(validationError)
-                    }
-                    return emptyList()
+                    ))
                 }
             }
 

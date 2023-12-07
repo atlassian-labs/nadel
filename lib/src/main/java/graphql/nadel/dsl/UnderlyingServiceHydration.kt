@@ -10,7 +10,7 @@ data class UnderlyingServiceHydration(
     val isBatched: Boolean,
     val batchSize: Int,
     val timeout: Int,
-    val conditionalHydration: LinkedHashMap<String, Any>?
+    val conditionalHydration: Map<String, Any>?
 ) {
     data class ObjectIdentifier(val sourceId: String, val resultId: String)
 }

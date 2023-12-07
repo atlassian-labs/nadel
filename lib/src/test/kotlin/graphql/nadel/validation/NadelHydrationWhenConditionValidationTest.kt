@@ -1,13 +1,10 @@
 package graphql.nadel.validation
 
-import graphql.Assert.assertTrue
-import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionSourceFieldNotASimpleType
+import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionUnsupportedFieldType
 import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateDoesNotMatchSourceFieldType
 import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateRequiresStringSourceField
 import graphql.nadel.validation.util.assertSingleOfType
-import graphql.schema.GraphQLTypeUtil
 import io.kotest.core.spec.style.DescribeSpec
-import io.mockk.InternalPlatformDsl.toStr
 
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
@@ -325,7 +322,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionSourceFieldNotASimpleType>()
+            val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
             assert(error.overallField.name == "creator")
             assert(error.sourceFieldName == "valid")
             assert(error.sourceFieldTypeName == "Boolean")

@@ -408,7 +408,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class WhenConditionSourceFieldNotASimpleType(
+    data class WhenConditionUnsupportedFieldType(
         val sourceFieldName: String,
         val sourceFieldTypeName: String,
         val overallField: GraphQLFieldDefinition
