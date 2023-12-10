@@ -87,6 +87,7 @@ internal class NadelHydrationValidation(
         }
 
         val indexHydrationErrors = limitUseOfIndexHydration(parent, overallField, hydrations)
+        val sourceFieldErrors = limitSourceField(parent, overallField, hydrations)
 
         if (hasMoreThanOneHydration) {
             val (batched, notBatched) = hydrations.partition(::isBatched)
@@ -95,7 +96,47 @@ internal class NadelHydrationValidation(
             }
         }
 
-        return indexHydrationErrors + errors
+        return indexHydrationErrors + sourceFieldErrors + errors
+    }
+
+    private fun limitSourceField(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        hydrations: List<UnderlyingServiceHydration>,
+    ): List<NadelSchemaValidationError> {
+        if (hydrations.size > 1) {
+            val hasListSourceInputField = hydrations
+                .any { hydration ->
+                    val parentType = parent.underlying as GraphQLFieldsContainer
+                    hydration
+                        .arguments
+                        .asSequence()
+                        .mapNotNull { argument ->
+                            argument.remoteArgumentSource.pathToField
+                        }
+                        .any { path ->
+                            parentType.getFieldAt(path)?.type?.unwrapNonNull()?.isList == true
+                        }
+                }
+
+            if (hasListSourceInputField) {
+                val sourceFields = hydrations
+                    .flatMapTo(LinkedHashSet()) { hydration ->
+                        hydration.arguments
+                            .mapNotNull { argument ->
+                                argument.remoteArgumentSource.pathToField
+                            }
+                    }
+
+                if (sourceFields.size > 1) {
+                    return listOf(
+                        NadelSchemaValidationError.MultipleHydrationSourceInputFields(parent, overallField),
+                    )
+                }
+            }
+        }
+
+        return emptyList()
     }
 
     private fun limitUseOfIndexHydration(
@@ -103,6 +144,7 @@ internal class NadelHydrationValidation(
         overallField: GraphQLFieldDefinition,
         hydrations: List<UnderlyingServiceHydration>,
     ): List<NadelSchemaValidationError> {
+        // todo: or maybe just don't allow polymorphic index hydration
         val (indexCount, nonIndexCount) = hydrations.partitionCount { it.isObjectMatchByIndex }
         if (indexCount > 0 && nonIndexCount > 0) {
             return listOf(

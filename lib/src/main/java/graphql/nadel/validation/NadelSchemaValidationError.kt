@@ -400,6 +400,20 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class MultipleHydrationSourceInputFields(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val coords = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Field $coords uses multiple \$source fields"
+        }
+
+        override val subject = overallField
+    }
+
     data class StaticArgIsNotAssignable(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
