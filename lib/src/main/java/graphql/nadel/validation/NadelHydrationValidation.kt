@@ -10,6 +10,7 @@ import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
+import graphql.nadel.engine.util.partitionCount
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
@@ -85,6 +86,8 @@ internal class NadelHydrationValidation(
             errors.addAll(outputTypeIssues)
         }
 
+        val indexHydrationErrors = limitUseOfIndexHydration(parent, overallField, hydrations)
+
         if (hasMoreThanOneHydration) {
             val (batched, notBatched) = hydrations.partition(::isBatched)
             if (batched.isNotEmpty() && notBatched.isNotEmpty()) {
@@ -92,7 +95,22 @@ internal class NadelHydrationValidation(
             }
         }
 
-        return errors
+        return indexHydrationErrors + errors
+    }
+
+    private fun limitUseOfIndexHydration(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        hydrations: List<UnderlyingServiceHydration>,
+    ): List<NadelSchemaValidationError> {
+        val (indexCount, nonIndexCount) = hydrations.partitionCount { it.isObjectMatchByIndex }
+        if (indexCount > 0 && nonIndexCount > 0) {
+            return listOf(
+                NadelSchemaValidationError.MixedIndexHydration(parent, overallField),
+            )
+        }
+
+        return emptyList()
     }
 
     private fun isBatched(hydration: UnderlyingServiceHydration): Boolean {
@@ -181,7 +199,6 @@ internal class NadelHydrationValidation(
                     )
                 )
             } else {
-                val remoteArgSource = remoteArg.remoteArgumentSource
                 getRemoteArgErrors(parent, overallField, remoteArg, actorField, hydration)
             }
         }
@@ -284,7 +301,8 @@ internal class NadelHydrationValidation(
 
             StaticArgument -> {
                 val staticArg = remoteArgSource.staticValue
-                if (!validationUtil.isValidLiteralValue(
+                if (
+                    !validationUtil.isValidLiteralValue(
                         staticArg,
                         actorFieldArg.type,
                         overallSchema,

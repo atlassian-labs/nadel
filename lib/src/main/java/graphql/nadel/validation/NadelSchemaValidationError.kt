@@ -386,6 +386,20 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class MixedIndexHydration(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val coords = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Field $coords uses both indexed hydration and non-indexed hydration"
+        }
+
+        override val subject = overallField
+    }
+
     data class StaticArgIsNotAssignable(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
