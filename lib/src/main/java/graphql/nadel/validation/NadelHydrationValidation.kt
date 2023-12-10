@@ -65,38 +65,53 @@ internal class NadelHydrationValidation(
         }
 
         val hasMoreThanOneHydration = hydrations.size > 1
-        val errors = mutableListOf<NadelSchemaValidationError>()
-
-        for (hydration in hydrations) {
-            val actorService = services[hydration.serviceName]
-            if (actorService == null) {
-                errors.add(MissingHydrationActorService(parent, overallField, hydration))
-                continue
+        val errors = hydrations
+            .flatMap { hydration ->
+                validate(parent, overallField, hydration, hasMoreThanOneHydration)
             }
 
-            val actorField = overallSchema.queryType.getFieldAt(hydration.pathToActorField)
-            if (actorField == null) {
-                errors.add(MissingHydrationActorField(parent, overallField, hydration))
-                continue
-            }
-
-            val argumentIssues = getArgumentErrors(parent, overallField, hydration, actorField)
-            val outputTypeIssues = getOutputTypeIssues(parent, overallField, actorField, hasMoreThanOneHydration)
-            errors.addAll(argumentIssues)
-            errors.addAll(outputTypeIssues)
-        }
-
+        val hydrationMismatchErrors = limitBatchHydrationMismatch(parent, overallField, hydrations)
         val indexHydrationErrors = limitUseOfIndexHydration(parent, overallField, hydrations)
         val sourceFieldErrors = limitSourceField(parent, overallField, hydrations)
 
-        if (hasMoreThanOneHydration) {
-            val (batched, notBatched) = hydrations.partition(::isBatched)
-            if (batched.isNotEmpty() && notBatched.isNotEmpty()) {
-                errors.add(NadelSchemaValidationError.HydrationsMismatch(parent, overallField))
-            }
+        return errors + hydrationMismatchErrors + indexHydrationErrors + sourceFieldErrors
+    }
+
+    private fun validate(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        hydration: UnderlyingServiceHydration,
+        hasMoreThanOneHydration: Boolean,
+    ): List<NadelSchemaValidationError> {
+        if (hydration.serviceName !in services) {
+            return listOf(
+                MissingHydrationActorService(parent, overallField, hydration),
+            )
         }
 
-        return indexHydrationErrors + sourceFieldErrors + errors
+        val actorField = overallSchema.queryType.getFieldAt(hydration.pathToActorField)
+            ?: return listOf(
+                MissingHydrationActorField(parent, overallField, hydration),
+            )
+
+        return getArgumentErrors(parent, overallField, hydration, actorField) +
+            getOutputTypeErrors(parent, overallField, actorField, hasMoreThanOneHydration)
+    }
+
+    private fun limitBatchHydrationMismatch(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        hydrations: List<UnderlyingServiceHydration>,
+    ): List<NadelSchemaValidationError> {
+        val (batched, notBatched) = hydrations.partitionCount(::isBatched)
+
+        return if (batched > 0 && notBatched > 0) {
+            listOf(
+                NadelSchemaValidationError.HydrationsMismatch(parent, overallField),
+            )
+        } else {
+            emptyList()
+        }
     }
 
     private fun limitSourceField(
@@ -160,7 +175,7 @@ internal class NadelHydrationValidation(
         return hydration.isBatched || /*deprecated*/ actorFieldDef?.type?.unwrapNonNull()?.isList == true
     }
 
-    private fun getOutputTypeIssues(
+    private fun getOutputTypeErrors(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         actorField: GraphQLFieldDefinition,
