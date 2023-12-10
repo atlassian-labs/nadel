@@ -5,6 +5,8 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
+internal typealias PairList<A, B> = List<Pair<A, B>>
+
 /**
  * Like [singleOrNull] but the single item must be of type [T].
  */

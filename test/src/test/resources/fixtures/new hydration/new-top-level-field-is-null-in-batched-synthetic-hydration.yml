@@ -122,7 +122,7 @@ serviceCalls:
       query: |
         query {
           users {
-            usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+            usersByIds(id: ["USER-4", "USER-5"]) {
               id
               batch_hydration__authors__id: id
             }

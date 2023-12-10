@@ -86,7 +86,7 @@ serviceCalls:
     request:
       query: |
         query {
-          usersByIds(ids: ["1", "1", "2"]) {
+          usersByIds(ids: ["1", "2"]) {
             name
           }
         }
@@ -96,9 +96,6 @@ serviceCalls:
       {
         "data": {
           "usersByIds": [
-            {
-              "name": "Name"
-            },
             {
               "name": "Name"
             },

@@ -1,6 +1,7 @@
-name: "new complex identified by with indexed hydration"
+name: "complex input object with indexed hydration"
 enabled: true
 overallSchema:
+  # language=GraphQL
   Activity: |
     type Query {
       activities: [Activity]
@@ -15,6 +16,7 @@ overallSchema:
         indexed: true
       )
     }
+  # language=GraphQL
   Issue: |
     type Query {
       issues(issuesInput: IssueInput!): [Issue]
@@ -30,6 +32,7 @@ overallSchema:
       site: ID!
     }
 underlyingSchema:
+  # language=GraphQL
   Activity: |
     type Query {
       activities: [Activity]
@@ -48,6 +51,7 @@ underlyingSchema:
       id: ID!
       site: ID!
     }
+  # language=GraphQL
   Issue: |
     type Query {
       issues(issuesInput: IssueInput!): [Issue]
@@ -62,6 +66,7 @@ underlyingSchema:
       id: ID!
       site: ID!
     }
+# language=GraphQL
 query: |
   query {
     activities {
@@ -76,6 +81,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Activity"
     request:
+      # language=GraphQL
       query: |
         {
           activities {
@@ -145,6 +151,7 @@ serviceCalls:
       }
   - serviceName: "Issue"
     request:
+      # language=GraphQL
       query: |
         {
           issues(issuesInput: [{id : "ISSUE-0", site : "CLOUD-0"}, {id : "ISSUE-1", site : "CLOUD-0"}, {id : "ISSUE-2", site : "CLOUD-0"}, {id : "ISSUE-3", site : "CLOUD-0"}]) {

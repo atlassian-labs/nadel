@@ -1,6 +1,7 @@
 name: "new hydration matching using index returning errors"
 enabled: true
 overallSchema:
+  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(ids: [ID]): [User]
@@ -9,6 +10,7 @@ overallSchema:
       id: ID
       name: String
     }
+  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -18,6 +20,7 @@ overallSchema:
       authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "ids" value: "$source.authorIds"}] indexed: true batchSize: 5)
     }
 underlyingSchema:
+  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(ids: [ID]): [User]
@@ -26,6 +29,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+  # language=GraphQL
   Issues: |
     type Issue {
       authorIds: [ID]
@@ -34,6 +38,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -47,6 +52,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -82,9 +88,10 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
-          usersByIds(ids: ["1", "1", "2"]) {
+          usersByIds(ids: ["1", "2"]) {
             name
           }
         }

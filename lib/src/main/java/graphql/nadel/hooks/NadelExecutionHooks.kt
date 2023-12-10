@@ -56,7 +56,7 @@ interface NadelExecutionHooks {
         sourceId: JsonNode,
         userContext: Any?,
     ): T? {
-        throw UnsupportedOperationException()
+        return instructions.single()
     }
 
     /**

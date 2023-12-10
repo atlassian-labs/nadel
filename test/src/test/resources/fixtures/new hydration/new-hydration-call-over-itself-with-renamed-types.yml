@@ -107,7 +107,7 @@ serviceCalls:
     request:
       query: |
         query {
-          characters(ids: ["C2", "C3"]) {
+          characters(ids: ["C1", "C2", "C3"]) {
             id
             batch_hydration__characters__id: id
             name
@@ -119,6 +119,11 @@ serviceCalls:
       {
         "data": {
           "characters": [
+            {
+              "name": "Luke",
+              "batch_hydration__characters__id": "C1",
+              "id": "C1"
+            },
             {
               "name": "Leia",
               "batch_hydration__characters__id": "C2",
@@ -128,41 +133,6 @@ serviceCalls:
               "name": "Anakin",
               "batch_hydration__characters__id": "C3",
               "id": "C3"
-            }
-          ]
-        },
-        "extensions": {}
-      }
-  - serviceName: "testing"
-    request:
-      query: |
-        query {
-          characters(ids: ["C1", "C2", "C1"]) {
-            id
-            batch_hydration__characters__id: id
-            name
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "characters": [
-            {
-              "name": "Luke",
-              "batch_hydration__characters__id": "C1",
-              "id": "C1"
-            },
-            {
-              "name": "Leia",
-              "batch_hydration__characters__id": "C2",
-              "id": "C2"
-            },
-            {
-              "name": "Luke",
-              "batch_hydration__characters__id": "C1",
-              "id": "C1"
             }
           ]
         },
