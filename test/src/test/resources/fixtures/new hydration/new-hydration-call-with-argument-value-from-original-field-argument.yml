@@ -1,0 +1,121 @@
+name: "new hydration call with argument value from original field argument"
+enabled: true
+overallSchema:
+  UserService: |
+    type Query {
+      usersByIds(extraArg: String, id: [ID]): [User]
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      author(extraArg: String): User @hydrated(
+        service: "UserService"
+        field: "usersByIds"
+        arguments: [
+          {name: "extraArg" value: "$argument.extraArg"}
+          {name: "id" value: "$source.authorId"}
+        ]
+        identifiedBy: "id"
+        batchSize: 2
+      )
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      usersByIds(extraArg: String, id: [ID]): [User]
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Issue {
+      authorId: ID
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      author(extraArg: "extraArg") {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__author: __typename
+            batch_hydration__author__authorId: authorId
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__author": "Issue",
+              "id": "ISSUE-1",
+              "batch_hydration__author__authorId": "USER-1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      query: |
+        query {
+          usersByIds(extraArg: "extraArg", id: ["USER-1"]) {
+            batch_hydration__author__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIds": [
+            {
+              "name": "User 1",
+              "batch_hydration__author__id": "USER-1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "author": {
+            "name": "User 1"
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }

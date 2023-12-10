@@ -1,0 +1,185 @@
+name: "new nested list hydration under a renamed top level field"
+enabled: true
+overallSchema:
+  Foo: |
+    type Query {
+      fooService: FooService @renamed(from: "service")
+
+      connection(id: ID): Connection
+      node(id: ID): Node
+      space(id: ID): Space
+    }
+    type FooService @renamed(from: "Service") {
+      otherServices: Connection @hydrated(service: "Foo" field: "connection" arguments: [{name: "id" value: "$source.id"}])
+    }
+    type Connection {
+      edges: [Edge]
+      nodes: [Node] @hydrated(service: "Foo" field: "node" arguments: [{name: "id" value: "$source.edges.node"}])
+    }
+    type Node {
+      space: Space @hydrated(service: "Foo" field: "space" arguments: [{name: "id" value: "$source.id"}])
+      id: ID
+    }
+    type Space {
+      id: ID
+      name: String
+    }
+    type Edge {
+      node: Node @hydrated(service: "Foo" field: "node" arguments: [{name: "id" value: "$source.node"}])
+      name: String
+      id: ID
+    }
+underlyingSchema:
+  Foo: |
+    type Connection {
+      edges: [Edge]
+      nodes: [ID]
+    }
+
+    type Edge {
+      id: ID
+      name: String
+      node: ID
+    }
+
+    type Node {
+      detailId: ID!
+      id: ID
+      name: String
+    }
+
+    type Query {
+      connection(id: ID): Connection
+      node(id: ID): Node
+      service: Service
+      space(id: ID): Space
+    }
+
+    type Service {
+      id: ID
+    }
+
+    type Space {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    fooService {
+      otherServices {
+        nodes {
+          space {
+            id
+          }
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          rename__fooService__service: service {
+            __typename__hydration__otherServices: __typename
+            hydration__otherServices__id: id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__fooService__service": {
+            "__typename__hydration__otherServices": "Service",
+            "hydration__otherServices__id": "ID"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          connection(id: "ID") {
+            __typename__hydration__nodes: __typename
+            hydration__nodes__edges: edges {
+              node
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "connection": {
+            "__typename__hydration__nodes": "Connection",
+            "hydration__nodes__edges": [
+              {
+                "node": "1"
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          node(id: "1") {
+            __typename__hydration__space: __typename
+            hydration__space__id: id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "node": {
+            "hydration__space__id": "1a",
+            "__typename__hydration__space": "Node"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          space(id: "1a") {
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "space": {
+            "id": "apple"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "fooService": {
+        "otherServices": {
+          "nodes": [
+            {
+              "space": {
+                "id": "apple"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "extensions": {}
+  }
