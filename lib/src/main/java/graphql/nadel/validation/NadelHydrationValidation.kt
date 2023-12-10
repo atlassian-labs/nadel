@@ -105,7 +105,7 @@ internal class NadelHydrationValidation(
         hydrations: List<UnderlyingServiceHydration>,
     ): List<NadelSchemaValidationError> {
         if (hydrations.size > 1) {
-            val hasListSourceInputField = hydrations
+            val anyListSourceInputField = hydrations
                 .any { hydration ->
                     val parentType = parent.underlying as GraphQLFieldsContainer
                     hydration
@@ -119,7 +119,7 @@ internal class NadelHydrationValidation(
                         }
                 }
 
-            if (hasListSourceInputField) {
+            if (anyListSourceInputField) {
                 val sourceFields = hydrations
                     .flatMapTo(LinkedHashSet()) { hydration ->
                         hydration.arguments
