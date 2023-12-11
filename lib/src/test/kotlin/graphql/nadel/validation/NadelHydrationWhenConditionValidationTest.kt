@@ -327,6 +327,138 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             assert(error.sourceFieldName == "valid")
             assert(error.sourceFieldTypeName == "Boolean")
         }
+        it("fails if sourceField is array of valid value") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type JiraIssue {
+                            categories: [String]
+                            creator: User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"}
+                                ]
+                                when: {
+                                    result: {
+                                        sourceField: "categories"
+                                        predicate: { equals: ["category1"] }
+                                    }
+                                }
+                            )
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                            categories: [String]!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
+            assert(error.overallField.name == "creator")
+            assert(error.sourceFieldName == "categories")
+            assert(error.sourceFieldTypeName == "[String]")
+        }
+        it("fails if sourceField doesnt exist") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type JiraIssue {
+                            creator: User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"}
+                                ]
+                                when: {
+                                    result: {
+                                        sourceField: "type"
+                                        predicate: { equals: "type1" }
+                                    }
+                                }
+                            )
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
+            assert(error.overallField.name == "creator")
+            assert(error.sourceFieldName == "categories")
+            assert(error.sourceFieldTypeName == "[String]")
+        }
         it("equals predicate fails if expected type mismatches with field type") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(

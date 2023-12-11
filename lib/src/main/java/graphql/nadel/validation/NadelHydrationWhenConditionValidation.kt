@@ -2,6 +2,7 @@ package graphql.nadel.validation
 
 import graphql.Scalars
 import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -23,8 +24,13 @@ internal class NadelHydrationWhenConditionValidation() {
         val whenConditionSourceFieldName: String = hydration.conditionalHydration?.get("sourceField") as String
         val whenConditionSourceField: GraphQLFieldDefinition = (parent.overall as GraphQLFieldsContainer).getField(whenConditionSourceFieldName)
 
+        if (whenConditionSourceField == null){
+            return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(whenConditionSourceFieldName, overallField)
+        }
+
+
         if (whenConditionSourceField.type.unwrapNonNull() !is GraphQLScalarType){
-            return return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(whenConditionSourceFieldName, GraphQLTypeUtil.simplePrint(whenConditionSourceField.type), overallField)
+            return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(whenConditionSourceFieldName, GraphQLTypeUtil.simplePrint(whenConditionSourceField.type), overallField)
         }
         val whenConditionSourceFieldTypeName: String = (whenConditionSourceField.type as GraphQLScalarType).name
 

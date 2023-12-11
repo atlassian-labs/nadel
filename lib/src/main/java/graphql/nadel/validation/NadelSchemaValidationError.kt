@@ -418,6 +418,14 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class WhenConditionSourceFieldDoesNotExist(
+        val sourceFieldName: String,
+        val overallField: GraphQLFieldDefinition
+    ) : NadelSchemaValidationError {
+        override val message = "When condition source field \"${sourceFieldName}\" does not exist "
+        override val subject = overallField
+    }
+
     data class WhenConditionPredicateDoesNotMatchSourceFieldType(
         val sourceFieldName: String,
         val sourceFieldTypeName: String,
