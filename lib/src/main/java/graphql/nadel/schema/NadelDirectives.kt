@@ -304,7 +304,10 @@ object NadelDirectives {
                 val identifiedByValues = resolveArgumentValue<List<Any>>(inputIdentifiedBy)
                 val identifiedBy = createObjectIdentifiers(identifiedByValues)
 
-                buildHydrationParameters(directive, arguments, identifiedBy)
+                val conditionalHydration = directive.getArgument("when")
+                    .getValue<LinkedHashMap<String, LinkedHashMap<String, Any>>>()?.get("result")
+
+                buildHydrationParameters(directive, arguments, identifiedBy, conditionalHydration)
             }
 
         val templatedHydrations = fieldDefinition.getAppliedDirectives(hydratedFromDirectiveDefinition.name)
@@ -320,6 +323,7 @@ object NadelDirectives {
         directive: GraphQLAppliedDirective,
         arguments: List<RemoteArgumentDefinition>,
         identifiedBy: List<UnderlyingServiceHydration.ObjectIdentifier>,
+        conditionalHydration: LinkedHashMap<String,Any>? = null
     ): UnderlyingServiceHydration {
         val service = getDirectiveValue<String>(directive, "service")
         val fieldNames = getDirectiveValue<String>(directive, "field").split('.')
@@ -345,7 +349,8 @@ object NadelDirectives {
             objectIndexed,
             batched,
             batchSize,
-            timeout
+            timeout,
+            conditionalHydration
         )
     }
 
