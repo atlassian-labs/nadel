@@ -1,8 +1,9 @@
 package graphql.nadel.validation
 
-import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionUnsupportedFieldType
 import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateDoesNotMatchSourceFieldType
 import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateRequiresStringSourceField
+import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist
+import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionUnsupportedFieldType
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -454,10 +455,9 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
+            val error = errors.assertSingleOfType<WhenConditionSourceFieldDoesNotExist>()
             assert(error.overallField.name == "creator")
-            assert(error.sourceFieldName == "categories")
-            assert(error.sourceFieldTypeName == "[String]")
+            assert(error.sourceFieldName == "type")
         }
         it("equals predicate fails if expected type mismatches with field type") {
             val fixture = NadelValidationTestFixture(

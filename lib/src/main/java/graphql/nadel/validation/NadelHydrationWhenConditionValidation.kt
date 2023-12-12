@@ -23,11 +23,7 @@ internal class NadelHydrationWhenConditionValidation() {
 
         val whenConditionSourceFieldName: String = hydration.conditionalHydration?.get("sourceField") as String
         val whenConditionSourceField: GraphQLFieldDefinition = (parent.overall as GraphQLFieldsContainer).getField(whenConditionSourceFieldName)
-
-        if (whenConditionSourceField == null){
-            return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(whenConditionSourceFieldName, overallField)
-        }
-
+            ?: return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(whenConditionSourceFieldName, overallField)
 
         if (whenConditionSourceField.type.unwrapNonNull() !is GraphQLScalarType){
             return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(whenConditionSourceFieldName, GraphQLTypeUtil.simplePrint(whenConditionSourceField.type), overallField)
