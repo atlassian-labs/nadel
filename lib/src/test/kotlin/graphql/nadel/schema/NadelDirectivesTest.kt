@@ -9,6 +9,9 @@ import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationComplexIdentifiedBy
 import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
+import graphql.nadel.schema.NadelDirectives.nadelWhenConditionDefinition
+import graphql.nadel.schema.NadelDirectives.nadelWhenConditionPredicateDefinition
+import graphql.nadel.schema.NadelDirectives.nadelWhenConditionResultDefinition
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.MockedWiringFactory
 import graphql.schema.idl.RuntimeWiring
@@ -30,6 +33,9 @@ class NadelDirectivesTest : DescribeSpec({
         ${AstPrinter.printAst(nadelHydrationTemplateEnumDefinition)}
         ${AstPrinter.printAst(hydratedFromDirectiveDefinition)}
         ${AstPrinter.printAst(hydratedTemplateDirectiveDefinition)}
+        ${AstPrinter.printAst(nadelWhenConditionDefinition)}
+        ${AstPrinter.printAst(nadelWhenConditionPredicateDefinition)}
+        ${AstPrinter.printAst(nadelWhenConditionResultDefinition)}
         scalar JSON
     """
 
@@ -55,6 +61,12 @@ class NadelDirectivesTest : DescribeSpec({
                                 {name: "fieldVal" value: "$source.namespace.issueId"}
                                 {name: "argVal" value: "$argument.cloudId"}
                             ]
+                            when: {
+                                result: {
+                                    sourceField: "type"
+                                    predicate: { equals: "issue" }
+                                }
+                            }
                         )
                 }
             """.trimIndent())

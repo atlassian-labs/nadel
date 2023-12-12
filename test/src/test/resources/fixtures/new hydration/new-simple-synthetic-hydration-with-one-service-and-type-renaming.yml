@@ -1,0 +1,142 @@
+name: "new simple synthetic hydration with one service and type renaming"
+enabled: true
+overallSchema:
+  testing: |
+    type Query {
+      tests: TestQuery
+    }
+    type TestQuery {
+      testing: Testing
+      character(id: ID): TestingCharacter
+    }
+    type Testing {
+      movie: Movie
+    }
+    type TestingCharacter @renamed(from: "Character") {
+      id: ID!
+      name: String
+    }
+    type Movie {
+      id: ID!
+      name: String
+      character: TestingCharacter @hydrated(service: "testing" field: "tests.character" arguments: [{name: "id" value: "$source.characterId"}] identifiedBy: "id" batchSize: 3)
+    }
+underlyingSchema:
+  testing: |
+    type Character {
+      id: ID!
+      name: String
+    }
+
+    type Movie {
+      characterId: ID
+      id: ID!
+      name: String
+    }
+
+    type Query {
+      tests: TestQuery
+    }
+
+    type TestQuery {
+      character(id: ID): Character
+      testing: Testing
+    }
+
+    type Testing {
+      movie: Movie
+    }
+query: |
+  query {
+    tests {
+      testing {
+        movie {
+          id
+          name
+          character {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "testing"
+    request:
+      query: |
+        query {
+          tests {
+            testing {
+              movie {
+                __typename__hydration__character: __typename
+                hydration__character__characterId: characterId
+                id
+                name
+              }
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "testing": {
+              "movie": {
+                "name": "Movie 1",
+                "__typename__hydration__character": "Movie",
+                "hydration__character__characterId": "C1",
+                "id": "M1"
+              }
+            }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "testing"
+    request:
+      query: |
+        query {
+          tests {
+            character(id: "C1") {
+              id
+              name
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "character": {
+              "name": "Luke",
+              "id": "C1"
+            }
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "tests": {
+        "testing": {
+          "movie": {
+            "id": "M1",
+            "name": "Movie 1",
+            "character": {
+              "id": "C1",
+              "name": "Luke"
+            }
+          }
+        }
+      }
+    },
+    "extensions": {}
+  }

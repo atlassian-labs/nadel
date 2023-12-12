@@ -22,6 +22,11 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
 
+    testImplementation(kotlin("test"))
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.15.3")
     testImplementation("org.openjdk.jmh:jmh-core:1.37")
@@ -54,5 +59,5 @@ tasks.withType<KotlinCompile>().configureEach {
 
 configure<PowerAssertGradleExtension> {
     // WARNING: do NOT touch this unless you have read https://github.com/bnorm/kotlin-power-assert/issues/55
-    functions = listOf("kotlin.assert", "graphql.nadel.test.dbg")
+    functions = listOf("kotlin.assert", "kotlin.test.assertTrue", "kotlin.test.assertFalse", "graphql.nadel.test.dbg")
 }

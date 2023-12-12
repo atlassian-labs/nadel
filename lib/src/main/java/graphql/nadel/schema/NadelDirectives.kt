@@ -10,9 +10,12 @@ import graphql.language.BooleanValue
 import graphql.language.DirectiveDefinition.newDirectiveDefinition
 import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
 import graphql.language.EnumValueDefinition.newEnumValueDefinition
+import graphql.language.InputObjectTypeDefinition
 import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
 import graphql.language.ObjectValue
 import graphql.language.StringValue
+import graphql.language.TypeDefinition
+import graphql.language.TypeName
 import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
@@ -20,6 +23,7 @@ import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.util.IntValue
 import graphql.nadel.util.description
 import graphql.nadel.util.emptyArrayValue
@@ -34,6 +38,7 @@ import graphql.nadel.util.onInterface
 import graphql.nadel.util.onObject
 import graphql.nadel.util.onScalar
 import graphql.nadel.util.onUnion
+import graphql.parser.Parser
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
@@ -76,6 +81,38 @@ object NadelDirectives {
         .inputValueDefinition(
             name = "value",
             type = nonNull(ExtendedScalars.Json),
+        )
+        .build()
+
+    val nadelWhenConditionPredicateDefinition = parseType<InputObjectTypeDefinition>(
+        """
+        input NadelWhenConditionPredicate @oneOf {
+          startsWith: String
+          equals: JSON
+          matches: String
+        }
+        """.trimIndent(),
+    )
+
+    val nadelWhenConditionResultDefinition = newInputObjectDefinition()
+        .name("NadelWhenConditionResult")
+        .description("Specify a condition for the hydration to activate based on the result")
+        .inputValueDefinition(
+            name = "sourceField",
+            type = nonNull(GraphQLString),
+        )
+        .inputValueDefinition(
+            name = "predicate",
+            type = nonNull(nadelWhenConditionPredicateDefinition),
+        )
+        .build()
+
+    val nadelWhenConditionDefinition = newInputObjectDefinition()
+        .name("NadelWhenCondition")
+        .description("Specify a condition for the hydration to activate")
+        .inputValueDefinition(
+            name = "result",
+            type = nonNull(nadelWhenConditionResultDefinition),
         )
         .build()
 
@@ -134,6 +171,13 @@ object NadelDirectives {
             name = "arguments",
             description = "The arguments to the hydrated field",
             type = nonNull(list(nonNull(nadelHydrationArgumentDefinition))),
+        )
+        .inputValueDefinition(
+            name = "when",
+            description = "Specify a condition for the hydration to activate",
+            type = TypeName.newTypeName()
+                .name(nadelWhenConditionDefinition.name)
+                .build()
         )
         .build()
 
@@ -260,7 +304,10 @@ object NadelDirectives {
                 val identifiedByValues = resolveArgumentValue<List<Any>>(inputIdentifiedBy)
                 val identifiedBy = createObjectIdentifiers(identifiedByValues)
 
-                buildHydrationParameters(directive, arguments, identifiedBy)
+                val conditionalHydration = directive.getArgument("when")
+                    .getValue<LinkedHashMap<String, LinkedHashMap<String, Any>>>()?.get("result")
+
+                buildHydrationParameters(directive, arguments, identifiedBy, conditionalHydration)
             }
 
         val templatedHydrations = fieldDefinition.getAppliedDirectives(hydratedFromDirectiveDefinition.name)
@@ -276,6 +323,7 @@ object NadelDirectives {
         directive: GraphQLAppliedDirective,
         arguments: List<RemoteArgumentDefinition>,
         identifiedBy: List<UnderlyingServiceHydration.ObjectIdentifier>,
+        conditionalHydration: LinkedHashMap<String,Any>? = null
     ): UnderlyingServiceHydration {
         val service = getDirectiveValue<String>(directive, "service")
         val fieldNames = getDirectiveValue<String>(directive, "field").split('.')
@@ -301,7 +349,8 @@ object NadelDirectives {
             objectIndexed,
             batched,
             batchSize,
-            timeout
+            timeout,
+            conditionalHydration
         )
     }
 
@@ -482,6 +531,14 @@ object NadelDirectives {
 
     private fun <T> resolveArgumentValue(graphQLArgument: GraphQLAppliedDirectiveArgument): T {
         @Suppress("UNCHECKED_CAST") // Trust caller. Can't do much
-        return ValuesResolver.valueToInternalValue(graphQLArgument.argumentValue, graphQLArgument.type, GraphQLContext.getDefault(), Locale.getDefault()) as T
+        return ValuesResolver.valueToInternalValue(
+            graphQLArgument.argumentValue,
+            graphQLArgument.type,
+            GraphQLContext.getDefault(),
+            Locale.getDefault()
+        ) as T
+    }
+    private inline fun <reified T : TypeDefinition<*>> parseType(sdl: String): T {
+        return Parser.parse(sdl).definitions.singleOfType()
     }
 }

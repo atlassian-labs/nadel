@@ -1,0 +1,108 @@
+name: "new can generate legacy operation name on hydration"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barById(id: ID): Bar
+    }
+    type Bar {
+      id: ID
+      name: String
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
+      barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
+    }
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      fooDetails: FooDetails
+      id: ID
+    }
+
+    type FooDetails {
+      externalBarId: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query TestFoo {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query nadel_2_service1_TestFoo {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
+          }
+        }
+      variables: { }
+      operationName: "nadel_2_service1_TestFoo"
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": "barId",
+            "__typename__hydration__bar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      query: |
+        query nadel_2_service2_TestFoo {
+          barById(id: "barId") {
+            name
+          }
+        }
+      variables: { }
+      operationName: "nadel_2_service2_TestFoo"
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "name": "Bar1"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar1"
+        }
+      }
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,198 @@
+name: "new hydration matching using index one batch returns errors"
+enabled: true
+overallSchema:
+  UserService: |
+    type Query {
+      usersByIds(ids: [ID]): [User]
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "ids" value: "$source.authorIds"}] indexed: true batchSize: 2)
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      usersByIds(ids: [ID]): [User]
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Issue {
+      authorIds: [ID]
+      id: ID
+    }
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            batch_hydration__authors__authorIds: authorIds
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "id": "ISSUE-1",
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "1"
+              ]
+            },
+            {
+              "id": "ISSUE-2",
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "1",
+                "2"
+              ]
+            },
+            {
+              "id": "ISSUE-3",
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "2",
+                "4"
+              ]
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      query: |
+        query {
+          usersByIds(ids: ["1", "1"]) {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIds": [
+            {
+              "name":  "User-1"},
+            {
+              "name":  "User-1"}
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      query: |
+        query {
+          usersByIds(ids: ["2", "2"]) {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIds": null
+        },
+        "errors": [
+          {
+            "message": "Fail"
+          }
+        ],
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      query: |
+        query {
+          usersByIds(ids: ["4"]) {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIds": [
+            {
+              "name": "User-4"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "name": "User-1"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            {
+              "name": "User-1"
+            },
+            null
+          ]
+        },
+        {
+          "id": "ISSUE-3",
+          "authors": [
+            null,
+            {
+              "name": "User-4"
+            }
+          ]
+        }
+      ]
+    },
+    "errors": [
+      {
+        "message": "Fail",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ]
+  }

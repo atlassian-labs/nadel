@@ -1,0 +1,106 @@
+name: "new basic hydration with actor field rename"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barByIdOverall(id: ID): Bar @renamed(from: "barById")
+    }
+    type Bar {
+      id: ID
+      name: String
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: Bar @hydrated(service: "service2" field: "barByIdOverall" arguments: [{name: "id" value: "$source.barId"}])
+      barLongerInput: Bar @hydrated(service: "service2" field: "barByIdOverall" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
+    }
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      fooDetails: FooDetails
+      id: ID
+    }
+
+    type FooDetails {
+      externalBarId: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": "barId",
+            "__typename__hydration__bar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      query: |
+        query {
+          rename__barByIdOverall__barById: barById(id: "barId") {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__barByIdOverall__barById": {
+            "name": "Bar1"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar1"
+        }
+      }
+    },
+    "extensions": {}
+  }

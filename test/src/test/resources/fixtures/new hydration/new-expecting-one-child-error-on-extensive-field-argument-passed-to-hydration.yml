@@ -1,0 +1,188 @@
+name: "new expecting one child error on extensive field argument passed to hydration"
+enabled: true
+overallSchema:
+  TestBoard: |
+    type Query {
+      board(id: ID): SoftwareBoard
+    }
+    type SoftwareBoard @renamed(from: "Board") {
+      id: ID
+      cardChildren: [SoftwareCard] @renamed(from: "issueChildren")
+    }
+    type SoftwareCard @renamed(from: "Card") {
+      id: ID
+      assignee: User @hydrated(service: "Users" field: "users" arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}] identifiedBy: "accountId" batchSize: 3)
+    }
+  Users: |
+    type Query {
+      users(accountIds: [ID]): [User]
+    }
+    type User {
+      accountId: ID
+    }
+underlyingSchema:
+  TestBoard: |
+    type Board {
+      id: ID
+      issueChildren: [Card]
+    }
+
+    type Card {
+      id: ID
+      issue: Issue
+    }
+
+    type Issue {
+      assignee: TestUser
+      id: ID
+    }
+
+    type Query {
+      board(id: ID): Board
+    }
+
+    type TestUser {
+      accountId: String
+    }
+  Users: |
+    type Query {
+      users(accountIds: [ID]): [User]
+    }
+
+    type User {
+      accountId: ID
+    }
+query: |
+  query {
+    board(id: 1) {
+      id
+      cardChildren {
+        id
+        assignee {
+          accountId
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "TestBoard"
+    request:
+      query: |
+        query {
+          board(id: 1) {
+            __typename__rename__cardChildren: __typename
+            id
+            rename__cardChildren__issueChildren: issueChildren {
+              __typename__batch_hydration__assignee: __typename
+              id
+              batch_hydration__assignee__issue: issue {
+                assignee {
+                  accountId
+                }
+              }
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "board": {
+            "__typename__rename__cardChildren": "Board",
+            "id": "1",
+            "rename__cardChildren__issueChildren": [
+              {
+                "__typename__batch_hydration__assignee": "Card",
+                "id": "a1",
+                "batch_hydration__assignee__issue": {
+                  "assignee": {
+                    "accountId": "1"
+                  }
+                }
+              },
+              {
+                "__typename__batch_hydration__assignee": "Card",
+                "id": "a2",
+                "batch_hydration__assignee__issue": {
+                  "assignee": {
+                    "accountId": "2"
+                  }
+                }
+              },
+              {
+                "__typename__batch_hydration__assignee": "Card",
+                "id": "a3",
+                "batch_hydration__assignee__issue": {
+                  "assignee": {
+                    "accountId": "3"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Users"
+    request:
+      query: |
+        query {
+          users(accountIds: ["1", "2", "3"]) {
+            accountId
+            batch_hydration__assignee__accountId: accountId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "users": [
+            {
+              "batch_hydration__assignee__accountId": "1",
+              "accountId": "1"
+            },
+            {
+              "batch_hydration__assignee__accountId": "2",
+              "accountId": "2"
+            },
+            {
+              "batch_hydration__assignee__accountId": "3",
+              "accountId": "3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "board": {
+        "id": "1",
+        "cardChildren": [
+          {
+            "id": "a1",
+            "assignee": {
+              "accountId": "1"
+            }
+          },
+          {
+            "id": "a2",
+            "assignee": {
+              "accountId": "2"
+            }
+          },
+          {
+            "id": "a3",
+            "assignee": {
+              "accountId": "3"
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

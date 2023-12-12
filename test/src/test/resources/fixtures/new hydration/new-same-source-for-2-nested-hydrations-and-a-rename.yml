@@ -1,0 +1,154 @@
+name: "new same source for 2 nested hydrations and a rename"
+enabled: true
+overallSchema:
+  Foo: |
+    type Query {
+      foo: Foo
+      detail(detailId: ID): Detail
+      issue(issueId: ID): Issue
+    }
+    type Foo {
+      renamedField: String @renamed(from: "issue.field")
+      issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.issue.fooId"}])
+      detail: Detail @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.issue.fooId"}])
+    }
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+    type Issue {
+      fooId: ID
+      field: String
+    }
+underlyingSchema:
+  Foo: |
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+
+    type Foo {
+      field: String
+      fooId: ID
+      issue: Issue
+    }
+
+    type Issue {
+      field: String
+      fooId: ID
+    }
+
+    type Query {
+      detail(detailId: ID): Detail
+      foo: Foo
+      issue(issueId: ID): Issue
+    }
+query: |
+  query {
+    foo {
+      issue {
+        field
+      }
+      detail {
+        name
+      }
+      renamedField
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__issue: __typename
+            __typename__hydration__detail: __typename
+            __typename__deep_rename__renamedField: __typename
+            hydration__issue__issue: issue {
+              fooId
+            }
+            hydration__detail__issue: issue {
+              fooId
+            }
+            deep_rename__renamedField__issue: issue {
+              field
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__deep_rename__renamedField": "Foo",
+            "hydration__issue__issue": {
+              "fooId": "ID"
+            },
+            "hydration__detail__issue": {
+              "fooId": "ID"
+            },
+            "__typename__hydration__issue": "Foo",
+            "__typename__hydration__detail": "Foo",
+            "deep_rename__renamedField__issue": {
+              "field": "field1"
+            }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          issue(issueId: "ID") {
+            field
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "field": "field_name"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          detail(detailId: "ID") {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "detail": {
+            "name": "apple"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "issue": {
+          "field": "field_name"
+        },
+        "detail": {
+          "name": "apple"
+        },
+        "renamedField": "field1"
+      }
+    },
+    "extensions": {}
+  }

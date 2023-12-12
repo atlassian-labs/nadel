@@ -37,7 +37,7 @@ internal object NadelBatchHydrationInputBuilder {
         return batchArgs.map { nonBatchArgs + it }
     }
 
-    private fun getNonBatchInputValues(
+    internal fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
     ): Map<NadelHydrationActorInputDef, NormalizedInputValue> {

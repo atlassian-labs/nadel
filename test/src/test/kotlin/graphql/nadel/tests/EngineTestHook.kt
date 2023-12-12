@@ -80,16 +80,42 @@ private val hooksPackage: String = join(
 internal fun getTestHook(fixture: TestFixture): EngineTestHook? {
     require(Util.validated) { "Tests hooks are not valid" }
 
+    val className = when (val name = fixture.name) {
+        "new transformer on hydration fields",
+        "new can generate legacy operation name on batch hydration for specific service",
+        "new can generate legacy operation name on batch hydration",
+        "new can generate legacy operation name on hydration",
+        "new batching of hydration list with partition",
+        "new batch polymorphic hydration where only one type is queried",
+        "new batch polymorphic hydration",
+        "new batch polymorphic hydration actor fields are in the same service",
+        "new batch polymorphic hydration when hook returns null",
+        "new batch polymorphic hydration with lots of renames",
+        "new batch polymorphic hydration with unions",
+        "new solitary polymorphic hydration when hook returns null",
+        "new batch polymorphic hydration with interfaces",
+        "new solitary polymorphic hydration",
+        "new batch polymorphic hydration with rename",
+        "new batch polymorphic hydration when hook returns null 1",
+        "new batch polymorphic hydration actor fields are in the same service return types implement same interface",
+        "new complex-identified-by-with-rename",
+        "new new batching single source id",
+        "new new batching multiple source ids going to different services",
+        ->
+            name.removePrefix("new ")
+        else -> name
+    }.toSlug()
+
     val hookClass = try {
         Class.forName(
-            join(hooksPackage, fixture.name.toSlug(), separator = "."),
+            join(hooksPackage, className, separator = "."),
         )
     } catch (e: ClassNotFoundException) {
         println("No hook class found: ${e.message}")
         return null
     }
 
-    return hookClass.newInstance() as EngineTestHook
+    return hookClass.declaredConstructors.single().newInstance() as EngineTestHook
 }
 
 private object Util {
