@@ -49,13 +49,12 @@ internal class NadelHydrationValidation(
             error("Don't invoke hydration validation if there is no hydration silly")
         }
         val whenConditionValidationError = validateConditionsOnAllHydrations(hydrations, parent, overallField)
-        if (whenConditionValidationError != null){
+        if (whenConditionValidationError != null) {
             return listOf(whenConditionValidationError)
         }
 
         val hasMoreThanOneHydration = hydrations.size > 1
         val errors = mutableListOf<NadelSchemaValidationError>()
-
 
         for (hydration in hydrations) {
             val actorService = services[hydration.serviceName]
@@ -163,12 +162,14 @@ internal class NadelHydrationValidation(
         val remoteArgErrors = hydration.arguments.flatMap { remoteArg ->
             val actorFieldArgument = actorField.getArgument(remoteArg.name)
             if (actorFieldArgument == null) {
-                listOf(NonExistentHydrationActorFieldArgument(
-                    parent,
-                    overallField,
-                    hydration,
-                    argument = remoteArg.name,
-                ))
+                listOf(
+                    NonExistentHydrationActorFieldArgument(
+                        parent,
+                        overallField,
+                        hydration,
+                        argument = remoteArg.name,
+                    )
+                )
             } else {
                 val remoteArgSource = remoteArg.remoteArgumentSource
                 getRemoteArgErrors(parent, overallField, remoteArg, actorField, hydration)
@@ -257,16 +258,17 @@ internal class NadelHydrationValidation(
                     //check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
                     return listOfNotNull(
-                    nadelHydrationArgumentValidation.validateHydrationInputArg(
-                        hydrationArgType,
-                        actorFieldArg.type,
-                        parent,
-                        overallField,
-                        remoteArgDef,
-                        hydration,
-                        isBatchHydration,
-                        actorField.name
-                    ))
+                        nadelHydrationArgumentValidation.validateHydrationInputArg(
+                            hydrationArgType,
+                            actorFieldArg.type,
+                            parent,
+                            overallField,
+                            remoteArgDef,
+                            hydration,
+                            isBatchHydration,
+                            actorField.name
+                        )
+                    )
                 }
             }
 
@@ -280,29 +282,32 @@ internal class NadelHydrationValidation(
                         Locale.getDefault()
                     )
                 ) {
-                    return listOf(NadelSchemaValidationError.StaticArgIsNotAssignable(
-                        parent,
-                        overallField,
-                        remoteArgDef,
-                        actorFieldArg.type,
-                        actorField.name
-                    ))
+                    return listOf(
+                        NadelSchemaValidationError.StaticArgIsNotAssignable(
+                            parent,
+                            overallField,
+                            remoteArgDef,
+                            actorFieldArg.type,
+                            actorField.name
+                        )
+                    )
                 }
                 return emptyList()
             }
         }
     }
+
     private fun validateConditionsOnAllHydrations(
         hydrations: List<UnderlyingServiceHydration>,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        ): NadelSchemaValidationError.SomeHydrationsHaveMissingConditions? {
+    ): NadelSchemaValidationError.SomeHydrationsHaveMissingConditions? {
         //if one hydration has a condition, then they all must, so lets check the first one
         var shouldHaveConditions = true
         if (hydrations.first().conditionalHydration == null) {
             shouldHaveConditions = false
         }
-        if (hydrations.any { (it.conditionalHydration == null) ==  shouldHaveConditions }) { //i.e. (if it has no condition but it should have condition) OR  (if it has condition but shouldn't have condition)
+        if (hydrations.any { (it.conditionalHydration == null) == shouldHaveConditions }) { //i.e. (if it has no condition but it should have condition) OR  (if it has condition but shouldn't have condition)
             return NadelSchemaValidationError.SomeHydrationsHaveMissingConditions(parent, overallField)
         }
         return null

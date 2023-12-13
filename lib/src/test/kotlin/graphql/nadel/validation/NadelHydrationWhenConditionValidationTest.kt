@@ -11,7 +11,6 @@ import io.kotest.core.spec.style.DescribeSpec
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
 
-
 class NadelHydrationWhenConditionValidationTest : DescribeSpec({
     describe("Hydration when condition validation") {
         it("happy path (valid when condition)") {
