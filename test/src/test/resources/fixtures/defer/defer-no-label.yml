@@ -52,8 +52,7 @@ serviceCalls:
       {
         "data": {
           "defer": {
-            "hello": "world",
-            "slow": "🐌"
+            "hello": "world"
           }
         },
         "extensions": {}
@@ -63,8 +62,7 @@ response: |-
   {
     "data": {
       "defer": {
-        "hello": "world",
-        "slow": "🐌"
+        "hello": "world"
       }
     },
     "extensions": {}

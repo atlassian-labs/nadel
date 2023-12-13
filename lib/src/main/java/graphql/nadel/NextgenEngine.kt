@@ -42,6 +42,7 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
+import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariablesWithDeferSupport
 import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
@@ -136,14 +137,24 @@ internal class NextgenEngine(
             )
 
             val query = timer.time(step = RootStep.ExecutableOperationParsing) {
-                createExecutableNormalizedOperationWithRawVariables(
-                    querySchema,
-                    queryDocument,
-                    executionInput.operationName,
-                    executionInput.rawVariables,
-                    operationParseOptions
-                        .graphQLContext(executionInput.graphQLContext),
-                )
+                if (executionHints.deferSupport.invoke())
+                    createExecutableNormalizedOperationWithRawVariablesWithDeferSupport(
+                        querySchema,
+                        queryDocument,
+                        executionInput.operationName,
+                        executionInput.rawVariables,
+                        operationParseOptions
+                            .graphQLContext(executionInput.graphQLContext),
+                    )
+                else
+                    createExecutableNormalizedOperationWithRawVariables(
+                        querySchema,
+                        queryDocument,
+                        executionInput.operationName,
+                        executionInput.rawVariables,
+                        operationParseOptions
+                            .graphQLContext(executionInput.graphQLContext),
+                    )
             }
 
             val executionContext = NadelExecutionContext(
@@ -268,7 +279,8 @@ internal class NextgenEngine(
                 operationKind = transformedQuery.getOperationKind(engineSchema),
                 operationName = getOperationName(service, executionContext),
                 topLevelFields = listOf(transformedQuery),
-                variablePredicate = jsonPredicate
+                variablePredicate = jsonPredicate,
+                deferSupport = executionContext.hints.deferSupport.invoke()
             )
         }
 

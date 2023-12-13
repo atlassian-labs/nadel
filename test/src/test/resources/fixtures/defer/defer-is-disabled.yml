@@ -1,4 +1,4 @@
-name: "defer with label"
+name: "defer is disabled"
 enabled: true
 overallSchema:
   service: |
@@ -41,9 +41,7 @@ serviceCalls:
         query {
           defer {
             hello
-            ... @defer(label: "slow-defer") {
-              slow
-            }
+            slow
           }
         }
       variables: { }
@@ -52,7 +50,8 @@ serviceCalls:
       {
         "data": {
           "defer": {
-            "hello": "world"
+            "hello": "world",
+            "slow": "🐌"
           }
         },
         "extensions": {}
@@ -62,7 +61,8 @@ response: |-
   {
     "data": {
       "defer": {
-        "hello": "world"
+        "hello": "world",
+        "slow": "🐌"
       }
     },
     "extensions": {}
