@@ -72,4 +72,24 @@ internal class NadelHydrationWhenConditionValidation() {
 
         return null
     }
+
+    fun validateConditionsOnAllHydrations(
+        hydrations: List<UnderlyingServiceHydration>,
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+    ): NadelSchemaValidationError.SomeHydrationsHaveMissingConditions? {
+        //if one hydration has a condition, then they all must, so lets check the first one
+        val shouldHaveConditions = hydrations.first().conditionalHydration != null
+
+        if (shouldHaveConditions) {
+            if (hydrations.any { (it.conditionalHydration == null) }) { //i.e. (if it has no condition but it should have condition) OR  (if it has condition but shouldn't have condition)
+                return NadelSchemaValidationError.SomeHydrationsHaveMissingConditions(parent, overallField)
+            }
+        } else {
+            if (hydrations.any { (it.conditionalHydration != null) }) { //i.e. (if it has no condition but it should have condition) OR  (if it has condition but shouldn't have condition)
+                return NadelSchemaValidationError.SomeHydrationsHaveMissingConditions(parent, overallField)
+            }
+        }
+        return null
+    }
 }
