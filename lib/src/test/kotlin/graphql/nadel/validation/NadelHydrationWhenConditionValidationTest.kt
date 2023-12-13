@@ -933,9 +933,13 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
+                        type OtherUser {
+                            id: ID!
+                            name: String!
+                        }
                         extend type JiraIssue {
                             type: String
-                            creator: User 
+                            creator: UserResult 
                                 @hydrated(
                                     service: "users"
                                     field: "user"
@@ -962,8 +966,8 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                                         }
                                     }
                                 )
-                                
                         }
+                        union UserResult = User | OtherUser
                     """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
@@ -982,6 +986,10 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                             user(id: ID!): User
                         }
                         type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type OtherUser {
                             id: ID!
                             name: String!
                         }
@@ -1010,9 +1018,13 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
+                        type OtherUser {
+                            id: ID!
+                            name: String!
+                        }
                         extend type JiraIssue {
                             type: String
-                            creator: User
+                            creator: UserResult 
                                 @hydrated(
                                     service: "users"
                                     field: "user"
@@ -1027,8 +1039,8 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                                         {name: "id", value: "$source.creator"}
                                     ]
                                 )
-                                
                         }
+                        union UserResult = User | OtherUser
                     """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
@@ -1047,6 +1059,10 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                             user(id: ID!): User
                         }
                         type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type OtherUser {
                             id: ID!
                             name: String!
                         }
@@ -1075,9 +1091,13 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
+                        type OtherUser {
+                            id: ID!
+                            name: String!
+                        }
                         extend type JiraIssue {
                             type: String
-                            creator: User 
+                            creator: UserResult 
                                 @hydrated(
                                     service: "users"
                                     field: "user"
@@ -1098,8 +1118,8 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                                         {name: "id", value: "$source.creator"}
                                     ]
                                 )
-                                
                         }
+                        union UserResult = User | OtherUser
                     """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
@@ -1118,6 +1138,10 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                             user(id: ID!): User
                         }
                         type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type OtherUser {
                             id: ID!
                             name: String!
                         }
