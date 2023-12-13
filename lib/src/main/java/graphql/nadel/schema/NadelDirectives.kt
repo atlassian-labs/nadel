@@ -9,11 +9,11 @@ import graphql.language.InputObjectTypeDefinition
 import graphql.language.ObjectValue
 import graphql.language.SDLDefinition
 import graphql.language.StringValue
+import graphql.language.TypeDefinition
 import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.NadelHydrationConditionDefinition
@@ -328,37 +328,20 @@ object NadelDirectives {
     }
 
     private fun createRemoteArgumentSource(value: Value<*>): RemoteArgumentSource {
-        if (value is StringValue) {
-            val values = listFromDottedString(value.value)
-            return when (values.first()) {
-                "\$source" -> RemoteArgumentSource(
-                    argumentName = null,
+        return if (value is StringValue) {
+            val values = value.value.split('.')
+
+            when (values.first()) {
+                "\$source" -> RemoteArgumentSource.ObjectField(
                     pathToField = values.subList(1, values.size),
-                    staticValue = null,
-                    sourceType = SourceType.ObjectField,
                 )
-
-                "\$argument" -> RemoteArgumentSource(
+                "\$argument" -> RemoteArgumentSource.FieldArgument(
                     argumentName = values.subList(1, values.size).single(),
-                    pathToField = null,
-                    staticValue = null,
-                    sourceType = SourceType.FieldArgument,
                 )
-
-                else -> RemoteArgumentSource(
-                    argumentName = null,
-                    pathToField = null,
-                    staticValue = value,
-                    sourceType = SourceType.StaticArgument,
-                )
+                else -> RemoteArgumentSource.StaticArgument(staticValue = value)
             }
         } else {
-            return RemoteArgumentSource(
-                argumentName = null,
-                pathToField = null,
-                staticValue = value,
-                sourceType = SourceType.StaticArgument,
-            )
+            RemoteArgumentSource.StaticArgument(staticValue = value)
         }
     }
 
@@ -380,35 +363,18 @@ object NadelDirectives {
 
             val remoteArgumentSource = if (remoteArgFieldValue != null && remoteArgArgValue != null) {
                 throw IllegalArgumentException("$inputObjectTypeName can not have both $valueFromFieldKey and $valueFromArgKey set")
-            } else if (remoteArgFieldValue != null) {
-                createTemplatedRemoteArgumentSource(remoteArgFieldValue, SourceType.ObjectField)
-            } else if (remoteArgArgValue != null) {
-                createTemplatedRemoteArgumentSource(remoteArgArgValue, SourceType.FieldArgument)
             } else {
-                throw IllegalArgumentException("$inputObjectTypeName requires one of $valueFromFieldKey or $valueFromArgKey to be set")
+                if (remoteArgFieldValue != null) {
+                    RemoteArgumentSource.ObjectField(remoteArgFieldValue.removePrefix("\$source.").split('.'))
+                } else if (remoteArgArgValue != null) {
+                    RemoteArgumentSource.FieldArgument(remoteArgArgValue.removePrefix("\$argument."))
+                } else {
+                    throw IllegalArgumentException("$inputObjectTypeName requires one of $valueFromFieldKey or $valueFromArgKey to be set")
+                }
             }
 
             RemoteArgumentDefinition(remoteArgName, remoteArgumentSource)
         }
-    }
-
-    private fun createTemplatedRemoteArgumentSource(value: String, argumentType: SourceType): RemoteArgumentSource {
-        // for backwards compat reasons - we will allow them to specify "$source.field.name" and treat it as just "field.name"
-        val values = value
-            .removePrefix("\$source.")
-            .removePrefix("\$argument.")
-            .split('.')
-
-        var argumentName: String? = null
-        var path: List<String>? = null
-        var staticValue: Value<*>? = null
-        when (argumentType) {
-            SourceType.ObjectField -> path = values
-            SourceType.FieldArgument -> argumentName = values.single()
-            SourceType.StaticArgument -> staticValue = StringValue(value)
-        }
-
-        return RemoteArgumentSource(argumentName, path, staticValue, argumentType)
     }
 
     internal fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
@@ -425,10 +391,6 @@ object NadelDirectives {
         val from = getDirectiveValue<String>(directive, "from")
 
         return TypeMappingDefinition(underlyingName = from, overallName = directivesContainer.name)
-    }
-
-    private fun listFromDottedString(from: String): List<String> {
-        return from.split('.').toList()
     }
 
     private inline fun <reified T : Any> getDirectiveValue(

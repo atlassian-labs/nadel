@@ -2,11 +2,9 @@ package graphql.nadel.validation
 
 import graphql.GraphQLContext
 import graphql.nadel.Service
-import graphql.nadel.dsl.RemoteArgumentDefinition
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
 import graphql.nadel.dsl.NadelHydrationDefinition
+import graphql.nadel.dsl.RemoteArgumentDefinition
+import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.isList
@@ -127,8 +125,10 @@ internal class NadelHydrationValidation(
                 .flatMap { hydration ->
                     hydration
                         .arguments
+                        .map { it.remoteArgumentSource }
                         .asSequence()
-                        .mapNotNull { it.remoteArgumentSource.pathToField }
+                        .filterIsInstance<RemoteArgumentSource.ObjectField>()
+                        .map { it.pathToField }
                 }
                 .toList()
 
@@ -282,7 +282,8 @@ internal class NadelHydrationValidation(
         val isBatchHydration = actorField.type.unwrapNonNull().isList
         val batchHydrationArgumentErrors: List<NadelSchemaValidationError> = when {
             isBatchHydration -> {
-                val numberOfSourceArgs = hydration.arguments.count { it.remoteArgumentSource.sourceType == ObjectField }
+                val numberOfSourceArgs =
+                    hydration.arguments.count { it.remoteArgumentSource is RemoteArgumentSource.ObjectField }
                 when {
                     numberOfSourceArgs > 1 ->
                         listOf(MultipleSourceArgsInBatchHydration(parent, overallField))
@@ -309,9 +310,9 @@ internal class NadelHydrationValidation(
         val remoteArgSource = remoteArgDef.remoteArgumentSource
         val actorFieldArg = actorField.getArgument(remoteArgDef.name)
         val isBatchHydration = actorField.type.unwrapNonNull().isList
-        return when (remoteArgSource.sourceType) {
-            ObjectField -> {
-                val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField!!)
+        return when (remoteArgSource) {
+            is RemoteArgumentSource.ObjectField -> {
+                val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField)
                 if (field == null) {
                     listOf(
                         MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
@@ -336,13 +337,12 @@ internal class NadelHydrationValidation(
                     )
                 }
             }
-
-            FieldArgument -> {
-                val argument = overallField.getArgument(remoteArgSource.argumentName!!)
+            is RemoteArgumentSource.FieldArgument -> {
+                val argument = overallField.getArgument(remoteArgSource.argumentName)
                 if (argument == null) {
                     listOf(MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource))
                 } else {
-                    //check the input types match with hydration and actor fields
+                    // Check the input types match with hydration and actor fields
                     val hydrationArgType = argument.type
                     listOfNotNull(
                         nadelHydrationArgumentValidation.validateHydrationInputArg(
@@ -358,8 +358,7 @@ internal class NadelHydrationValidation(
                     )
                 }
             }
-
-            StaticArgument -> {
+            is RemoteArgumentSource.StaticArgument -> {
                 val staticArg = remoteArgSource.staticValue
                 if (
                     !validationUtil.isValidLiteralValue(
