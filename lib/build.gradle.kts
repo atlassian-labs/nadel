@@ -7,7 +7,7 @@ plugins {
     id("com.bnorm.power.kotlin-power-assert")
 }
 
-val graphqlJavaVersion = "0.0.0-2023-10-30T22-58-00-448780b"
+val graphqlJavaVersion = "0.0.0-2023-12-05T22-54-46-39d2155"
 val slf4jVersion = "1.7.25"
 
 dependencies {
@@ -19,17 +19,21 @@ dependencies {
 
     api(kotlin("stdlib"))
     api(kotlin("reflect"))
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.0")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
+
+    testImplementation(kotlin("test"))
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
 
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.9.6")
-    testImplementation("org.openjdk.jmh:jmh-core:1.21")
-    testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.21")
-    testImplementation("com.google.guava:guava:28.0-jre")
-    testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
-    testImplementation("io.kotest:kotest-framework-datatest:5.1.0")
-    testImplementation("io.mockk:mockk:1.12.3")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.15.3")
+    testImplementation("org.openjdk.jmh:jmh-core:1.37")
+    testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.37")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest:kotest-framework-datatest:5.8.0")
+    testImplementation("io.mockk:mockk:1.13.8")
 }
 
 // compileJava.source file("build/generated-src"), sourceSets.main.java
@@ -51,11 +55,9 @@ tasks.withType<KotlinCompile>().configureEach {
             "-Xjvm-default=all",
         )
     }
-    sourceCompatibility = JavaVersion.VERSION_11.toString()
-    targetCompatibility = JavaVersion.VERSION_11.toString()
 }
 
 configure<PowerAssertGradleExtension> {
     // WARNING: do NOT touch this unless you have read https://github.com/bnorm/kotlin-power-assert/issues/55
-    functions = listOf("kotlin.assert", "graphql.nadel.test.dbg")
+    functions = listOf("kotlin.assert", "kotlin.test.assertTrue", "kotlin.test.assertFalse", "graphql.nadel.test.dbg")
 }

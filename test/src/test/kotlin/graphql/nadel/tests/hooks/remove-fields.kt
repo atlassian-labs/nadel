@@ -3,11 +3,11 @@ package graphql.nadel.tests.hooks
 import graphql.ErrorClassification
 import graphql.GraphQLError
 import graphql.nadel.Nadel
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.GraphqlErrorException as GraphQLErrorException
 
-private class RejectField(private val fieldNames: List<String>) : ServiceExecutionHooks {
+private class RejectField(private val fieldNames: List<String>) : NadelExecutionHooks {
     constructor(vararg fieldNames: String) : this(fieldNames.toList())
 
     // override fun isFieldForbidden(
@@ -48,7 +48,7 @@ private class RejectField(private val fieldNames: List<String>) : ServiceExecuti
 class `hydrated-field-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("author"))
+            .executionHooks(RejectField("author"))
     }
 }
 
@@ -56,7 +56,7 @@ class `hydrated-field-is-removed` : EngineTestHook {
 class `nested-hydrated-field-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("author"))
+            .executionHooks(RejectField("author"))
     }
 }
 
@@ -64,7 +64,7 @@ class `nested-hydrated-field-is-removed` : EngineTestHook {
 class `field-is-removed-from-nested-hydrated-field` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("userId"))
+            .executionHooks(RejectField("userId"))
     }
 }
 
@@ -72,7 +72,7 @@ class `field-is-removed-from-nested-hydrated-field` : EngineTestHook {
 class `all-fields-in-a-selection-set-are-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("title", "description"))
+            .executionHooks(RejectField("title", "description"))
     }
 }
 
@@ -80,7 +80,7 @@ class `all-fields-in-a-selection-set-are-removed` : EngineTestHook {
 class `field-in-a-selection-set-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("title"))
+            .executionHooks(RejectField("title"))
     }
 }
 
@@ -88,7 +88,7 @@ class `field-in-a-selection-set-is-removed` : EngineTestHook {
 class `one-of-top-level-fields-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("commentById"))
+            .executionHooks(RejectField("commentById"))
     }
 }
 
@@ -96,7 +96,7 @@ class `one-of-top-level-fields-is-removed` : EngineTestHook {
 class `top-level-field-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("commentById"))
+            .executionHooks(RejectField("commentById"))
     }
 }
 
@@ -104,7 +104,7 @@ class `top-level-field-is-removed` : EngineTestHook {
 class `top-level-field-in-batched-query-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("comments"))
+            .executionHooks(RejectField("comments"))
     }
 }
 
@@ -112,7 +112,7 @@ class `top-level-field-in-batched-query-is-removed` : EngineTestHook {
 class `all-fields-are-removed-from-hydrated-field` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("userId", "displayName"))
+            .executionHooks(RejectField("userId", "displayName"))
     }
 }
 
@@ -120,7 +120,7 @@ class `all-fields-are-removed-from-hydrated-field` : EngineTestHook {
 class `field-is-removed-from-hydrated-field` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("userId"))
+            .executionHooks(RejectField("userId"))
     }
 }
 
@@ -128,7 +128,7 @@ class `field-is-removed-from-hydrated-field` : EngineTestHook {
 class `all-non-hydrated-fields-in-query-are-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("id", "created", "commentText"))
+            .executionHooks(RejectField("id", "created", "commentText"))
     }
 }
 
@@ -136,7 +136,7 @@ class `all-non-hydrated-fields-in-query-are-removed` : EngineTestHook {
 class `field-with-selections-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("epic"))
+            .executionHooks(RejectField("epic"))
     }
 }
 
@@ -144,7 +144,7 @@ class `field-with-selections-is-removed` : EngineTestHook {
 class `the-only-field-in-a-selection-set-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("title"))
+            .executionHooks(RejectField("title"))
     }
 }
 
@@ -152,7 +152,7 @@ class `the-only-field-in-a-selection-set-is-removed` : EngineTestHook {
 class `field-in-non-hydrated-query-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("created"))
+            .executionHooks(RejectField("created"))
     }
 }
 
@@ -160,7 +160,7 @@ class `field-in-non-hydrated-query-is-removed` : EngineTestHook {
 class `restricted-field-inside-hydration-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("restricted"))
+            .executionHooks(RejectField("restricted"))
     }
 }
 
@@ -168,7 +168,7 @@ class `restricted-field-inside-hydration-via-fragments-used-twice` : EngineTestH
 class `restricted-field-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("restricted"))
+            .executionHooks(RejectField("restricted"))
     }
 }
 
@@ -176,7 +176,7 @@ class `restricted-field-via-fragments-used-twice` : EngineTestHook {
 class `inserts-one-error-for-a-forbidden-field-in-a-list` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(RejectField("restricted"))
+            .executionHooks(RejectField("restricted"))
     }
 }
 
@@ -184,7 +184,7 @@ class `inserts-one-error-for-a-forbidden-field-in-a-list` : EngineTestHook {
 class `restricted-single-field-inside-hydration-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(object : ServiceExecutionHooks {
+            .executionHooks(object : NadelExecutionHooks {
                 // override fun isFieldForbidden(
                 //     normalizedField: NormalizedQueryField,
                 //     hydrationArguments: HydrationArguments,
@@ -210,7 +210,7 @@ class `restricted-single-field-inside-hydration-via-fragments-used-twice` : Engi
 class `restricted-single-field-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionHooks(object : ServiceExecutionHooks {
+            .executionHooks(object : NadelExecutionHooks {
                 // override fun isFieldForbidden(
                 //     normalizedField: NormalizedQueryField,
                 //     hydrationArguments: HydrationArguments,

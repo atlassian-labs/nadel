@@ -14,6 +14,7 @@ import graphql.language.InputObjectTypeDefinition
 import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
 import graphql.language.ObjectValue
 import graphql.language.StringValue
+import graphql.language.TypeDefinition
 import graphql.language.TypeName
 import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
@@ -83,7 +84,7 @@ object NadelDirectives {
         )
         .build()
 
-    val nadelWhenConditionPredicateDefinition = parseType(
+    val nadelWhenConditionPredicateDefinition = parseType<InputObjectTypeDefinition>(
         """
         input NadelWhenConditionPredicate @oneOf {
           startsWith: String
@@ -537,8 +538,7 @@ object NadelDirectives {
             Locale.getDefault()
         ) as T
     }
-
-    inline fun parseType(sdl: String): InputObjectTypeDefinition {
-        return Parser.parse(sdl).definitions.singleOfType<InputObjectTypeDefinition>()
+    private inline fun <reified T : TypeDefinition<*>> parseType(sdl: String): T {
+        return Parser.parse(sdl).definitions.singleOfType()
     }
 }

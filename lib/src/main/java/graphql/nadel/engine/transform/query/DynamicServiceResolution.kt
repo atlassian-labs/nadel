@@ -5,7 +5,7 @@ import graphql.nadel.Service
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toGraphQLErrorException
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLInterfaceType
@@ -13,7 +13,7 @@ import graphql.schema.GraphQLSchema
 
 internal class DynamicServiceResolution(
     private val engineSchema: GraphQLSchema,
-    private val serviceExecutionHooks: ServiceExecutionHooks,
+    private val executionHooks: NadelExecutionHooks,
     private val services: List<Service>,
 ) {
 
@@ -39,7 +39,7 @@ internal class DynamicServiceResolution(
      * Resolves the service for a field
      */
     fun resolveServiceForField(field: ExecutableNormalizedField): Service {
-        val serviceOrError = serviceExecutionHooks.resolveServiceForField(services, field)
+        val serviceOrError = executionHooks.resolveServiceForField(services, field)
             ?: throw GraphqlErrorException.newErrorException()
                 .message("Could not resolve service for field '${field.name}'")
                 .path(field.queryPath.segments)

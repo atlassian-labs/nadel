@@ -16,7 +16,7 @@ import graphql.language.Document
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
@@ -227,7 +227,7 @@ class Nadel private constructor(
 
     class Builder {
         private var instrumentation: NadelInstrumentation = object : NadelInstrumentation {}
-        private var serviceExecutionHooks: ServiceExecutionHooks = object : ServiceExecutionHooks {}
+        private var executionHooks: NadelExecutionHooks = object : NadelExecutionHooks {}
         private var preparsedDocumentProvider: PreparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE
         private var executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER
         private var transforms = emptyList<NadelTransform<out Any>>()
@@ -327,8 +327,8 @@ class Nadel private constructor(
             return this
         }
 
-        fun serviceExecutionHooks(serviceExecutionHooks: ServiceExecutionHooks): Builder {
-            this.serviceExecutionHooks = serviceExecutionHooks
+        fun executionHooks(executionHooks: NadelExecutionHooks): Builder {
+            this.executionHooks = executionHooks
             return this
         }
 
@@ -357,7 +357,7 @@ class Nadel private constructor(
                     engineSchema = engineSchema,
                     querySchema = querySchema,
                     instrumentation = instrumentation,
-                    serviceExecutionHooks = serviceExecutionHooks,
+                    executionHooks = executionHooks,
                     executionIdProvider = executionIdProvider,
                     services = services,
                     transforms = transforms,

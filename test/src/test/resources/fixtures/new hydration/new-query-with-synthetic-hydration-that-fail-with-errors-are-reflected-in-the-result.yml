@@ -1,0 +1,132 @@
+name: "new query with synthetic hydration that fail with errors are reflected in the result"
+enabled: true
+overallSchema:
+  Bar: |
+    type Query {
+      barQuery: BarQuery
+    }
+    type BarQuery {
+      bar: Bar
+      barById(id: ID): Bar
+    }
+    type Bar {
+      name: String
+      nestedBar: Bar @hydrated(service: "Bar" field: "barQuery.barById" arguments: [{name: "id" value: "$source.nestedBarId"}])
+    }
+  Foo: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      bar: Bar @hydrated(service: "Bar" field: "barQuery.barById" arguments: [{name: "id" value: "$source.barId"}])
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      id: ID
+      name: String
+      nestedBarId: ID
+    }
+
+    type BarQuery {
+      bar: Bar
+      barById(id: ID): Bar
+    }
+
+    type Query {
+      barQuery: BarQuery
+    }
+  Foo: |
+    type Foo {
+      barId: ID
+      name: String
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+        nestedBar {
+          name
+          nestedBar {
+            name
+          }
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": "barId123",
+            "__typename__hydration__bar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Bar"
+    request:
+      query: |
+        query {
+          barQuery {
+            barById(id: "barId123") {
+              __typename__hydration__nestedBar: __typename
+              name
+              hydration__nestedBar__nestedBarId: nestedBarId
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "errors": [
+          {
+            "message": "Error during hydration"
+          }
+        ],
+        "data": {
+          "barQuery": {
+            "barById": null
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "message": "Error during hydration",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {
+      "foo": {
+        "bar": null
+      }
+    },
+    "extensions": {}
+  }

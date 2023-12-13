@@ -4,7 +4,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.hooks.CreateServiceContextParams
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.serviceExecutionFactory
@@ -16,7 +16,7 @@ class `service-context-is-being-set` : EngineTestHook {
         val serviceExecutionFactory = builder.serviceExecutionFactory
 
         return builder
-            .serviceExecutionHooks(object : ServiceExecutionHooks {
+            .executionHooks(object : NadelExecutionHooks {
                 override fun createServiceContext(params: CreateServiceContextParams): CompletableFuture<Any?> {
                     return CompletableFuture.completedFuture("Context for ${params.service.name}")
                 }

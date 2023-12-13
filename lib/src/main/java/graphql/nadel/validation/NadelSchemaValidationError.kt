@@ -456,7 +456,6 @@ sealed interface NadelSchemaValidationError {
         override val message = "Some hydrations of field ${of} are missing a when condition"
         override val subject = overallField
     }
-
     data class IncompatibleFieldInHydratedInputObject(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,

@@ -19,6 +19,20 @@ inline fun <reified T> Collection<*>.singleOfType(predicate: (T) -> Boolean = { 
     return singleOfTypeOrNull(predicate)!!
 }
 
+/**
+ * Like [singleOrNull] but the single item must be of type [T].
+ */
+inline fun <reified T> Sequence<*>.singleOfTypeOrNull(predicate: (T) -> Boolean = { true }): T? {
+    return singleOrNull { it is T && predicate(it) } as T?
+}
+
+/**
+ * Like [singleOrNull] but the single item must be of type [T].
+ */
+inline fun <reified T> Sequence<*>.singleOfType(predicate: (T) -> Boolean = { true }): T {
+    return singleOfTypeOrNull(predicate)!!
+}
+
 inline fun <K, E> Iterable<E>.strictAssociateBy(crossinline keyExtractor: (E) -> K): Map<K, E> {
     return mapFrom(
         map {

@@ -1,0 +1,102 @@
+name: "new hydration inside a renamed field"
+enabled: true
+overallSchema:
+  Bar: |
+    type Query {
+      barById(id: ID!): RenamedBar
+    }
+    type RenamedBar @renamed(from: "Bar") {
+      id: ID!
+    }
+  Foo: |
+    type Query {
+      foo: Foo @renamed(from: "fooOriginal")
+    }
+    type Foo {
+      id: ID!
+      fooBar: RenamedBar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.fooBarId"}])
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      id: ID!
+    }
+
+    type Query {
+      barById(id: ID!): Bar
+    }
+  Foo: |
+    type Foo {
+      fooBarId: ID
+      id: ID!
+    }
+
+    type Query {
+      fooOriginal: Foo
+    }
+query: |
+  query {
+    foo {
+      id
+      fooBar {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          rename__foo__fooOriginal: fooOriginal {
+            __typename__hydration__fooBar: __typename
+            hydration__fooBar__fooBarId: fooBarId
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__foo__fooOriginal": {
+            "hydration__fooBar__fooBarId": "hydrated-bar",
+            "id": "Foo",
+            "__typename__hydration__fooBar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Bar"
+    request:
+      query: |
+        query {
+          barById(id: "hydrated-bar") {
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "id": "hydrated-bar"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "id": "Foo",
+        "fooBar": {
+          "id": "hydrated-bar"
+        }
+      }
+    },
+    "extensions": {}
+  }

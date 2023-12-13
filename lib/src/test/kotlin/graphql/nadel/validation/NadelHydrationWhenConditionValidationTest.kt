@@ -1131,7 +1131,6 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val error = errors.assertSingleOfType<SomeHydrationsHaveMissingConditions>()
             assert(error.overallField.name == "creator")
         }
-
     }
 
 })

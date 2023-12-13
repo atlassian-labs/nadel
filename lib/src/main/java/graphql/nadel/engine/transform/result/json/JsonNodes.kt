@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.result.json
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
@@ -8,11 +7,10 @@ import graphql.nadel.engine.util.JsonMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Utility class to extract data out of the given
+ * Utility class to extract data out of the given [data].
  */
 class JsonNodes(
     private val data: JsonMap,
-    private val executionFlags: NadelExecutionHints,
 ) {
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
 

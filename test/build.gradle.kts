@@ -13,7 +13,7 @@ dependencies {
     testImplementation("org.reflections:reflections:0.9.12")
     testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.6")
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.6")
-    testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.strikt:strikt-jvm:0.31.0")
     testImplementation("org.yaml:snakeyaml:1.30")
 }
@@ -32,6 +32,4 @@ tasks.withType<KotlinCompile>().configureEach {
             "-Xjvm-default=all",
         )
     }
-    sourceCompatibility = JavaVersion.VERSION_11.toString()
-    targetCompatibility = JavaVersion.VERSION_11.toString()
 }

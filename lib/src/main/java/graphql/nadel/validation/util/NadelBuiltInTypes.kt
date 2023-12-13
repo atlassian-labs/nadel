@@ -15,6 +15,9 @@ import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationComplexIdentifiedBy
 import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
+import graphql.nadel.schema.NadelDirectives.nadelWhenConditionDefinition
+import graphql.nadel.schema.NadelDirectives.nadelWhenConditionPredicateDefinition
+import graphql.nadel.schema.NadelDirectives.nadelWhenConditionResultDefinition
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
 
@@ -45,6 +48,10 @@ object NadelBuiltInTypes {
         nadelHydrationTemplateEnumDefinition,
         hydratedFromDirectiveDefinition,
         hydratedTemplateDirectiveDefinition,
+
+        nadelWhenConditionPredicateDefinition,
+        nadelWhenConditionResultDefinition,
+        nadelWhenConditionDefinition,
     ).map {
         it.name
     }.toSet()

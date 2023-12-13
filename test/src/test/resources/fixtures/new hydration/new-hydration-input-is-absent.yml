@@ -1,0 +1,97 @@
+name: "new hydration input is absent"
+enabled: true
+overallSchema:
+  UserService: |
+    type Query {
+      userById(id: ID!): User
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [User] @hydrated(
+        service: "UserService"
+        field: "userById"
+        arguments: [
+          {name: "id" value: "$source.authors.id"}
+        ]
+      )
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      userById(id: ID!): User
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Issue {
+      id: ID!
+      authors: [AuthorRef]
+    }
+    type AuthorRef {
+      id: ID
+    }
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      query: |
+        query {
+          issues {
+            __typename__hydration__authors: __typename
+            hydration__authors__authors: authors {
+              id
+            }
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__hydration__authors": "Issue",
+              "id": "ISSUE-1",
+              "hydration__authors__authors": []
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": []
+        }
+      ]
+    },
+    "extensions": {}
+  }

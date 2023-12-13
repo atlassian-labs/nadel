@@ -31,7 +31,7 @@ import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
@@ -63,7 +63,7 @@ internal class NextgenEngine(
     private val engineSchema: GraphQLSchema,
     private val querySchema: GraphQLSchema,
     private val instrumentation: NadelInstrumentation,
-    private val serviceExecutionHooks: ServiceExecutionHooks,
+    private val executionHooks: NadelExecutionHooks,
     private val executionIdProvider: ExecutionIdProvider,
     maxQueryDepth: Int,
     services: List<Service>,
@@ -84,7 +84,7 @@ internal class NextgenEngine(
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val dynamicServiceResolution = DynamicServiceResolution(
         engineSchema = engineSchema,
-        serviceExecutionHooks = serviceExecutionHooks,
+        executionHooks = executionHooks,
         services = services,
     )
     private val fieldToService = NadelFieldToService(
@@ -149,7 +149,7 @@ internal class NextgenEngine(
             val executionContext = NadelExecutionContext(
                 executionInput,
                 query,
-                serviceExecutionHooks,
+                executionHooks,
                 executionHints,
                 instrumentationState,
                 timer,

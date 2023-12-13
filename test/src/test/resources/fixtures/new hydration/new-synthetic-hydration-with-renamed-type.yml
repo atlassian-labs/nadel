@@ -1,0 +1,113 @@
+name: "new synthetic hydration with renamed type"
+enabled: true
+overallSchema:
+  Bar: |
+    type Query {
+      bars: BarQuery
+    }
+    type BarQuery {
+      barById(id: ID!): Bar
+    }
+    type Bar {
+      id: ID!
+    }
+  Foo: |
+    type Query {
+      foo: Foo @renamed(from: "fooOriginal")
+    }
+    type Foo {
+      id: ID!
+      fooBar: Bar @hydrated(service: "Bar" field: "bars.barById" arguments: [{name: "id" value: "$source.fooBarId"}])
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      id: ID!
+    }
+
+    type BarQuery {
+      barById(id: ID!): Bar
+    }
+
+    type Query {
+      bars: BarQuery
+    }
+  Foo: |
+    type Foo {
+      fooBarId: ID
+      id: ID!
+    }
+
+    type Query {
+      fooOriginal: Foo
+    }
+query: |
+  query {
+    foo {
+      id
+      fooBar {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Foo"
+    request:
+      query: |
+        query {
+          rename__foo__fooOriginal: fooOriginal {
+            __typename__hydration__fooBar: __typename
+            hydration__fooBar__fooBarId: fooBarId
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__foo__fooOriginal": {
+            "hydration__fooBar__fooBarId": "hydrated-bar",
+            "id": "Foo",
+            "__typename__hydration__fooBar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "Bar"
+    request:
+      query: |
+        query {
+          bars {
+            barById(id: "hydrated-bar") {
+              id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bars": {
+            "barById": {
+              "id": "hydrated-bar"
+            }
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "id": "Foo",
+        "fooBar": {
+          "id": "hydrated-bar"
+        }
+      }
+    },
+    "extensions": {}
+  }
