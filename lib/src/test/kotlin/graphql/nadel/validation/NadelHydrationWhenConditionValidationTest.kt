@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.validation.NadelSchemaValidationError.SomeHydrationsHaveMissingConditions
 import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateDoesNotMatchSourceFieldType
 import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateRequiresStringSourceField
 import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist
@@ -912,6 +913,223 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             assert(error.sourceFieldName == "size")
             assert(error.sourceFieldTypeName == "Int")
             assert(error.predicateType == "matches")
+        }
+
+        it("passes with multiple hydrations all with when conditions") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type JiraIssue {
+                            type: String
+                            creator: User 
+                                @hydrated(
+                                    service: "users"
+                                    field: "user"
+                                    arguments: [
+                                        {name: "id", value: "$source.creator"}
+                                    ]
+                                    when: {
+                                        result: {
+                                            sourceField: "type"
+                                            predicate: { equals: "someTypeOfIssue" }
+                                        }
+                                    }
+                                )
+                                @hydrated(
+                                    service: "users"
+                                    field: "user"
+                                    arguments: [
+                                        {name: "id", value: "$source.creator"}
+                                    ]
+                                    when: {
+                                        result: {
+                                            sourceField: "type"
+                                            predicate: { equals: "someOtherTypeOfIssue" }
+                                        }
+                                    }
+                                )
+                                
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                            type: String!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+        it("passes with multiple hydrations all without when conditions") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type JiraIssue {
+                            type: String
+                            creator: User
+                                @hydrated(
+                                    service: "users"
+                                    field: "user"
+                                    arguments: [
+                                        {name: "id", value: "$source.creator"}
+                                    ]
+                                )
+                                @hydrated(
+                                    service: "users"
+                                    field: "user"
+                                    arguments: [
+                                        {name: "id", value: "$source.creator"}
+                                    ]
+                                )
+                                
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                            type: String!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+        it("fails if some hydrations are missing a when condition") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type JiraIssue {
+                            type: String
+                            creator: User 
+                                @hydrated(
+                                    service: "users"
+                                    field: "user"
+                                    arguments: [
+                                        {name: "id", value: "$source.creator"}
+                                    ]
+                                    when: {
+                                        result: {
+                                            sourceField: "type"
+                                            predicate: { equals: "someTypeOfIssue" }
+                                        }
+                                    }
+                                )
+                                @hydrated(
+                                    service: "users"
+                                    field: "user"
+                                    arguments: [
+                                        {name: "id", value: "$source.creator"}
+                                    ]
+                                )
+                                
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                            type: String!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<SomeHydrationsHaveMissingConditions>()
+            assert(error.overallField.name == "creator")
         }
 
     }

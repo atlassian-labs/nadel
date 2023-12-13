@@ -448,6 +448,15 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class SomeHydrationsHaveMissingConditions(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+        override val message = "Some hydrations of field ${of} are missing a when condition"
+        override val subject = overallField
+    }
+
     data class IncompatibleFieldInHydratedInputObject(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
