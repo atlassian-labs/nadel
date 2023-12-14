@@ -18,7 +18,6 @@ import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
-import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
@@ -67,7 +66,7 @@ object NadelDirectives {
     val nadelWhenConditionPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
-            input NadelWhenConditionPredicate @oneOf {
+            input NadelHydrationResultFieldPredicate @oneOf {
               startsWith: String
               equals: JSON
               matches: String
@@ -79,9 +78,9 @@ object NadelDirectives {
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate based on the result"
-            input NadelWhenConditionResult {
+            input NadelHydrationResultCondition {
               sourceField: String!
-              predicate: NadelWhenConditionPredicate!
+              predicate: NadelHydrationResultFieldPredicate!
             }
         """.trimIndent(),
     )
@@ -90,8 +89,8 @@ object NadelDirectives {
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate"
-            input NadelWhenCondition {
-              result: NadelWhenConditionResult!
+            input NadelHydrationCondition {
+              result: NadelHydrationResultCondition!
             }
         """.trimIndent(),
     )
@@ -120,7 +119,7 @@ object NadelDirectives {
                 "The arguments to the hydrated field"
                 arguments: [NadelHydrationArgument!]!
                 "Specify a condition for the hydration to activate"
-                when: NadelWhenCondition
+                when: NadelHydrationCondition
             ) repeatable on FIELD_DEFINITION
         """.trimIndent(),
     )
