@@ -26,7 +26,7 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
         strategy = NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers(listOf(strategy)),
     )
 
-    override fun getSourceKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey {
+    override fun getIndexKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey {
         // todo: bake this into the instruction
         val sourceInputPath = instruction.actorInputValueDefs
             .asSequence()
