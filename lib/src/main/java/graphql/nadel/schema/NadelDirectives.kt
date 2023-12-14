@@ -1,20 +1,14 @@
 package graphql.nadel.schema
 
 import graphql.GraphQLContext
-import graphql.Scalars
-import graphql.Scalars.GraphQLString
 import graphql.execution.ValuesResolver
 import graphql.language.ArrayValue
-import graphql.language.BooleanValue
-import graphql.language.DirectiveDefinition.newDirectiveDefinition
-import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
-import graphql.language.EnumValueDefinition.newEnumValueDefinition
+import graphql.language.DirectiveDefinition
+import graphql.language.EnumTypeDefinition
 import graphql.language.InputObjectTypeDefinition
-import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
 import graphql.language.ObjectValue
+import graphql.language.SDLDefinition
 import graphql.language.StringValue
-import graphql.language.TypeDefinition
-import graphql.language.TypeName
 import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
@@ -23,20 +17,6 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.singleOfType
-import graphql.nadel.util.IntValue
-import graphql.nadel.util.description
-import graphql.nadel.util.emptyArrayValue
-import graphql.nadel.util.inputValueDefinition
-import graphql.nadel.util.list
-import graphql.nadel.util.nonNull
-import graphql.nadel.util.onEnum
-import graphql.nadel.util.onEnumValue
-import graphql.nadel.util.onFieldDefinition
-import graphql.nadel.util.onInputObject
-import graphql.nadel.util.onInterface
-import graphql.nadel.util.onObject
-import graphql.nadel.util.onScalar
-import graphql.nadel.util.onUnion
 import graphql.parser.Parser
 import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLAppliedDirective
@@ -51,252 +31,188 @@ import java.util.Locale
  * If you update this file please add to NadelBuiltInTypes
  */
 object NadelDirectives {
-    val renamedDirectiveDefinition = newDirectiveDefinition()
-        .name("renamed")
-        .onFieldDefinition().onObject().onInterface().onUnion().onInputObject().onScalar().onEnum()
-        .description("This allows you to rename a type or field in the overall schema")
-        .inputValueDefinition(name = "from", type = nonNull(GraphQLString), description = "The type to be renamed")
-        .build()
-
-    val nadelHydrationComplexIdentifiedBy = newInputObjectDefinition()
-        .name("NadelBatchObjectIdentifiedBy")
-        .description("This is required by batch hydration to understand how to pull out objects from the batched result")
-        .inputValueDefinition(
-            name = "sourceId",
-            type = nonNull(GraphQLString),
-        )
-        .inputValueDefinition(
-            name = "resultId",
-            type = nonNull(GraphQLString),
-        )
-        .build()
-
-    val nadelHydrationArgumentDefinition = newInputObjectDefinition()
-        .name("NadelHydrationArgument")
-        .description("This allows you to hydrate new values into fields")
-        .inputValueDefinition(
-            name = "name",
-            type = nonNull(GraphQLString),
-        )
-        .inputValueDefinition(
-            name = "value",
-            type = nonNull(ExtendedScalars.Json),
-        )
-        .build()
-
-    val nadelWhenConditionPredicateDefinition = parseType<InputObjectTypeDefinition>(
+    val renamedDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
         """
-        input NadelWhenConditionPredicate @oneOf {
-          startsWith: String
-          equals: JSON
-          matches: String
-        }
+            "This allows you to rename a type or field in the overall schema"
+            directive @renamed(
+                "The type to be renamed"
+                from: String!
+            ) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION | INPUT_OBJECT | SCALAR | ENUM
         """.trimIndent(),
     )
 
-    val nadelWhenConditionResultDefinition = newInputObjectDefinition()
-        .name("NadelWhenConditionResult")
-        .description("Specify a condition for the hydration to activate based on the result")
-        .inputValueDefinition(
-            name = "sourceField",
-            type = nonNull(GraphQLString),
-        )
-        .inputValueDefinition(
-            name = "predicate",
-            type = nonNull(nadelWhenConditionPredicateDefinition),
-        )
-        .build()
+    val nadelHydrationComplexIdentifiedBy = parseDefinition<InputObjectTypeDefinition>(
+        // language=GraphQL
+        """
+            "This is required by batch hydration to understand how to pull out objects from the batched result"
+            input NadelBatchObjectIdentifiedBy {
+              sourceId: String!
+              resultId: String!
+            }
+        """.trimIndent(),
+    )
 
-    val nadelWhenConditionDefinition = newInputObjectDefinition()
-        .name("NadelWhenCondition")
-        .description("Specify a condition for the hydration to activate")
-        .inputValueDefinition(
-            name = "result",
-            type = nonNull(nadelWhenConditionResultDefinition),
-        )
-        .build()
+    val nadelHydrationArgumentDefinition = parseDefinition<InputObjectTypeDefinition>(
+        // language=GraphQL
+        """
+            "This allows you to hydrate new values into fields"
+            input NadelHydrationArgument {
+                name: String!
+                value: JSON!
+            }
+        """.trimIndent(),
+    )
 
-    val hydratedDirectiveDefinition = newDirectiveDefinition()
-        .name("hydrated")
-        .onFieldDefinition()
-        .description("This allows you to hydrate new values into fields")
-        .repeatable(true)
-        .inputValueDefinition(
-            name = "service",
-            type = nonNull(GraphQLString),
-            description = "The target service",
-        )
-        .inputValueDefinition(
-            name = "field",
-            type = nonNull(GraphQLString),
-            description = "The target top level field",
-        )
-        .inputValueDefinition(
-            name = "identifiedBy",
-            type = nonNull(GraphQLString),
-            description = "How to identify matching results",
-            defaultValue = StringValue("id"),
-        )
-        .inputValueDefinition(
-            name = "inputIdentifiedBy",
-            type = nonNull(list(nonNull(nadelHydrationComplexIdentifiedBy))),
-            description = "How to identify matching results",
-            defaultValue = emptyArrayValue(),
-        )
-        .inputValueDefinition(
-            name = "indexed",
-            description = "Are results indexed",
-            type = nonNull(Scalars.GraphQLBoolean),
-            defaultValue = BooleanValue(false),
-        )
-        .inputValueDefinition(
-            name = "batched",
-            description = "Is querying batched",
-            type = nonNull(Scalars.GraphQLBoolean),
-            defaultValue = BooleanValue(false),
-        )
-        .inputValueDefinition(
-            name = "batchSize",
-            description = "The batch size",
-            type = nonNull(Scalars.GraphQLInt),
-            defaultValue = IntValue(200),
-        )
-        .inputValueDefinition(
-            name = "timeout",
-            description = "The timeout to use when completing hydration",
-            type = nonNull(Scalars.GraphQLInt),
-            defaultValue = IntValue(-1),
-        )
-        .inputValueDefinition(
-            name = "arguments",
-            description = "The arguments to the hydrated field",
-            type = nonNull(list(nonNull(nadelHydrationArgumentDefinition))),
-        )
-        .inputValueDefinition(
-            name = "when",
-            description = "Specify a condition for the hydration to activate",
-            type = TypeName.newTypeName()
-                .name(nadelWhenConditionDefinition.name)
-                .build()
-        )
-        .build()
+    val nadelWhenConditionPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
+        // language=GraphQL
+        """
+            input NadelWhenConditionPredicate @oneOf {
+              startsWith: String
+              equals: JSON
+              matches: String
+            }
+        """.trimIndent(),
+    )
 
-    val dynamicServiceDirectiveDefinition = newDirectiveDefinition()
-        .name("dynamicServiceResolution")
-        .onFieldDefinition()
-        .description("Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service.")
-        .build()
+    val nadelWhenConditionResultDefinition = parseDefinition<InputObjectTypeDefinition>(
+        // language=GraphQL
+        """
+            "Specify a condition for the hydration to activate based on the result"
+            input NadelWhenConditionResult {
+              sourceField: String!
+              predicate: NadelWhenConditionPredicate!
+            }
+        """.trimIndent(),
+    )
 
-    val namespacedDirectiveDefinition = newDirectiveDefinition()
-        .name("namespaced")
-        .onFieldDefinition()
-        .description("Indicates that the field is a namespaced field.")
-        .build()
+    val nadelWhenConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
+        // language=GraphQL
+        """
+            "Specify a condition for the hydration to activate"
+            input NadelWhenCondition {
+              result: NadelWhenConditionResult!
+            }
+        """.trimIndent(),
+    )
 
-    val hiddenDirectiveDefinition = newDirectiveDefinition()
-        .name("hidden")
-        .description("Indicates that the field is not available for queries or introspection")
-        .onFieldDefinition()
-        .build()
+    val hydratedDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+            "This allows you to hydrate new values into fields"
+            directive @hydrated(
+                "The target service"
+                service: String!
+                "The target top level field"
+                field: String!
+                "How to identify matching results"
+                identifiedBy: String! = "id"
+                "How to identify matching results"
+                inputIdentifiedBy: [NadelBatchObjectIdentifiedBy!]! = []
+                "Are results indexed"
+                indexed: Boolean! = false
+                "Is querying batched"
+                batched: Boolean! = false
+                "The batch size"
+                batchSize: Int! = 200
+                "The timeout to use when completing hydration"
+                timeout: Int! = -1
+                "The arguments to the hydrated field"
+                arguments: [NadelHydrationArgument!]!
+                "Specify a condition for the hydration to activate"
+                when: NadelWhenCondition
+            ) repeatable on FIELD_DEFINITION
+        """.trimIndent(),
+    )
 
-    val nadelHydrationFromArgumentDefinition = newInputObjectDefinition()
-        .name("NadelHydrationFromArgument")
-        .description("This allows you to hydrate new values into fields with the @hydratedFrom directive")
-        .inputValueDefinition(
-            name = "name",
-            type = nonNull(GraphQLString),
-        )
-        .inputValueDefinition(
-            name = "valueFromField",
-            type = GraphQLString,
-        )
-        .inputValueDefinition(
-            name = "valueFromArg",
-            type = GraphQLString,
-        )
-        .build()
+    val dynamicServiceDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+            "Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service."
+            directive @dynamicServiceResolution on FIELD_DEFINITION
+        """.trimIndent(),
+    )
 
-    val nadelHydrationTemplateEnumDefinition = newEnumTypeDefinition()
-        .name("NadelHydrationTemplate")
-        .enumValueDefinition(newEnumValueDefinition().name("NADEL_PLACEHOLDER").build())
-        .build()
+    val namespacedDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+            "Indicates that the field is a namespaced field."
+            directive @namespaced on FIELD_DEFINITION
+        """.trimIndent(),
+    )
 
-    val hydratedFromDirectiveDefinition = newDirectiveDefinition()
-        .name("hydratedFrom")
-        .onFieldDefinition()
-        .description("This allows you to hydrate new values into fields")
-        .repeatable(true)
-        .inputValueDefinition(
-            name = "arguments",
-            description = "The arguments to the hydrated field",
-            type = nonNull(list(nonNull(nadelHydrationFromArgumentDefinition))),
-            defaultValue = ArrayValue.newArrayValue().build(),
-        )
-        .inputValueDefinition(
-            name = "template",
-            description = "The hydration template to use",
-            type = nonNull(nadelHydrationTemplateEnumDefinition),
-        )
-        .build()
+    val hiddenDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+            "Indicates that the field is not available for queries or introspection"
+            directive @hidden on FIELD_DEFINITION
+        """.trimIndent(),
+    )
 
-    val hydratedTemplateDirectiveDefinition = newDirectiveDefinition()
-        .name("hydratedTemplate")
-        .onEnumValue()
-        .description("This template directive provides common values to hydrated fields")
-        .inputValueDefinition(
-            name = "service",
-            type = nonNull(GraphQLString),
-            description = "The target service"
-        )
-        .inputValueDefinition(
-            name = "field",
-            type = nonNull(GraphQLString),
-            description = "The target top level field"
-        )
-        .inputValueDefinition(
-            name = "identifiedBy",
-            description = "How to identify matching results",
-            type = nonNull(GraphQLString),
-            defaultValue = StringValue.newStringValue("id").build(),
-        )
-        .inputValueDefinition(
-            name = "inputIdentifiedBy",
-            description = "How to identify matching results",
-            type = nonNull(list(nonNull(nadelHydrationComplexIdentifiedBy))),
-            defaultValue = ArrayValue.newArrayValue().build(),
-        )
-        .inputValueDefinition(
-            name = "indexed",
-            description = "Are results indexed",
-            type = Scalars.GraphQLBoolean,
-            defaultValue = BooleanValue(false),
-        )
-        .inputValueDefinition(
-            name = "batched",
-            description = "Is querying batched",
-            type = Scalars.GraphQLBoolean,
-            defaultValue = BooleanValue(false),
-        )
-        .inputValueDefinition(
-            name = "batchSize",
-            description = "The batch size",
-            type = Scalars.GraphQLInt,
-            defaultValue = IntValue(200),
-        )
-        .inputValueDefinition(
-            name = "timeout",
-            description = "The timeout in milliseconds",
-            type = Scalars.GraphQLInt,
-            defaultValue = IntValue(-1),
-        )
-        .build()
+    val nadelHydrationFromArgumentDefinition = parseDefinition<InputObjectTypeDefinition>(
+        // language=GraphQL
+        """
+            "This allows you to hydrate new values into fields with the @hydratedFrom directive"
+            input NadelHydrationFromArgument {
+              name: String!
+              valueFromField: String
+              valueFromArg: String
+            }
+        """.trimIndent(),
+    )
+
+    val nadelHydrationTemplateEnumDefinition = parseDefinition<EnumTypeDefinition>(
+        // language=GraphQL
+        """
+            enum NadelHydrationTemplate {
+              NADEL_PLACEHOLDER
+            }
+        """.trimIndent(),
+    )
+
+    val hydratedFromDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+            "This allows you to hydrate new values into fields"
+            directive @hydratedFrom(
+                "The arguments to the hydrated field"
+                arguments: [NadelHydrationFromArgument!]! = []
+                "The hydration template to use"
+                template: NadelHydrationTemplate!
+            ) repeatable on FIELD_DEFINITION
+        """.trimIndent(),
+    )
+
+    val hydratedTemplateDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+            "This template directive provides common values to hydrated fields"
+            directive @hydratedTemplate(
+                "The target service"
+                service: String!
+                "The target top level field"
+                field: String!
+                "How to identify matching results"
+                identifiedBy: String! = "id"
+                "How to identify matching results"
+                inputIdentifiedBy: [NadelBatchObjectIdentifiedBy!]! = []
+                "Are results indexed"
+                indexed: Boolean = false
+                "Is querying batched"
+                batched: Boolean = false
+                "The batch size"
+                batchSize: Int = 200
+                "The timeout in milliseconds"
+                timeout: Int = -1
+            ) on ENUM_VALUE
+        """.trimIndent(),
+    )
 
     fun createUnderlyingServiceHydration(
         fieldDefinition: GraphQLFieldDefinition,
         overallSchema: GraphQLSchema,
     ): List<UnderlyingServiceHydration> {
         val hydrations = fieldDefinition.getAppliedDirectives(hydratedDirectiveDefinition.name)
-            .asSequence()
             .map { directive ->
                 val arguments = createRemoteArgs(directive.getArgument("arguments").argumentValue.value as ArrayValue)
 
@@ -311,12 +227,11 @@ object NadelDirectives {
             }
 
         val templatedHydrations = fieldDefinition.getAppliedDirectives(hydratedFromDirectiveDefinition.name)
-            .asSequence()
             .map { directive ->
                 createTemplatedUnderlyingServiceHydration(directive, overallSchema)
             }
 
-        return (hydrations + templatedHydrations).toList()
+        return hydrations + templatedHydrations
     }
 
     private fun buildHydrationParameters(
@@ -382,12 +297,6 @@ object NadelDirectives {
     }
 
     private fun createRemoteArgs(arguments: ArrayValue): List<RemoteArgumentDefinition> {
-        fun Map<String, String>.requireArgument(key: String): String {
-            return requireNotNull(this[key]) {
-                "${nadelHydrationArgumentDefinition.name} definition requires '$key' to be not-null"
-            }
-        }
-
         return arguments.values
             .map { arg ->
                 @Suppress("UNCHECKED_CAST") // trust GraphQL type system and caller
@@ -538,7 +447,8 @@ object NadelDirectives {
             Locale.getDefault()
         ) as T
     }
-    private inline fun <reified T : TypeDefinition<*>> parseType(sdl: String): T {
+
+    private inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {
         return Parser.parse(sdl).definitions.singleOfType()
     }
 }
