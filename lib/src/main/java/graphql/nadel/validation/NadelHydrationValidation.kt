@@ -48,7 +48,8 @@ internal class NadelHydrationValidation(
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }
-        val whenConditionValidationError = nadelHydrationWhenConditionValidation.validateConditionsOnAllHydrations(hydrations, parent, overallField)
+        val whenConditionValidationError =
+            nadelHydrationWhenConditionValidation.validateConditionsOnAllHydrations(hydrations, parent, overallField)
         if (whenConditionValidationError != null) {
             return listOf(whenConditionValidationError)
         }

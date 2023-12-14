@@ -22,33 +22,46 @@ internal class NadelHydrationWhenConditionValidation() {
         }
 
         val whenConditionSourceFieldName: String = hydration.conditionalHydration?.get("sourceField") as String
-        val whenConditionSourceField: GraphQLFieldDefinition = (parent.overall as GraphQLFieldsContainer).getField(whenConditionSourceFieldName)
-            ?: return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(whenConditionSourceFieldName, overallField)
+        val whenConditionSourceField: GraphQLFieldDefinition =
+            (parent.overall as GraphQLFieldsContainer).getField(whenConditionSourceFieldName)
+                ?: return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(
+                    whenConditionSourceFieldName,
+                    overallField
+                )
 
-        if (whenConditionSourceField.type.unwrapNonNull() !is GraphQLScalarType){
-            return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(whenConditionSourceFieldName, GraphQLTypeUtil.simplePrint(whenConditionSourceField.type), overallField)
+        if (whenConditionSourceField.type.unwrapNonNull() !is GraphQLScalarType) {
+            return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(
+                whenConditionSourceFieldName,
+                GraphQLTypeUtil.simplePrint(whenConditionSourceField.type),
+                overallField
+            )
         }
         val whenConditionSourceFieldTypeName: String = (whenConditionSourceField.type as GraphQLScalarType).name
 
-
         // Limit sourceField to simple values like String, Boolean, Int etc.
-        if( ! (whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
+        if (!(whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
                 whenConditionSourceFieldTypeName == Scalars.GraphQLInt.name ||
-                whenConditionSourceFieldTypeName == Scalars.GraphQLID.name)) {
-            return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(whenConditionSourceFieldName, whenConditionSourceFieldTypeName, overallField)
+                whenConditionSourceFieldTypeName == Scalars.GraphQLID.name)
+        ) {
+            return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(
+                whenConditionSourceFieldName,
+                whenConditionSourceFieldTypeName,
+                overallField
+            )
         }
 
         // Ensure predicate matches the field type used
         val predicateObject = hydration.conditionalHydration?.get("predicate") as Map<String, Any>
         val (predicateType, predicateValue) = predicateObject.entries.single()
 
-        if (predicateType == "equals" ) {
+        if (predicateType == "equals") {
             if (!(
-                predicateValue is String && whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
-                predicateValue is BigInteger && whenConditionSourceFieldTypeName == Scalars.GraphQLInt.name ||
-                predicateValue is String && whenConditionSourceFieldTypeName == Scalars.GraphQLID.name ||
-                predicateValue is BigInteger && whenConditionSourceFieldTypeName == Scalars.GraphQLID.name
-            )) {
+                    predicateValue is String && whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
+                        predicateValue is BigInteger && whenConditionSourceFieldTypeName == Scalars.GraphQLInt.name ||
+                        predicateValue is String && whenConditionSourceFieldTypeName == Scalars.GraphQLID.name ||
+                        predicateValue is BigInteger && whenConditionSourceFieldTypeName == Scalars.GraphQLID.name
+                    )
+            ) {
                 return NadelSchemaValidationError.WhenConditionPredicateDoesNotMatchSourceFieldType(
                     whenConditionSourceFieldName,
                     whenConditionSourceFieldTypeName,
@@ -59,8 +72,9 @@ internal class NadelHydrationWhenConditionValidation() {
         }
         if (predicateType == "startsWith" || predicateType == "matches") {
             if (!(whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
-                whenConditionSourceFieldTypeName == Scalars.GraphQLID.name
-                )){
+                    whenConditionSourceFieldTypeName == Scalars.GraphQLID.name
+                    )
+            ) {
                 return NadelSchemaValidationError.WhenConditionPredicateRequiresStringSourceField(
                     whenConditionSourceFieldName,
                     whenConditionSourceFieldTypeName,
@@ -78,18 +92,10 @@ internal class NadelHydrationWhenConditionValidation() {
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationError.SomeHydrationsHaveMissingConditions? {
-        //if one hydration has a condition, then they all must, so lets check the first one
-        val shouldHaveConditions = hydrations.first().conditionalHydration != null
-
-        if (shouldHaveConditions) {
-            if (hydrations.any { (it.conditionalHydration == null) }) { //i.e. (if it has no condition but it should have condition) OR  (if it has condition but shouldn't have condition)
-                return NadelSchemaValidationError.SomeHydrationsHaveMissingConditions(parent, overallField)
-            }
-        } else {
-            if (hydrations.any { (it.conditionalHydration != null) }) { //i.e. (if it has no condition but it should have condition) OR  (if it has condition but shouldn't have condition)
-                return NadelSchemaValidationError.SomeHydrationsHaveMissingConditions(parent, overallField)
-            }
+        if (hydrations.all { (it.conditionalHydration == null) } ||
+            hydrations.all { (it.conditionalHydration != null) }) {
+            return null
         }
-        return null
+        return NadelSchemaValidationError.SomeHydrationsHaveMissingConditions(parent, overallField)
     }
 }
