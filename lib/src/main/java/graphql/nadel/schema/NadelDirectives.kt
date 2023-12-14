@@ -396,14 +396,14 @@ object NadelDirectives {
 
         var argumentName: String? = null
         var path: List<String>? = null
-        var value: Value<*>? = null
+        var staticValue: Value<*>? = null
         when (argumentType) {
             SourceType.ObjectField -> path = values
             SourceType.FieldArgument -> argumentName = values.single()
-            SourceType.StaticArgument -> value = value
+            SourceType.StaticArgument -> staticValue = StringValue(value)
         }
 
-        return RemoteArgumentSource(argumentName, path, value, argumentType)
+        return RemoteArgumentSource(argumentName, path, staticValue, argumentType)
     }
 
     fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
