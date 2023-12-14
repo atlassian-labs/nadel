@@ -7,7 +7,11 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
 import graphql.nadel.dsl.UnderlyingServiceHydration
-import graphql.nadel.engine.util.*
+import graphql.nadel.engine.util.getFieldAt
+import graphql.nadel.engine.util.isList
+import graphql.nadel.engine.util.isNonNull
+import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
@@ -22,9 +26,14 @@ import graphql.nadel.validation.NadelSchemaValidationError.NoSourceArgsInBatchHy
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
-import graphql.schema.*
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLNamedOutputType
+import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLUnionType
 import graphql.validation.ValidationUtil
-import java.util.*
+import java.util.Locale
 
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,

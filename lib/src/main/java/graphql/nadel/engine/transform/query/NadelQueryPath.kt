@@ -9,6 +9,10 @@ data class NadelQueryPath(val segments: List<String>) {
         return NadelQueryPath(segments + segment)
     }
 
+    fun drop(n: Int): NadelQueryPath {
+        return NadelQueryPath(segments.drop(n))
+    }
+
     fun dropLast(n: Int): NadelQueryPath {
         return NadelQueryPath(segments.dropLast(n))
     }

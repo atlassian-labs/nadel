@@ -1,5 +1,6 @@
 package graphql.nadel.tests.hooks
 
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.tests.EngineTestHook
@@ -45,33 +46,25 @@ class `primitive-json-arguments-variables` : EngineTestHook {
 open class AllDocumentVariablesHintHook : EngineTestHook {
     override val wiringFactory = NeverWiringFactoryWithExtendedJsonScalar()
 
-    override fun makeExecutionInput(
-        builder: NadelExecutionInput.Builder
-    ): NadelExecutionInput.Builder {
-        return builder.transformExecutionHints {
-            it.allDocumentVariablesHint {
+    override fun makeExecutionHints(builder: NadelExecutionHints.Builder): NadelExecutionHints.Builder {
+        return builder
+            .allDocumentVariablesHint {
                 true
             }
-        }
     }
 }
 
 @UseHook
-class `inlined-all-arguments` : AllDocumentVariablesHintHook() {
-}
+class `inlined-all-arguments` : AllDocumentVariablesHintHook()
 
 @UseHook
-class `inlined-all-arguments-with-mixed-literals-and-variables` : AllDocumentVariablesHintHook() {
-}
+class `inlined-all-arguments-with-mixed-literals-and-variables` : AllDocumentVariablesHintHook()
 
 @UseHook
-class `inlined-all-arguments-with-renamed-field` : AllDocumentVariablesHintHook() {
-
-}
-@UseHook
-class `inlined-all-arguments-with-renamed-field-input-is-wrapped-in-a-list` : AllDocumentVariablesHintHook() {
-}
+class `inlined-all-arguments-with-renamed-field` : AllDocumentVariablesHintHook()
 
 @UseHook
-class `complex-identified-by-with-rename` : AllDocumentVariablesHintHook() {
-}
+class `inlined-all-arguments-with-renamed-field-input-is-wrapped-in-a-list` : AllDocumentVariablesHintHook()
+
+@UseHook
+class `complex-identified-by-with-rename` : AllDocumentVariablesHintHook()

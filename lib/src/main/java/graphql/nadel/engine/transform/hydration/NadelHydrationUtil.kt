@@ -2,6 +2,7 @@ package graphql.nadel.engine.transform.hydration
 
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
+import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
@@ -9,6 +10,17 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.toGraphQLError
 
 internal object NadelHydrationUtil {
+    @JvmName("getInstructionsToAddErrors_2")
+    fun getInstructionsToAddErrors(
+        results: List<NadelResolvedObjectBatch>,
+    ): List<NadelResultInstruction> {
+        return results
+            .asSequence()
+            .map(NadelResolvedObjectBatch::result)
+            .flatMap(::sequenceOfInstructionsToAddErrors)
+            .toList()
+    }
+
     fun getInstructionsToAddErrors(
         results: List<ServiceExecutionResult>,
     ): List<NadelResultInstruction> {

@@ -53,6 +53,7 @@ tasks.withType<KotlinCompile>().configureEach {
             "-java-parameters",
             "-Xopt-in=kotlin.RequiresOptIn",
             "-Xjvm-default=all",
+            "-Xcontext-receivers",
         )
     }
 }

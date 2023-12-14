@@ -168,8 +168,6 @@ serviceCalls:
         v0:
           - site: "hello"
             userId: "USER-5"
-          - site: "jdog"
-            userId: "USER-2"
           - site: "hello"
             userId: "USER-2"
     # language=JSON
@@ -182,12 +180,6 @@ serviceCalls:
               "name": "H-Five",
               "batch_hydration__author__id": "USER-5",
               "batch_hydration__author__siteId": "hello"
-            },
-            {
-              "id": "USER-2",
-              "name": "J-Two",
-              "batch_hydration__author__id": "USER-2",
-              "batch_hydration__author__siteId": "jdog"
             },
             {
               "id": "USER-2",

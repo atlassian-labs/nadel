@@ -5,6 +5,8 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
+internal typealias PairList<A, B> = List<Pair<A, B>>
+
 /**
  * Like [singleOrNull] but the single item must be of type [T].
  */
@@ -263,4 +265,15 @@ fun <T> Sequence<T>.all(min: Int, predicate: (T) -> Boolean): Boolean {
     }
 
     return count >= min
+}
+
+fun <A, B : Any> Sequence<Pair<A, B?>>.filterPairSecondNotNull(): Sequence<Pair<A, B>> {
+    return mapNotNull { pair ->
+        if (pair.second == null) {
+            null
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            pair as Pair<A, B>
+        }
+    }
 }
