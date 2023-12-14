@@ -10,6 +10,7 @@ import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.partitionCount
+import graphql.nadel.engine.util.singleOfTypeOrNull
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
@@ -95,7 +96,44 @@ internal class NadelHydrationValidation(
             )
 
         return getArgumentErrors(parent, overallField, hydration, actorField) +
-            getOutputTypeErrors(parent, overallField, actorField, hasMoreThanOneHydration)
+            getOutputTypeErrors(parent, overallField, actorField, hasMoreThanOneHydration) +
+            getObjectIdentifierErrors(parent, overallField, hydration)
+    }
+
+    private fun getObjectIdentifierErrors(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        hydration: UnderlyingServiceHydration,
+    ): List<NadelSchemaValidationError> {
+        val pathToSourceInputField = hydration.arguments
+            .map { arg -> arg.remoteArgumentSource }
+            .singleOfTypeOrNull<RemoteArgumentSource.ObjectField>()
+            ?.pathToField
+            ?: return emptyList() // Ignore this, checked elsewhere
+
+        // Nothing to check
+        if (hydration.objectIdentifiers == null) {
+            return emptyList()
+        }
+
+        // Find offending object identifiers and generate errors
+        return hydration.objectIdentifiers
+            .asSequence()
+            .filter { identifier ->
+                // Source identifiers MUST use source input field
+                identifier.sourceId
+                    .split(".")
+                    .take(pathToSourceInputField.size) != pathToSourceInputField
+            }
+            .map { offendingObjectIdentifier ->
+                NadelSchemaValidationError.ObjectIdentifierMustFollowSourceInputField(
+                    type = parent,
+                    field = overallField,
+                    pathToSourceInputField = pathToSourceInputField,
+                    offendingObjectIdentifier = offendingObjectIdentifier,
+                )
+            }
+            .toList()
     }
 
     private fun limitBatchHydrationMismatch(

@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.validation.NadelSchemaValidationError.ObjectIdentifierMustFollowSourceInputField
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -519,5 +520,265 @@ class NadelHydrationValidationTest2 {
 
         val errors = validate(fixture)
         assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `object identifier follows source input field path`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    union ActivityContent = Comment | Page 
+                    type Activity {
+                        id: ID!
+                        data: ActivityContent
+                        @hydrated(
+                            service: "issues"
+                            field: "comments"
+                            arguments: [
+                                {name: "queries", value: "$source.jiraComment"}
+                            ]
+                            inputIdentifiedBy: [
+                                {sourceId: "jiraComment.id", resultId: "id"}
+                                {sourceId: "jiraComment.issueId", resultId: "issueId"}
+                            ]
+                        )
+                        @hydrated(
+                            service: "pages"
+                            field: "pages"
+                            arguments: [
+                                {name: "queries", value: "$source.confluencePage"}
+                            ]
+                            inputIdentifiedBy: [
+                                {sourceId: "confluencePage.pageId", resultId: "id"}
+                                {sourceId: "confluencePage.pageStatus", resultId: "status"}
+                            ]
+                        )
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(queries: [CommentQuery]!): [Comment]
+                    }
+                    input CommentQuery {
+                        issueId: ID!
+                        commentId: ID!
+                    }
+                    type Comment {
+                        id: ID!
+                        issueId: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(queries: [PageQuery]!): [Page]
+                    }
+                    input PageQuery {
+                        pageId: ID!
+                        pageStatus: PageStatus
+                    }
+                    enum PageStatus {
+                        CURRENT
+                        DRAFT
+                    }
+                    type Page {
+                        id: ID!
+                        status: PageStatus
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                        jiraComment: ActivityJiraCommentLink
+                        confluencePage: ActivityConfluencePageLink
+                    }
+                    type ActivityJiraCommentLink {
+                        issueId: ID!
+                        commentId: ID!
+                    }
+                    type ActivityConfluencePageLink {
+                        pageId: ID!
+                        pageStatus: PageStatus
+                    }
+                    enum PageStatus {
+                        CURRENT
+                        DRAFT
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(queries: [CommentQuery]!): [Comment]
+                    }
+                    input CommentQuery {
+                        issueId: ID!
+                        commentId: ID!
+                    }
+                    type Comment {
+                        id: ID!
+                        issueId: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(queries: [PageQuery]!): [Page]
+                    }
+                    input PageQuery {
+                        pageId: ID!
+                        pageStatus: PageStatus
+                    }
+                    enum PageStatus {
+                        CURRENT
+                        DRAFT
+                    }
+                    type Page {
+                        id: ID!
+                        status: PageStatus
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `object identifier is outside of source input field path`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    union ActivityContent = Comment | Page 
+                    type Activity {
+                        id: ID!
+                        data: ActivityContent
+                        @hydrated(
+                            service: "issues"
+                            field: "comments"
+                            arguments: [
+                                {name: "queries", value: "$source.jiraComment"}
+                            ]
+                            inputIdentifiedBy: [
+                                {sourceId: "id", resultId: "id"}
+                                {sourceId: "jiraComment.issueId", resultId: "issueId"}
+                            ]
+                        )
+                        @hydrated(
+                            service: "pages"
+                            field: "pages"
+                            arguments: [
+                                {name: "queries", value: "$source.confluencePage"}
+                            ]
+                            inputIdentifiedBy: [
+                                {sourceId: "confluencePage.pageId", resultId: "id"}
+                                {sourceId: "confluencePage.pageStatus", resultId: "status"}
+                            ]
+                        )
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(queries: [CommentQuery]!): [Comment]
+                    }
+                    input CommentQuery {
+                        issueId: ID!
+                        commentId: ID!
+                    }
+                    type Comment {
+                        id: ID!
+                        issueId: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(queries: [PageQuery]!): [Page]
+                    }
+                    input PageQuery {
+                        pageId: ID!
+                        pageStatus: PageStatus
+                    }
+                    enum PageStatus {
+                        CURRENT
+                        DRAFT
+                    }
+                    type Page {
+                        id: ID!
+                        status: PageStatus
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                        jiraComment: ActivityJiraCommentLink
+                        confluencePage: ActivityConfluencePageLink
+                    }
+                    type ActivityJiraCommentLink {
+                        issueId: ID!
+                        commentId: ID!
+                    }
+                    type ActivityConfluencePageLink {
+                        pageId: ID!
+                        pageStatus: PageStatus
+                    }
+                    enum PageStatus {
+                        CURRENT
+                        DRAFT
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(queries: [CommentQuery]!): [Comment]
+                    }
+                    input CommentQuery {
+                        issueId: ID!
+                        commentId: ID!
+                    }
+                    type Comment {
+                        id: ID!
+                        issueId: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(queries: [PageQuery]!): [Page]
+                    }
+                    input PageQuery {
+                        pageId: ID!
+                        pageStatus: PageStatus
+                    }
+                    enum PageStatus {
+                        CURRENT
+                        DRAFT
+                    }
+                    type Page {
+                        id: ID!
+                        status: PageStatus
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+        assertTrue(errors.single() is ObjectIdentifierMustFollowSourceInputField)
+        val error = errors.single() as ObjectIdentifierMustFollowSourceInputField
+        assertTrue(error.subject.name == "data")
+        assertTrue(error.pathToSourceInputField == listOf("jiraComment"))
+        assertTrue(error.offendingObjectIdentifier.sourceId == "id")
+        assertTrue(error.offendingObjectIdentifier.resultId == "id")
     }
 }

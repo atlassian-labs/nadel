@@ -12,5 +12,8 @@ data class NadelHydrationDefinition(
     val timeout: Int,
     val condition: NadelHydrationResultConditionDefinition?
 ) {
-    data class ObjectIdentifier(val sourceId: String, val resultId: String)
+    data class ObjectIdentifier(
+        val sourceId: String,
+        val resultId: String,
+    )
 }
