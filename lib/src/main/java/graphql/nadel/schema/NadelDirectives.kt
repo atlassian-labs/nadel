@@ -46,8 +46,8 @@ object NadelDirectives {
         """
             "This is required by batch hydration to understand how to pull out objects from the batched result"
             input NadelBatchObjectIdentifiedBy {
-              sourceId: String!
-              resultId: String!
+                sourceId: String!
+                resultId: String!
             }
         """.trimIndent(),
     )
@@ -67,9 +67,9 @@ object NadelDirectives {
         // language=GraphQL
         """
             input NadelHydrationResultFieldPredicate @oneOf {
-              startsWith: String
-              equals: JSON
-              matches: String
+                startsWith: String
+                equals: JSON
+                matches: String
             }
         """.trimIndent(),
     )
@@ -79,8 +79,8 @@ object NadelDirectives {
         """
             "Specify a condition for the hydration to activate based on the result"
             input NadelHydrationResultCondition {
-              sourceField: String!
-              predicate: NadelHydrationResultFieldPredicate!
+                sourceField: String!
+                predicate: NadelHydrationResultFieldPredicate!
             }
         """.trimIndent(),
     )
@@ -90,7 +90,7 @@ object NadelDirectives {
         """
             "Specify a condition for the hydration to activate"
             input NadelHydrationCondition {
-              result: NadelHydrationResultCondition!
+                result: NadelHydrationResultCondition!
             }
         """.trimIndent(),
     )
@@ -153,9 +153,9 @@ object NadelDirectives {
         """
             "This allows you to hydrate new values into fields with the @hydratedFrom directive"
             input NadelHydrationFromArgument {
-              name: String!
-              valueFromField: String
-              valueFromArg: String
+                name: String!
+                valueFromField: String
+                valueFromArg: String
             }
         """.trimIndent(),
     )
@@ -164,7 +164,7 @@ object NadelDirectives {
         // language=GraphQL
         """
             enum NadelHydrationTemplate {
-              NADEL_PLACEHOLDER
+                NADEL_PLACEHOLDER
             }
         """.trimIndent(),
     )
