@@ -21,7 +21,7 @@ internal class NadelHydrationWhenConditionValidation() {
             return null
         }
 
-        val whenConditionSourceFieldName: String = hydration.conditionalHydration?.get("sourceField") as String
+        val whenConditionSourceFieldName: String = hydration.conditionalHydration.sourceField
         val whenConditionSourceField: GraphQLFieldDefinition =
             (parent.overall as GraphQLFieldsContainer).getField(whenConditionSourceFieldName)
                 ?: return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(
@@ -51,10 +51,10 @@ internal class NadelHydrationWhenConditionValidation() {
         }
 
         // Ensure predicate matches the field type used
-        val predicateObject = hydration.conditionalHydration?.get("predicate") as Map<String, Any>
-        val (predicateType, predicateValue) = predicateObject.entries.single()
+        val predicateObject = hydration.conditionalHydration.predicate
 
-        if (predicateType == "equals") {
+        if (predicateObject.equals != null) {
+            val predicateValue = predicateObject.equals
             if (!(
                     predicateValue is String && whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
                         predicateValue is BigInteger && whenConditionSourceFieldTypeName == Scalars.GraphQLInt.name ||
@@ -70,7 +70,8 @@ internal class NadelHydrationWhenConditionValidation() {
                 )
             }
         }
-        if (predicateType == "startsWith" || predicateType == "matches") {
+        if (predicateObject.startsWith != null || predicateObject.matches != null ) {
+            val predicateType = if (predicateObject.startsWith != null) "startsWith" else "matches"
             if (!(whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
                     whenConditionSourceFieldTypeName == Scalars.GraphQLID.name
                     )
@@ -83,7 +84,6 @@ internal class NadelHydrationWhenConditionValidation() {
                 )
             }
         }
-
         return null
     }
 
