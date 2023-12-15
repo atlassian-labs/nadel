@@ -1,6 +1,5 @@
 package graphql.nadel.dsl
 
-
 data class WhenConditionDefinition(
     val result: WhenConditionResultDefinition
 )
