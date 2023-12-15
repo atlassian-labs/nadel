@@ -210,6 +210,7 @@ object NadelDirectives {
             ) on ENUM_VALUE
         """.trimIndent(),
     )
+
     fun createUnderlyingServiceHydration(
         fieldDefinition: GraphQLFieldDefinition,
         overallSchema: GraphQLSchema,
@@ -239,7 +240,7 @@ object NadelDirectives {
         directive: GraphQLAppliedDirective,
         arguments: List<RemoteArgumentDefinition>,
         identifiedBy: List<UnderlyingServiceHydration.ObjectIdentifier>,
-        conditionalHydration: WhenConditionResultDefinition? = null
+        conditionalHydration: WhenConditionResultDefinition? = null,
     ): UnderlyingServiceHydration {
         val service = getDirectiveValue<String>(directive, "service")
         val fieldNames = getDirectiveValue<String>(directive, "field").split('.')
@@ -452,7 +453,7 @@ object NadelDirectives {
     private fun buildConditionalHydrationObject(whenConditionArgument: GraphQLAppliedDirectiveArgument): WhenConditionDefinition? {
 
         val result = whenConditionArgument.getValue<Map<String, Map<String, Any>>>()?.get("result")
-        if (result == null){
+        if (result == null) {
             return null
         }
         val sourceField = result["sourceField"]!! as String
@@ -464,7 +465,7 @@ object NadelDirectives {
                 predicate = WhenConditionPredicateDefinition(
                     equals = predicate.get("equals"),
                     startsWith = predicate.get("startsWith") as String?,
-                    matches = (predicate.get("matches")as String?)?.toRegex()
+                    matches = (predicate.get("matches") as String?)?.toRegex()
                 )
             )
         )
