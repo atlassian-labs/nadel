@@ -72,7 +72,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("passes if sourceField is simple values Int") {
@@ -134,7 +138,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("passes if expecting an Int for an ID sourceField") {
@@ -196,7 +204,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("passes if expecting a String for an ID sourceField") {
@@ -258,7 +270,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("fails if sourceField is not a value of String, Int, or ID") {
@@ -320,7 +336,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
@@ -387,7 +407,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
@@ -452,7 +476,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<WhenConditionSourceFieldDoesNotExist>()
@@ -518,7 +546,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<WhenConditionPredicateDoesNotMatchSourceFieldType>()
@@ -587,7 +619,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("startsWith predicate works on ID field") {
@@ -649,7 +685,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("startsWith predicate fails on non-string field") {
@@ -711,7 +751,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<WhenConditionPredicateRequiresStringSourceField>()
@@ -780,7 +824,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("matches predicate works on ID field") {
@@ -842,7 +890,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("matches predicate fails on non-string field") {
@@ -904,7 +956,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<WhenConditionPredicateRequiresStringSourceField>()
@@ -996,7 +1052,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("passes with multiple hydrations all without when conditions") {
@@ -1069,7 +1129,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isEmpty())
         }
         it("fails if some hydrations are missing a when condition") {
@@ -1148,11 +1212,82 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
+            // When
             val errors = validate(fixture)
+
+            // Then
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<SomeHydrationsHaveMissingConditions>()
             assert(error.overallField.name == "creator")
+        }
+        it("handles non-nullable type is passed in") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type JiraIssue {
+                            type: String!
+                            creator: User
+                                @hydrated(
+                                    service: "users"
+                                    field: "user"
+                                    arguments: [
+                                        {name: "id", value: "$source.creator"}
+                                    ]
+                                    when: {
+                                        result: {
+                                            sourceField: "type"
+                                            predicate: { equals: "someTypeOfIssue" }
+                                        }
+                                    }
+                                )
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                            type: String!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            // When
+            val errors = validate(fixture)
+
+            // Then
+            assert(errors.map { it.message }.isEmpty())
         }
     }
 })
