@@ -21,7 +21,6 @@ import graphql.nadel.dsl.WhenConditionPredicateDefinition
 import graphql.nadel.dsl.WhenConditionResultDefinition
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
-import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
@@ -50,8 +49,8 @@ object NadelDirectives {
         """
             "This is required by batch hydration to understand how to pull out objects from the batched result"
             input NadelBatchObjectIdentifiedBy {
-              sourceId: String!
-              resultId: String!
+                sourceId: String!
+                resultId: String!
             }
         """.trimIndent(),
     )
@@ -70,10 +69,10 @@ object NadelDirectives {
     val nadelWhenConditionPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
-            input NadelWhenConditionPredicate @oneOf {
-              startsWith: String
-              equals: JSON
-              matches: String
+            input NadelHydrationResultFieldPredicate @oneOf {
+                startsWith: String
+                equals: JSON
+                matches: String
             }
         """.trimIndent(),
     )
@@ -82,9 +81,9 @@ object NadelDirectives {
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate based on the result"
-            input NadelWhenConditionResult {
-              sourceField: String!
-              predicate: NadelWhenConditionPredicate!
+            input NadelHydrationResultCondition {
+                sourceField: String!
+                predicate: NadelHydrationResultFieldPredicate!
             }
         """.trimIndent(),
     )
@@ -93,8 +92,8 @@ object NadelDirectives {
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate"
-            input NadelWhenCondition {
-              result: NadelWhenConditionResult!
+            input NadelHydrationCondition {
+                result: NadelHydrationResultCondition!
             }
         """.trimIndent(),
     )
@@ -123,7 +122,7 @@ object NadelDirectives {
                 "The arguments to the hydrated field"
                 arguments: [NadelHydrationArgument!]!
                 "Specify a condition for the hydration to activate"
-                when: NadelWhenCondition
+                when: NadelHydrationCondition
             ) repeatable on FIELD_DEFINITION
         """.trimIndent(),
     )
@@ -157,9 +156,9 @@ object NadelDirectives {
         """
             "This allows you to hydrate new values into fields with the @hydratedFrom directive"
             input NadelHydrationFromArgument {
-              name: String!
-              valueFromField: String
-              valueFromArg: String
+                name: String!
+                valueFromField: String
+                valueFromArg: String
             }
         """.trimIndent(),
     )
@@ -168,7 +167,7 @@ object NadelDirectives {
         // language=GraphQL
         """
             enum NadelHydrationTemplate {
-              NADEL_PLACEHOLDER
+                NADEL_PLACEHOLDER
             }
         """.trimIndent(),
     )
@@ -402,14 +401,14 @@ object NadelDirectives {
 
         var argumentName: String? = null
         var path: List<String>? = null
-        var value: Value<*>? = null
+        var staticValue: Value<*>? = null
         when (argumentType) {
             SourceType.ObjectField -> path = values
             SourceType.FieldArgument -> argumentName = values.single()
-            SourceType.StaticArgument -> value = value
+            SourceType.StaticArgument -> staticValue = StringValue(value)
         }
 
-        return RemoteArgumentSource(argumentName, path, value, argumentType)
+        return RemoteArgumentSource(argumentName, path, staticValue, argumentType)
     }
 
     fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
