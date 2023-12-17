@@ -16,6 +16,9 @@ import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.dsl.WhenConditionDefinition
+import graphql.nadel.dsl.WhenConditionPredicateDefinition
+import graphql.nadel.dsl.WhenConditionResultDefinition
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
 import graphql.scalars.ExtendedScalars
@@ -220,8 +223,7 @@ object NadelDirectives {
                 val identifiedByValues = resolveArgumentValue<List<Any>>(inputIdentifiedBy)
                 val identifiedBy = createObjectIdentifiers(identifiedByValues)
 
-                val conditionalHydration = directive.getArgument("when")
-                    .getValue<LinkedHashMap<String, LinkedHashMap<String, Any>>>()?.get("result")
+                val conditionalHydration = buildConditionalHydrationObject(directive.getArgument("when"))?.result
 
                 buildHydrationParameters(directive, arguments, identifiedBy, conditionalHydration)
             }
@@ -238,7 +240,7 @@ object NadelDirectives {
         directive: GraphQLAppliedDirective,
         arguments: List<RemoteArgumentDefinition>,
         identifiedBy: List<UnderlyingServiceHydration.ObjectIdentifier>,
-        conditionalHydration: LinkedHashMap<String,Any>? = null
+        conditionalHydration: WhenConditionResultDefinition? = null,
     ): UnderlyingServiceHydration {
         val service = getDirectiveValue<String>(directive, "service")
         val fieldNames = getDirectiveValue<String>(directive, "field").split('.')
@@ -446,6 +448,27 @@ object NadelDirectives {
             GraphQLContext.getDefault(),
             Locale.getDefault()
         ) as T
+    }
+
+    private fun buildConditionalHydrationObject(whenConditionArgument: GraphQLAppliedDirectiveArgument): WhenConditionDefinition? {
+
+        val result = whenConditionArgument.getValue<Map<String, Map<String, Any>>>()?.get("result")
+        if (result == null) {
+            return null
+        }
+        val sourceField = result["sourceField"]!! as String
+        val predicate: Map<String, Any> = result["predicate"]!! as Map<String, Any>
+
+        return WhenConditionDefinition(
+            result = WhenConditionResultDefinition(
+                sourceField = sourceField,
+                predicate = WhenConditionPredicateDefinition(
+                    equals = predicate.get("equals"),
+                    startsWith = predicate.get("startsWith") as String?,
+                    matches = (predicate.get("matches") as String?)?.toRegex()
+                )
+            )
+        )
     }
 
     private inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {
