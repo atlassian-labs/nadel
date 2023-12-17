@@ -2,7 +2,6 @@ package graphql.nadel.validation
 
 import graphql.Scalars
 import graphql.nadel.dsl.UnderlyingServiceHydration
-import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -10,7 +9,7 @@ import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLTypeUtil
 import java.math.BigInteger
 
-internal class NadelHydrationWhenConditionValidation() {
+internal class NadelHydrationWhenConditionValidation {
 
     fun validateHydrationWhenConditionInput(
         parent: NadelServiceSchemaElement,
@@ -26,17 +25,19 @@ internal class NadelHydrationWhenConditionValidation() {
             (parent.overall as GraphQLFieldsContainer).getField(whenConditionSourceFieldName)
                 ?: return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(
                     whenConditionSourceFieldName,
-                    overallField
+                    overallField,
                 )
 
-        if (whenConditionSourceField.type.unwrapNonNull() !is GraphQLScalarType) {
+        val whenConditionSourceFieldType = whenConditionSourceField.type.unwrapNonNull()
+        if (whenConditionSourceFieldType !is GraphQLScalarType) {
             return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(
                 whenConditionSourceFieldName,
                 GraphQLTypeUtil.simplePrint(whenConditionSourceField.type),
-                overallField
+                overallField,
             )
         }
-        val whenConditionSourceFieldTypeName: String = (whenConditionSourceField.type as GraphQLScalarType).name
+
+        val whenConditionSourceFieldTypeName: String = whenConditionSourceFieldType.name
 
         // Limit sourceField to simple values like String, Boolean, Int etc.
         if (!(whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
@@ -46,7 +47,7 @@ internal class NadelHydrationWhenConditionValidation() {
             return NadelSchemaValidationError.WhenConditionUnsupportedFieldType(
                 whenConditionSourceFieldName,
                 whenConditionSourceFieldTypeName,
-                overallField
+                overallField,
             )
         }
 
@@ -66,21 +67,21 @@ internal class NadelHydrationWhenConditionValidation() {
                     whenConditionSourceFieldName,
                     whenConditionSourceFieldTypeName,
                     predicateValue.javaClass.simpleName,
-                    overallField
+                    overallField,
                 )
             }
         }
-        if (predicateObject.startsWith != null || predicateObject.matches != null ) {
-            val predicateType = if (predicateObject.startsWith != null) "startsWith" else "matches"
+        if (predicateObject.startsWith != null || predicateObject.matches != null) {
             if (!(whenConditionSourceFieldTypeName == Scalars.GraphQLString.name ||
                     whenConditionSourceFieldTypeName == Scalars.GraphQLID.name
                     )
             ) {
+                val predicateType = if (predicateObject.startsWith != null) "startsWith" else "matches"
                 return NadelSchemaValidationError.WhenConditionPredicateRequiresStringSourceField(
                     whenConditionSourceFieldName,
                     whenConditionSourceFieldTypeName,
                     predicateType,
-                    overallField
+                    overallField,
                 )
             }
         }

@@ -181,7 +181,6 @@ internal class NadelHydrationValidation(
                     )
                 )
             } else {
-                val remoteArgSource = remoteArg.remoteArgumentSource
                 getRemoteArgErrors(parent, overallField, remoteArg, actorField, hydration)
             }
         }
