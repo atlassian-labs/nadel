@@ -223,7 +223,10 @@ object NadelDirectives {
                 val identifiedByValues = resolveArgumentValue<List<Any>>(inputIdentifiedBy)
                 val identifiedBy = createObjectIdentifiers(identifiedByValues)
 
-                val conditionalHydration = buildConditionalHydrationObject(directive.getArgument("when"))?.result
+                val conditionalHydration = directive.getArgument("when")
+                    ?.let {
+                        buildConditionalHydrationObject(it)?.result
+                    }
 
                 buildHydrationParameters(directive, arguments, identifiedBy, conditionalHydration)
             }

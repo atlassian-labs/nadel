@@ -1222,7 +1222,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val error = errors.assertSingleOfType<SomeHydrationsHaveMissingConditions>()
             assert(error.overallField.name == "creator")
         }
-        it("passes if non-nullable type is passed in") {
+        it("handles non-nullable type is passed in") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "issues" to """
@@ -1287,10 +1287,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
-
-            val error = errors.assertSingleOfType<SomeHydrationsHaveMissingConditions>()
-            assert(error.overallField.name == "creator")
+            assert(errors.map { it.message }.isEmpty())
         }
     }
 })
