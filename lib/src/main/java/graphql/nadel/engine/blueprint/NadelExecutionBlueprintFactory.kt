@@ -237,6 +237,8 @@ private class Factory(
             )
         }
 
+        val condition = getHydrationCondition(hydration)
+
         val hydrationArgs = getHydrationArguments(
             hydration = hydration,
             hydratedFieldParentType = hydratedFieldParentType,
@@ -258,15 +260,28 @@ private class Factory(
                 actorFieldDef = actorFieldDef,
                 actorInputValueDefs = hydrationArgs,
             ),
-            sourceFields = hydrationArgs.mapNotNull {
-                when (it.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
-                    is FieldResultValue -> it.valueSource.queryPathToField
-                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
-                }
-            },
+            sourceFields = getHydrationSourceFields(hydrationArgs, condition),
             condition = getHydrationCondition(hydration),
         )
+    }
+
+    private fun getHydrationSourceFields(
+        hydrationArgs: List<NadelHydrationActorInputDef>,
+        condition: NadelHydrationWhenCondition?,
+    ): List<NadelQueryPath> {
+        val sourceFieldsFromArgs = hydrationArgs.mapNotNull {
+            when (it.valueSource) {
+                is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                is FieldResultValue -> it.valueSource.queryPathToField
+                is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
+            }
+        }
+
+        if (condition != null) {
+            return sourceFieldsFromArgs + condition.fieldPath
+        }
+
+        return sourceFieldsFromArgs
     }
 
     private fun getHydrationCondition(hydration: UnderlyingServiceHydration): NadelHydrationWhenCondition? {

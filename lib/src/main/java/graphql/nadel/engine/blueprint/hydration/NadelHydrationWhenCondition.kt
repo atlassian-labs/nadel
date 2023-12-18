@@ -3,32 +3,34 @@ package graphql.nadel.engine.blueprint.hydration
 import graphql.nadel.engine.transform.query.NadelQueryPath
 
 sealed class NadelHydrationWhenCondition {
-    abstract fun evaluate(resultId: String): Boolean
+    abstract val fieldPath: NadelQueryPath
+
+    abstract fun evaluate(fieldValue: Any?): Boolean
 
     data class ResultEquals(
-        val fieldPath: NadelQueryPath,
+        override val fieldPath: NadelQueryPath,
         val value: Any,
     ) : NadelHydrationWhenCondition() {
-        override fun evaluate(resultId: String): Boolean {
-            TODO("Not yet implemented")
+        override fun evaluate(fieldValue: Any?): Boolean {
+            return fieldValue == value
         }
     }
 
     data class StringResultMatches(
-        val fieldPath: NadelQueryPath,
+        override val fieldPath: NadelQueryPath,
         val regex: Regex,
     ) : NadelHydrationWhenCondition() {
-        override fun evaluate(resultId: String): Boolean {
-            TODO("Not yet implemented")
+        override fun evaluate(fieldValue: Any?): Boolean {
+            return (fieldValue as String).matches(regex)
         }
     }
 
     data class StringResultStartsWith(
-        val fieldPath: NadelQueryPath,
+        override val fieldPath: NadelQueryPath,
         val prefix: String,
     ) : NadelHydrationWhenCondition() {
-        override fun evaluate(resultId: String): Boolean {
-            TODO("Not yet implemented")
+        override fun evaluate(fieldValue: Any?): Boolean {
+            return (fieldValue as String).startsWith(prefix)
         }
     }
 }
