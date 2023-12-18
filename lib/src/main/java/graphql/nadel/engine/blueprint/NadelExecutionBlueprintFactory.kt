@@ -269,10 +269,6 @@ private class Factory(
         )
     }
 
-    private fun getHydrationCondition(): NadelHydrationWhenCondition? {
-        return null
-    }
-
     private fun getHydrationCondition(hydration: UnderlyingServiceHydration): NadelHydrationWhenCondition? {
         if (hydration.conditionalHydration == null) {
             return null
@@ -286,7 +282,7 @@ private class Factory(
         if (hydration.conditionalHydration.predicate.startsWith != null) {
             return NadelHydrationWhenCondition.StringResultStartsWith(
                 fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
-                value = hydration.conditionalHydration.predicate.startsWith
+                prefix = hydration.conditionalHydration.predicate.startsWith
             )
         }
         if (hydration.conditionalHydration.predicate.matches != null) {

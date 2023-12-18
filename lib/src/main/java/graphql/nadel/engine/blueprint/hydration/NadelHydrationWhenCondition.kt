@@ -25,7 +25,7 @@ sealed class NadelHydrationWhenCondition {
 
     data class StringResultStartsWith(
         val fieldPath: NadelQueryPath,
-        val value: String,
+        val prefix: String,
     ) : NadelHydrationWhenCondition() {
         override fun evaluate(resultId: String): Boolean {
             TODO("Not yet implemented")
