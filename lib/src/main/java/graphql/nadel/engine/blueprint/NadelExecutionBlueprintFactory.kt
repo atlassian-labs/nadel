@@ -8,7 +8,6 @@ import graphql.Scalars.GraphQLString
 import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
-import graphql.language.StringValue
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
@@ -20,6 +19,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationWhenCondition
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.AnyNamedNode
@@ -265,7 +265,35 @@ private class Factory(
                     is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
                 }
             },
+            condition = getHydrationCondition(hydration),
         )
+    }
+
+    private fun getHydrationCondition(): NadelHydrationWhenCondition? {
+        return null
+    }
+
+    private fun getHydrationCondition(hydration: UnderlyingServiceHydration): NadelHydrationWhenCondition? {
+        if (hydration.conditionalHydration == null) {
+            return null
+        }
+        if (hydration.conditionalHydration.predicate.equals != null) {
+            return NadelHydrationWhenCondition.ResultEquals(
+                fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                value = hydration.conditionalHydration.predicate.equals)
+        }
+        if (hydration.conditionalHydration.predicate.startsWith != null){
+            return NadelHydrationWhenCondition.StringResultStartsWith(
+                fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                value = hydration.conditionalHydration.predicate.startsWith)
+        }
+        if (hydration.conditionalHydration.predicate.matches != null){
+            return NadelHydrationWhenCondition.StringResultMatches(
+                fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                regex = hydration.conditionalHydration.predicate.matches
+            )
+        }
+        error("a conditional hydration is defined but doesnt have any predicate")
     }
 
     private fun getHydrationStrategy(
@@ -352,6 +380,7 @@ private class Factory(
             batchHydrationMatchStrategy = matchStrategy,
             actorFieldDef = actorFieldDef,
             actorFieldContainer = actorFieldContainer,
+            condition = getHydrationCondition(hydration),
             sourceFields = Unit.let {
                 val paths = (when (matchStrategy) {
                     NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
@@ -489,7 +518,7 @@ private class Factory(
                 }
                 StaticArgument -> {
                     NadelHydrationActorInputDef.ValueSource.StaticValue(
-                        value =  remoteArgDef.remoteArgumentSource.staticValue!!
+                        value = remoteArgDef.remoteArgumentSource.staticValue!!
                     )
                 }
             }
