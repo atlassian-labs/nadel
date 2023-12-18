@@ -10,6 +10,7 @@ import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
+import graphql.nadel.engine.util.partitionCount
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
@@ -85,6 +86,9 @@ internal class NadelHydrationValidation(
             errors.addAll(outputTypeIssues)
         }
 
+        val indexHydrationErrors = limitUseOfIndexHydration(parent, overallField, hydrations)
+        val sourceFieldErrors = limitSourceField(parent, overallField, hydrations)
+
         if (hasMoreThanOneHydration) {
             val (batched, notBatched) = hydrations.partition(::isBatched)
             if (batched.isNotEmpty() && notBatched.isNotEmpty()) {
@@ -92,7 +96,63 @@ internal class NadelHydrationValidation(
             }
         }
 
-        return errors
+        return indexHydrationErrors + sourceFieldErrors + errors
+    }
+
+    private fun limitSourceField(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        hydrations: List<UnderlyingServiceHydration>,
+    ): List<NadelSchemaValidationError> {
+        if (hydrations.size > 1) {
+            val anyListSourceInputField = hydrations
+                .any { hydration ->
+                    val parentType = parent.underlying as GraphQLFieldsContainer
+                    hydration
+                        .arguments
+                        .asSequence()
+                        .mapNotNull { argument ->
+                            argument.remoteArgumentSource.pathToField
+                        }
+                        .any { path ->
+                            parentType.getFieldAt(path)?.type?.unwrapNonNull()?.isList == true
+                        }
+                }
+
+            if (anyListSourceInputField) {
+                val sourceFields = hydrations
+                    .flatMapTo(LinkedHashSet()) { hydration ->
+                        hydration.arguments
+                            .mapNotNull { argument ->
+                                argument.remoteArgumentSource.pathToField
+                            }
+                    }
+
+                if (sourceFields.size > 1) {
+                    return listOf(
+                        NadelSchemaValidationError.MultipleHydrationSourceInputFields(parent, overallField),
+                    )
+                }
+            }
+        }
+
+        return emptyList()
+    }
+
+    private fun limitUseOfIndexHydration(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        hydrations: List<UnderlyingServiceHydration>,
+    ): List<NadelSchemaValidationError> {
+        // todo: or maybe just don't allow polymorphic index hydration
+        val (indexCount, nonIndexCount) = hydrations.partitionCount { it.isObjectMatchByIndex }
+        if (indexCount > 0 && nonIndexCount > 0) {
+            return listOf(
+                NadelSchemaValidationError.MixedIndexHydration(parent, overallField),
+            )
+        }
+
+        return emptyList()
     }
 
     private fun isBatched(hydration: UnderlyingServiceHydration): Boolean {
@@ -283,7 +343,8 @@ internal class NadelHydrationValidation(
 
             StaticArgument -> {
                 val staticArg = remoteArgSource.staticValue
-                if (!validationUtil.isValidLiteralValue(
+                if (
+                    !validationUtil.isValidLiteralValue(
                         staticArg,
                         actorFieldArg.type,
                         overallSchema,

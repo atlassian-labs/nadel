@@ -277,3 +277,21 @@ fun <A, B : Any> Sequence<Pair<A, B?>>.filterPairSecondNotNull(): Sequence<Pair<
         }
     }
 }
+
+/**
+ * Like [List.partition] but only returns the count of each partition.
+ */
+internal fun <E> List<E>.partitionCount(predicate: (E) -> Boolean): Pair<Int, Int> {
+    var first = 0
+    var second = 0
+
+    for (element in this) {
+        if (predicate(element)) {
+            first++
+        } else {
+            second++
+        }
+    }
+
+    return first to second
+}
