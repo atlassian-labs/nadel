@@ -280,14 +280,16 @@ private class Factory(
         if (hydration.conditionalHydration.predicate.equals != null) {
             return NadelHydrationWhenCondition.ResultEquals(
                 fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
-                value = hydration.conditionalHydration.predicate.equals)
+                value = hydration.conditionalHydration.predicate.equals
+            )
         }
-        if (hydration.conditionalHydration.predicate.startsWith != null){
+        if (hydration.conditionalHydration.predicate.startsWith != null) {
             return NadelHydrationWhenCondition.StringResultStartsWith(
                 fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
-                value = hydration.conditionalHydration.predicate.startsWith)
+                value = hydration.conditionalHydration.predicate.startsWith
+            )
         }
-        if (hydration.conditionalHydration.predicate.matches != null){
+        if (hydration.conditionalHydration.predicate.matches != null) {
             return NadelHydrationWhenCondition.StringResultMatches(
                 fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
                 regex = hydration.conditionalHydration.predicate.matches
