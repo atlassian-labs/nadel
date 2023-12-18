@@ -331,9 +331,6 @@ internal class NadelNewBatchHydrator(
                 argBatches = argBatches.map { it.arguments },
             )
 
-        // todo: remove sanity check
-        require(queries.size == argBatches.size)
-
         return coroutineScope {
             queries
                 .map { query ->
