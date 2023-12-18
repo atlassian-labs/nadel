@@ -13,7 +13,31 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
 
 /**
- * todo: did I follow this README when forking?
+ * Represents the arguments for a hydration batch.
+ *
+ * There may be multiple instances of this class depending on whether
+ * [NadelBatchHydrationFieldInstruction.batchSize] was exceeded etc.
+ */
+internal data class NadelHydrationArgumentsBatch(
+    val sourceIds: List<JsonNode>,
+    val arguments: Map<NadelHydrationActorInputDef, NormalizedInputValue>,
+)
+
+/**
+ * An [NormalizedInputValue] for one query to a service.
+ *
+ * i.e. this object represents one batch of the [sourceIds] values that we send down.
+ *
+ * An intermediary object to store info while we pass data around functions.
+ */
+private data class BatchedArgumentValue(
+    val sourceIds: List<JsonNode>,
+    val argumentDef: NadelHydrationActorInputDef,
+    val argumentValue: NormalizedInputValue,
+)
+
+/**
+ * todo: does this apply even with the new matcher?
  *
  * README
  *
@@ -27,22 +51,28 @@ internal object NadelNewBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
         sourceIds: List<JsonNode>,
-    ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
+    ): List<NadelHydrationArgumentsBatch> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchInputValues(instruction, sourceIds, hooks, userContext)
+        val batchArgs = getBatchArgumentValue(instruction, sourceIds, hooks, userContext)
 
-        return batchArgs.map { nonBatchArgs + it }
+        return batchArgs
+            .map { batchedArgument ->
+                NadelHydrationArgumentsBatch(
+                    arguments = nonBatchArgs + (batchedArgument.argumentDef to batchedArgument.argumentValue),
+                    sourceIds = batchedArgument.sourceIds,
+                )
+            }
     }
 
-    private fun getBatchInputValues(
+    private fun getBatchArgumentValue(
         instruction: NadelBatchHydrationFieldInstruction,
         sourceIds: List<JsonNode>,
         hooks: NadelExecutionHooks,
         userContext: Any?,
-    ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
+    ): List<BatchedArgumentValue> {
         val batchSize = instruction.batchSize
 
-        val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
+        val (batchInputDef) = getBatchInputDef(instruction) ?: return emptyList()
         val actorBatchArgDef = instruction.actorFieldDef.getArgument(batchInputDef.name)
 
         val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(
@@ -56,9 +86,18 @@ internal object NadelNewBatchHydrationInputBuilder {
                 it.chunked(size = batchSize)
             }
             .map { chunk ->
-                batchInputDef to NormalizedInputValue(
+                val normalizedInputValue = NormalizedInputValue(
                     GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
                     javaValueToAstValue(chunk),
+                )
+
+                BatchedArgumentValue(
+                    sourceIds = chunk
+                        .map {
+                            JsonNode(it)
+                        },
+                    argumentDef = batchInputDef,
+                    argumentValue = normalizedInputValue,
                 )
             }
     }

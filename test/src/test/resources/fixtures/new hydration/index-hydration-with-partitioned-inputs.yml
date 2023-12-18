@@ -1,4 +1,4 @@
-name: "new batching of hydration list with partition"
+name: "index hydration with partitioned inputs"
 enabled: true
 overallSchema:
   # language=GraphQL
@@ -23,6 +23,7 @@ overallSchema:
         arguments: [{name: "id" value: "$source.authorIds"}]
         identifiedBy: "id"
         batchSize: 2
+        indexed: true
       )
     }
 underlyingSchema:
@@ -77,23 +78,23 @@ serviceCalls:
             {
               "__typename__batch_hydration__authors": "Issue",
               "batch_hydration__authors__authorIds": [
-                "CLOUD-ID-1/USER-1",
-                "CLOUD-ID-2/USER-2"
+                "site-1/user-1",
+                "site-2/user-2"
               ],
               "id": "ISSUE-1"
             },
             {
               "__typename__batch_hydration__authors": "Issue",
               "batch_hydration__authors__authorIds": [
-                "CLOUD-ID-1/USER-3"
+                "site-1/user-3"
               ],
               "id": "ISSUE-2"
             },
             {
               "__typename__batch_hydration__authors": "Issue",
               "batch_hydration__authors__authorIds": [
-                "CLOUD-ID-2/USER-4",
-                "CLOUD-ID-1/USER-5"
+                "site-2/user-4",
+                "site-1/user-5"
               ],
               "id": "ISSUE-3"
             }
@@ -106,9 +107,8 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          usersByIds(id: ["CLOUD-ID-1/USER-1", "CLOUD-ID-1/USER-3"]) {
+          usersByIds(id: ["site-1/user-1", "site-1/user-3"]) {
             id
-            batch_hydration__authors__id: id
           }
         }
       variables: { }
@@ -118,12 +118,10 @@ serviceCalls:
         "data": {
           "usersByIds": [
             {
-              "id": "CLOUD-ID-1/USER-1",
-              "batch_hydration__authors__id": "CLOUD-ID-1/USER-1"
+              "id": "site-1/user-1"
             },
             {
-              "id": "CLOUD-ID-1/USER-3",
-              "batch_hydration__authors__id": "CLOUD-ID-1/USER-3"
+              "id": "site-1/user-3"
             }
           ]
         },
@@ -134,9 +132,8 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          usersByIds(id: ["CLOUD-ID-1/USER-5"]) {
+          usersByIds(id: ["site-1/user-5"]) {
             id
-            batch_hydration__authors__id: id
           }
         }
       variables: { }
@@ -146,8 +143,7 @@ serviceCalls:
         "data": {
           "usersByIds": [
             {
-              "id": "CLOUD-ID-1/USER-5",
-              "batch_hydration__authors__id": "CLOUD-ID-1/USER-5"
+              "id": "site-1/user-5"
             }
           ]
         },
@@ -158,9 +154,8 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          usersByIds(id: ["CLOUD-ID-2/USER-2", "CLOUD-ID-2/USER-4"]) {
+          usersByIds(id: ["site-2/user-2", "site-2/user-4"]) {
             id
-            batch_hydration__authors__id: id
           }
         }
       variables: { }
@@ -170,12 +165,10 @@ serviceCalls:
         "data": {
           "usersByIds": [
             {
-              "id": "CLOUD-ID-2/USER-2",
-              "batch_hydration__authors__id": "CLOUD-ID-2/USER-2"
+              "id": "site-2/user-2"
             },
             {
-              "id": "CLOUD-ID-2/USER-4",
-              "batch_hydration__authors__id": "CLOUD-ID-2/USER-4"
+              "id": "site-2/user-4"
             }
           ]
         },
@@ -190,10 +183,10 @@ response: |-
           "id": "ISSUE-1",
           "authors": [
             {
-              "id": "CLOUD-ID-1/USER-1"
+              "id": "site-1/user-1"
             },
             {
-              "id": "CLOUD-ID-2/USER-2"
+              "id": "site-2/user-2"
             }
           ]
         },
@@ -201,7 +194,7 @@ response: |-
           "id": "ISSUE-2",
           "authors": [
             {
-              "id": "CLOUD-ID-1/USER-3"
+              "id": "site-1/user-3"
             }
           ]
         },
@@ -209,10 +202,10 @@ response: |-
           "id": "ISSUE-3",
           "authors": [
             {
-              "id": "CLOUD-ID-2/USER-4"
+              "id": "site-2/user-4"
             },
             {
-              "id": "CLOUD-ID-1/USER-5"
+              "id": "site-1/user-5"
             }
           ]
         }

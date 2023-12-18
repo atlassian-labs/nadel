@@ -30,6 +30,7 @@ import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.engine.util.zipOrThrow
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async
@@ -327,7 +328,7 @@ internal class NadelNewBatchHydrator(
                 instruction = instruction,
                 aliasHelper = aliasHelper,
                 hydratedField = sourceField,
-                argBatches = argBatches,
+                argBatches = argBatches.map { it.arguments },
             )
 
         return coroutineScope {
@@ -355,11 +356,13 @@ internal class NadelNewBatchHydrator(
                     }
                 }
                 .awaitAll()
+                // todo: in the future the output of NadelHydrationFieldsBuilder should be a pair of arg batch and query
                 .asSequence()
-                // todo: needs fix as this will not work if the data is partitioned
-                .zip(uniqueSourceIds.asSequence().chunked(instruction.batchSize))
-                .map { (result, sourceIds) ->
-                    NadelResolvedObjectBatch(sourceIds, result)
+                .zipOrThrow(argBatches) {
+                    error("Each argument batch must correspond to one query")
+                }
+                .map { (result, argBatch) ->
+                    NadelResolvedObjectBatch(argBatch.sourceIds, result)
                 }
                 .toList()
         }
