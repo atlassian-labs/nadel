@@ -8,7 +8,12 @@ overallSchema:
       issue(issueId: ID): Issue
     }
     type Foo {
-      issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.issueId"}])
+      issue: Issue
+      @hydrated(
+        service: "Foo"
+        field: "issue"
+        arguments: [{name: "issueId" value: "$source.issueId"}]
+      )
     }
     type Issue {
       id: ID

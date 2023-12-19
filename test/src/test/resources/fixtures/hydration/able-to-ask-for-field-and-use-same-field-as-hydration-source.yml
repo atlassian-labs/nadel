@@ -10,7 +10,12 @@ overallSchema:
     type Bar {
       barId: ID
       name: String
-      nestedBar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
+      nestedBar: Bar
+      @hydrated(
+        service: "Bar"
+        field: "barById"
+        arguments: [{name: "id" value: "$source.barId"}]
+      )
     }
 # language=GraphQL
 underlyingSchema:

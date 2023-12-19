@@ -10,7 +10,12 @@ overallSchema:
     type Foo {
       id: ID
       url: URL
-      details: Lookup @hydrated(service: "service" field: "lookup" arguments: [{ name: "url" value: "$source.url" }])
+      details: Lookup
+      @hydrated(
+        service: "service"
+        field: "lookup"
+        arguments: [{ name: "url" value: "$source.url" }]
+      )
     }
     type Lookup {
       baseUrl: URL
