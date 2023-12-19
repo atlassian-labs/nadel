@@ -26,16 +26,17 @@ query: |
     search(by: {name: null})
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {
     "data": null,
-    "errors": [{
-      "message":"OneOf type field 'SearchInput.name' must be non-null.",
-      "extensions":{
-        "classification":"ValidationError"
-      }
-    }],
+    "errors": [
+      {
+        "message": "OneOf type field 'SearchInput.name' must be non-null.",
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }],
     "extensions": {}
   }

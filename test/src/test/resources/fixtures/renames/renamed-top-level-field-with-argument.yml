@@ -56,5 +56,5 @@ response: |-
         "name": "Object 001"
       }
     },
-    "extensions": { }
+    "extensions": {}
   }

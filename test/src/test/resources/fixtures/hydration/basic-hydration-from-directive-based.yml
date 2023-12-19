@@ -15,10 +15,10 @@ overallSchema:
       foo: Foo
     }
     extend enum NadelHydrationTemplate {
-        SERVICE2_TEMPLATE @hydratedTemplate(
-                    service: "service2"
-                    field: "barById"
-            )
+      SERVICE2_TEMPLATE @hydratedTemplate(
+        service: "service2"
+        field: "barById"
+      )
     }
 
     type Foo {

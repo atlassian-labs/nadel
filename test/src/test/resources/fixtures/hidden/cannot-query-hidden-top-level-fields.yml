@@ -27,7 +27,7 @@ underlyingSchema:
 # language=GraphQL
 query: |
   query {
-      hiddenField
+    hiddenField
   }
 variables: { }
 serviceCalls: [ ]
@@ -38,14 +38,14 @@ response: |-
     "errors": [
       {
         "message": "Validation error (FieldUndefined@[hiddenField]) : Field 'hiddenField' in type 'Query' is undefined",
-        "locations":[
+        "locations": [
           {
-            "line":2,
-            "column":5
+            "line": 2,
+            "column": 3
           }
         ],
         "extensions": {
-          "classification":"ValidationError"
+          "classification": "ValidationError"
         }
       }
     ]

@@ -166,7 +166,7 @@ serviceCalls:
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "HUMAN-0",
               "id": "FOO-4"
-            } ]
+            }]
         },
         "extensions": {}
       }

@@ -55,14 +55,14 @@ response: |-
     "errors": [
       {
         "message": "Validation error (FieldUndefined@[hello/area51]) : Field 'area51' in type 'World' is undefined",
-        "locations":[
+        "locations": [
           {
-            "line":5,
-            "column":5
+            "line": 5,
+            "column": 5
           }
         ],
         "extensions": {
-          "classification":"ValidationError"
+          "classification": "ValidationError"
         }
       }
     ]

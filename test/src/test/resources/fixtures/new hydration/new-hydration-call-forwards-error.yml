@@ -120,7 +120,8 @@ response: |-
         "message": "Some error with extension occurred",
         "path": [
           "barById",
-          "name"],
+          "name"
+        ],
         "locations": [],
         "extensions": {
           "classification": "SomeCustomError"

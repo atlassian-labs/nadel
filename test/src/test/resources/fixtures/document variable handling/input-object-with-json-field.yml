@@ -37,7 +37,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         query myQuery($v0: JSON) {
-          hello(arg: {payload : $v0})
+          hello(arg: {payload: $v0})
         }
       variables:
         v0:

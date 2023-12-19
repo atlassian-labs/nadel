@@ -147,7 +147,7 @@ response: |-
       "users": [
         {
           "issue": {
-            "details":{
+            "details": {
               "__typename": "IssueDetails",
               "name": "Details of issue one"
             }

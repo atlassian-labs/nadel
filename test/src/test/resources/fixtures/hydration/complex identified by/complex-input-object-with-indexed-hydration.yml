@@ -152,7 +152,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         {
-          issues(issuesInput: [{id : "ISSUE-0", site : "CLOUD-0"}, {id : "ISSUE-1", site : "CLOUD-0"}, {id : "ISSUE-2", site : "CLOUD-0"}, {id : "ISSUE-3", site : "CLOUD-0"}]) {
+          issues(issuesInput: [{id: "ISSUE-0", site: "CLOUD-0"}, {id: "ISSUE-1", site: "CLOUD-0"}, {id: "ISSUE-2", site: "CLOUD-0"}, {id: "ISSUE-3", site: "CLOUD-0"}]) {
             description
             issueId
           }

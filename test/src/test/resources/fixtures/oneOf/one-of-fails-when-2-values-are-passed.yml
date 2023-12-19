@@ -26,16 +26,17 @@ query: |
     search(by: {name: "Figaro", id: "1001"})
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {
     "data": null,
-    "errors": [{
-      "message":"Exactly one key must be specified for OneOf type 'SearchInput'.",
-      "extensions":{
-        "classification":"ValidationError"
-      }
-    }],
+    "errors": [
+      {
+        "message": "Exactly one key must be specified for OneOf type 'SearchInput'.",
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }],
     "extensions": {}
   }

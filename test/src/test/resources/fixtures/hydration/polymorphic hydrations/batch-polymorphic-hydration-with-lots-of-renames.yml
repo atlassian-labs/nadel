@@ -4,46 +4,46 @@ enabled: true
 overallSchema:
   bar: |
     type Query {
-        animalById(ids: [ID]): [Animal] @renamed(from: "petById")
-        petById(ids: [ID]): [Animal]
-        personById(ids: [ID]): [Person] @renamed(from: "humanById")
-        humanById(ids: [ID]): [Person]
+      animalById(ids: [ID]): [Animal] @renamed(from: "petById")
+      petById(ids: [ID]): [Animal]
+      personById(ids: [ID]): [Person] @renamed(from: "humanById")
+      humanById(ids: [ID]): [Person]
     }
 
     type Animal @renamed(from: "Pet") {
-        id: ID @renamed(from: "identifier")
-        breed: String @renamed(from: "kind")
+      id: ID @renamed(from: "identifier")
+      breed: String @renamed(from: "kind")
     }
 
     type Person @renamed(from: "Human") {
-        id: ID @renamed(from: "identifier")
-        name: String
+      id: ID @renamed(from: "identifier")
+      name: String
     }
   foo: |
     type Query {
-        foo: [Foo]
+      foo: [Foo]
     }
 
     type Foo {
-        id: ID
-        dataId: ID
-        data: Data
-        @hydrated(
-            service: "bar"
-            field: "petById"
-            arguments: [
-                {name: "ids" value: "$source.dataId"}
-            ]
-            identifiedBy: "hiddenId"
-        )
-        @hydrated(
-            service: "bar"
-            field: "humanById"
-            arguments: [
-                {name: "ids" value: "$source.dataId"}
-            ]
-            identifiedBy: "hiddenId"
-        )
+      id: ID
+      dataId: ID
+      data: Data
+      @hydrated(
+        service: "bar"
+        field: "petById"
+        arguments: [
+          {name: "ids" value: "$source.dataId"}
+        ]
+        identifiedBy: "hiddenId"
+      )
+      @hydrated(
+        service: "bar"
+        field: "humanById"
+        arguments: [
+          {name: "ids" value: "$source.dataId"}
+        ]
+        identifiedBy: "hiddenId"
+      )
     }
 
     union Data = Animal | Person
@@ -143,7 +143,7 @@ serviceCalls:
               "batch_hydration__data__dataId": "HUMAN-1",
               "batch_hydration__data__dataId": "HUMAN-1",
               "id": "FOO-3"
-            } ]
+            }]
         },
         "extensions": {}
       }

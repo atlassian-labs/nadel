@@ -10,15 +10,15 @@ overallSchema:
       id: ID!
       key: String
       collaborators: [User]
-        @hydrated(
-          service: "Users"
-          field: "usersByIds"
-          arguments: [
-            {name: "ids", value: "$source.collaboratorIds"}
-          ]
-          identifiedBy: "id"
-          indexed: true
-        )
+      @hydrated(
+        service: "Users"
+        field: "usersByIds"
+        arguments: [
+          {name: "ids", value: "$source.collaboratorIds"}
+        ]
+        identifiedBy: "id"
+        indexed: true
+      )
     }
   Users: |
     type Query {

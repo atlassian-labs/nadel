@@ -162,7 +162,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          users(id: [{site : "hello", userId : "USER-5"}, {site : "jdog", userId : "USER-2"}, {site : "hello", userId : "USER-2"}]) {
+          users(id: [{site: "hello", userId: "USER-5"}, {site: "jdog", userId: "USER-2"}, {site: "hello", userId: "USER-2"}]) {
             id
             name
             batch_hydration__author__id: id
@@ -202,7 +202,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          users(id: [{site : "hello", userId : "USER-1"}, {site : "hello", userId : "USER-3"}, {site : "jdog", userId : "USER-2"}, {site : "hello", userId : "USER-4"}]) {
+          users(id: [{site: "hello", userId: "USER-1"}, {site: "hello", userId: "USER-3"}, {site: "jdog", userId: "USER-2"}, {site: "hello", userId: "USER-4"}]) {
             id
             name
             batch_hydration__author__id: id

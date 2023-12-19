@@ -137,7 +137,7 @@ serviceCalls:
               "batch_hydration__data__dataId": "HUMAN-1",
               "batch_hydration__data__dataId": "HUMAN-1",
               "id": "FOO-3"
-            } ]
+            }]
         },
         "extensions": {}
       }
