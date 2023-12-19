@@ -21,7 +21,12 @@ overallSchema:
       id: ID
       commentText: String @renamed(from: "text")
       created: String
-      author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
+      author: User
+      @hydrated(
+        service: "UserService"
+        field: "userById"
+        arguments: [{name: "id" value: "$source.authorId"}]
+      )
     }
 # language=GraphQL
 underlyingSchema:

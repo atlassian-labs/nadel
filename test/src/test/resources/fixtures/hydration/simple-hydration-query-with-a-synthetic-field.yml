@@ -19,7 +19,12 @@ overallSchema:
     }
     type Issue {
       id: ID
-      project: Project @hydrated(service: "service2" field: "projects.project" arguments: [{name: "id" value: "$source.projectId"}])
+      project: Project
+      @hydrated(
+        service: "service2"
+        field: "projects.project"
+        arguments: [{name: "id" value: "$source.projectId"}]
+      )
     }
 # language=GraphQL
 underlyingSchema:

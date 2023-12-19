@@ -8,7 +8,12 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
+      bar: Bar
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [{name: "id" value: "$source.barId"}]
+      )
     }
   service2: |
     type Query {

@@ -10,21 +10,36 @@ overallSchema:
     }
     interface Pet {
       name: String
-      owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
+      owners: [Owner]
+      @hydrated(
+        service: "OwnerService"
+        field: "ownerById"
+        arguments: [{name: "id" value: "$source.ownerIds"}]
+      )
       collar: Collar
       collarToRenamed: Collar @renamed(from: "collar")
     }
     type Cat implements Pet {
       name: String
       wearsBell: Boolean
-      owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
+      owners: [Owner]
+      @hydrated(
+        service: "OwnerService"
+        field: "ownerById"
+        arguments: [{name: "id" value: "$source.ownerIds"}]
+      )
       collar: Collar
       collarToRenamed: Collar @renamed(from: "collar")
     }
     type Dog implements Pet {
       name: String
       wearsCollar: Boolean
-      owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
+      owners: [Owner]
+      @hydrated(
+        service: "OwnerService"
+        field: "ownerById"
+        arguments: [{name: "id" value: "$source.ownerIds"}]
+      )
       collar: Collar
       collarToRenamed: Collar @renamed(from: "collar")
     }
