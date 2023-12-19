@@ -127,7 +127,8 @@ serviceCalls:
               "__typename__hydration__data": "Foo",
               "hydration__data__dataId": "HUMAN-0",
               "id": "FOO-1"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }

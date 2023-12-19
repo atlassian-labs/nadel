@@ -43,7 +43,7 @@ underlyingSchema:
     type Query {
       barById(id: ID, test: Test = {}): Bar
     }
-    
+
     input Test {
       string: String = "Test"
       int: Int = 42

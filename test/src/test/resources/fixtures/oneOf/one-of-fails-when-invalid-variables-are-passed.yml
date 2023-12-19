@@ -38,6 +38,7 @@ response: |-
         "extensions": {
           "classification": "ValidationError"
         }
-      }],
+      }
+    ],
     "extensions": {}
   }

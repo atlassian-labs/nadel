@@ -36,7 +36,7 @@ query: |
         }
       }
     }
-    
+
     __type(name: "World") {
       name
       fields {

@@ -79,7 +79,7 @@ serviceCalls:
             }
           }
         }
-        
+
         fragment IssueFragment on Issue {
           id
           authorId

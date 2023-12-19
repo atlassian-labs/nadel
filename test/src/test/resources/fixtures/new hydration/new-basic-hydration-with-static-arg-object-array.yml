@@ -55,7 +55,7 @@ underlyingSchema:
     type Query {
       barById(id: ID, friends: [FullName]): Bar
     }
-    
+
     input FullName {
       firstName: String
       lastName: String
