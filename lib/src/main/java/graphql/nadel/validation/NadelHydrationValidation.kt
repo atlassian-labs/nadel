@@ -3,7 +3,6 @@ package graphql.nadel.validation
 import graphql.GraphQLContext
 import graphql.nadel.Service
 import graphql.nadel.dsl.RemoteArgumentDefinition
-import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
@@ -122,7 +121,7 @@ internal class NadelHydrationValidation(
         hydrations: List<UnderlyingServiceHydration>,
     ): List<NadelSchemaValidationError> {
         if (hydrations.size > 1) {
-            val sourceFields = hydrations
+            val pathsToSourceFields = hydrations
                 .asSequence()
                 .flatMap { hydration ->
                     hydration
@@ -133,7 +132,7 @@ internal class NadelHydrationValidation(
                 .toList()
 
             val parentType = parent.underlying as GraphQLFieldsContainer
-            val anyListSourceInputField = sourceFields
+            val anyListSourceInputField = pathsToSourceFields
                 .any { pathToField ->
                     parentType
                         .getFieldsAlong(pathToField)
@@ -143,7 +142,7 @@ internal class NadelHydrationValidation(
                 }
 
             if (anyListSourceInputField) {
-                val uniqueSourceFieldPaths = sourceFields
+                val uniqueSourceFieldPaths = pathsToSourceFields
                     .toSet()
 
                 if (uniqueSourceFieldPaths.size > 1) {
