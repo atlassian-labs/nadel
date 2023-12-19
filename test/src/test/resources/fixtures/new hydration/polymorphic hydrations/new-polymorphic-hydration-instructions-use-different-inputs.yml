@@ -1,0 +1,283 @@
+name: "new polymorphic hydration instructions use different inputs"
+enabled: true
+overallSchema:
+  # language=GraphQL
+  Pets: |
+    type Query {
+      petsByIds(ids: [ID!]!): [Pet]
+    }
+
+    union Animal = Dog | Cat | Giraffe
+    type Pet {
+      animal: Animal
+      @hydrated(
+        service: "Dogs"
+        field: "dogsByIds"
+        arguments: [{ name: "ids", value: "$source.animalId"}]
+        identifiedBy: "id"
+        batchSize: 90
+      )
+      @hydrated(
+        service: "Cats"
+        field: "cats.catsByIds"
+        arguments: [{ name: "ids", value: "$source.animalId"}]
+        identifiedBy: "id"
+        batchSize: 90
+      )
+      @hydrated(
+        service: "Zoo"
+        field: "giraffes"
+        arguments: [{ name: "filters", value: "$source.giraffeInput"}]
+        inputIdentifiedBy: [
+          {sourceId: "giraffeInput.nickname", resultId: "nickname"}
+          {sourceId: "giraffeInput.birthday", resultId: "birthday"}
+          {sourceId: "giraffeInput.height", resultId: "height"}
+        ]
+        batchSize: 90
+      )
+    }
+  # language=GraphQL
+  Dogs: |
+    type Query {
+      dogsByIds(ids: [ID!]!): [Dog]
+    }
+
+    type Dog {
+      id: ID!
+      name: String
+    }
+  # language=GraphQL
+  Cats: |
+    type Query {
+      cats: CatQuery
+    }
+
+    type CatQuery {
+      catsByIds(ids: [ID!]!): [Cat]
+    }
+
+    type Cat {
+      id: ID!
+      name: String
+    }
+  # language=GraphQL
+  Zoo: |
+    type Query {
+      giraffes(filters: [GiraffeFilter]): [Giraffe]
+    }
+    input GiraffeFilter {
+      nickname: String!
+      birthday: Int!
+      height: Int!
+    }
+    type Giraffe {
+      id: ID!
+      name: String
+      birthday: Int
+      height: Int
+    }
+underlyingSchema:
+  # language=GraphQL
+  Pets: |
+    type Query {
+      petsByIds(ids: [ID!]!): [Pet]
+    }
+
+    type Pet {
+      animalId: ID!
+      giraffeInput: PetGiraffeInput
+    }
+    type PetGiraffeInput {
+      nickname: String!
+      birthday: Int!
+      height: Int!
+    }
+  # language=GraphQL
+  Dogs: |
+    type Query {
+      dogsByIds(ids: [ID!]!): [Dog]
+    }
+
+    type Dog {
+      id: ID!
+      name: String
+    }
+  # language=GraphQL
+  Cats: |
+    type Query {
+      cats: CatQuery
+    }
+
+    type CatQuery {
+      catsByIds(ids: [ID!]!): [Cat]
+    }
+
+    type Cat {
+      id: ID!
+      name: String
+    }
+  # language=GraphQL
+  Zoo: |
+    type Query {
+      giraffes(filters: [GiraffeFilter]): [Giraffe]
+    }
+    input GiraffeFilter {
+      nickname: String!
+      birthday: Int!
+      height: Int!
+    }
+    type Giraffe {
+      id: ID!
+      name: String
+      birthday: Int
+      height: Int
+    }
+# language=GraphQL
+query: |
+  query {
+    petsByIds(ids: ["good-boye-1", "tall-boye-9"]) {
+      animal {
+        __typename
+        ... on Dog {
+          name
+        }
+        ... on Cat {
+          name
+        }
+        ... on Giraffe {
+          name
+          birthday
+          height
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Pets"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          petsByIds(ids: ["good-boye-1", "tall-boye-9"]) {
+            __typename__batch_hydration__animal: __typename
+            batch_hydration__animal__animalId: animalId
+            batch_hydration__animal__animalId: animalId
+            batch_hydration__animal__giraffeInput: giraffeInput {
+              nickname
+            }
+            batch_hydration__animal__giraffeInput: giraffeInput {
+              birthday
+            }
+            batch_hydration__animal__giraffeInput: giraffeInput {
+              height
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "petsByIds": [
+            {
+              "__typename__batch_hydration__animal": "Pet",
+              "batch_hydration__animal__animalId": "good-boye-1",
+              "batch_hydration__animal__giraffeInput": null
+            },
+            {
+              "__typename__batch_hydration__animal": "Pet",
+              "batch_hydration__animal__animalId": "tall-boye-9",
+              "batch_hydration__animal__giraffeInput": {
+                "nickname": "Tall Boye",
+                "birthday": 1001203200,
+                "height": 570
+              }
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "Dogs"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          dogsByIds(ids: ["good-boye-1"]) {
+            __typename
+            batch_hydration__animal__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "dogsByIds": [
+            {
+              "__typename": "Dog",
+              "batch_hydration__animal__id": "good-boye-1",
+              "name": "Abe"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "Zoo"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          giraffes(filters: [{birthday: 1001203200, height: 570, nickname: "Tall Boye"}]) {
+            __typename
+            birthday
+            batch_hydration__animal__birthday: birthday
+            height
+            batch_hydration__animal__height: height
+            name
+            batch_hydration__animal__nickname: nickname
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "giraffes": [
+            {
+              "__typename": "Giraffe",
+              "birthday": 1001203200,
+              "batch_hydration__animal__birthday": 1001203200,
+              "height": 570,
+              "batch_hydration__animal__height": 570,
+              "name": "Rukiya",
+              "batch_hydration__animal__nickname": "Tall Boye"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "petsByIds": [
+        {
+          "animal": {
+            "__typename": "Dog",
+            "name": "Abe"
+          }
+        },
+        {
+          "animal": {
+            "__typename": "Giraffe",
+            "birthday": 1001203200,
+            "height": 570,
+            "name": "Rukiya"
+          }
+        }
+      ]
+    },
+    "errors": []
+  }

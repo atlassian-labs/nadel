@@ -403,16 +403,16 @@ internal class NadelNewBatchHydrator(
             fieldName = sourceField.name,
         )
 
-        val fieldSource = instructions
-            .first()
-            .actorInputValueDefs
-            .asSequence()
-            .map {
-                it.valueSource
-            }
-            .singleOfType<ValueSource.FieldResultValue>()
-
         return if (executionBlueprint.engineSchema.getField(coords)!!.type.unwrapNonNull().isList) {
+            val fieldSource = instructions
+                .first()
+                .actorInputValueDefs
+                .asSequence()
+                .map {
+                    it.valueSource
+                }
+                .singleOfType<ValueSource.FieldResultValue>()
+
             getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceId ->
                     val instruction = executionContext.hooks.getHydrationInstruction(
@@ -435,6 +435,14 @@ internal class NadelNewBatchHydrator(
             if (instruction == null) {
                 null
             } else {
+                val fieldSource = instruction
+                    .actorInputValueDefs
+                    .asSequence()
+                    .map {
+                        it.valueSource
+                    }
+                    .singleOfType<ValueSource.FieldResultValue>()
+
                 getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                     ?.map { sourceId ->
                         sourceId to instruction
