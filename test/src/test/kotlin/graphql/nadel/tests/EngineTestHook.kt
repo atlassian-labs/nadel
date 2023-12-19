@@ -98,9 +98,7 @@ internal fun getTestHook(fixture: TestFixture): EngineTestHook? {
         "new batch polymorphic hydration with rename",
         "new batch polymorphic hydration when hook returns null 1",
         "new batch polymorphic hydration actor fields are in the same service return types implement same interface",
-        "new complex-identified-by-with-rename",
-        "new new batching single source id",
-        "new new batching multiple source ids going to different services",
+        "new complex identified by with rename",
         ->
             name.removePrefix("new ")
         else -> name

@@ -1,6 +1,7 @@
-name: "new complex-identified-by-with-rename"
+name: "new complex identified by with rename"
 enabled: true
 overallSchema:
+  # language=GraphQL
   UserService: |
     type Query {
       users(id: [UserInput]): [User]
@@ -13,6 +14,7 @@ overallSchema:
       id: ID
       name: String
     }
+  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -31,6 +33,7 @@ overallSchema:
       )
     }
 underlyingSchema:
+  # language=GraphQL
   UserService: |
     type Query {
       users(id: [UserInputUnderlying]): [User]
@@ -46,6 +49,7 @@ underlyingSchema:
       siteId: ID
       name: String
     }
+  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -60,6 +64,7 @@ underlyingSchema:
       authorId: UserRef
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -74,6 +79,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -155,6 +161,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
             users(id: $v0) {
@@ -193,6 +200,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
             users(id: $v0) {

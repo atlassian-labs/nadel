@@ -1,4 +1,4 @@
-name: "complex-identified-by-with-rename"
+name: "complex identified by with rename"
 enabled: true
 overallSchema:
   UserService: |
