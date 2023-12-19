@@ -1,5 +1,6 @@
 name: "restricted field inside hydration via fragments used twice"
 enabled: false
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       relatedIssue: Issue
       author: User @hydrated(service: "UserService" field: "usersById" arguments: [{name: "id" value: "$source.authorId"}] identifiedBy: "id")
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -39,6 +41,7 @@ underlyingSchema:
       issue: Issue
       myIssue: Issue
     }
+# language=GraphQL
 query: |
   query {
     issue {
@@ -60,6 +63,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_Issues {
           issue {
@@ -93,6 +97,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           usersById(id: ["USER-1", "USER-2"]) {

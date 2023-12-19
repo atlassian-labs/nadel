@@ -1,7 +1,7 @@
 name: "basic hydration with default object argument values"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   service2: |
     type Query {
       barById(id: ID, test: Test): Bar
@@ -17,7 +17,6 @@ overallSchema:
       number: Int
       echo: String
     }
-  # language=GraphQL
   service1: |
     type Query {
       foo: Foo
@@ -33,8 +32,8 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   service2: |
     type Bar {
       id: ID
@@ -52,7 +51,6 @@ underlyingSchema:
       number: Int
       echo: String
     }
-  # language=GraphQL
   service1: |
     type Foo {
       barId: ID

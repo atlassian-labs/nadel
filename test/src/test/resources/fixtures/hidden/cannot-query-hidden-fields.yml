@@ -1,5 +1,6 @@
 name: "cannot query hidden fields"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     directive @hidden on FIELD_DEFINITION
@@ -16,6 +17,7 @@ overallSchema:
       name: String
       coordinates: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {
@@ -32,6 +34,7 @@ underlyingSchema:
       name: String
       coordinates: String
     }
+# language=GraphQL
 query: |
   query {
     hello {

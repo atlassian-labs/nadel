@@ -1,5 +1,6 @@
 name: "inlined json arguments"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -11,6 +12,7 @@ overallSchema:
     }
 
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {
@@ -30,6 +32,7 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query myQuery($v0: JSON, $v1: JSON!) {
           hello(arg: {payload : $v0}, arg1: $v1)

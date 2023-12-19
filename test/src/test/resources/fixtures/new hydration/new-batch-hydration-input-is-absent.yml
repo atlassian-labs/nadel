@@ -1,5 +1,6 @@
 name: "new batch hydration input is absent"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -25,6 +26,7 @@ overallSchema:
         batchSize: 2
       )
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -45,6 +47,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -58,6 +61,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {

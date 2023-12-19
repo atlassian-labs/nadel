@@ -1,15 +1,18 @@
 name: "can generate legacy operation names forwarding original name"
 enabled: true
+# language=GraphQL
 overallSchema:
   test: |
     type Query {
       foo: String
     }
+# language=GraphQL
 underlyingSchema:
   test: |
     type Query {
       foo: String
     }
+# language=GraphQL
 query: |
   query Original {
     foo
@@ -18,6 +21,7 @@ variables: { }
 serviceCalls:
   - serviceName: "test"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_test_Original {
           foo

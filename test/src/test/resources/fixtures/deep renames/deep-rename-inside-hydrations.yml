@@ -1,5 +1,6 @@
 name: "deep rename inside hydrations"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -22,6 +23,7 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Issue {
@@ -42,6 +44,7 @@ underlyingSchema:
     type User {
       issueId: ID
     }
+# language=GraphQL
 query: |
   query {
     users {
@@ -54,6 +57,7 @@ variables: { }
 serviceCalls:
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           users {
@@ -85,6 +89,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issueById(id: "issue-1") {
@@ -110,6 +115,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issueById(id: "issue-2") {
@@ -135,6 +141,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issueById(id: "issue-3") {

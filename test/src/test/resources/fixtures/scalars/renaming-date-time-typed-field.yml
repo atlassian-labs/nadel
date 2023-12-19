@@ -1,11 +1,13 @@
 name: "renaming date time typed field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
       aField: DateTime @renamed(from: "test")
     }
     scalar DateTime
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -20,6 +22,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__aField__test: test

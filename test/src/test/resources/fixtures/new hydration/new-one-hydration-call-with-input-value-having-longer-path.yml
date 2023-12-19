@@ -1,5 +1,6 @@
 name: "new one hydration call with input value having longer path"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
       barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -42,6 +44,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -54,6 +57,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -79,6 +83,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "barId") {

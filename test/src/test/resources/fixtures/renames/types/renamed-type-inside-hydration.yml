@@ -1,5 +1,6 @@
 name: "renamed type inside hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -25,6 +26,7 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Issue {
@@ -47,6 +49,7 @@ underlyingSchema:
     type User {
       issueId: ID
     }
+# language=GraphQL
 query: |
   query {
     me {
@@ -62,6 +65,7 @@ variables: { }
 serviceCalls:
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           me {
@@ -83,6 +87,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issueById(id: "issue-2") {

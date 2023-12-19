@@ -1,5 +1,6 @@
 name: "field is removed from hydrated field"
 enabled: false
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -22,6 +23,7 @@ overallSchema:
       created: String
       author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
     }
+# language=GraphQL
 underlyingSchema:
   CommentService: |
     type Comment {
@@ -46,6 +48,7 @@ underlyingSchema:
       displayName: String
       userId: ID
     }
+# language=GraphQL
 query: |
   query {
     commentById(id: "C1") {
@@ -59,6 +62,7 @@ variables: { }
 serviceCalls:
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C1") {
@@ -79,6 +83,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "fred") {

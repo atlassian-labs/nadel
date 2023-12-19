@@ -1,5 +1,6 @@
 name: "two top level fields with a fragment"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -16,6 +17,7 @@ overallSchema:
     type Issue {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -35,6 +37,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   fragment I on Issue {
     id
@@ -57,6 +60,7 @@ variables: { }
 serviceCalls:
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           user {
@@ -78,6 +82,7 @@ serviceCalls:
       }
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {

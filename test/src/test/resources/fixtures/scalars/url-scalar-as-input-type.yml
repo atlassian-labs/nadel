@@ -1,5 +1,6 @@
 name: "url scalar as input type"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -10,6 +11,7 @@ overallSchema:
     }
     scalar JSON
     scalar URL
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -30,6 +32,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo(input: "https://atlassian.com") {

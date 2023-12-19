@@ -1,5 +1,6 @@
 name: "oneOf fails when nested input"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -16,6 +17,7 @@ overallSchema:
       id: ID
     }
 
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {
@@ -31,6 +33,7 @@ underlyingSchema:
       email: String
       id: ID
     }
+# language=GraphQL
 query: |
   query myQuery {
     search(by: {id: {email: null}})

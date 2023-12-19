@@ -1,5 +1,6 @@
 name: "field in non-hydrated query is removed"
 enabled: false
+# language=GraphQL
 overallSchema:
   CommentService: |
     type Query {
@@ -11,6 +12,7 @@ overallSchema:
       commentText: String @renamed(from: "text")
       created: String
     }
+# language=GraphQL
 underlyingSchema:
   CommentService: |
     type Comment {
@@ -24,6 +26,7 @@ underlyingSchema:
       commentById(id: ID): Comment
       comments(ids: [ID]): [Comment]
     }
+# language=GraphQL
 query: |
   query {
     commentById(id: "C1") {
@@ -35,6 +38,7 @@ variables: { }
 serviceCalls:
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C1") {

@@ -1,5 +1,6 @@
 name: "mutation with two services sharing a namespaced field"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -29,6 +30,7 @@ overallSchema:
       id: ID
       count: Int
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -64,6 +66,7 @@ underlyingSchema:
       id: ID
       count: Int
     }
+# language=GraphQL
 query: |
   mutation {
     issue {
@@ -80,6 +83,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         mutation {
           issue {
@@ -103,6 +107,7 @@ serviceCalls:
       }
   - serviceName: "IssueSearch"
     request:
+      # language=GraphQL
       query: |
         mutation {
           issue {

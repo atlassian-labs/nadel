@@ -1,5 +1,6 @@
 name: "handles include directive on deep renamed field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type Foo {
       name: ID @renamed(from: "details.id")
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -19,6 +21,7 @@ underlyingSchema:
     type FooDetails {
       id: ID
     }
+# language=GraphQL
 query: |
   query ($test: Boolean!) {
     foo {
@@ -30,6 +33,7 @@ variables:
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {

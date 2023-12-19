@@ -1,5 +1,6 @@
 name: "synthetic hydration works when an ancestor field has been renamed"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type DevOpsIssue @renamed(from: "Issue") {
@@ -19,6 +20,7 @@ overallSchema:
       devOpsRelationships: DevOpsRelationshipConnection @renamed(from: "relationships")
       syntheticIssue: SyntheticIssue
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Issue {
@@ -41,6 +43,7 @@ underlyingSchema:
     type SyntheticIssue {
       issue(id: ID): Issue
     }
+# language=GraphQL
 query: |
   query {
     devOpsRelationships {
@@ -55,6 +58,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__devOpsRelationships__relationships: relationships {
@@ -84,6 +88,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           syntheticIssue {

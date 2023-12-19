@@ -1,11 +1,13 @@
 name: "date time scalar as output type"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
       aField: DateTime
     }
     scalar DateTime
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -20,6 +22,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           aField

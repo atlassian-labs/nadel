@@ -1,5 +1,6 @@
 name: "new basic hydration with static arg float"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       id: ID
       bar: Bar @hydrated(service: "service2" field: "barWithSomeFloat" arguments: [{name: "someFloat" value: 123.45}])
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -38,6 +40,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -50,6 +53,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -69,6 +73,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barWithSomeFloat(someFloat: 123.45) {

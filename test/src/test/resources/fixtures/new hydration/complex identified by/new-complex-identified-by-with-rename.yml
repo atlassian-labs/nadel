@@ -1,5 +1,6 @@
 name: "new complex identified by with rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   UserService: |
@@ -32,6 +33,7 @@ overallSchema:
         batchSize: 4
       )
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   UserService: |

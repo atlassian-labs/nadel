@@ -1,5 +1,6 @@
 name: "new basic hydration with default object argument values"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   service2: |
@@ -33,6 +34,7 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   service2: |

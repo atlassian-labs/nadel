@@ -1,7 +1,7 @@
 name: "complex input object with indexed hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   Activity: |
     type Query {
       activities: [Activity]
@@ -16,7 +16,6 @@ overallSchema:
         indexed: true
       )
     }
-  # language=GraphQL
   Issue: |
     type Query {
       issues(issuesInput: IssueInput!): [Issue]
@@ -31,8 +30,8 @@ overallSchema:
       id: ID!
       site: ID!
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   Activity: |
     type Query {
       activities: [Activity]
@@ -51,7 +50,6 @@ underlyingSchema:
       id: ID!
       site: ID!
     }
-  # language=GraphQL
   Issue: |
     type Query {
       issues(issuesInput: IssueInput!): [Issue]

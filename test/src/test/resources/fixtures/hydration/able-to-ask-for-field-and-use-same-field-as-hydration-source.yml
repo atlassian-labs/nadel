@@ -1,5 +1,6 @@
 name: "able to ask for field and use same field as hydration source"
 enabled: true
+# language=GraphQL
 overallSchema:
   Bar: |-
     type Query {
@@ -11,6 +12,7 @@ overallSchema:
       name: String
       nestedBar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
     }
+# language=GraphQL
 underlyingSchema:
   Bar: |-
     type Bar {
@@ -22,6 +24,7 @@ underlyingSchema:
       bar: Bar
       barById(id: ID): Bar
     }
+# language=GraphQL
 query: |-
   query {
     bar {
@@ -39,6 +42,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           bar {
@@ -64,6 +68,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "1") {
@@ -87,6 +92,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "1") {

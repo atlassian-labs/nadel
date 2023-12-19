@@ -1,5 +1,6 @@
 name: "hydrating using url as arg"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
     }
     scalar URL
     scalar DateTime
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -50,6 +52,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -73,6 +76,7 @@ serviceCalls:
       }
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           lookup(url: "https://github.com/atlassian-labs/nadel") {

@@ -1,7 +1,7 @@
 name: "new hydration matching using index returning null elements"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(ids: [ID]): [User]
@@ -19,6 +19,7 @@ overallSchema:
       id: ID
       authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "ids" value: "$source.authorIds"}] indexed: true batchSize: 5)
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   UserService: |
@@ -54,6 +55,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -89,6 +91,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           usersByIds(ids: ["1", "2"]) {

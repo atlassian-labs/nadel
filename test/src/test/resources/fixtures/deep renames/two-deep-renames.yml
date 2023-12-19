@@ -1,5 +1,6 @@
 name: "two deep renames"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -10,6 +11,7 @@ overallSchema:
       authorId: ID @renamed(from: "authorDetails.authorId")
       authorName: String @renamed(from: "authorDetails.name")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type AuthorDetail {
@@ -25,6 +27,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -37,6 +40,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {

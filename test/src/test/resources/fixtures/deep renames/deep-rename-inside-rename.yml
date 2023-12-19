@@ -1,5 +1,6 @@
 name: "deep rename inside rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type JiraIssue @renamed(from: "Issue") {
       name: String @renamed(from: "details.name")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -19,6 +21,7 @@ underlyingSchema:
     type IssueDetail {
       name: String
     }
+# language=GraphQL
 query: |
   query {
     first: issue {
@@ -33,6 +36,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__issue__first: first {
@@ -58,6 +62,7 @@ serviceCalls:
       }
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__first__first: first {

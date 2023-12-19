@@ -1,5 +1,6 @@
 name: "deep rename inside deep rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -11,6 +12,7 @@ overallSchema:
     type IssueExtra {
       ownerName: String @renamed(from: "owner.name")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -28,6 +30,7 @@ underlyingSchema:
     type User {
       name: String
     }
+# language=GraphQL
 query: |
   query {
     issue {
@@ -40,6 +43,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__issue__first: first {

@@ -1,5 +1,6 @@
 name: "deep rename inside another rename of type List"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -16,6 +17,7 @@ overallSchema:
       key: String @renamed(from: "issue.key")
       summary: String @renamed(from: "issue.summary")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Board {
@@ -41,6 +43,7 @@ underlyingSchema:
     type Query {
       boardScope: BoardScope
     }
+# language=GraphQL
 query: |
   query {
     boardScope {
@@ -57,6 +60,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           boardScope {

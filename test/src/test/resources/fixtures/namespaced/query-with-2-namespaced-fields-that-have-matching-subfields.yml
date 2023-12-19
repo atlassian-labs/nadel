@@ -1,5 +1,6 @@
 name: "query with 2 namespaced fields that have matching subfields"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -38,6 +39,7 @@ overallSchema:
       id: ID
       pageText: String
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -78,6 +80,7 @@ underlyingSchema:
       id: ID
       pageText: String
     }
+# language=GraphQL
 query: |
   {
     issue {
@@ -100,6 +103,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueSearch"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {
@@ -123,6 +127,7 @@ serviceCalls:
       }
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {
@@ -146,6 +151,7 @@ serviceCalls:
       }
   - serviceName: "Pages"
     request:
+      # language=GraphQL
       query: |
         query {
           page {

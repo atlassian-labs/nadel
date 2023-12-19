@@ -1,7 +1,7 @@
 name: "batching of hydration list with partition"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(id: [ID]): [User]
@@ -9,7 +9,6 @@ overallSchema:
     type User {
       id: ID
     }
-  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -18,8 +17,8 @@ overallSchema:
       id: ID
       authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "id" value: "$source.authorIds"}] identifiedBy: "id" batchSize: 2)
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(id: [ID]): [User]
@@ -28,7 +27,6 @@ underlyingSchema:
     type User {
       id: ID
     }
-  # language=GraphQL
   Issues: |
     type Issue {
       authorIds: [ID]

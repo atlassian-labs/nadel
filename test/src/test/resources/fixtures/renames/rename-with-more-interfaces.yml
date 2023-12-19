@@ -1,5 +1,6 @@
 name: "rename with more interfaces"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -17,6 +18,7 @@ overallSchema:
     type User implements Node {
       id: ID! @renamed(from: "ari")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -36,6 +38,7 @@ underlyingSchema:
       id: ID!
       ari: ID!
     }
+# language=GraphQL
 query: |
   query {
     nodes {
@@ -46,6 +49,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           nodes {

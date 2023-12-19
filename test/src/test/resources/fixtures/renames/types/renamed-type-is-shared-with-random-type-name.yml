@@ -2,6 +2,7 @@ name: "renamed type is shared with random type name"
 enabled: true
 # We do not allow implicit renames, enable this test once we have explicit renames for shared types
 ignored: true
+# language=GraphQL
 overallSchema:
   Nextgen: |-
     type Query {
@@ -25,6 +26,7 @@ overallSchema:
     interface Node {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   Nextgen: |-
     type Query {
@@ -67,6 +69,7 @@ underlyingSchema:
     interface Node {
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     elements {
@@ -94,6 +97,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Nextgen"
     request:
+      # language=GraphQL
       query: |-
         query {
           ... on Query {
@@ -137,6 +141,7 @@ serviceCalls:
       }
   - serviceName: "Service"
     request:
+      # language=GraphQL
       query: |-
         query {
           ... on Query {

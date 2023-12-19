@@ -1,5 +1,6 @@
 name: "handles include directive on hydrated field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -15,6 +16,7 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -24,6 +26,7 @@ underlyingSchema:
     type Foo {
       id: String
     }
+# language=GraphQL
 query: |
   query ($test: Boolean!) {
     foo {
@@ -35,6 +38,7 @@ variables:
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {

@@ -1,7 +1,7 @@
 name: "batched hydration with default object argument values"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(id: [ID], test: Test): [User]
@@ -16,7 +16,6 @@ overallSchema:
       number: Int
       echo: String
     }
-  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -34,8 +33,8 @@ overallSchema:
         batchSize: 3
       )
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(id: [ID], test: Test): [User]
@@ -51,7 +50,6 @@ underlyingSchema:
       number: Int
       echo: String
     }
-  # language=GraphQL
   Issues: |
     type Issue {
       authorIds: [ID]

@@ -1,5 +1,6 @@
 name: "renamed type inside list"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type JiraIssue @renamed(from: "Issue") {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Query {
@@ -16,6 +18,7 @@ underlyingSchema:
     type Issue {
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -26,6 +29,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {

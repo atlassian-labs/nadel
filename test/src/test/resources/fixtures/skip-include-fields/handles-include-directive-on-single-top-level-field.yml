@@ -1,15 +1,18 @@
 name: "handles include directive on single top level field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
       foo: String
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
       foo: String
     }
+# language=GraphQL
 query: |
   query ($test: Boolean!) {
     foo @include(if: $test)

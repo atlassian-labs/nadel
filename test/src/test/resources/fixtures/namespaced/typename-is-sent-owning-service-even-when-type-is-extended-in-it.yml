@@ -1,5 +1,6 @@
 name: "typename is sent owning service even when type is extended in it"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -33,6 +34,7 @@ overallSchema:
     extend type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -72,6 +74,7 @@ underlyingSchema:
     type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 query: |
   {
     issue {
@@ -85,6 +88,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

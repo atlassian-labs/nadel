@@ -1,5 +1,6 @@
 name: "graphqlcontext-is-present-on-input"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -9,6 +10,7 @@ overallSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {
@@ -19,6 +21,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     hello(arg : "x") {
@@ -29,6 +32,7 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query {
           hello(arg : "x") {

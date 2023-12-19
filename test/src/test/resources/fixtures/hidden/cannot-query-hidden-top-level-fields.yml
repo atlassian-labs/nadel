@@ -1,5 +1,6 @@
 name: "cannot query hidden top level fields"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     directive @hidden on FIELD_DEFINITION
@@ -11,6 +12,7 @@ overallSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {
@@ -22,6 +24,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
       hiddenField

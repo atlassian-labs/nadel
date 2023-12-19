@@ -1,5 +1,6 @@
 name: "renamed type inside batch hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -26,6 +27,7 @@ overallSchema:
         identifiedBy: "id"
       )
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Issue {
@@ -48,6 +50,7 @@ underlyingSchema:
     type User {
       issueId: ID
     }
+# language=GraphQL
 query: |
   query {
     users {
@@ -63,6 +66,7 @@ variables: { }
 serviceCalls:
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           users {
@@ -94,6 +98,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {

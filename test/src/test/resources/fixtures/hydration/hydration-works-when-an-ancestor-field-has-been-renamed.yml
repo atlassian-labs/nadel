@@ -1,5 +1,6 @@
 name: "hydration works when an ancestor field has been renamed"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type DevOpsIssue @renamed(from: "Issue") {
@@ -16,6 +17,7 @@ overallSchema:
       devOpsIssue(id: ID): DevOpsIssue @renamed(from: "issue")
       issue(id: ID): DevOpsIssue @hidden
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Issue {
@@ -34,6 +36,7 @@ underlyingSchema:
     type RelationshipConnection {
       nodes: [Relationship]
     }
+# language=GraphQL
 query: |
   query {
     devOpsRelationships {
@@ -48,6 +51,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__devOpsRelationships__relationships: relationships {
@@ -75,6 +79,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(id: "1") {

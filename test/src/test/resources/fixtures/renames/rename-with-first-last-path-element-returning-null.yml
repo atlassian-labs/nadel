@@ -1,5 +1,6 @@
 name: "rename with first last path element returning null"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type Issue {
       name: String @renamed(from: "details.name")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Issue {
@@ -21,6 +23,7 @@ underlyingSchema:
     type Query {
       issue: Issue
     }
+# language=GraphQL
 query: |
   query {
     issue {
@@ -31,6 +34,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

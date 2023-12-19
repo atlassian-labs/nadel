@@ -1,5 +1,6 @@
 name: "can generate legacy operation name on hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
       barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -42,6 +44,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query TestFoo {
     foo {
@@ -54,6 +57,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_service1_TestFoo {
           foo {
@@ -76,6 +80,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_service2_TestFoo {
           barById(id: "barId") {

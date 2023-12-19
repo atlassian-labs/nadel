@@ -1,5 +1,6 @@
 name: "complex identified by with list source id"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -32,6 +33,7 @@ overallSchema:
         batchSize: 3
       )
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -62,6 +64,7 @@ underlyingSchema:
       authorIds: [UserRef]
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -76,6 +79,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -143,6 +147,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           users(id: [{site : "hello", userId : "USER-1"}, {site : "hello", userId : "USER-2"}, {site : "hello", userId : "USER-3"}]) {
@@ -182,6 +187,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           users(id: [{site : "jdog", userId : "USER-2"}, {site : "hello", userId : "USER-4"}, {site : "hello", userId : "USER-5"}]) {

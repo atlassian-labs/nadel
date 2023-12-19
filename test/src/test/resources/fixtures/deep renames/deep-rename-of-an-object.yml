@@ -1,5 +1,6 @@
 name: "deep rename of an object"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -13,6 +14,7 @@ overallSchema:
       firstName: String @renamed(from: "fName")
       lastName: String @renamed(from: "lName")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type AuthorDetail {
@@ -32,6 +34,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -46,6 +49,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {

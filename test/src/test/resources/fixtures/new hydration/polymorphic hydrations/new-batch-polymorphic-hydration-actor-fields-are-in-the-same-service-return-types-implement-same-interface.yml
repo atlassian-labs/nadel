@@ -1,5 +1,6 @@
 name: "new batch polymorphic hydration actor fields are in the same service return types implement same interface"
 enabled: true
+# language=GraphQL
 overallSchema:
   foo: |
     type Query {
@@ -46,6 +47,7 @@ overallSchema:
       id: ID
       breed: String
     }
+# language=GraphQL
 underlyingSchema:
   foo: |
     type Query {
@@ -75,6 +77,7 @@ underlyingSchema:
       id: ID
       breed: String
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -98,6 +101,7 @@ variables: { }
 serviceCalls:
   - serviceName: "foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -147,6 +151,7 @@ serviceCalls:
       }
   - serviceName: "bar"
     request:
+      # language=GraphQL
       query: |
         query {
           petById(ids: ["PET-0", "PET-1"]) {
@@ -179,6 +184,7 @@ serviceCalls:
       }
   - serviceName: "bar"
     request:
+      # language=GraphQL
       query: |
         query {
           humanById(ids: ["HUMAN-0", "HUMAN-1"]) {

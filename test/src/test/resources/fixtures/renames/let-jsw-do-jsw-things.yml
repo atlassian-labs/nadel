@@ -1,6 +1,7 @@
 # We need to permit JSW to do weird things with their schema for the time being
 name: "let jsw do jsw things"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -12,6 +13,7 @@ overallSchema:
 
     scalar C @renamed(from: "Y")
     scalar D @renamed(from: "Y")
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -21,6 +23,7 @@ underlyingSchema:
     enum Y {
       P
     }
+# language=GraphQL
 query: |
   query {
     foo
@@ -29,6 +32,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo

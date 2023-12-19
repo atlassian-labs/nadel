@@ -1,5 +1,6 @@
 name: "new top level field data returns null in batched synthetic hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   service2: |
@@ -22,6 +23,7 @@ overallSchema:
       id: ID
       authors: [User] @hydrated(service: "service2" field: "users.usersByIds" arguments: [{name: "id" value: "$source.authorIds"}] identifiedBy: "id" batchSize: 3)
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   service2: |

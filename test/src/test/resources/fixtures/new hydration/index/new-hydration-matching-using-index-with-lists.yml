@@ -1,5 +1,6 @@
 name: "new hydration matching using index with lists"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -17,6 +18,7 @@ overallSchema:
       id: ID
       authors: [User] @hydrated(service: "UserService" field: "usersByIssueIds" arguments: [{name: "issueIds" value: "$source.id"}] indexed: true batchSize: 5)
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -35,6 +37,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -48,6 +51,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -78,6 +82,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
