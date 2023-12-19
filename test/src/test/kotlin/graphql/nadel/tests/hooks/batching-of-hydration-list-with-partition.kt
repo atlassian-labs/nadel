@@ -41,6 +41,7 @@ class `batching-of-hydration-list-with-partition` : EngineTestHook {
     }
 }
 
+@UseHook
 class `new-batching-of-hydration-list-with-partition-2` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder.executionHooks(BatchHydrationHooks())
