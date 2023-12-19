@@ -3,11 +3,13 @@ package graphql.nadel.validation
 import graphql.GraphQLContext
 import graphql.nadel.Service
 import graphql.nadel.dsl.RemoteArgumentDefinition
+import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.engine.util.getFieldAt
+import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.partitionCount
@@ -120,30 +122,31 @@ internal class NadelHydrationValidation(
         hydrations: List<UnderlyingServiceHydration>,
     ): List<NadelSchemaValidationError> {
         if (hydrations.size > 1) {
-            val anyListSourceInputField = hydrations
-                .any { hydration ->
-                    val parentType = parent.underlying as GraphQLFieldsContainer
+            val sourceFields = hydrations
+                .asSequence()
+                .flatMap { hydration ->
                     hydration
                         .arguments
                         .asSequence()
-                        .mapNotNull { argument ->
-                            argument.remoteArgumentSource.pathToField
-                        }
-                        .any { path ->
-                            parentType.getFieldAt(path)?.type?.unwrapNonNull()?.isList == true
+                        .mapNotNull { it.remoteArgumentSource.pathToField }
+                }
+                .toList()
+
+            val parentType = parent.underlying as GraphQLFieldsContainer
+            val anyListSourceInputField = sourceFields
+                .any { pathToField ->
+                    parentType
+                        .getFieldsAlong(pathToField)
+                        .any { field ->
+                            field.type.unwrapNonNull().isList
                         }
                 }
 
             if (anyListSourceInputField) {
-                val sourceFields = hydrations
-                    .flatMapTo(LinkedHashSet()) { hydration ->
-                        hydration.arguments
-                            .mapNotNull { argument ->
-                                argument.remoteArgumentSource.pathToField
-                            }
-                    }
+                val uniqueSourceFieldPaths = sourceFields
+                    .toSet()
 
-                if (sourceFields.size > 1) {
+                if (uniqueSourceFieldPaths.size > 1) {
                     return listOf(
                         NadelSchemaValidationError.MultipleHydrationSourceInputFields(parent, overallField),
                     )

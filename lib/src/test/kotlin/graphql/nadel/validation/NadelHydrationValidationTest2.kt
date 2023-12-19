@@ -171,6 +171,97 @@ class NadelHydrationValidationTest2 {
     }
 
     @Test
+    fun `prohibit multiple source fields where list not the leaf`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    union ActivityContent = User | Issue
+                    type Activity {
+                        id: ID!
+                        data: [ActivityContent]
+                        @hydrated(
+                            service: "users"
+                            field: "usersByIds"
+                            arguments: [
+                                {name: "ids", value: "$source.contexts.userId"}
+                            ]
+                        )
+                        @hydrated(
+                            service: "issues"
+                            field: "issuesByIds"
+                            arguments: [
+                                {name: "ids", value: "$source.contexts.issueId"}
+                            ]
+                        )
+                    }
+                """.trimIndent(),
+                "users" to /* language=GraphQL*/ """
+                    type Query {
+                        usersByIds(ids: [ID]!): [User]
+                    }
+                    type User {
+                        id: ID!
+                        name: String!
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        issuesByIds(ids: [ID]!): [Issue]
+                    }
+                    type Issue {
+                        id: ID!
+                        key: String
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type ActivityContext {
+                        issueId: ID
+                        userId: ID
+                    }
+                    type Activity {
+                        id: ID!
+                        contexts: [ActivityContext]
+                    }
+                """.trimIndent(),
+                "users" to /* language=GraphQL*/ """
+                    type Query {
+                        usersByIds(ids: [ID]!): [User]
+                    }
+                    type User {
+                        id: ID!
+                        name: String!
+                    }
+                    type Account {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        issuesByIds(ids: [ID]!): [Issue]
+                    }
+                    type Issue {
+                        id: ID!
+                        key: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+        assertTrue(errors.single() is NadelSchemaValidationError.MultipleHydrationSourceInputFields)
+        assertTrue(errors.single().subject.name == "data")
+    }
+
+    @Test
     fun `prohibit mixing list and non-list source input fields`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
