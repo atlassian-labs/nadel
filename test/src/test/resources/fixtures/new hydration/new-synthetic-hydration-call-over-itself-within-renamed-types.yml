@@ -1,5 +1,6 @@
 name: "new synthetic hydration call over itself within renamed types"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   testing: |
@@ -22,6 +23,7 @@ overallSchema:
       name: String
       characters: [TestingCharacter] @hydrated(service: "testing" field: "tests.characters" arguments: [{name: "ids" value: "$source.characterIds"}] identifiedBy: "id" batchSize: 3)
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   testing: |

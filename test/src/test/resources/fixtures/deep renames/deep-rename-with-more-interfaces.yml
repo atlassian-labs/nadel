@@ -1,5 +1,6 @@
 name: "deep rename with more interfaces"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -21,6 +22,7 @@ overallSchema:
     type User implements HasName {
       name: String @renamed(from: "details.firstName")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -52,6 +54,7 @@ underlyingSchema:
       name: String
       details: UserDetails
     }
+# language=GraphQL
 query: |
   query {
     names {
@@ -62,6 +65,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           names {

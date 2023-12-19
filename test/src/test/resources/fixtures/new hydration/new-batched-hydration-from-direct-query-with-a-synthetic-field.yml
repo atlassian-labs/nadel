@@ -1,5 +1,6 @@
 name: "new batched hydration from direct query with a synthetic field"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   service2: |
@@ -35,6 +36,7 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   service2: |

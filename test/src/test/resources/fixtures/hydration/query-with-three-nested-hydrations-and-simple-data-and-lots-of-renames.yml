@@ -1,5 +1,6 @@
 name: "query with three nested hydrations and simple data and lots of renames"
 enabled: true
+# language=GraphQL
 overallSchema:
   Bar: |
     type Query {
@@ -37,6 +38,7 @@ overallSchema:
       fooEmail: String @renamed(from: "email")
       fooPhone: Int @renamed(from: "phone")
     }
+# language=GraphQL
 underlyingSchema:
   Bar: |
     type Bar {
@@ -80,6 +82,7 @@ underlyingSchema:
     type Query {
       foos: [Foo]
     }
+# language=GraphQL
 query: |
   query {
     fooz {
@@ -113,6 +116,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__fooz__foos: foos {
@@ -164,6 +168,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsById(id: ["bar1"]) {
@@ -193,6 +198,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsById(id: ["nestedBar1"]) {
@@ -222,6 +228,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsById(id: ["nestedBarId456"]) {

@@ -1,5 +1,6 @@
 name: "inlined all arguments"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -19,6 +20,7 @@ overallSchema:
     }
 
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {

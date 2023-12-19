@@ -1,5 +1,6 @@
 name: "dynamic service resolution multiple services"
 enabled: true
+# language=GraphQL
 overallSchema:
   shared: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -21,6 +22,7 @@ overallSchema:
       id: ID!
       issueKey: String
     }
+# language=GraphQL
 underlyingSchema:
   shared: |
     type Query {
@@ -52,6 +54,7 @@ underlyingSchema:
         id: ID!
         issueKey: String
     }
+# language=GraphQL
 query: |
   {
     pr: node(id: "pull-request:id-123") {
@@ -71,6 +74,7 @@ variables: { }
 serviceCalls:
   - serviceName: "RepoService"
     request:
+      # language=GraphQL
       query: |
         query {
           pr: node(id: "pull-request:id-123") {
@@ -93,6 +97,7 @@ serviceCalls:
       }
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issue: node(id: "issue/id-123") {

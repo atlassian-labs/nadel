@@ -1,5 +1,6 @@
 name: "rename on shared abstract type"
 enabled: true
+# language=GraphQL
 overallSchema:
   shared: |
     interface Node {
@@ -16,6 +17,7 @@ overallSchema:
     type Planet implements Node {
       id: ID! @renamed(from: "identifier")
     }
+# language=GraphQL
 underlyingSchema:
   planets: |
     type Query {
@@ -57,6 +59,7 @@ variables: { }
 serviceCalls:
   - serviceName: "worlds"
     request:
+      # language=GraphQL
       query: |
         query {
           node(id: "world-1") {

@@ -1,5 +1,6 @@
 name: "renamed type in union"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -16,6 +17,7 @@ overallSchema:
     type Donkey @renamed(from: "Monkey") {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     union Node = Issue | User | Monkey
@@ -32,6 +34,7 @@ underlyingSchema:
     type Monkey {
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     nodes {
@@ -54,6 +57,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__nodes__all: all {

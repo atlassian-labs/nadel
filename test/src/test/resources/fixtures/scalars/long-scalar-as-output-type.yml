@@ -1,11 +1,13 @@
 name: "long scalar as output type"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
       aField: Long
     }
     scalar Long
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -20,6 +22,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           aField

@@ -1,7 +1,7 @@
 name: "index hydration with partitioned inputs"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(id: [ID]): [User]
@@ -9,7 +9,6 @@ overallSchema:
     type User {
       id: ID
     }
-  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -26,8 +25,8 @@ overallSchema:
         indexed: true
       )
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   UserService: |
     type Query {
       usersByIds(id: [ID]): [User]
@@ -36,7 +35,6 @@ underlyingSchema:
     type User {
       id: ID
     }
-  # language=GraphQL
   Issues: |
     type Issue {
       authorIds: [ID]

@@ -1,5 +1,6 @@
 name: "the only field in a selection set is removed"
 enabled: false
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       title: String
       description: String
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Epic {
@@ -40,6 +42,7 @@ underlyingSchema:
       issueById(id: String): Issue
       issues(jql: String): [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issueById(id: "I1") {
@@ -53,6 +56,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_IssueService {
           issueById(id: "I1") {

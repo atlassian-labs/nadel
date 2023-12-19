@@ -1,5 +1,6 @@
 name: "new hydration matching using index returning errors"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   UserService: |
@@ -19,6 +20,7 @@ overallSchema:
       id: ID
       authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "ids" value: "$source.authorIds"}] indexed: true batchSize: 5)
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   UserService: |

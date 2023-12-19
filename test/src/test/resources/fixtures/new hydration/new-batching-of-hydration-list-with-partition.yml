@@ -1,5 +1,6 @@
 name: "new batching of hydration list with partition"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   UserService: |
@@ -25,6 +26,7 @@ overallSchema:
         batchSize: 2
       )
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   UserService: |

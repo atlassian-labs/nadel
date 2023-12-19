@@ -1,5 +1,6 @@
 name: "new same source for 2 nested hydrations and a rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -20,6 +21,7 @@ overallSchema:
       fooId: ID
       field: String
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Detail {
@@ -43,6 +45,7 @@ underlyingSchema:
       foo: Foo
       issue(issueId: ID): Issue
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -59,6 +62,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -100,6 +104,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(issueId: "ID") {
@@ -119,6 +124,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           detail(detailId: "ID") {

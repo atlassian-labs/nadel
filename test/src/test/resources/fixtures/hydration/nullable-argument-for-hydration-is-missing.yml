@@ -1,5 +1,6 @@
 name: "nullable argument for hydration is missing"
 enabled: true
+# language=GraphQL
 overallSchema:
   boards: |
     type Query {
@@ -36,6 +37,7 @@ overallSchema:
     type CommentConnection {
         totalCount: Int
     }
+# language=GraphQL
 underlyingSchema:
   boards: |
     type Query {
@@ -63,6 +65,7 @@ underlyingSchema:
     type CommentConnection {
         totalCount: Int
     }
+# language=GraphQL
 query: |
   query {
     board {
@@ -78,6 +81,7 @@ variables:
 serviceCalls:
   - serviceName: "boards"
     request:
+      # language=GraphQL
       query: |
         query {
           board {
@@ -99,6 +103,7 @@ serviceCalls:
       }
   - serviceName: "issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(id: "ISSUE-1") {
@@ -120,6 +125,7 @@ serviceCalls:
       }
   - serviceName: "comments"
     request:
+      # language=GraphQL
       query: |
         query {
           comments(cloudId: "CLOUD_ID-1") {

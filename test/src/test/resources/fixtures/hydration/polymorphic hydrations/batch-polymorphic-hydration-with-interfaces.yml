@@ -1,5 +1,6 @@
 name: "batch polymorphic hydration with interfaces"
 enabled: true
+# language=GraphQL
 overallSchema:
   pets: |
     type Query {
@@ -56,6 +57,7 @@ overallSchema:
     }
 
     union LivingThing = Human | Fish | Dog
+# language=GraphQL
 underlyingSchema:
   pets: |
     type Query {
@@ -93,6 +95,7 @@ underlyingSchema:
       id: ID
       dataId: ID
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -121,6 +124,7 @@ variables: { }
 serviceCalls:
   - serviceName: "foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -172,6 +176,7 @@ serviceCalls:
       }
   - serviceName: "pets"
     request:
+      # language=GraphQL
       query: |
         query {
           petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
@@ -221,6 +226,7 @@ serviceCalls:
       }
   - serviceName: "people"
     request:
+      # language=GraphQL
       query: |
         query {
           humanById(ids: ["HUMAN-0"]) {

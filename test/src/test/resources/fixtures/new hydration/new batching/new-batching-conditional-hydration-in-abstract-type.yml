@@ -1,7 +1,7 @@
 name: "new batching conditional hydration in abstract type"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   monolith: |
     type Query {
       activity: [IActivity]
@@ -49,6 +49,7 @@ overallSchema:
       id: ID!
       content: String
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   monolith: |

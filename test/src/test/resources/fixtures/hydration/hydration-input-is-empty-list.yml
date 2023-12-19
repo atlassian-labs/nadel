@@ -1,5 +1,6 @@
 name: "hydration input is empty list"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -23,6 +24,7 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -42,6 +44,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -55,6 +58,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {

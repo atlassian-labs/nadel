@@ -1,5 +1,6 @@
 name: "field is removed from nested hydrated field"
 enabled: false
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -41,6 +42,7 @@ overallSchema:
       created: String
       author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Epic {
@@ -86,6 +88,7 @@ underlyingSchema:
       displayName: String
       userId: ID
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -109,6 +112,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_IssueService {
           issues {
@@ -153,6 +157,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "fred") {
@@ -173,6 +178,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "zed") {
@@ -193,6 +199,7 @@ serviceCalls:
       }
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C1") {
@@ -215,6 +222,7 @@ serviceCalls:
       }
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C3") {
@@ -237,6 +245,7 @@ serviceCalls:
       }
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C5") {
@@ -259,6 +268,7 @@ serviceCalls:
       }
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C2") {
@@ -281,6 +291,7 @@ serviceCalls:
       }
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C4") {
@@ -303,6 +314,7 @@ serviceCalls:
       }
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C6") {
@@ -325,6 +337,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "fred") {
@@ -345,6 +358,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "zed") {
@@ -365,6 +379,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "fred") {
@@ -385,6 +400,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "ned") {
@@ -405,6 +421,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "jed") {
@@ -425,6 +442,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_UserService {
           userById(id: "ted") {

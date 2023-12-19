@@ -1,5 +1,6 @@
 name: "extending types via hydration with variables arguments"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issue: |
     type Query {
@@ -22,6 +23,7 @@ overallSchema:
     extend type Issue {
       association(filter: Filter): RenamedAssociation @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
     }
+# language=GraphQL
 underlyingSchema:
   Issue: |
     type Issue {
@@ -44,6 +46,7 @@ underlyingSchema:
     input Filter {
       name: String
     }
+# language=GraphQL
 query: |
   query MyQuery($filter: Filter) {
     issue {
@@ -58,6 +61,7 @@ variables:
 serviceCalls:
   - serviceName: "Issue"
     request:
+      # language=GraphQL
       query: |
         query MyQuery {
           issue {
@@ -80,6 +84,7 @@ serviceCalls:
       }
   - serviceName: "Association"
     request:
+      # language=GraphQL
       query: |
         query MyQuery {
           association(filter: {name : "value"}, id: "ISSUE-1") {

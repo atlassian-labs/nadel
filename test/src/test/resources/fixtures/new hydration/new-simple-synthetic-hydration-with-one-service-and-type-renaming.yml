@@ -1,5 +1,6 @@
 name: "new simple synthetic hydration with one service and type renaming"
 enabled: true
+# language=GraphQL
 overallSchema:
   testing: |
     type Query {
@@ -21,6 +22,7 @@ overallSchema:
       name: String
       character: TestingCharacter @hydrated(service: "testing" field: "tests.character" arguments: [{name: "id" value: "$source.characterId"}] identifiedBy: "id" batchSize: 3)
     }
+# language=GraphQL
 underlyingSchema:
   testing: |
     type Character {
@@ -46,6 +48,7 @@ underlyingSchema:
     type Testing {
       movie: Movie
     }
+# language=GraphQL
 query: |
   query {
     tests {
@@ -65,6 +68,7 @@ variables: { }
 serviceCalls:
   - serviceName: "testing"
     request:
+      # language=GraphQL
       query: |
         query {
           tests {
@@ -98,6 +102,7 @@ serviceCalls:
       }
   - serviceName: "testing"
     request:
+      # language=GraphQL
       query: |
         query {
           tests {

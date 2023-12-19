@@ -1,5 +1,6 @@
 name: "deep rename nested inside renamed type"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -11,6 +12,7 @@ overallSchema:
     type User {
       name: String @renamed(from: "details.firstName")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -26,6 +28,7 @@ underlyingSchema:
       id: ID
       details: UserDetails
     }
+# language=GraphQL
 query: |
   query {
     first {
@@ -44,6 +47,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           first {
@@ -73,6 +77,7 @@ serviceCalls:
       }
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           second: first {

@@ -1,5 +1,6 @@
 name: "fragment referenced twice from inside query and inside another fragment"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type Bar {
       id: String
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Bar {
@@ -17,6 +19,7 @@ underlyingSchema:
     type Query {
       foo: Bar
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -38,6 +41,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {

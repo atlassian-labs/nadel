@@ -1,5 +1,6 @@
 name: "typename is resolved when namespaced field and type are defined in different services"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -33,6 +34,7 @@ overallSchema:
     extend type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -72,6 +74,7 @@ underlyingSchema:
     type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 query: |
   {
     issue {

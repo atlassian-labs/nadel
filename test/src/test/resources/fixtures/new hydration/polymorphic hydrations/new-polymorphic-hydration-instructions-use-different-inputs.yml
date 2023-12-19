@@ -1,7 +1,7 @@
 name: "new polymorphic hydration instructions use different inputs"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   Pets: |
     type Query {
       petsByIds(ids: [ID!]!): [Pet]
@@ -36,7 +36,6 @@ overallSchema:
         batchSize: 90
       )
     }
-  # language=GraphQL
   Dogs: |
     type Query {
       dogsByIds(ids: [ID!]!): [Dog]
@@ -46,7 +45,6 @@ overallSchema:
       id: ID!
       name: String
     }
-  # language=GraphQL
   Cats: |
     type Query {
       cats: CatQuery
@@ -60,7 +58,6 @@ overallSchema:
       id: ID!
       name: String
     }
-  # language=GraphQL
   Zoo: |
     type Query {
       giraffes(filters: [GiraffeFilter]): [Giraffe]
@@ -76,8 +73,8 @@ overallSchema:
       birthday: Int
       height: Int
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   Pets: |
     type Query {
       petsByIds(ids: [ID!]!): [Pet]
@@ -92,7 +89,6 @@ underlyingSchema:
       birthday: Int!
       height: Int!
     }
-  # language=GraphQL
   Dogs: |
     type Query {
       dogsByIds(ids: [ID!]!): [Dog]
@@ -102,7 +98,6 @@ underlyingSchema:
       id: ID!
       name: String
     }
-  # language=GraphQL
   Cats: |
     type Query {
       cats: CatQuery
@@ -116,7 +111,6 @@ underlyingSchema:
       id: ID!
       name: String
     }
-  # language=GraphQL
   Zoo: |
     type Query {
       giraffes(filters: [GiraffeFilter]): [Giraffe]

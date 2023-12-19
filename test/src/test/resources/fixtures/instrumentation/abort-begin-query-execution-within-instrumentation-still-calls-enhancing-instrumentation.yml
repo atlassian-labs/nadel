@@ -1,5 +1,6 @@
 name: "abort beginQueryExecution within instrumentation still calls enhancing instrumentation"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -12,6 +13,7 @@ overallSchema:
     type Mutation {
       hello: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Mutation {
@@ -26,6 +28,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query OpName {
     hello {

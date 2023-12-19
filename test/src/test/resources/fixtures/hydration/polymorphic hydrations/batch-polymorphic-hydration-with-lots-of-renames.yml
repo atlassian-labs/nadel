@@ -1,5 +1,6 @@
 name: "batch polymorphic hydration with lots of renames"
 enabled: true
+# language=GraphQL
 overallSchema:
   bar: |
     type Query {
@@ -46,6 +47,7 @@ overallSchema:
     }
 
     union Data = Animal | Person
+# language=GraphQL
 underlyingSchema:
   foo: |
     type Query {
@@ -73,6 +75,7 @@ underlyingSchema:
       identifier: ID
       kind: String
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -96,6 +99,7 @@ variables: { }
 serviceCalls:
   - serviceName: "foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -145,6 +149,7 @@ serviceCalls:
       }
   - serviceName: "bar"
     request:
+      # language=GraphQL
       query: |
         query {
           humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
@@ -180,6 +185,7 @@ serviceCalls:
       }
   - serviceName: "bar"
     request:
+      # language=GraphQL
       query: |
         query {
           petById(ids: ["PET-0", "PET-1"]) {

@@ -1,5 +1,6 @@
 name: "top level field is null in synthetic hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -20,6 +21,7 @@ overallSchema:
       id: ID
       project: Project @hydrated(service: "service2" field: "projects.project" arguments: [{name: "id" value: "$source.projectId"}])
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Project {
@@ -43,6 +45,7 @@ underlyingSchema:
     type Query {
       issue(id: ID): Issue
     }
+# language=GraphQL
 query: |
   query {
     issue {
@@ -55,6 +58,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {
@@ -76,6 +80,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           projects {

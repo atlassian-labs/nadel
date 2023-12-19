@@ -1,5 +1,6 @@
 name: "renamed type in interface"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
     type Donkey implements Node @renamed(from: "Monkey") {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Query {
@@ -36,6 +38,7 @@ underlyingSchema:
     type Monkey implements Node {
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     nodes {
@@ -52,6 +55,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__nodes__all: all {

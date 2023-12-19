@@ -1,5 +1,6 @@
 name: "new hydration matching using index with lists with hydration field not exposed"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   UserService: |
@@ -20,6 +21,7 @@ overallSchema:
       id: ID
       authors: [User] @hydrated(service: "UserService" field: "usersByIssueIds" arguments: [{name: "issueIds" value: "$source.id"}] indexed: true batchSize: 5)
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   UserService: |
@@ -86,6 +88,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {

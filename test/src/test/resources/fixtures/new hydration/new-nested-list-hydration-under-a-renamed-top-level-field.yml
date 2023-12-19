@@ -1,5 +1,6 @@
 name: "new nested list hydration under a renamed top level field"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -29,6 +30,7 @@ overallSchema:
       name: String
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Connection {
@@ -63,6 +65,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     fooService {
@@ -79,6 +82,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__fooService__service: service {
@@ -100,6 +104,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           connection(id: "ID") {
@@ -127,6 +132,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           node(id: "1") {
@@ -148,6 +154,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           space(id: "1a") {

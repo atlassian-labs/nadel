@@ -1,5 +1,6 @@
 name: "service types are filtered"
 enabled: true
+# language=GraphQL
 overallSchema:
   test: |-
     type Query {
@@ -33,6 +34,7 @@ overallSchema:
       "Use this to put extra data on the error if required"
       extensions: [QueryErrorExtension!]
     }
+# language=GraphQL
 underlyingSchema:
   test: |-
     type Query {
@@ -86,6 +88,7 @@ underlyingSchema:
     type Query {
       echo: String
     }
+# language=GraphQL
 query: |
   query {
     test {
@@ -110,6 +113,7 @@ variables: { }
 serviceCalls:
   - serviceName: "test"
     request:
+      # language=GraphQL
       query: |
         query {
           test {

@@ -1,5 +1,6 @@
 name: "two deep renames merged fields with same path and field rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -14,6 +15,7 @@ overallSchema:
     type AuthorDetail {
       extra: String @renamed(from: "extraInfo")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type AuthorDetail {
@@ -30,6 +32,7 @@ underlyingSchema:
     type Query {
       issue: Issue
     }
+# language=GraphQL
 query: |
   query {
     issue {
@@ -45,6 +48,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

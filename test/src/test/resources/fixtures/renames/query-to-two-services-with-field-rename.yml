@@ -1,5 +1,6 @@
 name: "query to two services with field rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   Bar: |
     type Query {
@@ -15,6 +16,7 @@ overallSchema:
     type Foo {
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   Bar: |
     type Bar {
@@ -32,6 +34,7 @@ underlyingSchema:
     type Query {
       fooOriginal: Foo
     }
+# language=GraphQL
 query: |
   query {
     otherFoo: foo {
@@ -45,6 +48,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__otherFoo__fooOriginal: fooOriginal {
@@ -67,6 +71,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           bar {

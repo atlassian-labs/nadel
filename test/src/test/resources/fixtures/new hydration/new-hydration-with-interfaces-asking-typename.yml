@@ -1,5 +1,6 @@
 name: "new hydration with interfaces asking typename"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -15,6 +16,7 @@ overallSchema:
     type User implements Node {
       id: ID @hydrated(service: "Issues" field: "ariById" arguments: [{name: "id" value: "$source.id"}])
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -31,6 +33,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     nodes {
@@ -42,6 +45,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           nodes {
@@ -80,6 +84,7 @@ serviceCalls:
       }
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           ariById(id: "ari:i-always-forget-the-format/1")

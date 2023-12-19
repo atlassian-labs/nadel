@@ -1,5 +1,6 @@
 name: "hydration call with fragments in the hydrated part"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -21,6 +22,7 @@ overallSchema:
     type AuthorDetail {
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -45,6 +47,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   fragment IssueFragment on Issue {
     id
@@ -77,6 +80,7 @@ variables: { }
 serviceCalls:
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           usersByIds(id: ["USER-1"]) {
@@ -100,6 +104,7 @@ serviceCalls:
       }
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -134,6 +139,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           usersByIds(id: ["USER-1", "USER-2"]) {

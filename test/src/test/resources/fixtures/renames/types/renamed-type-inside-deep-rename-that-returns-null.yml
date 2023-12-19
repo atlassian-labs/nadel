@@ -1,5 +1,6 @@
 name: "renamed type inside deep rename that returns null"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -15,6 +16,7 @@ overallSchema:
     type IssueDetails @renamed(from: "Details") {
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Issue {
@@ -32,6 +34,7 @@ underlyingSchema:
     type Query {
       issueById(id: ID!): Issue
     }
+# language=GraphQL
 query: |
   query {
     issueById(id: "issue-1") {
@@ -48,6 +51,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issueById(id: "issue-1") {

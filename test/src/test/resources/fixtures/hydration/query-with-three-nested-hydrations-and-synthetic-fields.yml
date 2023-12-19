@@ -1,5 +1,6 @@
 name: "query with three nested hydrations and synthetic fields"
 enabled: true
+# language=GraphQL
 overallSchema:
   Bar: |
     type Query {
@@ -22,6 +23,7 @@ overallSchema:
       name: String
       bar: Bar @hydrated(service: "Bar" field: "barsQuery.barsById" arguments: [{ name: "id" value: "$source.barId"}] identifiedBy: "barId" batchSize: 2)
     }
+# language=GraphQL
 underlyingSchema:
   Bar: |
     type Bar {
@@ -47,6 +49,7 @@ underlyingSchema:
     type Query {
       foos: [Foo]
     }
+# language=GraphQL
 query: |
   query {
     foos {
@@ -65,6 +68,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foos {
@@ -96,6 +100,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsQuery {
@@ -127,6 +132,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsQuery {
@@ -164,6 +170,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsQuery {
@@ -195,6 +202,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsQuery {

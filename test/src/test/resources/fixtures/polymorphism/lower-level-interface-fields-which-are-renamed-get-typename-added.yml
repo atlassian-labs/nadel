@@ -1,5 +1,6 @@
 name: "lower level interface fields which are renamed get typename added"
 enabled: true
+# language=GraphQL
 overallSchema:
   PetService: |
     type Query {
@@ -51,6 +52,7 @@ overallSchema:
       name: String
       givesSmacks: Boolean
     }
+# language=GraphQL
 underlyingSchema:
   PetService: |
     interface Collar {
@@ -122,6 +124,7 @@ underlyingSchema:
     type Query {
       owner(id: String): Owner
     }
+# language=GraphQL
 query: |
   query petQ($isLoyal: Boolean) {
     pets(isLoyal: $isLoyal) {
@@ -136,6 +139,7 @@ variables:
 serviceCalls:
   - serviceName: "PetService"
     request:
+      # language=GraphQL
       query: |
         query petQ {
           pets(isLoyal: true) {

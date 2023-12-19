@@ -1,5 +1,6 @@
 name: "typename is resolved even when no fields are queried from declaring service"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -29,6 +30,7 @@ overallSchema:
     extend type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -64,6 +66,7 @@ underlyingSchema:
     type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 query: |
   {
     issue {

@@ -1,7 +1,7 @@
 name: "operation depth limit"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   service: |
     type Query {
       foo: Foo
@@ -10,8 +10,8 @@ overallSchema:
       name: String
       child: Foo
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   service: |
     type Query {
       foo: Foo
