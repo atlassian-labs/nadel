@@ -9,6 +9,7 @@
     * [Object Matching](#object-matching)
 * [Index Hydration](#index-hydration)
 * [Conditional Hydration](#conditional-hydration)
+    * [Source Inputs](#source-inputs)
 * [Argument Sources](#argument-sources)
 * [Considerations](#considerations)
     * [Abstract Types](#abstract-types)
@@ -371,8 +372,9 @@ For full examples, refer to the test files
 
 # Conditional Hydration
 
-# Argument Sources
+## Source Inputs
 
+# Argument Sources
 
 # Considerations
 
