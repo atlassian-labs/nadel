@@ -154,9 +154,6 @@ internal class NadelNewBatchHydrator(
         val sourceIdsPairedWithInstructions: PairList<JsonNode, NadelBatchHydrationFieldInstruction?>?,
     )
 
-    /**
-     * todo: add validation that repeated directives must use the same $source object unless there is only one input
-     */
     suspend fun hydrate(
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
