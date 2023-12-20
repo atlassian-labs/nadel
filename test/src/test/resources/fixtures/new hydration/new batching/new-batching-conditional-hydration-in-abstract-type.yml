@@ -51,7 +51,6 @@ overallSchema:
     }
 # language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   monolith: |
     type Query {
       activity: [IActivity]
