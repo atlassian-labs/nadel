@@ -1,3 +1,14 @@
+* [Hydration](#hydration)
+* [Example](#example)
+* [Terminology](#terminology)
+* [How it works](#how-it-works)
+* [Directive Definition](#directive-definition)
+* [Batched Hydration](#batched-hydration)
+    * [Dimensions](#dimensions)
+* [Index Hydration](#index-hydration)
+* [Considerations](#considerations)
+    * [Abstract Types](#abstract-types)
+
 # Hydration
 
 Hydration is the process where references to pieces of data are resolved.
