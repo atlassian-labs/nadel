@@ -76,7 +76,7 @@ Nadel will transform the `assignee` field to replace it with the source input fi
 
 i.e. Nadel will send a query like
 
-```patch
+```graphql
 query {
   issueById(id: 1) {
     id
