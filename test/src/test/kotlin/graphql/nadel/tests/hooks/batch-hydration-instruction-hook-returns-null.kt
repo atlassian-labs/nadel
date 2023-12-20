@@ -25,10 +25,10 @@ class `new-batch-hydration-instruction-hook-returns-null` : EngineTestHook {
 
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
                         instructions: List<T>,
-                        sourceId: JsonNode,
+                        sourceInput: JsonNode,
                         userContext: Any?,
                     ): T? {
-                        return if (sourceId.value.toString().contains("NULL", ignoreCase = true)) {
+                        return if (sourceInput.value.toString().contains("NULL", ignoreCase = true)) {
                             null
                         } else {
                             instructions.single()
