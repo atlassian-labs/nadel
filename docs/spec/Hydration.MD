@@ -151,7 +151,8 @@ For full example, refer to test file
 
 # Directive Definition
 
-The most up-to-date definition is found in `lib/src/main/java/graphql/nadel/schema/NadelDirectives.kt`
+The most up-to-date definition is found
+in [NadelDirectives.kt](/lib/src/main/java/graphql/nadel/schema/NadelDirectives.kt)
 
 ```graphql
 "This allows you to hydrate new values into fields"
