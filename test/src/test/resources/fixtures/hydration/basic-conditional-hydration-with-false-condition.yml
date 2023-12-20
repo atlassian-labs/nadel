@@ -33,7 +33,6 @@ overallSchema:
           }
         }
       )
-      barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
     }
 underlyingSchema:
   service2: |
