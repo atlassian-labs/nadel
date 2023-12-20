@@ -27,8 +27,8 @@ type User {
 }
 ```
 
-Where the `assignee` field is the hydrated field, and does not exist in any service.
-It's an artificial field made up by Nadel that fetches data from `userById` once the issue is loaded.
+Where the `Issue.assignee` field is the hydrated field, and does not exist in any service.
+It's an artificial field made up by Nadel that is backed by the `userById` field.
 
 # Terminology
 
@@ -129,6 +129,9 @@ Then Nadel will insert that into the original response
   }
 }
 ```
+
+For full example, refer to test file
+[spec-how-it-works-example.yml](/test/src/test/resources/fixtures/hydration/spec/spec-how-it-works-example.yml)
 
 # Directive Definition
 
