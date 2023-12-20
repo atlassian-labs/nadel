@@ -33,7 +33,6 @@ overallSchema:
           }
         }
       )
-      barLongerInput: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.fooDetails.externalBarId"}])
     }
 underlyingSchema:
   service2: |
@@ -49,13 +48,8 @@ underlyingSchema:
   service1: |
     type Foo {
       barId: ID
-      fooDetails: FooDetails
       id: ID
-    type: String
-    }
-    
-    type FooDetails {
-      externalBarId: ID
+      type: String
     }
     
     type Query {
