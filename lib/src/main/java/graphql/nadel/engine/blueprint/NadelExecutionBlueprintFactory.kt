@@ -261,7 +261,7 @@ private class Factory(
                 actorInputValueDefs = hydrationArgs,
             ),
             sourceFields = getHydrationSourceFields(hydrationArgs, condition),
-            condition = getHydrationCondition(hydration),
+            condition = condition,
         )
     }
 
@@ -382,6 +382,8 @@ private class Factory(
             )
         }
 
+        val condition = getHydrationCondition(hydration)
+
         return NadelBatchHydrationFieldInstruction(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
@@ -393,7 +395,6 @@ private class Factory(
             batchHydrationMatchStrategy = matchStrategy,
             actorFieldDef = actorFieldDef,
             actorFieldContainer = actorFieldContainer,
-            condition = getHydrationCondition(hydration),
             sourceFields = Unit.let {
                 val paths = (when (matchStrategy) {
                     NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
@@ -429,6 +430,7 @@ private class Factory(
                         !prefixes.contains(it.segments + "*")
                     }
             },
+            condition = condition,
         )
     }
 

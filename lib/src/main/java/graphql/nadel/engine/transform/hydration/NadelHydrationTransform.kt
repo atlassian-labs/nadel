@@ -279,11 +279,21 @@ internal class NadelHydrationTransform(
         hooks: NadelExecutionHooks,
         parentNode: JsonNode,
     ): NadelHydrationFieldInstruction? {
-        return hooks.getHydrationInstruction(
-            instructions,
-            parentNode,
-            state.aliasHelper,
-            state.executionContext.userContext
-        )
+        if (instructions.any{it.condition == null}){
+            return hooks.getHydrationInstruction(
+                instructions,
+                parentNode,
+                state.aliasHelper,
+                state.executionContext.userContext
+            )
+        }
+        return instructions
+            .firstOrNull {
+                // Note: due to the validation, all instructions in here have a condition, so can call explicitly
+                val resultQueryPath = state.aliasHelper.getQueryPath(it.condition!!.fieldPath)
+                val node = JsonNodeExtractor.getNodesAt(parentNode, resultQueryPath)
+                    .emptyOrSingle()
+                it.condition.evaluate(node?.value)
+            }
     }
 }

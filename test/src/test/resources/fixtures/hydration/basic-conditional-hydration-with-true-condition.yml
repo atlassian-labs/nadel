@@ -1,4 +1,4 @@
-name: "basic hydration with when condition"
+name: "basic conditional hydration with true condition"
 enabled: true
 overallSchema:
   service2: |
@@ -89,7 +89,7 @@ serviceCalls:
           "foo": {
             "hydration__bar__barId": "barId",
             "__typename__hydration__bar": "Foo",
-            "hydration__bar__type": "type"
+            "hydration__bar__type": "someType"
           }
         },
         "extensions": {}
@@ -119,10 +119,7 @@ response: |-
   {
     "data": {
       "foo": {
-        "bar": {
-          "name": "Bar1",
-          "type": "someType"
-        }
+        "bar": null
       }
     },
     "extensions": {}

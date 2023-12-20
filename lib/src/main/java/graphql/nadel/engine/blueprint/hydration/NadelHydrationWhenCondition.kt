@@ -21,7 +21,10 @@ sealed class NadelHydrationWhenCondition {
         val regex: Regex,
     ) : NadelHydrationWhenCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
-            return (fieldValue as String).matches(regex)
+            if (fieldValue is String) {
+                return fieldValue.matches(regex)
+            }
+            return false
         }
     }
 
@@ -30,7 +33,10 @@ sealed class NadelHydrationWhenCondition {
         val prefix: String,
     ) : NadelHydrationWhenCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
-            return (fieldValue as String).startsWith(prefix)
+            if (fieldValue is String) {
+                return fieldValue.startsWith(prefix)
+            }
+            return false
         }
     }
 }
