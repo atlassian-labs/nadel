@@ -94,23 +94,6 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: "service2"
-    request:
-      query: |
-        query {
-          barById(id: "barId") {
-            name
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barById": null
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {
