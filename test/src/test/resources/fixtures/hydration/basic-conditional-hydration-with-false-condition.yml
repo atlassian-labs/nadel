@@ -49,13 +49,8 @@ underlyingSchema:
   service1: |
     type Foo {
       barId: ID
-      fooDetails: FooDetails
       id: ID
-    type: String
-    }
-    
-    type FooDetails {
-      externalBarId: ID
+      type: String
     }
     
     type Query {
