@@ -11,6 +11,7 @@
 * [Conditional Hydration](#conditional-hydration)
     * [Source Inputs](#source-inputs)
 * [Argument Sources](#argument-sources)
+* [Argument Partitioning](#argument-partitioning)
 * [Considerations](#considerations)
     * [Abstract Types](#abstract-types)
 
@@ -151,8 +152,8 @@ For full example, refer to test file
 
 # Directive Definition
 
-The most up-to-date definition is found
-in [NadelDirectives.kt](/lib/src/main/java/graphql/nadel/schema/NadelDirectives.kt)
+The most up-to-date definition is found in
+[NadelDirectives.kt](/lib/src/main/java/graphql/nadel/schema/NadelDirectives.kt)
 
 ```graphql
 "This allows you to hydrate new values into fields"
@@ -234,7 +235,17 @@ query {
 }
 ```
 
-and response
+Nadel will transform it to something like
+
+```graphql
+query {
+  issueById(id: 1) {
+    collaboratorIds
+  }
+}
+```
+
+and given a response
 
 ```json
 {
@@ -376,6 +387,8 @@ For full examples, refer to the test files
 ## Source Inputs
 
 # Argument Sources
+
+# Argument Partitioning
 
 # Considerations
 
