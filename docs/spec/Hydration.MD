@@ -284,8 +284,8 @@ Then the final response is
 }
 ```
 
-This example can be found as a test at
-`test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example.yml`
+For full example, refer to test file
+[spec-batch-hydration-example.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example.yml)
 
 ## Dimensions
 
@@ -340,13 +340,10 @@ query ManyIssuesManyCollaborators {
 
 For full examples, refer to the test files
 
-[spec-batch-hydration-example-many-issues-many-collaborators.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-many-issues-many-collaborators.yml)
-
-[spec-batch-hydration-example-many-issues-one-assignee.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-many-issues-one-assignee.yml)
-
-[spec-batch-hydration-example-one-issue-many-collaborators.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-one-issue-many-collaborators.yml)
-
-[spec-batch-hydration-example-one-issue-one-assignee.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-one-issue-one-assignee.yml)
+* [spec-batch-hydration-example-many-issues-many-collaborators.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-many-issues-many-collaborators.yml)
+* [spec-batch-hydration-example-many-issues-one-assignee.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-many-issues-one-assignee.yml)
+* [spec-batch-hydration-example-one-issue-many-collaborators.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-one-issue-many-collaborators.yml)
+* [spec-batch-hydration-example-one-issue-one-assignee.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-one-issue-one-assignee.yml)
 
 # Index Hydration
 
