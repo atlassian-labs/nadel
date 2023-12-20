@@ -4,8 +4,12 @@
 * [How it works](#how-it-works)
 * [Directive Definition](#directive-definition)
 * [Batched Hydration](#batched-hydration)
+    * [Batch Size](#batch-size)
     * [Dimensions](#dimensions)
+    * [Object Matching](#object-matching)
 * [Index Hydration](#index-hydration)
+* [Conditional Hydration](#conditional-hydration)
+* [Argument Sources](#argument-sources)
 * [Considerations](#considerations)
     * [Abstract Types](#abstract-types)
 
@@ -359,7 +363,16 @@ For full examples, refer to the test files
 * [spec-batch-hydration-example-one-issue-many-collaborators.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-one-issue-many-collaborators.yml)
 * [spec-batch-hydration-example-one-issue-one-assignee.yml](/test/src/test/resources/fixtures/hydration/spec/spec-batch-hydration-example-one-issue-one-assignee.yml)
 
+## Batch Size
+
+## Object Matching
+
 # Index Hydration
+
+# Conditional Hydration
+
+# Argument Sources
+
 
 # Considerations
 
