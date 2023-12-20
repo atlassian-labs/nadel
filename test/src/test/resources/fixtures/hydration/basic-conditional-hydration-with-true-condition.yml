@@ -119,7 +119,10 @@ response: |-
   {
     "data": {
       "foo": {
-        "bar": null
+        "bar": {
+          "name": "Bar1",
+          "type": "someType"
+        }
       }
     },
     "extensions": {}
