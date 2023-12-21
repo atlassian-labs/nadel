@@ -163,8 +163,8 @@ internal class NadelHydrationValidation(
                 .flatMap { hydration ->
                     hydration
                         .arguments
-                        .map { it.remoteArgumentSource }
                         .asSequence()
+                        .map { it.remoteArgumentSource }
                         .filterIsInstance<RemoteArgumentSource.ObjectField>()
                         .map { it.pathToField }
                 }
