@@ -373,7 +373,7 @@ internal class NadelNewBatchHydrator(
         sourceObjects: List<JsonNode>,
     ): List<SourceObjectMetadata> {
         return sourceObjects
-            .map { sourceObject ->
+            .mapNotNull { sourceObject ->
                 val instructions = instructionsByObjectTypeNames.getInstructionsForNode(
                     executionBlueprint = executionBlueprint,
                     service = sourceFieldService,
@@ -381,15 +381,19 @@ internal class NadelNewBatchHydrator(
                     parentNode = sourceObject,
                 )
 
-                val sourceIdsPairedWithInstructions = getInstructionParingForSourceIds(
-                    sourceObject = sourceObject,
-                    instructions = instructions,
-                )
+                if (instructions.isEmpty()) {
+                    null
+                } else {
+                    val sourceIdsPairedWithInstructions = getInstructionParingForSourceIds(
+                        sourceObject = sourceObject,
+                        instructions = instructions,
+                    )
 
-                SourceObjectMetadata(
-                    sourceObject,
-                    sourceIdsPairedWithInstructions,
-                )
+                    SourceObjectMetadata(
+                        sourceObject,
+                        sourceIdsPairedWithInstructions,
+                    )
+                }
             }
     }
 
