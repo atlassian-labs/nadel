@@ -1,4 +1,4 @@
-name: "basic conditional hydration with true condition"
+name: "basic conditional hydration with true matches condition"
 enabled: true
 overallSchema:
   service2: |
@@ -29,7 +29,7 @@ overallSchema:
         when: {
           result: {
               sourceField: "type"
-              predicate: { equals: "someType" }
+              predicate: { matches: "[a-z]+Type" }
           }
         }
       )

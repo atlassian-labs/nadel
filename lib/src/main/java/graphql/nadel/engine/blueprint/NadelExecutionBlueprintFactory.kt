@@ -46,6 +46,7 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
+import java.math.BigInteger
 
 internal object NadelExecutionBlueprintFactory {
     fun create(
@@ -289,10 +290,16 @@ private class Factory(
             return null
         }
         if (hydration.conditionalHydration.predicate.equals != null) {
-            return NadelHydrationWhenCondition.ResultEquals(
-                fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
-                value = hydration.conditionalHydration.predicate.equals
-            )
+            when (val expectedValue = hydration.conditionalHydration.predicate.equals) {
+                is BigInteger -> return NadelHydrationWhenCondition.LongResultEquals(
+                    fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                    value = expectedValue.longValueExact(),
+                )
+                is String -> return NadelHydrationWhenCondition.StringResultEquals(
+                    fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                    value = expectedValue
+                )
+            }
         }
         if (hydration.conditionalHydration.predicate.startsWith != null) {
             return NadelHydrationWhenCondition.StringResultStartsWith(

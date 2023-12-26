@@ -7,12 +7,29 @@ sealed class NadelHydrationWhenCondition {
 
     abstract fun evaluate(fieldValue: Any?): Boolean
 
-    data class ResultEquals(
+    data class StringResultEquals(
         override val fieldPath: NadelQueryPath,
-        val value: Any,
+        val value: String,
     ) : NadelHydrationWhenCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
-            return fieldValue == value
+            if (fieldValue is String){
+                return  fieldValue == value
+            }
+            return false
+        }
+    }
+    data class LongResultEquals(
+        override val fieldPath: NadelQueryPath,
+        val value: Long,
+    ) : NadelHydrationWhenCondition() {
+        override fun evaluate(fieldValue: Any?): Boolean {
+            if (fieldValue is Int) {
+                return  fieldValue.toLong() == value
+            }
+            if (fieldValue is Long) {
+                return  fieldValue == value
+            }
+            return false
         }
     }
 

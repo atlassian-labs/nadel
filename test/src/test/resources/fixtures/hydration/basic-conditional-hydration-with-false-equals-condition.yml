@@ -1,4 +1,4 @@
-name: "basic conditional hydration with false condition"
+name: "basic conditional hydration with false equals condition"
 enabled: true
 overallSchema:
   service2: |
