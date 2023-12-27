@@ -2,7 +2,7 @@ package graphql.nadel.engine.blueprint.hydration
 
 import graphql.nadel.engine.transform.query.NadelQueryPath
 
-sealed class NadelHydrationWhenCondition {
+internal sealed class NadelHydrationWhenCondition {
     abstract val fieldPath: NadelQueryPath
 
     abstract fun evaluate(fieldValue: Any?): Boolean
@@ -12,22 +12,23 @@ sealed class NadelHydrationWhenCondition {
         val value: String,
     ) : NadelHydrationWhenCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
-            if (fieldValue is String){
-                return  fieldValue == value
+            if (fieldValue is String) {
+                return fieldValue == value
             }
             return false
         }
     }
+
     data class LongResultEquals(
         override val fieldPath: NadelQueryPath,
         val value: Long,
     ) : NadelHydrationWhenCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
             if (fieldValue is Int) {
-                return  fieldValue.toLong() == value
+                return fieldValue.toLong() == value
             }
             if (fieldValue is Long) {
-                return  fieldValue == value
+                return fieldValue == value
             }
             return false
         }

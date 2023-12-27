@@ -30,8 +30,8 @@ overallSchema:
         ]
         when: {
           result: {
-              sourceField: "type"
-              predicate: { equals: 1 }
+            sourceField: "type"
+            predicate: { equals: 1 }
           }
         }
       )
@@ -46,8 +46,8 @@ overallSchema:
         ]
         when: {
           result: {
-              sourceField: "type"
-              predicate: { equals: 2 }
+            sourceField: "type"
+            predicate: { equals: 2 }
           }
         }
       )
@@ -105,25 +105,6 @@ serviceCalls:
           "foo": {
             "__typename__hydration__bar": "Foo",
             "hydration__bar__type": 2
-          }
-        },
-        "extensions": {}
-      }
-  - serviceName: "service2"
-    request:
-      query: |
-        query {
-          barById(id: "BAR_A") {
-            name
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barById": {
-            "name": "Bar A"
           }
         },
         "extensions": {}

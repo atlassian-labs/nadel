@@ -279,7 +279,7 @@ internal class NadelHydrationTransform(
         hooks: NadelExecutionHooks,
         parentNode: JsonNode,
     ): NadelHydrationFieldInstruction? {
-        if (instructions.any{it.condition == null}){
+        if (instructions.any { it.condition == null }) {
             return hooks.getHydrationInstruction(
                 instructions,
                 parentNode,

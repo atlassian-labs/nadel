@@ -28,8 +28,8 @@ overallSchema:
         ]
         when: {
           result: {
-              sourceField: "type"
-              predicate: { equals: "someType" }
+            sourceField: "type"
+            predicate: { equals: "someType" }
           }
         }
       )

@@ -28,8 +28,8 @@ overallSchema:
         ]
         when: {
           result: {
-              sourceField: "type"
-              predicate: { startsWith: "hehe" }
+            sourceField: "type"
+            predicate: { startsWith: "hehe" }
           }
         }
       )

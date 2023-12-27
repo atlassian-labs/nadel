@@ -28,8 +28,8 @@ overallSchema:
         ]
         when: {
           result: {
-              sourceField: "type"
-              predicate: { matches: "[A-Z]+Type" }
+            sourceField: "type"
+            predicate: { matches: "[A-Z]+Type" }
           }
         }
       )
