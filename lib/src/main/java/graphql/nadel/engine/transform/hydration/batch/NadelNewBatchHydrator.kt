@@ -258,8 +258,12 @@ internal class NadelNewBatchHydrator(
                     extractNode(sourceId, instruction)
                 }
             } else {
-                val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                extractNode(sourceId, instruction)
+                if (sourceIdsPairedWithInstruction.isEmpty()) {
+                    JsonNode.Null
+                } else {
+                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
+                    extractNode(sourceId, instruction)
+                }
             }
         } else {
             if (sourceIdsPairedWithInstruction == null) {
@@ -272,8 +276,12 @@ internal class NadelNewBatchHydrator(
                         },
                 )
             } else {
-                val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                extractNode(sourceId, instruction)
+                if (sourceIdsPairedWithInstruction.isEmpty()) {
+                    JsonNode.Null
+                } else {
+                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
+                    extractNode(sourceId, instruction)
+                }
             }
         }
     }
