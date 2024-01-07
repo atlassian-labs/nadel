@@ -299,6 +299,7 @@ private class Factory(
                     fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
                     value = expectedValue
                 )
+                else -> error("unexpected type for equals predicate in conditional hydration")
             }
         }
         if (hydration.conditionalHydration.predicate.startsWith != null) {
