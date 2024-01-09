@@ -2,7 +2,7 @@ package graphql.nadel.engine.blueprint.hydration
 
 import graphql.nadel.engine.transform.query.NadelQueryPath
 
-internal sealed class NadelHydrationWhenCondition {
+sealed class NadelHydrationWhenCondition {
     abstract val fieldPath: NadelQueryPath
 
     abstract fun evaluate(fieldValue: Any?): Boolean
