@@ -32,7 +32,7 @@ class `new-polymorphic-hydration-instructions-use-different-inputs` : EngineTest
 
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
                         instructions: List<T>,
-                        sourceId: JsonNode,
+                        sourceInput: JsonNode,
                         userContext: Any?,
                     ): T? {
                         throw UnsupportedOperationException()
