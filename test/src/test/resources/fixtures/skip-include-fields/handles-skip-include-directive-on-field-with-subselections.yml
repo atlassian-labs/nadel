@@ -1,5 +1,6 @@
 name: "handles skip include directive on field with subselections"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -9,6 +10,7 @@ overallSchema:
       id: String
       foo: Foo
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -18,6 +20,7 @@ underlyingSchema:
       foo: Foo
       id: String
     }
+# language=GraphQL
 query: |
   query ($test: Boolean!, $invertTest: Boolean! = false, $other: Boolean! = true) {
     foo {
@@ -35,6 +38,7 @@ variables:
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {

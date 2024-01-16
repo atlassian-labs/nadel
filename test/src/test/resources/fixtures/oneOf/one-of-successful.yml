@@ -1,5 +1,6 @@
 name: "oneOf successful"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -9,6 +10,7 @@ overallSchema:
       name: String
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {
@@ -18,6 +20,7 @@ underlyingSchema:
       name: String
       id: ID
     }
+# language=GraphQL
 query: |
   query myQuery {
     search(by: {name: "Figaro"})
@@ -26,6 +29,7 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query myQuery {
           search(by: {name: "Figaro"})

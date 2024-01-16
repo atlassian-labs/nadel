@@ -1,5 +1,6 @@
 name: "deep rename returns null 2"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type Troll {
       name: String @renamed(from: "firstEat.item.name")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -24,6 +26,7 @@ underlyingSchema:
     type Edible {
       name: String
     }
+# language=GraphQL
 query: |
   query {
     troll {
@@ -34,6 +37,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           troll {

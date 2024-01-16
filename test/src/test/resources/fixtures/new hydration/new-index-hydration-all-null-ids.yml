@@ -1,7 +1,7 @@
 name: "new index hydration all null ids"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   Issues: |
     type Query {
       issueById(id: ID!): Issue!
@@ -20,7 +20,6 @@ overallSchema:
           indexed: true
         )
     }
-  # language=GraphQL
   Users: |
     type Query {
       usersByIds(ids: [ID!]!): [User]
@@ -29,8 +28,8 @@ overallSchema:
       id: ID!
       name: String
     }
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   Issues: |
     type Query {
       issueById(id: ID!): Issue!
@@ -40,7 +39,6 @@ underlyingSchema:
       key: String
       collaboratorIds: [ID]
     }
-  # language=GraphQL
   Users: |
     type Query {
       usersByIds(ids: [ID!]!): [User]

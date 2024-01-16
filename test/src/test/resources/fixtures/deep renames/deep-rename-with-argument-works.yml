@@ -1,5 +1,6 @@
 name: "deep rename with argument works"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type Issue {
       name(userId: ID!): String @renamed(from: "detail.detailName")
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Issue {
@@ -21,6 +23,7 @@ underlyingSchema:
     type Query {
       issue: Issue
     }
+# language=GraphQL
 query: |
   query {
     issue {
@@ -31,6 +34,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

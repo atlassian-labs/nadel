@@ -1,5 +1,6 @@
 name: "renamed list inside renamed list"
 enabled: true
+# language=GraphQL
 overallSchema:
   IssuesService: |
     type Query {
@@ -15,6 +16,7 @@ overallSchema:
       renamedId: String @renamed(from: "id")
       renamedDate: String @renamed(from: "date")
     }
+# language=GraphQL
 underlyingSchema:
   IssuesService: |
     type Issue {
@@ -33,6 +35,7 @@ underlyingSchema:
       date: String
       id: String
     }
+# language=GraphQL
 query: |
   query {
     renamedIssue {
@@ -48,6 +51,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssuesService"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__renamedIssue__issue: issue {

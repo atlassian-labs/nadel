@@ -1,7 +1,7 @@
 name: "new batch polymorphic hydration when hook returns null"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   pets: |
     type Query {
       petById(ids: [ID]): [Pet]
@@ -11,7 +11,6 @@ overallSchema:
       id: ID
       breed: String
     }
-  # language=GraphQL
   people: |
     type Query {
       humanById(ids: [ID]): [Human]
@@ -21,7 +20,6 @@ overallSchema:
       id: ID
       name: String
     }
-  # language=GraphQL
   foo: |
     type Query {
       foo: [Foo]
@@ -48,8 +46,8 @@ overallSchema:
     }
 
     union Data = Pet | Human
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   pets: |
     type Query {
       petById(ids: [ID]): [Pet]
@@ -59,7 +57,6 @@ underlyingSchema:
       id: ID
       breed: String
     }
-  # language=GraphQL
   people: |
     type Query {
       humanById(ids: [ID]): [Human]
@@ -69,7 +66,6 @@ underlyingSchema:
       id: ID
       name: String
     }
-  # language=GraphQL
   foo: |
     type Query {
       foo: [Foo]

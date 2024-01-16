@@ -277,3 +277,71 @@ fun <A, B : Any> Sequence<Pair<A, B?>>.filterPairSecondNotNull(): Sequence<Pair<
         }
     }
 }
+
+/**
+ * Like [List.partition] but only returns the count of each partition.
+ */
+internal fun <E> List<E>.partitionCount(predicate: (E) -> Boolean): Pair<Int, Int> {
+    var first = 0
+    var second = 0
+
+    for (element in this) {
+        if (predicate(element)) {
+            first++
+        } else {
+            second++
+        }
+    }
+
+    return first to second
+}
+
+/**
+ * Like [Sequence.zip] but throws an exception when the two sequences do not have the same number
+ * of items to join.
+ */
+internal inline fun <A, B> Sequence<A>.zipOrThrow(
+    other: Sequence<B>,
+    crossinline errorFunction: () -> Nothing,
+): Sequence<Pair<A, B>> {
+    return zipOrThrow(
+        other = object : Iterable<B> {
+            override fun iterator(): Iterator<B> {
+                return other.iterator()
+            }
+        },
+        errorFunction = errorFunction,
+    )
+}
+
+/**
+ * Like [Sequence.zip] but throws an exception when the two sequences do not have the same number
+ * of items to join.
+ */
+internal inline fun <A, B> Sequence<A>.zipOrThrow(
+    other: Iterable<B>,
+    crossinline errorFunction: () -> Nothing,
+): Sequence<Pair<A, B>> {
+    val sequenceA = this
+
+    return object : Sequence<Pair<A, B>> {
+        override fun iterator(): Iterator<Pair<A, B>> {
+            val iteratorA = sequenceA.iterator()
+            val iteratorB = other.iterator()
+
+            return object : Iterator<Pair<A, B>> {
+                override fun hasNext(): Boolean {
+                    return when {
+                        iteratorA.hasNext() && iteratorB.hasNext() -> true
+                        iteratorA.hasNext() || iteratorB.hasNext() -> errorFunction()
+                        else -> false
+                    }
+                }
+
+                override fun next(): Pair<A, B> {
+                    return iteratorA.next() to iteratorB.next()
+                }
+            }
+        }
+    }
+}

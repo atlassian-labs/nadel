@@ -1,5 +1,6 @@
 name: "typename is sent to owning service even when no fields are queried"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -29,6 +30,7 @@ overallSchema:
     extend type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -64,6 +66,7 @@ underlyingSchema:
     type IssueQuery {
       commentsCount: Int
     }
+# language=GraphQL
 query: |
   {
     issue {
@@ -78,6 +81,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {
@@ -97,6 +101,7 @@ serviceCalls:
       }
   - serviceName: "IssueSearch"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

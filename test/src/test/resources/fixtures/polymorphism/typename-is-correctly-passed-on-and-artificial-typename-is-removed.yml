@@ -1,5 +1,6 @@
 name: "__typename is correctly passed on and artificial typename is removed"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -12,6 +13,7 @@ overallSchema:
       id: ID
       authorIds: [ID]
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     interface AbstractIssue {
@@ -26,6 +28,7 @@ underlyingSchema:
     type Query {
       issues: [AbstractIssue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -40,6 +43,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {

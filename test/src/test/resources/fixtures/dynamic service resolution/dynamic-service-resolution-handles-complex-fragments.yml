@@ -1,5 +1,6 @@
 name: "dynamic service resolution handles complex fragments"
 enabled: true
+# language=GraphQL
 overallSchema:
   shared: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -26,6 +27,7 @@ overallSchema:
       id: ID!
       issueKey: String
     }
+# language=GraphQL
 underlyingSchema:
   shared: |
     type Query {
@@ -63,6 +65,7 @@ underlyingSchema:
         id: ID!
         issueKey: String
     }
+# language=GraphQL
 query: |
   {
     node(id: "pull-request:id-123") {
@@ -90,6 +93,7 @@ variables: { }
 serviceCalls:
   - serviceName: "RepoService"
     request:
+      # language=GraphQL
       query: |
         query {
           node(id: "pull-request:id-123") {

@@ -30,6 +30,7 @@ import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.engine.util.zipOrThrow
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async
@@ -257,8 +258,12 @@ internal class NadelNewBatchHydrator(
                     extractNode(sourceId, instruction)
                 }
             } else {
-                val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                extractNode(sourceId, instruction)
+                if (sourceIdsPairedWithInstruction.isEmpty()) {
+                    JsonNode.Null
+                } else {
+                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
+                    extractNode(sourceId, instruction)
+                }
             }
         } else {
             if (sourceIdsPairedWithInstruction == null) {
@@ -271,8 +276,12 @@ internal class NadelNewBatchHydrator(
                         },
                 )
             } else {
-                val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                extractNode(sourceId, instruction)
+                if (sourceIdsPairedWithInstruction.isEmpty()) {
+                    JsonNode.Null
+                } else {
+                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
+                    extractNode(sourceId, instruction)
+                }
             }
         }
     }
@@ -327,7 +336,7 @@ internal class NadelNewBatchHydrator(
                 instruction = instruction,
                 aliasHelper = aliasHelper,
                 hydratedField = sourceField,
-                argBatches = argBatches,
+                argBatches = argBatches.map { it.arguments },
             )
 
         return coroutineScope {
@@ -355,11 +364,13 @@ internal class NadelNewBatchHydrator(
                     }
                 }
                 .awaitAll()
+                // todo: in the future the output of NadelHydrationFieldsBuilder should be a pair of arg batch and query
                 .asSequence()
-                // todo: needs fix as this will not work if the data is partitioned
-                .zip(uniqueSourceIds.asSequence().chunked(instruction.batchSize))
-                .map { (result, sourceIds) ->
-                    NadelResolvedObjectBatch(sourceIds, result)
+                .zipOrThrow(argBatches) {
+                    error("Each argument batch must correspond to one query")
+                }
+                .map { (result, argBatch) ->
+                    NadelResolvedObjectBatch(argBatch.sourceIds, result)
                 }
                 .toList()
         }
@@ -370,7 +381,7 @@ internal class NadelNewBatchHydrator(
         sourceObjects: List<JsonNode>,
     ): List<SourceObjectMetadata> {
         return sourceObjects
-            .map { sourceObject ->
+            .mapNotNull { sourceObject ->
                 val instructions = instructionsByObjectTypeNames.getInstructionsForNode(
                     executionBlueprint = executionBlueprint,
                     service = sourceFieldService,
@@ -378,15 +389,19 @@ internal class NadelNewBatchHydrator(
                     parentNode = sourceObject,
                 )
 
-                val sourceIdsPairedWithInstructions = getInstructionParingForSourceIds(
-                    sourceObject = sourceObject,
-                    instructions = instructions,
-                )
+                if (instructions.isEmpty()) {
+                    null
+                } else {
+                    val sourceIdsPairedWithInstructions = getInstructionParingForSourceIds(
+                        sourceObject = sourceObject,
+                        instructions = instructions,
+                    )
 
-                SourceObjectMetadata(
-                    sourceObject,
-                    sourceIdsPairedWithInstructions,
-                )
+                    SourceObjectMetadata(
+                        sourceObject,
+                        sourceIdsPairedWithInstructions,
+                    )
+                }
             }
     }
 
@@ -400,16 +415,16 @@ internal class NadelNewBatchHydrator(
             fieldName = sourceField.name,
         )
 
-        val fieldSource = instructions
-            .first()
-            .actorInputValueDefs
-            .asSequence()
-            .map {
-                it.valueSource
-            }
-            .singleOfType<ValueSource.FieldResultValue>()
-
         return if (executionBlueprint.engineSchema.getField(coords)!!.type.unwrapNonNull().isList) {
+            val fieldSource = instructions
+                .first()
+                .actorInputValueDefs
+                .asSequence()
+                .map {
+                    it.valueSource
+                }
+                .singleOfType<ValueSource.FieldResultValue>()
+
             getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceId ->
                     val instruction = executionContext.hooks.getHydrationInstruction(
@@ -432,6 +447,14 @@ internal class NadelNewBatchHydrator(
             if (instruction == null) {
                 null
             } else {
+                val fieldSource = instruction
+                    .actorInputValueDefs
+                    .asSequence()
+                    .map {
+                        it.valueSource
+                    }
+                    .singleOfType<ValueSource.FieldResultValue>()
+
                 getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                     ?.map { sourceId ->
                         sourceId to instruction

@@ -1,6 +1,7 @@
 name: "renamed type is shared"
 # Not supported, currently blocked by validation
 enabled: false
+# language=GraphQL
 overallSchema:
   NextgenIssues: |-
     type Query {
@@ -13,6 +14,7 @@ overallSchema:
     type JiraIssue @renamed(from: "Issue") {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   NextgenIssues: |-
     type Query {
@@ -28,6 +30,7 @@ underlyingSchema:
     type Issue {
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     fastIssue(id: "ISSUE-1") {
@@ -39,6 +42,7 @@ variables: { }
 serviceCalls:
   - serviceName: "NextgenIssues"
     request:
+      # language=GraphQL
       query: |
         query {
           fastIssue(id: "ISSUE-1") {

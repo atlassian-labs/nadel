@@ -1,7 +1,7 @@
 name: "ari argument in renamed input"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   MyService: |
     type Query {
       echo: String
@@ -25,8 +25,8 @@ overallSchema:
       owner: String!
       interpreted: Boolean! = false
     ) on ARGUMENT_DEFINITION | FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   MyService: |
     type Query {
       echo: String

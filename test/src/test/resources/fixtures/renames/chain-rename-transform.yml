@@ -1,5 +1,6 @@
 name: "chain rename transform"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       NorthAmerica
       SouthAmerica
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {

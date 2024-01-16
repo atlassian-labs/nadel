@@ -1,5 +1,6 @@
 name: "new hydration from field in interface"
 enabled: true
+# language=GraphQL
 overallSchema:
   issues: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       id: ID!
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   issues: |
     type Issue {
@@ -47,6 +49,7 @@ underlyingSchema:
     type Query {
       user(id: ID!): User
     }
+# language=GraphQL
 query: |
   query {
     issue(id: "1") {
@@ -60,6 +63,7 @@ variables: { }
 serviceCalls:
   - serviceName: "issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(id: "1") {
@@ -87,6 +91,7 @@ serviceCalls:
       }
   - serviceName: "users"
     request:
+      # language=GraphQL
       query: |
         query {
           user(id: "1001") {

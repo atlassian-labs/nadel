@@ -1,5 +1,6 @@
 name: "hydrating json data"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -19,6 +20,7 @@ overallSchema:
     }
   Shared: |
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -52,6 +54,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query ($v0: JSON) {
           foo(input: $v0) {
@@ -76,6 +79,7 @@ serviceCalls:
       }
   - serviceName: "Baz"
     request:
+      # language=GraphQL
       query: |
         query {
           otherFoo(id: "10000") {

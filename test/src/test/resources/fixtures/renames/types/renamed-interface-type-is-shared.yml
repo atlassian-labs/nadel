@@ -2,6 +2,7 @@ name: "renamed interface type is shared"
 enabled: true
 # This is a bug that we cannot fix, we need better syntax to declare the specific services
 ignored: true
+# language=GraphQL
 overallSchema:
   NextgenIssues: |-
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
     interface Node {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   NextgenIssues: |-
     type Query {
@@ -37,6 +39,7 @@ underlyingSchema:
     type Query {
       me: String
     }
+# language=GraphQL
 query: |
   query {
     node(id: "ISSUE-1") {
@@ -49,6 +52,7 @@ variables: { }
 serviceCalls:
   - serviceName: "NextgenIssues"
     request:
+      # language=GraphQL
       query: |-
         query {
           node(id: "ISSUE-1") {

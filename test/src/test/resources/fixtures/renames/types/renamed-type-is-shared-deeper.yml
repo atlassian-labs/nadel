@@ -1,6 +1,7 @@
 name: "renamed type is shared deeper"
 # Doesn't even get past validation
 enabled: false
+# language=GraphQL
 overallSchema:
   NextgenIssues: |-
     type Query {
@@ -14,6 +15,7 @@ overallSchema:
     type User @renamed(from: "Account") {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   NextgenIssues: |-
     type Query {
@@ -37,6 +39,7 @@ underlyingSchema:
     type Account {
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     issue(id: "ISSUE-1") {
@@ -52,6 +55,7 @@ variables: { }
 serviceCalls:
   - serviceName: "NextgenIssues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(id: "ISSUE-1") {

@@ -1,5 +1,6 @@
 name: "handles include directive on field with batch hydrated parent"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -19,6 +20,7 @@ overallSchema:
     type Test {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -31,6 +33,7 @@ underlyingSchema:
     type Test {
       id: ID
     }
+# language=GraphQL
 query: |
   query ($test: Boolean!) {
     foos {
@@ -44,6 +47,7 @@ variables:
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foos {
@@ -71,6 +75,7 @@ serviceCalls:
       }
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           tests(ids: ["Foo-3", "Foo-4"]) {

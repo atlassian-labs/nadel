@@ -1,5 +1,6 @@
 name: "ari argument transform on renamed field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     directive @interpretAri on ARGUMENT_DEFINITION
@@ -9,6 +10,7 @@ overallSchema:
     type Issue {
       key: ID @renamed(from: "id")
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -17,6 +19,7 @@ underlyingSchema:
     type Issue {
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     issue(id: "ari:/i-forget-what-aris-actually-look-like/57") {
@@ -27,6 +30,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__issue__issueById: issueById(id: "57") {

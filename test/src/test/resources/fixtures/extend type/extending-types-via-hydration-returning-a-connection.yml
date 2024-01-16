@@ -1,5 +1,6 @@
 name: "extending types via hydration returning a connection"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issue: |
     type Query {
@@ -36,6 +37,7 @@ overallSchema:
     extend type Issue {
       association(filter: Filter): AssociationConnection @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
     }
+# language=GraphQL
 underlyingSchema:
   Issue: |
     type Issue {
@@ -76,6 +78,7 @@ underlyingSchema:
     input Filter {
       name: String
     }
+# language=GraphQL
 query: |
   query {
     synth {
@@ -94,6 +97,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issue"
     request:
+      # language=GraphQL
       query: |
         query {
           synth {
@@ -119,6 +123,7 @@ serviceCalls:
       }
   - serviceName: "Association"
     request:
+      # language=GraphQL
       query: |
         query {
           association(filter: {name : "value"}, id: "ISSUE-1") {
@@ -146,6 +151,7 @@ serviceCalls:
       }
   - serviceName: "Association"
     request:
+      # language=GraphQL
       query: |
         query {
           pages {

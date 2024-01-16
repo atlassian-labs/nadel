@@ -1,5 +1,6 @@
 name: "solitary polymorphic hydration when hook returns null"
 enabled: true
+# language=GraphQL
 overallSchema:
   pets: |
     type Query {
@@ -45,6 +46,7 @@ overallSchema:
     }
 
     union Data = Pet | Human
+# language=GraphQL
 underlyingSchema:
   pets: |
     type Query {
@@ -73,6 +75,7 @@ underlyingSchema:
       id: ID
       dataId: ID
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -96,6 +99,7 @@ variables: { }
 serviceCalls:
   - serviceName: "foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -129,6 +133,7 @@ serviceCalls:
       }
   - serviceName: "people"
     request:
+      # language=GraphQL
       query: |
         query {
           humanById(id: "HUMAN-0") {

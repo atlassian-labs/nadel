@@ -1,5 +1,6 @@
 name: "top level field is removed"
 enabled: false
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -41,6 +42,7 @@ overallSchema:
       created: String
       author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Epic {
@@ -86,6 +88,7 @@ underlyingSchema:
       displayName: String
       userId: ID
     }
+# language=GraphQL
 query: |
   query {
     commentById(id: "C1") {

@@ -1,5 +1,6 @@
 name: "extending types from another service is possible with synthetic fields"
 enabled: true
+# language=GraphQL
 overallSchema:
   Service2: |
     type Query {
@@ -28,6 +29,7 @@ overallSchema:
     extend type Root {
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   Service2: |
     type Extension {
@@ -58,6 +60,7 @@ underlyingSchema:
     extend type Root {
       name: String
     }
+# language=GraphQL
 query: |
   query {
     root {
@@ -74,6 +77,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Service1"
     request:
+      # language=GraphQL
       query: |
         query {
           anotherRoot
@@ -89,6 +93,7 @@ serviceCalls:
       }
   - serviceName: "Service1"
     request:
+      # language=GraphQL
       query: |
         query {
           root {
@@ -114,6 +119,7 @@ serviceCalls:
       }
   - serviceName: "Service2"
     request:
+      # language=GraphQL
       query: |
         query {
           lookUpQuery {

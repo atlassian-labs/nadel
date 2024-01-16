@@ -1,5 +1,6 @@
 name: "restricted field via fragments used twice"
 enabled: false
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -10,6 +11,7 @@ overallSchema:
       relatedIssue: Issue
       restricted: String
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Issue {
@@ -21,6 +23,7 @@ underlyingSchema:
     type Query {
       issue: Issue
     }
+# language=GraphQL
 query: |
   query {
     issue {
@@ -39,6 +42,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_Issues {
           issue {

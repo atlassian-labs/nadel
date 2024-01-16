@@ -1,5 +1,6 @@
 name: "renamed field with normal field using same source"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -16,6 +17,7 @@ overallSchema:
       detailId: ID!
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Detail {
@@ -37,6 +39,7 @@ underlyingSchema:
       detail(detailIds: [ID]): Detail
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -52,6 +55,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {

@@ -1,5 +1,6 @@
 name: "deep rename with unions"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
     type User {
       name: String @renamed(from: "details.firstName")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     union HasName = Issue | Edible
@@ -45,6 +47,7 @@ underlyingSchema:
       id: ID
       details: UserDetails
     }
+# language=GraphQL
 query: |
   query {
     names {
@@ -66,6 +69,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           names {

@@ -1,5 +1,6 @@
 name: "hydrating using date time as arg"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -12,6 +13,7 @@ overallSchema:
       successor: Foo @hydrated(service: "service" field: "successor" arguments: [{ name: "after" value: "$source.createdAt" }])
     }
     scalar DateTime
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -36,6 +38,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -57,6 +60,7 @@ serviceCalls:
       }
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           successor(after: "2022-03-09T05:01:50Z") {

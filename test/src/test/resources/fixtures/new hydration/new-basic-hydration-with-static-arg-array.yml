@@ -1,5 +1,6 @@
 name: "new basic hydration with static arg array"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -20,6 +21,7 @@ overallSchema:
     { name: "friendIds" value: ["barId2", "barId3", "barId4"] }
     ])
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -39,6 +41,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -51,6 +54,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
             foo {
@@ -72,6 +76,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "barId", friendIds: ["barId2", "barId3", "barId4"]) {

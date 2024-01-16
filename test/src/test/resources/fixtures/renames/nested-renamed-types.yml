@@ -1,5 +1,6 @@
 name: "nested renamed types"
 enabled: true
+# language=GraphQL
 overallSchema:
   service1: |
     type Query {
@@ -13,6 +14,7 @@ overallSchema:
     type Bar @renamed(from: "Building") {
       id: ID!
     }
+# language=GraphQL
 underlyingSchema:
   service1: |
     type Foo {
@@ -28,6 +30,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -46,6 +49,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
