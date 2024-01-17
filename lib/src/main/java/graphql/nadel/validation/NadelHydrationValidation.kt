@@ -11,6 +11,7 @@ import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.partitionCount
 import graphql.nadel.engine.util.singleOfTypeOrNull
+import graphql.nadel.engine.util.startsWith
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
@@ -105,6 +106,7 @@ internal class NadelHydrationValidation(
         overallField: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
     ): List<NadelSchemaValidationError> {
+        // e.g. context.jiraComment
         val pathToSourceInputField = hydration.arguments
             .map { arg -> arg.remoteArgumentSource }
             .singleOfTypeOrNull<RemoteArgumentSource.ObjectField>()
@@ -119,11 +121,11 @@ internal class NadelHydrationValidation(
         // Find offending object identifiers and generate errors
         return hydration.objectIdentifiers
             .asSequence()
-            .filter { identifier ->
-                // Source identifiers MUST use source input field
+            .filterNot { identifier ->
+                // e.g. context.jiraComment.id
                 identifier.sourceId
                     .split(".")
-                    .take(pathToSourceInputField.size) != pathToSourceInputField
+                    .startsWith(pathToSourceInputField)
             }
             .map { offendingObjectIdentifier ->
                 NadelSchemaValidationError.ObjectIdentifierMustFollowSourceInputField(

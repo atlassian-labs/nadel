@@ -345,3 +345,13 @@ internal inline fun <A, B> Sequence<A>.zipOrThrow(
         }
     }
 }
+
+internal fun <T> List<T>.startsWith(other: List<T>): Boolean {
+    return if (size >= other.size) {
+        asSequence()
+            .zip(other.asSequence())
+            .all { (a, b) -> a == b }
+    } else {
+        false
+    }
+}
