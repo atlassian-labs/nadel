@@ -7,6 +7,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.HydrationConditionSou
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationConditionUnsupportedFieldType
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
+import kotlin.test.assertTrue
 
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
@@ -77,7 +78,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("passes if sourceField is simple values Int") {
             val fixture = NadelValidationTestFixture(
@@ -143,7 +144,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("passes if expecting an Int for an ID sourceField") {
             val fixture = NadelValidationTestFixture(
@@ -209,7 +210,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("passes if expecting a String for an ID sourceField") {
             val fixture = NadelValidationTestFixture(
@@ -275,7 +276,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("fails if sourceField is not a value of String, Int, or ID") {
             val fixture = NadelValidationTestFixture(
@@ -341,14 +342,14 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationConditionUnsupportedFieldType>()
-            assert(error.overallField.name == "creator")
-            assert(error.sourceFieldName == "valid")
-            assert(error.sourceFieldTypeName == "Boolean")
+            assertTrue(error.overallField.name == "creator")
+            assertTrue(error.pathToSourceField == listOf("valid"))
+            assertTrue(error.sourceFieldTypeName == "Boolean")
         }
-        it("fails if sourceField is array of valid value") {
+        it("fails if sourceField is list of permissible type") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "issues" to """
@@ -412,12 +413,12 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationConditionUnsupportedFieldType>()
-            assert(error.overallField.name == "creator")
-            assert(error.sourceFieldName == "categories")
-            assert(error.sourceFieldTypeName == "[String]")
+            assertTrue(error.overallField.name == "creator")
+            assertTrue(error.pathToSourceField == listOf("categories"))
+            assertTrue(error.sourceFieldTypeName == "[String]")
         }
         it("fails if sourceField doesnt exist") {
             val fixture = NadelValidationTestFixture(
@@ -481,11 +482,11 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationConditionSourceFieldDoesNotExist>()
-            assert(error.overallField.name == "creator")
-            assert(error.sourceFieldName == "type")
+            assertTrue(error.overallField.name == "creator")
+            assertTrue(error.pathToSourceField == listOf("type"))
         }
         it("equals predicate fails if expected type mismatches with field type") {
             val fixture = NadelValidationTestFixture(
@@ -551,13 +552,13 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationConditionPredicateDoesNotMatchSourceFieldType>()
-            assert(error.overallField.name == "creator")
-            assert(error.sourceFieldName == "type")
-            assert(error.sourceFieldTypeName == "String")
-            assert(error.predicateTypeName == "BigInteger")
+            assertTrue(error.overallField.name == "creator")
+            assertTrue(error.pathToSourceField == listOf("type"))
+            assertTrue(error.sourceFieldTypeName == "String")
+            assertTrue(error.predicateTypeName == "BigInteger")
         }
 
         it("startsWith predicate works on String field") {
@@ -624,7 +625,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("startsWith predicate works on ID field") {
             val fixture = NadelValidationTestFixture(
@@ -690,7 +691,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("startsWith predicate fails on non-string field") {
             val fixture = NadelValidationTestFixture(
@@ -756,13 +757,13 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationConditionPredicateRequiresStringSourceField>()
-            assert(error.overallField.name == "creator")
-            assert(error.sourceFieldName == "size")
-            assert(error.sourceFieldTypeName == "Int")
-            assert(error.predicateType == "startsWith")
+            assertTrue(error.overallField.name == "creator")
+            assertTrue(error.pathToSourceField == listOf("size"))
+            assertTrue(error.sourceFieldTypeName == "Int")
+            assertTrue(error.predicateType == "startsWith")
         }
 
         it("matches predicate works on String field") {
@@ -829,7 +830,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("matches predicate works on ID field") {
             val fixture = NadelValidationTestFixture(
@@ -895,7 +896,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("matches predicate fails on non-string field") {
             val fixture = NadelValidationTestFixture(
@@ -961,13 +962,13 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationConditionPredicateRequiresStringSourceField>()
-            assert(error.overallField.name == "creator")
-            assert(error.sourceFieldName == "size")
-            assert(error.sourceFieldTypeName == "Int")
-            assert(error.predicateType == "matches")
+            assertTrue(error.overallField.name == "creator")
+            assertTrue(error.pathToSourceField == listOf("size"))
+            assertTrue(error.sourceFieldTypeName == "Int")
+            assertTrue(error.predicateType == "matches")
         }
 
         it("passes with multiple hydrations all with when conditions") {
@@ -1057,7 +1058,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("passes with multiple hydrations all without when conditions") {
             val fixture = NadelValidationTestFixture(
@@ -1134,7 +1135,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
         it("fails if some hydrations are missing a when condition") {
             val fixture = NadelValidationTestFixture(
@@ -1217,10 +1218,10 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<SomeHydrationsHaveMissingConditions>()
-            assert(error.overallField.name == "creator")
+            assertTrue(error.overallField.name == "creator")
         }
         it("handles non-nullable type is passed in") {
             val fixture = NadelValidationTestFixture(
@@ -1287,7 +1288,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             // Then
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
     }
 })

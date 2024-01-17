@@ -437,45 +437,45 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class HydrationConditionUnsupportedFieldType(
-        val sourceFieldName: String,
+        val pathToSourceField: List<String>,
         val sourceFieldTypeName: String,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
         override val message =
-            "When condition source field \"${sourceFieldName}\" is of type \"${sourceFieldTypeName}}\" " +
-                "but it needs to be of type String, Int or ID"
+            "Hydration condition field \"${pathToSourceField.joinToString(separator = ".")}\" needs to be of type String, Int or ID"
         override val subject = overallField
     }
 
     data class HydrationConditionSourceFieldDoesNotExist(
-        val sourceFieldName: String,
+        val pathToSourceField: List<String>,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
-        override val message = "When condition source field \"${sourceFieldName}\" does not exist "
+        override val message =
+            "Hydration condition field \"${pathToSourceField.joinToString(separator = ".")}\" does not exist "
         override val subject = overallField
     }
 
     data class HydrationConditionPredicateDoesNotMatchSourceFieldType(
-        val sourceFieldName: String,
+        val pathToSourceField: List<String>,
         val sourceFieldTypeName: String,
         val predicateTypeName: String,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
         override val message =
-            "When condition source field \"${sourceFieldName}\" of type \"${sourceFieldTypeName}\" " +
-                "does not match the predicate type ${predicateTypeName} in the when condition"
+            "Hydration condition field \"${pathToSourceField.joinToString(separator = ".")}\" of type \"${sourceFieldTypeName}\" " +
+                "does not match the predicate type \"$predicateTypeName\" in the when condition"
         override val subject = overallField
     }
 
     data class HydrationConditionPredicateRequiresStringSourceField(
-        val sourceFieldName: String,
+        val pathToSourceField: List<String>,
         val sourceFieldTypeName: String,
         val predicateType: String,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
         override val message =
-            "When condition source field \"${sourceFieldName}\" of type \"${sourceFieldTypeName}\" " +
-                "needs to be of type String or ID in order to use the ${predicateType} predicate."
+            "Hydration condition field \"${pathToSourceField.joinToString(separator = ".")}\" " +
+                "needs to be of type String or ID in order to use the \"$predicateType\" predicate."
         override val subject = overallField
     }
 

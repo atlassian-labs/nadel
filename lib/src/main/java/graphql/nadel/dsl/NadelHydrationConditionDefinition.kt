@@ -5,7 +5,7 @@ data class NadelHydrationConditionDefinition(
 )
 
 data class NadelHydrationResultConditionDefinition(
-    val sourceField: String,
+    val pathToSourceField: List<String>,
     val predicate: NadelHydrationConditionPredicateDefinition,
 )
 
