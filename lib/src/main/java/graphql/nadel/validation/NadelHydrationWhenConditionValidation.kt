@@ -1,7 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.Scalars
-import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -14,13 +14,13 @@ internal class NadelHydrationWhenConditionValidation {
     fun validateHydrationWhenConditionInput(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
     ): NadelSchemaValidationError? {
-        if (hydration.conditionalHydration == null) {
+        if (hydration.condition == null) {
             return null
         }
 
-        val whenConditionSourceFieldName: String = hydration.conditionalHydration.sourceField
+        val whenConditionSourceFieldName: String = hydration.condition.sourceField
         val whenConditionSourceField: GraphQLFieldDefinition =
             (parent.overall as GraphQLFieldsContainer).getField(whenConditionSourceFieldName)
                 ?: return NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist(
@@ -52,7 +52,7 @@ internal class NadelHydrationWhenConditionValidation {
         }
 
         // Ensure predicate matches the field type used
-        val predicateObject = hydration.conditionalHydration.predicate
+        val predicateObject = hydration.condition.predicate
 
         if (predicateObject.equals != null) {
             val predicateValue = predicateObject.equals
@@ -89,12 +89,12 @@ internal class NadelHydrationWhenConditionValidation {
     }
 
     fun validateConditionsOnAllHydrations(
-        hydrations: List<UnderlyingServiceHydration>,
+        hydrations: List<NadelHydrationDefinition>,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationError.SomeHydrationsHaveMissingConditions? {
-        if (hydrations.all { (it.conditionalHydration == null) } ||
-            hydrations.all { (it.conditionalHydration != null) }) {
+        if (hydrations.all { (it.condition == null) } ||
+            hydrations.all { (it.condition != null) }) {
             return null
         }
         return NadelSchemaValidationError.SomeHydrationsHaveMissingConditions(parent, overallField)
