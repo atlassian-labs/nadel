@@ -123,6 +123,7 @@ class CollectionUtilTest {
     @Test
     fun `startsWith returns true if they are equal`() {
         assertTrue(listOf(1, 3, 10).startsWith(listOf(1, 3, 10)))
+        assertTrue(listOf("hello", 10, false).startsWith(listOf("hello", 10, false)))
     }
 
     @Test
@@ -133,6 +134,7 @@ class CollectionUtilTest {
     @Test
     fun `startsWith returns false if prefix list is longer`() {
         assertFalse(listOf(1, 3, 10).startsWith(listOf(1, 3, 10, 5)))
+        assertFalse(listOf("hello", 10, false).startsWith(listOf("hello", 10, false, true)))
     }
 
     @Test
