@@ -41,7 +41,7 @@ class NadelPrefixTest {
 
     private fun excludeGrandfatheredClassesFromNadelPrefix() =
         object : DescribedPredicate<JavaClass>("ignore grandfathered classes") {
-            private val grandfathered = setOf(
+            private val grandfatheredClasses = setOf(
                 "graphql.nadel.NextgenEngine",
                 "graphql.nadel.Service",
                 "graphql.nadel.ServiceExecution",
@@ -84,7 +84,7 @@ class NadelPrefixTest {
             )
 
             override fun test(t: JavaClass): Boolean {
-                return t.fullName !in grandfathered
+                return t.fullName !in grandfatheredClasses
             }
         }
 }
