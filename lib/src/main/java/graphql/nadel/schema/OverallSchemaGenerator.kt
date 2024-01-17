@@ -68,17 +68,19 @@ internal class OverallSchemaGenerator {
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.renamedDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hiddenDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationFromArgumentDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationComplexIdentifiedBy)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelBatchObjectIdentifiedByDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationTemplateEnumDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedFromDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedTemplateDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelWhenConditionPredicateDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelWhenConditionDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelWhenConditionResultDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationResultFieldPredicateDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationResultConditionDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationConditionDefinition)
 
-        addIfNotPresent(overallRegistry, allDefinitions, newScalarTypeDefinition()
-            .name(ExtendedScalars.Json.name)
-            .build())
+        addIfNotPresent(
+            overallRegistry, allDefinitions, newScalarTypeDefinition()
+                .name(ExtendedScalars.Json.name)
+                .build()
+        )
 
         for (definition in allDefinitions) {
             val error = overallRegistry.add(definition)

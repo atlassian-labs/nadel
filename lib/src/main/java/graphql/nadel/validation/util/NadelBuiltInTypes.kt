@@ -12,12 +12,12 @@ import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedFromDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedTemplateDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationComplexIdentifiedBy
+import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionPredicateDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionResultDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
 
@@ -44,14 +44,14 @@ object NadelBuiltInTypes {
         hiddenDirectiveDefinition,
 
         nadelHydrationFromArgumentDefinition,
-        nadelHydrationComplexIdentifiedBy,
+        nadelBatchObjectIdentifiedByDefinition,
         nadelHydrationTemplateEnumDefinition,
         hydratedFromDirectiveDefinition,
         hydratedTemplateDirectiveDefinition,
 
-        nadelWhenConditionPredicateDefinition,
-        nadelWhenConditionResultDefinition,
-        nadelWhenConditionDefinition,
+        nadelHydrationResultFieldPredicateDefinition,
+        nadelHydrationResultConditionDefinition,
+        nadelHydrationConditionDefinition,
     ).map {
         it.name
     }.toSet()
