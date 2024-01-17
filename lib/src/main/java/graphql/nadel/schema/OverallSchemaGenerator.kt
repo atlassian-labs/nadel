@@ -34,11 +34,9 @@ internal class OverallSchemaGenerator {
     }
 
     private fun createTypeRegistry(serviceRegistries: List<NadelDefinitionRegistry>): TypeDefinitionRegistry {
-        val topLevelFields: MutableMap<NadelOperationKind, MutableList<FieldDefinition>> = LinkedHashMap()
-
-        NadelOperationKind.values()
-            .forEach {
-                topLevelFields[it] = ArrayList()
+        val topLevelFields = NadelOperationKind.entries
+            .associateWith {
+                mutableListOf<FieldDefinition>()
             }
 
         val overallRegistry = TypeDefinitionRegistry()
@@ -94,7 +92,7 @@ internal class OverallSchemaGenerator {
 
     private inline fun <reified T : AnySDLNamedDefinition> addIfNotPresent(
         overallRegistry: TypeDefinitionRegistry,
-        allDefinitions: MutableList<AnySDLDefinition>,
+        allDefinitions: List<AnySDLDefinition>,
         namedDefinition: T,
     ) {
         if (!containsElement(allDefinitions, namedDefinition)) {
