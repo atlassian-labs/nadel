@@ -3,32 +3,58 @@ package graphql.nadel.engine.blueprint.hydration
 import graphql.nadel.engine.transform.query.NadelQueryPath
 
 sealed class NadelHydrationWhenCondition {
-    abstract fun evaluate(resultId: String): Boolean
+    abstract val fieldPath: NadelQueryPath
 
-    data class ResultEquals(
-        val fieldPath: NadelQueryPath,
-        val value: Any,
+    abstract fun evaluate(fieldValue: Any?): Boolean
+
+    data class StringResultEquals(
+        override val fieldPath: NadelQueryPath,
+        val value: String,
     ) : NadelHydrationWhenCondition() {
-        override fun evaluate(resultId: String): Boolean {
-            TODO("Not yet implemented")
+        override fun evaluate(fieldValue: Any?): Boolean {
+            if (fieldValue is String) {
+                return fieldValue == value
+            }
+            return false
+        }
+    }
+
+    data class LongResultEquals(
+        override val fieldPath: NadelQueryPath,
+        val value: Long,
+    ) : NadelHydrationWhenCondition() {
+        override fun evaluate(fieldValue: Any?): Boolean {
+            if (fieldValue is Int) {
+                return fieldValue.toLong() == value
+            }
+            if (fieldValue is Long) {
+                return fieldValue == value
+            }
+            return false
         }
     }
 
     data class StringResultMatches(
-        val fieldPath: NadelQueryPath,
+        override val fieldPath: NadelQueryPath,
         val regex: Regex,
     ) : NadelHydrationWhenCondition() {
-        override fun evaluate(resultId: String): Boolean {
-            TODO("Not yet implemented")
+        override fun evaluate(fieldValue: Any?): Boolean {
+            if (fieldValue is String) {
+                return fieldValue.matches(regex)
+            }
+            return false
         }
     }
 
     data class StringResultStartsWith(
-        val fieldPath: NadelQueryPath,
+        override val fieldPath: NadelQueryPath,
         val prefix: String,
     ) : NadelHydrationWhenCondition() {
-        override fun evaluate(resultId: String): Boolean {
-            TODO("Not yet implemented")
+        override fun evaluate(fieldValue: Any?): Boolean {
+            if (fieldValue is String) {
+                return fieldValue.startsWith(prefix)
+            }
+            return false
         }
     }
 }

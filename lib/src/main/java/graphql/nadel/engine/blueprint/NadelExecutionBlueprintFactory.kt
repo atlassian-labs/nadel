@@ -46,6 +46,7 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
+import java.math.BigInteger
 
 internal object NadelExecutionBlueprintFactory {
     fun create(
@@ -237,6 +238,8 @@ private class Factory(
             )
         }
 
+        val condition = getHydrationCondition(hydration)
+
         val hydrationArgs = getHydrationArguments(
             hydration = hydration,
             hydratedFieldParentType = hydratedFieldParentType,
@@ -258,15 +261,28 @@ private class Factory(
                 actorFieldDef = actorFieldDef,
                 actorInputValueDefs = hydrationArgs,
             ),
-            sourceFields = hydrationArgs.mapNotNull {
-                when (it.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
-                    is FieldResultValue -> it.valueSource.queryPathToField
-                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
-                }
-            },
-            condition = getHydrationCondition(hydration),
+            sourceFields = getHydrationSourceFields(hydrationArgs, condition),
+            condition = condition,
         )
+    }
+
+    private fun getHydrationSourceFields(
+        hydrationArgs: List<NadelHydrationActorInputDef>,
+        condition: NadelHydrationWhenCondition?,
+    ): List<NadelQueryPath> {
+        val sourceFieldsFromArgs = hydrationArgs.mapNotNull {
+            when (it.valueSource) {
+                is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                is FieldResultValue -> it.valueSource.queryPathToField
+                is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
+            }
+        }
+
+        if (condition != null) {
+            return sourceFieldsFromArgs + condition.fieldPath
+        }
+
+        return sourceFieldsFromArgs
     }
 
     private fun getHydrationCondition(hydration: UnderlyingServiceHydration): NadelHydrationWhenCondition? {
@@ -274,10 +290,17 @@ private class Factory(
             return null
         }
         if (hydration.conditionalHydration.predicate.equals != null) {
-            return NadelHydrationWhenCondition.ResultEquals(
-                fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
-                value = hydration.conditionalHydration.predicate.equals
-            )
+            when (val expectedValue = hydration.conditionalHydration.predicate.equals) {
+                is BigInteger -> return NadelHydrationWhenCondition.LongResultEquals(
+                    fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                    value = expectedValue.longValueExact(),
+                )
+                is String -> return NadelHydrationWhenCondition.StringResultEquals(
+                    fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                    value = expectedValue
+                )
+                else -> error("unexpected type for equals predicate in conditional hydration")
+            }
         }
         if (hydration.conditionalHydration.predicate.startsWith != null) {
             return NadelHydrationWhenCondition.StringResultStartsWith(
@@ -367,6 +390,8 @@ private class Factory(
             )
         }
 
+        val condition = getHydrationCondition(hydration)
+
         return NadelBatchHydrationFieldInstruction(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
@@ -378,7 +403,6 @@ private class Factory(
             batchHydrationMatchStrategy = matchStrategy,
             actorFieldDef = actorFieldDef,
             actorFieldContainer = actorFieldContainer,
-            condition = getHydrationCondition(hydration),
             sourceFields = Unit.let {
                 val paths = (when (matchStrategy) {
                     NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
@@ -414,6 +438,7 @@ private class Factory(
                         !prefixes.contains(it.segments + "*")
                     }
             },
+            condition = condition,
         )
     }
 
