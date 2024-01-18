@@ -436,7 +436,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class WhenConditionUnsupportedFieldType(
+    data class HydrationConditionUnsupportedFieldType(
         val sourceFieldName: String,
         val sourceFieldTypeName: String,
         val overallField: GraphQLFieldDefinition,
@@ -447,7 +447,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class WhenConditionSourceFieldDoesNotExist(
+    data class HydrationConditionSourceFieldDoesNotExist(
         val sourceFieldName: String,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
@@ -455,7 +455,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class WhenConditionPredicateDoesNotMatchSourceFieldType(
+    data class HydrationConditionPredicateDoesNotMatchSourceFieldType(
         val sourceFieldName: String,
         val sourceFieldTypeName: String,
         val predicateTypeName: String,
@@ -467,7 +467,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class WhenConditionPredicateRequiresStringSourceField(
+    data class HydrationConditionPredicateRequiresStringSourceField(
         val sourceFieldName: String,
         val sourceFieldTypeName: String,
         val predicateType: String,

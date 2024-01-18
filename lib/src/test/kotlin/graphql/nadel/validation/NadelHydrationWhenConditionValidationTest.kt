@@ -1,10 +1,10 @@
 package graphql.nadel.validation
 
 import graphql.nadel.validation.NadelSchemaValidationError.SomeHydrationsHaveMissingConditions
-import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateDoesNotMatchSourceFieldType
-import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionPredicateRequiresStringSourceField
-import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionSourceFieldDoesNotExist
-import graphql.nadel.validation.NadelSchemaValidationError.WhenConditionUnsupportedFieldType
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationConditionPredicateDoesNotMatchSourceFieldType
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationConditionPredicateRequiresStringSourceField
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationConditionSourceFieldDoesNotExist
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationConditionUnsupportedFieldType
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -343,7 +343,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             // Then
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
+            val error = errors.assertSingleOfType<HydrationConditionUnsupportedFieldType>()
             assert(error.overallField.name == "creator")
             assert(error.sourceFieldName == "valid")
             assert(error.sourceFieldTypeName == "Boolean")
@@ -414,7 +414,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             // Then
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionUnsupportedFieldType>()
+            val error = errors.assertSingleOfType<HydrationConditionUnsupportedFieldType>()
             assert(error.overallField.name == "creator")
             assert(error.sourceFieldName == "categories")
             assert(error.sourceFieldTypeName == "[String]")
@@ -483,7 +483,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             // Then
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionSourceFieldDoesNotExist>()
+            val error = errors.assertSingleOfType<HydrationConditionSourceFieldDoesNotExist>()
             assert(error.overallField.name == "creator")
             assert(error.sourceFieldName == "type")
         }
@@ -553,7 +553,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             // Then
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionPredicateDoesNotMatchSourceFieldType>()
+            val error = errors.assertSingleOfType<HydrationConditionPredicateDoesNotMatchSourceFieldType>()
             assert(error.overallField.name == "creator")
             assert(error.sourceFieldName == "type")
             assert(error.sourceFieldTypeName == "String")
@@ -758,7 +758,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             // Then
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionPredicateRequiresStringSourceField>()
+            val error = errors.assertSingleOfType<HydrationConditionPredicateRequiresStringSourceField>()
             assert(error.overallField.name == "creator")
             assert(error.sourceFieldName == "size")
             assert(error.sourceFieldTypeName == "Int")
@@ -963,7 +963,7 @@ class NadelHydrationWhenConditionValidationTest : DescribeSpec({
             // Then
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<WhenConditionPredicateRequiresStringSourceField>()
+            val error = errors.assertSingleOfType<HydrationConditionPredicateRequiresStringSourceField>()
             assert(error.overallField.name == "creator")
             assert(error.sourceFieldName == "size")
             assert(error.sourceFieldTypeName == "Int")

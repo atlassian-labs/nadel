@@ -6,14 +6,13 @@ import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedFromDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedTemplateDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationComplexIdentifiedBy
+import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionPredicateDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionResultDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.MockedWiringFactory
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
@@ -28,14 +27,14 @@ class NadelDirectivesTest : DescribeSpec({
     val commonDefs = """
         ${AstPrinter.printAst(hydratedDirectiveDefinition)}
         ${AstPrinter.printAst(nadelHydrationArgumentDefinition)}
-        ${AstPrinter.printAst(nadelHydrationComplexIdentifiedBy)}
+        ${AstPrinter.printAst(nadelBatchObjectIdentifiedByDefinition)}
         ${AstPrinter.printAst(nadelHydrationFromArgumentDefinition)}
         ${AstPrinter.printAst(nadelHydrationTemplateEnumDefinition)}
         ${AstPrinter.printAst(hydratedFromDirectiveDefinition)}
         ${AstPrinter.printAst(hydratedTemplateDirectiveDefinition)}
-        ${AstPrinter.printAst(nadelWhenConditionDefinition)}
-        ${AstPrinter.printAst(nadelWhenConditionPredicateDefinition)}
-        ${AstPrinter.printAst(nadelWhenConditionResultDefinition)}
+        ${AstPrinter.printAst(nadelHydrationConditionDefinition)}
+        ${AstPrinter.printAst(nadelHydrationResultFieldPredicateDefinition)}
+        ${AstPrinter.printAst(nadelHydrationResultConditionDefinition)}
         scalar JSON
     """
 

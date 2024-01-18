@@ -44,7 +44,8 @@ internal class NadelHydrationValidation(
 ) {
     private val validationUtil = ValidationUtil()
     private val nadelHydrationArgumentValidation = NadelHydrationArgumentValidation()
-    private val nadelHydrationWhenConditionValidation = NadelHydrationWhenConditionValidation()
+    private val nadelHydrationConditionValidation = NadelHydrationConditionValidation()
+
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
@@ -60,7 +61,7 @@ internal class NadelHydrationValidation(
             error("Don't invoke hydration validation if there is no hydration silly")
         }
         val whenConditionValidationError =
-            nadelHydrationWhenConditionValidation.validateConditionsOnAllHydrations(hydrations, parent, overallField)
+            nadelHydrationConditionValidation.validateConditionsOnAllHydrations(hydrations, parent, overallField)
         if (whenConditionValidationError != null) {
             return listOf(whenConditionValidationError)
         }
@@ -327,7 +328,7 @@ internal class NadelHydrationValidation(
                             isBatchHydration,
                             actorField.name
                         ),
-                        nadelHydrationWhenConditionValidation.validateHydrationWhenConditionInput(
+                        nadelHydrationConditionValidation.validateHydrationCondition(
                             parent,
                             overallField,
                             hydration

@@ -44,7 +44,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelHydrationComplexIdentifiedBy = parseDefinition<InputObjectTypeDefinition>(
+    val nadelBatchObjectIdentifiedByDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             "This is required by batch hydration to understand how to pull out objects from the batched result"
@@ -66,7 +66,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelWhenConditionPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
+    val nadelHydrationResultFieldPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             input NadelHydrationResultFieldPredicate @oneOf {
@@ -77,7 +77,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelWhenConditionResultDefinition = parseDefinition<InputObjectTypeDefinition>(
+    val nadelHydrationResultConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate based on the result"
@@ -88,7 +88,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelWhenConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
+    val nadelHydrationConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate"
@@ -315,7 +315,7 @@ object NadelDirectives {
     private fun createObjectIdentifiers(arguments: List<Any>): List<NadelHydrationDefinition.ObjectIdentifier> {
         fun Map<String, String>.requireArgument(key: String): String {
             return requireNotNull(this[key]) {
-                "${nadelHydrationComplexIdentifiedBy.name} definition requires '$key' to be not-null"
+                "${nadelBatchObjectIdentifiedByDefinition.name} definition requires '$key' to be not-null"
             }
         }
         return arguments.map { arg ->

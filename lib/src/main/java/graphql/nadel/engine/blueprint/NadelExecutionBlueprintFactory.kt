@@ -19,7 +19,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationWhenCondition
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.AnyNamedNode
@@ -268,7 +268,7 @@ private class Factory(
 
     private fun getHydrationSourceFields(
         hydrationArgs: List<NadelHydrationActorInputDef>,
-        condition: NadelHydrationWhenCondition?,
+        condition: NadelHydrationCondition?,
     ): List<NadelQueryPath> {
         val sourceFieldsFromArgs = hydrationArgs.mapNotNull {
             when (it.valueSource) {
@@ -285,17 +285,17 @@ private class Factory(
         return sourceFieldsFromArgs
     }
 
-    private fun getHydrationCondition(hydration: NadelHydrationDefinition): NadelHydrationWhenCondition? {
+    private fun getHydrationCondition(hydration: NadelHydrationDefinition): NadelHydrationCondition? {
         if (hydration.condition == null) {
             return null
         }
         if (hydration.condition.predicate.equals != null) {
             return when (val expectedValue = hydration.condition.predicate.equals) {
-                is BigInteger -> NadelHydrationWhenCondition.LongResultEquals(
+                is BigInteger -> NadelHydrationCondition.LongResultEquals(
                     fieldPath = NadelQueryPath(hydration.condition.sourceField),
                     value = expectedValue.longValueExact(),
                 )
-                is String -> NadelHydrationWhenCondition.StringResultEquals(
+                is String -> NadelHydrationCondition.StringResultEquals(
                     fieldPath = NadelQueryPath(hydration.condition.sourceField),
                     value = expectedValue
                 )
@@ -303,13 +303,13 @@ private class Factory(
             }
         }
         if (hydration.condition.predicate.startsWith != null) {
-            return NadelHydrationWhenCondition.StringResultStartsWith(
+            return NadelHydrationCondition.StringResultStartsWith(
                 fieldPath = NadelQueryPath(hydration.condition.sourceField),
                 prefix = hydration.condition.predicate.startsWith
             )
         }
         if (hydration.condition.predicate.matches != null) {
-            return NadelHydrationWhenCondition.StringResultMatches(
+            return NadelHydrationCondition.StringResultMatches(
                 fieldPath = NadelQueryPath(hydration.condition.sourceField),
                 regex = hydration.condition.predicate.matches
             )
