@@ -7,7 +7,13 @@ overallSchema:
       lookup(id: ID): Extension
     }
     extend type Root {
-      extension: Extension @hydrated(service: "Service2" field: "lookup" arguments: [{name: "id" value: "$source.id"}] identifiedBy: "id")
+      extension: Extension
+      @hydrated(
+        service: "Service2"
+        field: "lookup"
+        arguments: [{name: "id" value: "$source.id"}]
+        identifiedBy: "id"
+      )
     }
     type Extension {
       id: ID

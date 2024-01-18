@@ -17,7 +17,12 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barWithSomeAttribute" arguments: [{name: "someAttribute" value: true}])
+      bar: Bar
+      @hydrated(
+        service: "service2"
+        field: "barWithSomeAttribute"
+        arguments: [{name: "someAttribute" value: true}]
+      )
     }
 # language=GraphQL
 underlyingSchema:

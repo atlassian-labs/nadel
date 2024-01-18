@@ -12,13 +12,23 @@ overallSchema:
       id: ID
     }
     type Troll implements Node {
-      id: ID @hydrated(service: "Issues" field: "trollName" arguments: [{name: "id" value: "$source.id"}])
+      id: ID
+      @hydrated(
+        service: "Issues"
+        field: "trollName"
+        arguments: [{name: "id" value: "$source.id"}]
+      )
     }
     interface Node {
       id: ID
     }
     type User implements Node {
-      id: ID @hydrated(service: "Issues" field: "ariById" arguments: [{name: "id" value: "$source.id"}])
+      id: ID
+      @hydrated(
+        service: "Issues"
+        field: "ariById"
+        arguments: [{name: "id" value: "$source.id"}]
+      )
     }
 # language=GraphQL
 underlyingSchema:

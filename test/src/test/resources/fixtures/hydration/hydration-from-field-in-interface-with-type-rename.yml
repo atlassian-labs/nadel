@@ -9,7 +9,12 @@ overallSchema:
     type RenamedIssue @renamed(from: "Issue") {
       id: ID
       title: String
-      issueAuthor: RenamedUser @hydrated(service: "users" field: "user" arguments: [{name: "id" value: "$source.author.userId"}])
+      issueAuthor: RenamedUser
+      @hydrated(
+        service: "users"
+        field: "user"
+        arguments: [{name: "id" value: "$source.author.userId"}]
+      )
     }
   users: |
     type Query {
