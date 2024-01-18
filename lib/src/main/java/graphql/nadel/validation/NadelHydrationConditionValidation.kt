@@ -2,6 +2,9 @@ package graphql.nadel.validation
 
 import graphql.Scalars
 import graphql.nadel.dsl.NadelHydrationDefinition
+import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
+import graphql.nadel.engine.util.getFieldAt
+import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -19,23 +22,47 @@ internal class NadelHydrationConditionValidation {
             return null
         }
 
-        val conditionSourceFieldName: String = hydration.condition.sourceField
+        val pathToConditionSourceField = hydration.condition.pathToSourceField
         val conditionSourceField: GraphQLFieldDefinition =
-            (parent.overall as GraphQLFieldsContainer).getField(conditionSourceFieldName)
+            (parent.overall as GraphQLFieldsContainer).getFieldAt(pathToConditionSourceField)
                 ?: return NadelSchemaValidationError.HydrationConditionSourceFieldDoesNotExist(
-                    conditionSourceFieldName,
+                    pathToConditionSourceField,
                     overallField,
                 )
 
-        val conditionSourceFieldType = conditionSourceField.type.unwrapNonNull()
+        val sourceInputField = hydration.arguments
+            .asSequence()
+            .mapNotNull { it.remoteArgumentSource.pathToField }
+            .single()
+
+        val conditionSourceFieldType = if (pathToConditionSourceField == sourceInputField) {
+            conditionSourceField.type.unwrapAll()
+        } else {
+            conditionSourceField.type.unwrapNonNull()
+        }
+
         if (conditionSourceFieldType !is GraphQLScalarType) {
             return NadelSchemaValidationError.HydrationConditionUnsupportedFieldType(
-                conditionSourceFieldName,
+                pathToConditionSourceField,
                 GraphQLTypeUtil.simplePrint(conditionSourceField.type),
                 overallField,
             )
         }
 
+        return validateConditionFieldType(
+            overallField = overallField,
+            pathToConditionSourceField = pathToConditionSourceField,
+            conditionSourceFieldType = conditionSourceFieldType,
+            condition = hydration.condition,
+        )
+    }
+
+    private fun validateConditionFieldType(
+        overallField: GraphQLFieldDefinition,
+        pathToConditionSourceField: List<String>,
+        conditionSourceFieldType: GraphQLScalarType,
+        condition: NadelHydrationResultConditionDefinition,
+    ): NadelSchemaValidationError? {
         val conditionSourceFieldTypeName: String = conditionSourceFieldType.name
 
         // Limit sourceField to simple values like String, Boolean, Int etc.
@@ -44,14 +71,14 @@ internal class NadelHydrationConditionValidation {
                 conditionSourceFieldTypeName == Scalars.GraphQLID.name)
         ) {
             return NadelSchemaValidationError.HydrationConditionUnsupportedFieldType(
-                conditionSourceFieldName,
+                pathToConditionSourceField,
                 conditionSourceFieldTypeName,
                 overallField,
             )
         }
 
         // Ensure predicate matches the field type used
-        val predicateObject = hydration.condition.predicate
+        val predicateObject = condition.predicate
 
         if (predicateObject.equals != null) {
             val predicateValue = predicateObject.equals
@@ -63,7 +90,7 @@ internal class NadelHydrationConditionValidation {
                     )
             ) {
                 return NadelSchemaValidationError.HydrationConditionPredicateDoesNotMatchSourceFieldType(
-                    conditionSourceFieldName,
+                    pathToConditionSourceField,
                     conditionSourceFieldTypeName,
                     predicateValue.javaClass.simpleName,
                     overallField,
@@ -77,13 +104,14 @@ internal class NadelHydrationConditionValidation {
             ) {
                 val predicateType = if (predicateObject.startsWith != null) "startsWith" else "matches"
                 return NadelSchemaValidationError.HydrationConditionPredicateRequiresStringSourceField(
-                    conditionSourceFieldName,
+                    pathToConditionSourceField,
                     conditionSourceFieldTypeName,
                     predicateType,
                     overallField,
                 )
             }
         }
+
         return null
     }
 

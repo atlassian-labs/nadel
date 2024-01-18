@@ -292,11 +292,11 @@ private class Factory(
         if (hydration.condition.predicate.equals != null) {
             return when (val expectedValue = hydration.condition.predicate.equals) {
                 is BigInteger -> NadelHydrationCondition.LongResultEquals(
-                    fieldPath = NadelQueryPath(hydration.condition.sourceField),
+                    fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
                     value = expectedValue.longValueExact(),
                 )
                 is String -> NadelHydrationCondition.StringResultEquals(
-                    fieldPath = NadelQueryPath(hydration.condition.sourceField),
+                    fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
                     value = expectedValue
                 )
                 else -> error("Unexpected type for equals predicate in conditional hydration")
@@ -304,13 +304,13 @@ private class Factory(
         }
         if (hydration.condition.predicate.startsWith != null) {
             return NadelHydrationCondition.StringResultStartsWith(
-                fieldPath = NadelQueryPath(hydration.condition.sourceField),
+                fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
                 prefix = hydration.condition.predicate.startsWith
             )
         }
         if (hydration.condition.predicate.matches != null) {
             return NadelHydrationCondition.StringResultMatches(
-                fieldPath = NadelQueryPath(hydration.condition.sourceField),
+                fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
                 regex = hydration.condition.predicate.matches
             )
         }

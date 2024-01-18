@@ -452,22 +452,28 @@ object NadelDirectives {
         ) as T
     }
 
-    private fun buildConditionalHydrationObject(whenConditionArgument: GraphQLAppliedDirectiveArgument): NadelHydrationConditionDefinition? {
-        val result = whenConditionArgument.getValue<Map<String, Map<String, Any>>>()?.get("result")
+    private fun buildConditionalHydrationObject(
+        conditionArgument: GraphQLAppliedDirectiveArgument,
+    ): NadelHydrationConditionDefinition? {
+        @Suppress("UNCHECKED_CAST")
+        val result = conditionArgument.getValue<Map<String, Any?>>()
+            ?.get("result") as Map<String, Any>?
             ?: return null
 
         val sourceField = result["sourceField"]!! as String
-        val predicate: Map<String, Any> = result["predicate"]!! as Map<String, Any>
+
+        @Suppress("UNCHECKED_CAST")
+        val predicate = result["predicate"]!! as Map<String, Any>
 
         return NadelHydrationConditionDefinition(
             result = NadelHydrationResultConditionDefinition(
-                sourceField = sourceField,
+                pathToSourceField = sourceField.split("."),
                 predicate = NadelHydrationConditionPredicateDefinition(
                     equals = predicate["equals"],
                     startsWith = predicate["startsWith"] as String?,
                     matches = (predicate["matches"] as String?)?.toRegex(),
-                )
-            )
+                ),
+            ),
         )
     }
 
