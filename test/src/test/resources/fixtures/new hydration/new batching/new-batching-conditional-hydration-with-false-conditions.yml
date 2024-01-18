@@ -137,7 +137,7 @@ response: |-
   {
     "data": {
       "foo": {
-        "bar": []  
+        "bar": [null, null]  
       }
     },
     "extensions": {}
