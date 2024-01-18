@@ -9,7 +9,7 @@ import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
-import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLArgument
@@ -227,7 +227,7 @@ sealed interface NadelSchemaValidationError {
     data class MissingHydrationActorService(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val hydration: UnderlyingServiceHydration,
+        val hydration: NadelHydrationDefinition,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -243,7 +243,7 @@ sealed interface NadelSchemaValidationError {
     data class MissingHydrationActorField(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val hydration: UnderlyingServiceHydration,
+        val hydration: NadelHydrationDefinition,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -340,7 +340,7 @@ sealed interface NadelSchemaValidationError {
     data class NonExistentHydrationActorFieldArgument(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val hydration: UnderlyingServiceHydration,
+        val hydration: NadelHydrationDefinition,
         val argument: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
@@ -537,7 +537,7 @@ sealed interface NadelSchemaValidationError {
     data class MissingRequiredHydrationActorFieldArgument(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val hydration: UnderlyingServiceHydration,
+        val hydration: NadelHydrationDefinition,
         val argument: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service

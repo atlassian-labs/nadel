@@ -14,7 +14,7 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
 import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
@@ -219,7 +219,7 @@ private class Factory(
     private fun makeHydrationFieldInstruction(
         hydratedFieldParentType: GraphQLObjectType,
         hydratedFieldDef: GraphQLFieldDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
     ): NadelFieldInstruction {
         val hydrationActorService = services.single { it.name == hydration.serviceName }
         val queryPathToActorField = hydration.pathToActorField
@@ -285,36 +285,36 @@ private class Factory(
         return sourceFieldsFromArgs
     }
 
-    private fun getHydrationCondition(hydration: UnderlyingServiceHydration): NadelHydrationWhenCondition? {
-        if (hydration.conditionalHydration == null) {
+    private fun getHydrationCondition(hydration: NadelHydrationDefinition): NadelHydrationWhenCondition? {
+        if (hydration.condition == null) {
             return null
         }
-        if (hydration.conditionalHydration.predicate.equals != null) {
-            when (val expectedValue = hydration.conditionalHydration.predicate.equals) {
-                is BigInteger -> return NadelHydrationWhenCondition.LongResultEquals(
-                    fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+        if (hydration.condition.predicate.equals != null) {
+            return when (val expectedValue = hydration.condition.predicate.equals) {
+                is BigInteger -> NadelHydrationWhenCondition.LongResultEquals(
+                    fieldPath = NadelQueryPath(hydration.condition.sourceField),
                     value = expectedValue.longValueExact(),
                 )
-                is String -> return NadelHydrationWhenCondition.StringResultEquals(
-                    fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
+                is String -> NadelHydrationWhenCondition.StringResultEquals(
+                    fieldPath = NadelQueryPath(hydration.condition.sourceField),
                     value = expectedValue
                 )
-                else -> error("unexpected type for equals predicate in conditional hydration")
+                else -> error("Unexpected type for equals predicate in conditional hydration")
             }
         }
-        if (hydration.conditionalHydration.predicate.startsWith != null) {
+        if (hydration.condition.predicate.startsWith != null) {
             return NadelHydrationWhenCondition.StringResultStartsWith(
-                fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
-                prefix = hydration.conditionalHydration.predicate.startsWith
+                fieldPath = NadelQueryPath(hydration.condition.sourceField),
+                prefix = hydration.condition.predicate.startsWith
             )
         }
-        if (hydration.conditionalHydration.predicate.matches != null) {
+        if (hydration.condition.predicate.matches != null) {
             return NadelHydrationWhenCondition.StringResultMatches(
-                fieldPath = NadelQueryPath(hydration.conditionalHydration.sourceField),
-                regex = hydration.conditionalHydration.predicate.matches
+                fieldPath = NadelQueryPath(hydration.condition.sourceField),
+                regex = hydration.condition.predicate.matches
             )
         }
-        error("a conditional hydration is defined but doesnt have any predicate")
+        error("A conditional hydration is defined but doesnt have any predicate")
     }
 
     private fun getHydrationStrategy(
@@ -357,7 +357,7 @@ private class Factory(
         hydratedFieldDef: GraphQLFieldDefinition,
         actorFieldDef: GraphQLFieldDefinition,
         actorFieldContainer: GraphQLFieldsContainer,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         actorService: Service,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
@@ -504,7 +504,7 @@ private class Factory(
     }
 
     private fun getHydrationArguments(
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         hydratedFieldParentType: GraphQLObjectType,
         hydratedFieldDef: GraphQLFieldDefinition,
         actorFieldDef: GraphQLFieldDefinition,
@@ -566,7 +566,7 @@ private class Factory(
         return NadelDirectives.createFieldMapping(field)
     }
 
-    private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
+    private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<NadelHydrationDefinition> {
         return NadelDirectives.createUnderlyingServiceHydration(field, engineSchema)
     }
 

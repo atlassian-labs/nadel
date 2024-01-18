@@ -3,7 +3,7 @@ package graphql.nadel.validation.util
 import graphql.language.FieldDefinition
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -15,7 +15,7 @@ object NadelSchemaUtil {
         return service.underlyingSchema.getType(getRenamedFrom(overallType) ?: overallType.name) as GraphQLNamedType?
     }
 
-    fun getHydrations(field: GraphQLFieldDefinition, overallSchema: GraphQLSchema): List<UnderlyingServiceHydration> {
+    fun getHydrations(field: GraphQLFieldDefinition, overallSchema: GraphQLSchema): List<NadelHydrationDefinition> {
         return NadelDirectives.createUnderlyingServiceHydration(field, overallSchema)
     }
 
