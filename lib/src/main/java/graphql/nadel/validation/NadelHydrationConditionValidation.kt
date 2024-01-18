@@ -49,18 +49,18 @@ internal class NadelHydrationConditionValidation {
             )
         }
 
-        return validateType(
+        return validateConditionFieldType(
+            overallField = overallField,
             pathToConditionSourceField = pathToConditionSourceField,
             conditionSourceFieldType = conditionSourceFieldType,
-            overallField = overallField,
             condition = hydration.condition,
         )
     }
 
-    private fun validateType(
+    private fun validateConditionFieldType(
+        overallField: GraphQLFieldDefinition,
         pathToConditionSourceField: List<String>,
         conditionSourceFieldType: GraphQLScalarType,
-        overallField: GraphQLFieldDefinition,
         condition: NadelHydrationResultConditionDefinition,
     ): NadelSchemaValidationError? {
         val conditionSourceFieldTypeName: String = conditionSourceFieldType.name
