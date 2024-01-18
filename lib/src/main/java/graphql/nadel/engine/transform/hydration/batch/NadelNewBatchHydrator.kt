@@ -23,6 +23,7 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.util.PairList
+import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.filterPairSecondNotNull
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
@@ -172,14 +173,14 @@ internal class NadelNewBatchHydrator(
         )
 
         return with(context) {
-            hydrate(sourceObjects)
+            hydrate(sourceObjects, state)
         }
     }
 
     context(NadelBatchHydratorContext)
-    suspend fun hydrate(sourceObjects: List<JsonNode>): List<NadelResultInstruction> {
+    suspend fun hydrate(sourceObjects: List<JsonNode>, state: State): List<NadelResultInstruction> {
         // Gets source IDs, instructions info etc.
-        val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects)
+        val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects, state)
         val sourceIdsByInstruction = getSourceIdsByInstruction(sourceObjectsMetadata)
 
         val resultsByInstruction = sourceIdsByInstruction
@@ -379,6 +380,7 @@ internal class NadelNewBatchHydrator(
     context(NadelBatchHydratorContext)
     private fun getSourceObjectsMetadata(
         sourceObjects: List<JsonNode>,
+        state: State
     ): List<SourceObjectMetadata> {
         return sourceObjects
             .mapNotNull { sourceObject ->
@@ -395,6 +397,7 @@ internal class NadelNewBatchHydrator(
                     val sourceIdsPairedWithInstructions = getInstructionParingForSourceIds(
                         sourceObject = sourceObject,
                         instructions = instructions,
+                        state = state
                     )
 
                     SourceObjectMetadata(
@@ -409,6 +412,7 @@ internal class NadelNewBatchHydrator(
     private fun getInstructionParingForSourceIds(
         sourceObject: JsonNode,
         instructions: List<NadelBatchHydrationFieldInstruction>,
+        state: State
     ): PairList<JsonNode, NadelBatchHydrationFieldInstruction?>? {
         val coords = makeFieldCoordinates(
             typeName = sourceField.objectTypeNames.first(),
@@ -425,20 +429,30 @@ internal class NadelNewBatchHydrator(
                 }
                 .singleOfType<ValueSource.FieldResultValue>()
 
-            getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
-                ?.map { sourceId ->
-                    val instruction = executionContext.hooks.getHydrationInstruction(
-                        instructions = instructions,
-                        sourceId = sourceId,
-                        userContext = executionContext.userContext,
-                    )
+                getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
+                    ?.map { sourceId ->
 
-                    sourceId to instruction
-                }
+                        val filteredInstructions =
+                            getFilteredInstructions(instructions, sourceObject, state)
+                        if (filteredInstructions.isEmpty()) {
+                            null
+                        }
+                        else {
+                            val instruction = executionContext.hooks.getHydrationInstruction(
+                                instructions = filteredInstructions,
+                                sourceId = sourceId,
+                                userContext = executionContext.userContext,
+                            )
+                            sourceId to instruction
+                        }
+                    }?.filterNotNull()
+
         } else {
             // todo: determine what to do here in the longer term, this hook should probably be replaced
+            val filteredInstructions =
+                getFilteredInstructions(instructions, sourceObject, state)
             val instruction = executionContext.hooks.getHydrationInstruction(
-                instructions = instructions,
+                instructions = filteredInstructions,
                 parentNode = sourceObject,
                 aliasHelper = aliasHelper,
                 userContext = executionContext.userContext,
@@ -461,6 +475,26 @@ internal class NadelNewBatchHydrator(
                     }
             }
         }
+    }
+
+    private fun getFilteredInstructions(
+        instructions: List<NadelBatchHydrationFieldInstruction>,
+        // fieldSource: ValueSource.FieldResultValue,
+        sourceObject: JsonNode,
+        state: State
+    ): List<NadelBatchHydrationFieldInstruction> {
+
+        if (instructions.any { it.condition == null }) {
+            return instructions
+        }
+
+        return instructions.filter {
+            // Note: due to the validation, all instructions in here have a condition, so can call explicitly
+            val resultQueryPath = state.aliasHelper.getQueryPath(it.condition!!.fieldPath)
+            val node = JsonNodeExtractor.getNodesAt(sourceObject, resultQueryPath)
+                .emptyOrSingle()
+            it.condition.evaluate(node?.value)
+        }.firstOrNull()?.let { listOf(it) } ?: emptyList()
     }
 
     /**
