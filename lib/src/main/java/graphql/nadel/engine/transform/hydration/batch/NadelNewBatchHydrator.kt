@@ -22,9 +22,7 @@ import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrati
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
-import graphql.nadel.engine.util.PairList
 import graphql.nadel.engine.util.emptyOrSingle
-import graphql.nadel.engine.util.filterPairSecondNotNull
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.isList
@@ -44,13 +42,13 @@ import kotlinx.coroutines.coroutineScope
  * Some things to consider
  *
  * 1. There can be repeated @hydrated instruction, so we need to choose one.
- * 2. There can be multiple source IDs to hydrate per result object e.g. one issue may have multiple contributors
- * 3. Each source ID can resolve to a different @hydrated instruction
+ * 2. There can be multiple source inputs to hydrate per result object e.g. one issue may have multiple contributors
+ * 3. Each source input can resolve to a different @hydrated instruction
  *
  * So what do we need
  *
- * 1. Source object -> Source IDs
- * 2. Source ID -> @hydrated instruction
+ * 1. Source object -> Source inputs
+ * 2. Source input -> @hydrated instruction
  * 3. Resolved objects need to be indexed
  *
  * So let's consider a hydration
@@ -88,9 +86,9 @@ import kotlinx.coroutines.coroutineScope
  *
  * We need to create
  *
- * 1. Source object -> Source IDs [getSourceObjectsMetadata]
- * 2. Source IDs to -> Instruction [getInstructionParingForSourceIds]
- * 3. Resolved objects need to be indexed [indexResults]
+ * 1. Source object -> Source inputs [getSourceObjectsMetadata]
+ * 2. Source input -> instruction [getSourceInputs]
+ * 3. Resolved objects need to be indexed [getIndexedResultsByInstruction]
  *
  * e.g. of [SourceObjectMetadata]
  *
@@ -101,9 +99,17 @@ import kotlinx.coroutines.coroutineScope
  *         "key": "GQLGW-6"
  *         "linkIds": ["user/2", "comment/4"]
  *      }
- *      "sourceIds": [
- *          {"user/2": "@hydrated(field: userById)"}
- *          {"comment/4": "@hydrated(field: commentById)"}
+ *      "sourceInputs": [
+ *          {
+ *              sourceInputNode: "user/2"
+ *              instruction: "@hydrated(field: userById)"
+ *              indexKey: "user/2"
+ *          }
+ *          {
+ *              sourceInputNode: "comment/4"
+ *              instruction: "@hydrated(field: commentById)"
+ *              indexKey: "comment/4"
+ *          }
  *      ]
  *   }
  *   {
@@ -111,8 +117,12 @@ import kotlinx.coroutines.coroutineScope
  *         "key": "ZELDA-12"
  *         "linkIds": ["user/128"]
  *      }
- *      "sourceIds": [
- *          {"user/122": "@hydrated(field: userById)"}
+ *      "sourceInputs": [
+ *          {
+ *              sourceInputNode: "user/122"
+ *              instruction: "@hydrated(field: userById)"
+ *              indexKey: "comment/4"
+ *          }
  *      ]
  *   }
  * ]
@@ -137,9 +147,9 @@ import kotlinx.coroutines.coroutineScope
  * ```kotlin
  * for (sourceObjectMetadata in sourceObjectsMetadata) {
  *   val values = sourceObjectMetadata
- *     .sourceIdsPairedWithInstructions
- *     .map { (sourceId, instruction) ->
- *       index[instruction][sourceId]
+ *     .sourceInputs
+ *     .map { sourceInput ->
+ *       index[sourceInput.instruction][sourceInput.indexKey]
  *     }
  * }
  * ```
@@ -152,8 +162,22 @@ internal class NadelNewBatchHydrator(
      */
     private data class SourceObjectMetadata(
         val sourceObject: JsonNode,
-        val sourceIdsPairedWithInstructions: PairList<JsonNode, NadelBatchHydrationFieldInstruction?>?,
+        val sourceInputs: List<SourceInput>?,
     )
+
+    private sealed class SourceInput {
+        abstract val sourceInputNode: JsonNode
+
+        data class NotQueryable(
+            override val sourceInputNode: JsonNode,
+        ) : SourceInput()
+
+        data class Queryable(
+            override val sourceInputNode: JsonNode,
+            val instruction: NadelBatchHydrationFieldInstruction,
+            val indexKey: NadelBatchHydrationIndexKey,
+        ) : SourceInput()
+    }
 
     /**
      * todo: add validation that repeated directives must use the same $source object unless there is only one input
@@ -179,16 +203,16 @@ internal class NadelNewBatchHydrator(
 
     context(NadelBatchHydratorContext)
     suspend fun hydrate(sourceObjects: List<JsonNode>, state: State): List<NadelResultInstruction> {
-        // Gets source IDs, instructions info etc.
+        // Gets source inputs, instructions info etc.
         val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects, state)
-        val sourceIdsByInstruction = getSourceIdsByInstruction(sourceObjectsMetadata)
+        val sourceInputsByInstruction = groupSourceInputsByInstruction(sourceObjectsMetadata)
 
-        val resultsByInstruction = sourceIdsByInstruction
-            .mapValues { (instruction, sourceIds) ->
+        val resultsByInstruction = sourceInputsByInstruction
+            .mapValues { (instruction, sourceInputs) ->
                 executeQueries(
                     executionBlueprint = executionBlueprint,
                     instruction = instruction,
-                    sourceIds = sourceIds,
+                    sourceInputs = sourceInputs,
                 )
             }
 
@@ -213,13 +237,13 @@ internal class NadelNewBatchHydrator(
         indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
     ): List<NadelResultInstruction> {
         return sourceObjectsMetadata
-            .map { (sourceObject, sourceIdsPairedWithInstruction) ->
+            .map { (sourceObject, sourceInputsPairedWithInstruction) ->
                 NadelResultInstruction.Set(
                     subject = sourceObject,
                     field = sourceField,
                     newValue = getHydrationValueForSourceObject(
                         indexedResultsByInstruction,
-                        sourceIdsPairedWithInstruction,
+                        sourceInputsPairedWithInstruction,
                     ),
                 )
             }
@@ -228,60 +252,55 @@ internal class NadelNewBatchHydrator(
     context(NadelBatchHydratorContext)
     private fun getHydrationValueForSourceObject(
         indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
-        sourceIdsPairedWithInstruction: PairList<JsonNode, NadelBatchHydrationFieldInstruction?>?,
+        sourceInputsPairedWithInstruction: List<SourceInput>?,
     ): JsonNode {
-        fun extractNode(
-            sourceId: JsonNode,
-            instruction: NadelBatchHydrationFieldInstruction?,
-        ): JsonNode {
-            return if (instruction == null) {
-                JsonNode.Null
-            } else {
-                val key = getIndexer(instruction).getSourceKey(sourceId)
-                // todo: could this ever be null say if response failed?
-                indexedResultsByInstruction[instruction]!![key] ?: JsonNode.Null
+        fun extractNode(sourceInput: SourceInput): JsonNode {
+            return when (sourceInput) {
+                is SourceInput.NotQueryable -> JsonNode.Null
+                is SourceInput.Queryable -> indexedResultsByInstruction[sourceInput.instruction]!![sourceInput.indexKey]
+                    ?: JsonNode.Null
             }
         }
 
         return if (isIndexHydration) {
-            if (sourceIdsPairedWithInstruction == null) {
+            if (sourceInputsPairedWithInstruction == null) {
                 JsonNode.Null
             } else if (isSourceFieldListOutput) {
                 if (isSourceInputFieldListOutput) {
                     JsonNode(
-                        sourceIdsPairedWithInstruction
-                            .map { (sourceId, instruction) ->
-                                extractNode(sourceId, instruction).value
+                        sourceInputsPairedWithInstruction
+                            .map { sourceInput ->
+                                extractNode(sourceInput).value
                             },
                     )
                 } else {
-                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                    extractNode(sourceId, instruction)
+                    val sourceInput = sourceInputsPairedWithInstruction.single()
+                    extractNode(sourceInput)
                 }
             } else {
-                if (sourceIdsPairedWithInstruction.isEmpty()) {
+                if (sourceInputsPairedWithInstruction.isEmpty()) {
                     JsonNode.Null
                 } else {
-                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                    extractNode(sourceId, instruction)
+                    val sourceInput = sourceInputsPairedWithInstruction.single()
+                    extractNode(sourceInput)
                 }
             }
         } else {
-            if (sourceIdsPairedWithInstruction == null) {
+            if (sourceInputsPairedWithInstruction == null) {
                 JsonNode.Null
             } else if (isSourceFieldListOutput) {
                 JsonNode(
-                    sourceIdsPairedWithInstruction
-                        .map { (sourceId, instruction) ->
-                            extractNode(sourceId, instruction).value
+                    sourceInputsPairedWithInstruction
+                        .map { sourceInput ->
+                            extractNode(sourceInput).value
                         },
                 )
             } else {
-                if (sourceIdsPairedWithInstruction.isEmpty()) {
+                if (sourceInputsPairedWithInstruction.isEmpty()) {
                     JsonNode.Null
                 } else {
-                    val (sourceId, instruction) = sourceIdsPairedWithInstruction.single()
-                    extractNode(sourceId, instruction)
+                    val sourceInput = sourceInputsPairedWithInstruction.single()
+                    extractNode(sourceInput)
                 }
             }
         }
@@ -312,15 +331,18 @@ internal class NadelNewBatchHydrator(
     private suspend fun executeQueries(
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
-        sourceIds: List<JsonNode>,
+        sourceInputs: List<SourceInput>,
     ): List<NadelResolvedObjectBatch> {
-        val uniqueSourceIds = sourceIds
+        val uniqueSourceInputs = sourceInputs
             .asSequence()
             // We don't want to query for null values, we always map those to null
             .filter {
-                it.value != null
+                it.sourceInputNode.value != null
             }
-            .toSet()
+            .map {
+                it.sourceInputNode
+            }
+            .toCollection(LinkedHashSet())
             .toList()
 
         val argBatches = NadelNewBatchHydrationInputBuilder.getInputValueBatches(
@@ -328,7 +350,7 @@ internal class NadelNewBatchHydrator(
             userContext = executionContext.userContext,
             instruction = instruction,
             hydrationField = sourceField,
-            sourceIds = uniqueSourceIds,
+            sourceInputs = uniqueSourceInputs,
         )
 
         val queries = NadelHydrationFieldsBuilder
@@ -371,7 +393,7 @@ internal class NadelNewBatchHydrator(
                     error("Each argument batch must correspond to one query")
                 }
                 .map { (result, argBatch) ->
-                    NadelResolvedObjectBatch(argBatch.sourceIds, result)
+                    NadelResolvedObjectBatch(argBatch.sourceInputs, result)
                 }
                 .toList()
         }
@@ -380,7 +402,7 @@ internal class NadelNewBatchHydrator(
     context(NadelBatchHydratorContext)
     private fun getSourceObjectsMetadata(
         sourceObjects: List<JsonNode>,
-        state: State
+        state: State,
     ): List<SourceObjectMetadata> {
         return sourceObjects
             .mapNotNull { sourceObject ->
@@ -394,7 +416,7 @@ internal class NadelNewBatchHydrator(
                 if (instructions.isEmpty()) {
                     null
                 } else {
-                    val sourceIdsPairedWithInstructions = getInstructionParingForSourceIds(
+                    val sourceInputs = getSourceInputs(
                         sourceObject = sourceObject,
                         instructions = instructions,
                         state = state
@@ -402,18 +424,18 @@ internal class NadelNewBatchHydrator(
 
                     SourceObjectMetadata(
                         sourceObject,
-                        sourceIdsPairedWithInstructions,
+                        sourceInputs,
                     )
                 }
             }
     }
 
     context(NadelBatchHydratorContext)
-    private fun getInstructionParingForSourceIds(
+    private fun getSourceInputs(
         sourceObject: JsonNode,
         instructions: List<NadelBatchHydrationFieldInstruction>,
-        state: State
-    ): PairList<JsonNode, NadelBatchHydrationFieldInstruction?>? {
+        state: State,
+    ): List<SourceInput>? {
         val coords = makeFieldCoordinates(
             typeName = sourceField.objectTypeNames.first(),
             fieldName = sourceField.name,
@@ -429,24 +451,49 @@ internal class NadelNewBatchHydrator(
                 }
                 .singleOfType<ValueSource.FieldResultValue>()
 
-                getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
-                    ?.map { sourceId ->
+            // getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
+            //     ?.map { sourceId ->
+            //
+            //         val filteredInstructions =
+            //             getFilteredInstructions(instructions, sourceObject, state)
+            //         if (filteredInstructions.isEmpty()) {
+            //             null
+            //         }
+            //         else {
+            //             val instruction = executionContext.hooks.getHydrationInstruction(
+            //                 instructions = filteredInstructions,
+            //                 sourceId = sourceId,
+            //                 userContext = executionContext.userContext,
+            //             )
+            //             sourceId to instruction
+            //         }
+            //     }?.filterNotNull()
 
-                        val filteredInstructions =
-                            getFilteredInstructions(instructions, sourceObject, state)
-                        if (filteredInstructions.isEmpty()) {
-                            null
-                        }
-                        else {
-                            val instruction = executionContext.hooks.getHydrationInstruction(
-                                instructions = filteredInstructions,
-                                sourceId = sourceId,
-                                userContext = executionContext.userContext,
+            getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
+                ?.map { sourceInput ->
+                    val filteredInstructions =
+                        getFilteredInstructions(instructions, sourceObject, state)
+                    if (filteredInstructions.isEmpty()) {
+                        null
+                    } else {
+
+                        val instruction = executionContext.hooks.getHydrationInstruction(
+                            instructions = filteredInstructions,
+                            sourceInput = sourceInput,
+                            userContext = executionContext.userContext,
+                        )
+
+                        if (instruction == null) {
+                            SourceInput.NotQueryable(sourceInput)
+                        } else {
+                            SourceInput.Queryable(
+                                sourceInputNode = sourceInput,
+                                instruction = instruction,
+                                indexKey = getIndexer(instruction).getSourceKey(sourceInput),
                             )
-                            sourceId to instruction
                         }
-                    }?.filterNotNull()
-
+                    }
+                }?.filterNotNull()
         } else {
             // todo: determine what to do here in the longer term, this hook should probably be replaced
             val filteredInstructions =
@@ -469,9 +516,13 @@ internal class NadelNewBatchHydrator(
                     }
                     .singleOfType<ValueSource.FieldResultValue>()
 
-                getSourceInputs(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
-                    ?.map { sourceId ->
-                        sourceId to instruction
+                getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
+                    ?.map { sourceInput ->
+                        SourceInput.Queryable(
+                            sourceInputNode = sourceInput,
+                            instruction = instruction,
+                            indexKey = getIndexer(instruction).getSourceKey(sourceInput),
+                        )
                     }
             }
         }
@@ -481,7 +532,7 @@ internal class NadelNewBatchHydrator(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         // fieldSource: ValueSource.FieldResultValue,
         sourceObject: JsonNode,
-        state: State
+        state: State,
     ): List<NadelBatchHydrationFieldInstruction> {
 
         if (instructions.any { it.condition == null }) {
@@ -498,34 +549,27 @@ internal class NadelNewBatchHydrator(
     }
 
     /**
-     * Creates a giant inverted Map of [SourceObjectMetadata.sourceIdsPairedWithInstructions]
-     * where the instruction is the key and the value is the source ID.
+     * Groups the [SourceInput] by instruction so that we can gather all the source
+     * IDs together for a given query.
      */
-    private fun getSourceIdsByInstruction(
+    private fun groupSourceInputsByInstruction(
         sourceObjects: List<SourceObjectMetadata>,
-    ): Map<NadelBatchHydrationFieldInstruction, List<JsonNode>> {
+    ): Map<NadelBatchHydrationFieldInstruction, List<SourceInput>> {
         return sourceObjects
             .asSequence()
             .flatMap {
-                it.sourceIdsPairedWithInstructions ?: emptyList()
+                it.sourceInputs ?: emptyList()
             }
-            // Removes Pair values where instruction is null
-            .filterPairSecondNotNull()
-            .groupBy(
-                // Pair<SourceId, Instruction>
-                keySelector = { (_, instruction) ->
-                    instruction
-                },
-                valueTransform = { (sourceId, _) ->
-                    sourceId
-                },
-            )
+            .filterIsInstance<SourceInput.Queryable>()
+            .groupBy { sourceInput ->
+                sourceInput.instruction
+            }
     }
 
     /**
-     * Gets the source inputs for [sourceObject]
+     * Gets the [JsonNode] source inputs for [sourceObject]
      */
-    private fun getSourceInputs(
+    private fun getSourceInputNodes(
         sourceObject: JsonNode,
         valueSource: ValueSource.FieldResultValue,
         aliasHelper: NadelAliasHelper,

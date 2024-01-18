@@ -21,10 +21,10 @@ class `new-batching-multiple-source-ids-going-to-different-services` : EngineTes
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
                         instructions: List<T>,
-                        sourceId: JsonNode,
+                        sourceInput: JsonNode,
                         userContext: Any?,
                     ): T {
-                        val type = (sourceId.value as String).substringBefore("/")
+                        val type = (sourceInput.value as String).substringBefore("/")
 
                         return instructions
                             .first {
