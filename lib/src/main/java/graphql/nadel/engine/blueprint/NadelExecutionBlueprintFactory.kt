@@ -465,10 +465,6 @@ private class Factory(
                 hydrationValueSource.queryPathToField.plus(field.name)
             }
         }
-
-        // if (condition != null) {
-        //     return listOf(hydrationValueSource.queryPathToField, condition.fieldPath)
-        // }
         return listOf(hydrationValueSource.queryPathToField)
     }
 
