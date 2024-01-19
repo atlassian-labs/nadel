@@ -1,0 +1,104 @@
+name: "hydration works when matches condition field is null"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barById(id: ID): Bar
+    }
+    type Bar {
+      id: ID
+      name: String
+      type: String
+    }
+
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      type: String
+      bar: Bars
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {
+            name: "id" 
+            value: "BAR_A"
+          }
+        ]
+        when: {
+          result: {
+            sourceField: "type"
+            predicate: { matches: "type*" }
+          }
+        }
+      )
+    }
+    union Bars = Bar
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+      type: String
+    }
+    union Bars = Bar
+    
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      id: ID
+      type: String
+    }
+    
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        ... on Bar {
+          name
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__type: type
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__hydration__bar": "Foo",
+            "hydration__bar__type": null
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": null
+      }
+    },
+    "extensions": {}
+  }
