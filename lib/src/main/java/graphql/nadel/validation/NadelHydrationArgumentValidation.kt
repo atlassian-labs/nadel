@@ -4,7 +4,7 @@ import graphql.Scalars
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
-import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.unwrapNonNull
@@ -19,7 +19,7 @@ internal class NadelHydrationArgumentValidation() {
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: RemoteArgumentDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         isBatchHydration: Boolean,
         actorFieldName: String,
     ): NadelSchemaValidationError? {
@@ -93,7 +93,7 @@ internal class NadelHydrationArgumentValidation() {
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: RemoteArgumentDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         actorFieldName: String,
     ): NadelSchemaValidationError? {
 
@@ -239,7 +239,7 @@ internal class NadelHydrationArgumentValidation() {
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: RemoteArgumentDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         actorFieldName: String,
     ): NadelSchemaValidationError? {
         var hydrationSourceFieldInnerType: GraphQLType = hydrationSourceType.unwrapNonNull().unwrapOne()
@@ -272,7 +272,7 @@ internal class NadelHydrationArgumentValidation() {
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: RemoteArgumentDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         actorFieldName: String,
     ): NadelSchemaValidationError? {
         for (actorInnerField in actorFieldArgType.fields) {

@@ -11,14 +11,29 @@ overallSchema:
       space(id: ID): Space
     }
     type FooService @renamed(from: "Service") {
-      otherServices: Connection @hydrated(service: "Foo" field: "connection" arguments: [{name: "id" value: "$source.id"}])
+      otherServices: Connection
+      @hydrated(
+        service: "Foo"
+        field: "connection"
+        arguments: [{name: "id" value: "$source.id"}]
+      )
     }
     type Connection {
       edges: [Edge]
-      nodes: [Node] @hydrated(service: "Foo" field: "node" arguments: [{name: "id" value: "$source.edges.node"}])
+      nodes: [Node]
+      @hydrated(
+        service: "Foo"
+        field: "node"
+        arguments: [{name: "id" value: "$source.edges.node"}]
+      )
     }
     type Node {
-      space: Space @hydrated(service: "Foo" field: "space" arguments: [{name: "id" value: "$source.id"}])
+      space: Space
+      @hydrated(
+        service: "Foo"
+        field: "space"
+        arguments: [{name: "id" value: "$source.id"}]
+      )
       id: ID
     }
     type Space {
@@ -26,7 +41,12 @@ overallSchema:
       name: String
     }
     type Edge {
-      node: Node @hydrated(service: "Foo" field: "node" arguments: [{name: "id" value: "$source.node"}])
+      node: Node
+      @hydrated(
+        service: "Foo"
+        field: "node"
+        arguments: [{name: "id" value: "$source.node"}]
+      )
       name: String
       id: ID
     }

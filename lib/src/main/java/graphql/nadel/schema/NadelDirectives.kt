@@ -15,10 +15,10 @@ import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType
 import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.dsl.UnderlyingServiceHydration
-import graphql.nadel.dsl.WhenConditionDefinition
-import graphql.nadel.dsl.WhenConditionPredicateDefinition
-import graphql.nadel.dsl.WhenConditionResultDefinition
+import graphql.nadel.dsl.NadelHydrationDefinition
+import graphql.nadel.dsl.NadelHydrationConditionDefinition
+import graphql.nadel.dsl.NadelHydrationConditionPredicateDefinition
+import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
 import graphql.schema.GraphQLAppliedDirective
@@ -44,7 +44,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelHydrationComplexIdentifiedBy = parseDefinition<InputObjectTypeDefinition>(
+    val nadelBatchObjectIdentifiedByDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             "This is required by batch hydration to understand how to pull out objects from the batched result"
@@ -66,7 +66,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelWhenConditionPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
+    val nadelHydrationResultFieldPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             input NadelHydrationResultFieldPredicate @oneOf {
@@ -77,7 +77,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelWhenConditionResultDefinition = parseDefinition<InputObjectTypeDefinition>(
+    val nadelHydrationResultConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate based on the result"
@@ -88,7 +88,7 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelWhenConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
+    val nadelHydrationConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
         // language=GraphQL
         """
             "Specify a condition for the hydration to activate"
@@ -210,10 +210,10 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    fun createUnderlyingServiceHydration(
+    internal fun createUnderlyingServiceHydration(
         fieldDefinition: GraphQLFieldDefinition,
         overallSchema: GraphQLSchema,
-    ): List<UnderlyingServiceHydration> {
+    ): List<NadelHydrationDefinition> {
         val hydrations = fieldDefinition.getAppliedDirectives(hydratedDirectiveDefinition.name)
             .map { directive ->
                 val arguments = createRemoteArgs(directive.getArgument("arguments").argumentValue.value as ArrayValue)
@@ -241,9 +241,9 @@ object NadelDirectives {
     private fun buildHydrationParameters(
         directive: GraphQLAppliedDirective,
         arguments: List<RemoteArgumentDefinition>,
-        identifiedBy: List<UnderlyingServiceHydration.ObjectIdentifier>,
-        conditionalHydration: WhenConditionResultDefinition? = null,
-    ): UnderlyingServiceHydration {
+        identifiedBy: List<NadelHydrationDefinition.ObjectIdentifier>,
+        conditionalHydration: NadelHydrationResultConditionDefinition? = null,
+    ): NadelHydrationDefinition {
         val service = getDirectiveValue<String>(directive, "service")
         val fieldNames = getDirectiveValue<String>(directive, "field").split('.')
         val objectIdentifier = getDirectiveValue<String>(directive, "identifiedBy")
@@ -259,7 +259,7 @@ object NadelDirectives {
 
         // nominally this should be some other data class that's not an AST element
         // but history is what it is, and it's an AST element that's' really a data class
-        return UnderlyingServiceHydration(
+        return NadelHydrationDefinition(
             service,
             fieldNames,
             arguments,
@@ -276,7 +276,7 @@ object NadelDirectives {
     private fun createTemplatedUnderlyingServiceHydration(
         hydratedFromDirective: GraphQLAppliedDirective,
         overallSchema: GraphQLSchema,
-    ): UnderlyingServiceHydration {
+    ): NadelHydrationDefinition {
         val template = hydratedFromDirective.getArgument("template")
         val enumTargetName = resolveArgumentValue<String?>(template)
         val templateEnumType = overallSchema.getTypeAs<GraphQLEnumType?>("NadelHydrationTemplate")
@@ -312,10 +312,10 @@ object NadelDirectives {
             }
     }
 
-    private fun createObjectIdentifiers(arguments: List<Any>): List<UnderlyingServiceHydration.ObjectIdentifier> {
+    private fun createObjectIdentifiers(arguments: List<Any>): List<NadelHydrationDefinition.ObjectIdentifier> {
         fun Map<String, String>.requireArgument(key: String): String {
             return requireNotNull(this[key]) {
-                "${nadelHydrationComplexIdentifiedBy.name} definition requires '$key' to be not-null"
+                "${nadelBatchObjectIdentifiedByDefinition.name} definition requires '$key' to be not-null"
             }
         }
         return arguments.map { arg ->
@@ -323,7 +323,7 @@ object NadelDirectives {
             val argMap = arg as MutableMap<String, String>
             val sourceId = argMap.requireArgument("sourceId")
             val resultId = argMap.requireArgument("resultId")
-            UnderlyingServiceHydration.ObjectIdentifier(sourceId, resultId)
+            NadelHydrationDefinition.ObjectIdentifier(sourceId, resultId)
         }
     }
 
@@ -411,7 +411,7 @@ object NadelDirectives {
         return RemoteArgumentSource(argumentName, path, staticValue, argumentType)
     }
 
-    fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
+    internal fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
         val directive = fieldDefinition.getAppliedDirective(renamedDirectiveDefinition.name)
             ?: return null
         val fromValue = getDirectiveValue<String>(directive, "from")
@@ -419,7 +419,7 @@ object NadelDirectives {
         return FieldMappingDefinition(inputPath = fromValue.split('.'))
     }
 
-    fun createTypeMapping(directivesContainer: GraphQLDirectiveContainer): TypeMappingDefinition? {
+    internal fun createTypeMapping(directivesContainer: GraphQLDirectiveContainer): TypeMappingDefinition? {
         val directive = directivesContainer.getAppliedDirective(renamedDirectiveDefinition.name)
             ?: return null
         val from = getDirectiveValue<String>(directive, "from")
@@ -452,22 +452,28 @@ object NadelDirectives {
         ) as T
     }
 
-    private fun buildConditionalHydrationObject(whenConditionArgument: GraphQLAppliedDirectiveArgument): WhenConditionDefinition? {
-        val result = whenConditionArgument.getValue<Map<String, Map<String, Any>>>()?.get("result")
+    private fun buildConditionalHydrationObject(
+        conditionArgument: GraphQLAppliedDirectiveArgument,
+    ): NadelHydrationConditionDefinition? {
+        @Suppress("UNCHECKED_CAST")
+        val result = conditionArgument.getValue<Map<String, Any?>>()
+            ?.get("result") as Map<String, Any>?
             ?: return null
 
         val sourceField = result["sourceField"]!! as String
-        val predicate: Map<String, Any> = result["predicate"]!! as Map<String, Any>
 
-        return WhenConditionDefinition(
-            result = WhenConditionResultDefinition(
-                sourceField = sourceField,
-                predicate = WhenConditionPredicateDefinition(
+        @Suppress("UNCHECKED_CAST")
+        val predicate = result["predicate"]!! as Map<String, Any>
+
+        return NadelHydrationConditionDefinition(
+            result = NadelHydrationResultConditionDefinition(
+                pathToSourceField = sourceField.split("."),
+                predicate = NadelHydrationConditionPredicateDefinition(
                     equals = predicate["equals"],
                     startsWith = predicate["startsWith"] as String?,
                     matches = (predicate["matches"] as String?)?.toRegex(),
-                )
-            )
+                ),
+            ),
         )
     }
 

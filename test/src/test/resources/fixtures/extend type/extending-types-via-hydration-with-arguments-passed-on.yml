@@ -21,7 +21,12 @@ overallSchema:
       nameOfAssociation: String
     }
     extend type Issue {
-      association(filter: Filter): Association @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
+      association(filter: Filter): Association
+      @hydrated(
+        service: "Association"
+        field: "association"
+        arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}]
+      )
     }
 # language=GraphQL
 underlyingSchema:

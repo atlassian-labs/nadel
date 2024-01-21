@@ -12,7 +12,14 @@ overallSchema:
     }
     type SoftwareCard @renamed(from: "Card") {
       id: ID
-      assignee: User @hydrated(service: "Users" field: "usersQuery.users" arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}] identifiedBy: "accountId" batchSize: 3)
+      assignee: User
+      @hydrated(
+        service: "Users"
+        field: "usersQuery.users"
+        arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}]
+        identifiedBy: "accountId"
+        batchSize: 3
+      )
     }
   Users: |
     type Query {

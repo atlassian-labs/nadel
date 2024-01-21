@@ -15,7 +15,14 @@ overallSchema:
     }
     type Issue {
       id: ID
-      authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "id" value: "$source.authorIds"}] identifiedBy: "id" batchSize: 3)
+      authors: [User]
+      @hydrated(
+        service: "UserService"
+        field: "usersByIds"
+        arguments: [{name: "id" value: "$source.authorIds"}]
+        identifiedBy: "id"
+        batchSize: 3
+      )
     }
 # language=GraphQL
 underlyingSchema:

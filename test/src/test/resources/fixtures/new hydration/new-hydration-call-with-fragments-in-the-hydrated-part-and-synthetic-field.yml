@@ -20,7 +20,13 @@ overallSchema:
     type Issue {
       id: ID
       authorDetails: [AuthorDetail]
-      authors: [User] @hydrated(service: "UserService" field: "userQuery.usersByIds" arguments: [{name: "id" value: "$source.authorDetails.authorId"}] identifiedBy: "id")
+      authors: [User]
+      @hydrated(
+        service: "UserService"
+        field: "userQuery.usersByIds"
+        arguments: [{name: "id" value: "$source.authorDetails.authorId"}]
+        identifiedBy: "id"
+      )
     }
     type AuthorDetail {
       name: String

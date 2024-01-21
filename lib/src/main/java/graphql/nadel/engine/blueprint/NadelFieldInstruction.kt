@@ -4,7 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationWhenCondition
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
@@ -87,7 +87,7 @@ interface NadelGenericHydrationInstruction {
     /**
      * The optional definition for conditional hydrations
      */
-    val condition: NadelHydrationWhenCondition?
+    val condition: NadelHydrationCondition?
 }
 
 data class NadelHydrationFieldInstruction(
@@ -101,7 +101,7 @@ data class NadelHydrationFieldInstruction(
     override val sourceFields: List<NadelQueryPath>,
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorFieldContainer: GraphQLFieldsContainer,
-    override val condition: NadelHydrationWhenCondition?,
+    override val condition: NadelHydrationCondition?,
     val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
@@ -116,7 +116,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val sourceFields: List<NadelQueryPath>,
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorFieldContainer: GraphQLFieldsContainer,
-    override val condition: NadelHydrationWhenCondition?,
+    override val condition: NadelHydrationCondition?,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction

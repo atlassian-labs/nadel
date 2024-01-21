@@ -2,7 +2,7 @@ package graphql.nadel.engine.blueprint.hydration
 
 import graphql.nadel.engine.transform.query.NadelQueryPath
 
-sealed class NadelHydrationWhenCondition {
+sealed class NadelHydrationCondition {
     abstract val fieldPath: NadelQueryPath
 
     abstract fun evaluate(fieldValue: Any?): Boolean
@@ -10,7 +10,7 @@ sealed class NadelHydrationWhenCondition {
     data class StringResultEquals(
         override val fieldPath: NadelQueryPath,
         val value: String,
-    ) : NadelHydrationWhenCondition() {
+    ) : NadelHydrationCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
             if (fieldValue is String) {
                 return fieldValue == value
@@ -22,7 +22,7 @@ sealed class NadelHydrationWhenCondition {
     data class LongResultEquals(
         override val fieldPath: NadelQueryPath,
         val value: Long,
-    ) : NadelHydrationWhenCondition() {
+    ) : NadelHydrationCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
             if (fieldValue is Int) {
                 return fieldValue.toLong() == value
@@ -37,7 +37,7 @@ sealed class NadelHydrationWhenCondition {
     data class StringResultMatches(
         override val fieldPath: NadelQueryPath,
         val regex: Regex,
-    ) : NadelHydrationWhenCondition() {
+    ) : NadelHydrationCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
             if (fieldValue is String) {
                 return fieldValue.matches(regex)
@@ -49,7 +49,7 @@ sealed class NadelHydrationWhenCondition {
     data class StringResultStartsWith(
         override val fieldPath: NadelQueryPath,
         val prefix: String,
-    ) : NadelHydrationWhenCondition() {
+    ) : NadelHydrationCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
             if (fieldValue is String) {
                 return fieldValue.startsWith(prefix)

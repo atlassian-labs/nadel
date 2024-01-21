@@ -13,8 +13,18 @@ overallSchema:
       summary: String
       description: String
       epic: Epic
-      reporter: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.reporterId"}])
-      comments: [Comment] @hydrated(service: "CommentService" field: "commentById" arguments: [{name: "id" value: "$source.commentIds"}])
+      reporter: User
+      @hydrated(
+        service: "UserService"
+        field: "userById"
+        arguments: [{name: "id" value: "$source.reporterId"}]
+      )
+      comments: [Comment]
+      @hydrated(
+        service: "CommentService"
+        field: "commentById"
+        arguments: [{name: "id" value: "$source.commentIds"}]
+      )
     }
     type Epic {
       id: ID
@@ -40,7 +50,12 @@ overallSchema:
       id: ID
       commentText: String @renamed(from: "text")
       created: String
-      author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
+      author: User
+      @hydrated(
+        service: "UserService"
+        field: "userById"
+        arguments: [{name: "id" value: "$source.authorId"}]
+      )
     }
 # language=GraphQL
 underlyingSchema:
