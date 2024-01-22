@@ -70,7 +70,6 @@ serviceCalls:
           foo {
             __typename__batch_hydration__bar: __typename
             batch_hydration__bar__barIds: barIds
-            batch_hydration__bar__barIds: barIds
           }
         }
       variables: { }

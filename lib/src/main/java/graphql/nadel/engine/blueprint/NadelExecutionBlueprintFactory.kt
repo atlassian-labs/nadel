@@ -413,45 +413,39 @@ private class Factory(
         hydrationArgs: List<NadelHydrationActorInputDef>,
         condition: NadelHydrationCondition?
     ): List<NadelQueryPath> {
-        val sourceFieldsFromArgs = Unit.let {
-            val paths = (when (matchStrategy) {
-                NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
-                is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
-                is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
-            } + hydrationArgs.flatMap {
-                when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
-                    is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource, condition)
-                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList()
-                }
-            }).toSet()
+        val paths = (when (matchStrategy) {
+            NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
+            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
+            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
+        } + hydrationArgs.flatMap {
+            when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
+                is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
+                is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource, condition)
+                is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList()
+            }
+        } + (if (condition != null) listOf(condition.fieldPath) else emptyList())).toSet()
 
-            val prefixes = paths
-                .asSequence()
-                .map {
-                    it.segments.dropLast(1) + "*"
-                }
-                .toSet()
+        val prefixes = paths
+            .asSequence()
+            .map {
+                it.segments.dropLast(1) + "*"
+            }
+            .toSet()
 
-            // Say we have paths = [
-            //     [page]
-            //     [page.id]
-            //     [page.status]
-            // ]
-            // (e.g. page was the input and the page.id and page.status are used to match batch objects)
-            // then this maps it to [
-            //     [page.id]
-            //     [page.status]
-            // ]
-            paths
-                .filter {
-                    !prefixes.contains(it.segments + "*")
-                }
-        }
-
-        if (condition != null) {
-            return sourceFieldsFromArgs + condition.fieldPath
-        }
+        // Say we have paths = [
+        //     [page]
+        //     [page.id]
+        //     [page.status]
+        // ]
+        // (e.g. page was the input and the page.id and page.status are used to match batch objects)
+        // then this maps it to [
+        //     [page.id]
+        //     [page.status]
+        // ]
+        val sourceFieldsFromArgs = paths
+            .filter {
+                !prefixes.contains(it.segments + "*")
+            }
 
         return sourceFieldsFromArgs
     }

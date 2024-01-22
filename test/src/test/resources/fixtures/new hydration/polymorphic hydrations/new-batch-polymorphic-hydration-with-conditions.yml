@@ -119,8 +119,6 @@ serviceCalls:
             __typename__batch_hydration__data: __typename
             batch_hydration__data__dataId: dataId
             batch_hydration__data__dataId: dataId
-            batch_hydration__data__dataId: dataId
-            batch_hydration__data__dataId: dataId
             id
           }
         }
