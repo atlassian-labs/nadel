@@ -450,7 +450,7 @@ internal class NadelNewBatchHydrator(
 
             getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceInput ->
-                    val instruction = getFilteredInstructionFromList(instructions, sourceObject, sourceInput, fieldSource)
+                    val instruction = getHydrationInstructionForSourceInput(instructions, sourceObject, sourceInput, fieldSource)
                     if (instruction == null) {
                         SourceInput.NotQueryable(sourceInput)
                     } else {
@@ -463,7 +463,7 @@ internal class NadelNewBatchHydrator(
                 }
         } else {
             // todo: determine what to do here in the longer term, this hook should probably be replaced
-            val instruction = getFilteredInstruction(instructions, sourceObject)
+            val instruction = getHydrationInstructionForSourceObject(instructions, sourceObject)
 
             if (instruction == null) {
                 null
@@ -489,7 +489,7 @@ internal class NadelNewBatchHydrator(
     }
 
     context(NadelBatchHydratorContext)
-    private fun getFilteredInstructionFromList(
+    private fun getHydrationInstructionForSourceInput(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         sourceObject: JsonNode,
         sourceInput: JsonNode,
@@ -518,7 +518,7 @@ internal class NadelNewBatchHydrator(
     }
 
     context(NadelBatchHydratorContext)
-    private fun getFilteredInstruction(
+    private fun getHydrationInstructionForSourceObject(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         sourceObject: JsonNode
     ): NadelBatchHydrationFieldInstruction? {
