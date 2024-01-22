@@ -411,7 +411,7 @@ private class Factory(
     private fun getBatchHydrationSourceFields(
         matchStrategy: NadelBatchHydrationMatchStrategy,
         hydrationArgs: List<NadelHydrationActorInputDef>,
-        condition: NadelHydrationWhenCondition?
+        condition: NadelHydrationCondition?
     ): List<NadelQueryPath> {
         val sourceFieldsFromArgs = Unit.let {
             val paths = (when (matchStrategy) {
@@ -456,7 +456,7 @@ private class Factory(
         return sourceFieldsFromArgs
     }
 
-    private fun selectSourceFieldQueryPaths(hydrationValueSource: FieldResultValue, condition: NadelHydrationWhenCondition?): List<NadelQueryPath> {
+    private fun selectSourceFieldQueryPaths(hydrationValueSource: FieldResultValue, condition: NadelHydrationCondition?): List<NadelQueryPath> {
         val hydrationSourceType = hydrationValueSource.fieldDefinition.type.unwrapAll()
         if (hydrationSourceType is GraphQLObjectType) {
             // When the argument of the hydration actor field is an input type and not a primitive
