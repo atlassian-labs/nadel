@@ -461,7 +461,7 @@ internal class NadelNewBatchHydrator(
                         SourceInput.Queryable(
                             sourceInputNode = sourceInput,
                             instruction = instruction,
-                            indexKey = getIndexer(instruction).getSourceKey(sourceInput),
+                            indexKey = getIndexer(instruction).getIndexKey(sourceInput),
                         )
                     }
                 }
@@ -490,7 +490,7 @@ internal class NadelNewBatchHydrator(
                         SourceInput.Queryable(
                             sourceInputNode = sourceInput,
                             instruction = instruction,
-                            indexKey = getIndexer(instruction).getSourceKey(sourceInput),
+                            indexKey = getIndexer(instruction).getIndexKey(sourceInput),
                         )
                     }
             }
