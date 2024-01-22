@@ -108,30 +108,6 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: "service2"
-    request:
-      query: |
-        query {
-          barsById(ids: ["barId1", "barId2"]) {
-            batch_hydration__bar__id: id
-            name
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barsById": [{
-            "batch_hydration__bar__id": "barId1",
-            "name": "Bar1"
-          }, {
-            "batch_hydration__bar__id": "barId2",
-            "name": "Bar2"
-          }]
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {
