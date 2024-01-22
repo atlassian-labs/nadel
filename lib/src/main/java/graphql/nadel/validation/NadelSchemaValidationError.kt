@@ -719,7 +719,7 @@ sealed interface NadelSchemaValidationError {
         val type: NadelServiceSchemaElement,
         val field: GraphQLFieldDefinition,
         val pathToSourceInputField: List<String>,
-        val offendingObjectIdentifier: UnderlyingServiceHydration.ObjectIdentifier,
+        val offendingObjectIdentifier: NadelHydrationDefinition.ObjectIdentifier,
     ) : NadelSchemaValidationError {
         val service: Service get() = type.service
 

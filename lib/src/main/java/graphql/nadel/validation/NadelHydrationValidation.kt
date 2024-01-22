@@ -104,7 +104,7 @@ internal class NadelHydrationValidation(
     private fun getObjectIdentifierErrors(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
     ): List<NadelSchemaValidationError> {
         // e.g. context.jiraComment
         val pathToSourceInputField = hydration.arguments
