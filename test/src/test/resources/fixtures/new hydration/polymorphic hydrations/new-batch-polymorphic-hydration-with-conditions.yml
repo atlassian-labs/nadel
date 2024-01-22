@@ -1,4 +1,4 @@
-name: "new batch polymorphic hydration"
+name: "new batch polymorphic hydration with conditions"
 enabled: true
 # language=GraphQL
 overallSchema:
