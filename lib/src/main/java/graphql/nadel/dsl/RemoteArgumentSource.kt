@@ -1,17 +1,17 @@
 package graphql.nadel.dsl
 
-import graphql.language.Value
+import graphql.nadel.util.AnyAstValue
 
-// todo this should be a union or sealed class thing
-data class RemoteArgumentSource(
-    val argumentName: String?, // for OBJECT_FIELD
-    val pathToField: List<String>?,
-    val staticValue: Value<*>?,
-    val sourceType: SourceType,
-) {
-    enum class SourceType {
-        ObjectField,
-        FieldArgument,
-        StaticArgument
-    }
+sealed class RemoteArgumentSource {
+    data class ObjectField(
+        val pathToField: List<String>,
+    ) : RemoteArgumentSource()
+
+    data class FieldArgument(
+        val argumentName: String,
+    ) : RemoteArgumentSource()
+
+    data class StaticArgument(
+        val staticValue: AnyAstValue,
+    ) : RemoteArgumentSource()
 }

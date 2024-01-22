@@ -3,6 +3,7 @@ package graphql.nadel.validation
 import graphql.Scalars
 import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
+import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
@@ -32,7 +33,9 @@ internal class NadelHydrationConditionValidation {
 
         val sourceInputField = hydration.arguments
             .asSequence()
-            .mapNotNull { it.remoteArgumentSource.pathToField }
+            .map { it.remoteArgumentSource }
+            .filterIsInstance<RemoteArgumentSource.ObjectField>()
+            .map { it.pathToField }
             .single()
 
         val conditionSourceFieldType = if (pathToConditionSourceField == sourceInputField) {

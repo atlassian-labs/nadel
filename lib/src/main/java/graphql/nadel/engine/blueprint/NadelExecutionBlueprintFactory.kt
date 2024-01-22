@@ -10,9 +10,7 @@ import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
+import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -510,9 +508,9 @@ private class Factory(
         actorFieldDef: GraphQLFieldDefinition,
     ): List<NadelHydrationActorInputDef> {
         return hydration.arguments.map { remoteArgDef ->
-            val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource.sourceType) {
-                FieldArgument -> {
-                    val argumentName = remoteArgDef.remoteArgumentSource.argumentName!!
+            val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource) {
+                is RemoteArgumentSource.FieldArgument -> {
+                    val argumentName = argSourceType.argumentName
                     val argumentDef = hydratedFieldDef.getArgument(argumentName)
                         ?: error("No argument '$argumentName' on field ${hydratedFieldParentType.name}.${hydratedFieldDef.name}")
                     val defaultValue = if (argumentDef.argumentDefaultValue.isLiteral) {
@@ -525,13 +523,13 @@ private class Factory(
                     }
 
                     NadelHydrationActorInputDef.ValueSource.ArgumentValue(
-                        argumentName = argumentName,
+                        argumentName = argSourceType.argumentName,
                         argumentDefinition = argumentDef,
                         defaultValue = defaultValue,
                     )
                 }
-                ObjectField -> {
-                    val pathToField = remoteArgDef.remoteArgumentSource.pathToField!!
+                is RemoteArgumentSource.ObjectField -> {
+                    val pathToField = argSourceType.pathToField
                     FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = getUnderlyingType(hydratedFieldParentType)
@@ -539,9 +537,9 @@ private class Factory(
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
-                StaticArgument -> {
+                is RemoteArgumentSource.StaticArgument -> {
                     NadelHydrationActorInputDef.ValueSource.StaticValue(
-                        value = remoteArgDef.remoteArgumentSource.staticValue!!
+                        value = argSourceType.staticValue,
                     )
                 }
             }

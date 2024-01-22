@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInHydratedInputObject
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleHydrationArgumentType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingFieldInHydratedInputObject
@@ -80,7 +81,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "Int")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creator")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
+            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creator")
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ID!")
         }
 
@@ -368,8 +370,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.remoteArg.name == "id")
             assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "ID!")
             // supplied hydration for arg:
-            error.remoteArg.remoteArgumentSource.argumentName
-            assert(error.remoteArg.remoteArgumentSource.argumentName == "creatorId")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.FieldArgument
+            assert(remoteArgumentSource.argumentName == "creatorId")
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ID")
         }
 
@@ -549,7 +551,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[[String!]!]!")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creators")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
+            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creators")
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[[Int!]!]!")
         }
 
@@ -703,7 +706,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.remoteArg.name == "name")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creator")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
+            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creator")
         }
 
         it("input object - validation allows a valid array nested inside object") {
@@ -949,7 +953,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.remoteArg.name == "userInfo")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creator")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
+            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creator")
 
         }
 
@@ -1102,7 +1107,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[FullNameInput]!")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creators")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
+            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creators")
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[FullName]!")
 
         }
@@ -1256,7 +1262,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[UserInput]")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "creators")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
+            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creators")
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[UserRef]")
         }
 
@@ -1564,7 +1571,8 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "SomeOtherEnumType")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
-            assert(error.remoteArg.remoteArgumentSource.pathToField?.joinToString(separator = ".") == "providerType")
+            val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
+            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "providerType")
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ProviderType")
         }
     }
