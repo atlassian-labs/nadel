@@ -495,7 +495,6 @@ internal class NadelNewBatchHydrator(
         sourceInput: JsonNode,
         fieldSource: ValueSource.FieldResultValue
     ): NadelBatchHydrationFieldInstruction? {
-
         if (instructions.any { it.condition == null }) {
             return executionContext.hooks.getHydrationInstruction(
                 instructions = instructions,
@@ -509,8 +508,7 @@ internal class NadelNewBatchHydrator(
             val condition = it.condition!!
             if (condition.fieldPath == fieldSource.queryPathToField) {
                 it.condition.evaluate(sourceInput.value)
-            }
-            else {
+            } else {
                 val resultQueryPath = aliasHelper.getQueryPath(condition.fieldPath)
                 val node = JsonNodeExtractor.getNodesAt(sourceObject, resultQueryPath)
                     .emptyOrSingle()
@@ -524,7 +522,6 @@ internal class NadelNewBatchHydrator(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         sourceObject: JsonNode
     ): NadelBatchHydrationFieldInstruction? {
-
         if (instructions.any { it.condition == null }) {
             return executionContext.hooks.getHydrationInstruction(
                 instructions = instructions,

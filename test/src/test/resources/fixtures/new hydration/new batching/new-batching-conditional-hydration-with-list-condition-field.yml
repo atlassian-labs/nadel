@@ -91,7 +91,7 @@ serviceCalls:
         query {
           barsById(ids: ["barId2"]) {
             batch_hydration__bar__id: id
-              name
+            name
           }
         }
       variables: { }
