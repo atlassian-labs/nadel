@@ -1,9 +1,10 @@
-name: "new batching conditional hydration with multiple true conditions"
+name: "new batching conditional hydration with multiple true conditions takes first"
 enabled: true
 overallSchema:
   service2: |
     type Query {
       barsById(ids: [ID]): [Bar]
+      othersById(ids: [ID]): [Bar]
     }
     type Bar {
       id: ID
@@ -29,13 +30,13 @@ overallSchema:
           when: {
             result: {
               sourceField: "type"
-              predicate: { equals: "thatType" }
+              predicate: { startsWith: "this" }
             }
           }
         )
         @hydrated(
           service: "service2"
-          field: "barsById"
+          field: "othersById"
           arguments: [
             {
               name: "ids"
@@ -45,7 +46,7 @@ overallSchema:
           when: {
             result: {
               sourceField: "type"
-              predicate: { startsWith: "that" }
+              predicate: { equals: "thisType" }
             }
           }
         )
@@ -60,6 +61,7 @@ underlyingSchema:
 
     type Query {
       barsById(ids: [ID]): [Bar]
+      othersById(ids: [ID]): [Bar]
     }
   service1: |
     type Foo {
@@ -102,8 +104,8 @@ serviceCalls:
         "data": {
           "foo": {
             "__typename__batch_hydration__bar": "Foo",
-            "batch_hydration__bar__barIds": ["barId1", "barId2"],      
-            "batch_hydration__bar__type": "thatType"
+            "batch_hydration__bar__barIds": ["barId1", "barId2"],
+            "batch_hydration__bar__type": "thisType"
           }
         },
         "extensions": {}
@@ -143,7 +145,8 @@ response: |-
           },
           {
             "name":"Bar2"
-          }]  
+          }
+        ]
       }
     },
     "extensions": {}

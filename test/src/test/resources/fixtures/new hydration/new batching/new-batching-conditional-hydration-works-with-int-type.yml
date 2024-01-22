@@ -1,12 +1,12 @@
-name: "new batching conditional hydration with list condition field"
+name: "new batching conditional hydration works with int type"
 enabled: true
 overallSchema:
   service2: |
     type Query {
-      barsById(ids: [ID]): [Bar]
+      barsById(ids: [Int]): [Bar]
     }
     type Bar {
-      id: ID
+      id: Int
       name: String
     }
   service1: |
@@ -14,8 +14,8 @@ overallSchema:
       foo: Foo
     }
     type Foo {
-      id: ID
-      barIds: [ID] @hidden
+      id: Int
+      barIds: [Int] @hidden
       bar: [Bar] 
         @hydrated(
           service: "service2"
@@ -29,7 +29,7 @@ overallSchema:
           when: {
             result: {
               sourceField: "barIds"
-              predicate: { equals: "barId2" }
+              predicate: { equals: 2 }
             }
           }
         )
@@ -37,17 +37,17 @@ overallSchema:
 underlyingSchema:
   service2: |
     type Bar {
-      id: ID
+      id: Int
       name: String
     }
 
     type Query {
-      barsById(ids: [ID]): [Bar]
+      barsById(ids: [Int]): [Bar]
     }
   service1: |
     type Foo {
-      barIds: [ID]
-      id: ID
+      barIds: [Int]
+      id: Int
     }
 
     type Query {
@@ -80,7 +80,7 @@ serviceCalls:
         "data": {
           "foo": {
             "__typename__batch_hydration__bar": "Foo",
-            "batch_hydration__bar__barIds": ["barId1", "barId2", "barId3"]
+            "batch_hydration__bar__barIds": [1, 2, 3]
           }
         },
         "extensions": {}
@@ -89,7 +89,7 @@ serviceCalls:
     request:
       query: |
         query {
-          barsById(ids: ["barId2"]) {
+          barsById(ids: [2]) {
             batch_hydration__bar__id: id
             name
           }
@@ -100,7 +100,7 @@ serviceCalls:
       {
         "data": {
           "barsById": [{
-            "batch_hydration__bar__id": "barId2",
+            "batch_hydration__bar__id": 2,
             "name": "Bar2"
           }]
         },
