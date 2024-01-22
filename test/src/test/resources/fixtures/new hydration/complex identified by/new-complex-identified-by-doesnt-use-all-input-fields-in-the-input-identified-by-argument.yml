@@ -6,7 +6,7 @@ overallSchema:
     type Query {
       activities: [Activity]
     }
-    
+
     type Activity {
       id: ID
       issue: Issue @hydrated(
@@ -22,12 +22,12 @@ overallSchema:
     type Query {
       issues(issuesInput: IssueInput!): [Issue]
     }
-    
+
     type Issue {
       issueId: ID
       description: String
     }
-    
+
     input IssueInput {
       id: ID!
       site: ID!
@@ -38,16 +38,16 @@ underlyingSchema:
     type Query {
       activities: [Activity]
     }
-    
+
     type Activity {
       id: ID
       context: HydrationContext
     }
-    
+
     type HydrationContext {
       issueHydrationInput: IssueHydrationInput
     }
-    
+
     type IssueHydrationInput {
       id: ID!
       site: ID!
@@ -56,12 +56,12 @@ underlyingSchema:
     type Query {
       issues(issuesInput: IssueInput!): [Issue]
     }
-    
+
     type Issue {
       issueId: ID
       description: String
     }
-    
+
     input IssueInput {
       id: ID!
       site: ID!
@@ -154,7 +154,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         {
-          issues(issuesInput: [{id : "ISSUE-0", site : "CLOUD-0"}, {id : "ISSUE-1", site : "CLOUD-0"}, {id : "ISSUE-2", site : "CLOUD-0"}, {id : "ISSUE-3", site : "CLOUD-0"}]) {
+          issues(issuesInput: [{id: "ISSUE-0", site: "CLOUD-0"}, {id: "ISSUE-1", site: "CLOUD-0"}, {id: "ISSUE-2", site: "CLOUD-0"}, {id: "ISSUE-3", site: "CLOUD-0"}]) {
             description
             issueId
             batch_hydration__issue__issueId: issueId

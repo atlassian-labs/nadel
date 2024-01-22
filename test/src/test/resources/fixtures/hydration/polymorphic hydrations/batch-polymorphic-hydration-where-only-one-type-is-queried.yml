@@ -147,7 +147,8 @@ serviceCalls:
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "HUMAN-0",
               "batch_hydration__data__dataId": "HUMAN-0"
-            } ]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -191,7 +192,8 @@ serviceCalls:
               "fins": 8,
               "id": "FISH-1",
               "batch_hydration__data__id": "FISH-1"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -212,7 +214,8 @@ serviceCalls:
           "humanById": [
             {
               "batch_hydration__data__id": "HUMAN-0"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }

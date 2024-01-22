@@ -143,7 +143,8 @@ serviceCalls:
               "batch_hydration__data__dataId": "HUMAN-1",
               "batch_hydration__data__dataId": "HUMAN-1",
               "id": "FOO-3"
-            } ]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -176,7 +177,8 @@ serviceCalls:
               "breed": "Labrador",
               "id": "PET-1",
               "batch_hydration__data__id": "PET-1"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -209,7 +211,8 @@ serviceCalls:
               "id": "HUMAN-1",
               "batch_hydration__data__id": "HUMAN-1",
               "name": "John Doe"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -253,7 +256,8 @@ response: |-
             "id": "HUMAN-1",
             "name": "John Doe"
           }
-        }]
+        }
+      ]
     },
     "extensions": {}
   }

@@ -166,7 +166,8 @@ serviceCalls:
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "HUMAN-0",
               "id": "FOO-4"
-            } ]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -218,7 +219,8 @@ serviceCalls:
               "fins": 8,
               "id": "FISH-1",
               "batch_hydration__data__id": "FISH-1"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -245,7 +247,8 @@ serviceCalls:
               "id": "HUMAN-0",
               "batch_hydration__data__id": "HUMAN-0",
               "name": "Fanny Longbottom"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -298,7 +301,8 @@ response: |-
             "id": "HUMAN-0",
             "name": "Fanny Longbottom"
           }
-        }]
+        }
+      ]
     },
     "extensions": {}
   }

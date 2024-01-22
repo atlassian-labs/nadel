@@ -4,7 +4,7 @@ enabled: true
 overallSchema:
   MyService: |
     type Query {
-      earth: Planet 
+      earth: Planet
       pluto: Planet @deprecated(reason: "Oh no")
     }
     type Planet {
@@ -21,7 +21,7 @@ underlyingSchema:
     }
 
     type Query {
-      earth: Planet 
+      earth: Planet
       pluto: Planet @deprecated(reason: "Oh no")
     }
 

@@ -27,10 +27,10 @@ underlyingSchema:
 # language=GraphQL
 query: |
   query {
-      hello {
-        id
-        name
-      }
+    hello {
+      id
+      name
+    }
   }
 variables: { }
 serviceCalls:

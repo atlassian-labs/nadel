@@ -86,7 +86,7 @@ serviceCalls:
         "data": {
           "issue": {
             "title": "Issue 1",
-            "hydration__issueAuthor__author" : {
+            "hydration__issueAuthor__author": {
               "userId": "1001"
             },
             "__typename__hydration__issueAuthor": "Issue"

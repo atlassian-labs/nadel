@@ -98,7 +98,7 @@ serviceCalls:
     response: |
       {
         "data": {
-          "startSprint":{
+          "startSprint": {
             "__typename": "Sprint"
           }
         }
@@ -107,7 +107,7 @@ serviceCalls:
 response: |-
   {
     "data": {
-      "startSprint":{
+      "startSprint": {
         "__typename": "Sprint"
       }
     },

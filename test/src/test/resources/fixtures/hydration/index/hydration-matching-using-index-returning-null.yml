@@ -123,7 +123,8 @@ response: |-
           "id": "ISSUE-2",
           "authors": [
             null,
-            null]
+            null
+          ]
         }
       ]
     },

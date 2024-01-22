@@ -117,7 +117,8 @@ serviceCalls:
             }
           ]
         },
-        "extensions": {}
+        "extensions": {
+        }
       }
   - serviceName: "UserService"
     request:

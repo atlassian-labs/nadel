@@ -7,7 +7,7 @@ overallSchema:
     type Query {
       users(id: [UserInput]): [User]
     }
-    input UserInput @renamed(from : "UserInputUnderlying") {
+    input UserInput @renamed(from: "UserInputUnderlying") {
       userId: ID
       site: String
     }
@@ -166,11 +166,11 @@ serviceCalls:
       # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            name
+            batch_hydration__author__id: id
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:
@@ -205,11 +205,11 @@ serviceCalls:
       # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            name
+            batch_hydration__author__id: id
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:

@@ -103,7 +103,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         query X {
-          renameInput(arg1: {inputVal : "x"})
+          renameInput(arg1: {inputVal: "x"})
         }
       variables: { }
       operationName: "X"

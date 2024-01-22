@@ -8,7 +8,7 @@ overallSchema:
     }
     type Bar {
       id: ID
-      name: String  
+      name: String
     }
   service1: |
     type Query {
@@ -16,10 +16,15 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [
-    { name: "id" value: "$source.id" }, 
-    { name: "friendIds" value: ["barId2", "barId3", "barId4"] }
-    ])
+      bar: Bar
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          { name: "id" value: "$source.id" }
+          { name: "friendIds" value: ["barId2", "barId3", "barId4"] }
+        ]
+      )
     }
 # language=GraphQL
 underlyingSchema:
@@ -34,7 +39,7 @@ underlyingSchema:
     }
   service1: |
     type Foo {
-      barId: ID 
+      barId: ID
       id: ID
     }
 
@@ -57,10 +62,10 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-            foo {
-                __typename__hydration__bar: __typename
-                hydration__bar__id: id
-            }
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__id: id
+          }
         }
       variables: { }
     # language=JSON
@@ -80,7 +85,7 @@ serviceCalls:
       query: |
         query {
           barById(id: "barId", friendIds: ["barId2", "barId3", "barId4"]) {
-              name
+            name
           }
         }
       variables: { }

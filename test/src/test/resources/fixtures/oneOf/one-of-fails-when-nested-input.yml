@@ -6,12 +6,12 @@ overallSchema:
     type Query {
       search(by: SearchInput): String
     }
-     
+
     input SearchInput {
       name: String
       id: IdInput
     }
-    
+
     input IdInput @oneOf {
       email: String
       id: ID
@@ -23,12 +23,12 @@ underlyingSchema:
     type Query {
       search(by: SearchInput): String
     }
-    
+
     input SearchInput {
       name: String
       id: IdInput
     }
-    
+
     input IdInput @oneOf {
       email: String
       id: ID
@@ -39,16 +39,18 @@ query: |
     search(by: {id: {email: null}})
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {
     "data": null,
-    "errors": [{
-      "message":"OneOf type field 'IdInput.email' must be non-null.",
-      "extensions":{
-        "classification":"ValidationError"
+    "errors": [
+      {
+        "message": "OneOf type field 'IdInput.email' must be non-null.",
+        "extensions": {
+          "classification": "ValidationError"
+        }
       }
-    }],
+    ],
     "extensions": {}
   }

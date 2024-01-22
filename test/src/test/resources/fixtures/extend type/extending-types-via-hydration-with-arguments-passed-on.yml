@@ -89,7 +89,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          association(filter: {name : "value"}, id: "ISSUE-1") {
+          association(filter: {name: "value"}, id: "ISSUE-1") {
             nameOfAssociation
           }
         }

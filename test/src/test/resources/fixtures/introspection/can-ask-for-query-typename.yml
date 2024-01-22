@@ -34,7 +34,7 @@ query: |
     __typename
   }
 variables: { }
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {
