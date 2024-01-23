@@ -307,9 +307,10 @@ private class Factory(
             )
         }
         if (hydration.condition.predicate.matches != null) {
+
             return NadelHydrationCondition.StringResultMatches(
                 fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
-                regexString = hydration.condition.predicate.matches
+                regex = hydration.condition.predicate.matches.toRegex()
             )
         }
         error("A conditional hydration is defined but doesnt have any predicate")
