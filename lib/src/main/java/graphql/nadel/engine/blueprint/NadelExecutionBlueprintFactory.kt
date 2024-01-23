@@ -420,7 +420,7 @@ private class Factory(
         } + hydrationArgs.flatMap {
             when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
                 is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
-                is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource, condition)
+                is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
                 is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList()
             }
         } + listOfNotNull(condition?.fieldPath)).toSet()
