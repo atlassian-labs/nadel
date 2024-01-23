@@ -10,7 +10,7 @@ import graphql.nadel.engine.util.emptyOrSingle
 internal class NadelBatchHydrationIndexBasedIndexer(
     private val instruction: NadelBatchHydrationFieldInstruction,
 ) : NadelBatchHydrationIndexer {
-    override fun getSourceKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey {
+    override fun getIndexKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey {
         return NadelBatchHydrationIndexKey(sourceInput)
     }
 
