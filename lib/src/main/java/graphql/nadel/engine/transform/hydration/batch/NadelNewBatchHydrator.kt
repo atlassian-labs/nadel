@@ -22,6 +22,7 @@ import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrati
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
+import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.isList
@@ -400,7 +401,7 @@ internal class NadelNewBatchHydrator(
 
     context(NadelBatchHydratorContext)
     private fun getSourceObjectsMetadata(
-        sourceObjects: List<JsonNode>,
+        sourceObjects: List<JsonNode>
     ): List<SourceObjectMetadata> {
         return sourceObjects
             .mapNotNull { sourceObject ->
@@ -416,7 +417,7 @@ internal class NadelNewBatchHydrator(
                 } else {
                     val sourceInputs = getSourceInputs(
                         sourceObject = sourceObject,
-                        instructions = instructions,
+                        instructions = instructions
                     )
 
                     SourceObjectMetadata(
@@ -430,7 +431,7 @@ internal class NadelNewBatchHydrator(
     context(NadelBatchHydratorContext)
     private fun getSourceInputs(
         sourceObject: JsonNode,
-        instructions: List<NadelBatchHydrationFieldInstruction>,
+        instructions: List<NadelBatchHydrationFieldInstruction>
     ): List<SourceInput>? {
         val coords = makeFieldCoordinates(
             typeName = sourceField.objectTypeNames.first(),
@@ -449,12 +450,7 @@ internal class NadelNewBatchHydrator(
 
             getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceInput ->
-                    val instruction = executionContext.hooks.getHydrationInstruction(
-                        instructions = instructions,
-                        sourceInput = sourceInput,
-                        userContext = executionContext.userContext,
-                    )
-
+                    val instruction = getHydrationInstructionForSourceInput(instructions, sourceObject, sourceInput, fieldSource)
                     if (instruction == null) {
                         SourceInput.NotQueryable(sourceInput)
                     } else {
@@ -467,12 +463,7 @@ internal class NadelNewBatchHydrator(
                 }
         } else {
             // todo: determine what to do here in the longer term, this hook should probably be replaced
-            val instruction = executionContext.hooks.getHydrationInstruction(
-                instructions = instructions,
-                parentNode = sourceObject,
-                aliasHelper = aliasHelper,
-                userContext = executionContext.userContext,
-            )
+            val instruction = getHydrationInstructionForSourceObject(instructions, sourceObject)
 
             if (instruction == null) {
                 null
@@ -494,6 +485,58 @@ internal class NadelNewBatchHydrator(
                         )
                     }
             }
+        }
+    }
+
+    context(NadelBatchHydratorContext)
+    private fun getHydrationInstructionForSourceInput(
+        instructions: List<NadelBatchHydrationFieldInstruction>,
+        sourceObject: JsonNode,
+        sourceInput: JsonNode,
+        fieldSource: ValueSource.FieldResultValue
+    ): NadelBatchHydrationFieldInstruction? {
+        if (instructions.any { it.condition == null }) {
+            return executionContext.hooks.getHydrationInstruction(
+                instructions = instructions,
+                sourceInput = sourceInput,
+                userContext = executionContext.userContext,
+            )
+        }
+
+        return instructions.firstOrNull {
+            // Note: due to the validation, all instructions in here have a condition, so can call explicitly
+            val condition = it.condition!!
+            if (condition.fieldPath == fieldSource.queryPathToField) {
+                it.condition.evaluate(sourceInput.value)
+            } else {
+                val resultQueryPath = aliasHelper.getQueryPath(condition.fieldPath)
+                val node = JsonNodeExtractor.getNodesAt(sourceObject, resultQueryPath)
+                    .emptyOrSingle()
+                it.condition.evaluate(node?.value)
+            }
+        }
+    }
+
+    context(NadelBatchHydratorContext)
+    private fun getHydrationInstructionForSourceObject(
+        instructions: List<NadelBatchHydrationFieldInstruction>,
+        sourceObject: JsonNode
+    ): NadelBatchHydrationFieldInstruction? {
+        if (instructions.any { it.condition == null }) {
+            return executionContext.hooks.getHydrationInstruction(
+                instructions = instructions,
+                parentNode = sourceObject,
+                aliasHelper = aliasHelper,
+                userContext = executionContext.userContext,
+            )
+        }
+
+        return instructions.firstOrNull {
+            // Note: due to the validation, all instructions in here have a condition, so can call explicitly
+            val resultQueryPath = aliasHelper.getQueryPath(it.condition!!.fieldPath)
+            val node = JsonNodeExtractor.getNodesAt(sourceObject, resultQueryPath)
+                .emptyOrSingle()
+            it.condition.evaluate(node?.value)
         }
     }
 
