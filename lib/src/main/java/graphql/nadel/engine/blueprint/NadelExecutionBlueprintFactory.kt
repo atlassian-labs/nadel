@@ -423,7 +423,7 @@ private class Factory(
                 is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource, condition)
                 is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList()
             }
-        } + (if (condition != null) listOf(condition.fieldPath) else emptyList())).toSet()
+        } + listOfNotNull(condition?.fieldPath)).toSet()
 
         val prefixes = paths
             .asSequence()
@@ -450,7 +450,7 @@ private class Factory(
         return sourceFieldsFromArgs
     }
 
-    private fun selectSourceFieldQueryPaths(hydrationValueSource: FieldResultValue, condition: NadelHydrationCondition?): List<NadelQueryPath> {
+    private fun selectSourceFieldQueryPaths(hydrationValueSource: FieldResultValue): List<NadelQueryPath> {
         val hydrationSourceType = hydrationValueSource.fieldDefinition.type.unwrapAll()
         if (hydrationSourceType is GraphQLObjectType) {
             // When the argument of the hydration actor field is an input type and not a primitive
