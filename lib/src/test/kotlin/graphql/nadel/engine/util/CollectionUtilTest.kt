@@ -2,6 +2,7 @@ package graphql.nadel.engine.util
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CollectionUtilTest {
@@ -111,5 +112,34 @@ class CollectionUtilTest {
 
         // Then
         assertTrue(output == sequenceA.zip(sequenceB.asSequence()).toList())
+    }
+
+    @Test
+    fun `startsWith returns true if list is a prefix`() {
+        assertTrue(listOf(1, 3, 10).startsWith(listOf(1, 3)))
+        assertTrue(listOf("hello", 10, false).startsWith(listOf("hello", 10)))
+    }
+
+    @Test
+    fun `startsWith returns true if they are equal`() {
+        assertTrue(listOf(1, 3, 10).startsWith(listOf(1, 3, 10)))
+        assertTrue(listOf("hello", 10, false).startsWith(listOf("hello", 10, false)))
+    }
+
+    @Test
+    fun `startsWith returns true if other list is empty`() {
+        assertTrue(listOf(1, 3, 10).startsWith(emptyList()))
+    }
+
+    @Test
+    fun `startsWith returns false if prefix list is longer`() {
+        assertFalse(listOf(1, 3, 10).startsWith(listOf(1, 3, 10, 5)))
+        assertFalse(listOf("hello", 10, false).startsWith(listOf("hello", 10, false, true)))
+    }
+
+    @Test
+    fun `startsWith returns false if other list is not a prefix`() {
+        assertFalse(listOf(1, 3, 10).startsWith(listOf(10)))
+        assertFalse(listOf("hello", 10, false).startsWith(listOf(false, "hello", 10)))
     }
 }

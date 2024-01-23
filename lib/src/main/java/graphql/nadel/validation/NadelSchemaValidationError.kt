@@ -714,6 +714,23 @@ sealed interface NadelSchemaValidationError {
 
         override val subject = type.overall
     }
+
+    data class ObjectIdentifierMustFollowSourceInputField(
+        val type: NadelServiceSchemaElement,
+        val field: GraphQLFieldDefinition,
+        val pathToSourceInputField: List<String>,
+        val offendingObjectIdentifier: NadelHydrationDefinition.ObjectIdentifier,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = type.service
+
+        override val message: String = run {
+            val offender = offendingObjectIdentifier.sourceId
+            val prefix = pathToSourceInputField.joinToString(".")
+            "Source input field $prefix must be prefix of object identifier $offender"
+        }
+
+        override val subject = field
+    }
 }
 
 private fun toString(element: GraphQLNamedSchemaElement): String {
