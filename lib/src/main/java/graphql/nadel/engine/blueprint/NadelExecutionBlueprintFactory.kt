@@ -307,7 +307,6 @@ private class Factory(
             )
         }
         if (hydration.condition.predicate.matches != null) {
-
             return NadelHydrationCondition.StringResultMatches(
                 fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
                 regex = hydration.condition.predicate.matches.toRegex()
