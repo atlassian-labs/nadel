@@ -143,7 +143,8 @@ class NadelHydrationWhenConditionValidationTest2 {
         // Then
         assertTrue(errors.map { it.message }.isNotEmpty())
 
-        val error = errors.assertSingleOfType<NadelSchemaValidationError.ConditionalHydrationPredicateContainsInvalidRegex>()
+        val error =
+            errors.assertSingleOfType<NadelSchemaValidationError.ConditionalHydrationPredicateContainsInvalidRegex>()
         assertTrue(error.overallField.name == "collaborators")
         assertTrue(error.pathToSourceField == listOf("type"))
         assertTrue(error.sourceFieldTypeName == "String")

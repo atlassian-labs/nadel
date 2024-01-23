@@ -117,8 +117,7 @@ internal class NadelHydrationConditionValidation {
         if (predicateObject.matches != null) {
             try {
                 predicateObject.matches.toRegex()
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 return NadelSchemaValidationError.ConditionalHydrationPredicateContainsInvalidRegex(
                     pathToConditionSourceField,
                     conditionSourceFieldTypeName,
@@ -127,8 +126,6 @@ internal class NadelHydrationConditionValidation {
                 )
             }
         }
-
-
         return null
     }
 
