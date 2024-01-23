@@ -27,7 +27,6 @@ import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
-import java.lang.Exception
 import java.util.Locale
 
 /**
