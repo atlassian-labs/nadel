@@ -114,7 +114,16 @@ internal class NadelHydrationConditionValidation {
                 )
             }
         }
-
+        if (predicateObject.matches != null) {
+            try {
+                predicateObject.matches.toRegex()
+            } catch (e: Exception) {
+                return NadelSchemaValidationError.ConditionalHydrationPredicateContainsInvalidRegex(
+                    predicateObject.matches,
+                    overallField,
+                )
+            }
+        }
         return null
     }
 

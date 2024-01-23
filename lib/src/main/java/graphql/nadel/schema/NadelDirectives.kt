@@ -433,7 +433,7 @@ object NadelDirectives {
                 predicate = NadelHydrationConditionPredicateDefinition(
                     equals = predicate["equals"],
                     startsWith = predicate["startsWith"] as String?,
-                    matches = (predicate["matches"] as String?)?.toRegex(),
+                    matches = predicate["matches"] as String?,
                 ),
             ),
         )
