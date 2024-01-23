@@ -27,6 +27,7 @@ import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
+import java.lang.Exception
 import java.util.Locale
 
 /**
@@ -433,7 +434,7 @@ object NadelDirectives {
                 predicate = NadelHydrationConditionPredicateDefinition(
                     equals = predicate["equals"],
                     startsWith = predicate["startsWith"] as String?,
-                    matches = (predicate["matches"] as String?)?.toRegex(),
+                    matches = predicate["matches"] as String?,
                 ),
             ),
         )

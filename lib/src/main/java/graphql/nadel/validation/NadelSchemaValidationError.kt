@@ -466,6 +466,18 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class ConditionalHydrationPredicateContainsInvalidRegex(
+        val pathToSourceField: List<String>,
+        val sourceFieldTypeName: String,
+        val regexString: String,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        override val message =
+            "Hydration condition field \"${pathToSourceField.joinToString(separator = ".")}\" " +
+                "is is using invalid regex \"$regexString\"."
+        override val subject = overallField
+    }
+
     data class SomeHydrationsHaveMissingConditions(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,

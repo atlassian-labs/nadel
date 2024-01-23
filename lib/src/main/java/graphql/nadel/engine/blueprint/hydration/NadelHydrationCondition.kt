@@ -36,11 +36,11 @@ sealed class NadelHydrationCondition {
 
     data class StringResultMatches(
         override val fieldPath: NadelQueryPath,
-        val regex: Regex,
+        val regexString: String,
     ) : NadelHydrationCondition() {
         override fun evaluate(fieldValue: Any?): Boolean {
             if (fieldValue is String) {
-                return fieldValue.matches(regex)
+                return fieldValue.matches(regexString.toRegex())
             }
             return false
         }

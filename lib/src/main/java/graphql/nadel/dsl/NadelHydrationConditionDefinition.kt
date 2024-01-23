@@ -12,5 +12,5 @@ data class NadelHydrationResultConditionDefinition(
 data class NadelHydrationConditionPredicateDefinition(
     val equals: Any?,
     val startsWith: String?,
-    val matches: Regex?,
+    val matches: String?,
 )
