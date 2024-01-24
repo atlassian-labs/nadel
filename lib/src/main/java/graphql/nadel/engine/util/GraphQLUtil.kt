@@ -586,12 +586,23 @@ fun compileToDocument(
     operationName: String?,
     topLevelFields: List<ExecutableNormalizedField>,
     variablePredicate: VariablePredicate?,
+    deferSupport: Boolean = false,
 ): CompilerResult {
-    return ExecutableNormalizedOperationToAstCompiler.compileToDocument(
-        schema,
-        operationKind,
-        operationName,
-        topLevelFields,
-        variablePredicate,
-    )
+    if (deferSupport) {
+        return ExecutableNormalizedOperationToAstCompiler.compileToDocumentWithDeferSupport(
+            schema,
+            operationKind,
+            operationName,
+            topLevelFields,
+            variablePredicate,
+        )
+    } else {
+        return ExecutableNormalizedOperationToAstCompiler.compileToDocument(
+            schema,
+            operationKind,
+            operationName,
+            topLevelFields,
+            variablePredicate,
+        )
+    }
 }

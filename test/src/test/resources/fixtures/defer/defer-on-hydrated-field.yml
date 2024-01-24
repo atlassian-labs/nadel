@@ -1,0 +1,112 @@
+name: "defer on hydrated field"
+enabled: true
+overallSchema:
+  petService: |
+    directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+    
+    type Query {
+      pet(id: ID!): Pet
+    }
+    type Pet {
+      name: String
+      owner: Person @hydrated(service: "personService" field: "person" arguments: [{name: "id" value: "$source.ownerId"}])
+    }
+  personService: |
+    type Query {
+      person(id: ID!): Person 
+    }
+    type Person {
+      firstname: String
+      lastname: String
+    }
+underlyingSchema:
+  petService: |
+    type Query {
+      pet(id: ID!): Pet
+    }
+    type Pet {
+      name: String
+      ownerId: ID
+    }
+  personService: |
+    type Query {
+      person(id: ID!): Person 
+    }
+    type Person {
+      firstname: String
+      lastname: String
+    }
+query: |
+  query {
+    pet(id: "1") {
+      name
+      ... @defer { # the @defer on the hydrated field has no effect at the moment
+        owner {
+          firstname
+          ... @defer {
+            lastname
+          }
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "petService"
+    request:
+      query: |
+        query {
+          pet(id: "1") {
+            __typename__hydration__owner: __typename
+            name
+            hydration__owner__ownerId: ownerId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "pet": {
+            "name": "Figaro",
+            "hydration__owner__ownerId": "100",
+            "__typename__hydration__owner": "Pet"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "personService"
+    request:
+      query: |
+        query {
+          person(id: "100") {
+            firstname
+            ... @defer {
+              lastname
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "person": {
+            "firstname": "Ziggy"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "pet": {
+        "name": "Figaro",
+        "owner": {
+          "firstname": "Ziggy"
+        }
+      }
+    },
+    "extensions": {}
+  }
