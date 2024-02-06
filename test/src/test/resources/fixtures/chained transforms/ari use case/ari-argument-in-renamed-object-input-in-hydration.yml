@@ -1,7 +1,7 @@
 name: "ari argument in renamed object input in hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
-  # language=GraphQL
   MyService: |
     type Query {
       issue(id: ID!): Issue
@@ -33,8 +33,8 @@ overallSchema:
       owner: String!
       interpreted: Boolean! = false
     ) on ARGUMENT_DEFINITION | FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+# language=GraphQL
 underlyingSchema:
-  # language=GraphQL
   MyService: |
     type Query {
       issue(id: ID!): Issue
@@ -90,9 +90,9 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "issue":{
+          "issue": {
             "__typename__batch_hydration__related": "Issue",
-            "batch_hydration__related__relatedIds":  [
+            "batch_hydration__related__relatedIds": [
               {
                 "projectId": "ari:cloud:jira-software::project/100",
                 "issueId": "ari:cloud:jira-software::issue/1"

@@ -1,9 +1,10 @@
 name: "introspection with variables FF on"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
-      earth: Planet 
+      earth: Planet
       pluto: Planet @deprecated(reason: "Oh no")
     }
     type Planet {
@@ -12,6 +13,7 @@ overallSchema:
     type Mutation {
       hello: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Mutation {
@@ -19,7 +21,7 @@ underlyingSchema:
     }
 
     type Query {
-      earth: Planet 
+      earth: Planet
       pluto: Planet @deprecated(reason: "Oh no")
     }
 
@@ -27,6 +29,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     __schema {

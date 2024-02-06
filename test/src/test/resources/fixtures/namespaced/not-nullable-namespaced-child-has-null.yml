@@ -1,5 +1,6 @@
 name: "not nullable namespaced child has null"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -25,6 +26,7 @@ overallSchema:
       id: ID
       count: Int
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -52,6 +54,7 @@ underlyingSchema:
       id: ID
       count: Int
     }
+# language=GraphQL
 query: |
   {
     issue {
@@ -67,6 +70,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {
@@ -90,6 +94,7 @@ serviceCalls:
       }
   - serviceName: "IssueSearch"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

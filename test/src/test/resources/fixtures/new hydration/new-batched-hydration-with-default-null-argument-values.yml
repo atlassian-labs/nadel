@@ -1,5 +1,6 @@
 name: "new batched hydration with default null argument values"
 enabled: true
+# language=GraphQL
 overallSchema:
   # language=GraphQL
   UserService: |
@@ -27,6 +28,7 @@ overallSchema:
         batchSize: 3
       )
     }
+# language=GraphQL
 underlyingSchema:
   # language=GraphQL
   UserService: |
@@ -141,7 +143,7 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          usersByIds(id: ["USER-2", "USER-4", "USER-5"], test: null) {
+          usersByIds(id: ["USER-4", "USER-5"], test: null) {
             id
             batch_hydration__authors__id: id
           }
@@ -152,10 +154,6 @@ serviceCalls:
       {
         "data": {
           "usersByIds": [
-            {
-              "id": "USER-2",
-              "batch_hydration__authors__id": "USER-2"
-            },
             {
               "id": "USER-4",
               "batch_hydration__authors__id": "USER-4"

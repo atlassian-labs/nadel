@@ -1,5 +1,6 @@
 name: "variable referenced input types rename works as expected"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -39,6 +40,7 @@ overallSchema:
       object: ObjectOverall
       objects: [ObjectOverall]
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     interface InterfaceUnderlying {
@@ -87,6 +89,7 @@ underlyingSchema:
     input InputUnderlying {
       inputVal: String
     }
+# language=GraphQL
 query: |
   query X($var1: InputOverall!, $var2: URL, $var3: EnumOverall) {
     renameInput(arg1: $var1, arg2: $var2, arg3: $var3)
@@ -97,9 +100,10 @@ variables:
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query X {
-          renameInput(arg1: {inputVal : "x"})
+          renameInput(arg1: {inputVal: "x"})
         }
       variables: { }
       operationName: "X"

@@ -1,5 +1,6 @@
 name: "new one synthetic hydration call with longer path and same named overall field"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
@@ -19,11 +20,19 @@ overallSchema:
     type Issue {
       id: ID
       authorDetails: [AuthorDetail]
-      authors: [User] @hydrated(service: "UserService" field: "usersQuery.usersByIds" arguments: [{name: "id" value: "$source.authorDetails.authorId"}] identifiedBy: "id" batchSize: 2)
+      authors: [User]
+      @hydrated(
+        service: "UserService"
+        field: "usersQuery.usersByIds"
+        arguments: [{name: "id" value: "$source.authorDetails.authorId"}]
+        identifiedBy: "id"
+        batchSize: 2
+      )
     }
     type AuthorDetail {
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -52,6 +61,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -68,6 +78,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -113,6 +124,7 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query {
           usersQuery {

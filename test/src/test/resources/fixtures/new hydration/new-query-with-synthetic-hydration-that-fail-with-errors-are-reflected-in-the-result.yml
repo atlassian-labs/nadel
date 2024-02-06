@@ -1,5 +1,6 @@
 name: "new query with synthetic hydration that fail with errors are reflected in the result"
 enabled: true
+# language=GraphQL
 overallSchema:
   Bar: |
     type Query {
@@ -11,7 +12,12 @@ overallSchema:
     }
     type Bar {
       name: String
-      nestedBar: Bar @hydrated(service: "Bar" field: "barQuery.barById" arguments: [{name: "id" value: "$source.nestedBarId"}])
+      nestedBar: Bar
+      @hydrated(
+        service: "Bar"
+        field: "barQuery.barById"
+        arguments: [{name: "id" value: "$source.nestedBarId"}]
+      )
     }
   Foo: |
     type Query {
@@ -19,8 +25,14 @@ overallSchema:
     }
     type Foo {
       name: String
-      bar: Bar @hydrated(service: "Bar" field: "barQuery.barById" arguments: [{name: "id" value: "$source.barId"}])
+      bar: Bar
+      @hydrated(
+        service: "Bar"
+        field: "barQuery.barById"
+        arguments: [{name: "id" value: "$source.barId"}]
+      )
     }
+# language=GraphQL
 underlyingSchema:
   Bar: |
     type Bar {
@@ -46,6 +58,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -64,6 +77,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -85,6 +99,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barQuery {

@@ -1,5 +1,6 @@
 name: "transformer on hydration fields"
 enabled: true
+# language=GraphQL
 overallSchema:
   service1: |
     type Query {
@@ -7,7 +8,12 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
+      bar: Bar
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [{name: "id" value: "$source.barId"}]
+      )
     }
   service2: |
     type Query {
@@ -17,6 +23,7 @@ overallSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   service1: |
     type Foo {
@@ -36,6 +43,7 @@ underlyingSchema:
     type Query {
       barById(id: ID): Bar
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -48,6 +56,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -69,6 +78,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "transformed-id") {

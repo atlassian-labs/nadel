@@ -53,10 +53,10 @@ interface NadelExecutionHooks {
 
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
-        sourceId: JsonNode,
+        sourceInput: JsonNode,
         userContext: Any?,
     ): T? {
-        throw UnsupportedOperationException()
+        return instructions.single()
     }
 
     /**

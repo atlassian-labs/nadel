@@ -1,5 +1,6 @@
 name: "deep rename of list of list"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type IssueDetail {
       labels: [[String]] @renamed(from: "issue.labels")
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Issue {
@@ -21,6 +23,7 @@ underlyingSchema:
     type Query {
       details: [IssueDetail]
     }
+# language=GraphQL
 query: |
   query {
     details {
@@ -31,6 +34,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           details {

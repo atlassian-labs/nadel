@@ -1,0 +1,142 @@
+name: "conditional hydration startsWith predicate works with id type"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barById(id: ID): Bar
+    }
+    type Bar {
+      id: ID
+      name: String
+      type: ID
+    }
+
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      type: ID
+      bar: Bars
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {
+            name: "id" 
+            value: "BAR_A"
+          }
+        ]
+        when: {
+          result: {
+            sourceField: "type"
+            predicate: { startsWith: "nope" }
+          }
+        }
+      )
+      @hydrated(
+        service: "service2" 
+        field: "barById" 
+        arguments: [
+          {
+            name: "id" 
+            value: "BAR_B"
+          }
+        ]
+        when: {
+          result: {
+            sourceField: "type"
+            predicate: { startsWith: "type" }
+          }
+        }
+      )
+    }
+    union Bars = Bar
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+      type: ID
+    }
+    union Bars = Bar
+    
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      id: ID
+      type: ID
+    }
+    
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        ... on Bar {
+          name
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__type: type
+            hydration__bar__type: type
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__hydration__bar": "Foo",
+            "hydration__bar__type": "type_B"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      query: |
+        query {
+          barById(id: "BAR_B") {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "name": "Bar B"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar B"
+        }
+      }
+    },
+    "extensions": {}
+  }

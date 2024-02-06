@@ -1,11 +1,12 @@
-name: "complex-identified-by-with-rename"
+name: "complex identified by with rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   UserService: |
     type Query {
       users(id: [UserInput]): [User]
     }
-    input UserInput @renamed(from : "UserInputUnderlying") {
+    input UserInput @renamed(from: "UserInputUnderlying") {
       userId: ID
       site: String
     }
@@ -30,6 +31,7 @@ overallSchema:
         batchSize: 4
       )
     }
+# language=GraphQL
 underlyingSchema:
   UserService: |
     type Query {
@@ -60,6 +62,7 @@ underlyingSchema:
       authorId: UserRef
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -74,6 +77,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -155,13 +159,14 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            name
+            batch_hydration__author__id: id
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:
@@ -201,13 +206,14 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            name
+            batch_hydration__author__id: id
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:

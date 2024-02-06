@@ -17,9 +17,11 @@ private class PolymorphicHydrationHooks : NadelExecutionHooks {
         aliasHelper: NadelAliasHelper,
         userContext: Any?,
     ): T? {
-        val dataIdFieldName = if (instructions.any { it is NadelHydrationFieldInstruction })
+        val dataIdFieldName = if (instructions.any { it is NadelHydrationFieldInstruction }) {
             "hydration__data__dataId"
-        else "batch_hydration__data__dataId"
+        } else {
+            "batch_hydration__data__dataId"
+        }
 
         val dataIdValue = (parentNode.value as JsonMap)[dataIdFieldName] as String
         val actorFieldName = when {

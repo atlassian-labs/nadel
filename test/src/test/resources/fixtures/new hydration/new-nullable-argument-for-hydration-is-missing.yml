@@ -1,5 +1,6 @@
 name: "new nullable argument for hydration is missing"
 enabled: true
+# language=GraphQL
 overallSchema:
   boards: |
     type Query {
@@ -9,13 +10,17 @@ overallSchema:
     type Board {
       id: ID
       issue: Issue
-      @hydrated(service: "issues" field: "issue" arguments: [
+      @hydrated(
+        service: "issues"
+        field: "issue"
+        arguments: [
           { name: "id", value: "$source.issueId"}
-      ])
+        ]
+      )
     }
   issues: |
     type Query {
-        issue(id: ID): Issue
+      issue(id: ID): Issue
     }
 
     type Issue {
@@ -23,19 +28,24 @@ overallSchema:
       cloudId: ID!
 
       comments(after: String): CommentConnection
-        @hydrated(service: "comments" field: "comments" arguments: [
-            { name:"cloudId" value:"$source.cloudId"},
-            { name:"after" value:"$argument.after"},
-        ])
+      @hydrated(
+        service: "comments"
+        field: "comments"
+        arguments: [
+          { name:"cloudId" value:"$source.cloudId"}
+          { name:"after" value:"$argument.after"}
+        ]
+      )
     }
   comments: |
     type Query {
-        comments(cloudId: ID!, after: String): CommentConnection
+      comments(cloudId: ID!, after: String): CommentConnection
     }
 
     type CommentConnection {
-        totalCount: Int
+      totalCount: Int
     }
+# language=GraphQL
 underlyingSchema:
   boards: |
     type Query {
@@ -48,21 +58,22 @@ underlyingSchema:
     }
   issues: |
     type Query {
-        issue(id: ID): Issue
+      issue(id: ID): Issue
     }
 
     type Issue {
-        id: ID!
-        cloudId: ID!
+      id: ID!
+      cloudId: ID!
     }
   comments: |
     type Query {
-        comments(cloudId: ID!, after: String): CommentConnection
+      comments(cloudId: ID!, after: String): CommentConnection
     }
 
     type CommentConnection {
-        totalCount: Int
+      totalCount: Int
     }
+# language=GraphQL
 query: |
   query {
     board {
@@ -78,6 +89,7 @@ variables:
 serviceCalls:
   - serviceName: "boards"
     request:
+      # language=GraphQL
       query: |
         query {
           board {
@@ -99,6 +111,7 @@ serviceCalls:
       }
   - serviceName: "issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(id: "ISSUE-1") {
@@ -120,6 +133,7 @@ serviceCalls:
       }
   - serviceName: "comments"
     request:
+      # language=GraphQL
       query: |
         query {
           comments(cloudId: "CLOUD_ID-1") {
@@ -140,12 +154,11 @@ serviceCalls:
 # language=JSON
 response: |-
   {
-    "data":
-    {
+    "data": {
       "board": {
         "issue": {
           "comments": {
-            "totalCount":10
+            "totalCount": 10
           }
         }
       }

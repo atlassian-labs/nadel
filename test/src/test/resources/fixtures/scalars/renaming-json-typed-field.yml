@@ -1,11 +1,13 @@
 name: "renaming json typed field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
       aField: JSON @renamed(from: "test")
     }
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -21,6 +23,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__aField__test: test
@@ -38,6 +41,7 @@ serviceCalls:
       }
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__test__test: test

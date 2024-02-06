@@ -1,5 +1,6 @@
 name: "new query with three nested hydrations and simple data"
 enabled: true
+# language=GraphQL
 overallSchema:
   Bar: |
     type Query {
@@ -9,7 +10,13 @@ overallSchema:
     type Bar {
       barId: ID
       name: String
-      nestedBar: Bar @hydrated(service: "Bar" field: "barsById" arguments: [{name: "id" value: "$source.nestedBarId"}] identifiedBy: "barId")
+      nestedBar: Bar
+      @hydrated(
+        service: "Bar"
+        field: "barsById"
+        arguments: [{name: "id" value: "$source.nestedBarId"}]
+        identifiedBy: "barId"
+      )
     }
   Foo: |
     type Query {
@@ -17,8 +24,16 @@ overallSchema:
     }
     type Foo {
       name: String
-      bar: Bar @hydrated(service: "Bar" field: "barsById" arguments: [{name: "id" value: "$source.barId"}] identifiedBy: "barId" batchSize: 2)
+      bar: Bar
+      @hydrated(
+        service: "Bar"
+        field: "barsById"
+        arguments: [{name: "id" value: "$source.barId"}]
+        identifiedBy: "barId"
+        batchSize: 2
+      )
     }
+# language=GraphQL
 underlyingSchema:
   Bar: |
     type Bar {
@@ -40,6 +55,7 @@ underlyingSchema:
     type Query {
       foos: [Foo]
     }
+# language=GraphQL
 query: |
   query {
     foos {
@@ -58,6 +74,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foos {
@@ -81,6 +98,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsById(id: ["bar1"]) {
@@ -108,6 +126,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsById(id: ["nestedBar1"]) {
@@ -135,6 +154,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           barsById(id: ["nestedBarId456"]) {

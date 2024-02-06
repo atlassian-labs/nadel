@@ -1,5 +1,6 @@
 name: "renamed top level field with argument"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -8,6 +9,7 @@ overallSchema:
     type ObjectOverall @renamed(from: "ObjectUnderlying") {
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type ObjectUnderlying {
@@ -17,6 +19,7 @@ underlyingSchema:
     type Query {
       renameObjectUnderlying(id: ID!): ObjectUnderlying
     }
+# language=GraphQL
 query: |
   query {
     renameObject(id: "OBJECT-001") {
@@ -27,6 +30,7 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
@@ -52,5 +56,5 @@ response: |-
         "name": "Object 001"
       }
     },
-    "extensions": { }
+    "extensions": {}
   }

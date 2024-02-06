@@ -1,5 +1,6 @@
 name: "nested list hydration under a renamed top level field"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -10,14 +11,29 @@ overallSchema:
       space(id: ID): Space
     }
     type FooService @renamed(from: "Service") {
-      otherServices: Connection @hydrated(service: "Foo" field: "connection" arguments: [{name: "id" value: "$source.id"}])
+      otherServices: Connection
+      @hydrated(
+        service: "Foo"
+        field: "connection"
+        arguments: [{name: "id" value: "$source.id"}]
+      )
     }
     type Connection {
       edges: [Edge]
-      nodes: [Node] @hydrated(service: "Foo" field: "node" arguments: [{name: "id" value: "$source.edges.node"}])
+      nodes: [Node]
+      @hydrated(
+        service: "Foo"
+        field: "node"
+        arguments: [{name: "id" value: "$source.edges.node"}]
+      )
     }
     type Node {
-      space: Space @hydrated(service: "Foo" field: "space" arguments: [{name: "id" value: "$source.id"}])
+      space: Space
+      @hydrated(
+        service: "Foo"
+        field: "space"
+        arguments: [{name: "id" value: "$source.id"}]
+      )
       id: ID
     }
     type Space {
@@ -25,10 +41,16 @@ overallSchema:
       name: String
     }
     type Edge {
-      node: Node @hydrated(service: "Foo" field: "node" arguments: [{name: "id" value: "$source.node"}])
+      node: Node
+      @hydrated(
+        service: "Foo"
+        field: "node"
+        arguments: [{name: "id" value: "$source.node"}]
+      )
       name: String
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Connection {
@@ -63,6 +85,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     fooService {
@@ -79,6 +102,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__fooService__service: service {
@@ -100,6 +124,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           connection(id: "ID") {
@@ -127,6 +152,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           node(id: "1") {
@@ -148,6 +174,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           space(id: "1a") {

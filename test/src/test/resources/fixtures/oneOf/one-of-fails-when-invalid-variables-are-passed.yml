@@ -1,5 +1,6 @@
 name: "oneOf fails when invalid variables are passed"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -9,6 +10,7 @@ overallSchema:
       name: String
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {
@@ -18,22 +20,25 @@ underlyingSchema:
       name: String
       id: ID
     }
+# language=GraphQL
 query: |
   query myQuery($name: String, $id: ID) {
     search(by: {name: $name, id: $id})
   }
 variables:
   name: "Figaro"
-serviceCalls: []
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {
     "data": null,
-    "errors": [{
-      "message":"Exactly one key must be specified for OneOf type 'SearchInput'.",
-      "extensions":{
-        "classification":"ValidationError"
+    "errors": [
+      {
+        "message": "Exactly one key must be specified for OneOf type 'SearchInput'.",
+        "extensions": {
+          "classification": "ValidationError"
+        }
       }
-    }],
+    ],
     "extensions": {}
   }

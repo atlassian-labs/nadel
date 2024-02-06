@@ -1,5 +1,6 @@
 name: "synthetic hydration list with batching forwards error"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -18,8 +19,14 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: [Bar] @hydrated(service: "service2" field: "barsQuery.barsById" arguments: [{name: "id" value: "$source.barId"}])
+      bar: [Bar]
+      @hydrated(
+        service: "service2"
+        field: "barsQuery.barsById"
+        arguments: [{name: "id" value: "$source.barId"}]
+      )
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -43,6 +50,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -55,6 +63,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -80,6 +89,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barsQuery {

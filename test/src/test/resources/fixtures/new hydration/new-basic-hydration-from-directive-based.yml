@@ -1,5 +1,6 @@
 name: "new basic hydration from directive based"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -14,10 +15,10 @@ overallSchema:
       foo: Foo
     }
     extend enum NadelHydrationTemplate {
-        SERVICE2_TEMPLATE @hydratedTemplate(
-                    service: "service2"
-                    field: "barById"
-            )
+      SERVICE2_TEMPLATE @hydratedTemplate(
+        service: "service2"
+        field: "barById"
+      )
     }
 
     type Foo {
@@ -35,6 +36,7 @@ overallSchema:
         ]
       )
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -59,6 +61,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -71,6 +74,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -92,6 +96,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "barId") {

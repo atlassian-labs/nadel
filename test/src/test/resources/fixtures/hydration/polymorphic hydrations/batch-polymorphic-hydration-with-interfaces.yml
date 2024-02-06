@@ -1,5 +1,6 @@
 name: "batch polymorphic hydration with interfaces"
 enabled: true
+# language=GraphQL
 overallSchema:
   pets: |
     type Query {
@@ -56,6 +57,7 @@ overallSchema:
     }
 
     union LivingThing = Human | Fish | Dog
+# language=GraphQL
 underlyingSchema:
   pets: |
     type Query {
@@ -93,6 +95,7 @@ underlyingSchema:
       id: ID
       dataId: ID
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -121,6 +124,7 @@ variables: { }
 serviceCalls:
   - serviceName: "foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -166,12 +170,14 @@ serviceCalls:
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "HUMAN-0",
               "id": "FOO-4"
-            } ]
+            }
+          ]
         },
         "extensions": {}
       }
   - serviceName: "pets"
     request:
+      # language=GraphQL
       query: |
         query {
           petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
@@ -215,12 +221,14 @@ serviceCalls:
               "fins": 8,
               "id": "FISH-1",
               "batch_hydration__data__id": "FISH-1"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }
   - serviceName: "people"
     request:
+      # language=GraphQL
       query: |
         query {
           humanById(ids: ["HUMAN-0"]) {
@@ -241,7 +249,8 @@ serviceCalls:
               "id": "HUMAN-0",
               "batch_hydration__data__id": "HUMAN-0",
               "name": "Fanny Longbottom"
-            }]
+            }
+          ]
         },
         "extensions": {}
       }
@@ -294,7 +303,8 @@ response: |-
             "id": "HUMAN-0",
             "name": "Fanny Longbottom"
           }
-        }]
+        }
+      ]
     },
     "extensions": {}
   }

@@ -1,11 +1,13 @@
 name: "renaming url typed field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
       aField: URL @renamed(from: "test")
     }
     scalar URL
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -20,6 +22,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__aField__test: test

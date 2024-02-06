@@ -1,5 +1,6 @@
 name: "basic hydration with static arg object array"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -7,7 +8,7 @@ overallSchema:
     }
     type Bar {
       id: ID
-      name: String  
+      name: String
     }
     input FullName {
       firstName: String
@@ -19,26 +20,32 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: Bar @hydrated(service: "service2" field: "barById" arguments: [
-        { name: "id" value: "$source.id" }, 
-        { name: "friends" 
-          value: [
-            {
-              firstName: "first"
-              lastName: "last"
-            },
-            {
-              firstName: "first2"
-              lastName: "last2"
-            },
-            {
-              firstName: "first3"
-              lastName: "last3"
-            }
+      bar: Bar @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          { name: "id" value: "$source.id" }
+          {
+            name: "friends"
+            value: [
+              {
+                firstName: "first"
+                lastName: "last"
+              }
+              {
+                firstName: "first2"
+                lastName: "last2"
+              }
+              {
+                firstName: "first3"
+                lastName: "last3"
+              }
+            ]
+          }
         ]
-        }
-    ])
+      )
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -49,20 +56,21 @@ underlyingSchema:
     type Query {
       barById(id: ID, friends: [FullName]): Bar
     }
-    
+
     input FullName {
       firstName: String
       lastName: String
     }
   service1: |
     type Foo {
-      barId: ID 
+      barId: ID
       id: ID
     }
 
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -75,12 +83,13 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
-            foo {
-                __typename__hydration__bar: __typename
-                hydration__bar__id: id
-            }
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__id: id
+          }
         }
       variables: { }
     # language=JSON
@@ -96,6 +105,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "barId", friends: [
@@ -111,7 +121,7 @@ serviceCalls:
               firstName: "first3"
               lastName: "last3"
             }
-        ]) {
+          ]) {
             name
           }
         }

@@ -1,5 +1,6 @@
 name: "new hydration call over itself with renamed types"
 enabled: true
+# language=GraphQL
 overallSchema:
   testing: |
     type Query {
@@ -16,8 +17,16 @@ overallSchema:
     type TestingMovie @renamed(from: "Movie") {
       id: ID!
       name: String
-      characters: [TestingCharacter] @hydrated(service: "testing" field: "characters" arguments: [{name: "ids" value: "$source.characterIds"}] identifiedBy: "id" batchSize: 3)
+      characters: [TestingCharacter]
+      @hydrated(
+        service: "testing"
+        field: "characters"
+        arguments: [{name: "ids" value: "$source.characterIds"}]
+        identifiedBy: "id"
+        batchSize: 3
+      )
     }
+# language=GraphQL
 underlyingSchema:
   testing: |
     type Character {
@@ -39,6 +48,7 @@ underlyingSchema:
     type Testing {
       movies: [Movie]
     }
+# language=GraphQL
 query: |
   query {
     testing {
@@ -61,6 +71,7 @@ variables: { }
 serviceCalls:
   - serviceName: "testing"
     request:
+      # language=GraphQL
       query: |
         query {
           testing {
@@ -105,9 +116,10 @@ serviceCalls:
       }
   - serviceName: "testing"
     request:
+      # language=GraphQL
       query: |
         query {
-          characters(ids: ["C2", "C3"]) {
+          characters(ids: ["C1", "C2", "C3"]) {
             id
             batch_hydration__characters__id: id
             name
@@ -119,6 +131,11 @@ serviceCalls:
       {
         "data": {
           "characters": [
+            {
+              "name": "Luke",
+              "batch_hydration__characters__id": "C1",
+              "id": "C1"
+            },
             {
               "name": "Leia",
               "batch_hydration__characters__id": "C2",
@@ -128,41 +145,6 @@ serviceCalls:
               "name": "Anakin",
               "batch_hydration__characters__id": "C3",
               "id": "C3"
-            }
-          ]
-        },
-        "extensions": {}
-      }
-  - serviceName: "testing"
-    request:
-      query: |
-        query {
-          characters(ids: ["C1", "C2", "C1"]) {
-            id
-            batch_hydration__characters__id: id
-            name
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "characters": [
-            {
-              "name": "Luke",
-              "batch_hydration__characters__id": "C1",
-              "id": "C1"
-            },
-            {
-              "name": "Leia",
-              "batch_hydration__characters__id": "C2",
-              "id": "C2"
-            },
-            {
-              "name": "Luke",
-              "batch_hydration__characters__id": "C1",
-              "id": "C1"
             }
           ]
         },

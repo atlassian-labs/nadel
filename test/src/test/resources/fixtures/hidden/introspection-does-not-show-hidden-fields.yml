@@ -1,5 +1,6 @@
 name: "introspection does not show hidden fields"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     directive @hidden on FIELD_DEFINITION
@@ -12,6 +13,7 @@ overallSchema:
       name: String
       area51: String @hidden
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {
@@ -24,29 +26,30 @@ underlyingSchema:
       name: String
       area51: String
     }
+# language=GraphQL
 query: |
   query introspection_query {
-      __schema {
-          queryType {
-              fields(includeDeprecated: false) {
-                  name
-              }
-          }
-      }
-
-      __type(name: "World") {
+    __schema {
+      queryType {
+        fields(includeDeprecated: false) {
           name
-          fields {
-              name
-          }
+        }
       }
+    }
+
+    __type(name: "World") {
+      name
+      fields {
+        name
+      }
+    }
   }
 variables: { }
 serviceCalls: [ ]
 # language=JSON
 response: |-
   {
-    "data":{
+    "data": {
       "__schema": {
         "queryType": {
           "fields": [

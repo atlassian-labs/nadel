@@ -1,5 +1,6 @@
 name: "repeated hydrated fields on the same level"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -7,13 +8,19 @@ overallSchema:
       issue(issueId: ID): Issue
     }
     type Foo {
-      issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.issueId"}])
+      issue: Issue
+      @hydrated(
+        service: "Foo"
+        field: "issue"
+        arguments: [{name: "issueId" value: "$source.issueId"}]
+      )
     }
     type Issue {
       id: ID
       name: String
       desc: String
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Foo {
@@ -30,6 +37,7 @@ underlyingSchema:
       foo: Foo
       issue(issueId: ID): Issue
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -45,6 +53,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -66,6 +75,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(issueId: "ISSUE-1") {

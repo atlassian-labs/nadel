@@ -1,5 +1,6 @@
 name: "query with pass through interfaces and unions that DONT have __typename in them work as expected"
 enabled: true
+# language=GraphQL
 overallSchema:
   PetService: |
     type Query {
@@ -51,6 +52,7 @@ overallSchema:
       name: String
       givesSmacks: Boolean
     }
+# language=GraphQL
 underlyingSchema:
   PetService: |
     interface Collar {
@@ -122,6 +124,7 @@ underlyingSchema:
     type Query {
       owner(id: String): Owner
     }
+# language=GraphQL
 query: |
   query petQ($isLoyal: Boolean) {
     pets(isLoyal: $isLoyal) {
@@ -147,6 +150,7 @@ variables:
 serviceCalls:
   - serviceName: "PetService"
     request:
+      # language=GraphQL
       query: |
         query petQ {
           raining(isLoyal: true) {
@@ -172,6 +176,7 @@ serviceCalls:
       }
   - serviceName: "PetService"
     request:
+      # language=GraphQL
       query: |
         query petQ {
           pets(isLoyal: true) {

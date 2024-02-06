@@ -1,6 +1,6 @@
 package graphql.nadel.dsl
 
-data class UnderlyingServiceHydration(
+data class NadelHydrationDefinition(
     val serviceName: String,
     val pathToActorField: List<String>,
     val arguments: List<RemoteArgumentDefinition>,
@@ -10,7 +10,10 @@ data class UnderlyingServiceHydration(
     val isBatched: Boolean,
     val batchSize: Int,
     val timeout: Int,
-    val conditionalHydration: Map<String, Any>?
+    val condition: NadelHydrationResultConditionDefinition?
 ) {
-    data class ObjectIdentifier(val sourceId: String, val resultId: String)
+    data class ObjectIdentifier(
+        val sourceId: String,
+        val resultId: String,
+    )
 }

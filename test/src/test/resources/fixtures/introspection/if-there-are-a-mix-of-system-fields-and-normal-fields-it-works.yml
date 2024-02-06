@@ -1,5 +1,6 @@
 name: "if there are a mix of system fields and normal fields it works"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -12,6 +13,7 @@ overallSchema:
     type Mutation {
       hello: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Mutation {
@@ -26,6 +28,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     __schema {
@@ -42,6 +45,7 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query {
           hello {
@@ -62,7 +66,7 @@ serviceCalls:
 # language=JSON
 response: |-
   {
-    "data":{
+    "data": {
       "__schema": {
         "queryType": {
           "name": "Query"
@@ -70,7 +74,8 @@ response: |-
       },
       "__typename": "Query",
       "hello": {
-        "name": "World"}
+        "name": "World"
+      }
     },
     "errors": []
   }

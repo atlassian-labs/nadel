@@ -1,12 +1,14 @@
 package graphql.nadel.engine.transform.query
 
 data class NadelQueryPath(val segments: List<String>) {
-    constructor(segment: String) : this(listOf(segment))
-
     val size: Int get() = segments.size
 
     operator fun plus(segment: String): NadelQueryPath {
         return NadelQueryPath(segments + segment)
+    }
+
+    fun drop(n: Int): NadelQueryPath {
+        return NadelQueryPath(segments.drop(n))
     }
 
     fun dropLast(n: Int): NadelQueryPath {

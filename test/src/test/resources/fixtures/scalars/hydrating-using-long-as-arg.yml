@@ -1,5 +1,6 @@
 name: "hydrating using long as arg"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -9,9 +10,15 @@ overallSchema:
     type Foo {
       id: ID
       createdAt: Long
-      successor: Foo @hydrated(service: "service" field: "successor" arguments: [{ name: "after" value: "$source.createdAt" }])
+      successor: Foo
+      @hydrated(
+        service: "service"
+        field: "successor"
+        arguments: [{ name: "after" value: "$source.createdAt" }]
+      )
     }
     scalar Long
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -36,6 +43,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -57,6 +65,7 @@ serviceCalls:
       }
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           successor(after: 3000000000) {

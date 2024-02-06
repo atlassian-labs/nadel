@@ -1,5 +1,6 @@
 name: "renamed and hydrated query using same underlying source"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -8,12 +9,18 @@ overallSchema:
     }
     type Foo {
       renamedField: String @renamed(from: "issue.field")
-      details: [Detail] @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.issue.fooId"}])
+      details: [Detail]
+      @hydrated(
+        service: "Foo"
+        field: "detail"
+        arguments: [{name: "detailId" value: "$source.issue.fooId"}]
+      )
     }
     type Detail {
       detailId: ID!
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Detail {
@@ -36,6 +43,7 @@ underlyingSchema:
       detail(detailId: ID): Detail
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -49,6 +57,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -82,6 +91,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           detail(detailId: "ID") {

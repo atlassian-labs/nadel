@@ -1,5 +1,6 @@
 name: "extending types via hydration returning a connection"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issue: |
     type Query {
@@ -28,14 +29,25 @@ overallSchema:
     type Association {
       id: ID
       nameOfAssociation: String
-      page: Page @hydrated(service: "Association" field: "pages.page" arguments: [{name: "id" value: "$source.pageId"}])
+      page: Page
+      @hydrated(
+        service: "Association"
+        field: "pages.page"
+        arguments: [{name: "id" value: "$source.pageId"}]
+      )
     }
     type Page {
       id: ID
     }
     extend type Issue {
-      association(filter: Filter): AssociationConnection @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
+      association(filter: Filter): AssociationConnection
+      @hydrated(
+        service: "Association"
+        field: "association"
+        arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}]
+      )
     }
+# language=GraphQL
 underlyingSchema:
   Issue: |
     type Issue {
@@ -76,6 +88,7 @@ underlyingSchema:
     input Filter {
       name: String
     }
+# language=GraphQL
 query: |
   query {
     synth {
@@ -94,6 +107,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issue"
     request:
+      # language=GraphQL
       query: |
         query {
           synth {
@@ -119,9 +133,10 @@ serviceCalls:
       }
   - serviceName: "Association"
     request:
+      # language=GraphQL
       query: |
         query {
-          association(filter: {name : "value"}, id: "ISSUE-1") {
+          association(filter: {name: "value"}, id: "ISSUE-1") {
             nodes {
               __typename__hydration__page: __typename
               hydration__page__pageId: pageId
@@ -146,6 +161,7 @@ serviceCalls:
       }
   - serviceName: "Association"
     request:
+      # language=GraphQL
       query: |
         query {
           pages {

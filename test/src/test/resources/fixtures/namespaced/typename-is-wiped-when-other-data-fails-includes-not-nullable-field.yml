@@ -1,5 +1,6 @@
 name: "typename is wiped when other data fails includes not nullable field"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -25,6 +26,7 @@ overallSchema:
       id: ID
       count: Int
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -52,6 +54,7 @@ underlyingSchema:
       id: ID
       count: Int
     }
+# language=GraphQL
 query: |
   {
     issue {
@@ -65,6 +68,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueSearch"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

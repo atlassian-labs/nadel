@@ -1,5 +1,6 @@
 name: "inlined all arguments with renamed field input is wrapped in a list"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -7,20 +8,21 @@ overallSchema:
     }
 
     input InputArgType @renamed(from: "UnderlyingInputArgType") {
-      age : Int
-      inputWithJson : [InputWithJson]
+      age: Int
+      inputWithJson: [InputWithJson]
     }
 
     input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
-      names : [String!]!
+      names: [String!]!
       payload: JSON
     }
 
     type Output @renamed(from: "OutputUnderlying") {
-      value : String
+      value: String
     }
 
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {
@@ -28,23 +30,23 @@ underlyingSchema:
     }
 
     input UnderlyingInputArgType {
-      age : Int
-      inputWithJson : [InputWithJsonUnderlying]
+      age: Int
+      inputWithJson: [InputWithJsonUnderlying]
     }
 
     input InputWithJsonUnderlying {
-      names : [String!]!
+      names: [String!]!
       payload: JSON
     }
 
     type OutputUnderlying  {
-      value : String
+      value: String
     }
 
     scalar JSON
 query: |
-  query myQuery($varX : [InputWithJson])  {
-    hello(arg: [{ age : 50, inputWithJson : $varX }] ) {
+  query myQuery($varX: [InputWithJson])  {
+    hello(arg: [{ age: 50, inputWithJson: $varX }] ) {
       value
     }
   }
@@ -60,6 +62,7 @@ variables:
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query myQuery($v0: [UnderlyingInputArgType]) {
           rename__hello__helloUnderlying: helloUnderlying(arg: $v0) {
@@ -82,7 +85,7 @@ serviceCalls:
       {
         "data": {
           "rename__hello__helloUnderlying": {
-            "value" : "world"
+            "value": "world"
           }
         },
         "extensions": {}
@@ -92,7 +95,7 @@ response: |-
   {
     "data": {
       "hello": {
-        "value" : "world"
+        "value": "world"
       }
     },
     "extensions": {}

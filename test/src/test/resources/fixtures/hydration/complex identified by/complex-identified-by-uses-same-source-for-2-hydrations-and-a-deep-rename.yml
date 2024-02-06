@@ -1,5 +1,6 @@
 name: "complex identified by uses same source for 2 hydrations and a deep rename"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -32,6 +33,7 @@ overallSchema:
       fooId: ID
       field: String
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Detail {
@@ -55,6 +57,7 @@ underlyingSchema:
       foos: [Foo]
       issues(issueIds: [ID]): [Issue]
     }
+# language=GraphQL
 query: |
   query {
     foos {
@@ -71,6 +74,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foos {
@@ -126,6 +130,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           issues(issueIds: ["Foo-1", "Foo-2"]) {
@@ -153,6 +158,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           issues(issueIds: ["Foo-3"]) {
@@ -176,6 +182,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           details(detailIds: ["Foo-1", "Foo-2"]) {
@@ -203,6 +210,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           details(detailIds: ["Foo-4"]) {

@@ -8,18 +8,16 @@ import graphql.Scalars.GraphQLString
 import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
-import graphql.language.StringValue
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.StaticArgument
+import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.AnyNamedNode
@@ -46,6 +44,7 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
+import java.math.BigInteger
 
 internal object NadelExecutionBlueprintFactory {
     fun create(
@@ -218,7 +217,7 @@ private class Factory(
     private fun makeHydrationFieldInstruction(
         hydratedFieldParentType: GraphQLObjectType,
         hydratedFieldDef: GraphQLFieldDefinition,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
     ): NadelFieldInstruction {
         val hydrationActorService = services.single { it.name == hydration.serviceName }
         val queryPathToActorField = hydration.pathToActorField
@@ -236,6 +235,8 @@ private class Factory(
                 actorFieldContainer = actorFieldContainer
             )
         }
+
+        val condition = getHydrationCondition(hydration)
 
         val hydrationArgs = getHydrationArguments(
             hydration = hydration,
@@ -258,14 +259,60 @@ private class Factory(
                 actorFieldDef = actorFieldDef,
                 actorInputValueDefs = hydrationArgs,
             ),
-            sourceFields = hydrationArgs.mapNotNull {
-                when (it.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
-                    is FieldResultValue -> it.valueSource.queryPathToField
-                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
-                }
-            },
+            sourceFields = getHydrationSourceFields(hydrationArgs, condition),
+            condition = condition,
         )
+    }
+
+    private fun getHydrationSourceFields(
+        hydrationArgs: List<NadelHydrationActorInputDef>,
+        condition: NadelHydrationCondition?,
+    ): List<NadelQueryPath> {
+        val sourceFieldsFromArgs = hydrationArgs.mapNotNull {
+            when (it.valueSource) {
+                is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                is FieldResultValue -> it.valueSource.queryPathToField
+                is NadelHydrationActorInputDef.ValueSource.StaticValue -> null
+            }
+        }
+
+        if (condition != null) {
+            return sourceFieldsFromArgs + condition.fieldPath
+        }
+
+        return sourceFieldsFromArgs
+    }
+
+    private fun getHydrationCondition(hydration: NadelHydrationDefinition): NadelHydrationCondition? {
+        if (hydration.condition == null) {
+            return null
+        }
+        if (hydration.condition.predicate.equals != null) {
+            return when (val expectedValue = hydration.condition.predicate.equals) {
+                is BigInteger -> NadelHydrationCondition.LongResultEquals(
+                    fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
+                    value = expectedValue.longValueExact(),
+                )
+                is String -> NadelHydrationCondition.StringResultEquals(
+                    fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
+                    value = expectedValue
+                )
+                else -> error("Unexpected type for equals predicate in conditional hydration")
+            }
+        }
+        if (hydration.condition.predicate.startsWith != null) {
+            return NadelHydrationCondition.StringResultStartsWith(
+                fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
+                prefix = hydration.condition.predicate.startsWith
+            )
+        }
+        if (hydration.condition.predicate.matches != null) {
+            return NadelHydrationCondition.StringResultMatches(
+                fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
+                regex = hydration.condition.predicate.matches.toRegex()
+            )
+        }
+        error("A conditional hydration is defined but doesnt have any predicate")
     }
 
     private fun getHydrationStrategy(
@@ -308,7 +355,7 @@ private class Factory(
         hydratedFieldDef: GraphQLFieldDefinition,
         actorFieldDef: GraphQLFieldDefinition,
         actorFieldContainer: GraphQLFieldsContainer,
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         actorService: Service,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
@@ -341,6 +388,8 @@ private class Factory(
             )
         }
 
+        val condition = getHydrationCondition(hydration)
+
         return NadelBatchHydrationFieldInstruction(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
@@ -352,42 +401,51 @@ private class Factory(
             batchHydrationMatchStrategy = matchStrategy,
             actorFieldDef = actorFieldDef,
             actorFieldContainer = actorFieldContainer,
-            sourceFields = Unit.let {
-                val paths = (when (matchStrategy) {
-                    NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
-                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
-                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
-                } + hydrationArgs.flatMap {
-                    when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
-                        is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
-                        is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
-                        is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList()
-                    }
-                }).toSet()
-
-                val prefixes = paths
-                    .asSequence()
-                    .map {
-                        it.segments.dropLast(1) + "*"
-                    }
-                    .toSet()
-
-                // Say we have paths = [
-                //     [page]
-                //     [page.id]
-                //     [page.status]
-                // ]
-                // (e.g. page was the input and the page.id and page.status are used to match batch objects)
-                // then this maps it to [
-                //     [page.id]
-                //     [page.status]
-                // ]
-                paths
-                    .filter {
-                        !prefixes.contains(it.segments + "*")
-                    }
-            },
+            sourceFields = getBatchHydrationSourceFields(matchStrategy, hydrationArgs, condition),
+            condition = condition,
         )
+    }
+
+    private fun getBatchHydrationSourceFields(
+        matchStrategy: NadelBatchHydrationMatchStrategy,
+        hydrationArgs: List<NadelHydrationActorInputDef>,
+        condition: NadelHydrationCondition?
+    ): List<NadelQueryPath> {
+        val paths = (when (matchStrategy) {
+            NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
+            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
+            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
+        } + hydrationArgs.flatMap {
+            when (val hydrationValueSource: NadelHydrationActorInputDef.ValueSource = it.valueSource) {
+                is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> emptyList()
+                is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
+                is NadelHydrationActorInputDef.ValueSource.StaticValue -> emptyList()
+            }
+        } + listOfNotNull(condition?.fieldPath)).toSet()
+
+        val prefixes = paths
+            .asSequence()
+            .map {
+                it.segments.dropLast(1) + "*"
+            }
+            .toSet()
+
+        // Say we have paths = [
+        //     [page]
+        //     [page.id]
+        //     [page.status]
+        // ]
+        // (e.g. page was the input and the page.id and page.status are used to match batch objects)
+        // then this maps it to [
+        //     [page.id]
+        //     [page.status]
+        // ]
+        val sourceFieldsFromArgs = paths
+            .filter {
+                !prefixes.contains(it.segments + "*")
+            }
+
+        return sourceFieldsFromArgs
     }
 
     private fun selectSourceFieldQueryPaths(hydrationValueSource: FieldResultValue): List<NadelQueryPath> {
@@ -452,15 +510,15 @@ private class Factory(
     }
 
     private fun getHydrationArguments(
-        hydration: UnderlyingServiceHydration,
+        hydration: NadelHydrationDefinition,
         hydratedFieldParentType: GraphQLObjectType,
         hydratedFieldDef: GraphQLFieldDefinition,
         actorFieldDef: GraphQLFieldDefinition,
     ): List<NadelHydrationActorInputDef> {
         return hydration.arguments.map { remoteArgDef ->
-            val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource.sourceType) {
-                FieldArgument -> {
-                    val argumentName = remoteArgDef.remoteArgumentSource.argumentName!!
+            val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource) {
+                is RemoteArgumentSource.FieldArgument -> {
+                    val argumentName = argSourceType.argumentName
                     val argumentDef = hydratedFieldDef.getArgument(argumentName)
                         ?: error("No argument '$argumentName' on field ${hydratedFieldParentType.name}.${hydratedFieldDef.name}")
                     val defaultValue = if (argumentDef.argumentDefaultValue.isLiteral) {
@@ -473,13 +531,13 @@ private class Factory(
                     }
 
                     NadelHydrationActorInputDef.ValueSource.ArgumentValue(
-                        argumentName = argumentName,
+                        argumentName = argSourceType.argumentName,
                         argumentDefinition = argumentDef,
                         defaultValue = defaultValue,
                     )
                 }
-                ObjectField -> {
-                    val pathToField = remoteArgDef.remoteArgumentSource.pathToField!!
+                is RemoteArgumentSource.ObjectField -> {
+                    val pathToField = argSourceType.pathToField
                     FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = getUnderlyingType(hydratedFieldParentType)
@@ -487,9 +545,9 @@ private class Factory(
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
-                StaticArgument -> {
+                is RemoteArgumentSource.StaticArgument -> {
                     NadelHydrationActorInputDef.ValueSource.StaticValue(
-                        value =  remoteArgDef.remoteArgumentSource.staticValue!!
+                        value = argSourceType.staticValue,
                     )
                 }
             }
@@ -514,7 +572,7 @@ private class Factory(
         return NadelDirectives.createFieldMapping(field)
     }
 
-    private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
+    private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<NadelHydrationDefinition> {
         return NadelDirectives.createUnderlyingServiceHydration(field, engineSchema)
     }
 

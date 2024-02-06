@@ -1,41 +1,43 @@
 name: "inlined all arguments"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
       hello(
-        arg: InputWithJson, 
-        arg1: JSON!, 
-        arg2 : String, 
-        arg3 : String, 
-        arg4Nullable : String, 
-        arg5Nullable : String
+        arg: InputWithJson,
+        arg1: JSON!,
+        arg2: String,
+        arg3: String,
+        arg4Nullable: String,
+        arg5Nullable: String
       ): String
     }
 
     input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
-      names : [String!]!
+      names: [String!]!
       payload: JSON
     }
 
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {
-      hello(arg: InputWithJsonUnderlying, 
-        arg1: JSON!, arg2 : String, arg3 : String, arg4Nullable : String, arg5Nullable : String): String
+      hello(arg: InputWithJsonUnderlying,
+        arg1: JSON!, arg2: String, arg3: String, arg4Nullable: String, arg5Nullable: String): String
     }
 
     input InputWithJsonUnderlying {
-      names : [String!]!
+      names: [String!]!
       payload: JSON
     }
 
     scalar JSON
 query: |
-  query myQuery($inputVar1 : String, $inputVar2 : String! = "defaulted", $inputVar3 : String) {
+  query myQuery($inputVar1: String, $inputVar2: String! = "defaulted", $inputVar3: String) {
     hello(
-          arg: { names : ["Bobba", "Fett"] payload: {name: "Bobert", age: "23"}}, 
+          arg: { names: ["Bobba", "Fett"] payload: {name: "Bobert", age: "23"}}, 
           arg1: {interests: ["photography", "basketball"]},
           arg2: null,
           arg3: $inputVar1,
@@ -45,7 +47,7 @@ query: |
   }
 
 variables: {
-  inputVar1 : "input1"
+  inputVar1: "input1"
 }
 
 serviceCalls:

@@ -1,11 +1,13 @@
-name: "new complex-identified-by-with-rename"
+name: "new complex identified by with rename"
 enabled: true
+# language=GraphQL
 overallSchema:
+  # language=GraphQL
   UserService: |
     type Query {
       users(id: [UserInput]): [User]
     }
-    input UserInput @renamed(from : "UserInputUnderlying") {
+    input UserInput @renamed(from: "UserInputUnderlying") {
       userId: ID
       site: String
     }
@@ -13,6 +15,7 @@ overallSchema:
       id: ID
       name: String
     }
+  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -30,7 +33,9 @@ overallSchema:
         batchSize: 4
       )
     }
+# language=GraphQL
 underlyingSchema:
+  # language=GraphQL
   UserService: |
     type Query {
       users(id: [UserInputUnderlying]): [User]
@@ -46,6 +51,7 @@ underlyingSchema:
       siteId: ID
       name: String
     }
+  # language=GraphQL
   Issues: |
     type Query {
       issues: [Issue]
@@ -60,6 +66,7 @@ underlyingSchema:
       authorId: UserRef
       id: ID
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -74,6 +81,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -155,21 +163,20 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            name
+            batch_hydration__author__id: id
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:
         v0:
           - site: "hello"
             userId: "USER-5"
-          - site: "jdog"
-            userId: "USER-2"
           - site: "hello"
             userId: "USER-2"
     # language=JSON
@@ -185,12 +192,6 @@ serviceCalls:
             },
             {
               "id": "USER-2",
-              "name": "J-Two",
-              "batch_hydration__author__id": "USER-2",
-              "batch_hydration__author__siteId": "jdog"
-            },
-            {
-              "id": "USER-2",
               "name": "H-Two",
               "batch_hydration__author__id": "USER-2",
               "batch_hydration__author__siteId": "hello"
@@ -201,13 +202,14 @@ serviceCalls:
       }
   - serviceName: "UserService"
     request:
+      # language=GraphQL
       query: |
         query ($v0: [UserInputUnderlying]) {
-            users(id: $v0) {
-              id
-              name
-              batch_hydration__author__id: id
-              batch_hydration__author__siteId: siteId
+          users(id: $v0) {
+            id
+            name
+            batch_hydration__author__id: id
+            batch_hydration__author__siteId: siteId
           }
         }
       variables:

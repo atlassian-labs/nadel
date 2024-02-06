@@ -1,0 +1,222 @@
+name: "complex input object with indexed hydration"
+enabled: true
+# language=GraphQL
+overallSchema:
+  Activity: |
+    type Query {
+      activities: [Activity]
+    }
+
+    type Activity {
+      id: ID
+      issue: Issue @hydrated(
+        service: "Issue"
+        field: "issues"
+        arguments: [{name: "issuesInput" value: "$source.context.issueHydrationInput"}]
+        indexed: true
+      )
+    }
+  Issue: |
+    type Query {
+      issues(issuesInput: IssueInput!): [Issue]
+    }
+
+    type Issue {
+      issueId: ID
+      description: String
+    }
+
+    input IssueInput {
+      id: ID!
+      site: ID!
+    }
+# language=GraphQL
+underlyingSchema:
+  Activity: |
+    type Query {
+      activities: [Activity]
+    }
+
+    type Activity {
+      id: ID
+      context: HydrationContext
+    }
+
+    type HydrationContext {
+      issueHydrationInput: IssueHydrationInput
+    }
+
+    type IssueHydrationInput {
+      id: ID!
+      site: ID!
+    }
+  Issue: |
+    type Query {
+      issues(issuesInput: IssueInput!): [Issue]
+    }
+
+    type Issue {
+      issueId: ID
+      description: String
+    }
+
+    input IssueInput {
+      id: ID!
+      site: ID!
+    }
+# language=GraphQL
+query: |
+  query {
+    activities {
+      id
+      issue {
+        issueId
+        description
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Activity"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          activities {
+            __typename__batch_hydration__issue: __typename
+            batch_hydration__issue__context: context {
+              issueHydrationInput {
+                id
+              }
+            }
+            batch_hydration__issue__context: context {
+              issueHydrationInput {
+                site
+              }
+            }
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "activities": [
+            {
+              "__typename__batch_hydration__issue": "Activity",
+              "batch_hydration__issue__context": {
+                "issueHydrationInput": {
+                  "id": "ISSUE-0",
+                  "site": "CLOUD-0"
+                }
+              },
+              "id": "ACTIVITY-0"
+            },
+            {
+              "__typename__batch_hydration__issue": "Activity",
+              "batch_hydration__issue__context": {
+                "issueHydrationInput": {
+                  "id": "ISSUE-1",
+                  "site": "CLOUD-0"
+                }
+              },
+              "id": "ACTIVITY-1"
+            },
+            {
+              "__typename__batch_hydration__issue": "Activity",
+              "batch_hydration__issue__context": {
+                "issueHydrationInput": {
+                  "id": "ISSUE-2",
+                  "site": "CLOUD-0"
+                }
+              },
+              "id": "ACTIVITY-2"
+            },
+            {
+              "__typename__batch_hydration__issue": "Activity",
+              "batch_hydration__issue__context": {
+                "issueHydrationInput": {
+                  "id": "ISSUE-3",
+                  "site": "CLOUD-0"
+                }
+              },
+              "id": "ACTIVITY-3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "Issue"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          issues(issuesInput: [{id: "ISSUE-0", site: "CLOUD-0"}, {id: "ISSUE-1", site: "CLOUD-0"}, {id: "ISSUE-2", site: "CLOUD-0"}, {id: "ISSUE-3", site: "CLOUD-0"}]) {
+            description
+            issueId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "issueId": "ISSUE-0",
+              "description": "fix A"
+            },
+            {
+              "issueId": "ISSUE-1",
+              "description": "fix B"
+            },
+            {
+              "issueId": "ISSUE-2",
+              "description": "fix C"
+            },
+            {
+              "issueId": "ISSUE-3",
+              "description": "fix D"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "activities": [
+        {
+          "id": "ACTIVITY-0",
+          "issue": {
+            "issueId": "ISSUE-0",
+            "description": "fix A"
+          }
+        },
+        {
+          "id": "ACTIVITY-1",
+          "issue": {
+            "issueId": "ISSUE-1",
+            "description": "fix B"
+          }
+        },
+        {
+          "id": "ACTIVITY-2",
+          "issue": {
+            "issueId": "ISSUE-2",
+            "description": "fix C"
+          }
+        },
+        {
+          "id": "ACTIVITY-3",
+          "issue": {
+            "issueId": "ISSUE-3",
+            "description": "fix D"
+          }
+        }
+      ]
+    },
+    "errors": []
+  }

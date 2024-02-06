@@ -1,5 +1,6 @@
 name: "hydration list input"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -15,8 +16,14 @@ overallSchema:
     }
     type Foo {
       id: ID
-      bar: [Bar] @hydrated(service: "service2" field: "barById" arguments: [{name: "id" value: "$source.barIds"}])
+      bar: [Bar]
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [{name: "id" value: "$source.barIds"}]
+      )
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Bar {
@@ -36,6 +43,7 @@ underlyingSchema:
     type Query {
       foo: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -49,6 +57,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -74,6 +83,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "barId1") {
@@ -95,6 +105,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "barId3") {
@@ -116,6 +127,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           barById(id: "barId2") {

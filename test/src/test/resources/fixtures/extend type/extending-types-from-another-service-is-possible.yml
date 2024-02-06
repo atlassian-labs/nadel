@@ -1,12 +1,19 @@
 name: "extending types from another service is possible"
 enabled: true
+# language=GraphQL
 overallSchema:
   Service2: |
     type Query {
       lookup(id: ID): Extension
     }
     extend type Root {
-      extension: Extension @hydrated(service: "Service2" field: "lookup" arguments: [{name: "id" value: "$source.id"}] identifiedBy: "id")
+      extension: Extension
+      @hydrated(
+        service: "Service2"
+        field: "lookup"
+        arguments: [{name: "id" value: "$source.id"}]
+        identifiedBy: "id"
+      )
     }
     type Extension {
       id: ID
@@ -25,6 +32,7 @@ overallSchema:
     extend type Root {
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   Service2: |
     type Extension {
@@ -51,6 +59,7 @@ underlyingSchema:
     extend type Root {
       name: String
     }
+# language=GraphQL
 query: |
   query {
     root {
@@ -67,6 +76,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Service1"
     request:
+      # language=GraphQL
       query: |
         query {
           anotherRoot
@@ -82,6 +92,7 @@ serviceCalls:
       }
   - serviceName: "Service1"
     request:
+      # language=GraphQL
       query: |
         query {
           root {
@@ -107,6 +118,7 @@ serviceCalls:
       }
   - serviceName: "Service2"
     request:
+      # language=GraphQL
       query: |
         query {
           lookup(id: "rootId") {

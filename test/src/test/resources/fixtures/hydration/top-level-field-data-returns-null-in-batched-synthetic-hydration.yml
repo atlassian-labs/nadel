@@ -1,5 +1,6 @@
 name: "top level field data returns null in batched synthetic hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
   service2: |
     type Query {
@@ -18,8 +19,16 @@ overallSchema:
     }
     type Issue {
       id: ID
-      authors: [User] @hydrated(service: "service2" field: "users.usersByIds" arguments: [{name: "id" value: "$source.authorIds"}] identifiedBy: "id" batchSize: 3)
+      authors: [User]
+      @hydrated(
+        service: "service2"
+        field: "users.usersByIds"
+        arguments: [{name: "id" value: "$source.authorIds"}]
+        identifiedBy: "id"
+        batchSize: 3
+      )
     }
+# language=GraphQL
 underlyingSchema:
   service2: |
     type Query {
@@ -43,6 +52,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -56,6 +66,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
         query {
           issues {
@@ -100,6 +111,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           users {
@@ -122,6 +134,7 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
         query {
           users {

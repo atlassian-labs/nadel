@@ -1,5 +1,6 @@
 name: "chain rename transform"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -18,6 +19,7 @@ overallSchema:
       NorthAmerica
       SouthAmerica
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {
@@ -69,7 +71,8 @@ serviceCalls:
             "__typename__rename__cities": "World",
             "id": "Earth",
             "rename__cities__places": [
-              "Uhh yea I know cities"]
+              "Uhh yea I know cities"
+            ]
           }
         },
         "extensions": {}

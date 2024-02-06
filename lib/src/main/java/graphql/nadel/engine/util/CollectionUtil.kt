@@ -5,6 +5,8 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
+internal typealias PairList<A, B> = List<Pair<A, B>>
+
 /**
  * Like [singleOrNull] but the single item must be of type [T].
  */
@@ -263,4 +265,93 @@ fun <T> Sequence<T>.all(min: Int, predicate: (T) -> Boolean): Boolean {
     }
 
     return count >= min
+}
+
+fun <A, B : Any> Sequence<Pair<A, B?>>.filterPairSecondNotNull(): Sequence<Pair<A, B>> {
+    return mapNotNull { pair ->
+        if (pair.second == null) {
+            null
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            pair as Pair<A, B>
+        }
+    }
+}
+
+/**
+ * Like [List.partition] but only returns the count of each partition.
+ */
+internal fun <E> List<E>.partitionCount(predicate: (E) -> Boolean): Pair<Int, Int> {
+    var first = 0
+    var second = 0
+
+    for (element in this) {
+        if (predicate(element)) {
+            first++
+        } else {
+            second++
+        }
+    }
+
+    return first to second
+}
+
+/**
+ * Like [Sequence.zip] but throws an exception when the two sequences do not have the same number
+ * of items to join.
+ */
+internal inline fun <A, B> Sequence<A>.zipOrThrow(
+    other: Sequence<B>,
+    crossinline errorFunction: () -> Nothing,
+): Sequence<Pair<A, B>> {
+    return zipOrThrow(
+        other = object : Iterable<B> {
+            override fun iterator(): Iterator<B> {
+                return other.iterator()
+            }
+        },
+        errorFunction = errorFunction,
+    )
+}
+
+/**
+ * Like [Sequence.zip] but throws an exception when the two sequences do not have the same number
+ * of items to join.
+ */
+internal inline fun <A, B> Sequence<A>.zipOrThrow(
+    other: Iterable<B>,
+    crossinline errorFunction: () -> Nothing,
+): Sequence<Pair<A, B>> {
+    val sequenceA = this
+
+    return object : Sequence<Pair<A, B>> {
+        override fun iterator(): Iterator<Pair<A, B>> {
+            val iteratorA = sequenceA.iterator()
+            val iteratorB = other.iterator()
+
+            return object : Iterator<Pair<A, B>> {
+                override fun hasNext(): Boolean {
+                    return when {
+                        iteratorA.hasNext() && iteratorB.hasNext() -> true
+                        iteratorA.hasNext() || iteratorB.hasNext() -> errorFunction()
+                        else -> false
+                    }
+                }
+
+                override fun next(): Pair<A, B> {
+                    return iteratorA.next() to iteratorB.next()
+                }
+            }
+        }
+    }
+}
+
+internal fun <T> List<T>.startsWith(other: List<T>): Boolean {
+    return if (size >= other.size) {
+        asSequence()
+            .zip(other.asSequence())
+            .all { (a, b) -> a == b }
+    } else {
+        false
+    }
 }

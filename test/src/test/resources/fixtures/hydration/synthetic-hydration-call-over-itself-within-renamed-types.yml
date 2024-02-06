@@ -1,5 +1,6 @@
 name: "synthetic hydration call over itself within renamed types"
 enabled: true
+# language=GraphQL
 overallSchema:
   testing: |
     type Query {
@@ -19,8 +20,16 @@ overallSchema:
     type TestingMovie @renamed(from: "Movie") {
       id: ID!
       name: String
-      characters: [TestingCharacter] @hydrated(service: "testing" field: "tests.characters" arguments: [{name: "ids" value: "$source.characterIds"}] identifiedBy: "id" batchSize: 3)
+      characters: [TestingCharacter]
+      @hydrated(
+        service: "testing"
+        field: "tests.characters"
+        arguments: [{name: "ids" value: "$source.characterIds"}]
+        identifiedBy: "id"
+        batchSize: 3
+      )
     }
+# language=GraphQL
 underlyingSchema:
   testing: |
     type Character {
@@ -46,6 +55,7 @@ underlyingSchema:
     type Testing {
       movies: [Movie]
     }
+# language=GraphQL
 query: |
   query {
     tests {
@@ -65,6 +75,7 @@ variables: { }
 serviceCalls:
   - serviceName: "testing"
     request:
+      # language=GraphQL
       query: |
         query {
           tests {
@@ -113,6 +124,7 @@ serviceCalls:
       }
   - serviceName: "testing"
     request:
+      # language=GraphQL
       query: |
         query {
           tests {
@@ -147,6 +159,7 @@ serviceCalls:
       }
   - serviceName: "testing"
     request:
+      # language=GraphQL
       query: |
         query {
           tests {

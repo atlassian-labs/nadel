@@ -1,15 +1,18 @@
 name: "service context is being set"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
       foo: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {
       foo: String
     }
+# language=GraphQL
 query: |
   query {
     foo
@@ -18,6 +21,7 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query {
           foo

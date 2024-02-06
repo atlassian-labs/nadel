@@ -1,5 +1,6 @@
 name: "__typename is passed on namespaced fields"
 enabled: true
+# language=GraphQL
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -16,6 +17,7 @@ overallSchema:
       id: ID
       text: String
     }
+# language=GraphQL
 underlyingSchema:
   Issues: |
     type Query {
@@ -30,6 +32,7 @@ underlyingSchema:
       id: ID
       text: String
     }
+# language=GraphQL
 query: |
   {
     issue {
@@ -46,6 +49,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Issues"
     request:
+      # language=GraphQL
       query: |
         query {
           issue {

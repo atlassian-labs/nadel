@@ -1,0 +1,153 @@
+name: "new batching conditional hydration with multiple true conditions takes first"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barsById(ids: [ID]): [Bar]
+      othersById(ids: [ID]): [Bar]
+    }
+    type Bar {
+      id: ID
+      name: String
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      type: String
+      bar: [Bars] 
+        @hydrated(
+          service: "service2"
+          field: "barsById"
+          arguments: [
+            {
+              name: "ids"
+              value: "$source.barIds"
+            }
+          ]
+          when: {
+            result: {
+              sourceField: "type"
+              predicate: { startsWith: "this" }
+            }
+          }
+        )
+        @hydrated(
+          service: "service2"
+          field: "othersById"
+          arguments: [
+            {
+              name: "ids"
+              value: "$source.barIds"
+            }
+          ]
+          when: {
+            result: {
+              sourceField: "type"
+              predicate: { equals: "thisType" }
+            }
+          }
+        )
+    }
+    union Bars = Bar
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barsById(ids: [ID]): [Bar]
+      othersById(ids: [ID]): [Bar]
+    }
+  service1: |
+    type Foo {
+      barIds: [ID]
+      id: ID
+      type: String
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        ... on Bar {
+          name
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__batch_hydration__bar: __typename
+            batch_hydration__bar__barIds: barIds
+            batch_hydration__bar__barIds: barIds
+            batch_hydration__bar__type: type
+            batch_hydration__bar__type: type
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__batch_hydration__bar": "Foo",
+            "batch_hydration__bar__barIds": ["barId1", "barId2"],
+            "batch_hydration__bar__type": "thisType"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      query: |
+        query {
+          barsById(ids: ["barId1", "barId2"]) {
+            batch_hydration__bar__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barsById": [{
+            "batch_hydration__bar__id": "barId1",
+            "name": "Bar1"
+          }, {
+            "batch_hydration__bar__id": "barId2",
+            "name": "Bar2"
+          }]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": [
+          {
+            "name":"Bar1"
+          },
+          {
+            "name":"Bar2"
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

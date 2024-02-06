@@ -31,9 +31,17 @@ dependencies {
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.15.3")
     testImplementation("org.openjdk.jmh:jmh-core:1.37")
     testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.37")
+
+    testImplementation(kotlin("test"))
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest:kotest-framework-datatest:5.8.0")
     testImplementation("io.mockk:mockk:1.13.8")
+
+    testImplementation("com.tngtech.archunit:archunit:1.2.1")
 }
 
 // compileJava.source file("build/generated-src"), sourceSets.main.java
@@ -53,6 +61,7 @@ tasks.withType<KotlinCompile>().configureEach {
             "-java-parameters",
             "-Xopt-in=kotlin.RequiresOptIn",
             "-Xjvm-default=all",
+            "-Xcontext-receivers",
         )
     }
 }

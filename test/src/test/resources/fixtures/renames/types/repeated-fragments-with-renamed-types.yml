@@ -1,5 +1,6 @@
 name: "repeated fragments with renamed types"
 enabled: true
+# language=GraphQL
 overallSchema:
   Users: |
     type Query {
@@ -27,6 +28,7 @@ overallSchema:
     interface Node {
       id: ID!
     }
+# language=GraphQL
 underlyingSchema:
   Users: |
     type Query {
@@ -54,6 +56,7 @@ underlyingSchema:
     interface Node {
       id: ID!
     }
+# language=GraphQL
 query: |
   query($var1: ID!) {
     service(id: $var1) {
@@ -127,6 +130,7 @@ variables:
 serviceCalls:
   - serviceName: "Users"
     request:
+      # language=GraphQL
       query: |
         query {
           service(id: "service-1") {

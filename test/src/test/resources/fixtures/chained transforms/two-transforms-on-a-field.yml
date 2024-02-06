@@ -1,5 +1,6 @@
 name: "two transforms on a field"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     directive @toBeDeleted on FIELD_DEFINITION
@@ -14,6 +15,7 @@ overallSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -29,6 +31,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -43,6 +46,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {

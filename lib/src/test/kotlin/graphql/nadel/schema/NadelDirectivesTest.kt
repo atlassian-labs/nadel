@@ -6,20 +6,20 @@ import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedFromDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedTemplateDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationComplexIdentifiedBy
+import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionPredicateDefinition
-import graphql.nadel.schema.NadelDirectives.nadelWhenConditionResultDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.MockedWiringFactory
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertTrue
 
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
@@ -28,28 +28,33 @@ class NadelDirectivesTest : DescribeSpec({
     val commonDefs = """
         ${AstPrinter.printAst(hydratedDirectiveDefinition)}
         ${AstPrinter.printAst(nadelHydrationArgumentDefinition)}
-        ${AstPrinter.printAst(nadelHydrationComplexIdentifiedBy)}
+        ${AstPrinter.printAst(nadelBatchObjectIdentifiedByDefinition)}
         ${AstPrinter.printAst(nadelHydrationFromArgumentDefinition)}
         ${AstPrinter.printAst(nadelHydrationTemplateEnumDefinition)}
         ${AstPrinter.printAst(hydratedFromDirectiveDefinition)}
         ${AstPrinter.printAst(hydratedTemplateDirectiveDefinition)}
-        ${AstPrinter.printAst(nadelWhenConditionDefinition)}
-        ${AstPrinter.printAst(nadelWhenConditionPredicateDefinition)}
-        ${AstPrinter.printAst(nadelWhenConditionResultDefinition)}
+        ${AstPrinter.printAst(nadelHydrationConditionDefinition)}
+        ${AstPrinter.printAst(nadelHydrationResultFieldPredicateDefinition)}
+        ${AstPrinter.printAst(nadelHydrationResultConditionDefinition)}
         scalar JSON
     """
 
     fun getSchema(schemaText: String): GraphQLSchema {
         val typeDefs = SchemaParser().parse(commonDefs + "\n" + schemaText)
-        return SchemaGenerator().makeExecutableSchema(typeDefs, RuntimeWiring
-            .newRuntimeWiring()
-            .wiringFactory(NeverWiringFactory()).build())
+        return SchemaGenerator().makeExecutableSchema(
+            typeDefs,
+            RuntimeWiring
+                .newRuntimeWiring()
+                .wiringFactory(NeverWiringFactory())
+                .build(),
+        )
     }
 
     describe("@hydrated") {
         it("can parse") {
             // given
-            val schema = getSchema("""
+            val schema = getSchema(
+                """
                 type Query {
                     field: String
                         @hydrated(
@@ -69,7 +74,8 @@ class NadelDirectivesTest : DescribeSpec({
                             }
                         )
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             val field = schema.queryType.getField("field")
 
@@ -83,19 +89,22 @@ class NadelDirectivesTest : DescribeSpec({
             assert(hydration.timeout == 100)
             assert(hydration.arguments.size == 2)
 
-            assert(hydration.arguments[0].name == "fieldVal")
-            assert(hydration.arguments[0].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.ObjectField)
-            assert(hydration.arguments[0].remoteArgumentSource.pathToField == listOf("namespace", "issueId"))
+            assertTrue(hydration.arguments[0].name == "fieldVal")
+            val firstArgumentSource = hydration.arguments[0].remoteArgumentSource
+            assertTrue(firstArgumentSource is RemoteArgumentSource.ObjectField)
+            assertTrue(firstArgumentSource.pathToField == listOf("namespace", "issueId"))
 
-            assert(hydration.arguments[1].name == "argVal")
-            assert(hydration.arguments[1].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.FieldArgument)
-            assert(hydration.arguments[1].remoteArgumentSource.argumentName == "cloudId")
+            assertTrue(hydration.arguments[1].name == "argVal")
+            val secondArgumentSource = hydration.arguments[1].remoteArgumentSource
+            assertTrue(secondArgumentSource is RemoteArgumentSource.FieldArgument)
+            assertTrue(secondArgumentSource.argumentName == "cloudId")
         }
     }
 
     describe("@hydratedFrom") {
         it("can parse") {
-            val schema = getSchema("""
+            val schema = getSchema(
+                """
                 extend enum NadelHydrationTemplate {
                     JIRA @hydratedTemplate(
                         service: "IssueService"
@@ -117,7 +126,8 @@ class NadelDirectivesTest : DescribeSpec({
                             ]
                         )
                 }
-            """.trimIndent())
+                """.trimIndent()
+            )
 
             val fieldDef = schema.queryType.getFieldDefinition("field")
 
@@ -130,22 +140,27 @@ class NadelDirectivesTest : DescribeSpec({
             assert(hydration.batchSize == 50)
             assert(hydration.timeout == 100)
             assert(hydration.arguments.size == 4)
+            val (argumentOne, argumentTwo, argumentThree, argumentFour) = hydration.arguments
 
-            assert(hydration.arguments[0].name == "fieldVal")
-            assert(hydration.arguments[0].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.ObjectField)
-            assert(hydration.arguments[0].remoteArgumentSource.pathToField == listOf("namespace", "issueId"))
+            assertTrue(argumentOne.name == "fieldVal")
+            val remoteArgumentSourceOne = argumentOne.remoteArgumentSource
+            assertTrue(remoteArgumentSourceOne is RemoteArgumentSource.ObjectField)
+            assertTrue(remoteArgumentSourceOne.pathToField == listOf("namespace", "issueId"))
 
-            assert(hydration.arguments[1].name == "argVal")
-            assert(hydration.arguments[1].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.FieldArgument)
-            assert(hydration.arguments[1].remoteArgumentSource.argumentName == "cloudId")
+            assertTrue(argumentTwo.name == "argVal")
+            val remoteArgumentSourceTwo = argumentTwo.remoteArgumentSource
+            assertTrue(remoteArgumentSourceTwo is RemoteArgumentSource.FieldArgument)
+            assertTrue(remoteArgumentSourceTwo.argumentName == "cloudId")
 
-            assert(hydration.arguments[2].name == "fieldValLegacy")
-            assert(hydration.arguments[2].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.ObjectField)
-            assert(hydration.arguments[2].remoteArgumentSource.pathToField == listOf("namespace", "issueId"))
+            assertTrue(argumentThree.name == "fieldValLegacy")
+            val remoteArgumentSourceThree = argumentThree.remoteArgumentSource
+            assertTrue(remoteArgumentSourceThree is RemoteArgumentSource.ObjectField)
+            assertTrue(remoteArgumentSourceThree.pathToField == listOf("namespace", "issueId"))
 
-            assert(hydration.arguments[3].name == "argValLegacy")
-            assert(hydration.arguments[3].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.FieldArgument)
-            assert(hydration.arguments[3].remoteArgumentSource.argumentName == "cloudId")
+            assertTrue(argumentFour.name == "argValLegacy")
+            val remoteArgumentSourceFour = argumentFour.remoteArgumentSource
+            assertTrue(remoteArgumentSourceFour is RemoteArgumentSource.FieldArgument)
+            assertTrue(remoteArgumentSourceFour.argumentName == "cloudId")
         }
 
         context("throws exception if valueFromField or valueFromArg are both specified or if neither are specified") {
@@ -164,7 +179,8 @@ class NadelDirectivesTest : DescribeSpec({
                 ),
             ) { (arguments, error) ->
                 // given
-                val schema = getSchema("""
+                val schema = getSchema(
+                    """
                     extend enum NadelHydrationTemplate {
                         JIRA @hydratedTemplate(
                             service: "IssueService"
@@ -180,7 +196,8 @@ class NadelDirectivesTest : DescribeSpec({
                                 arguments: [$arguments]
                             )
                     }
-                """.trimIndent())
+                    """.trimIndent()
+                )
                 val fieldDef = schema.queryType.getField("field")
 
                 // when

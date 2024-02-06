@@ -1,5 +1,6 @@
 name: "can delete fields and types"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -13,6 +14,7 @@ overallSchema:
       id: ID
       foo: Foo
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -26,6 +28,7 @@ underlyingSchema:
       id: ID
       foo: Foo
     }
+# language=GraphQL
 query: |
   query GetTypes {
     __schema {

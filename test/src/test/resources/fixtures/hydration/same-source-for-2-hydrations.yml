@@ -1,5 +1,6 @@
 name: "same source for 2 hydrations"
 enabled: true
+# language=GraphQL
 overallSchema:
   Foo: |
     type Query {
@@ -8,8 +9,18 @@ overallSchema:
       issue(issueId: ID): Issue
     }
     type Foo {
-      issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.fooId"}])
-      detail: Detail @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.fooId"}])
+      issue: Issue
+      @hydrated(
+        service: "Foo"
+        field: "issue"
+        arguments: [{name: "issueId" value: "$source.fooId"}]
+      )
+      detail: Detail
+      @hydrated(
+        service: "Foo"
+        field: "detail"
+        arguments: [{name: "detailId" value: "$source.fooId"}]
+      )
     }
     type Detail {
       detailId: ID!
@@ -19,6 +30,7 @@ overallSchema:
       fooId: ID
       field: String
     }
+# language=GraphQL
 underlyingSchema:
   Foo: |
     type Detail {
@@ -42,6 +54,7 @@ underlyingSchema:
       foo: Foo
       issue(issueId: ID): Issue
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -57,6 +70,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {
@@ -82,6 +96,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           issue(issueId: "ID") {
@@ -101,6 +116,7 @@ serviceCalls:
       }
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           detail(detailId: "ID") {

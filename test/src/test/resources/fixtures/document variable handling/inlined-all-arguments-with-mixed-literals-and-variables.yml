@@ -1,5 +1,6 @@
 name: "inlined all arguments with mixed literals and variables"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -7,16 +8,17 @@ overallSchema:
     }
 
     input InputArgType @renamed(from: "UnderlyingInputArgType") {
-      age : Int
-      inputWithJson : InputWithJson
+      age: Int
+      inputWithJson: InputWithJson
     }
 
     input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
-      names : [String!]!
+      names: [String!]!
       payload: JSON
     }
 
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   MyService: |-
     type Query {
@@ -24,19 +26,19 @@ underlyingSchema:
     }
 
     input UnderlyingInputArgType {
-      age : Int
-      inputWithJson : InputWithJsonUnderlying
+      age: Int
+      inputWithJson: InputWithJsonUnderlying
     }
 
     input InputWithJsonUnderlying {
-      names : [String!]!
+      names: [String!]!
       payload: JSON
     }
 
     scalar JSON
 query: |
-  query myQuery($varX : InputWithJson)  {
-    hello(arg: { age : 50, inputWithJson : $varX } )
+  query myQuery($varX: InputWithJson)  {
+    hello(arg: { age: 50, inputWithJson: $varX } )
   }
 variables:
   varX:
@@ -50,6 +52,7 @@ variables:
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query myQuery($v0: UnderlyingInputArgType) {
           hello(arg: $v0)

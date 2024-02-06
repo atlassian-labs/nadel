@@ -1,5 +1,6 @@
 name: "dynamic service resolution handles complex fragments"
 enabled: true
+# language=GraphQL
 overallSchema:
   shared: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -26,6 +27,7 @@ overallSchema:
       id: ID!
       issueKey: String
     }
+# language=GraphQL
 underlyingSchema:
   shared: |
     type Query {
@@ -33,17 +35,17 @@ underlyingSchema:
     }
   RepoService: |
     type Query {
-        node(id: ID): Node
+      node(id: ID): Node
     }
 
     interface Node {
-        id: ID!
+      id: ID!
     }
 
     type PullRequest implements Node {
-        id: ID!
-        description: String
-        author: User
+      id: ID!
+      description: String
+      author: User
     }
 
     type User {
@@ -52,17 +54,18 @@ underlyingSchema:
     }
   IssueService: |
     type Query {
-        node(id: ID): Node
+      node(id: ID): Node
     }
 
     interface Node {
-        id: ID!
+      id: ID!
     }
 
     type Issue implements Node {
-        id: ID!
-        issueKey: String
+      id: ID!
+      issueKey: String
     }
+# language=GraphQL
 query: |
   {
     node(id: "pull-request:id-123") {
@@ -90,6 +93,7 @@ variables: { }
 serviceCalls:
   - serviceName: "RepoService"
     request:
+      # language=GraphQL
       query: |
         query {
           node(id: "pull-request:id-123") {

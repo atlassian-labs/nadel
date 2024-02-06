@@ -1,5 +1,6 @@
 name: "execution id is transferred from input"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
@@ -16,6 +17,7 @@ overallSchema:
       onWorldUpdate: World
       onAnotherUpdate: World
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Mutation {
@@ -35,6 +37,7 @@ underlyingSchema:
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
     hello {
@@ -48,6 +51,7 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query {
           hello {

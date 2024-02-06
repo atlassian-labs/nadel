@@ -1,5 +1,6 @@
 name: "new expecting one child error on extensive field argument passed to synthetic hydration"
 enabled: true
+# language=GraphQL
 overallSchema:
   TestBoard: |
     type Query {
@@ -11,7 +12,14 @@ overallSchema:
     }
     type SoftwareCard @renamed(from: "Card") {
       id: ID
-      assignee: User @hydrated(service: "Users" field: "usersQuery.users" arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}] identifiedBy: "accountId" batchSize: 3)
+      assignee: User
+      @hydrated(
+        service: "Users"
+        field: "usersQuery.users"
+        arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}]
+        identifiedBy: "accountId"
+        batchSize: 3
+      )
     }
   Users: |
     type Query {
@@ -23,6 +31,7 @@ overallSchema:
     type User {
       accountId: ID
     }
+# language=GraphQL
 underlyingSchema:
   TestBoard: |
     type Board {
@@ -59,6 +68,7 @@ underlyingSchema:
     type UserQuery {
       users(accountIds: [ID]): [User]
     }
+# language=GraphQL
 query: |
   query {
     board(id: 1) {
@@ -74,6 +84,7 @@ variables: { }
 serviceCalls:
   - serviceName: "TestBoard"
     request:
+      # language=GraphQL
       query: |
         query {
           board(id: 1) {
@@ -129,6 +140,7 @@ serviceCalls:
       }
   - serviceName: "Users"
     request:
+      # language=GraphQL
       query: |
         query {
           usersQuery {

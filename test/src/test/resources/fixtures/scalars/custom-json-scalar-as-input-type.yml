@@ -1,5 +1,6 @@
 name: "custom json scalar as input type"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -9,6 +10,7 @@ overallSchema:
       id: ID!
     }
     scalar JSON
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -28,6 +30,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query ($v0: JSON) {
           foo(input: $v0) {

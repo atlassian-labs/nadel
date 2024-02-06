@@ -1,5 +1,6 @@
 name: "nested hydrated field is removed"
 enabled: false
+# language=GraphQL
 overallSchema:
   IssueService: |
     type Query {
@@ -12,8 +13,18 @@ overallSchema:
       summary: String
       description: String
       epic: Epic
-      reporter: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.reporterId"}])
-      comments: [Comment] @hydrated(service: "CommentService" field: "commentById" arguments: [{name: "id" value: "$source.commentIds"}])
+      reporter: User
+      @hydrated(
+        service: "UserService"
+        field: "userById"
+        arguments: [{name: "id" value: "$source.reporterId"}]
+      )
+      comments: [Comment]
+      @hydrated(
+        service: "CommentService"
+        field: "commentById"
+        arguments: [{name: "id" value: "$source.commentIds"}]
+      )
     }
     type Epic {
       id: ID
@@ -39,8 +50,14 @@ overallSchema:
       id: ID
       commentText: String @renamed(from: "text")
       created: String
-      author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
+      author: User
+      @hydrated(
+        service: "UserService"
+        field: "userById"
+        arguments: [{name: "id" value: "$source.authorId"}]
+      )
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |
     type Epic {
@@ -86,6 +103,7 @@ underlyingSchema:
       commentById(id: ID): Comment
       comments(ids: [ID]): [Comment]
     }
+# language=GraphQL
 query: |
   query {
     issueById(id: "I1") {
@@ -100,6 +118,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_IssueService {
           issueById(id: "I1") {
@@ -122,6 +141,7 @@ serviceCalls:
       }
   - serviceName: "CommentService"
     request:
+      # language=GraphQL
       query: |
         query nadel_2_CommentService {
           commentById(id: "C1") {

@@ -1,5 +1,6 @@
 name: "new synthetic hydration with renamed type"
 enabled: true
+# language=GraphQL
 overallSchema:
   Bar: |
     type Query {
@@ -17,8 +18,14 @@ overallSchema:
     }
     type Foo {
       id: ID!
-      fooBar: Bar @hydrated(service: "Bar" field: "bars.barById" arguments: [{name: "id" value: "$source.fooBarId"}])
+      fooBar: Bar
+      @hydrated(
+        service: "Bar"
+        field: "bars.barById"
+        arguments: [{name: "id" value: "$source.fooBarId"}]
+      )
     }
+# language=GraphQL
 underlyingSchema:
   Bar: |
     type Bar {
@@ -41,6 +48,7 @@ underlyingSchema:
     type Query {
       fooOriginal: Foo
     }
+# language=GraphQL
 query: |
   query {
     foo {
@@ -54,6 +62,7 @@ variables: { }
 serviceCalls:
   - serviceName: "Foo"
     request:
+      # language=GraphQL
       query: |
         query {
           rename__foo__fooOriginal: fooOriginal {
@@ -77,6 +86,7 @@ serviceCalls:
       }
   - serviceName: "Bar"
     request:
+      # language=GraphQL
       query: |
         query {
           bars {

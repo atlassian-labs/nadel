@@ -1,5 +1,6 @@
 name: "handles include directive on field with deep renamed parent"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
@@ -11,6 +12,7 @@ overallSchema:
     type Bar {
       id: ID
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
@@ -25,6 +27,7 @@ underlyingSchema:
     type Bar {
       id: ID
     }
+# language=GraphQL
 query: |
   query ($test: Boolean!) {
     foo {
@@ -38,6 +41,7 @@ variables:
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo {

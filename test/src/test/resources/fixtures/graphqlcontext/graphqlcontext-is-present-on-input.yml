@@ -1,27 +1,30 @@
 name: "graphqlcontext-is-present-on-input"
 enabled: true
+# language=GraphQL
 overallSchema:
   MyService: |
     type Query {
-      hello(arg : String) : World
+      hello(arg: String): World
     }
     type World {
       id: ID
       name: String
     }
+# language=GraphQL
 underlyingSchema:
   MyService: |
     type Query {
-      hello(arg : String) : World
+      hello(arg: String): World
     }
 
     type World {
       id: ID
       name: String
     }
+# language=GraphQL
 query: |
   query {
-    hello(arg : "x") {
+    hello(arg: "x") {
       name
     }
   }
@@ -29,9 +32,10 @@ variables: { }
 serviceCalls:
   - serviceName: "MyService"
     request:
+      # language=GraphQL
       query: |
         query {
-          hello(arg : "x") {
+          hello(arg: "x") {
             name
           }
         }

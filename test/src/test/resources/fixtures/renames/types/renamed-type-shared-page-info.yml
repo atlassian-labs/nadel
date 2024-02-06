@@ -2,6 +2,7 @@ name: "renamed type shared PageInfo"
 enabled: true
 ignored: # We do not allow implicit renames, enable this test once we have explicit renames for shared types
   true
+# language=GraphQL
 overallSchema:
   IssueService: |-
     type Query {
@@ -21,6 +22,7 @@ overallSchema:
       startCursor: String
       endCursor: String
     }
+# language=GraphQL
 underlyingSchema:
   IssueService: |-
     type Query {
@@ -49,6 +51,7 @@ underlyingSchema:
       startCursor: String
       endCursor: String
     }
+# language=GraphQL
 query: |
   query {
     issues {
@@ -66,6 +69,7 @@ variables: { }
 serviceCalls:
   - serviceName: "IssueService"
     request:
+      # language=GraphQL
       query: |
         query {
           ... on Query {

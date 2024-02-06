@@ -1,15 +1,18 @@
 name: "one call to one service with list result"
 enabled: true
+# language=GraphQL
 overallSchema:
   service: |
     type Query {
       foo: [String]
     }
+# language=GraphQL
 underlyingSchema:
   service: |
     type Query {
       foo: [String]
     }
+# language=GraphQL
 query: |
   query {
     foo
@@ -18,6 +21,7 @@ variables: { }
 serviceCalls:
   - serviceName: "service"
     request:
+      # language=GraphQL
       query: |
         query {
           foo

@@ -164,7 +164,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             createField(
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
-                queryPathToField = NadelQueryPath(rename.underlyingName),
+                queryPathToField = NadelQueryPath(listOf(rename.underlyingName)),
                 fieldArguments = field.normalizedArguments,
                 fieldChildren = transformer.transform(field.children),
             )
@@ -193,7 +193,11 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 parentNode = parentNode,
             ) ?: return@instruction null
 
-            val queryPathForSourceField = NadelQueryPath(state.aliasHelper.getResultKey(instruction.underlyingName))
+            val queryPathForSourceField = NadelQueryPath(
+                segments = listOf(
+                    state.aliasHelper.getResultKey(instruction.underlyingName),
+                ),
+            )
             val sourceFieldNode = JsonNodeExtractor.getNodesAt(parentNode, queryPathForSourceField)
                 .emptyOrSingle() ?: return@instruction null
 

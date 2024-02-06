@@ -1,0 +1,136 @@
+name: new batched with null value in source array
+enabled: true
+# language=GraphQL
+overallSchema:
+  Issues: |
+    type Query {
+      issueById(id: ID!): Issue!
+    }
+    type Issue {
+      id: ID!
+      key: String
+      collaborators: [User]
+      @hydrated(
+        service: "Users"
+        field: "usersByIds"
+        arguments: [
+          {name: "ids", value: "$source.collaboratorIds"}
+        ]
+        identifiedBy: "id"
+      )
+    }
+  Users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+    }
+# language=GraphQL
+underlyingSchema:
+  Issues: |
+    type Query {
+      issueById(id: ID!): Issue!
+    }
+    type Issue {
+      id: ID!
+      key: String
+      collaboratorIds: [ID]
+    }
+  Users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+    }
+# language=GraphQL
+query: |
+  query {
+    issueById(id: "10000") {
+      key
+      collaborators {
+        __typename
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          issueById(id: "10000") {
+            __typename__batch_hydration__collaborators: __typename
+            batch_hydration__collaborators__collaboratorIds: collaboratorIds
+            key
+          }
+        }
+    # language=JSON
+    response: |
+      {
+        "data": {
+          "issueById": {
+            "__typename__batch_hydration__collaborators": "Issue",
+            "batch_hydration__collaborators__collaboratorIds": [
+              "100",
+              null,
+              "200"
+            ],
+            "key": "GQLGW-1000"
+          }
+        }
+      }
+  - serviceName: "Users"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          usersByIds(ids: ["100", "200"]) {
+            __typename
+            batch_hydration__collaborators__id: id
+            name
+          }
+        }
+    # language=JSON
+    response: |
+      {
+        "data": {
+          "usersByIds": [
+            {
+              "__typename": "User",
+              "batch_hydration__collaborators__id": "100",
+              "name": "John Doe"
+            },
+            {
+              "__typename": "User",
+              "batch_hydration__collaborators__id": "200",
+              "name": "Joe"
+            }
+          ]
+        }
+      }
+# language=JSON
+response: |
+  {
+    "data": {
+      "issueById": {
+        "key": "GQLGW-1000",
+        "collaborators": [
+          {
+            "__typename": "User",
+            "name": "John Doe"
+          },
+          {
+            "__typename": "User",
+            "name": "Joe"
+          }
+        ]
+      }
+    },
+    "errors": []
+  }
