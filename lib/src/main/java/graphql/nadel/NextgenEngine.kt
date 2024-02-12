@@ -42,7 +42,6 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
-import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariablesWithDeferSupport
 import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
@@ -95,10 +94,7 @@ internal class NextgenEngine(
         dynamicServiceResolution = dynamicServiceResolution,
         services = this.services,
     )
-
-    private val operationParseOptions = executableNormalizedOperationFactoryOptions()
-        .maxChildrenDepth(maxQueryDepth)
-
+    private val maxQueryDepth = maxQueryDepth
     fun execute(
         executionInput: ExecutionInput,
         queryDocument: Document,
@@ -136,25 +132,19 @@ internal class NextgenEngine(
                 instrumentationState,
             )
 
+            val operationParseOptions = executableNormalizedOperationFactoryOptions()
+                .maxChildrenDepth(maxQueryDepth)
+                .deferSupport(executionHints.deferSupport.invoke())
+
             val query = timer.time(step = RootStep.ExecutableOperationParsing) {
-                if (executionHints.deferSupport.invoke())
-                    createExecutableNormalizedOperationWithRawVariablesWithDeferSupport(
-                        querySchema,
-                        queryDocument,
-                        executionInput.operationName,
-                        executionInput.rawVariables,
-                        operationParseOptions
-                            .graphQLContext(executionInput.graphQLContext),
-                    )
-                else
-                    createExecutableNormalizedOperationWithRawVariables(
-                        querySchema,
-                        queryDocument,
-                        executionInput.operationName,
-                        executionInput.rawVariables,
-                        operationParseOptions
-                            .graphQLContext(executionInput.graphQLContext),
-                    )
+                createExecutableNormalizedOperationWithRawVariables(
+                    querySchema,
+                    queryDocument,
+                    executionInput.operationName,
+                    executionInput.rawVariables,
+                    operationParseOptions
+                        .graphQLContext(executionInput.graphQLContext),
+                )
             }
 
             val executionContext = NadelExecutionContext(
