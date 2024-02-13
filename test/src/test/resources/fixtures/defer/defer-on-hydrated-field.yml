@@ -64,6 +64,9 @@ serviceCalls:
         }
       variables: { }
     # language=JSON
+
+    # This is just checking that  can generate queries containing @defer.
+    # The response below will change once defer work is implemented.
     response: |-
       {
         "data": {
