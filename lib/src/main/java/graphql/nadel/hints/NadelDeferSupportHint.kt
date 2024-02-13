@@ -1,6 +1,6 @@
 package graphql.nadel.hints
 
-fun interface DeferSupportHint {
+fun interface NadelDeferSupportHint {
     /**
      * Adds support for the @defer directive on Nadel execution
      */
