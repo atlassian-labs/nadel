@@ -94,10 +94,7 @@ internal class NextgenEngine(
         dynamicServiceResolution = dynamicServiceResolution,
         services = this.services,
     )
-
-    private val operationParseOptions = executableNormalizedOperationFactoryOptions()
-        .maxChildrenDepth(maxQueryDepth)
-
+    private val maxQueryDepth = maxQueryDepth
     fun execute(
         executionInput: ExecutionInput,
         queryDocument: Document,
@@ -134,6 +131,10 @@ internal class NextgenEngine(
                 userContext = executionInput.context,
                 instrumentationState,
             )
+
+            val operationParseOptions = executableNormalizedOperationFactoryOptions()
+                .maxChildrenDepth(maxQueryDepth)
+                .deferSupport(executionHints.deferSupport.invoke())
 
             val query = timer.time(step = RootStep.ExecutableOperationParsing) {
                 createExecutableNormalizedOperationWithRawVariables(
@@ -268,7 +269,8 @@ internal class NextgenEngine(
                 operationKind = transformedQuery.getOperationKind(engineSchema),
                 operationName = getOperationName(service, executionContext),
                 topLevelFields = listOf(transformedQuery),
-                variablePredicate = jsonPredicate
+                variablePredicate = jsonPredicate,
+                deferSupport = executionContext.hints.deferSupport.invoke()
             )
         }
 

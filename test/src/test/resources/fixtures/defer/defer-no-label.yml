@@ -1,0 +1,72 @@
+name: "defer no label"
+enabled: true
+overallSchema:
+  service: |
+    directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+    
+    type Query {
+      defer: DeferApi
+    }
+    
+    type DeferApi {
+      hello: String
+      slow: String
+    }
+underlyingSchema:
+  service: |
+    directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+    
+    type Query {
+      defer: DeferApi
+    }
+    
+    type DeferApi {
+      hello: String
+      slow: String
+    }
+query: |
+  query {
+    defer {
+      hello
+      ... @defer {
+        slow
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service"
+    request:
+      query: |
+        query {
+          defer {
+            hello
+            ... @defer {
+              slow
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+
+    # This is just checking that  can generate queries containing @defer.
+    # The response below will change once defer work is implemented.
+    response: |-
+      {
+        "data": {
+          "defer": {
+            "hello": "world"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "defer": {
+        "hello": "world"
+      }
+    },
+    "extensions": {}
+  }
