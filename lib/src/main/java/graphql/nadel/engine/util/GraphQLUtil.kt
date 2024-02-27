@@ -9,6 +9,7 @@ import graphql.GraphqlErrorBuilder.newError
 import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.execution.directives.QueryDirectives
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.ArrayValue
@@ -585,6 +586,7 @@ fun compileToDocument(
     operationKind: OperationDefinition.Operation,
     operationName: String?,
     topLevelFields: List<ExecutableNormalizedField>,
+    normalizedFieldToQueryDirectives: Map<ExecutableNormalizedField, QueryDirectives> ,
     variablePredicate: VariablePredicate?,
     deferSupport: Boolean = false,
 ): CompilerResult {
@@ -602,6 +604,7 @@ fun compileToDocument(
             operationKind,
             operationName,
             topLevelFields,
+            normalizedFieldToQueryDirectives,
             variablePredicate,
         )
     }
