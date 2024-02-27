@@ -269,6 +269,7 @@ internal class NextgenEngine(
                 operationKind = transformedQuery.getOperationKind(engineSchema),
                 operationName = getOperationName(service, executionContext),
                 topLevelFields = listOf(transformedQuery),
+                executionContext.query.normalizedFieldToQueryDirectives,
                 variablePredicate = jsonPredicate,
                 deferSupport = executionContext.hints.deferSupport.invoke()
             )
