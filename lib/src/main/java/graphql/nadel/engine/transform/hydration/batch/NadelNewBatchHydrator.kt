@@ -207,14 +207,26 @@ internal class NadelNewBatchHydrator(
         val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects)
         val sourceInputsByInstruction = groupSourceInputsByInstruction(sourceObjectsMetadata)
 
-        val resultsByInstruction = sourceInputsByInstruction
-            .mapValues { (instruction, sourceInputs) ->
-                executeQueries(
-                    executionBlueprint = executionBlueprint,
-                    instruction = instruction,
-                    sourceInputs = sourceInputs,
-                )
-            }
+        val resultsByInstruction = coroutineScope {
+            // It's important to understand that this is a List, not a Sequence.
+            // We want to kick off ALL the hydrations at the same time, _then_ wait for them after.
+            val deferredResults = sourceInputsByInstruction
+                .entries
+                .map { (instruction, sourceInputs) ->
+                    instruction to async {
+                        executeQueries(
+                            executionBlueprint = executionBlueprint,
+                            instruction = instruction,
+                            sourceInputs = sourceInputs,
+                        )
+                    }
+                }
+
+            deferredResults
+                .associate { (instruction, deferred) ->
+                    instruction to deferred.await()
+                }
+        }
 
         val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
 
@@ -401,7 +413,7 @@ internal class NadelNewBatchHydrator(
 
     context(NadelBatchHydratorContext)
     private fun getSourceObjectsMetadata(
-        sourceObjects: List<JsonNode>
+        sourceObjects: List<JsonNode>,
     ): List<SourceObjectMetadata> {
         return sourceObjects
             .mapNotNull { sourceObject ->
@@ -431,7 +443,7 @@ internal class NadelNewBatchHydrator(
     context(NadelBatchHydratorContext)
     private fun getSourceInputs(
         sourceObject: JsonNode,
-        instructions: List<NadelBatchHydrationFieldInstruction>
+        instructions: List<NadelBatchHydrationFieldInstruction>,
     ): List<SourceInput>? {
         val coords = makeFieldCoordinates(
             typeName = sourceField.objectTypeNames.first(),
@@ -493,7 +505,7 @@ internal class NadelNewBatchHydrator(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         sourceObject: JsonNode,
         sourceInput: JsonNode,
-        fieldSource: ValueSource.FieldResultValue
+        fieldSource: ValueSource.FieldResultValue,
     ): NadelBatchHydrationFieldInstruction? {
         if (instructions.any { it.condition == null }) {
             return executionContext.hooks.getHydrationInstruction(
@@ -520,7 +532,7 @@ internal class NadelNewBatchHydrator(
     context(NadelBatchHydratorContext)
     private fun getHydrationInstructionForSourceObject(
         instructions: List<NadelBatchHydrationFieldInstruction>,
-        sourceObject: JsonNode
+        sourceObject: JsonNode,
     ): NadelBatchHydrationFieldInstruction? {
         if (instructions.any { it.condition == null }) {
             return executionContext.hooks.getHydrationInstruction(
