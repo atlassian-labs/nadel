@@ -9,7 +9,7 @@ sealed class ServiceExecutionResult @JvmOverloads constructor(
     val extensions: MutableMap<String, Any?> = LinkedHashMap(),
 )
 
-open class NadelIncrementalServiceExecutionResult(
+class NadelIncrementalServiceExecutionResult(
     serviceExecutionResult: ServiceExecutionResult,
     val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult>,
 ) : ServiceExecutionResult(serviceExecutionResult.data, serviceExecutionResult.errors, serviceExecutionResult.extensions)
