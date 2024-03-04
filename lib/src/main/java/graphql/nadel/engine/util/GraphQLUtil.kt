@@ -38,6 +38,7 @@ import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
@@ -62,7 +63,6 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
-import java.util.Arrays
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
@@ -367,7 +367,7 @@ fun newServiceExecutionResult(
     errors: MutableList<MutableJsonMap> = mutableListOf(),
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
-    return ServiceExecutionResult(data, errors, extensions)
+    return NadelServiceExecutionResultImpl(data, errors, extensions)
 }
 
 fun newServiceExecutionResult(
@@ -406,7 +406,7 @@ fun newServiceExecutionErrorResult(
     field: ExecutableNormalizedField,
     error: GraphQLError,
 ): ServiceExecutionResult {
-    return ServiceExecutionResult(
+    return NadelServiceExecutionResultImpl(
         data = mutableMapOf(
             field.resultKey to null,
         ),

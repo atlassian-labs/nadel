@@ -13,4 +13,3 @@ class NadelIncrementalServiceExecutionResult(
     serviceExecutionResult: ServiceExecutionResult,
     val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult>,
 ) : ServiceExecutionResult(serviceExecutionResult.data, serviceExecutionResult.errors, serviceExecutionResult.extensions)
-
