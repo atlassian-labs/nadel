@@ -13,7 +13,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
-import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
@@ -77,11 +76,11 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         state: GraphQLError,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val parentNodes = JsonNodeExtractor.getNodesAt(
-            data = result.data,
-            queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
-            flatten = true,
-        )
+        val parentNodes = JsonNodes(result.data)
+            .getNodesAt(
+                queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
+                flatten = true,
+            )
 
         return parentNodes.map { parentNode ->
             NadelResultInstruction.Set(

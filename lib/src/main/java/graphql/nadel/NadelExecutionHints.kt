@@ -1,10 +1,11 @@
 package graphql.nadel
 
 import graphql.nadel.hints.AllDocumentVariablesHint
-import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.LegacyOperationNamesHint
+import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NewBatchHydrationGroupingHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
+import graphql.nadel.hints.ShortCircuitEmptyQueryHint
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
@@ -12,6 +13,7 @@ data class NadelExecutionHints(
     val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
     val newBatchHydrationGrouping: NewBatchHydrationGroupingHint,
     val deferSupport: NadelDeferSupportHint,
+    val shortCircuitEmptyQuery: ShortCircuitEmptyQueryHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -29,6 +31,7 @@ data class NadelExecutionHints(
         private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
         private var newBatchHydrationGrouping = NewBatchHydrationGroupingHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
+        private var shortCircuitEmptyQuery = ShortCircuitEmptyQueryHint { false }
 
         constructor()
 
@@ -36,6 +39,7 @@ data class NadelExecutionHints(
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
+            shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -63,13 +67,19 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun shortCircuitEmptyQuery(flag: ShortCircuitEmptyQueryHint): Builder {
+            shortCircuitEmptyQuery = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
                 newResultMergerAndNamespacedTypename,
                 newBatchHydrationGrouping,
-                deferSupport
+                deferSupport,
+                shortCircuitEmptyQuery,
             )
         }
     }

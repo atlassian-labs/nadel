@@ -6,8 +6,10 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.language.Document
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
@@ -39,10 +41,12 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParam
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep.Companion.DocumentCompilation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.instrumentation.parameters.child
+import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
+import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +76,7 @@ internal class NextgenEngine(
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = services.strictAssociateBy { it.name }
+    private val engineSchemaIntrospectionService = IntrospectionService(engineSchema, introspectionRunnerFactory)
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         engineSchema = engineSchema,
         services = services,
@@ -270,7 +275,7 @@ internal class NextgenEngine(
                 operationName = getOperationName(service, executionContext),
                 topLevelFields = listOf(transformedQuery),
                 variablePredicate = jsonPredicate,
-                deferSupport = executionContext.hints.deferSupport.invoke()
+                deferSupport = executionContext.hints.deferSupport(),
             )
         }
 
@@ -285,10 +290,9 @@ internal class NextgenEngine(
             hydrationDetails = executionHydrationDetails,
             executableNormalizedField = transformedQuery,
         )
-
+        val serviceExecution = chooseServiceExecution(service, transformedQuery, executionContext.hints)
         val serviceExecResult = try {
-            service.serviceExecution
-                .execute(serviceExecParams)
+            serviceExecution.execute(serviceExecParams)
                 .asDeferred()
                 .await()
         } catch (e: Exception) {
@@ -328,6 +332,32 @@ internal class NextgenEngine(
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
         )
+    }
+
+    private fun chooseServiceExecution(
+        service: Service,
+        transformedQuery: ExecutableNormalizedField,
+        hints: NadelExecutionHints,
+    ): ServiceExecution {
+        return when {
+            hints.shortCircuitEmptyQuery(service) && onlyTopLevelTypenameField(transformedQuery) ->
+                engineSchemaIntrospectionService.serviceExecution
+            else -> service.serviceExecution
+        }
+    }
+
+    private fun onlyTopLevelTypenameField(executableNormalizedField: ExecutableNormalizedField): Boolean {
+        if (executableNormalizedField.fieldName == TypeNameMetaFieldDef.name) {
+            return true
+        }
+        val operationType = engineSchema.getTypeAs<GraphQLObjectType>(executableNormalizedField.singleObjectTypeName)
+        val topLevelFieldDefinition =
+            operationType.fieldDefinitions.firstOrNull { it.name == executableNormalizedField.name }
+                ?: return false
+        return if (topLevelFieldDefinition.hasAppliedDirective(namespacedDirectiveDefinition.name)) {
+            executableNormalizedField.hasChildren()
+                && executableNormalizedField.children.all { it.name == TypeNameMetaFieldDef.name }
+        } else false
     }
 
     private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
