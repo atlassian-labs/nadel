@@ -1,0 +1,98 @@
+name: "hydration top level field is removed"
+enabled: true
+# language=GraphQL
+overallSchema:
+  IssueService: |
+    type Query {
+      issueById(id: ID): Issue
+    }
+    type Issue {
+      id: ID
+      comment: Comment @hydrated(
+        service: "CommentService"
+        field: "commentById"
+        arguments: [
+          {name: "id", value: "$source.commentId"}
+        ]
+      )
+    }
+  CommentService: |
+    directive @toBeDeleted on FIELD_DEFINITION
+    type Query {
+      commentById(id: ID): Comment @toBeDeleted
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+underlyingSchema:
+  IssueService: |
+    type Query {
+      issueById(id: ID): Issue
+    }
+    type Issue {
+      id: ID
+      commentId: ID
+    }
+  CommentService: |
+    type Query {
+      commentById(id: ID): Comment
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+query: |
+  query {
+    issueById(id: "C1") {
+      id
+      comment {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "IssueService"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          issueById(id: "C1") {
+            __typename__hydration__comment: __typename
+            hydration__comment__commentId: commentId
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issueById": {
+            "__typename__hydration__comment": "Issue",
+            "hydration__comment__commentId": "C1",
+            "id": "C1"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "locations": [],
+        "message": "An error has occurred",
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ],
+    "data": {
+      "issueById": {
+        "id": "C1",
+        "comment": null
+      }
+    }
+  }
