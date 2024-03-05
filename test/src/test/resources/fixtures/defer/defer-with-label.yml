@@ -61,15 +61,16 @@ serviceCalls:
           "extensions": {}
         }
       delayedResponses: |-
-        {
+        [{
           "hasNext": false,
           "incremental": [{
             "data": {
               "slow": "snail"
-
+  
             }
           }]
-        }
+        }]
+
 
 # language=JSON
 
@@ -97,12 +98,12 @@ incrementalResponse:
       "extensions": {}
     }
   delayedResponses: |-
-    {
+    [{
       "hasNext": false,
       "incremental": [{
         "data": {
           "slow": "snail"
-
+  
         }
       }]
-    }
+    }]

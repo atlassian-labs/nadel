@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT
 import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstSorter
 import graphql.language.Document
@@ -103,7 +104,7 @@ data class IncrementalResponse(
     @JsonProperty("initialResponse")
     val initialResponseJsonString: String,
     @JsonProperty("delayedResponses")
-    val delayedResponsesJsonString: String?,
+    val delayedResponsesJsonString: String,
 )
 {
     @get:JsonIgnore
@@ -112,9 +113,7 @@ data class IncrementalResponse(
     }
 
     @get:JsonIgnore
-    val delayedResponses: JsonMap? by lazy {
-        delayedResponsesJsonString?.let {
-            jsonObjectMapper.readValue(it)
-        }
+    val delayedResponses: List<JsonMap> by lazy {
+        jsonObjectMapper.readValue(delayedResponsesJsonString, object : TypeReference<List<JsonMap>>() {})
     }
 }
