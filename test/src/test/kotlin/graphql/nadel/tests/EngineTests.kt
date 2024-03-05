@@ -9,7 +9,7 @@ import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NadelSchemas
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
-import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
@@ -196,7 +196,7 @@ private suspend fun execute(
 
                             @Suppress("UNCHECKED_CAST")
                             CompletableFuture.completedFuture(
-                                ServiceExecutionResult(
+                                NadelServiceExecutionResultImpl(
                                     response["data"] as MutableJsonMap? ?: LinkedHashMap(),
                                     response["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
                                     response["extensions"] as MutableJsonMap? ?: LinkedHashMap(),

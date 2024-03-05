@@ -9,6 +9,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toBuilderWithoutTypes
@@ -45,7 +46,7 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
                     .build()
             )
             .thenApply {
-                ServiceExecutionResult(
+                NadelServiceExecutionResultImpl(
                     data = it.getData() ?: mutableMapOf(),
                     errors = it.errors.mapTo(ArrayList(), ::toSpecification),
                 )

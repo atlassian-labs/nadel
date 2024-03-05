@@ -136,9 +136,9 @@ class ChainedNadelInstrumentation(
     private class ChainedInstrumentationContext<T>(
         private val contexts: List<InstrumentationContext<T>>,
     ) : InstrumentationContext<T> {
-        override fun onDispatched(result: CompletableFuture<T>?) {
+        override fun onDispatched() {
             contexts.forEach { context: InstrumentationContext<T> ->
-                context.onDispatched(result)
+                context.onDispatched()
             }
         }
 
