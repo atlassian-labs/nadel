@@ -27,8 +27,14 @@ data class TestFixture(
     @JsonInclude(NON_NULL)
     val operationName: String? = null,
     val serviceCalls: List<ServiceCall>,
+
+
     @JsonProperty("response")
     val responseJsonString: String?,
+
+    @JsonProperty("incrementalResponse")
+    val incrementalResponseJsonString: IncrementalResponse?,
+
     @JsonInclude(NON_NULL)
     val exception: ExpectedException?,
 ) {
@@ -41,12 +47,17 @@ data class TestFixture(
 data class ServiceCall(
     val serviceName: String,
     val request: Request,
+
     @JsonProperty("response")
-    val responseJsonString: String,
+    val responseJsonString: String?,
+
+    val incrementalResponse: IncrementalResponse?,
 ) {
     @get:JsonIgnore
-    val response: JsonMap by lazy {
-        jsonObjectMapper.readValue(responseJsonString)
+    val response: JsonMap? by lazy {
+        responseJsonString?.let {
+            jsonObjectMapper.readValue(it)
+        }
     }
 
     data class Request(
@@ -86,5 +97,24 @@ data class ExpectedException(
                 },
             ),
         )
+    }
+}
+data class IncrementalResponse(
+    @JsonProperty("initialResponse")
+    val initialResponseJsonString: String,
+    @JsonProperty("delayedResponses")
+    val delayedResponsesJsonString: String?,
+)
+{
+    @get:JsonIgnore
+    val initialResponse: JsonMap by lazy {
+        jsonObjectMapper.readValue(initialResponseJsonString)
+    }
+
+    @get:JsonIgnore
+    val delayedResponses: JsonMap? by lazy {
+        delayedResponsesJsonString?.let {
+            jsonObjectMapper.readValue(it)
+        }
     }
 }

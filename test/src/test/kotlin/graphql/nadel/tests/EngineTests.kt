@@ -180,7 +180,12 @@ private suspend fun execute(
 
                                 if (indexOfCall != null) {
                                     val serviceCall = serviceCalls.removeAt(indexOfCall)
-                                    serviceCall.response
+                                    if( serviceCall.incrementalResponse != null){
+                                        serviceCall.incrementalResponse.initialResponse //for now, just return initial response
+                                    }
+                                    else {
+                                        serviceCall.response!!
+                                    }
                                 } else {
                                     fail(
                                         """Unable to match service call 
