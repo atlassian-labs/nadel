@@ -1,11 +1,13 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelSchemas
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
@@ -21,6 +23,9 @@ import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
 import java.io.File
@@ -168,7 +173,7 @@ private suspend fun execute(
                             )
                             printSyncLine(actualQuery)
 
-                            val response = synchronized(serviceCalls) {
+                            synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
                                         it.serviceName == serviceName
@@ -181,9 +186,32 @@ private suspend fun execute(
                                 if (indexOfCall != null) {
                                     val serviceCall = serviceCalls.removeAt(indexOfCall)
                                     if (serviceCall.incrementalResponse != null) {
-                                        serviceCall.incrementalResponse.initialResponse //for now, just return initial response
-                                    } else {
-                                        serviceCall.response!!
+
+                                        val incrementalItemPublisher: Flow<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse.delayedResponses.toTypedArray())
+
+                                        CompletableFuture.completedFuture(
+                                            NadelIncrementalServiceExecutionResult(
+                                                serviceExecutionResult = NadelServiceExecutionResultImpl(
+                                                serviceCall.incrementalResponse.initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                                                serviceCall.incrementalResponse.initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                                                serviceCall.incrementalResponse.initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                                            ),
+                                                incrementalItemPublisher = null,
+                                                hasNext = true
+                                        )
+
+
+                                    } else if (serviceCall.response != null) {
+                                        CompletableFuture.completedFuture(
+                                            NadelServiceExecutionResultImpl(
+                                                serviceCall.response!!["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                                                serviceCall.response!!["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                                                serviceCall.response!!["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                                            ),
+                                        )
+                                    }
+                                    else {
+                                        fail("")
                                     }
                                 } else {
                                     fail(
@@ -197,15 +225,6 @@ private suspend fun execute(
                                     )
                                 }
                             }
-
-                            @Suppress("UNCHECKED_CAST")
-                            CompletableFuture.completedFuture(
-                                NadelServiceExecutionResultImpl(
-                                    response["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                                    response["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
-                                    response["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
-                                ),
-                            )
                         } catch (e: Throwable) {
                             fail("Unable to invoke service '$serviceName'", e)
                         }
