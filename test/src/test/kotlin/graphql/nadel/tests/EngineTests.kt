@@ -180,10 +180,9 @@ private suspend fun execute(
 
                                 if (indexOfCall != null) {
                                     val serviceCall = serviceCalls.removeAt(indexOfCall)
-                                    if( serviceCall.incrementalResponse != null){
+                                    if (serviceCall.incrementalResponse != null) {
                                         serviceCall.incrementalResponse.initialResponse //for now, just return initial response
-                                    }
-                                    else {
+                                    } else {
                                         serviceCall.response!!
                                     }
                                 } else {
