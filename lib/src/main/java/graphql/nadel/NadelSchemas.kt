@@ -6,9 +6,7 @@ import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.schema.UnderlyingSchemaGenerator
 import graphql.nadel.util.SchemaUtil
 import graphql.parser.MultiSourceReader
-import graphql.parser.ParserOptions
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.WiringFactory
 import java.io.Reader
@@ -37,6 +35,12 @@ data class NadelSchemas constructor(
         // .graphqls files
         internal var underlyingSchemaReaders = mutableMapOf<String, Reader>()
         internal var underlyingTypeDefs = mutableMapOf<String, TypeDefinitionRegistry>()
+
+        private var captureSourceLocation = false
+
+        fun captureSourceLocation(value: Boolean): Builder = also {
+            captureSourceLocation = value
+        }
 
         fun schemaTransformationHook(value: SchemaTransformationHook): Builder = also {
             schemaTransformationHook = value
@@ -156,7 +160,12 @@ data class NadelSchemas constructor(
 
             // Combine readers & type defs
             val readersToTypeDefs = underlyingSchemaReaders
-                .mapValues { (_, reader) -> SchemaUtil.parseTypeDefinitionRegistry(reader) }
+                .mapValues { (_, reader) ->
+                    SchemaUtil.parseTypeDefinitionRegistry(
+                        reader,
+                        captureSourceLocation = captureSourceLocation,
+                    )
+                }
             val resolvedUnderlyingTypeDefs = readersToTypeDefs + underlyingTypeDefs
 
             // Ensure we didn't have dupes i.e. we didn't merge and ignore a value
@@ -165,7 +174,12 @@ data class NadelSchemas constructor(
                 "There is an illegal intersection of underlying schema keys $intersection"
             }
 
-            return Factory(builder = this, serviceExecutionFactory, resolvedUnderlyingTypeDefs).create()
+            return Factory(
+                builder = this,
+                serviceExecutionFactory = serviceExecutionFactory,
+                underlyingTypeDefs = resolvedUnderlyingTypeDefs,
+                captureSourceLocation = captureSourceLocation,
+            ).create()
         }
     }
 
@@ -173,6 +187,7 @@ data class NadelSchemas constructor(
         private val builder: Builder,
         private val serviceExecutionFactory: ServiceExecutionFactory,
         private val underlyingTypeDefs: Map<String, TypeDefinitionRegistry>,
+        private val captureSourceLocation: Boolean,
     ) {
         fun create(): NadelSchemas {
             val services = createServices()
@@ -187,7 +202,10 @@ data class NadelSchemas constructor(
             val underlyingSchemaGenerator = UnderlyingSchemaGenerator()
 
             return builder.overallSchemaReaders.map { (serviceName, reader) ->
-                val nadelDefinitions = SchemaUtil.parseDefinitions(reader)
+                val nadelDefinitions = SchemaUtil.parseSchemaDefinitions(
+                    reader,
+                    captureSourceLocation = captureSourceLocation,
+                )
                 val nadelDefinitionRegistry = NadelDefinitionRegistry.from(nadelDefinitions)
 
                 // Builder should enforce non-null entry

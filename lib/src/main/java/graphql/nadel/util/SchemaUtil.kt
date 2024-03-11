@@ -8,38 +8,41 @@ import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import java.io.Reader
 
-object SchemaUtil {
-    private val defaultParserOptions = ParserOptions.newParserOptions()
-        .maxTokens(Int.MAX_VALUE)
-        .captureSourceLocation(false)
-        .build()
-
+internal object SchemaUtil {
     private val parser = Parser()
     private val schemaParser = SchemaParser()
 
-    fun parseDefinitions(schema: String): List<AnySDLDefinition> {
+    fun parseSchemaDefinitions(
+        schema: Reader,
+        maxTokens: Int = Int.MAX_VALUE,
+        captureSourceLocation: Boolean = false,
+    ): List<AnySDLDefinition> {
         return parser
             .parseDocument(
                 ParserEnvironment.newParserEnvironment()
                     .document(schema)
-                    .parserOptions(defaultParserOptions)
+                    .parserOptions(
+                        ParserOptions.newParserOptions()
+                            .maxTokens(maxTokens)
+                            .captureSourceLocation(captureSourceLocation)
+                            .build(),
+                    )
                     .build(),
             )
             .getDefinitionsOfType(SDLDefinition::class.java)
     }
 
-    fun parseDefinitions(schema: Reader): List<AnySDLDefinition> {
-        return parser
-            .parseDocument(
-                ParserEnvironment.newParserEnvironment()
-                    .document(schema)
-                    .parserOptions(defaultParserOptions)
-                    .build(),
-            )
-            .getDefinitionsOfType(SDLDefinition::class.java)
-    }
-
-    fun parseTypeDefinitionRegistry(schema: Reader): TypeDefinitionRegistry {
-        return schemaParser.parse(schema, defaultParserOptions)
+    fun parseTypeDefinitionRegistry(
+        schema: Reader,
+        maxTokens: Int = Int.MAX_VALUE,
+        captureSourceLocation: Boolean = false,
+    ): TypeDefinitionRegistry {
+        return schemaParser.parse(
+            schema,
+            ParserOptions.newParserOptions()
+                .maxTokens(maxTokens)
+                .captureSourceLocation(captureSourceLocation)
+                .build(),
+        )
     }
 }

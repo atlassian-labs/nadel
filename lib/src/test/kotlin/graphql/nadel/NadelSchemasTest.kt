@@ -378,6 +378,7 @@ class NadelSchemasTest : DescribeSpec({
 
             // when
             val schemas = NadelSchemas.newNadelSchemas()
+                .captureSourceLocation(true)
                 .overallSchemas(overallSchema)
                 .underlyingSchemas(underlyingSchema)
                 .stubServiceExecution()
@@ -397,6 +398,74 @@ class NadelSchemasTest : DescribeSpec({
 
             val issueService = schemas.services.single { it.name == "issue" }
             assert(issueService.underlyingSchema.typeMap["Task"]?.definition?.sourceLocation?.line == 4)
+        }
+
+        it("drops source location if not asked for") {
+            val overallSchema = mapOf(
+                "test" to """
+                    type Query {
+                        echo: Echo
+                    }
+                    type Echo {
+                        world: String 
+                    }
+                """.trimIndent(),
+                "issue" to """
+                    type Query {
+                        issue: Issue
+                    }
+                    type Issue {
+                        # This is a comment
+                        id: ID!
+                    }
+                """.trimIndent(),
+            )
+            val underlyingSchema = mapOf(
+                "test" to """
+                    type Query {
+                        echo: Echo
+                    }
+                   
+                    type Echo {
+                        world: String 
+                    }
+                """.trimIndent(),
+                "issue" to """
+                    type Query {
+                        issue: Task
+                    }
+                    type Task {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            )
+
+            val echoCoordinates = makeFieldCoordinates("Query", "echo")
+            val worldCoordinates = makeFieldCoordinates("Echo", "world")
+            val issueIdCoordinates = makeFieldCoordinates("Issue", "id")
+
+            // when
+            val schemas = NadelSchemas.newNadelSchemas()
+                .captureSourceLocation(false)
+                .overallSchemas(overallSchema)
+                .underlyingSchemas(underlyingSchema)
+                .stubServiceExecution()
+                .build()
+
+            // then
+            assert(schemas.engineSchema.typeMap["Echo"]?.definition?.sourceLocation == null)
+            assert(schemas.engineSchema.typeMap["Issue"]?.definition?.sourceLocation == null)
+            assert(schemas.engineSchema.getField(echoCoordinates)?.definition?.sourceLocation == null)
+            assert(schemas.engineSchema.getField(worldCoordinates)?.definition?.sourceLocation == null)
+            assert(schemas.engineSchema.getField(issueIdCoordinates)?.definition?.sourceLocation == null)
+
+            val testService = schemas.services.single { it.name == "test" }
+            assert(testService.underlyingSchema.typeMap["Echo"]?.definition?.sourceLocation == null)
+            assert(testService.underlyingSchema.getField(echoCoordinates)?.definition?.sourceLocation == null)
+            assert(testService.underlyingSchema.getField(worldCoordinates)?.definition?.sourceLocation == null)
+
+            val issueService = schemas.services.single { it.name == "issue" }
+            assert(issueService.underlyingSchema.typeMap["Task"]?.definition?.sourceLocation == null)
         }
     }
 })
