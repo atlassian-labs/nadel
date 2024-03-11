@@ -6,6 +6,7 @@ import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.schema.UnderlyingSchemaGenerator
 import graphql.nadel.util.SchemaUtil
 import graphql.parser.MultiSourceReader
+import graphql.parser.ParserOptions
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
@@ -153,10 +154,9 @@ data class NadelSchemas constructor(
                 "serviceExecutionFactory must be set"
             }
 
-            val schemaParser = SchemaParser()
-
             // Combine readers & type defs
-            val readersToTypeDefs = underlyingSchemaReaders.mapValues { (_, value) -> schemaParser.parse(value) }
+            val readersToTypeDefs = underlyingSchemaReaders
+                .mapValues { (_, reader) -> SchemaUtil.parseTypeDefinitionRegistry(reader) }
             val resolvedUnderlyingTypeDefs = readersToTypeDefs + underlyingTypeDefs
 
             // Ensure we didn't have dupes i.e. we didn't merge and ignore a value
