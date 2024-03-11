@@ -168,6 +168,18 @@ private suspend fun execute(
                             )
                             printSyncLine(actualQuery)
 
+                            fun failWithFixtureContext(message: String): Nothing {
+                                fail(
+                                    """${message}
+                                        |   fixture : '${fixture.name}' 
+                                        |   service : '${serviceName}' 
+                                        |   query : '${actualQuery}' 
+                                        |   variables : '${actualVariables}' 
+                                        |   operation : '${actualOperationName}' 
+                                        """.trimMargin()
+                                )
+                            }
+
                             val response = synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
@@ -180,17 +192,20 @@ private suspend fun execute(
 
                                 if (indexOfCall != null) {
                                     val serviceCall = serviceCalls.removeAt(indexOfCall)
-                                    serviceCall.response
+                                    val response = serviceCall.response
+                                    if (serviceCall.incrementalResponse != null && response != null) {
+                                        failWithFixtureContext("Fixture cannot have both a response and an incrementalResponse.")
+                                    }
+                                    else if (serviceCall.incrementalResponse != null) {
+                                        serviceCall.incrementalResponse.initialResponse //for now, just return initial response
+                                    } else if (response != null) {
+                                        response
+                                    }
+                                    else {
+                                        failWithFixtureContext("Fixture had no response")
+                                    }
                                 } else {
-                                    fail(
-                                        """Unable to match service call 
-                                        |   fixture : '${fixture.name}' 
-                                        |   service : '${serviceName}' 
-                                        |   query : '${actualQuery}' 
-                                        |   variables : '${actualVariables}' 
-                                        |   operation : '${actualOperationName}' 
-                                        """.trimMargin()
-                                    )
+                                    failWithFixtureContext("Unable to match service call")
                                 }
                             }
 
