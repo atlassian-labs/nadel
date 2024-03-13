@@ -15,7 +15,7 @@ class NadelIncrementalServiceExecutionResult(
     val hasNext: Boolean,
 ) : ServiceExecutionResult(serviceExecutionResult.data, serviceExecutionResult.errors, serviceExecutionResult.extensions)
 
-class NadelServiceExecutionResultImpl(
+class NadelServiceExecutionResultImpl @JvmOverloads constructor(
     data: MutableMap<String, Any?> = LinkedHashMap(),
     errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
     extensions: MutableMap<String, Any?> = LinkedHashMap(),
