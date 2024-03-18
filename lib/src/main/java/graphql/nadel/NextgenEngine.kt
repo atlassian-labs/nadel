@@ -47,6 +47,7 @@ import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
@@ -56,6 +57,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.util.concurrent.CompletableFuture
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
@@ -101,14 +103,38 @@ internal class NextgenEngine(
         instrumentationState: InstrumentationState?,
         nadelExecutionParams: NadelExecutionParams,
     ): CompletableFuture<ExecutionResult> {
-        return coroutineScope.async {
-            executeCoroutine(
-                executionInput,
-                queryDocument,
-                instrumentationState,
-                nadelExecutionParams.nadelExecutionHints,
-            )
-        }.asCompletableFuture()
+
+        val FF_APLLY_COROUTINE_TIMEOUT = true //TODO: make this legit
+        val timeoutMillis: Long = 10000 //TODO: investigate & finalise timeout number
+
+        if(FF_APLLY_COROUTINE_TIMEOUT) {
+
+            return coroutineScope.async {
+                try {
+                    withTimeout(timeoutMillis) {
+                        executeCoroutine(
+                            executionInput,
+                            queryDocument,
+                            instrumentationState,
+                            nadelExecutionParams.nadelExecutionHints,
+                        )
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    newExecutionResult(error = GraphQLError.newError().message("Coroutine Timeout").build()) //TODO tidy this error message
+                }
+            }.asCompletableFuture()
+        }
+        else {
+            return coroutineScope.async {
+                executeCoroutine(
+                    executionInput,
+                    queryDocument,
+                    instrumentationState,
+                    nadelExecutionParams.nadelExecutionHints,
+                )
+            }.asCompletableFuture()
+
+        }
     }
 
     fun close() {
