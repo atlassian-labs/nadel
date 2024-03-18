@@ -104,10 +104,10 @@ internal class NextgenEngine(
         nadelExecutionParams: NadelExecutionParams,
     ): CompletableFuture<ExecutionResult> {
 
-        val FF_APLLY_COROUTINE_TIMEOUT = true //TODO: make this legit
+        val FF_APPLY_COROUTINE_TIMEOUT = true //TODO: make this legit
         val timeoutMillis: Long = 10000 //TODO: investigate & finalise timeout number
 
-        if(FF_APLLY_COROUTINE_TIMEOUT) {
+        if(FF_APPLY_COROUTINE_TIMEOUT) {
 
             return coroutineScope.async {
                 try {
