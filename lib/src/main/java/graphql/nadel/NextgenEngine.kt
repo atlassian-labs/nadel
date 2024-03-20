@@ -94,7 +94,9 @@ internal class NextgenEngine(
         dynamicServiceResolution = dynamicServiceResolution,
         services = this.services,
     )
-    private val maxQueryDepth = maxQueryDepth
+    private val baseParseOptions = executableNormalizedOperationFactoryOptions()
+        .maxChildrenDepth(maxQueryDepth)
+
     fun execute(
         executionInput: ExecutionInput,
         queryDocument: Document,
@@ -132,8 +134,7 @@ internal class NextgenEngine(
                 instrumentationState,
             )
 
-            val operationParseOptions = executableNormalizedOperationFactoryOptions()
-                .maxChildrenDepth(maxQueryDepth)
+            val operationParseOptions = baseParseOptions
                 .deferSupport(executionHints.deferSupport.invoke())
 
             val query = timer.time(step = RootStep.ExecutableOperationParsing) {
