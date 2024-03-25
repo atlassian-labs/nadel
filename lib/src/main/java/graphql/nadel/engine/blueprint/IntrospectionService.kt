@@ -35,7 +35,7 @@ fun interface NadelIntrospectionRunnerFactory {
 }
 
 open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecution {
-    private val graphQL = GraphQL
+    protected val graphQL: GraphQL = GraphQL
         .newGraphQL(injectNamespaceDataFetchers(schema))
         .build()
 
