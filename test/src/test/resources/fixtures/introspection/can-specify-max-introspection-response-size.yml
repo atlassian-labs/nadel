@@ -40,6 +40,7 @@ query: |
   }
 variables: { }
 serviceCalls: [ ]
+# Note that the current mechanism does not generate an error, just null response
 # language=JSON
 response: |-
   {
