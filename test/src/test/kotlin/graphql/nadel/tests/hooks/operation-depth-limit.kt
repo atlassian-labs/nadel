@@ -11,3 +11,11 @@ class `operation-depth-limit` : EngineTestHook {
             .maxQueryDepth(10)
     }
 }
+
+@UseHook
+class `operation-field-count-limit` : EngineTestHook {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
+        return super.makeNadel(builder)
+            .maxFieldCount(10)
+    }
+}

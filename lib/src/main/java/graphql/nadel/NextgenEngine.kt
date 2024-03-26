@@ -66,6 +66,7 @@ internal class NextgenEngine(
     private val executionHooks: NadelExecutionHooks,
     private val executionIdProvider: ExecutionIdProvider,
     maxQueryDepth: Int,
+    maxFieldCount: Int,
     services: List<Service>,
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
@@ -94,7 +95,10 @@ internal class NextgenEngine(
         dynamicServiceResolution = dynamicServiceResolution,
         services = this.services,
     )
-    private val maxQueryDepth = maxQueryDepth
+    private val baseParseOptions = executableNormalizedOperationFactoryOptions()
+        .maxChildrenDepth(maxQueryDepth)
+        .maxFieldsCount(maxFieldCount)
+
     fun execute(
         executionInput: ExecutionInput,
         queryDocument: Document,
@@ -132,8 +136,7 @@ internal class NextgenEngine(
                 instrumentationState,
             )
 
-            val operationParseOptions = executableNormalizedOperationFactoryOptions()
-                .maxChildrenDepth(maxQueryDepth)
+            val operationParseOptions = baseParseOptions
                 .deferSupport(executionHints.deferSupport.invoke())
 
             val query = timer.time(step = RootStep.ExecutableOperationParsing) {
