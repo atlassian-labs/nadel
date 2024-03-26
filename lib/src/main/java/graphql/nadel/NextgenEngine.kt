@@ -66,6 +66,7 @@ internal class NextgenEngine(
     private val executionHooks: NadelExecutionHooks,
     private val executionIdProvider: ExecutionIdProvider,
     maxQueryDepth: Int,
+    maxFieldCount: Int,
     services: List<Service>,
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
@@ -96,6 +97,7 @@ internal class NextgenEngine(
     )
     private val baseParseOptions = executableNormalizedOperationFactoryOptions()
         .maxChildrenDepth(maxQueryDepth)
+        .maxFieldsCount(maxFieldCount)
 
     fun execute(
         executionInput: ExecutionInput,

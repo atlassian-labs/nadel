@@ -236,6 +236,7 @@ class Nadel private constructor(
         private var schemaBuilder = NadelSchemas.Builder()
 
         private var maxQueryDepth = Integer.MAX_VALUE
+        private var maxFieldCount = Integer.MAX_VALUE
 
         fun overallSchema(serviceName: String, nsdl: Reader): Builder {
             schemaBuilder.overallSchema(serviceName, nsdl)
@@ -347,6 +348,11 @@ class Nadel private constructor(
             return this
         }
 
+        fun maxFieldCount(maxFieldCount: Int): Builder {
+            this.maxFieldCount = maxFieldCount
+            return this
+        }
+
         fun build(): Nadel {
             val (engineSchema, services) = schemaBuilder.build()
 
@@ -363,6 +369,7 @@ class Nadel private constructor(
                     transforms = transforms,
                     introspectionRunnerFactory = introspectionRunnerFactory,
                     maxQueryDepth = maxQueryDepth,
+                    maxFieldCount = maxFieldCount,
                 ),
                 services = services,
                 engineSchema = engineSchema,
