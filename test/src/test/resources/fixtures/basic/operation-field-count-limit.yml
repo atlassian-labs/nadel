@@ -1,0 +1,56 @@
+name: "operation field count limit"
+enabled: true
+# language=GraphQL
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      child: Foo
+    }
+# language=GraphQL
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      child: Foo
+    }
+# language=GraphQL
+query: |
+  query {
+    foo {
+      __typename
+      name
+      child {
+        name
+      }
+    }
+    __typename
+    bar: foo {
+        barName: name
+        barChild: child {
+          barTypeName: __typename
+          name
+        }
+    }
+  }
+variables: { }
+serviceCalls: [ ]
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [
+      {
+        "message": "Maximum field count exceeded. 11 > 10",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ]
+  }
