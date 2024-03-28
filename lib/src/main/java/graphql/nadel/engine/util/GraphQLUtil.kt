@@ -29,6 +29,7 @@ import graphql.language.ObjectTypeExtensionDefinition
 import graphql.language.ObjectValue
 import graphql.language.OperationDefinition
 import graphql.language.SDLDefinition
+import graphql.language.SDLNamedDefinition
 import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaExtensionDefinition
 import graphql.language.StringValue
@@ -69,6 +70,7 @@ internal typealias AnyAstNode = Node<*>
 internal typealias AnyAstDefinition = Definition<*>
 internal typealias AnyImplementingTypeDefinition = ImplementingTypeDefinition<*>
 internal typealias AnyNamedNode = NamedNode<*>
+internal typealias AnySDLNamedDefinition = SDLNamedDefinition<*>
 internal typealias AnySDLDefinition = SDLDefinition<*>
 internal typealias AnyAstType = Type<*>
 
