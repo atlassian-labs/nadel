@@ -474,6 +474,148 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(error.overallField.name == "nextgenSpecific")
         }
 
+        it("ignores extension union members declared by other services") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "users" to """
+                        type Query {
+                            stuff: Stuff
+                        }
+                        union Stuff = User
+                        type User {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "issues" to """
+                        extend union Stuff = | Issue
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "users" to """
+                        type Query {
+                            stuff: Stuff
+                        }
+                        union Stuff = User
+                        type User {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "issues" to """
+                        type Query {
+                            echo: String
+                        }
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("validates extension union member if defined by own service") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "users" to """
+                        type Query {
+                            stuff: Stuff
+                        }
+                        union Stuff = User
+                        type User {
+                            id: ID!
+                        }
+                        extend union Stuff = | Issue
+                    """.trimIndent(),
+                    "issues" to """
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "users" to """
+                        type Query {
+                            stuff: Stuff
+                        }
+                        union Stuff = User
+                        type User {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "issues" to """
+                        type Query {
+                            echo: String
+                        }
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+            val error = errors.assertSingleOfType<MissingUnderlyingType>()
+            assert(error.service.name == "users")
+            assert(error.overallType.name == "Issue")
+        }
+
+        it("validates external member if service defines it") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "users" to """
+                        type Query {
+                            stuff: Stuff
+                        }
+                        union Stuff = User
+                        type User {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "issues" to """
+                        extend union Stuff = | Issue
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "users" to """
+                        type Query {
+                            stuff: Stuff
+                        }
+                        union Stuff = User | Issue
+                        type User {
+                            id: ID!
+                        }
+                        type Issue {
+                            key: ID!
+                        }
+                    """.trimIndent(),
+                    "issues" to """
+                        type Query {
+                            echo: String
+                        }
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+            val error = errors.assertSingleOfType<MissingUnderlyingField>()
+            assert(error.service.name == "users")
+            assert(error.parentType.overall.name == "Issue")
+            assert(error.overallField.name == "id")
+        }
+
         it("picks up types defined in other services used as input types") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
