@@ -226,9 +226,6 @@ private suspend fun execute(
                                                 )
                                                 .build()
                                         }
-                                        serviceCall.incrementalResponse.delayedResponses.toTypedArray().map {
-                                            transformData(it)
-                                        }
 
                                         val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse.delayedResponses.toTypedArray()).map {
                                             transformData(it)
