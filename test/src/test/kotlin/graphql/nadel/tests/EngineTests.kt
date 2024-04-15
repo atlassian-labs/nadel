@@ -44,7 +44,7 @@ import java.util.concurrent.CompletableFuture
  * 2. Test name e.g. hydration inside a renamed field
  * 3. Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
+private val singleTestToRun = (System.getenv("TEST_NAME") ?: "defer with label")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -212,10 +212,9 @@ private suspend fun execute(
                                                 .incrementalItems(
                                                     incrementalDataVal.map{
                                                         DeferPayload.newDeferredItem()
+                                                            .label(it["label"] as String)
+                                                            .path(it["path"] as List<Object>)
                                                             .apply {
-                                                                if (it["label"] != null) label(it["label"] as String)
-                                                                if (it["path"] != null) path(it["path"] as List<Object>)
-                                                                if (it["data"] != null) data(it["data"])
                                                                 if (it["extensions"] != null) extensions(it["extensions"] as Map<Any, Any>)
                                                                 if (it["errors"] != null) errors(it["errors"] as List<GraphQLError>)
                                                             }
