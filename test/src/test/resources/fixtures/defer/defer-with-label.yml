@@ -64,13 +64,15 @@ serviceCalls:
         [{
           "hasNext": false,
           "incremental": [{
+            "label": "slow-defer",
+            "path": ["defer"],
             "data": {
               "slow": "snail"
   
             }
           }]
         }]
-
+        
 
 # language=JSON
 
@@ -101,6 +103,8 @@ incrementalResponse:
     [{
       "hasNext": false,
       "incremental": [{
+        "label": "slow-defer",
+        "path": ["defer"],
         "data": {
           "slow": "snail"
   
