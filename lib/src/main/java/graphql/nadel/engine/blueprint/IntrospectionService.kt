@@ -35,7 +35,9 @@ fun interface NadelIntrospectionRunnerFactory {
 }
 
 open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecution {
-    private val graphQL = GraphQL.newGraphQL(injectNamespaceDataFetchers(schema)).build()
+    protected val graphQL: GraphQL = GraphQL
+        .newGraphQL(injectNamespaceDataFetchers(schema))
+        .build()
 
     override fun execute(serviceExecutionParameters: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> {
         return graphQL
@@ -43,6 +45,7 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
                 ExecutionInput.newExecutionInput()
                     .query(AstPrinter.printAstCompact(serviceExecutionParameters.query))
                     .variables(serviceExecutionParameters.variables)
+                    .also(::makeExecutionInput)
                     .build()
             )
             .thenApply {
@@ -51,6 +54,9 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
                     errors = it.errors.mapTo(ArrayList(), ::toSpecification),
                 )
             }
+    }
+
+    protected open fun makeExecutionInput(input: ExecutionInput.Builder) {
     }
 
     companion object {

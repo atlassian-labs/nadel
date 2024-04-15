@@ -15,7 +15,6 @@ import graphql.nadel.engine.util.operationTypes
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.unwrapOne
-import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
