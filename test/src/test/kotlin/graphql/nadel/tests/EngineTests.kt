@@ -194,6 +194,7 @@ private suspend fun execute(
                                             """Cannot have both an incremental and non-incremental response 
                                         |   fixture : '${fixture.name}' 
                                         |   service : '${serviceName}' 
+                                        |   service : '${serviceName}' 
                                         |   query : '${actualQuery}' 
                                         |   variables : '${actualVariables}' 
                                         |   operation : '${actualOperationName}' 

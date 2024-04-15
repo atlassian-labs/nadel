@@ -53,7 +53,7 @@ response: |-
     "data": null,
     "errors": [
       {
-        "message": "Maximum query depth exceeded 11 > 10",
+        "message": "Maximum query depth exceeded. 11 > 10",
         "extensions": {
           "classification": "ExecutionAborted"
         }
