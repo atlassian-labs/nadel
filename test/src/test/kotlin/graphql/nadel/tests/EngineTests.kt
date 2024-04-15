@@ -44,7 +44,7 @@ import java.util.concurrent.CompletableFuture
  * 2. Test name e.g. hydration inside a renamed field
  * 3. Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
+private val singleTestToRun = (System.getenv("TEST_NAME") ?: "defer with label")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -203,13 +203,11 @@ private suspend fun execute(
                                     }
                                     else if (serviceCall.incrementalResponse != null) {
                                         fun transformData(executionResult: JsonMap): DelayedIncrementalPartialResult{
-                                            val hasNextVal = executionResult["hasNext"] as Boolean
-                                            val extensionsVal = executionResult["extensions"] as Map<Any, Any>
                                             val incrementalDataVal = executionResult["incremental"] as List<JsonMap> //[0]["data"]
                                             return newIncrementalExecutionResult()
-                                                .hasNext(hasNextVal)
+                                                .hasNext(executionResult["hasNext"] as Boolean)
                                                 .apply {
-                                                    if(extensionsVal != null) extensions(extensionsVal)
+                                                    if(executionResult["extensions"] != null) extensions(executionResult["extensions"] as Map<Any, Any>)
                                                 }
                                                 .incrementalItems(
                                                     incrementalDataVal.map{
@@ -225,6 +223,9 @@ private suspend fun execute(
                                                     }
                                                 )
                                                 .build()
+                                        }
+                                        serviceCall.incrementalResponse.delayedResponses.toTypedArray().map {
+                                            transformData(it)
                                         }
 
                                         val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse.delayedResponses.toTypedArray()).map {
