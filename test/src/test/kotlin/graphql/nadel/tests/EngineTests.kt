@@ -212,9 +212,10 @@ private suspend fun execute(
                                                 .incrementalItems(
                                                     incrementalDataVal.map{
                                                         DeferPayload.newDeferredItem()
-                                                            .label(it["label"] as String)
+                                                            .data(it["data"])
                                                             .path(it["path"] as List<Object>)
                                                             .apply {
+                                                                if (it["label"] != null) it["label"] as String
                                                                 if (it["extensions"] != null) extensions(it["extensions"] as Map<Any, Any>)
                                                                 if (it["errors"] != null) errors(it["errors"] as List<GraphQLError>)
                                                             }
@@ -222,9 +223,6 @@ private suspend fun execute(
                                                     }
                                                 )
                                                 .build()
-                                        }
-                                        serviceCall.incrementalResponse.delayedResponses.toTypedArray().map {
-                                            transformData(it)
                                         }
 
                                         val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse.delayedResponses.toTypedArray()).map {
