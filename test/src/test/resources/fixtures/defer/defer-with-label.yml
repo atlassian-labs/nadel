@@ -48,25 +48,48 @@ serviceCalls:
         }
       variables: { }
     # language=JSON
-    response: |-
-      {
-        "data": {
-          "defer": {
-            "hello": "world"
-          }
-        },
-        "extensions": {}
-      }
-# language=JSON
+    incrementalResponse:
+      # Note: currently this just returns initialResponse, but have included delayedResponse to ensure no errors with the TestFixture types
+      initialResponse: |-
+        {
+          "hasNext": true,
+          "data": {
+            "defer": {
+              "hello": "world"
+            }
+          },
+          "extensions": {}
+        }
+      delayedResponses: |-
+        [{
+          "hasNext": false,
+          "incremental": [{
+            "data": {
+              "slow": "snail"
+  
+            }
+          }]
+        }]
 
-    # This is just checking that  can generate queries containing @defer.
-    # The response below will change once defer work is implemented.
-response: |-
-  {
-    "data": {
-      "defer": {
-        "hello": "world"
-      }
-    },
-    "extensions": {}
-  }
+# language=JSON
+incrementalResponse:
+  initialResponse: |-
+    {
+      "hasNext": true,
+      "data": {
+        "defer": {
+          "hello": "world"
+        }
+      },
+      "extensions": {}
+    }
+  delayedResponses: |-
+    [{
+      "hasNext": false,
+      "incremental": [{
+        "data": {
+          "slow": "snail"
+  
+        }
+      }]
+    }]
