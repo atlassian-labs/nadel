@@ -177,6 +177,18 @@ private suspend fun execute(
                             )
                             printSyncLine(actualQuery)
 
+                            fun failWithFixtureContext(message: String): Nothing {
+                                fail(
+                                    """${message}
+                                        |   fixture : '${fixture.name}' 
+                                        |   service : '${serviceName}' 
+                                        |   query : '${actualQuery}' 
+                                        |   variables : '${actualVariables}' 
+                                        |   operation : '${actualOperationName}' 
+                                        """.trimMargin()
+                                )
+                            }
+
                             synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
@@ -190,16 +202,7 @@ private suspend fun execute(
                                 if (indexOfCall != null) {
                                     val serviceCall = serviceCalls.removeAt(indexOfCall)
                                     if (serviceCall.incrementalResponse != null && serviceCall.response != null) {
-                                        fail(
-                                            """Cannot have both an incremental and non-incremental response 
-                                        |   fixture : '${fixture.name}' 
-                                        |   service : '${serviceName}' 
-                                        |   service : '${serviceName}' 
-                                        |   query : '${actualQuery}' 
-                                        |   variables : '${actualVariables}' 
-                                        |   operation : '${actualOperationName}' 
-                                        """.trimMargin()
-                                        )
+                                        failWithFixtureContext("Cannot have both an incremental and non-incremental response")
                                     }
                                     else if (serviceCall.incrementalResponse != null) {
                                         fun transformData(executionResult: JsonMap): DelayedIncrementalPartialResult{
@@ -261,15 +264,7 @@ private suspend fun execute(
                                         )
                                     }
                                 } else {
-                                    fail(
-                                        """Unable to match service call 
-                                        |   fixture : '${fixture.name}' 
-                                        |   service : '${serviceName}' 
-                                        |   query : '${actualQuery}' 
-                                        |   variables : '${actualVariables}' 
-                                        |   operation : '${actualOperationName}' 
-                                        """.trimMargin()
-                                    )
+                                    failWithFixtureContext("Unable to match service call")
                                 }
                             }
                         } catch (e: Throwable) {
