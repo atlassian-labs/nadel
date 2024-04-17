@@ -287,7 +287,7 @@ private suspend fun execute(
                     )
                 }
                 .build(),
-        ).await()
+        )
 
         if (fixture.exception != null) {
             fail("Expected exception did not occur")
