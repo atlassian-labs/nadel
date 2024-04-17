@@ -203,7 +203,7 @@ private suspend fun execute(
                                     }
                                     else if (serviceCall.incrementalResponse != null) {
                                         fun transformData(executionResult: JsonMap): DelayedIncrementalPartialResult{
-                                            val incrementalDataVal = executionResult["incremental"] as List<JsonMap> //[0]["data"]
+                                            val incrementalDataVal = executionResult["incremental"] as List<JsonMap>
                                             return newIncrementalExecutionResult()
                                                 .hasNext(executionResult["hasNext"] as Boolean)
                                                 .apply {
