@@ -15,6 +15,7 @@ import graphql.nadel.NadelSchemas
 import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
@@ -205,63 +206,13 @@ private suspend fun execute(
                                         failWithFixtureContext("Cannot have both an incremental and non-incremental response")
                                     }
                                     else if (serviceCall.incrementalResponse != null) {
-                                        fun transformData(executionResult: JsonMap): DelayedIncrementalPartialResult{
-                                            val incrementalDataVal = executionResult["incremental"] as List<JsonMap>
-                                            return newIncrementalExecutionResult()
-                                                .hasNext(executionResult["hasNext"] as Boolean)
-                                                .apply {
-                                                    if(executionResult["extensions"] != null) extensions(executionResult["extensions"] as Map<Any, Any>)
-                                                }
-                                                .incrementalItems(
-                                                    incrementalDataVal.map{
-                                                        DeferPayload.newDeferredItem()
-                                                            .data(it["data"])
-                                                            .path(it["path"] as List<Object>)
-                                                            .apply {
-                                                                if (it["label"] != null) it["label"] as String
-                                                                if (it["extensions"] != null) extensions(it["extensions"] as Map<Any, Any>)
-                                                                if (it["errors"] != null) errors(it["errors"] as List<GraphQLError>)
-                                                            }
-                                                            .build()
-                                                    }
-                                                )
-                                                .build()
-                                        }
-
-                                        val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse.delayedResponses.toTypedArray()).map {
-                                            transformData(it)
-                                        }.asPublisher()
-
-                                        CompletableFuture.completedFuture(
-                                            NadelIncrementalServiceExecutionResult(
-                                                serviceExecutionResult = NadelServiceExecutionResultImpl(
-                                                serviceCall.incrementalResponse.initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                                                serviceCall.incrementalResponse.initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
-                                                serviceCall.incrementalResponse.initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
-                                            ),
-                                                incrementalItemPublisher = incrementalItemPublisher,
-                                                hasNext = true
-                                        ))
+                                        transformIncrementalExecutionResult(serviceCall)
                                     }
                                     else if (serviceCall.response != null) {
-                                        CompletableFuture.completedFuture(
-                                            NadelServiceExecutionResultImpl(
-                                                serviceCall.response!!["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                                                serviceCall.response!!["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
-                                                serviceCall.response!!["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
-                                            ),
-                                        )
+                                        transformExecutionResult(serviceCall.response!!)
                                     }
                                     else {
-                                        fail(
-                                            """Service call had no response 
-                                        |   fixture : '${fixture.name}' 
-                                        |   service : '${serviceName}' 
-                                        |   query : '${actualQuery}' 
-                                        |   variables : '${actualVariables}' 
-                                        |   operation : '${actualOperationName}' 
-                                        """.trimMargin()
-                                        )
+                                        failWithFixtureContext("Service call had no response")
                                     }
                                 } else {
                                     failWithFixtureContext("Unable to match service call")
@@ -272,6 +223,55 @@ private suspend fun execute(
                         }
                     }
                     return testHook.wrapServiceExecution(serviceExecution)
+                }
+
+                private fun transformIncrementalExecutionResult(serviceCall: ServiceCall): CompletableFuture<ServiceExecutionResult> {
+                    val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse!!.delayedResponses.toTypedArray()).map {
+                        transformDelayedIncrementalPartialResult(it)
+                    }.asPublisher()
+                    return CompletableFuture.completedFuture(
+                        NadelIncrementalServiceExecutionResult(
+                            serviceExecutionResult = NadelServiceExecutionResultImpl(
+                                serviceCall.incrementalResponse.initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                                serviceCall.incrementalResponse.initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                                serviceCall.incrementalResponse.initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                            ),
+                            incrementalItemPublisher = incrementalItemPublisher,
+                            hasNext = true
+                        ))
+                }
+
+                private fun transformExecutionResult(serviceCallResponse: JsonMap): CompletableFuture<ServiceExecutionResult> {
+                    return CompletableFuture.completedFuture(
+                        NadelServiceExecutionResultImpl(
+                            serviceCallResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                            serviceCallResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                            serviceCallResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                        ),
+                    )
+                }
+
+                private fun transformDelayedIncrementalPartialResult(delayedResponse: JsonMap): DelayedIncrementalPartialResult{
+                    val incrementalDataVal = delayedResponse["incremental"] as List<JsonMap>
+                    return newIncrementalExecutionResult()
+                        .hasNext(delayedResponse["hasNext"] as Boolean)
+                        .apply {
+                            if(delayedResponse["extensions"] != null) extensions(delayedResponse["extensions"] as Map<Any, Any>)
+                        }
+                        .incrementalItems(
+                            incrementalDataVal.map{
+                                DeferPayload.newDeferredItem()
+                                    .data(it["data"])
+                                    .path(it["path"] as List<Object>)
+                                    .apply {
+                                        if (it["label"] != null) it["label"] as String
+                                        if (it["extensions"] != null) extensions(it["extensions"] as Map<Any, Any>)
+                                        if (it["errors"] != null) errors(it["errors"] as List<GraphQLError>)
+                                    }
+                                    .build()
+                            }
+                        )
+                        .build()
                 }
 
                 private fun fixVariables(variables: JsonMap): JsonMap {
