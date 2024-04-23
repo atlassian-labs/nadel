@@ -6,6 +6,8 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.IncrementalExecutionResult
+import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.language.Document
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
@@ -44,11 +46,16 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.reactive.asPublisher
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
 internal class NextgenEngine(
@@ -91,6 +98,7 @@ internal class NextgenEngine(
         .maxFieldsCount(maxFieldCount)
 
     suspend fun execute(
+        coroutineScope: CoroutineScope,
         executionInput: ExecutionInput,
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
@@ -118,6 +126,8 @@ internal class NextgenEngine(
             }
 
             val executionContext = NadelExecutionContext(
+                coroutineScope,
+                Channel(UNLIMITED),
                 executionInput,
                 query,
                 executionHooks,
@@ -167,7 +177,11 @@ internal class NextgenEngine(
             }
 
             beginExecuteContext?.onCompleted(result, null)
-            return result
+
+            return IncrementalExecutionResultImpl.Builder()
+                .from(result)
+                .incrementalItemPublisher(executionContext.resultsChannel.consumeAsFlow().asPublisher())
+                .build()
         } catch (e: Throwable) {
             when (e) {
                 is GraphQLError -> return newExecutionResult(error = e)

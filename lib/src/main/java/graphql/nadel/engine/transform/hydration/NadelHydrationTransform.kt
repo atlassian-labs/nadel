@@ -1,5 +1,9 @@
 package graphql.nadel.engine.transform.hydration
 
+import graphql.incremental.DeferPayload
+import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl
+import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -35,7 +39,16 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
+/**
+ * Defer notes:
+ *
+ * Hydration could be invoked in an incremental response (handled by system?)
+ * Hydration could be invoked immediately
+ *
+ * How do we know what the result path is?
+ */
 /**
  * Would recommend a read of [NadelGenericHydrationInstruction] for more context.
  */
@@ -168,7 +181,33 @@ internal class NadelHydrationTransform(
             }
         }
 
-        return jobs.awaitAll().flatten()
+        executionContext.deferScope.launch {
+            val results = jobs.awaitAll()
+                .flatten()
+                .mapNotNull {
+                    when (it) {
+                        is NadelResultInstruction.AddError -> null
+                        is NadelResultInstruction.Remove -> null
+                        is NadelResultInstruction.Set -> it.newValue
+                    }
+                }
+
+            executionContext.resultsChannel
+                .send(
+                    DelayedIncrementalPartialResultImpl.Builder()
+                        .incrementalItems(
+                            listOf(
+                                DeferPayload.newDeferredItem()
+                                    .data(results.map { it.value })
+                                    .path(overallField.listOfResultKeys as List<Any>?)
+                                    .build(),
+                            ),
+                        )
+                        .build()
+                )
+        }
+
+        return emptyList()
     }
 
     private suspend fun hydrate(
