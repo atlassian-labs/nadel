@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -154,12 +155,15 @@ class Nadel private constructor(
         return if (result.hasErrors()) {
             ExecutionResultImpl(result.errors)
         } else {
-            engine.execute(
-                executionInput = executionInputRef.get()!!,
-                queryDocument = result.document,
-                instrumentationState = instrumentationState,
-                executionHints = hints,
-            )
+            coroutineScope {
+                engine.execute(
+                    coroutineScope = this,
+                    executionInput = executionInputRef.get()!!,
+                    queryDocument = result.document,
+                    instrumentationState = instrumentationState,
+                    executionHints = hints,
+                )
+            }
         }
     }
 
@@ -259,10 +263,16 @@ class Nadel private constructor(
         private var transforms = emptyList<NadelTransform<out Any>>()
         private var introspectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner)
 
+        private var schemas: NadelSchemas? = null
         private var schemaBuilder = NadelSchemas.Builder()
 
         private var maxQueryDepth = Integer.MAX_VALUE
         private var maxFieldCount = Integer.MAX_VALUE
+
+        fun schemas(schemas: NadelSchemas): Builder {
+            this.schemas = schemas
+            return this
+        }
 
         fun overallSchema(serviceName: String, nsdl: Reader): Builder {
             schemaBuilder.overallSchema(serviceName, nsdl)
@@ -380,7 +390,7 @@ class Nadel private constructor(
         }
 
         fun build(): Nadel {
-            val (engineSchema, services) = schemaBuilder.build()
+            val (engineSchema, services) = schemas ?: schemaBuilder.build()
 
             val querySchema = QuerySchemaGenerator.generateQuerySchema(engineSchema)
 
