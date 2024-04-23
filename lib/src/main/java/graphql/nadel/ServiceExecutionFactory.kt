@@ -1,6 +1,6 @@
 package graphql.nadel
 
-interface ServiceExecutionFactory {
+fun interface ServiceExecutionFactory {
     /**
      * Called to to get a function that can be called to get data for the named service
      *
