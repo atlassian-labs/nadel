@@ -1,15 +1,21 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.GraphQLError
+import graphql.incremental.DeferPayload
+import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelSchemas
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
-import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
@@ -21,8 +27,12 @@ import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.reactive.asPublisher
 import org.junit.jupiter.api.fail
+import org.reactivestreams.Publisher
 import java.io.File
 import java.math.BigInteger
 import java.util.concurrent.CompletableFuture
@@ -180,7 +190,7 @@ private suspend fun execute(
                                 )
                             }
 
-                            val response = synchronized(serviceCalls) {
+                            synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
                                         it.serviceName == serviceName
@@ -192,36 +202,76 @@ private suspend fun execute(
 
                                 if (indexOfCall != null) {
                                     val serviceCall = serviceCalls.removeAt(indexOfCall)
-                                    val response = serviceCall.response
-                                    if (serviceCall.incrementalResponse != null && response != null) {
-                                        failWithFixtureContext("Fixture cannot have both a response and an incrementalResponse.")
+                                    if (serviceCall.incrementalResponse != null && serviceCall.response != null) {
+                                        failWithFixtureContext("Cannot have both an incremental and non-incremental response")
                                     }
                                     else if (serviceCall.incrementalResponse != null) {
-                                        serviceCall.incrementalResponse.initialResponse //for now, just return initial response
-                                    } else if (response != null) {
-                                        response
+                                        transformIncrementalExecutionResult(serviceCall)
+                                    }
+                                    else if (serviceCall.response != null) {
+                                        transformExecutionResult(serviceCall.response!!)
                                     }
                                     else {
-                                        failWithFixtureContext("Fixture had no response")
+                                        failWithFixtureContext("Service call had no response")
                                     }
                                 } else {
                                     failWithFixtureContext("Unable to match service call")
                                 }
                             }
-
-                            @Suppress("UNCHECKED_CAST")
-                            CompletableFuture.completedFuture(
-                                NadelServiceExecutionResultImpl(
-                                    response["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                                    response["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
-                                    response["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
-                                ),
-                            )
                         } catch (e: Throwable) {
                             fail("Unable to invoke service '$serviceName'", e)
                         }
                     }
                     return testHook.wrapServiceExecution(serviceExecution)
+                }
+
+                private fun transformIncrementalExecutionResult(serviceCall: ServiceCall): CompletableFuture<ServiceExecutionResult> {
+                    val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse!!.delayedResponses.toTypedArray()).map {
+                        transformDelayedIncrementalPartialResult(it)
+                    }.asPublisher()
+                    return CompletableFuture.completedFuture(
+                        NadelIncrementalServiceExecutionResult(
+                            serviceExecutionResult = NadelServiceExecutionResultImpl(
+                                serviceCall.incrementalResponse.initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                                serviceCall.incrementalResponse.initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                                serviceCall.incrementalResponse.initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                            ),
+                            incrementalItemPublisher = incrementalItemPublisher,
+                            hasNext = true
+                        ))
+                }
+
+                private fun transformExecutionResult(serviceCallResponse: JsonMap): CompletableFuture<ServiceExecutionResult> {
+                    return CompletableFuture.completedFuture(
+                        NadelServiceExecutionResultImpl(
+                            serviceCallResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                            serviceCallResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                            serviceCallResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                        ),
+                    )
+                }
+
+                private fun transformDelayedIncrementalPartialResult(delayedResponse: JsonMap): DelayedIncrementalPartialResult{
+                    val incrementalDataVal = delayedResponse["incremental"] as List<JsonMap>
+                    return newIncrementalExecutionResult()
+                        .hasNext(delayedResponse["hasNext"] as Boolean)
+                        .apply {
+                            if(delayedResponse["extensions"] != null) extensions(delayedResponse["extensions"] as Map<Any, Any>)
+                        }
+                        .incrementalItems(
+                            incrementalDataVal.map{
+                                DeferPayload.newDeferredItem()
+                                    .data(it["data"])
+                                    .path(it["path"] as List<Object>)
+                                    .apply {
+                                        if (it["label"] != null) it["label"] as String
+                                        if (it["extensions"] != null) extensions(it["extensions"] as Map<Any, Any>)
+                                        if (it["errors"] != null) errors(it["errors"] as List<GraphQLError>)
+                                    }
+                                    .build()
+                            }
+                        )
+                        .build()
                 }
 
                 private fun fixVariables(variables: JsonMap): JsonMap {

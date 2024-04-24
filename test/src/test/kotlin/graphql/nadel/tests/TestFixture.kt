@@ -30,8 +30,7 @@ data class TestFixture(
     val serviceCalls: List<ServiceCall>,
     @JsonProperty("response")
     val responseJsonString: String?,
-    @JsonProperty("incrementalResponse")
-    val incrementalResponseJsonString: IncrementalResponse?,
+    val incrementalResponse: IncrementalResponse?,
     @JsonInclude(NON_NULL)
     val exception: ExpectedException?,
 ) {

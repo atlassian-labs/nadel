@@ -49,7 +49,6 @@ serviceCalls:
       variables: { }
     # language=JSON
     incrementalResponse:
-      # Note: currently this just returns initialResponse, but have included delayedResponse to ensure no errors with the TestFixture types
       initialResponse: |-
         {
           "hasNext": true,
@@ -64,9 +63,10 @@ serviceCalls:
         [{
           "hasNext": false,
           "incremental": [{
+            "label": "slow-defer",
+            "path": ["defer"],
             "data": {
               "slow": "snail"
-  
             }
           }]
         }]
@@ -87,9 +87,10 @@ incrementalResponse:
     [{
       "hasNext": false,
       "incremental": [{
+        "label": "slow-defer",
+        "path": ["defer"],
         "data": {
           "slow": "snail"
-  
         }
       }]
     }]
