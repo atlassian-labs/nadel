@@ -1,7 +1,6 @@
 package graphql.nadel
 
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.TypeDefinitionRegistry
 
 open class Service(
     val name: String,

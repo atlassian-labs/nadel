@@ -30,7 +30,6 @@ import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompare
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 abstract class NadelIntegrationTest(
