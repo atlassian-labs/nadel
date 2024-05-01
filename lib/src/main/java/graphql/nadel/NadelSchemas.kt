@@ -209,15 +209,22 @@ data class NadelSchemas constructor(
                 val nadelDefinitionRegistry = NadelDefinitionRegistry.from(nadelDefinitions)
 
                 // Builder should enforce non-null entry
+                val underlyingTypeDefinitions = underlyingTypeDefs[serviceName]!!
                 val underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(
                     serviceName,
-                    requireNotNull(underlyingTypeDefs[serviceName]),
+                    underlyingTypeDefinitions,
                     builder.underlyingWiringFactory,
                 )
 
                 val serviceExecution = serviceExecutionFactory.getServiceExecution(serviceName)
 
-                Service(serviceName, underlyingSchema, serviceExecution, nadelDefinitionRegistry)
+                Service(
+                    name = serviceName,
+                    underlyingSchema = underlyingSchema,
+                    serviceExecution = serviceExecution,
+                    definitionRegistry = nadelDefinitionRegistry,
+                    underlyingTypeDefinitions = underlyingTypeDefinitions,
+                )
             }
         }
 
