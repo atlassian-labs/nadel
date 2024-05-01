@@ -14,11 +14,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 data class NadelExecutionContext internal constructor(
-    /**
-     * A scope close to the root of the request execution, use this to launch
-     * async jobs still tied to the request.
-     */
-    internal val coroutineScope: CoroutineScope,
     val executionInput: ExecutionInput,
     val query: ExecutableNormalizedOperation,
     internal val hooks: NadelExecutionHooks,

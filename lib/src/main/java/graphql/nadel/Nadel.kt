@@ -155,15 +155,12 @@ class Nadel private constructor(
         return if (result.hasErrors()) {
             ExecutionResultImpl(result.errors)
         } else {
-            coroutineScope {
-                engine.execute(
-                    coroutineScope = this,
-                    executionInput = executionInputRef.get()!!,
-                    queryDocument = result.document,
-                    instrumentationState = instrumentationState,
-                    executionHints = hints,
-                )
-            }
+            engine.execute(
+                executionInput = executionInputRef.get()!!,
+                queryDocument = result.document,
+                instrumentationState = instrumentationState,
+                executionHints = hints,
+            )
         }
     }
 
