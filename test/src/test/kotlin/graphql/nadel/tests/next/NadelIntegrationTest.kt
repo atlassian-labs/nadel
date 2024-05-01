@@ -21,6 +21,7 @@ import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.test.runTest
 import org.intellij.lang.annotations.Language
@@ -29,6 +30,7 @@ import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompare
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 abstract class NadelIntegrationTest(
@@ -200,8 +202,12 @@ abstract class NadelIntegrationTest(
             JSONCompareMode.STRICT,
         )
 
-        // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
-        if (testData.response.delayedResponses.isNotEmpty()) {
+        if (testData.response.delayedResponses.isEmpty()) {
+            if (result is IncrementalExecutionResult) {
+                assertTrue(result.incrementalItemPublisher.asFlow().toList().isEmpty())
+            }
+        } else {
+            // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
             assertTrue(result is IncrementalExecutionResult)
 
             // Unmatched calls, by the end of the function both should be empty if they're matched
