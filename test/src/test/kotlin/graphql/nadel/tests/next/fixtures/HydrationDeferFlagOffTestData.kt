@@ -30,13 +30,10 @@ public class HydrationDeferFlagOffTestData : TestData() {
                     variables = "{}",
                     response = """
                     | {
-                    |   "data": {
-                    |     "issue": {
-                    |       "id": "ari:cloud:jira::issue/1",
-                    |       "assignee": {
-                    |         "name": "Franklin"
-                    |       }
-                    |     }
+                    |   "issue": {
+                    |     "id": "ari:cloud:jira::issue/1",
+                    |     "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
+                    |     "__typename__hydration__assignee": "Issue"
                     |   }
                     | }
                     """.trimMargin(),
@@ -54,10 +51,8 @@ public class HydrationDeferFlagOffTestData : TestData() {
                     variables = "{}",
                     response = """
                     | {
-                    |   "data": {
-                    |     "user": {
-                    |       "name": "Franklin"
-                    |     }
+                    |   "user": {
+                    |     "name": "Franklin"
                     |   }
                     | }
                     """.trimMargin(),
