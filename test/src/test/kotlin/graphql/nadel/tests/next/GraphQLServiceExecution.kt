@@ -12,7 +12,10 @@ import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import java.util.concurrent.CompletableFuture
 
-class GraphQLServiceExecution(val serviceName: String, private val graphQL: GraphQL) : ServiceExecution {
+class GraphQLServiceExecution(
+    private val serviceName: String,
+    private val graphQL: GraphQL,
+) : ServiceExecution {
     override fun execute(serviceExecutionParameters: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> {
         val input = ExecutionInput.newExecutionInput()
             .query(AstPrinter.printAst(serviceExecutionParameters.query))

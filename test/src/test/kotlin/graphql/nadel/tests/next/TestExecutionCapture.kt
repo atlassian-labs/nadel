@@ -1,10 +1,12 @@
 package graphql.nadel.tests.next
 
+import com.fasterxml.jackson.module.kotlin.convertValue
 import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.tests.jsonObjectMapper
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
@@ -24,7 +26,7 @@ class TestExecutionCapture {
     data class Call(
         val query: String,
         val variables: JsonMap,
-        val result: ExecutionResult,
+        val result: JsonMap,
         val delayedResults: List<DelayedIncrementalPartialResult>,
     )
 
@@ -39,7 +41,7 @@ class TestExecutionCapture {
             Call(
                 query = query,
                 variables = variables,
-                result = result,
+                result = deepClone(result),
                 delayedResults = delayedResults,
             ),
         )
@@ -77,5 +79,13 @@ class TestExecutionCapture {
         } else {
             result
         }
+    }
+
+    /**
+     * The issue is that Nadel manipulates the underlying service response.
+     * We need to capture the original response before that happens.
+     */
+    private fun deepClone(result: ExecutionResult): JsonMap {
+        return jsonObjectMapper.convertValue(result.getData())
     }
 }
