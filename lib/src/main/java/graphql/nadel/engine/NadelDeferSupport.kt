@@ -30,11 +30,14 @@ class NadelDeferSupport internal constructor(
      */
     private val resultFlow by lazy(delayedResultsChannel::consumeAsFlow)
 
-    private val outstandingJobCounter = OutstandingJobCounter(
-        onEmpty = {
+    init {
+        deferCoroutineJob.invokeOnCompletion {
+            require(outstandingJobCounter.isEmpty())
             delayedResultsChannel.close()
-        },
-    )
+        }
+    }
+
+    private val outstandingJobCounter = OutstandingJobCounter()
 
     fun defer(task: suspend CoroutineScope.() -> DelayedIncrementalPartialResult): Job {
         val outstandingJobHandle = outstandingJobCounter.incrementJobCount()
@@ -74,7 +77,6 @@ class NadelDeferSupport internal constructor(
                             outstandingJobHandle.decrementAndGetJobCount() > 0
                         }
 
-
                         delayedResultsChannel.send(
                             // Copy of result but with the correct hasNext according to the info we know
                             result.copy(hasNext = hasNext)
@@ -92,15 +94,21 @@ class NadelDeferSupport internal constructor(
         return resultFlow
     }
 
+    fun onInitialResultComplete() {
+        deferCoroutineJob.complete()
+    }
+
     fun close() {
         deferCoroutineScope.cancel()
     }
 }
 
-private class OutstandingJobCounter(
-    private val onEmpty: () -> Unit,
-) {
+private class OutstandingJobCounter {
     private val count = AtomicInteger()
+
+    fun isEmpty(): Boolean {
+        return count.get() == 0
+    }
 
     fun incrementJobCount(): OutstandingJobHandle {
         count.incrementAndGet()
@@ -112,11 +120,6 @@ private class OutstandingJobCounter(
             }
 
             count.decrementAndGet()
-                .also {
-                    if (it == 0) {
-                        onEmpty()
-                    }
-                }
         }
     }
 
