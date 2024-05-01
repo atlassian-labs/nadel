@@ -6,7 +6,6 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.language.Document
 import graphql.nadel.engine.NadelDeferSupport
@@ -50,10 +49,7 @@ import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.reactive.asPublisher
@@ -99,7 +95,6 @@ internal class NextgenEngine(
         .maxFieldsCount(maxFieldCount)
 
     suspend fun execute(
-        coroutineScope: CoroutineScope,
         executionInput: ExecutionInput,
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
@@ -128,7 +123,6 @@ internal class NextgenEngine(
 
             val deferSupport = NadelDeferSupport()
             val executionContext = NadelExecutionContext(
-                coroutineScope,
                 executionInput,
                 query,
                 executionHooks,
