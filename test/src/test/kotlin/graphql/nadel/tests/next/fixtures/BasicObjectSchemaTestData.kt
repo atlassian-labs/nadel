@@ -17,26 +17,26 @@ import kotlin.collections.listOf
 @Suppress("unused")
 public class BasicObjectSchemaTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
-                ExpectedServiceCall(
-                    service = "test",
-                    query = """
-                    | {
-                    |   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
-                    |     id
-                    |   }
-                    | }
-                    """.trimMargin(),
-                    variables = "{}",
-                    response = """
-                    | {
-                    |   "issueById": {
-                    |     "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
-                    |   }
-                    | }
-                    """.trimMargin(),
-                    delayedResponses = listOfJsonStrings(
-                    ),
+            ExpectedServiceCall(
+                service = "test",
+                query = """
+                | {
+                |   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
+                |     id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                response = """
+                | {
+                |   "issueById": {
+                |     "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResponses = listOfJsonStrings(
                 ),
+            ),
         )
 
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
