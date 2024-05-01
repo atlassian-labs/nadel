@@ -8,6 +8,7 @@ abstract class TestData {
 }
 
 data class ExpectedServiceCall(
+    val service: String,
     @Language("GraphQL")
     val query: String,
     @Language("JSON")

@@ -142,9 +142,10 @@ abstract class NadelIntegrationTest(
                     ): CompletableFuture<ExecutionResult> {
                         return CompletableFuture.completedFuture(
                             executionCapture.capture(
-                                parameters.query,
-                                parameters.variables,
-                                executionResult,
+                                service = service.name,
+                                query = parameters.query,
+                                variables = parameters.variables,
+                                result = executionResult,
                             ),
                         )
                     }
@@ -181,7 +182,8 @@ abstract class NadelIntegrationTest(
 
             val matchingCalls = unmatchedExpectedCalls
                 .filter { expected ->
-                    getCanonicalQuery(expected.query) == actualQuery
+                    actualCall.service == expected.service
+                        && getCanonicalQuery(expected.query) == actualQuery
                         && jsonObjectMapper.readValue<JsonMap>(expected.variables) == actualVariables
                 }
 
