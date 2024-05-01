@@ -24,6 +24,7 @@ class TestExecutionCapture {
         get() = _delayedResults
 
     data class Call(
+        val service: String,
         val query: String,
         val variables: JsonMap,
         val result: JsonMap,
@@ -31,6 +32,7 @@ class TestExecutionCapture {
     )
 
     fun capture(
+        service: String,
         query: String,
         variables: JsonMap,
         result: ExecutionResult,
@@ -39,6 +41,7 @@ class TestExecutionCapture {
 
         _calls.add(
             Call(
+                service = service,
                 query = query,
                 variables = variables,
                 result = deepClone(result),
