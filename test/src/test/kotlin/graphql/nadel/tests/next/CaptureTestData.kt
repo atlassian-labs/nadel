@@ -108,6 +108,7 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
                         // Calls can appear out of order (e.g. parallel calls) so sort it here to ensure a consistent output
                         .sortedWith(
                             compareBy(
+                                { it.service },
                                 { it.query },
                                 {
                                     jsonObjectMapper.writeValueAsString(it.variables)
