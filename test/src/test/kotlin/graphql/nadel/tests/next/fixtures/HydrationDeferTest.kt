@@ -4,7 +4,7 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-class HydrationDeferTest : NadelIntegrationTest(
+open class HydrationDeferTest : NadelIntegrationTest(
     query = """
         query {
           issue(id: "ari:cloud:jira::issue/1") {
