@@ -18,6 +18,7 @@ import kotlin.collections.listOf
 public class EchoTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
                 ExpectedServiceCall(
+                    service = "hello",
                     query = """
                     | {
                     |   echo

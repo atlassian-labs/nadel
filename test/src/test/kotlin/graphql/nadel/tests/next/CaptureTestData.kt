@@ -164,6 +164,7 @@ private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCa
         add("(\n")
         indented {
             ExpectedServiceCall::query.name
+            add("%L = %S,\n", ExpectedServiceCall::service.name, call.service)
             add("%L = %S,\n", ExpectedServiceCall::query.name, call.query.replaceIndent(" "))
             add("%L = %S,\n", ExpectedServiceCall::variables.name, call.variables)
             add("%L = %S,\n", ExpectedServiceCall::response.name, writeResultJson(call.result))
