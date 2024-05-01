@@ -11,7 +11,7 @@ class EchoTest : NadelIntegrationTest(
     variables = mapOf(),
     services = listOf(
         Service(
-            name = "",
+            name = "hello",
             overallSchema = """
                 type Query {
                   echo: String
