@@ -22,7 +22,7 @@ import io.kotest.mpp.newInstanceNoArgConstructor
 import java.io.File
 import kotlin.reflect.KClass
 
-// For autocomplete
+// For navigation so you can search up CaptureTestData
 private typealias CaptureTestData = Unit
 
 suspend fun main() {
