@@ -39,7 +39,9 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
             ?: return null
 
         if (objectType.getField(overallField.name)?.getDirective("toBeDeleted") != null) {
-            return ValidationError(ValidationErrorType.WrongType)
+            return ValidationError.newValidationError()
+                .validationErrorType(ValidationErrorType.WrongType)
+                .build()
         }
 
         return null

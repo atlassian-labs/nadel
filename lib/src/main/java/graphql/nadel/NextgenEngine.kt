@@ -6,8 +6,10 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.language.Document
+import graphql.nadel.engine.NadelDeferSupport
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
@@ -45,7 +47,6 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
-import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -55,7 +56,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.job
 import kotlinx.coroutines.reactive.asPublisher
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
@@ -126,16 +126,18 @@ internal class NextgenEngine(
                 )
             }
 
+            val deferSupport = NadelDeferSupport()
             val executionContext = NadelExecutionContext(
                 coroutineScope,
-                Channel(UNLIMITED),
                 executionInput,
                 query,
                 executionHooks,
                 executionHints,
                 instrumentationState,
                 timer,
+                deferSupport,
             )
+
             val beginExecuteContext = instrumentation.beginExecute(
                 query,
                 queryDocument,
@@ -179,17 +181,9 @@ internal class NextgenEngine(
 
             beginExecuteContext?.onCompleted(result, null)
 
-            // If there are no more defer jobs, close the channel to notify listeners
-            executionContext.deferScope.coroutineContext.job
-                .invokeOnCompletion {
-                    executionContext.resultsChannel.close()
-                }
-            // Complete the parent job (i.e. child jobs now dictate when the job is done).
-            (executionContext.deferScope.coroutineContext.job as CompletableJob).complete()
-
             return IncrementalExecutionResultImpl.Builder()
                 .from(result)
-                .incrementalItemPublisher(executionContext.resultsChannel.consumeAsFlow().asPublisher())
+                .incrementalItemPublisher(deferSupport.resultFlow().asPublisher())
                 .build()
         } catch (e: Throwable) {
             when (e) {

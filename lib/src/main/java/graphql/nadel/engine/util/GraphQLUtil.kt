@@ -11,6 +11,9 @@ import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl
+import graphql.incremental.IncrementalPayload
 import graphql.language.ArrayValue
 import graphql.language.BooleanValue
 import graphql.language.Definition
@@ -608,3 +611,16 @@ fun compileToDocument(
         )
     }
 }
+
+internal fun DelayedIncrementalPartialResult.copy(
+    incremental: List<IncrementalPayload>? = this.incremental,
+    extensions: Map<Any?, Any?>? = this.extensions,
+    hasNext: Boolean = this.hasNext(),
+): DelayedIncrementalPartialResult {
+    return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+        .hasNext(hasNext)
+        .incrementalItems(incremental)
+        .extensions(extensions)
+        .build()
+}
+
