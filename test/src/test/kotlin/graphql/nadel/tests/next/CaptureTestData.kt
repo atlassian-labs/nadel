@@ -97,29 +97,28 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
     val listOf = MemberName("kotlin.collections", "listOf")
     val callsType = List::class.asClassName().parameterizedBy(ExpectedServiceCall::class.asTypeName())
 
+    // override val calls: List<ExpectedServiceCall> = listOf(…)
     return PropertySpec.builder("calls", callsType)
         .addModifiers(KModifier.OVERRIDE)
         .initializer(
             buildCodeBlock {
                 add("%M", listOf)
                 add("(\n")
-                indented {
-                    captured.calls
-                        // Calls can appear out of order (e.g. parallel calls) so sort it here to ensure a consistent output
-                        .sortedWith(
-                            compareBy(
-                                { it.service },
-                                { it.query },
-                                {
-                                    jsonObjectMapper.writeValueAsString(it.variables)
-                                },
-                            )
+                captured.calls
+                    // Calls can appear out of order (e.g. parallel calls) so sort it here to ensure a consistent output
+                    .sortedWith(
+                        compareBy(
+                            { it.service },
+                            { it.query },
+                            {
+                                jsonObjectMapper.writeValueAsString(it.variables)
+                            },
                         )
-                        .forEach { call ->
-                            add(makeConstructorInvocationToExpectedServiceCall(call))
-                            add(",\n")
-                        }
-                }
+                    )
+                    .forEach { call ->
+                        add(makeConstructorInvocationToExpectedServiceCall(call))
+                        add(",\n")
+                    }
                 add(")")
             },
         )
@@ -129,10 +128,12 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
 private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpec {
     val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", ::listOfJsonStrings.name)
 
+    // override val response: ExpectedNadelResponse = …
     return PropertySpec.builder("response", ExpectedNadelResponse::class)
         .addModifiers(KModifier.OVERRIDE)
         .initializer(
             buildCodeBlock {
+                // Invoke constructor
                 add("%T", ExpectedNadelResponse::class)
                 add("(\n")
 

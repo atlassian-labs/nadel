@@ -17,22 +17,22 @@ import kotlin.collections.listOf
 @Suppress("unused")
 public class EchoTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
-                ExpectedServiceCall(
-                    service = "hello",
-                    query = """
-                    | {
-                    |   echo
-                    | }
-                    """.trimMargin(),
-                    variables = "{}",
-                    response = """
-                    | {
-                    |   "echo": "Hello World"
-                    | }
-                    """.trimMargin(),
-                    delayedResponses = listOfJsonStrings(
-                    ),
+            ExpectedServiceCall(
+                service = "hello",
+                query = """
+                | {
+                |   echo
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                response = """
+                | {
+                |   "echo": "Hello World"
+                | }
+                """.trimMargin(),
+                delayedResponses = listOfJsonStrings(
                 ),
+            ),
         )
 
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
