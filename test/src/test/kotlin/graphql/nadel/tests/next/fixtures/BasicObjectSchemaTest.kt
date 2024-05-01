@@ -16,7 +16,7 @@ class BasicObjectSchemaTest : NadelIntegrationTest(
     variables = mapOf(),
     services = listOf(
         Service(
-            name = "",
+            name = "test",
             overallSchema = """
                 type Query {
                   issueById(id: ID!): Issue
