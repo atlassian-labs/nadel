@@ -18,5 +18,4 @@ open class Service(
      * These are the GraphQL definitions that a service contributes to the OVERALL schema.
      */
     val definitionRegistry: NadelDefinitionRegistry,
-    val underlyingTypeDefinitions: TypeDefinitionRegistry? = null,
 )
