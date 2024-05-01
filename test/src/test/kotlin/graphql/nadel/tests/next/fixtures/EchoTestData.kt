@@ -26,9 +26,7 @@ public class EchoTestData : TestData() {
                     variables = "{}",
                     response = """
                     | {
-                    |   "data": {
-                    |     "echo": "Hello World"
-                    |   }
+                    |   "echo": "Hello World"
                     | }
                     """.trimMargin(),
                     delayedResponses = listOfJsonStrings(
