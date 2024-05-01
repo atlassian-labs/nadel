@@ -64,7 +64,7 @@ class HydrationDeferTest : NadelIntegrationTest(
                     val assigneeId: String,
                 )
 
-                val issues = listOf(
+                val issuesById: Map<String, Issue> = listOf(
                     Issue(
                         id = "ari:cloud:jira::issue/1",
                         assigneeId = "ari:cloud:jira::user/1",
@@ -74,7 +74,7 @@ class HydrationDeferTest : NadelIntegrationTest(
                 wiring
                     .type("Query") { type ->
                         type.dataFetcher("issue") { env ->
-                            issues[env.getArgument("id")]
+                            issuesById[env.getArgument("id")]
                         }
                     }
             },
@@ -96,7 +96,7 @@ class HydrationDeferTest : NadelIntegrationTest(
                     val name: String,
                 )
 
-                val users = listOf(
+                val usersById = listOf(
                     User(
                         id = "ari:cloud:jira::user/1",
                         name = "Franklin",
@@ -106,7 +106,7 @@ class HydrationDeferTest : NadelIntegrationTest(
                 wiring
                     .type("Query") { type ->
                         type.dataFetcher("user") { env ->
-                            users[env.getArgument("id")]
+                            usersById[env.getArgument("id")]
                         }
                     }
             },
