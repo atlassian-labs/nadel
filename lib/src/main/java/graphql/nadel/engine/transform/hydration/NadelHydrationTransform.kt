@@ -166,11 +166,11 @@ internal class NadelHydrationTransform(
             flatten = true,
         )
 
-        return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isEmpty()) {
-            getResultInstructions(parentNodes, state, executionBlueprint, overallField, executionContext)
-        } else {
+        return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
             deferHydration(parentNodes, state, executionBlueprint, overallField, executionContext)
             return emptyList()
+        } else {
+            getResultInstructions(parentNodes, state, executionBlueprint, overallField, executionContext)
         }
     }
 
