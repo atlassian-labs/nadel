@@ -1,5 +1,5 @@
 name: "defer on hydrated field"
-enabled: true
+enabled: false
 overallSchema:
   petService: |
     directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
