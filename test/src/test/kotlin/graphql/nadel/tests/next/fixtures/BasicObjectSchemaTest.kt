@@ -1,9 +1,9 @@
 package graphql.nadel.tests.next.fixtures
 
+import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.SerializedJsonValue
 import graphql.nadel.tests.next.jsonDataFetcher
-import graphql.nadel.tests.jsonObjectMapper
 
 class BasicObjectSchemaTest : NadelIntegrationTest(
     query = """
