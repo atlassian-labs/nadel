@@ -72,8 +72,8 @@ private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
         .map {
             it.load().kotlin
         }
-        .filter {
-            it.isFinal
+        .filterNot {
+            it.isAbstract
         }
         .mapNotNull {
             it.asSubclassOfOrNull()
