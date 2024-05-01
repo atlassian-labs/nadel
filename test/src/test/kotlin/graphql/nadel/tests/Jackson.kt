@@ -21,7 +21,7 @@ val yamlObjectMapper: ObjectMapper = YAMLFactory()
     .findAndRegisterModules()
 
 val prettierPrinter = DefaultPrettyPrinter()
-    // Wtf is this half mutate, half immutable API?
+    // Wtf is this half mutable, half immutable API?
     .apply {
         indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
     }
