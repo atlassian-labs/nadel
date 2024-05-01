@@ -15,6 +15,7 @@ import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.buildCodeBlock
 import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import io.kotest.mpp.newInstanceNoArgConstructor
@@ -182,6 +183,13 @@ private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCa
         }
         add(")")
     }
+}
+
+private fun writeResultJson(result: JsonMap): String {
+    return jsonObjectMapper
+        .withPrettierPrinter()
+        .writeValueAsString(result)
+        .replaceIndent(" ")
 }
 
 private fun writeResultJson(result: ExecutionResult): String {
