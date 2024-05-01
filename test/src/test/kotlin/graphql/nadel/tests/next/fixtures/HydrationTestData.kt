@@ -18,6 +18,7 @@ import kotlin.collections.listOf
 public class HydrationTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
                 ExpectedServiceCall(
+                    service = "issues",
                     query = """
                     | {
                     |   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
@@ -43,6 +44,7 @@ public class HydrationTestData : TestData() {
                     ),
                 ),
                 ExpectedServiceCall(
+                    service = "identity",
                     query = """
                     | {
                     |   userById(id: "ari:cloud:identity::user/1") {

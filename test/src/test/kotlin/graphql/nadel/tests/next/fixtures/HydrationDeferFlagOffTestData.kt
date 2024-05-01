@@ -18,6 +18,7 @@ import kotlin.collections.listOf
 public class HydrationDeferFlagOffTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
                 ExpectedServiceCall(
+                    service = "issues",
                     query = """
                     | {
                     |   issue(id: "ari:cloud:jira::issue/1") {
@@ -41,6 +42,7 @@ public class HydrationDeferFlagOffTestData : TestData() {
                     ),
                 ),
                 ExpectedServiceCall(
+                    service = "users",
                     query = """
                     | {
                     |   user(id: "ari:cloud:jira::user/1") {
