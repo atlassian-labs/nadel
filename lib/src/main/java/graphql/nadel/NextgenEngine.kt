@@ -174,6 +174,7 @@ internal class NextgenEngine(
             }
 
             beginExecuteContext?.onCompleted(result, null)
+            deferSupport.onInitialResultComplete()
 
             return IncrementalExecutionResultImpl.Builder()
                 .from(result)
