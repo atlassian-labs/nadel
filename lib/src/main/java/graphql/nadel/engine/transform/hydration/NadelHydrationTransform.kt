@@ -33,6 +33,7 @@ import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
+import graphql.schema.AsyncDataFetcher.async
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -165,14 +166,15 @@ internal class NadelHydrationTransform(
             flatten = true,
         )
 
-        if (overallField.deferredExecutions.isEmpty()) {
-            return plain(parentNodes, state, executionBlueprint, overallField, executionContext)
+        return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isEmpty()) {
+            getResultInstructions(parentNodes, state, executionBlueprint, overallField, executionContext)
         } else {
-            return deferred(parentNodes, state, executionBlueprint, overallField, executionContext)
+            deferHydration(parentNodes, state, executionBlueprint, overallField, executionContext)
+            return emptyList()
         }
     }
 
-    private suspend fun plain(
+    private suspend fun getResultInstructions(
         parentNodes: List<JsonNode>,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -182,7 +184,7 @@ internal class NadelHydrationTransform(
         return coroutineScope {
             parentNodes
                 .map {
-                    hydrate(
+                    prepareHydration(
                         parentNode = it,
                         state = state,
                         executionBlueprint = executionBlueprint,
@@ -200,26 +202,26 @@ internal class NadelHydrationTransform(
         }
     }
 
-    private suspend fun deferred(
+    private suspend fun deferHydration(
         parentNodes: List<JsonNode>,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
         overallField: ExecutableNormalizedField,
         executionContext: NadelExecutionContext,
-    ): List<NadelResultInstruction> {
-        val hydrations = coroutineScope {
-            parentNodes.map {
-                hydrate(
-                    parentNode = it,
-                    state = state,
-                    executionBlueprint = executionBlueprint,
-                    fieldToHydrate = overallField,
-                    executionContext = executionContext,
-                )
-            }
+    ) {
+        // Prepare the hydrations before we go async
+        // We need to do this because if we run it async below, we cannot guarantee that our artificial fields have not yet been removed
+        val hydrations = parentNodes.map {
+            prepareHydration(
+                parentNode = it,
+                state = state,
+                executionBlueprint = executionBlueprint,
+                fieldToHydrate = overallField,
+                executionContext = executionContext,
+            )
         }
 
-        executionContext.deferScope.launch {
+        executionContext.deferSupport.defer {
             val instructions = hydrations
                 .map {
                     async {
@@ -234,37 +236,32 @@ internal class NadelHydrationTransform(
                 .filterIsInstance<NadelResultInstruction.Set>()
                 .emptyOrSingle()
 
-            executionContext.resultsChannel
-                .send(
-                    DelayedIncrementalPartialResultImpl.Builder()
-                        .incrementalItems(
-                            listOf(
-                                DeferPayload.newDeferredItem()
-                                    .data(results?.newValue)
-                                    .path(overallField.listOfResultKeys as List<Any>?)
-                                    .errors(
-                                        instructions
-                                            .filterIsInstance<NadelResultInstruction.AddError>()
-                                            .map {
-                                                it.error
-                                            }
-                                            .toList(),
-                                    )
-                                    .build(),
-                            ),
-                        )
-                        .build()
+            DelayedIncrementalPartialResultImpl.Builder()
+                .incrementalItems(
+                    listOf(
+                        DeferPayload.newDeferredItem()
+                            .data(results?.newValue)
+                            .path(overallField.listOfResultKeys as List<Any>?)
+                            .errors(
+                                instructions
+                                    .filterIsInstance<NadelResultInstruction.AddError>()
+                                    .map {
+                                        it.error
+                                    }
+                                    .toList(),
+                            )
+                            .build(),
+                    ),
                 )
+                .build()
         }
-
-        return emptyList()
     }
 
     fun interface PreparedHydration {
         suspend fun hydrate(): List<NadelResultInstruction>
     }
 
-    private suspend fun hydrate(
+    private suspend fun prepareHydration(
         parentNode: JsonNode,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
