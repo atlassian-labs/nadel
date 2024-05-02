@@ -1,4 +1,4 @@
-package graphql.nadel.tests.next.fixtures
+package graphql.nadel.tests.next.fixtures.basic
 
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.next.NadelIntegrationTest

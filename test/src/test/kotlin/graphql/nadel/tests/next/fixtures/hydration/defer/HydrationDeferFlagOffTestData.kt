@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures
+package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.nadel.tests.next.ExpectedNadelResponse
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -15,7 +15,7 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.CaptureTestData]
  */
 @Suppress("unused")
-public class HydrationDeferTestData : TestData() {
+public class HydrationDeferFlagOffTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
@@ -68,31 +68,15 @@ public class HydrationDeferTestData : TestData() {
             | {
             |   "data": {
             |     "issue": {
-            |       "id": "ari:cloud:jira::issue/1"
+            |       "id": "ari:cloud:jira::issue/1",
+            |       "assignee": {
+            |         "name": "Franklin"
+            |       }
             |     }
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
-                """
-                | {
-                |   "hasNext": false,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issue",
-                |         "assignee"
-                |       ],
-                |       "data": {
-                |         "value": {
-                |           "name": "Franklin"
-                |         }
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
             ),
         )
 }

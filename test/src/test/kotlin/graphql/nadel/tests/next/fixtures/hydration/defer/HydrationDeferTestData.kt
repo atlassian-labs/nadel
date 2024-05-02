@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures
+package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.nadel.tests.next.ExpectedNadelResponse
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -15,37 +15,14 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.CaptureTestData]
  */
 @Suppress("unused")
-public class HydrationTestData : TestData() {
+public class HydrationDeferTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "identity",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
-                |     id
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                response = """
-                | {
-                |   "userById": {
-                |     "id": "ari:cloud:identity::user/1",
-                |     "name": "Franklin Wang"
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
-                ),
-            ),
             ExpectedServiceCall(
                 service = "issues",
                 query = """
                 | {
-                |   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
+                |   issue(id: "ari:cloud:jira::issue/1") {
                 |     id
-                |     key
                 |     hydration__assignee__assigneeId: assigneeId
                 |     __typename__hydration__assignee: __typename
                 |   }
@@ -54,11 +31,30 @@ public class HydrationTestData : TestData() {
                 variables = "{}",
                 response = """
                 | {
-                |   "issueById": {
-                |     "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1",
-                |     "key": "GQLGW-1",
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |   "issue": {
+                |     "id": "ari:cloud:jira::issue/1",
+                |     "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
                 |     "__typename__hydration__assignee": "Issue"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResponses = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "users",
+                query = """
+                | {
+                |   user(id: "ari:cloud:jira::user/1") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                response = """
+                | {
+                |   "user": {
+                |     "name": "Franklin"
                 |   }
                 | }
                 """.trimMargin(),
@@ -71,18 +67,32 @@ public class HydrationTestData : TestData() {
             response = """
             | {
             |   "data": {
-            |     "issueById": {
-            |       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1",
-            |       "key": "GQLGW-1",
-            |       "assignee": {
-            |         "id": "ari:cloud:identity::user/1",
-            |         "name": "Franklin Wang"
-            |       }
+            |     "issue": {
+            |       "id": "ari:cloud:jira::issue/1"
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issue",
+                |         "assignee"
+                |       ],
+                |       "data": {
+                |         "value": {
+                |           "name": "Franklin"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
