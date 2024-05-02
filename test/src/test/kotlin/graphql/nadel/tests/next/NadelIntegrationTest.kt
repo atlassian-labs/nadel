@@ -26,7 +26,6 @@ import graphql.schema.idl.SchemaParser
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -302,7 +301,7 @@ abstract class NadelIntegrationTest(
         @Language("GraphQL")
         val overallSchema: String,
         @Language("GraphQL")
-        val underlyingSchema: String = overallSchema,
+        val underlyingSchema: String = makeUnderlyingSchema(overallSchema),
         val runtimeWiring: (RuntimeWiring.Builder) -> Unit,
     )
 
