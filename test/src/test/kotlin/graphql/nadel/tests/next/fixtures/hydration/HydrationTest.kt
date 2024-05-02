@@ -1,4 +1,4 @@
-package graphql.nadel.tests.next.fixtures
+package graphql.nadel.tests.next.fixtures.hydration
 
 import graphql.nadel.tests.next.NadelIntegrationTest
 

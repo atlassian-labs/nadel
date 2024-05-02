@@ -1,11 +1,11 @@
-package graphql.nadel.tests.next.fixtures
+package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 import org.intellij.lang.annotations.Language
 
-class DeferHydrationInListIsDisabledTest : DeferHydrationInListIsDisabled(
+class HydrationDeferInListIsDisabledTest : HydrationDeferInListIsDisabled(
     query = """
         query {
           issues { # List
@@ -27,7 +27,7 @@ class DeferHydrationInListIsDisabledTest : DeferHydrationInListIsDisabled(
  *
  * Then there's the hydration at `issueByKey.related.assignee` which does not defer because `Issue.related` is a List.
  */
-class DeferHydrationInListIsDisabledForRelatedIssuesTest : DeferHydrationInListIsDisabled(
+class HydrationDeferInListIsDisabledForRelatedIssuesTest : HydrationDeferInListIsDisabled(
     query = """
         query {
           issueByKey(key: "GQLGW-2") { # Not a list
@@ -49,7 +49,7 @@ class DeferHydrationInListIsDisabledForRelatedIssuesTest : DeferHydrationInListI
     """.trimIndent(),
 )
 
-class DeferHydrationInListIsDisabledForParentIssueInRelatedIssuesTest : DeferHydrationInListIsDisabled(
+class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTest : HydrationDeferInListIsDisabled(
     query = """
         query {
           issueByKey(key: "GQLGW-3") { # Not a list
@@ -68,7 +68,7 @@ class DeferHydrationInListIsDisabledForParentIssueInRelatedIssuesTest : DeferHyd
     """.trimIndent(),
 )
 
-abstract class DeferHydrationInListIsDisabled(
+abstract class HydrationDeferInListIsDisabled(
     @Language("GraphQL")
     query: String,
 ) : NadelIntegrationTest(
