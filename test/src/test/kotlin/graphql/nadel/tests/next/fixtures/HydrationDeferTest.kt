@@ -23,12 +23,6 @@ open class HydrationDeferTest : NadelIntegrationTest(
             overallSchema = """
                 directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
             """.trimIndent(),
-            underlyingSchema = """
-                directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
-                type Query {
-                  echo: String
-                }
-            """.trimIndent(),
             runtimeWiring = { wiring ->
             },
         ),
@@ -47,15 +41,6 @@ open class HydrationDeferTest : NadelIntegrationTest(
                       field: "user"
                       arguments: [{name: "id", value: "$source.assigneeId"}]
                     )
-                }
-            """.trimIndent(),
-            underlyingSchema = """
-                type Query {
-                  issue(id: ID!): Issue
-                }
-                type Issue {
-                  id: ID!
-                  assigneeId: ID!
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->

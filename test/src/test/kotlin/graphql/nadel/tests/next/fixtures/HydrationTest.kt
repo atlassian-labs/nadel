@@ -26,22 +26,13 @@ class HydrationTest : NadelIntegrationTest(
                 type Issue {
                   id: ID!
                   key: String
+                  assigneeId: ID @hidden
                   assignee: User
                     @hydrated(
                       service: "identity"
                       field: "userById"
                       arguments: [{name: "id", value: "$source.assigneeId"}]
                     )
-                }
-            """.trimIndent(),
-            underlyingSchema = """
-                type Query {
-                  issueById(id: ID!): Issue
-                }
-                type Issue {
-                  id: ID!
-                  key: String!
-                  assigneeId: ID
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->
