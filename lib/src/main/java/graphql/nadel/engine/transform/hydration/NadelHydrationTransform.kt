@@ -18,7 +18,6 @@ import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
-import graphql.nadel.engine.transform.hydration.NadelHydrationTransform.PreparedHydration
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -29,12 +28,17 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.emptyOrSingle
+import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
+import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.AsyncDataFetcher.async
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -166,7 +170,7 @@ internal class NadelHydrationTransform(
             flatten = true,
         )
 
-        return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
+        return if (isDeferred(executionContext, executionBlueprint, overallField)) {
             deferHydration(parentNodes, state, executionBlueprint, overallField, executionContext)
             return emptyList()
         } else {
@@ -222,7 +226,7 @@ internal class NadelHydrationTransform(
         }
 
         executionContext.deferSupport.defer {
-            val instructions = hydrations
+            val instructionSequence = hydrations
                 .map {
                     async {
                         it.hydrate()
@@ -232,7 +236,7 @@ internal class NadelHydrationTransform(
                 .asSequence()
                 .flatten()
 
-            val results = instructions
+            val results = instructionSequence
                 .filterIsInstance<NadelResultInstruction.Set>()
                 .emptyOrSingle()
 
@@ -243,7 +247,7 @@ internal class NadelHydrationTransform(
                             .data(results?.newValue)
                             .path(overallField.listOfResultKeys as List<Any>?)
                             .errors(
-                                instructions
+                                instructionSequence
                                     .filterIsInstance<NadelResultInstruction.AddError>()
                                     .map {
                                         it.error
@@ -255,10 +259,6 @@ internal class NadelHydrationTransform(
                 )
                 .build()
         }
-    }
-
-    fun interface PreparedHydration {
-        suspend fun hydrate(): List<NadelResultInstruction>
     }
 
     private suspend fun prepareHydration(
@@ -397,4 +397,78 @@ internal class NadelHydrationTransform(
                 it.condition.evaluate(node?.value)
             }
     }
+
+    private fun isDeferred(
+        executionContext: NadelExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        overallField: ExecutableNormalizedField,
+    ): Boolean {
+        return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
+            // We currently don't support defer if the hydration is inside a List
+            return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
+        } else {
+            false
+        }
+    }
+
+    private fun areAnyParentFieldsOutputtingLists(
+        field: ExecutableNormalizedField,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+    ): Boolean {
+        var cursor: ExecutableNormalizedField? = field.parent
+
+        while (cursor != null) {
+            val isList = cursor.getFieldDefinitionsSequence(executionBlueprint.engineSchema)
+                // todo: I think we don't need to check all of them? just one should be enough since they must conform to the same shape
+                .any {
+                    it.type.unwrapNonNull().isList
+                }
+
+            if (isList) {
+                return true
+            }
+
+            cursor = cursor.parent
+        }
+
+        return false
+    }
+}
+
+private fun ExecutableNormalizedField.getFieldDefinitionsSequence(
+    schema: GraphQLSchema,
+): Sequence<GraphQLFieldDefinition> {
+    return objectTypeNames
+        .asSequence()
+        .map { parentTypeName ->
+            schema.getTypeAs<GraphQLObjectType>(parentTypeName).getField(name)
+        }
+}
+
+/**
+ * A prepared hydration is a hydration that is ready to run, and not dependent on any result objects etc.
+ *
+ * This exists because hydrations can be `@defer`red.
+ *
+ * If you defer the hydration code, some values in the result may not be available as they will have been mutated.
+ *
+ * e.g. for this hydration
+ *
+ * ``` graphql
+ * type Issue {
+ *   assignee: User
+ *     @hydrated(
+ *       service: "users"
+ *       field: "user"
+ *       arguments: [{name: "id", value: "$source.assigneeId"}]
+ *     )
+ * }
+ * ```
+ *
+ * Then we need the value of `assigneeId` in the result, but this is an artificial field.
+ * Nadel removes artificial fields before the result gets sent back to the caller.
+ * So we "prepare" a hydration to ensure we have the value of the artificial field before it gets removed.
+ */
+private fun interface PreparedHydration {
+    suspend fun hydrate(): List<NadelResultInstruction>
 }
