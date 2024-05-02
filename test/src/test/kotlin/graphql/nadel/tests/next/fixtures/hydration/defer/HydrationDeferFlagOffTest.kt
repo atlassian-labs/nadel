@@ -1,4 +1,4 @@
-package graphql.nadel.tests.next.fixtures
+package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.nadel.NadelExecutionHints
 
