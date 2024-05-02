@@ -624,3 +624,13 @@ internal fun DelayedIncrementalPartialResult.copy(
         .build()
 }
 
+internal fun ExecutableNormalizedField.getFieldDefinitionSequence(
+    schema: GraphQLSchema,
+): Sequence<GraphQLFieldDefinition> {
+    return objectTypeNames
+        .asSequence()
+        .map { parentTypeName ->
+            schema.getTypeAs<GraphQLObjectType>(parentTypeName).getField(name)
+        }
+}
+

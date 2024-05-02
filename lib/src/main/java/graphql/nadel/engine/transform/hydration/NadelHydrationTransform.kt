@@ -28,6 +28,7 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.emptyOrSingle
+import graphql.nadel.engine.util.getFieldDefinitionSequence
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
@@ -36,9 +37,6 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.AsyncDataFetcher.async
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -418,7 +416,7 @@ internal class NadelHydrationTransform(
         var cursor: ExecutableNormalizedField? = field.parent
 
         while (cursor != null) {
-            val isList = cursor.getFieldDefinitionsSequence(executionBlueprint.engineSchema)
+            val isList = cursor.getFieldDefinitionSequence(executionBlueprint.engineSchema)
                 // todo: I think we don't need to check all of them? just one should be enough since they must conform to the same shape
                 .any {
                     it.type.unwrapNonNull().isList
@@ -433,16 +431,6 @@ internal class NadelHydrationTransform(
 
         return false
     }
-}
-
-private fun ExecutableNormalizedField.getFieldDefinitionsSequence(
-    schema: GraphQLSchema,
-): Sequence<GraphQLFieldDefinition> {
-    return objectTypeNames
-        .asSequence()
-        .map { parentTypeName ->
-            schema.getTypeAs<GraphQLObjectType>(parentTypeName).getField(name)
-        }
 }
 
 /**
