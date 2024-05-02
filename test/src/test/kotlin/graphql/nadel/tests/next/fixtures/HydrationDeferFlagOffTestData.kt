@@ -73,8 +73,7 @@ public class HydrationDeferFlagOffTestData : TestData() {
             |         "name": "Franklin"
             |       }
             |     }
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
