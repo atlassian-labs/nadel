@@ -1,14 +1,11 @@
 package graphql.nadel.tests.next.fixtures
 
-import graphql.execution.ResultPath
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.future
-import kotlin.time.Duration.Companion.milliseconds
 
 class UnderlyingServiceDeferTest : NadelIntegrationTest(
     query = """
@@ -33,7 +30,6 @@ class UnderlyingServiceDeferTest : NadelIntegrationTest(
         Service(
             name = "echo",
             overallSchema = """
-              directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
               type Query {
                 echo: String
               }
@@ -51,16 +47,6 @@ class UnderlyingServiceDeferTest : NadelIntegrationTest(
         Service(
             name = "users",
             overallSchema = """
-              type Query {
-                users: [User]
-              }
-              type User {
-                id: ID!
-                name: String!
-                friends: [User!]
-              }
-            """.trimIndent(),
-            underlyingSchema = """
               directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
               type Query {
                 users: [User]
