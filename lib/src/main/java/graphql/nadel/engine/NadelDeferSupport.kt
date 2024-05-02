@@ -1,7 +1,6 @@
 package graphql.nadel.engine
 
 import graphql.incremental.DelayedIncrementalPartialResult
-import graphql.nadel.engine.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -101,29 +100,29 @@ class NadelDeferSupport internal constructor(
     fun close() {
         deferCoroutineScope.cancel()
     }
-}
 
-private class OutstandingJobCounter {
-    private val count = AtomicInteger()
+    private class OutstandingJobCounter {
+        private val count = AtomicInteger()
 
-    fun isEmpty(): Boolean {
-        return count.get() == 0
-    }
-
-    fun incrementJobCount(): OutstandingJobHandle {
-        count.incrementAndGet()
-
-        val closed = AtomicBoolean(false)
-        return OutstandingJobHandle {
-            if (closed.getAndSet(true)) {
-                throw IllegalArgumentException("Cannot close outstanding job more than once")
-            }
-
-            count.decrementAndGet()
+        fun isEmpty(): Boolean {
+            return count.get() == 0
         }
-    }
 
-    fun interface OutstandingJobHandle {
-        fun decrementAndGetJobCount(): Int
+        fun incrementJobCount(): OutstandingJobHandle {
+            count.incrementAndGet()
+
+            val closed = AtomicBoolean(false)
+            return OutstandingJobHandle {
+                if (closed.getAndSet(true)) {
+                    throw IllegalArgumentException("Cannot close outstanding job more than once")
+                }
+
+                count.decrementAndGet()
+            }
+        }
+
+        fun interface OutstandingJobHandle {
+            fun decrementAndGetJobCount(): Int
+        }
     }
 }
