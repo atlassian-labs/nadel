@@ -7,9 +7,9 @@ import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NadelSchemas
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
-import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
@@ -21,7 +21,6 @@ import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
-import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
 import java.io.File
 import java.math.BigInteger

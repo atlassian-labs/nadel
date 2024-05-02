@@ -41,8 +41,8 @@ import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
 import graphql.nadel.NadelOperationKind
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
