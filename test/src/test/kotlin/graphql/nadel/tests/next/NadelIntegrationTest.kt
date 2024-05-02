@@ -1,6 +1,7 @@
 package graphql.nadel.tests.next
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.Assert.assertFalse
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.execution.instrumentation.Instrumentation
@@ -13,8 +14,10 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NadelSchemas
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.tests.jsonObjectMapper
+import graphql.nadel.tests.withPrettierPrinter
 import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -211,12 +214,38 @@ abstract class NadelIntegrationTest(
             // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
             assertTrue(result is IncrementalExecutionResult)
 
-            // Unmatched calls, by the end of the function both should be empty if they're matched
-            val unmatchedExpectedDelayedResponses = testData.response.delayedResponses.toMutableList()
-            val unmatchedActualDelayedResponses = result.incrementalItemPublisher
+            val actualDelayedResponses = result.incrementalItemPublisher
                 .asFlow()
-                .map {
-                    jsonObjectMapper.writeValueAsString(it.toSpecification())
+                .toList()
+
+            // Should only have one element that says hasNext=false, and it should be the last one
+            assertTrue(actualDelayedResponses.count { !it.hasNext() } == 1)
+            assertFalse(actualDelayedResponses.last().hasNext())
+
+            // Unmatched calls, by the end of the function both should be empty if they're matched
+            val unmatchedExpectedDelayedResponses = testData.response.delayedResponses
+                .map { delayedResponse ->
+                    val withoutHasNext = jsonObjectMapper.readValue<MutableJsonMap>(delayedResponse)
+                        .also {
+                            it.remove("hasNext")
+                        }
+
+                    jsonObjectMapper
+                        .withPrettierPrinter()
+                        .writeValueAsString(withoutHasNext)
+                }
+                .toMutableList()
+            val unmatchedActualDelayedResponses = actualDelayedResponses
+                .map { delayedResult ->
+                    jsonObjectMapper
+                        .withPrettierPrinter()
+                        .writeValueAsString(
+                            delayedResult.toSpecification()
+                                .also {
+                                    // Don't assert hasNext
+                                    it.remove("hasNext")
+                                },
+                        )
                 }
                 .toMutableList()
 

@@ -51,6 +51,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
@@ -290,6 +291,11 @@ internal class NextgenEngine(
                 .execute(serviceExecParams)
                 .asDeferred()
                 .await()
+                .also {
+                    if (it is NadelIncrementalServiceExecutionResult) {
+                        executionContext.deferSupport.defer(it.incrementalItemPublisher.asFlow())
+                    }
+                }
         } catch (e: Exception) {
             val errorMessage = "An exception occurred invoking the service '${service.name}'"
             val errorMessageNotSafe = "$errorMessage: ${e.message}"
