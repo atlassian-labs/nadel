@@ -79,8 +79,7 @@ public class HydrationTestData : TestData() {
             |         "name": "Franklin Wang"
             |       }
             |     }
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
