@@ -176,10 +176,14 @@ internal class NextgenEngine(
             beginExecuteContext?.onCompleted(result, null)
             deferSupport.onInitialResultComplete()
 
-            return IncrementalExecutionResultImpl.Builder()
-                .from(result)
-                .incrementalItemPublisher(deferSupport.resultFlow().asPublisher())
-                .build()
+            return if (deferSupport.hasDeferredResults()) {
+                IncrementalExecutionResultImpl.Builder()
+                    .from(result)
+                    .incrementalItemPublisher(deferSupport.resultFlow().asPublisher())
+                    .build()
+            } else {
+                result
+            }
         } catch (e: Throwable) {
             when (e) {
                 is GraphQLError -> return newExecutionResult(error = e)

@@ -79,6 +79,10 @@ class NadelDeferSupport internal constructor(
         }
     }
 
+    fun hasDeferredResults(): Boolean {
+        return outstandingJobCounter.hadJobs
+    }
+
     /**
      * Note that there is only one instance of this Flow, and it cannot be consumed more than once.
      *
@@ -123,7 +127,11 @@ class NadelDeferSupport internal constructor(
     }
 
     private class OutstandingJobCounter {
+        private val _hadJobs = AtomicBoolean()
         private val count = AtomicInteger()
+
+        val hadJobs: Boolean
+            get() = _hadJobs.get()
 
         fun isEmpty(): Boolean {
             return count.get() == 0
@@ -131,6 +139,7 @@ class NadelDeferSupport internal constructor(
 
         fun incrementJobCount(): OutstandingJobHandle {
             count.incrementAndGet()
+            _hadJobs.set(true)
 
             val closed = AtomicBoolean(false)
             return object : OutstandingJobHandle {
