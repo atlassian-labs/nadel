@@ -4,9 +4,12 @@ import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -14,6 +17,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NadelDeferSupportTest {
+    @Test
+    fun `channel closes once initial result comes in and there are no pending defer jobs`() {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+        val subject = NadelDeferSupport(channel)
+
+        assertFalse(channel.isClosedForSend)
+        assertFalse(channel.isClosedForReceive)
+
+        // When
+        subject.onInitialResultComplete()
+
+        // Then
+        assertTrue(channel.isClosedForSend)
+        assertTrue(channel.isClosedForReceive)
+    }
+
     @Test
     fun `after last job the hasNext is false`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
@@ -36,7 +55,7 @@ class NadelDeferSupportTest {
         }
 
         subject.defer {
-            // Wait until test tells us to finish
+            // Wait until test tells us to continue
             lockingJob.join()
 
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
@@ -51,6 +70,8 @@ class NadelDeferSupportTest {
                 .hasNext(true)
                 .build()
         }
+
+        subject.onInitialResultComplete()
 
         // Then
         firstAsync.join()
@@ -73,7 +94,7 @@ class NadelDeferSupportTest {
 
         // When
         subject.defer {
-            // Wait until test tells us to finish
+            // Wait until test tells us to continue
             firstLock.join()
 
             subject.defer {
@@ -109,7 +130,7 @@ class NadelDeferSupportTest {
 
         // When
         subject.defer {
-            // Wait until test tells us to finish
+            // Wait until test tells us to continue
             secondLock.join()
 
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
@@ -126,7 +147,7 @@ class NadelDeferSupportTest {
         }
 
         subject.defer {
-            // Wait until test tells us to finish
+            // Wait until test tells us to continue
             firstLock.join()
 
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
@@ -146,5 +167,44 @@ class NadelDeferSupportTest {
         assertTrue(secondItem !== firstItem)
         assertTrue(secondItem.incremental?.isNotEmpty() == true)
         assertFalse(secondItem.hasNext())
+    }
+
+    @Test
+    fun `channel still closes if the last defer job fails`() {
+        var testCompleted = false
+
+        try {
+            runTest {
+                // Channel that stores the oldest item
+                val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+                val subject = NadelDeferSupport(channel)
+                val lock = CompletableDeferred<Boolean>()
+
+                assertFalse(channel.isClosedForSend)
+
+                // When
+                subject.defer {
+                    // Wait until test tells us to continue
+                    lock.join()
+                    throw UnsupportedOperationException("Hello")
+                }
+                subject.onInitialResultComplete()
+
+                // Then
+                lock.complete(true)
+                // Can only get last element once the channel is closed
+                assertTrue(channel.consumeAsFlow().lastOrNull() == null)
+
+                // Must be at end of runTest
+                testCompleted = true
+            }
+        } catch (e: UnsupportedOperationException) {
+            assertTrue(e.message == "Hello")
+        }
+
+        // Coroutines code will throw uncaught exceptions even though we threw it deliberately
+        // Just ensure that we actually ran all the asserts and the tests is fine
+        assertTrue(testCompleted)
     }
 }

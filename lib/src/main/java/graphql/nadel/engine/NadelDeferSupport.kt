@@ -1,6 +1,7 @@
 package graphql.nadel.engine
 
 import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.nadel.engine.NadelDeferSupport.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,22 +40,19 @@ class NadelDeferSupport internal constructor(
     private val outstandingJobCounter = OutstandingJobCounter()
 
     fun defer(task: suspend CoroutineScope.() -> DelayedIncrementalPartialResult): Job {
-        val outstandingJobHandle = outstandingJobCounter.incrementJobCount()
-
-        return deferCoroutineScope
-            .launch {
-                val hasNext: Boolean
-                val result = try {
-                    task()
-                } finally {
-                    hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
-                }
-
-                delayedResultsChannel.send(
-                    // Copy of result but with the correct hasNext according to the info we know
-                    result.copy(hasNext = hasNext)
-                )
+        return launch { outstandingJobHandle ->
+            val hasNext: Boolean
+            val result = try {
+                task()
+            } finally {
+                hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
             }
+
+            delayedResultsChannel.send(
+                // Copy of result but with the correct hasNext according to the info we know
+                result.copy(hasNext = hasNext)
+            )
+        }
     }
 
     /**
@@ -63,25 +61,22 @@ class NadelDeferSupport internal constructor(
      * i.e. that the last element in the [Flow] will have `hasNext` set to `false`.
      */
     fun defer(serviceResults: Flow<DelayedIncrementalPartialResult>): Job {
-        val outstandingJobHandle = outstandingJobCounter.incrementJobCount()
-
-        return deferCoroutineScope
-            .launch {
-                serviceResults
-                    .collect { result ->
-                        // Here we'll stipulate that the last element of the Flow sets hasNext=false
-                        val hasNext = if (result.hasNext()) {
-                            true
-                        } else {
-                            outstandingJobHandle.decrementAndGetJobCount() > 0
-                        }
-
-                        delayedResultsChannel.send(
-                            // Copy of result but with the correct hasNext according to the info we know
-                            result.copy(hasNext = hasNext)
-                        )
+        return launch { outstandingJobHandle ->
+            serviceResults
+                .collect { result ->
+                    // Here we'll stipulate that the last element of the Flow sets hasNext=false
+                    val hasNext = if (result.hasNext()) {
+                        true
+                    } else {
+                        outstandingJobHandle.decrementAndGetJobCount() > 0
                     }
-            }
+
+                    delayedResultsChannel.send(
+                        // Copy of result but with the correct hasNext according to the info we know
+                        result.copy(hasNext = hasNext)
+                    )
+                }
+        }
     }
 
     /**
@@ -101,6 +96,32 @@ class NadelDeferSupport internal constructor(
         deferCoroutineScope.cancel()
     }
 
+    /**
+     * Launches a job and increments the outstanding job handle.
+     *
+     * Ensures the outstanding job is always closed at the end.
+     */
+    private inline fun launch(
+        crossinline task: suspend CoroutineScope.(OutstandingJobHandle) -> Unit,
+    ): Job {
+        val outstandingJobHandle = outstandingJobCounter.incrementJobCount()
+
+        return try {
+            deferCoroutineScope
+                .launch {
+                    task(outstandingJobHandle)
+                }
+                .also { job ->
+                    job.invokeOnCompletion {
+                        outstandingJobHandle.onFinallyEnsureDecremented()
+                    }
+                }
+        } catch (e: Throwable) {
+            outstandingJobHandle.onFinallyEnsureDecremented()
+            throw e
+        }
+    }
+
     private class OutstandingJobCounter {
         private val count = AtomicInteger()
 
@@ -112,17 +133,26 @@ class NadelDeferSupport internal constructor(
             count.incrementAndGet()
 
             val closed = AtomicBoolean(false)
-            return OutstandingJobHandle {
-                if (closed.getAndSet(true)) {
-                    throw IllegalArgumentException("Cannot close outstanding job more than once")
+            return object : OutstandingJobHandle {
+                override fun decrementAndGetJobCount(): Int {
+                    return if (closed.getAndSet(true)) {
+                        throw IllegalArgumentException("Cannot close outstanding job more than once")
+                    } else {
+                        count.decrementAndGet()
+                    }
                 }
 
-                count.decrementAndGet()
+                override fun onFinallyEnsureDecremented() {
+                    if (!closed.getAndSet(true)) {
+                        count.decrementAndGet()
+                    }
+                }
             }
         }
 
-        fun interface OutstandingJobHandle {
+        interface OutstandingJobHandle {
             fun decrementAndGetJobCount(): Int
+            fun onFinallyEnsureDecremented()
         }
     }
 }
