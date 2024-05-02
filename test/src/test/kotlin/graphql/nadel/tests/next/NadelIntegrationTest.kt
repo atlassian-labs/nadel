@@ -7,6 +7,7 @@ import graphql.GraphQL
 import graphql.execution.instrumentation.Instrumentation
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.language.AstPrinter
 import graphql.nadel.Nadel
@@ -23,9 +24,9 @@ import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -194,6 +195,8 @@ abstract class NadelIntegrationTest(
                 unmatchedExpectedCalls.remove(matchingCalls.first())
                 iterator.remove()
             }
+
+            // todo: match delayed responses here too
         }
 
         assertTrue(unmatchedExpectedCalls.isEmpty() && unmatchedActualCalls.isEmpty())
@@ -223,51 +226,75 @@ abstract class NadelIntegrationTest(
             assertTrue(actualDelayedResponses.dropLast(n = 1).all { it.hasNext() })
             assertFalse(actualDelayedResponses.last().hasNext())
 
-            // Unmatched calls, by the end of the function both should be empty if they're matched
-            val unmatchedExpectedDelayedResponses = testData.response.delayedResponses
-                .map { delayedResponse ->
-                    val withoutHasNext = jsonObjectMapper.readValue<MutableJsonMap>(delayedResponse)
-                        .also {
-                            it.remove("hasNext")
-                        }
-
-                    jsonObjectMapper
-                        .withPrettierPrinter()
-                        .writeValueAsString(withoutHasNext)
-                }
-                .toMutableList()
-            val unmatchedActualDelayedResponses = actualDelayedResponses
-                .map { delayedResult ->
-                    jsonObjectMapper
-                        .withPrettierPrinter()
-                        .writeValueAsString(
-                            delayedResult.toSpecification()
-                                .also {
-                                    // Don't assert hasNext
-                                    it.remove("hasNext")
-                                },
-                        )
-                }
-                .toMutableList()
-
-            unmatchedActualDelayedResponses
-                .forEachElementInIterator { iterator, actual ->
-                    // Find expected match
-                    val matches = unmatchedExpectedDelayedResponses
-                        .filter { expected ->
-                            JSONCompare.compareJSON(expected, actual, JSONCompareMode.STRICT)
-                                .passed()
-                        }
-
-                    // Multiple matches is ok, we match one at a time though
-                    if (matches.isNotEmpty()) {
-                        unmatchedExpectedDelayedResponses.remove(matches.first())
-                        iterator.remove()
-                    }
-                }
+            val (
+                unmatchedExpectedDelayedResponses,
+                unmatchedActualDelayedResponses,
+            ) = findUnmatchedDelayedResponses(
+                expectedResponses = testData.response.delayedResponses,
+                actualResponses = actualDelayedResponses,
+            )
 
             assertTrue(unmatchedExpectedDelayedResponses.isEmpty() && unmatchedActualDelayedResponses.isEmpty())
         }
+    }
+
+    /**
+     * This is specifically for root level delayed responses that Nadel returns.
+     */
+    private fun findUnmatchedDelayedResponses(
+        expectedResponses: List<String>, // Json object strings
+        actualResponses: List<DelayedIncrementalPartialResult>,
+    ): Pair<List<String>, List<String>> {
+        val unmatchedExpectedDelayedResponses = expectedResponses
+            .map { delayedResponse ->
+                // We don't care about the order
+                val withoutHasNext = jsonObjectMapper.readValue<MutableJsonMap>(delayedResponse)
+                    .also {
+                        it.remove("hasNext")
+                    }
+
+                jsonObjectMapper
+                    .withPrettierPrinter()
+                    .writeValueAsString(withoutHasNext)
+            }
+            .toMutableList()
+
+        val unmatchedActualDelayedResponses = actualResponses
+            .map { delayedResult ->
+                jsonObjectMapper
+                    .withPrettierPrinter()
+                    .writeValueAsString(
+                        delayedResult.toSpecification()
+                            .also {
+                                // Don't assert hasNext, we don't care about the order
+                                it.remove("hasNext")
+                            },
+                    )
+            }
+            .toMutableList()
+
+        // Matching process, this will remove matches from the unmatched lists above
+        unmatchedActualDelayedResponses
+            .forEachElementInIterator { iterator, actualResponse ->
+                val matches = unmatchedExpectedDelayedResponses
+                    .filter { expectedResponse ->
+                        JSONCompare
+                            .compareJSON(
+                                expectedResponse,
+                                actualResponse,
+                                JSONCompareMode.STRICT
+                            )
+                            .passed()
+                    }
+
+                // Multiple matches is ok, we match one at a time though
+                if (matches.isNotEmpty()) {
+                    unmatchedExpectedDelayedResponses.remove(matches.first())
+                    iterator.remove()
+                }
+            }
+
+        return unmatchedExpectedDelayedResponses to unmatchedActualDelayedResponses
     }
 
     data class Service(
