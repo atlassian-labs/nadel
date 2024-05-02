@@ -10,16 +10,17 @@ import graphql.nadel.tests.jsonObjectMapper
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
+import java.util.Collections
 
 class TestExecutionCapture {
-    private val _calls = mutableListOf<Call>()
+    private val _calls = synchronizedMutableListOf<Call>()
     val calls: List<Call>
         get() = _calls
 
     var result: ExecutionResult? = null
         private set
 
-    private val _delayedResults = mutableListOf<DelayedIncrementalPartialResult>()
+    private val _delayedResults = synchronizedMutableListOf<DelayedIncrementalPartialResult>()
     val delayedResults: List<DelayedIncrementalPartialResult>
         get() = _delayedResults
 
@@ -37,7 +38,7 @@ class TestExecutionCapture {
         variables: JsonMap,
         result: ExecutionResult,
     ): ExecutionResult {
-        val delayedResults = mutableListOf<DelayedIncrementalPartialResult>()
+        val delayedResults = synchronizedMutableListOf<DelayedIncrementalPartialResult>()
 
         _calls.add(
             Call(
@@ -91,5 +92,21 @@ class TestExecutionCapture {
     private fun deepClone(result: ExecutionResult): JsonMap {
         // todo: what should null behavior here be?
         return jsonObjectMapper.convertValue(result.getData() ?: return emptyMap())
+    }
+
+    /**
+     * Overrides the default one to mark it as deprecated because you probably
+     * want the synchronized one anyway.
+     */
+    @Deprecated(
+        message = "Use the synchronized version",
+        replaceWith = ReplaceWith("synchronizedMutableListOf<T>(*elements)"),
+    )
+    private fun <T> mutableListOf(vararg elements: T): MutableList<T> {
+        return kotlin.collections.mutableListOf(*elements)
+    }
+
+    private fun <T> synchronizedMutableListOf(vararg elements: T): MutableList<T> {
+        return Collections.synchronizedList(kotlin.collections.mutableListOf(*elements))
     }
 }
