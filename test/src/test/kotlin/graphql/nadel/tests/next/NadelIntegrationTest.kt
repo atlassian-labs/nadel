@@ -209,6 +209,7 @@ abstract class NadelIntegrationTest(
         if (testData.response.delayedResponses.isEmpty()) {
             if (result is IncrementalExecutionResult) {
                 assertTrue(result.incrementalItemPublisher.asFlow().toList().isEmpty())
+                assertFalse(result.hasNext())
             }
         } else {
             // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
@@ -219,7 +220,7 @@ abstract class NadelIntegrationTest(
                 .toList()
 
             // Should only have one element that says hasNext=false, and it should be the last one
-            assertTrue(actualDelayedResponses.count { !it.hasNext() } == 1)
+            assertTrue(actualDelayedResponses.dropLast(n = 1).all { it.hasNext() })
             assertFalse(actualDelayedResponses.last().hasNext())
 
             // Unmatched calls, by the end of the function both should be empty if they're matched

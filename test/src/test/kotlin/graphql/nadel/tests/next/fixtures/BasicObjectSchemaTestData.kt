@@ -46,8 +46,7 @@ public class BasicObjectSchemaTestData : TestData() {
             |     "issueById": {
             |       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
             |     }
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(

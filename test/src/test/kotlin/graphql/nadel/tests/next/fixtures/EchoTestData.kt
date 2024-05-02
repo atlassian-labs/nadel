@@ -40,8 +40,7 @@ public class EchoTestData : TestData() {
             | {
             |   "data": {
             |     "echo": "Hello World"
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
