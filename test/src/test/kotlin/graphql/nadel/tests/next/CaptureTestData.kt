@@ -34,7 +34,7 @@ suspend fun main() {
             println("Loading ${klass.qualifiedName}")
         }
         .map {
-            it to it.newInstanceNoArgConstructor() as NadelIntegrationTest
+            it to it.newInstanceNoArgConstructor()
         }
         .toList() // Construct all tests before running them, plus we need to be in a suspending context
         .forEach { (klass, test) ->
