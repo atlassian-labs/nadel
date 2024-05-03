@@ -93,6 +93,29 @@ public class HydrationDeferInListIsDisabledForRelatedIssuesTestData : TestData()
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "issueByKey": {
+     *       "key": "GQLGW-2",
+     *       "related": [
+     *         {
+     *           "assignee": {
+     *             "name": "Franklin"
+     *           }
+     *         }
+     *       ],
+     *       "assignee": {
+     *         "value": {
+     *           "name": "Tom"
+     *         }
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     */
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
             response = """
             | {
