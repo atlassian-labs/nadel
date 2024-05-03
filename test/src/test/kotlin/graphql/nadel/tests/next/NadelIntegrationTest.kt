@@ -59,7 +59,7 @@ abstract class NadelIntegrationTest(
         val result = nadel.execute(makeExecutionInput().build())
 
         // Then
-        assert(result.toSpecification())
+        assert(result)
         assertNadelResult(result, testData)
         assertServiceCalls(testData)
     }
@@ -166,7 +166,7 @@ abstract class NadelIntegrationTest(
             .newInstance() as TestData
     }
 
-    open fun assert(result: JsonMap) {
+    open fun assert(result: ExecutionResult) {
     }
 
     private fun assertServiceCalls(testData: TestData) {
