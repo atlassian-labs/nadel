@@ -67,6 +67,22 @@ public class HydrationTestData : TestData() {
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "issueById": {
+     *       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1",
+     *       "key": "GQLGW-1",
+     *       "assignee": {
+     *         "id": "ari:cloud:identity::user/1",
+     *         "name": "Franklin Wang"
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     */
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
             response = """
             | {

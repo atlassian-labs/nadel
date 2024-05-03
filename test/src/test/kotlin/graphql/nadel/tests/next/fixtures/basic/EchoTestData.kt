@@ -35,6 +35,15 @@ public class EchoTestData : TestData() {
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "echo": "Hello World"
+     *   }
+     * }
+     * ```
+     */
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
             response = """
             | {
