@@ -115,6 +115,34 @@ public class HydrationDeferInListIsDisabledTestData : TestData() {
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "issues": [
+     *       {
+     *         "key": "GQLGW-1",
+     *         "assignee": {
+     *           "name": "Franklin"
+     *         }
+     *       },
+     *       {
+     *         "key": "GQLGW-2",
+     *         "assignee": {
+     *           "name": "Tom"
+     *         }
+     *       },
+     *       {
+     *         "key": "GQLGW-3",
+     *         "assignee": {
+     *           "name": "Franklin"
+     *         }
+     *       }
+     *     ]
+     *   }
+     * }
+     * ```
+     */
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
             response = """
             | {
