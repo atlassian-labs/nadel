@@ -1,7 +1,6 @@
 package graphql.nadel.tests.next
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import graphql.Assert.assertFalse
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.execution.instrumentation.Instrumentation
@@ -35,6 +34,7 @@ import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompare
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 abstract class NadelIntegrationTest(

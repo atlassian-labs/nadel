@@ -43,7 +43,7 @@ dependencies {
     testImplementation("io.kotest:kotest-framework-datatest:5.8.0")
     testImplementation("io.mockk:mockk:1.13.8")
 
-    testImplementation("com.tngtech.archunit:archunit:1.2.1")
+    testImplementation("com.tngtech.archunit:archunit:1.2.2")
 }
 
 // compileJava.source file("build/generated-src"), sourceSets.main.java

@@ -22,6 +22,7 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.1")
     testImplementation("com.google.guava:guava:33.1.0-jre")
     testImplementation("com.squareup:kotlinpoet:1.16.0")
+    testImplementation("com.tngtech.archunit:archunit:1.2.2")
 }
 
 tasks.withType<Test> {

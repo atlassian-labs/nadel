@@ -1,6 +1,5 @@
 package graphql.nadel.tests.hooks
 
-import graphql.Assert.assertTrue
 import graphql.ExecutionResult
 import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
@@ -21,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.future
 import java.util.Collections
 import kotlin.random.Random
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 
 private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
