@@ -19,6 +19,7 @@ import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
+import graphql.nadel.validation.NadelSchemaValidation
 import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -98,8 +99,11 @@ abstract class NadelIntegrationTest(
     }
 
     open fun makeNadel(): Nadel.Builder {
+        val schemas = makeNadelSchemas().build()
+        NadelSchemaValidation(schemas).validate()
+
         return Nadel.newNadel()
-            .schemas(makeNadelSchemas().build())
+            .schemas(schemas)
             .instrumentation(makeInstrumentation())
     }
 
