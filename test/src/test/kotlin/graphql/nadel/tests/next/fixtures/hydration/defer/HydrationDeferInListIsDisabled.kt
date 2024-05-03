@@ -1,9 +1,12 @@
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
+import graphql.ExecutionResult
+import graphql.incremental.IncrementalExecutionResult
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 import org.intellij.lang.annotations.Language
+import kotlin.test.assertTrue
 
 class HydrationDeferInListIsDisabledTest : HydrationDeferInListIsDisabled(
     query = """
@@ -18,7 +21,11 @@ class HydrationDeferInListIsDisabledTest : HydrationDeferInListIsDisabled(
           }
         }
     """.trimIndent(),
-)
+) {
+    override fun assert(result: ExecutionResult) {
+        assertTrue(result !is IncrementalExecutionResult)
+    }
+}
 
 /**
  * There's actually two hydrations here.
@@ -117,7 +124,7 @@ abstract class HydrationDeferInListIsDisabled(
                     Issue(
                         key = "GQLGW-3",
                         assigneeId = "ari:cloud:identity::user/1",
-                        parentKey= "GQLGW-1",
+                        parentKey = "GQLGW-1",
                         relatedKeys = listOf("GQLGW-1", "GQLGW-2"),
                     ),
                 )
