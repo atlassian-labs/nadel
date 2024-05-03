@@ -63,6 +63,22 @@ public class HydrationDeferTestData : TestData() {
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "issue": {
+     *       "id": "ari:cloud:jira::issue/1",
+     *       "assignee": {
+     *         "value": {
+     *           "name": "Franklin"
+     *         }
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     */
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
             response = """
             | {
