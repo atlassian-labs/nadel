@@ -128,6 +128,14 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
 private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpec {
     val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", ::listOfJsonStrings.name)
 
+    val combinedResult = joinExecutionResults(
+        result = captured.result?.toSpecification() as JsonMap,
+        incrementalResults = captured.delayedResults
+            .map {
+                it.toSpecification()
+            },
+    )
+
     // override val response: ExpectedNadelResponse = …
     return PropertySpec.builder("response", ExpectedNadelResponse::class)
         .addModifiers(KModifier.OVERRIDE)
@@ -155,6 +163,7 @@ private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpe
                 add(")")
             },
         )
+        .addKdoc("```json\n%L\n```", jsonObjectMapper.withPrettierPrinter().writeValueAsString(combinedResult))
         .build()
 }
 
