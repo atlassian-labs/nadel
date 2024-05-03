@@ -154,6 +154,43 @@ public class UnderlyingServiceDeferTestData : TestData() {
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "echo": "Hello World",
+     *     "users": [
+     *       {
+     *         "name": "Johnny",
+     *         "friends": [
+     *           {
+     *             "name": "Bert",
+     *             "friends": [
+     *               {
+     *                 "name": "Johnny"
+     *               }
+     *             ]
+     *           }
+     *         ]
+     *       },
+     *       {
+     *         "name": "Bert",
+     *         "friends": [
+     *           {
+     *             "name": "Johnny",
+     *             "friends": [
+     *               {
+     *                 "name": "Bert"
+     *               }
+     *             ]
+     *           }
+     *         ]
+     *       }
+     *     ]
+     *   }
+     * }
+     * ```
+     */
     override val response: ExpectedNadelResponse = ExpectedNadelResponse(
             response = """
             | {
