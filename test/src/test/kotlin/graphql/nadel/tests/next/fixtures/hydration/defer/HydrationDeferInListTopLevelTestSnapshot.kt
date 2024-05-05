@@ -15,7 +15,7 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
+public class HydrationDeferInListTopLevelTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
@@ -47,6 +47,11 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |         "key": "GQLGW-3",
                 |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
                 |         "__typename__hydration__assignee": "Issue"
+                |       },
+                |       {
+                |         "key": "GQLGW-4",
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/3",
+                |         "__typename__hydration__assignee": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -69,7 +74,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "userById": {
-                |       "name": "Franklin"
+                |       "name": "Frank"
                 |     }
                 |   }
                 | }
@@ -91,7 +96,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "userById": {
-                |       "name": "Franklin"
+                |       "name": "Frank"
                 |     }
                 |   }
                 | }
@@ -121,6 +126,28 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 delayedResults = listOfJsonStrings(
                 ),
             ),
+            ExpectedServiceCall(
+                service = "users",
+                query = """
+                | {
+                |   userById(id: "ari:cloud:identity::user/3") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "userById": {
+                |       "name": "Lin"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
         )
 
     /**
@@ -131,7 +158,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
      *       {
      *         "key": "GQLGW-1",
      *         "assignee": {
-     *           "name": "Franklin"
+     *           "name": "Frank"
      *         }
      *       },
      *       {
@@ -143,7 +170,13 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
      *       {
      *         "key": "GQLGW-3",
      *         "assignee": {
-     *           "name": "Franklin"
+     *           "name": "Frank"
+     *         }
+     *       },
+     *       {
+     *         "key": "GQLGW-4",
+     *         "assignee": {
+     *           "name": "Lin"
      *         }
      *       }
      *     ]
@@ -164,6 +197,9 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
             |       },
             |       {
             |         "key": "GQLGW-3"
+            |       },
+            |       {
+            |         "key": "GQLGW-4"
             |       }
             |     ]
             |   },
@@ -182,7 +218,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |       ],
                 |       "data": {
                 |         "assignee": {
-                |           "name": "Franklin"
+                |           "name": "Frank"
                 |         }
                 |       }
                 |     },
@@ -204,7 +240,18 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |       ],
                 |       "data": {
                 |         "assignee": {
-                |           "name": "Franklin"
+                |           "name": "Frank"
+                |         }
+                |       }
+                |     },
+                |     {
+                |       "path": [
+                |         "issues",
+                |         3
+                |       ],
+                |       "data": {
+                |         "assignee": {
+                |           "name": "Lin"
                 |         }
                 |       }
                 |     }
