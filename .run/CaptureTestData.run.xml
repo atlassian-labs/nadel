@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="CaptureTestData" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="graphql.nadel.tests.next.CaptureTestDataKt" />
+    <module name="nadel.test.test" />
+    <shortenClasspath name="NONE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
