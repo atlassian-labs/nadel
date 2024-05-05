@@ -1,22 +1,23 @@
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
-import graphql.ExecutionResult
-import graphql.incremental.DelayedIncrementalPartialResult
-import graphql.incremental.IncrementalExecutionResult
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 import org.intellij.lang.annotations.Language
-import kotlin.test.assertTrue
 
-class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled(
+class HydrationDeferInListTest : HydrationDeferInList(
     query = """
         query {
-          issueByKey(key: "GQLGW-3") { # Not a list
+          issueByKey(key: "GQLGW-2") { # Not a list
             key
-            self { # Hydration
+            ... @defer {
+              assignee {
+                name
+              }
+            }
+            related { # Is a list
               ... @defer {
-                assignee { # Should NOT defer
+                assignee {
                   name
                 }
               }
@@ -24,14 +25,58 @@ class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled
           }
         }
     """.trimIndent(),
-) {
-    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
-        assertTrue(result !is IncrementalExecutionResult)
-        assertTrue(incrementalResults == null)
-    }
-}
+)
 
-abstract class HydrationDeferIsDisabled(
+class HydrationDeferInListTwoDimensionsTest : HydrationDeferInList(
+    query = """
+        query {
+          issueGroups {
+            key
+            ... @defer {
+              assignee {
+                name
+             }
+            }
+          }
+        }
+    """.trimIndent(),
+)
+
+class HydrationDeferInListTopLevelTest : HydrationDeferInList(
+    query = """
+        query {
+          issues { # List
+            key
+            ... @defer {
+              assignee {
+                name
+              }
+            }
+          }
+        }
+    """.trimIndent(),
+)
+
+class HydrationDeferInListNestedTest : HydrationDeferInList(
+    query = """
+        query {
+          issueByKey(key: "GQLGW-3") { # Not a list
+            key
+            related { # Is a list
+              parent { # Not a list
+                ... @defer {
+                  assignee {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+    """.trimIndent(),
+)
+
+abstract class HydrationDeferInList(
     @Language("GraphQL")
     query: String,
 ) : NadelIntegrationTest(
@@ -40,8 +85,10 @@ abstract class HydrationDeferIsDisabled(
         Service(
             name = "issues",
             overallSchema = """
+              directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
               type Query {
                 issues: [Issue!]
+                issueGroups: [[Issue]]
                 issueByKey(key: String!): Issue
               }
               type Issue {
@@ -79,14 +126,20 @@ abstract class HydrationDeferIsDisabled(
                     Issue(
                         key = "GQLGW-2",
                         assigneeId = "ari:cloud:identity::user/2",
-                        relatedKeys = listOf("GQLGW-1"),
                         parentKey = "GQLGW-1",
+                        relatedKeys = listOf("GQLGW-1"),
                     ),
                     Issue(
                         key = "GQLGW-3",
                         assigneeId = "ari:cloud:identity::user/1",
                         parentKey = "GQLGW-1",
                         relatedKeys = listOf("GQLGW-1", "GQLGW-2"),
+                    ),
+                    Issue(
+                        key = "GQLGW-4",
+                        assigneeId = "ari:cloud:identity::user/3",
+                        parentKey = "GQLGW-1",
+                        relatedKeys = listOf("GQLGW-1", "GQLGW-2", "GQLGW-3"),
                     ),
                 )
                 val issuesByKey = issues.strictAssociateBy { it.key }
@@ -100,18 +153,25 @@ abstract class HydrationDeferIsDisabled(
                             .dataFetcher("issues") { env ->
                                 issues
                             }
+                            .dataFetcher("issueGroups") {
+                                issues
+                                    .groupBy {
+                                        it.key.substringAfter("-").toInt() % 2 == 0
+                                    }
+                                    .values
+                            }
                     }
                     .type("Issue") { type ->
                         type
                             .dataFetcher("related") { env ->
-                                env.getSource<Issue>()!!
+                                env.getSource<Issue>()
                                     .relatedKeys
                                     .map {
                                         issuesByKey[it]!!
                                     }
                             }
                             .dataFetcher("parent") { env ->
-                                issuesByKey[env.getSource<Issue>()!!.parentKey]
+                                issuesByKey[env.getSource<Issue>().parentKey]
                             }
                     }
             },
@@ -136,11 +196,15 @@ abstract class HydrationDeferIsDisabled(
                 val users = listOf(
                     User(
                         id = "ari:cloud:identity::user/1",
-                        name = "Franklin",
+                        name = "Frank",
                     ),
                     User(
                         id = "ari:cloud:identity::user/2",
                         name = "Tom",
+                    ),
+                    User(
+                        id = "ari:cloud:identity::user/3",
+                        name = "Lin",
                     ),
                 )
                 val usersById = users.strictAssociateBy { it.id }

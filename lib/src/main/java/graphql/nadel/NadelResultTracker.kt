@@ -31,12 +31,10 @@ class ResultListener {
 /**
  * todo: this needs to track multiple responses
  */
-internal class NadelResponseTracker {
+internal class NadelResultTracker {
     private val result = CompletableDeferred<ExecutionResult>()
 
-    // todo: maybe store some kind of Map<IdentityHashCode, ResultPath> to free up memory earlier?
-
-    suspend fun getResponsePath(
+    suspend fun getResultPath(
         queryPath: NadelQueryPath,
         node: JsonNode,
     ): List<NadelResultPathSegment>? {
@@ -44,7 +42,7 @@ internal class NadelResponseTracker {
         val data = result.getData<Any?>()
 
         val queryPathSegments = queryPath.segments
-        val currentResultPath = mutableListOf<NadelResultPathSegment>()
+        val currentResultPathSegments = mutableListOf<NadelResultPathSegment>()
         val currentQueryPathSegments = mutableListOf<String>()
 
         /**
@@ -59,93 +57,58 @@ internal class NadelResponseTracker {
          * }
          */
 
-        // todo: how do we know if we need to pop?
         val queue = mutableListOf<Any?>(data)
 
-        // users[0].friend.user[1]
-        // [a, b, c]
-        // b
-        // [a] <-- if we hit this then we should decrement the index
-
-        fun printState(): String? {
-            return """
-                Current query path: ${
-                currentQueryPathSegments.joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                )
-            }
-                Current result path: ${currentResultPath.joinToString(separator = ",", prefix = "[", postfix = "]")}
-            """.replaceIndent(' '.toString().repeat(n = 4))
-        }
-
-        println(
-            "Trying to find $node from ${
-                queryPath.segments.joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                )
-            }"
-        )
         while (queue.isNotEmpty()) {
             val element = queue.removeLast()
             if (element === node.value) {
-                println("Got em $currentResultPath")
-                return currentResultPath
+                return currentResultPathSegments
             }
 
             when (element) {
                 is AnyList -> {
-                    // todo: expand the queue here
                     if (element.isNotEmpty()) {
                         queue.addAll(element)
-                        currentResultPath.add(NadelResultPathSegment.Array(element.lastIndex)) // DFS so we traverse last element first
+                        currentResultPathSegments.add(NadelResultPathSegment.Array(element.lastIndex))
                         continue
                     }
                 }
                 is AnyMap -> {
                     if (currentQueryPathSegments.size < queryPathSegments.size) {
                         val nextQueryPathSegment = queryPathSegments[currentQueryPathSegments.size]
-                        println("Entering $nextQueryPathSegment\n${printState()}")
                         val nextElement = element[nextQueryPathSegment]
 
                         queue.add(nextElement)
-                        currentResultPath.add(NadelResultPathSegment.Object(nextQueryPathSegment))
+                        currentResultPathSegments.add(NadelResultPathSegment.Object(nextQueryPathSegment))
                         currentQueryPathSegments.add(nextQueryPathSegment)
 
                         if (nextElement === node.value) {
-                            println("Got em on next $currentResultPath")
-                            return currentResultPath
+                            return currentResultPathSegments
                         }
                     }
                 }
             }
 
-            println("Loop end")
-
-            // Correct the result path
-            var last = currentResultPath.lastOrNull()
+            // Correct the result path segment i.e. move to the next array element
+            var last = currentResultPathSegments.lastOrNull()
             while (last is NadelResultPathSegment.Array) {
                 if (last.index == 0) {
-                    println("We're popping up\n${printState()}")
-                    currentResultPath.removeLast()
-                    currentQueryPathSegments.removeLast() // todo: is this always the case? what about nested lists
+                    val removedResultPathSegment = currentResultPathSegments.removeLast()
+                    if (removedResultPathSegment is NadelResultPathSegment.Object) {
+                        currentQueryPathSegments.removeLast()
+                    }
                 } else {
-                    println("Moving to next array element ${last.index - 1}")
                     // We're moving to the next element
-                    currentResultPath[currentResultPath.lastIndex] =
+                    currentResultPathSegments[currentResultPathSegments.lastIndex] =
                         NadelResultPathSegment.Array(last.index - 1)
                     // Nothing further to fix, stop
                     break
                 }
 
-                last = currentResultPath.lastOrNull()
+                last = currentResultPathSegments.lastOrNull()
             }
         }
 
-        println("Didn't get em")
         return null
     }
 
