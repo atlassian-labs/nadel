@@ -3,7 +3,7 @@ package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.nadel.tests.next.ExpectedNadelResponse
 import graphql.nadel.tests.next.ExpectedServiceCall
-import graphql.nadel.tests.next.TestData
+import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
 import kotlin.Suppress
 import kotlin.collections.List
@@ -12,29 +12,43 @@ import kotlin.collections.listOf
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.CaptureTestData]
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferInRenamedFieldTestData : TestData() {
+public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnapshot :
+        TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
                 query = """
                 | {
-                |   rename__issueByKey__getIssueByKey: getIssueByKey(key: "GQLGW-1") {
+                |   issueByKey(key: "GQLGW-3") {
                 |     key
-                |     hydration__assignee__assigneeId: assigneeId
-                |     __typename__hydration__assignee: __typename
+                |     related {
+                |       parent {
+                |         hydration__assignee__assigneeId: assigneeId
+                |         __typename__hydration__assignee: __typename
+                |       }
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 response = """
                 | {
-                |   "rename__issueByKey__getIssueByKey": {
-                |     "key": "GQLGW-1",
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |     "__typename__hydration__assignee": "Issue"
+                |   "issueByKey": {
+                |     "key": "GQLGW-3",
+                |     "related": [
+                |       {
+                |         "parent": null
+                |       },
+                |       {
+                |         "parent": {
+                |           "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |           "__typename__hydration__assignee": "Issue"
+                |         }
+                |       }
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -68,12 +82,19 @@ public class HydrationDeferInRenamedFieldTestData : TestData() {
      * {
      *   "data": {
      *     "issueByKey": {
-     *       "key": "GQLGW-1",
-     *       "assignee": {
-     *         "value": {
-     *           "name": "Franklin"
+     *       "key": "GQLGW-3",
+     *       "related": [
+     *         {
+     *           "parent": null
+     *         },
+     *         {
+     *           "parent": {
+     *             "assignee": {
+     *               "name": "Franklin"
+     *             }
+     *           }
      *         }
-     *       }
+     *       ]
      *     }
      *   }
      * }
@@ -84,31 +105,24 @@ public class HydrationDeferInRenamedFieldTestData : TestData() {
             | {
             |   "data": {
             |     "issueByKey": {
-            |       "key": "GQLGW-1"
+            |       "key": "GQLGW-3",
+            |       "related": [
+            |         {
+            |           "parent": null
+            |         },
+            |         {
+            |           "parent": {
+            |             "assignee": {
+            |               "name": "Franklin"
+            |             }
+            |           }
+            |         }
+            |       ]
             |     }
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
-                """
-                | {
-                |   "hasNext": false,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey",
-                |         "assignee"
-                |       ],
-                |       "data": {
-                |         "value": {
-                |           "name": "Franklin"
-                |         }
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
             ),
         )
 }
