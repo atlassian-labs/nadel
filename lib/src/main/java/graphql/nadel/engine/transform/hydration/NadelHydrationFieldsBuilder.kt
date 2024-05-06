@@ -8,7 +8,6 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationObjectIdFieldBuilder.makeObjectIdFields
 import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -16,7 +15,6 @@ import graphql.nadel.engine.util.deepClone
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
@@ -41,33 +39,6 @@ internal object NadelHydrationFieldsBuilder {
                 executionBlueprint = executionBlueprint,
             )
         }
-    }
-
-    fun makeBatchActorQueries(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        instruction: NadelBatchHydrationFieldInstruction,
-        aliasHelper: NadelAliasHelper,
-        hydratedField: ExecutableNormalizedField,
-        parentNodes: List<JsonNode>,
-        hooks: NadelExecutionHooks,
-        userContext: Any?,
-    ): List<ExecutableNormalizedField> {
-        val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
-            instruction = instruction,
-            aliasHelper = aliasHelper,
-            hydrationField = hydratedField,
-            parentNodes = parentNodes,
-            hooks = hooks,
-            userContext = userContext,
-        )
-
-        return makeBatchActorQueries(
-            executionBlueprint = executionBlueprint,
-            instruction = instruction,
-            aliasHelper = aliasHelper,
-            hydratedField = hydratedField,
-            argBatches = argBatches,
-        )
     }
 
     fun makeBatchActorQueries(
