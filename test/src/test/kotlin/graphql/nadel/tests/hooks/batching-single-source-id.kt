@@ -12,7 +12,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
 @UseHook
-class `new-batching-single-source-id` : EngineTestHook {
+class `batching-single-source-id` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return super.makeNadel(builder)
             .executionHooks(

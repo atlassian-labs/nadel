@@ -9,7 +9,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
 @UseHook
-class `new-batching-absent-source-input` : EngineTestHook {
+class `batching-absent-source-input` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return super.makeNadel(builder)
             .executionHooks(
