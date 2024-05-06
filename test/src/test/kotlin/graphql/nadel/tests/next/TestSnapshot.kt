@@ -20,6 +20,6 @@ data class ExpectedServiceCall(
 
 data class ExpectedNadelResponse(
     @Language("JSON")
-    val response: String?,
+    val response: String,
     val delayedResponses: List<String>,
 )
