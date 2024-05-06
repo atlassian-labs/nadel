@@ -89,16 +89,22 @@ fun newGraphQLError(
         .build()
 }
 
+/**
+ * Maps a [raw] [JsonMap] to a [GraphQLError] with optional overrides in the parameters.
+ */
 fun toGraphQLError(
     raw: JsonMap,
+    message: String? = raw["message"] as String?,
+    extensions: JsonMap? = raw["extensions"] as JsonMap?,
+    path: AnyList? = raw["path"] as AnyList?,
 ): GraphQLError {
     val errorBuilder = newError()
-        .message((raw["message"] as String?) ?: "An error has occurred")
-    raw["extensions"]?.let { extensions ->
-        errorBuilder.extensions(extensions as JsonMap)
+        .message(message ?: "An error has occurred")
+    if (extensions != null) {
+        errorBuilder.extensions(extensions)
     }
-    raw["path"]?.let { path ->
-        errorBuilder.path(path as AnyList)
+    if (path != null) {
+        errorBuilder.path(path)
     }
     return errorBuilder.build()
 }
