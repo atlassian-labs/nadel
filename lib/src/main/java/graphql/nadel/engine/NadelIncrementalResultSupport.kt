@@ -1,7 +1,7 @@
 package graphql.nadel.engine
 
 import graphql.incremental.DelayedIncrementalPartialResult
-import graphql.nadel.engine.NadelDeferSupport.OutstandingJobCounter.OutstandingJobHandle
+import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-class NadelDeferSupport internal constructor(
+class NadelIncrementalResultSupport internal constructor(
     private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(UNLIMITED),
 ) {
     /**
