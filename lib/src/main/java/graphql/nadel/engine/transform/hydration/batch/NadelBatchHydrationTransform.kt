@@ -27,7 +27,6 @@ import graphql.normalized.ExecutableNormalizedField
 internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
 ) : NadelTransform<State> {
-    private val hydrator = NadelBatchHydrator(engine)
     private val newHydrator = NadelNewBatchHydrator(engine)
 
     data class State(
@@ -128,11 +127,7 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        if (executionContext.hints.newBatchHydrationGrouping()) {
-            return newHydrator.hydrate(state, executionBlueprint, parentNodes)
-        } else {
-            return hydrator.hydrate(state, executionBlueprint, parentNodes)
-        }
+        return newHydrator.hydrate(state, executionBlueprint, parentNodes)
     }
 
     private fun makeTypeNameField(
