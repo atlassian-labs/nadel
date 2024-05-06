@@ -15,20 +15,15 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.CaptureTestData]
  */
 @Suppress("unused")
-public class HydrationDeferInListIsDisabledForRelatedIssuesTestData : TestData() {
+public class HydrationDeferIsDisabledForNestedHydrationsTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
                 query = """
                 | {
-                |   issueByKey(key: "GQLGW-2") {
-                |     key
+                |   issueByKey(key: "GQLGW-3") {
                 |     hydration__assignee__assigneeId: assigneeId
                 |     __typename__hydration__assignee: __typename
-                |     related {
-                |       hydration__assignee__assigneeId: assigneeId
-                |       __typename__hydration__assignee: __typename
-                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -36,15 +31,32 @@ public class HydrationDeferInListIsDisabledForRelatedIssuesTestData : TestData()
                 response = """
                 | {
                 |   "issueByKey": {
-                |     "key": "GQLGW-2",
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
-                |     "__typename__hydration__assignee": "Issue",
-                |     "related": [
-                |       {
-                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |         "__typename__hydration__assignee": "Issue"
-                |       }
-                |     ]
+                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |     "__typename__hydration__assignee": "Issue"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResponses = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "issues",
+                query = """
+                | {
+                |   issueByKey(key: "GQLGW-3") {
+                |     key
+                |     hydration__self__key: key
+                |     __typename__hydration__self: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                response = """
+                | {
+                |   "issueByKey": {
+                |     "key": "GQLGW-3",
+                |     "hydration__self__key": "GQLGW-3",
+                |     "__typename__hydration__self": "Issue"
                 |   }
                 | }
                 """.trimMargin(),
@@ -71,26 +83,6 @@ public class HydrationDeferInListIsDisabledForRelatedIssuesTestData : TestData()
                 delayedResponses = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/2") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                response = """
-                | {
-                |   "userById": {
-                |     "name": "Tom"
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**
@@ -98,17 +90,10 @@ public class HydrationDeferInListIsDisabledForRelatedIssuesTestData : TestData()
      * {
      *   "data": {
      *     "issueByKey": {
-     *       "key": "GQLGW-2",
-     *       "related": [
-     *         {
-     *           "assignee": {
-     *             "name": "Franklin"
-     *           }
-     *         }
-     *       ],
-     *       "assignee": {
-     *         "value": {
-     *           "name": "Tom"
+     *       "key": "GQLGW-3",
+     *       "self": {
+     *         "assignee": {
+     *           "name": "Franklin"
      *         }
      *       }
      *     }
@@ -121,38 +106,17 @@ public class HydrationDeferInListIsDisabledForRelatedIssuesTestData : TestData()
             | {
             |   "data": {
             |     "issueByKey": {
-            |       "key": "GQLGW-2",
-            |       "related": [
-            |         {
-            |           "assignee": {
-            |             "name": "Franklin"
-            |           }
+            |       "key": "GQLGW-3",
+            |       "self": {
+            |         "assignee": {
+            |           "name": "Franklin"
             |         }
-            |       ]
+            |       }
             |     }
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
-                """
-                | {
-                |   "hasNext": false,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey",
-                |         "assignee"
-                |       ],
-                |       "data": {
-                |         "value": {
-                |           "name": "Tom"
-                |         }
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
             ),
         )
 }
