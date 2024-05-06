@@ -247,19 +247,28 @@ internal class NadelHydrationTransform(
                         .map { hydration -> // Hydration of one parent node
                             val data = hydration.newValue
 
+                            val parentPath = executionContext.resultTracker.getResultPath(
+                                overallField.queryPath.dropLast(1),
+                                hydration.parentNode,
+                            )!!
+                            val path = parentPath + overallField.resultKey
+
                             DeferPayload.newDeferredItem()
                                 .data(
                                     mapOf(
                                         overallField.resultKey to data?.value,
                                     ),
                                 )
-                                .path(
-                                    executionContext.resultTracker.getResultPath(
-                                        overallField.queryPath.dropLast(1),
-                                        hydration.parentNode,
-                                    )!!
+                                .path(parentPath)
+                                .errors(
+                                    hydration.errors
+                                        .map {
+                                            toGraphQLError(
+                                                raw = it,
+                                                path = path,
+                                            )
+                                        },
                                 )
-                                .errors(hydration.errors.map(::toGraphQLError))
                                 .build()
                         }
                 )

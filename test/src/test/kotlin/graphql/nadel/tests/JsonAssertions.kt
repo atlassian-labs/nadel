@@ -5,15 +5,9 @@ import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.util.keysEqual
 import strikt.api.Assertion
-import strikt.api.expectThat
 import strikt.assertions.isA
 
-fun assertJsonObject(subject: JsonMap, expected: JsonMap) {
-    return expectThat(subject) {
-        assertJsonObject(expectedMap = expected)
-    }
-}
-
+@Deprecated("Do not use")
 fun Assertion.Builder<out AnyMap>.assertJsonKeys(): Assertion.Builder<JsonMap> {
     assert("keys are all strings") { subject ->
         @Suppress("UNCHECKED_CAST") // We're checking if the erased type holds up
@@ -30,6 +24,7 @@ fun Assertion.Builder<out AnyMap>.assertJsonKeys(): Assertion.Builder<JsonMap> {
     return this as Assertion.Builder<JsonMap>
 }
 
+@Deprecated("Do not use")
 private fun Assertion.Builder<JsonMap>.assertJsonObject(expectedMap: JsonMap) {
     keysEqual(expectedMap.keys)
 
@@ -44,11 +39,13 @@ private fun Assertion.Builder<JsonMap>.assertJsonObject(expectedMap: JsonMap) {
     }
 }
 
+@Deprecated("Do not use")
 private fun Assertion.Builder<JsonMap>.assertJsonEntry(key: String, subjectValue: Any?, expectedValue: Any?) {
     get("""entry "$key"""") { subjectValue }
         .assertJsonValue(subjectValue, expectedValue)
 }
 
+@Deprecated("Do not use")
 private fun jsonTypeOf(element: Any?): String {
     return when (element) {
         is AnyList -> "JSON array"
@@ -64,6 +61,7 @@ private fun jsonTypeOf(element: Any?): String {
     }
 }
 
+@Deprecated("Do not use")
 private fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expectedValue: Any?) {
     when (subjectValue) {
         is AnyMap -> {
@@ -100,6 +98,7 @@ private fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expecte
     }
 }
 
+@Deprecated("Do not use")
 private fun <T> Assertion.Builder<List<T>>.assertJsonArray(expectedValue: List<T>) {
     compose("all elements match expected:") { subject ->
         assert("size matches expected") {

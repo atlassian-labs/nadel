@@ -7,6 +7,7 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.assertJsonKeys
 import strikt.api.Assertion
 
+@Deprecated("Do not use")
 fun <T : Map<K, V>, K, V> Assertion.Builder<T>.keysEqual(expectedKeys: Collection<K>): Assertion.Builder<T> {
     compose("keys match expected") { actual ->
         val actualKeys = actual.keys
@@ -33,21 +34,25 @@ fun <T : Map<K, V>, K, V> Assertion.Builder<T>.keysEqual(expectedKeys: Collectio
     return this
 }
 
+@Deprecated("Do not use")
 val Assertion.Builder<out ExecutionResult>.extensions: Assertion.Builder<JsonMap>
     get() {
         return get { extensions as AnyMap }.assertJsonKeys()
     }
 
+@Deprecated("Do not use")
 val Assertion.Builder<out ExecutionResult>.errors: Assertion.Builder<List<GraphQLError>>
     get() {
         return get { errors }
     }
 
+@Deprecated("Do not use")
 val Assertion.Builder<out GraphQLError>.message: Assertion.Builder<String>
     get() {
         return get { message }
     }
 
+@Deprecated("Do not use")
 val Assertion.Builder<out ExecutionResult>.data: Assertion.Builder<AnyMap?>
     get() {
         return get {
@@ -55,12 +60,7 @@ val Assertion.Builder<out ExecutionResult>.data: Assertion.Builder<AnyMap?>
         }
     }
 
-fun Assertion.Builder<out Any>.getHashCode(): Assertion.Builder<Int> {
-    return get {
-        hashCode()
-    }
-}
-
+@Deprecated("Do not use")
 fun Assertion.Builder<out Any>.getToString(): Assertion.Builder<String> {
     return get {
         toString()
