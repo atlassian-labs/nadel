@@ -14,6 +14,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NadelSchemas
+import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -112,12 +113,9 @@ abstract class NadelIntegrationTest(
 
         val overallSchemas = services.associate { it.name to it.overallSchema }
         val underlyingSchemas = services.associate { it.name to it.underlyingSchema }
-        val serviceExecutions = services.associate {
-            val serviceName = it.name
-            serviceName to GraphQLServiceExecution(
-                serviceName = serviceName,
-                graphQL = makeServiceGraphQL(it).build(),
-            )
+        val serviceExecutions = services.associate { service ->
+            val serviceName = service.name
+            serviceName to makeServiceExecution(service)
         }
 
         return NadelSchemas.newNadelSchemas()
@@ -126,6 +124,13 @@ abstract class NadelIntegrationTest(
             .serviceExecutionFactory { service ->
                 serviceExecutions[service]!!
             }
+    }
+
+    open fun makeServiceExecution(service: Service): ServiceExecution {
+        return GraphQLServiceExecution(
+            serviceName = service.name,
+            graphQL = makeServiceGraphQL(service).build(),
+        )
     }
 
     open fun makeServiceGraphQL(service: Service): GraphQL.Builder {
@@ -164,10 +169,21 @@ abstract class NadelIntegrationTest(
         }
     }
 
+    /**
+     * Default backing value for [getTestSnapshot].
+     */
+    private val _testSnapshot = lazy {
+        try {
+            Class.forName(this::class.qualifiedName + "Snapshot")
+                .getDeclaredConstructor()
+                .newInstance() as TestSnapshot
+        } catch (e: ClassNotFoundException) {
+            throw ClassNotFoundException("Run UpdateTestSnapshots to write test snapshots", e)
+        }
+    }
+
     open fun getTestSnapshot(): TestSnapshot {
-        return Class.forName(this::class.qualifiedName + "Snapshot")
-            .getDeclaredConstructor()
-            .newInstance() as TestSnapshot
+        return _testSnapshot.value
     }
 
     open fun assert(result: ExecutionResult) {
