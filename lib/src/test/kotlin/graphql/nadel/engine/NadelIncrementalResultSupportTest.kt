@@ -120,7 +120,6 @@ class NadelIncrementalResultSupportTest {
 
     @Test
     fun `hasNext is true if there is another job still running`() = runTest {
-        // Channel that stores the oldest item
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
         val subject = NadelIncrementalResultSupport(channel)
@@ -174,7 +173,6 @@ class NadelIncrementalResultSupportTest {
 
         try {
             runTest {
-                // Channel that stores the oldest item
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
                 val subject = NadelIncrementalResultSupport(channel)
