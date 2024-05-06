@@ -148,11 +148,11 @@ internal class NadelBatchHydrator(
                             hydrationActorField = hydrationActorField,
                             fieldPath = state.hydratedField.listOfResultKeys,
                         )
-                        engine.executeTopLevelField(
+                        engine.executeHydration(
                             service = instruction.actorService,
                             topLevelField = actorQuery,
                             executionContext = state.executionContext,
-                            serviceHydrationDetails = serviceHydrationDetails,
+                            hydrationDetails = serviceHydrationDetails,
                         )
                     }
                 }
