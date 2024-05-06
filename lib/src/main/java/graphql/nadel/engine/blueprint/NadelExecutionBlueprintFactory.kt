@@ -103,6 +103,7 @@ private class Factory(
             overallTypeNamesByService = overallTypeNamesByService,
             underlyingBlueprints = underlyingBlueprints,
             coordinatesToService = coordinatesToService,
+            typeRenamesByOverallTypeName = typeRenameInstructions,
         )
     }
 

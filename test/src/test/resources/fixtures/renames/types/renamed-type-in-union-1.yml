@@ -1,0 +1,88 @@
+name: "renamed type in union 1"
+enabled: true
+# language=GraphQL
+overallSchema:
+  IssueService: |
+    type Query {
+      nodes: [Node]
+    }
+    type Issue {
+      id: ID
+    }
+    union Node = Issue | JiraComment
+  CommentService: |
+    type Query {
+      comment: JiraComment
+    }
+    type JiraComment @renamed(from: "Comment") {
+      id: ID
+    }
+# language=GraphQL
+underlyingSchema:
+  IssueService: |
+    type Query {
+      nodes: [Node]
+    }
+    type Issue {
+      id: ID
+    }
+    type Comment {
+      id: ID
+    }
+    union Node = Issue | Comment
+  CommentService: |
+    type Query {
+      comment: Comment
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+query: |
+  query {
+    nodes {
+      __typename
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "IssueService"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          nodes {
+            __typename
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "__typename": "Issue"
+            },
+            {
+              "__typename": "Comment"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "nodes": [
+        {
+          "__typename": "Issue"
+        },
+        {
+          "__typename": "JiraComment"
+        }
+      ]
+    },
+    "extensions": {}
+  }
