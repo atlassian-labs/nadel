@@ -191,11 +191,25 @@ internal class NextgenEngine(
         }
     }
 
-    internal suspend fun executeTopLevelField(
+    internal suspend fun executeHydration(
         topLevelField: ExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
-        serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
+        hydrationDetails: ServiceExecutionHydrationDetails,
+    ): ServiceExecutionResult {
+        return executeTopLevelField(
+            topLevelField = topLevelField,
+            service = service,
+            executionContext = executionContext.copy(
+                hydrationDetails = hydrationDetails,
+            ),
+        )
+    }
+
+    private suspend fun executeTopLevelField(
+        topLevelField: ExecutableNormalizedField,
+        service: Service,
+        executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
         val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
@@ -204,7 +218,7 @@ internal class NextgenEngine(
                 services = services,
                 service = service,
                 rootField = topLevelField,
-                serviceHydrationDetails = serviceHydrationDetails,
+                serviceHydrationDetails = executionContext.hydrationDetails,
             )
         }
         val queryTransform = timer.time(step = RootStep.QueryTransforming) {
@@ -216,7 +230,7 @@ internal class NextgenEngine(
                 service = service,
                 transformedQuery = transformedQuery,
                 executionContext = executionContext,
-                executionHydrationDetails = serviceHydrationDetails,
+                executionHydrationDetails = executionContext.hydrationDetails,
             )
         }
         val transformedResult: ServiceExecutionResult = when {

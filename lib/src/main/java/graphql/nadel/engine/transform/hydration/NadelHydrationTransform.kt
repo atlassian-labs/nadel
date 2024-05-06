@@ -316,11 +316,11 @@ internal class NadelHydrationTransform(
                                 hydrationActorField = hydrationActorField,
                                 fieldPath = fieldToHydrate.listOfResultKeys
                             )
-                            engine.executeTopLevelField(
+                            engine.executeHydration(
                                 service = instruction.actorService,
                                 topLevelField = actorQuery,
                                 executionContext = executionContext,
-                                serviceHydrationDetails = serviceHydrationDetails,
+                                hydrationDetails = serviceHydrationDetails,
                             )
                         }
                     }.awaitAll()
@@ -399,6 +399,11 @@ internal class NadelHydrationTransform(
         executionBlueprint: NadelOverallExecutionBlueprint,
         overallField: ExecutableNormalizedField,
     ): Boolean {
+        // Disable defer in nested hydration
+        if (executionContext.hydrationDetails != null) {
+            return false
+        }
+
         return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
             // We currently don't support defer if the hydration is inside a List
             return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
