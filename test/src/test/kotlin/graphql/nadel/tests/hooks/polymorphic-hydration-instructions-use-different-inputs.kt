@@ -9,7 +9,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
 @UseHook
-class `batch-hydration-instruction-hook-returns-null` : EngineTestHook {
+class `polymorphic-hydration-instructions-use-different-inputs` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return super.makeNadel(builder)
             .executionHooks(
@@ -19,8 +19,15 @@ class `batch-hydration-instruction-hook-returns-null` : EngineTestHook {
                         parentNode: JsonNode,
                         aliasHelper: NadelAliasHelper,
                         userContext: Any?,
-                    ): Nothing {
-                        throw UnsupportedOperationException("should not run")
+                    ): T? {
+                        val toString = parentNode.value.toString()
+
+                        return when {
+                            toString.contains("tall") -> instructions.single { it.actorFieldDef.name.contains("giraffe") }
+                            toString.contains("good") -> instructions.single { it.actorFieldDef.name.contains("dog") }
+                            toString.contains("cute") -> instructions.single { it.actorFieldDef.name.contains("cat") }
+                            else -> throw UnsupportedOperationException("unknown boye")
+                        }
                     }
 
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
@@ -28,11 +35,7 @@ class `batch-hydration-instruction-hook-returns-null` : EngineTestHook {
                         sourceInput: JsonNode,
                         userContext: Any?,
                     ): T? {
-                        return if (sourceInput.value.toString().contains("NULL", ignoreCase = true)) {
-                            null
-                        } else {
-                            instructions.single()
-                        }
+                        throw UnsupportedOperationException()
                     }
                 },
             )

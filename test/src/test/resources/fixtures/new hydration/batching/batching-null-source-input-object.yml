@@ -1,0 +1,104 @@
+name: "batching null source input object"
+enabled: true
+# language=GraphQL
+overallSchema:
+  activity: |
+    type Query {
+      activity: [Activity]
+    }
+    type Activity {
+      id: ID!
+      content: Issue
+        @hydrated(
+          service: "issues"
+          field: "issuesByIds"
+          arguments: [
+            {name: "ids" value: "$source.reference.issueId"}
+          ]
+        )
+    }
+  # language=GraphQL
+  issues: |
+    type Query {
+      issuesByIds(ids: [ID!]!): [Issue!]
+    }
+    type Issue {
+      id: ID!
+      title: String
+    }
+# language=GraphQL
+underlyingSchema:
+  # language=GraphQL
+  activity: |
+    type Query {
+      activity: [Activity]
+    }
+    type Activity {
+      id: ID!
+      reference: ActivityReference
+    }
+    type ActivityReference {
+      issueId: ID
+    }
+  # language=GraphQL
+  issues: |
+    type Query {
+      issuesByIds(ids: [ID!]!): [Issue!]
+    }
+    type Issue {
+      id: ID!
+      title: String
+    }
+# language=GraphQL
+query: |
+  {
+    activity {
+      content {
+        __typename
+        ... on Issue {
+          id
+          title
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "activity"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          activity {
+            __typename__batch_hydration__content: __typename
+            batch_hydration__content__reference: reference {
+              issueId
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "activity": [
+            {
+              "__typename__batch_hydration__content": "Activity",
+              "batch_hydration__content__reference": null
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "activity": [
+        {
+          "content": null
+        }
+      ]
+    },
+    "errors": []
+  }

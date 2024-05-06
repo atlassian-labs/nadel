@@ -1,0 +1,211 @@
+name: "synthetic hydration call over itself within renamed types"
+enabled: true
+# language=GraphQL
+overallSchema:
+  # language=GraphQL
+  testing: |
+    type Query {
+      tests: TestQuery
+    }
+    type TestQuery {
+      testing: Testing
+      characters(ids: [ID!]!): [TestingCharacter]
+    }
+    type Testing {
+      movies: [TestingMovie]
+    }
+    type TestingCharacter @renamed(from: "Character") {
+      id: ID!
+      name: String
+    }
+    type TestingMovie @renamed(from: "Movie") {
+      id: ID!
+      name: String
+      characters: [TestingCharacter]
+      @hydrated(
+        service: "testing"
+        field: "tests.characters"
+        arguments: [{name: "ids" value: "$source.characterIds"}]
+        identifiedBy: "id"
+        batchSize: 3
+      )
+    }
+# language=GraphQL
+underlyingSchema:
+  # language=GraphQL
+  testing: |
+    type Character {
+      id: ID!
+      name: String
+    }
+
+    type Movie {
+      characterIds: [ID]
+      id: ID!
+      name: String
+    }
+
+    type Query {
+      tests: TestQuery
+    }
+
+    type TestQuery {
+      characters(ids: [ID!]!): [Character]
+      testing: Testing
+    }
+
+    type Testing {
+      movies: [Movie]
+    }
+# language=GraphQL
+query: |
+  query {
+    tests {
+      testing {
+        movies {
+          id
+          name
+          characters {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "testing"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          tests {
+            testing {
+              movies {
+                __typename__batch_hydration__characters: __typename
+                batch_hydration__characters__characterIds: characterIds
+                id
+                name
+              }
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "testing": {
+              "movies": [
+                {
+                  "name": "Movie 1",
+                  "id": "M1",
+                  "batch_hydration__characters__characterIds": [
+                    "C1",
+                    "C2"
+                  ],
+                  "__typename__batch_hydration__characters": "Movie"
+                },
+                {
+                  "name": "Movie 2",
+                  "id": "M2",
+                  "batch_hydration__characters__characterIds": [
+                    "C1",
+                    "C2",
+                    "C3"
+                  ],
+                  "__typename__batch_hydration__characters": "Movie"
+                }
+              ]
+            }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "testing"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          tests {
+            characters(ids: ["C1", "C2", "C3"]) {
+              id
+              batch_hydration__characters__id: id
+              name
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "characters": [
+              {
+                "name": "Luke",
+                "batch_hydration__characters__id": "C1",
+                "id": "C1"
+              },
+              {
+                "name": "Leia",
+                "batch_hydration__characters__id": "C2",
+                "id": "C2"
+              },
+              {
+                "name": "Anakin",
+                "batch_hydration__characters__id": "C3",
+                "id": "C3"
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "tests": {
+        "testing": {
+          "movies": [
+            {
+              "id": "M1",
+              "name": "Movie 1",
+              "characters": [
+                {
+                  "id": "C1",
+                  "name": "Luke"
+                },
+                {
+                  "id": "C2",
+                  "name": "Leia"
+                }
+              ]
+            },
+            {
+              "id": "M2",
+              "name": "Movie 2",
+              "characters": [
+                {
+                  "id": "C1",
+                  "name": "Luke"
+                },
+                {
+                  "id": "C2",
+                  "name": "Leia"
+                },
+                {
+                  "id": "C3",
+                  "name": "Anakin"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "extensions": {}
+  }

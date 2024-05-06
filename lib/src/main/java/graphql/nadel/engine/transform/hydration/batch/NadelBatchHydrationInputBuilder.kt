@@ -3,18 +3,11 @@ package graphql.nadel.engine.transform.hydration.batch
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.engine.transform.artificial.NadelAliasHelper
-import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.util.emptyOrSingle
-import graphql.nadel.engine.util.flatten
-import graphql.nadel.engine.util.javaValueToAstValue
 import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.mapFrom
-import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
-import graphql.schema.GraphQLTypeUtil
 
 /**
  * README
@@ -23,20 +16,6 @@ import graphql.schema.GraphQLTypeUtil
  * This is required for [NadelBatchHydrationMatchStrategy.MatchIndex].
  */
 internal object NadelBatchHydrationInputBuilder {
-    fun getInputValueBatches(
-        aliasHelper: NadelAliasHelper,
-        instruction: NadelBatchHydrationFieldInstruction,
-        hydrationField: ExecutableNormalizedField,
-        parentNodes: List<JsonNode>,
-        hooks: NadelExecutionHooks,
-        userContext: Any?,
-    ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
-        val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper, hooks, userContext)
-
-        return batchArgs.map { nonBatchArgs + it }
-    }
-
     internal fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
@@ -66,31 +45,6 @@ internal object NadelBatchHydrationInputBuilder {
                 }
             },
         )
-    }
-
-    private fun getBatchInputValues(
-        instruction: NadelBatchHydrationFieldInstruction,
-        parentNodes: List<JsonNode>,
-        aliasHelper: NadelAliasHelper,
-        hooks: NadelExecutionHooks,
-        userContext: Any?,
-    ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
-        val batchSize = instruction.batchSize
-
-        val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
-        val actorBatchArgDef = instruction.actorFieldDef.getArgument(batchInputDef.name)
-
-        val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
-
-        val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(args, instruction, userContext)
-
-        return partitionArgumentList.flatMap { it.chunked(size = batchSize) }
-            .map { chunk ->
-                batchInputDef to NormalizedInputValue(
-                    GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
-                    javaValueToAstValue(chunk),
-                )
-            }
     }
 
     /**
@@ -127,46 +81,5 @@ internal object NadelBatchHydrationInputBuilder {
                 }
             }
             .emptyOrSingle()
-    }
-
-    private fun getFieldResultValues(
-        valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
-        parentNodes: List<JsonNode>,
-        aliasHelper: NadelAliasHelper,
-    ): List<Any?> {
-        return parentNodes.flatMap { parentNode ->
-            getFieldResultValues(
-                valueSource = valueSource,
-                parentNode = parentNode,
-                aliasHelper = aliasHelper,
-                filterNull = true,
-            )
-        }
-    }
-
-    internal fun getFieldResultValues(
-        valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
-        parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper,
-        filterNull: Boolean,
-    ): List<Any?> {
-        val nodes = JsonNodeExtractor.getNodesAt(
-            rootNode = parentNode,
-            queryPath = aliasHelper.getQueryPath(valueSource.queryPathToField),
-            flatten = true,
-        )
-
-        return nodes
-            .asSequence()
-            .map { it.value }
-            .flatten(recursively = true)
-            .let {
-                if (filterNull) {
-                    it.filterNotNull()
-                } else {
-                    it
-                }
-            }
-            .toList()
     }
 }

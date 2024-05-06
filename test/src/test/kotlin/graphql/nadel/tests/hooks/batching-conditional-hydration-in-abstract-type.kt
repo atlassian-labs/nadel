@@ -8,21 +8,21 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
 @UseHook
-class `batching-no-source-inputs` : EngineTestHook {
+class `batching-conditional-hydration-in-abstract-type` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return super.makeNadel(builder)
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
                         instructions: List<T>,
-                        sourceId: JsonNode,
+                        sourceInput: JsonNode,
                         userContext: Any?,
                     ): T {
-                        val type = (sourceId.value as String).substringBefore("/")
+                        val type = (sourceInput.value as String).substringBefore("/")
 
                         return instructions
                             .first {
-                                it.actorService.name.startsWith(type, ignoreCase = true)
+                                it.actorFieldDef.name.startsWith(type, ignoreCase = true)
                             }
                     }
                 },
