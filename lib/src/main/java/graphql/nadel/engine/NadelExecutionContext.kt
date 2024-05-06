@@ -4,12 +4,12 @@ import graphql.ExecutionInput
 import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
-import graphql.nadel.NadelResultTracker
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
+import graphql.nadel.result.NadelResultTracker
 import graphql.normalized.ExecutableNormalizedOperation
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
