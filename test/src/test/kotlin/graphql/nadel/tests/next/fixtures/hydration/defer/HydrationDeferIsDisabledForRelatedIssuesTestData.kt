@@ -15,19 +15,19 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.CaptureTestData]
  */
 @Suppress("unused")
-public class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTestData : TestData() {
+public class HydrationDeferIsDisabledForRelatedIssuesTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
                 query = """
                 | {
-                |   issueByKey(key: "GQLGW-3") {
+                |   issueByKey(key: "GQLGW-2") {
                 |     key
+                |     hydration__assignee__assigneeId: assigneeId
+                |     __typename__hydration__assignee: __typename
                 |     related {
-                |       parent {
-                |         hydration__assignee__assigneeId: assigneeId
-                |         __typename__hydration__assignee: __typename
-                |       }
+                |       hydration__assignee__assigneeId: assigneeId
+                |       __typename__hydration__assignee: __typename
                 |     }
                 |   }
                 | }
@@ -36,16 +36,13 @@ public class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTestData
                 response = """
                 | {
                 |   "issueByKey": {
-                |     "key": "GQLGW-3",
+                |     "key": "GQLGW-2",
+                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
+                |     "__typename__hydration__assignee": "Issue",
                 |     "related": [
                 |       {
-                |         "parent": null
-                |       },
-                |       {
-                |         "parent": {
-                |           "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |           "__typename__hydration__assignee": "Issue"
-                |         }
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |         "__typename__hydration__assignee": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -74,6 +71,26 @@ public class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTestData
                 delayedResponses = listOfJsonStrings(
                 ),
             ),
+            ExpectedServiceCall(
+                service = "users",
+                query = """
+                | {
+                |   userById(id: "ari:cloud:identity::user/2") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                response = """
+                | {
+                |   "userById": {
+                |     "name": "Tom"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResponses = listOfJsonStrings(
+                ),
+            ),
         )
 
     /**
@@ -81,19 +98,19 @@ public class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTestData
      * {
      *   "data": {
      *     "issueByKey": {
-     *       "key": "GQLGW-3",
+     *       "key": "GQLGW-2",
      *       "related": [
      *         {
-     *           "parent": null
-     *         },
-     *         {
-     *           "parent": {
-     *             "assignee": {
-     *               "name": "Franklin"
-     *             }
+     *           "assignee": {
+     *             "name": "Franklin"
      *           }
      *         }
-     *       ]
+     *       ],
+     *       "assignee": {
+     *         "value": {
+     *           "name": "Tom"
+     *         }
+     *       }
      *     }
      *   }
      * }
@@ -104,24 +121,38 @@ public class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTestData
             | {
             |   "data": {
             |     "issueByKey": {
-            |       "key": "GQLGW-3",
+            |       "key": "GQLGW-2",
             |       "related": [
             |         {
-            |           "parent": null
-            |         },
-            |         {
-            |           "parent": {
-            |             "assignee": {
-            |               "name": "Franklin"
-            |             }
+            |           "assignee": {
+            |             "name": "Franklin"
             |           }
             |         }
             |       ]
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey",
+                |         "assignee"
+                |       ],
+                |       "data": {
+                |         "value": {
+                |           "name": "Tom"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
