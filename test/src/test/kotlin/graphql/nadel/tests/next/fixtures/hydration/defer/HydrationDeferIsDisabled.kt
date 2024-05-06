@@ -8,7 +8,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import org.intellij.lang.annotations.Language
 import kotlin.test.assertTrue
 
-class HydrationDeferInListIsDisabledTest : HydrationDeferInListIsDisabled(
+class HydrationDeferIsDisabledTest : HydrationDeferIsDisabled(
     query = """
         query {
           issues { # List
@@ -34,7 +34,7 @@ class HydrationDeferInListIsDisabledTest : HydrationDeferInListIsDisabled(
  *
  * Then there's the hydration at `issueByKey.related.assignee` which does not defer because `Issue.related` is a List.
  */
-class HydrationDeferInListIsDisabledForRelatedIssuesTest : HydrationDeferInListIsDisabled(
+class HydrationDeferIsDisabledForRelatedIssuesTest : HydrationDeferIsDisabled(
     query = """
         query {
           issueByKey(key: "GQLGW-2") { # Not a list
@@ -56,7 +56,7 @@ class HydrationDeferInListIsDisabledForRelatedIssuesTest : HydrationDeferInListI
     """.trimIndent(),
 )
 
-class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTest : HydrationDeferInListIsDisabled(
+class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTest : HydrationDeferIsDisabled(
     query = """
         query {
           issueByKey(key: "GQLGW-3") { # Not a list
@@ -73,9 +73,34 @@ class HydrationDeferInListIsDisabledForParentIssueInRelatedIssuesTest : Hydratio
           }
         }
     """.trimIndent(),
-)
+) {
+    override fun assert(result: ExecutionResult) {
+        assertTrue(result !is IncrementalExecutionResult)
+    }
+}
 
-abstract class HydrationDeferInListIsDisabled(
+class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled(
+    query = """
+        query {
+          issueByKey(key: "GQLGW-3") { # Not a list
+            key
+            self { # Hydration
+              ... @defer {
+                assignee { # Should NOT defer
+                  name
+                }
+              }
+            }
+          }
+        }
+    """.trimIndent(),
+) {
+    override fun assert(result: ExecutionResult) {
+        assertTrue(result !is IncrementalExecutionResult)
+    }
+}
+
+abstract class HydrationDeferIsDisabled(
     @Language("GraphQL")
     query: String,
 ) : NadelIntegrationTest(
@@ -92,6 +117,12 @@ abstract class HydrationDeferInListIsDisabled(
               type Issue {
                 key: String!
                 assigneeId: ID!
+                self: Issue
+                  @hydrated(
+                    service: "issues"
+                    field: "issueByKey"
+                    arguments: [{name: "key", value: "$source.key"}]
+                  )
                 assignee: User
                   @hydrated(
                     service: "users"

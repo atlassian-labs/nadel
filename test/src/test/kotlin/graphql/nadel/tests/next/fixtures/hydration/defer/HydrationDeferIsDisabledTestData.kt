@@ -15,7 +15,7 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.CaptureTestData]
  */
 @Suppress("unused")
-public class HydrationDeferInListIsDisabledTestData : TestData() {
+public class HydrationDeferIsDisabledTestData : TestData() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
