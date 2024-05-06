@@ -2,6 +2,7 @@ package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.IncrementalExecutionResult
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.error.NadelGraphQLErrorException
@@ -23,8 +24,29 @@ class HydrationDeferForwardsErrorsTest : HydrationDeferForwardsErrors(
     """.trimIndent(),
 ) {
     override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
+        assertTrue(result is IncrementalExecutionResult)
         assertTrue(incrementalResults?.isNotEmpty() == true)
         assertTrue(incrementalResults?.single()?.incremental?.single()?.errors?.isNotEmpty() == true)
+    }
+}
+
+class HydrationDeferForwardsErrorsFromEachHydrationTest : HydrationDeferForwardsErrors(
+    query = """
+        query {
+          issuesByKeys(keys: ["GQLGW-2", "GQLGW-3", "GQLGW-4"]) {
+            key
+            ... @defer {
+              assignee {
+                name
+              }
+            }
+          }
+        }
+    """.trimIndent(),
+) {
+    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
+        assertTrue(result is IncrementalExecutionResult)
+        assertTrue(incrementalResults?.isNotEmpty() == true)
     }
 }
 
@@ -40,6 +62,7 @@ abstract class HydrationDeferForwardsErrors(
               directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
               type Query {
                 issues: [Issue!]
+                issuesByKeys(keys: [String!]!): [Issue!]
                 issueGroups: [[Issue]]
                 issueByKey(key: String!): Issue
               }
@@ -89,7 +112,7 @@ abstract class HydrationDeferForwardsErrors(
                     ),
                     Issue(
                         key = "GQLGW-4",
-                        assigneeId = "ari:cloud:identity::user/3",
+                        assigneeId = "ari:cloud:identity::user/10",
                         parentKey = "GQLGW-1",
                         relatedKeys = listOf("GQLGW-1", "GQLGW-2", "GQLGW-3"),
                     ),
@@ -101,6 +124,13 @@ abstract class HydrationDeferForwardsErrors(
                         type
                             .dataFetcher("issueByKey") { env ->
                                 issuesByKey[env.getArgument("key")]
+                            }
+                            .dataFetcher("issuesByKeys") { env ->
+                                val keys = env.getArgument<List<String>>("keys").toSet()
+                                issues
+                                    .filter {
+                                        it.key in keys
+                                    }
                             }
                             .dataFetcher("issues") { env ->
                                 issues

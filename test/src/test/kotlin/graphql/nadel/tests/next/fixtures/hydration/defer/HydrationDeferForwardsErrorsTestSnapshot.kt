@@ -83,6 +83,10 @@ public class HydrationDeferForwardsErrorsTestSnapshot : TestSnapshot() {
      *     {
      *       "message": "No user: ari:cloud:identity::user/0",
      *       "locations": [],
+     *       "path": [
+     *         "issueByKey",
+     *         "assignee"
+     *       ],
      *       "extensions": {
      *         "classification": "UserNotFoundError"
      *       }
@@ -113,6 +117,10 @@ public class HydrationDeferForwardsErrorsTestSnapshot : TestSnapshot() {
                 |         {
                 |           "message": "No user: ari:cloud:identity::user/0",
                 |           "locations": [],
+                |           "path": [
+                |             "issueByKey",
+                |             "assignee"
+                |           ],
                 |           "extensions": {
                 |             "classification": "UserNotFoundError"
                 |           }
