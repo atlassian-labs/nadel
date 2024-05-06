@@ -1,9 +1,10 @@
-package graphql.nadel
+package graphql.nadel.result
 
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl
 import graphql.GraphQLError
 import graphql.introspection.Introspection
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelFieldAndService
 import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.util.AnyMap
