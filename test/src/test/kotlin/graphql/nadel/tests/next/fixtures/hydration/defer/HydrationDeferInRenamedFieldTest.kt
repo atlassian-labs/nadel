@@ -3,11 +3,12 @@ package graphql.nadel.tests.next.fixtures.hydration.defer
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
+import org.intellij.lang.annotations.Language
 
-class HydrationDeferInRenamedFieldTest : NadelIntegrationTest(
+class HydrationDeferInRenamedFieldTest : BaseHydrationDeferInRenamedFieldTest(
     query = """
       query {
-        issueByKey(key: "GQLGW-1") {
+        issueByKey(key: "GQLGW-1") { # Renamed
           key
           ... @defer {
             assignee {
@@ -17,6 +18,52 @@ class HydrationDeferInRenamedFieldTest : NadelIntegrationTest(
         }
       }
     """.trimIndent(),
+)
+
+class HydrationDeferInRenamedFieldUsingRenamedFieldTest : BaseHydrationDeferInRenamedFieldTest(
+    query = """
+      query {
+        issueByKey(key: "GQLGW-1") { # Renamed
+          key
+          ... @defer {
+            assigneeV2 { # Renamed
+              name
+            }
+          }
+        }
+      }
+    """.trimIndent(),
+)
+
+/**
+ * `@defer` hydration is currently disabled for nested hydrations.
+ */
+class HydrationDeferInRenamedFieldAndNestedHydrationsTest : BaseHydrationDeferInRenamedFieldTest(
+    query = """
+      query {
+        issueByKey(key: "GQLGW-1") { # Renamed
+          key
+          self { # Hydrate
+            self { # Hydrate
+              self { # Hydrate
+                ... @defer {
+                  assigneeV2 { # Renamed
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    """.trimIndent(),
+)
+
+abstract class BaseHydrationDeferInRenamedFieldTest(
+    @Language("GraphQL")
+    query: String,
+) : NadelIntegrationTest(
+    query = query,
     services = listOf(
         Service(
             name = "issues",
@@ -30,10 +77,22 @@ class HydrationDeferInRenamedFieldTest : NadelIntegrationTest(
                 id: ID!
                 key: String!
                 assigneeId: ID @hidden
+                self: Issue
+                  @hydrated(
+                    service: "issues"
+                    field: "issueById"
+                    arguments: [{name: "id", value: "$source.id"}]
+                  )
                 assignee: User
                   @hydrated(
                     service: "users"
                     field: "userById"
+                    arguments: [{name: "id", value: "$source.assigneeId"}]
+                  )
+                assigneeV2: User
+                  @hydrated(
+                    service: "users"
+                    field: "quickUser"
                     arguments: [{name: "id", value: "$source.assigneeId"}]
                   )
               }
@@ -73,6 +132,7 @@ class HydrationDeferInRenamedFieldTest : NadelIntegrationTest(
             overallSchema = """
               type Query {
                 userById(id: ID!): User
+                quickUser(id: ID!): User @renamed(from: "user_fast")
               }
               type User {
                 id: ID!
@@ -98,6 +158,10 @@ class HydrationDeferInRenamedFieldTest : NadelIntegrationTest(
                         type
                             .dataFetcher("userById") { env ->
                                 usersById[env.getArgument("id")]
+                            }
+                            .dataFetcher("user_fast") { env ->
+                                usersById[env.getArgument("id")]
+                                    ?.copy(name = "SPEED")
                             }
                     }
             },
