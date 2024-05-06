@@ -9,7 +9,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
 @UseHook
-class `new-batch-hydration-instruction-hook-returns-null` : EngineTestHook {
+class `batch-hydration-instruction-hook-returns-null` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return super.makeNadel(builder)
             .executionHooks(

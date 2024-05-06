@@ -70,7 +70,7 @@ class `batch-polymorphic-hydration-actor-fields-are-in-the-same-service-return-t
     PolymorphicHydrationWithAliasTestHook()
 
 @UseHook
-class `new-batch-polymorphic-hydrations-are-executed-in-parallel` : PolymorphicHydrationWithAliasTestHook() {
+class `batch-polymorphic-hydrations-are-executed-in-parallel` : PolymorphicHydrationWithAliasTestHook() {
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
