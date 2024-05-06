@@ -41,6 +41,8 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParam
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep.Companion.DocumentCompilation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.instrumentation.parameters.child
+import graphql.nadel.result.NadelResultMerger
+import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
