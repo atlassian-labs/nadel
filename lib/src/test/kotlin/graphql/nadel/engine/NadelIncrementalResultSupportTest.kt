@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class NadelDeferSupportTest {
+class NadelIncrementalResultSupportTest {
     @Test
     fun `channel closes once initial result comes in and there are no pending defer jobs`() {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
-        val subject = NadelDeferSupport(channel)
+        val subject = NadelIncrementalResultSupport(channel)
 
         assertFalse(channel.isClosedForSend)
         assertFalse(channel.isClosedForReceive)
@@ -35,7 +35,7 @@ class NadelDeferSupportTest {
     fun `after last job the hasNext is false`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelDeferSupport(channel)
+        val subject = NadelIncrementalResultSupport(channel)
         val lockingJob = CompletableDeferred<Boolean>()
 
         // When
@@ -78,6 +78,7 @@ class NadelDeferSupportTest {
         lockingJob.complete(true)
 
         val results = channel.consumeAsFlow().toList()
+        assertTrue(results.dropLast(n = 1).all { it.hasNext() })
         val lastResult = results.last()
         assertTrue((lastResult.incremental?.single() as DeferPayload).getData<String>() == "Bye world")
         assertFalse(lastResult.hasNext())
@@ -86,7 +87,7 @@ class NadelDeferSupportTest {
     @Test
     fun `hasNext is true if last job launches more jobs`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
-        val subject = NadelDeferSupport(channel)
+        val subject = NadelIncrementalResultSupport(channel)
         val firstLock = CompletableDeferred<Boolean>()
         val secondLock = CompletableDeferred<Boolean>()
 
@@ -122,7 +123,7 @@ class NadelDeferSupportTest {
         // Channel that stores the oldest item
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelDeferSupport(channel)
+        val subject = NadelIncrementalResultSupport(channel)
         val firstLock = CompletableDeferred<Boolean>()
         val secondLock = CompletableDeferred<Boolean>()
 
@@ -176,7 +177,7 @@ class NadelDeferSupportTest {
                 // Channel that stores the oldest item
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-                val subject = NadelDeferSupport(channel)
+                val subject = NadelIncrementalResultSupport(channel)
                 val lock = CompletableDeferred<Boolean>()
 
                 assertFalse(channel.isClosedForSend)
