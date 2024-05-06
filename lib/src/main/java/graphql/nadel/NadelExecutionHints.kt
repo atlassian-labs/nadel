@@ -6,14 +6,12 @@ import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
-import graphql.nadel.hints.NewBatchHydrationGroupingHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
-    val newBatchHydrationGrouping: NewBatchHydrationGroupingHint,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
@@ -33,7 +31,6 @@ data class NadelExecutionHints(
         private var legacyOperationNames = LegacyOperationNamesHint { false }
         private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
-        private var newBatchHydrationGrouping = NewBatchHydrationGroupingHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
         private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
@@ -63,11 +60,6 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun newBatchHydrationGrouping(flag: NewBatchHydrationGroupingHint): Builder {
-            newBatchHydrationGrouping = flag
-            return this
-        }
-
         fun deferSupport(flag: NadelDeferSupportHint): Builder {
             deferSupport = flag
             return this
@@ -93,7 +85,6 @@ data class NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
                 newResultMergerAndNamespacedTypename,
-                newBatchHydrationGrouping,
                 deferSupport,
                 sharedTypeRenames,
                 shortCircuitEmptyQuery,

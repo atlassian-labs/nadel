@@ -1,0 +1,120 @@
+name: "batching conditional hydration works when startsWith condition field is null"
+enabled: true
+overallSchema:
+  service2: |
+    type Query {
+      barsById(ids: [ID]): [Bar]
+    }
+    type Bar {
+      id: ID
+      name: String
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      type: String
+      bar: [Bars] 
+        @hydrated(
+          service: "service2"
+          field: "barsById"
+          arguments: [
+            {
+              name: "ids"
+              value: "$source.barIds"
+            }
+          ]
+          when: {
+            result: {
+              sourceField: "type"
+              predicate: { startsWith: "that" }
+            }
+          }
+        )
+        @hydrated(
+          service: "service2"
+          field: "barsById"
+          arguments: [
+            {
+              name: "ids"
+              value: "$source.barIds"
+            }
+          ]
+          when: {
+            result: {
+              sourceField: "type"
+              predicate: { startsWith: "this" }
+            }
+          }
+        )
+    }
+    union Bars = Bar
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barsById(ids: [ID]): [Bar]
+    }
+  service1: |
+    type Foo {
+      barIds: [ID]
+      id: ID
+      type: String
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        ... on Bar {
+          name
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      query: |
+        query {
+          foo {
+            __typename__batch_hydration__bar: __typename
+            batch_hydration__bar__barIds: barIds
+            batch_hydration__bar__barIds: barIds
+            batch_hydration__bar__type: type
+            batch_hydration__bar__type: type
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__batch_hydration__bar": "Foo",
+            "batch_hydration__bar__barIds": ["barId1", "barId2"],      
+            "batch_hydration__bar__type": null
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": [null, null]  
+      }
+    },
+    "extensions": {}
+  }

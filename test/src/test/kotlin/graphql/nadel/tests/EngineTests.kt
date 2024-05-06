@@ -328,13 +328,6 @@ private suspend fun execute(
                         builder = builder.executionHints(
                             nadelExecutionHints = testHook
                                 .makeExecutionHints(defaultHints.toBuilder())
-                                .let {
-                                    if (fixture.name.startsWith("new ")) {
-                                        it.newBatchHydrationGrouping { true }
-                                    } else {
-                                        it
-                                    }
-                                }
                                 .build(),
                         ),
                     )
