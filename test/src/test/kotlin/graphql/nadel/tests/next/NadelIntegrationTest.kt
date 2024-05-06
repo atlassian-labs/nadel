@@ -51,7 +51,7 @@ abstract class NadelIntegrationTest(
     @Test
     fun execute() = runTest {
         // Given
-        val testData = getTestData()
+        val testData = getTestSnapshot()
 
         val nadel = makeNadel()
             .build()
@@ -164,18 +164,18 @@ abstract class NadelIntegrationTest(
         }
     }
 
-    open fun getTestData(): TestData {
-        return Class.forName(this::class.qualifiedName + "Data")
+    open fun getTestSnapshot(): TestSnapshot {
+        return Class.forName(this::class.qualifiedName + "Snapshot")
             .getDeclaredConstructor()
-            .newInstance() as TestData
+            .newInstance() as TestSnapshot
     }
 
     open fun assert(result: ExecutionResult) {
     }
 
-    private fun assertServiceCalls(testData: TestData) {
+    private fun assertServiceCalls(testSnapshot: TestSnapshot) {
         // Unmatched calls, by the end of the function both should be empty if they're matched
-        val unmatchedExpectedCalls = testData.calls.toMutableList()
+        val unmatchedExpectedCalls = testSnapshot.calls.toMutableList()
         val unmatchedActualCalls = executionCapture.calls.toMutableList()
 
         unmatchedActualCalls.forEachElementInIterator { iterator, actualCall ->
@@ -205,14 +205,14 @@ abstract class NadelIntegrationTest(
         assertTrue(unmatchedExpectedCalls.isEmpty() && unmatchedActualCalls.isEmpty())
     }
 
-    private suspend fun assertNadelResult(result: ExecutionResult, testData: TestData) {
+    private suspend fun assertNadelResult(result: ExecutionResult, testSnapshot: TestSnapshot) {
         JSONAssert.assertEquals(
-            testData.response.response,
+            testSnapshot.response.response,
             jsonObjectMapper.writeValueAsString(result.toSpecification()),
             JSONCompareMode.STRICT,
         )
 
-        if (testData.response.delayedResponses.isEmpty()) {
+        if (testSnapshot.response.delayedResponses.isEmpty()) {
             if (result is IncrementalExecutionResult) {
                 assertTrue(result.incrementalItemPublisher.asFlow().toList().isEmpty())
                 assertFalse(result.hasNext())
@@ -233,7 +233,7 @@ abstract class NadelIntegrationTest(
                 unmatchedExpectedDelayedResponses,
                 unmatchedActualDelayedResponses,
             ) = findUnmatchedDelayedResponses(
-                expectedResponses = testData.response.delayedResponses,
+                expectedResponses = testSnapshot.response.delayedResponses,
                 actualResponses = actualDelayedResponses,
             )
 

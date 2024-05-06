@@ -22,8 +22,8 @@ import io.kotest.mpp.newInstanceNoArgConstructor
 import java.io.File
 import kotlin.reflect.KClass
 
-// For navigation so you can search up CaptureTestData
-private typealias CaptureTestData = Unit
+// For navigation so you can search up UpdateTestSnapshots
+private typealias UpdateTestSnapshots = Unit
 
 suspend fun main() {
     val sourceRoot = File("test/src/test/kotlin/")
@@ -42,10 +42,10 @@ suspend fun main() {
 
             val captured = test.capture()
 
-            val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Data"))
+            val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
                 .indent(' '.toString().repeat(4))
                 .addFileComment("@formatter:off")
-                .addType(makeTestDataClass(klass, captured))
+                .addType(makeTestSnapshotClass(klass, captured))
                 .build()
                 .writeTo(sourceRoot)
 
@@ -80,13 +80,13 @@ private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
         }
 }
 
-private fun makeTestDataClass(
+private fun makeTestSnapshotClass(
     klass: KClass<out Any>,
     captured: TestExecutionCapture,
 ): TypeSpec {
-    return TypeSpec.classBuilder(klass.simpleName + "Data")
-        .superclass(TestData::class)
-        .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.CaptureTestData]")
+    return TypeSpec.classBuilder(klass.simpleName + "Snapshot")
+        .superclass(TestSnapshot::class)
+        .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots")
         .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S","unused").build())
         .addProperty(makeServiceCallsProperty(captured))
         .addProperty(makeNadelResultProperty(captured))
