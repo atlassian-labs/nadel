@@ -3,14 +3,12 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.LegacyOperationNamesHint
-import graphql.nadel.hints.NewBatchHydrationGroupingHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
-    val newBatchHydrationGrouping: NewBatchHydrationGroupingHint,
     val deferSupport: NadelDeferSupportHint,
 ) {
     /**
@@ -27,7 +25,6 @@ data class NadelExecutionHints(
         private var legacyOperationNames = LegacyOperationNamesHint { false }
         private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
-        private var newBatchHydrationGrouping = NewBatchHydrationGroupingHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
 
         constructor()
@@ -53,11 +50,6 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun newBatchHydrationGrouping(flag: NewBatchHydrationGroupingHint): Builder {
-            newBatchHydrationGrouping = flag
-            return this
-        }
-
         fun deferSupport(flag: NadelDeferSupportHint): Builder {
             deferSupport = flag
             return this
@@ -68,8 +60,7 @@ data class NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
                 newResultMergerAndNamespacedTypename,
-                newBatchHydrationGrouping,
-                deferSupport
+                deferSupport,
             )
         }
     }

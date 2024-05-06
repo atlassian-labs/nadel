@@ -1,7 +1,6 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
@@ -50,13 +49,6 @@ class `new-batching-of-hydration-list-with-partition-2` : EngineTestHook {
 
 @UseHook
 class `index-hydration-with-partitioned-inputs` : EngineTestHook {
-    override fun makeExecutionHints(
-        builder: NadelExecutionHints.Builder,
-    ): NadelExecutionHints.Builder {
-        return super.makeExecutionHints(builder)
-            .newBatchHydrationGrouping { true }
-    }
-
     override fun makeNadel(
         builder: Nadel.Builder,
     ): Nadel.Builder {

@@ -1,0 +1,155 @@
+name: "hydration matching using index with lists with hydration field not exposed"
+enabled: true
+# language=GraphQL
+overallSchema:
+  # language=GraphQL
+  UserService: |
+    type Query {
+      echo: String
+      usersByIssueIds(issueIds: [ID]): [[User]]
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  # language=GraphQL
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [User]
+      @hydrated(
+        service: "UserService"
+        field: "usersByIssueIds"
+        arguments: [{name: "issueIds" value: "$source.id"}]
+        indexed: true
+        batchSize: 5
+      )
+    }
+# language=GraphQL
+underlyingSchema:
+  # language=GraphQL
+  UserService: |
+    type Query {
+      echo: String
+      usersByIssueIds(issueIds: [ID]): [[User]]
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+  # language=GraphQL
+  Issues: |
+    type Issue {
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+# language=GraphQL
+query: |
+  query {
+    issues {
+      id
+      authors {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            id
+            batch_hydration__authors__id: id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "id": "ISSUE-1",
+              "batch_hydration__authors__id": "ISSUE-1"
+            },
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "id": "ISSUE-2",
+              "batch_hydration__authors__id": "ISSUE-2"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIssueIds": [
+            [
+              {
+                "name": "Name"
+              }
+            ],
+            [
+              {
+                "name": "Name"
+              },
+              {
+                "name": "Name 2"
+              }
+            ]
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "name": "Name"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            {
+              "name": "Name"
+            },
+            {
+              "name": "Name 2"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }

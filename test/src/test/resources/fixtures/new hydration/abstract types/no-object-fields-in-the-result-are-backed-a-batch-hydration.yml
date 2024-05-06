@@ -1,0 +1,130 @@
+name: "no object fields in the result are backed a batch hydration"
+enabled: true
+# language=GraphQL
+overallSchema:
+  activity: |
+    type Query {
+      activity: [IActivity]
+    }
+    interface IActivity {
+      user: User
+    }
+    type Activity implements IActivity {
+      id: ID!
+      user: User
+      @hydrated(
+        service: "users"
+        field: "usersByIds"
+        arguments: [{name: "ids" value: "$source.userId"}]
+        inputIdentifiedBy: [{sourceId: "userId" resultId: "id"}]
+      )
+    }
+    type SingleActivity implements IActivity {
+      id: ID!
+      user: User
+    }
+  users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+    }
+# language=GraphQL
+underlyingSchema:
+  activity: |
+    type Query {
+      activity: [IActivity]
+    }
+    type User {
+      id: ID!
+      name: String
+    }
+    interface IActivity {
+      user: User
+    }
+    type Activity implements IActivity {
+      id: ID!
+      userId: ID
+      user: User @deprecated(reason: "Fake")
+    }
+    type SingleActivity implements IActivity {
+      id: ID!
+      user: User
+    }
+  users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+    }
+# language=GraphQL
+query: |
+  {
+    activity {
+      user {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "activity"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          activity {
+            ... on Activity {
+              __typename__batch_hydration__user: __typename
+              batch_hydration__user__userId: userId
+            }
+            ... on SingleActivity {
+              user {
+                name
+              }
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "activity": [
+            {
+              "user": {
+                "name": "John"
+              }
+            },
+            {
+              "user": {
+                "name": "Mayor"
+              }
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |
+  {
+    "data": {
+      "activity": [
+        {
+          "user": {
+            "name": "John"
+          }
+        },
+        {
+          "user": {
+            "name": "Mayor"
+          }
+        }
+      ]
+    },
+    "errors": []
+  }
