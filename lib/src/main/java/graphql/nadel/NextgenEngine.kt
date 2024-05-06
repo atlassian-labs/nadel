@@ -55,7 +55,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
+import org.reactivestreams.Publisher
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
 internal class NextgenEngine(
@@ -306,6 +309,19 @@ internal class NextgenEngine(
             )
         }
 
+        // if serviceExecResult is IncrementalServiceExecutionResult -> consume publisher and send events to channel
+
+        if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
+            serviceExecResult.incrementalItemPublisher
+
+            // Launch a coroutine to collect values from the flow and send them to the channel
+            executionContext.deferScope.launch {
+                serviceExecResult.incrementalItemPublisher.asFlow().collect { result ->
+                    // Send the result to the channel
+                    executionContext.resultsChannel.send(result)
+                }
+            }
+        }
         return serviceExecResult.copy(
             data = serviceExecResult.data.let { data ->
                 data.takeIf { transformedQuery.resultKey in data }

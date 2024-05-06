@@ -10,10 +10,12 @@ sealed class ServiceExecutionResult @JvmOverloads constructor(
 )
 
 class NadelIncrementalServiceExecutionResult(
-    serviceExecutionResult: ServiceExecutionResult,
+    data: MutableMap<String, Any?> = LinkedHashMap(),
+    errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
+    extensions: MutableMap<String, Any?> = LinkedHashMap(),
     val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult>,
     val hasNext: Boolean,
-) : ServiceExecutionResult(serviceExecutionResult.data, serviceExecutionResult.errors, serviceExecutionResult.extensions)
+) : ServiceExecutionResult(data, errors, extensions)
 
 class NadelServiceExecutionResultImpl @JvmOverloads constructor(
     data: MutableMap<String, Any?> = LinkedHashMap(),
