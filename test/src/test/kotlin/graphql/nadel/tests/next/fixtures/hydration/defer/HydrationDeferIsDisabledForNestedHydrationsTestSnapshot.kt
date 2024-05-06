@@ -3,7 +3,7 @@ package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.nadel.tests.next.ExpectedNadelResponse
 import graphql.nadel.tests.next.ExpectedServiceCall
-import graphql.nadel.tests.next.TestData
+import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
 import kotlin.Suppress
 import kotlin.collections.List
@@ -12,17 +12,16 @@ import kotlin.collections.listOf
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.CaptureTestData]
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferTestData : TestData() {
+public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
                 query = """
                 | {
-                |   issue(id: "ari:cloud:jira::issue/1") {
-                |     id
+                |   issueByKey(key: "GQLGW-3") {
                 |     hydration__assignee__assigneeId: assigneeId
                 |     __typename__hydration__assignee: __typename
                 |   }
@@ -31,10 +30,33 @@ public class HydrationDeferTestData : TestData() {
                 variables = "{}",
                 response = """
                 | {
-                |   "issue": {
-                |     "id": "ari:cloud:jira::issue/1",
-                |     "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
+                |   "issueByKey": {
+                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
                 |     "__typename__hydration__assignee": "Issue"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResponses = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "issues",
+                query = """
+                | {
+                |   issueByKey(key: "GQLGW-3") {
+                |     key
+                |     hydration__self__key: key
+                |     __typename__hydration__self: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                response = """
+                | {
+                |   "issueByKey": {
+                |     "key": "GQLGW-3",
+                |     "hydration__self__key": "GQLGW-3",
+                |     "__typename__hydration__self": "Issue"
                 |   }
                 | }
                 """.trimMargin(),
@@ -45,7 +67,7 @@ public class HydrationDeferTestData : TestData() {
                 service = "users",
                 query = """
                 | {
-                |   user(id: "ari:cloud:jira::user/1") {
+                |   userById(id: "ari:cloud:identity::user/1") {
                 |     name
                 |   }
                 | }
@@ -53,7 +75,7 @@ public class HydrationDeferTestData : TestData() {
                 variables = "{}",
                 response = """
                 | {
-                |   "user": {
+                |   "userById": {
                 |     "name": "Franklin"
                 |   }
                 | }
@@ -67,10 +89,10 @@ public class HydrationDeferTestData : TestData() {
      * ```json
      * {
      *   "data": {
-     *     "issue": {
-     *       "id": "ari:cloud:jira::issue/1",
-     *       "assignee": {
-     *         "value": {
+     *     "issueByKey": {
+     *       "key": "GQLGW-3",
+     *       "self": {
+     *         "assignee": {
      *           "name": "Franklin"
      *         }
      *       }
@@ -83,32 +105,18 @@ public class HydrationDeferTestData : TestData() {
             response = """
             | {
             |   "data": {
-            |     "issue": {
-            |       "id": "ari:cloud:jira::issue/1"
+            |     "issueByKey": {
+            |       "key": "GQLGW-3",
+            |       "self": {
+            |         "assignee": {
+            |           "name": "Franklin"
+            |         }
+            |       }
             |     }
-            |   },
-            |   "hasNext": true
+            |   }
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
-                """
-                | {
-                |   "hasNext": false,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issue",
-                |         "assignee"
-                |       ],
-                |       "data": {
-                |         "value": {
-                |           "name": "Franklin"
-                |         }
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
             ),
         )
 }

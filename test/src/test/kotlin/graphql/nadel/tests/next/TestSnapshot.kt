@@ -2,7 +2,7 @@ package graphql.nadel.tests.next
 
 import org.intellij.lang.annotations.Language
 
-abstract class TestData {
+abstract class TestSnapshot {
     abstract val calls: List<ExpectedServiceCall>
     abstract val response: ExpectedNadelResponse
 }

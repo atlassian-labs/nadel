@@ -3,7 +3,7 @@ package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.nadel.tests.next.ExpectedNadelResponse
 import graphql.nadel.tests.next.ExpectedServiceCall
-import graphql.nadel.tests.next.TestData
+import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
 import kotlin.Suppress
 import kotlin.collections.List
@@ -12,16 +12,17 @@ import kotlin.collections.listOf
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.CaptureTestData]
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledForNestedHydrationsTestData : TestData() {
+public class HydrationDeferTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
                 query = """
                 | {
-                |   issueByKey(key: "GQLGW-3") {
+                |   issue(id: "ari:cloud:jira::issue/1") {
+                |     id
                 |     hydration__assignee__assigneeId: assigneeId
                 |     __typename__hydration__assignee: __typename
                 |   }
@@ -30,33 +31,10 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestData : TestData() {
                 variables = "{}",
                 response = """
                 | {
-                |   "issueByKey": {
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |   "issue": {
+                |     "id": "ari:cloud:jira::issue/1",
+                |     "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
                 |     "__typename__hydration__assignee": "Issue"
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "issues",
-                query = """
-                | {
-                |   issueByKey(key: "GQLGW-3") {
-                |     key
-                |     hydration__self__key: key
-                |     __typename__hydration__self: __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                response = """
-                | {
-                |   "issueByKey": {
-                |     "key": "GQLGW-3",
-                |     "hydration__self__key": "GQLGW-3",
-                |     "__typename__hydration__self": "Issue"
                 |   }
                 | }
                 """.trimMargin(),
@@ -67,7 +45,7 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestData : TestData() {
                 service = "users",
                 query = """
                 | {
-                |   userById(id: "ari:cloud:identity::user/1") {
+                |   user(id: "ari:cloud:jira::user/1") {
                 |     name
                 |   }
                 | }
@@ -75,7 +53,7 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestData : TestData() {
                 variables = "{}",
                 response = """
                 | {
-                |   "userById": {
+                |   "user": {
                 |     "name": "Franklin"
                 |   }
                 | }
@@ -89,10 +67,10 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestData : TestData() {
      * ```json
      * {
      *   "data": {
-     *     "issueByKey": {
-     *       "key": "GQLGW-3",
-     *       "self": {
-     *         "assignee": {
+     *     "issue": {
+     *       "id": "ari:cloud:jira::issue/1",
+     *       "assignee": {
+     *         "value": {
      *           "name": "Franklin"
      *         }
      *       }
@@ -105,18 +83,32 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestData : TestData() {
             response = """
             | {
             |   "data": {
-            |     "issueByKey": {
-            |       "key": "GQLGW-3",
-            |       "self": {
-            |         "assignee": {
-            |           "name": "Franklin"
-            |         }
-            |       }
+            |     "issue": {
+            |       "id": "ari:cloud:jira::issue/1"
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResponses = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issue",
+                |         "assignee"
+                |       ],
+                |       "data": {
+                |         "value": {
+                |           "name": "Franklin"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
