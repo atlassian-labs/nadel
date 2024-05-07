@@ -23,9 +23,6 @@ class JsonNodes(
     }
 
     /**
-     * todo: can this be a sequence?
-     */
-    /**
      * Extracts the nodes at the given query selection path.
      */
     private fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
