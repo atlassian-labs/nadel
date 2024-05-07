@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class NadelIncrementalResultSupport internal constructor(
-    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(UNLIMITED),
+    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(100),
 ) {
     /**
      * The root [Job] to actually run the defer work.
