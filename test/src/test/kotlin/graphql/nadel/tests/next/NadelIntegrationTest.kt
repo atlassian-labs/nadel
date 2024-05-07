@@ -218,6 +218,9 @@ abstract class NadelIntegrationTest(
             // todo: match delayed responses here too
         }
 
+        // This will fail if there are any unmatched calls e.g.
+        // unmatched because the number of calls was different
+        // unmatched because the contents of the calls were different
         assertTrue(unmatchedExpectedCalls.isEmpty() && unmatchedActualCalls.isEmpty())
     }
 
@@ -253,6 +256,9 @@ abstract class NadelIntegrationTest(
                 actualResponses = actualDelayedResponses,
             )
 
+            // This will fail if there are any unmatched responses e.g.
+            // unmatched because the number of responses was different
+            // unmatched because the contents of the responses were different
             assertTrue(unmatchedExpectedDelayedResponses.isEmpty() && unmatchedActualDelayedResponses.isEmpty())
         }
     }
@@ -266,7 +272,7 @@ abstract class NadelIntegrationTest(
     ): Pair<List<String>, List<String>> {
         val unmatchedExpectedDelayedResponses = expectedResponses
             .map { delayedResponse ->
-                // We don't care about the order
+                // We don't care about the order, hasNext is asserted elsewhere
                 val withoutHasNext = jsonObjectMapper.readValue<MutableJsonMap>(delayedResponse)
                     .also {
                         it.remove("hasNext")
