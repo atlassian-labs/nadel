@@ -2,8 +2,11 @@ package graphql.nadel.tests.next
 
 import graphql.ExecutionInput
 import graphql.ExecutionResult
+import graphql.ExperimentalApi
 import graphql.GraphQL
+import graphql.incremental.IncrementalExecutionResult
 import graphql.language.AstPrinter
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
@@ -20,6 +23,7 @@ class GraphQLServiceExecution(
         val input = ExecutionInput.newExecutionInput()
             .query(AstPrinter.printAst(serviceExecutionParameters.query))
             .variables(serviceExecutionParameters.variables)
+            .graphQLContext(mapOf(ExperimentalApi.ENABLE_INCREMENTAL_SUPPORT to true))
             .build()
 
         return graphQL
@@ -28,14 +32,28 @@ class GraphQLServiceExecution(
                 onServiceCall(input, result, exception)
             }
             .thenApply {
-                val spec = it.toSpecification()
+                if (it is IncrementalExecutionResult) {
+                    val spec = it.toSpecification()
 
-                @Suppress("UNCHECKED_CAST")
-                NadelServiceExecutionResultImpl(
-                    data = spec["data"] as MutableMap<String, Any?>? ?: mutableMapOf(),
-                    errors = spec["errors"] as MutableList<MutableMap<String, Any?>>? ?: mutableListOf(),
-                    extensions = spec["extensions"] as MutableMap<String, Any?>? ?: mutableMapOf(),
-                )
+                    @Suppress("UNCHECKED_CAST")
+                    NadelIncrementalServiceExecutionResult(
+                        data = spec["data"] as MutableMap<String, Any?>? ?: mutableMapOf(),
+                        errors = spec["errors"] as MutableList<MutableMap<String, Any?>>? ?: mutableListOf(),
+                        extensions = spec["extensions"] as MutableMap<String, Any?>? ?: mutableMapOf(),
+                        incremental = it.incremental,
+                        incrementalItemPublisher = it.incrementalItemPublisher,
+                        hasNext = it.hasNext(),
+                    )
+                } else {
+                    val spec = it.toSpecification()
+
+                    @Suppress("UNCHECKED_CAST")
+                    NadelServiceExecutionResultImpl(
+                        data = spec["data"] as MutableMap<String, Any?>? ?: mutableMapOf(),
+                        errors = spec["errors"] as MutableList<MutableMap<String, Any?>>? ?: mutableListOf(),
+                        extensions = spec["extensions"] as MutableMap<String, Any?>? ?: mutableMapOf(),
+                    )
+                }
             }
     }
 
