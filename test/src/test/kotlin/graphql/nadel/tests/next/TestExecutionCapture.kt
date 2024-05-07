@@ -89,6 +89,7 @@ class TestExecutionCapture {
      * We need to capture the original response before that happens.
      */
     private fun deepClone(result: ExecutionResult): JsonMap {
-        return jsonObjectMapper.convertValue(result.getData())
+        // todo: what should null behavior here be?
+        return jsonObjectMapper.convertValue(result.getData() ?: return emptyMap())
     }
 }
