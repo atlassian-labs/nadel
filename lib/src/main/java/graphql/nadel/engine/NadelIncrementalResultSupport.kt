@@ -3,22 +3,34 @@ package graphql.nadel.engine
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
+import graphql.nadel.util.getLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class NadelIncrementalResultSupport internal constructor(
-    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(100),
+    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(
+        capacity = 100,
+        onBufferOverflow = BufferOverflow.DROP_LATEST,
+        onUndeliveredElement = {
+            log.error("Dropping incremental result because of buffer overflow")
+        },
+    ),
 ) {
+    companion object {
+        private val log = getLogger<NadelIncrementalResultSupport>()
+    }
+
     /**
      * The root [Job] to actually run the defer work.
      */
