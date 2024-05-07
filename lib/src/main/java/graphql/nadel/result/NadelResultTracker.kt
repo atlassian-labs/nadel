@@ -48,40 +48,9 @@ internal class NadelResultTracker {
 
         val queue = mutableListOf<Any?>(data)
 
-        fun printState(): String {
-            return """
-                Current query path: ${
-                currentQueryPathSegments.joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                )
-            }
-                Current result path: ${
-                currentResultPathSegments.joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                )
-            }
-            """.replaceIndent(' '.toString().repeat(n = 4))
-        }
-
-        println(
-            "Trying to find $node from ${
-                queryPath.segments.joinToString(
-                    separator = ",",
-                    prefix = "[",
-                    postfix = "]"
-                )
-            }"
-        )
-
         while (queue.isNotEmpty()) {
             val element = queue.removeLast()
-            println("Visiting $element")
             if (element === node.value) {
-                println("Got em $currentResultPathSegments")
                 return currentResultPathSegments
             }
 
@@ -101,7 +70,7 @@ internal class NadelResultTracker {
                         val nextElement = element[nextQueryPathSegment]
 
                         if (nextElement == null) {
-                            NavigationOutcome.DeadEnd // todo: tests
+                            NavigationOutcome.DeadEnd
                         } else {
                             queue.add(nextElement)
                             currentResultPathSegments.add(NadelResultPathSegment.Object(nextQueryPathSegment))
@@ -109,10 +78,10 @@ internal class NadelResultTracker {
                             NavigationOutcome.QueuedChild
                         }
                     } else {
-                        NavigationOutcome.DeadEnd  // todo: tests
+                        NavigationOutcome.DeadEnd
                     }
                 }
-                else -> NavigationOutcome.DeadEnd  // todo: tests
+                else -> NavigationOutcome.DeadEnd
             }
 
             when (outcome) {
@@ -129,10 +98,8 @@ internal class NadelResultTracker {
                                 is NadelResultPathSegment.Array -> {
                                     if (last.index == 0) {
                                         // Nothing more to visit in the array, remember that we traverse end -> front
-                                        println("Popping dead end array")
                                         currentResultPathSegments.removeLast()
                                     } else {
-                                        println("Moving to next array element ${last.index - 1}")
                                         // We're moving to the next element
                                         currentResultPathSegments[currentResultPathSegments.lastIndex] =
                                             NadelResultPathSegment.Array(last.index - 1)
@@ -141,7 +108,6 @@ internal class NadelResultTracker {
                                     }
                                 }
                                 is NadelResultPathSegment.Object -> {
-                                    println("Popping up dead end object")
                                     currentResultPathSegments.removeLast()
                                     currentQueryPathSegments.removeLast()
                                 }
@@ -150,11 +116,8 @@ internal class NadelResultTracker {
                     }
                 }
             }
-
-            println("Loop end\n${printState()}")
         }
 
-        println("Didn't get em")
         return null
     }
 
