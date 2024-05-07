@@ -1,11 +1,13 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelSchemas
 import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecution
@@ -21,6 +23,8 @@ import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.reactive.asPublisher
 import org.junit.jupiter.api.fail
 import java.io.File
 import java.math.BigInteger
@@ -179,7 +183,7 @@ private suspend fun execute(
                                 )
                             }
 
-                            val response = synchronized(serviceCalls) {
+                            val serviceExecutionResult = synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
                                         it.serviceName == serviceName
@@ -196,9 +200,20 @@ private suspend fun execute(
                                         failWithFixtureContext("Fixture cannot have both a response and an incrementalResponse.")
                                     }
                                     else if (serviceCall.incrementalResponse != null) {
-                                        serviceCall.incrementalResponse.initialResponse //for now, just return initial response
+                                        NadelIncrementalServiceExecutionResult(
+                                            serviceCall.incrementalResponse.initialResponse["data"] as MutableJsonMap,
+                                            serviceCall.incrementalResponse.initialResponse["errors"] as MutableList<MutableJsonMap>,
+                                            serviceCall.incrementalResponse.initialResponse["extensions"] as MutableJsonMap,
+                                            emptyList(),
+                                            emptyFlow<DelayedIncrementalPartialResult>().asPublisher(),
+                                            true   //TODO: hasNext moight not be implemented properly yet - need to check
+                                        )
                                     } else if (response != null) {
-                                        response
+                                        NadelServiceExecutionResultImpl(
+                                            response["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                                            response["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                                            response["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                                        )
                                     }
                                     else {
                                         failWithFixtureContext("Fixture had no response")
@@ -209,13 +224,7 @@ private suspend fun execute(
                             }
 
                             @Suppress("UNCHECKED_CAST")
-                            CompletableFuture.completedFuture(
-                                NadelServiceExecutionResultImpl(
-                                    response["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                                    response["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
-                                    response["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
-                                ),
-                            )
+                            CompletableFuture.completedFuture(serviceExecutionResult)
                         } catch (e: Throwable) {
                             fail("Unable to invoke service '$serviceName'", e)
                         }

@@ -1,11 +1,13 @@
 package graphql.nadel
 
+import com.sun.tools.javac.comp.Flow
 import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.language.Document
 import graphql.nadel.engine.NadelDeferSupport
@@ -324,6 +326,12 @@ internal class NextgenEngine(
                         ),
                     ).toSpecification(),
                 ),
+            )
+        }
+        
+        if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
+            executionContext.deferSupport.defer(
+                serviceExecResult.incrementalItemPublisher.asFlow()
             )
         }
 
