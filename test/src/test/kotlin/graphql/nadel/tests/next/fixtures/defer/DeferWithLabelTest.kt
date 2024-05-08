@@ -1,10 +1,9 @@
 package graphql.nadel.tests.next.fixtures.defer
 
 import graphql.nadel.NadelExecutionHints
-import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class SimpleDeferTest : NadelIntegrationTest(
+open class DeferWithLabelTest : NadelIntegrationTest(
     query = """
       query {
         defer {
@@ -17,16 +16,9 @@ open class SimpleDeferTest : NadelIntegrationTest(
     """.trimIndent(),
     services = listOf(
         Service(
-            name = "shared",
-            overallSchema = """
-                directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
-            """.trimIndent(),
-            runtimeWiring = { wiring ->
-            },
-        ),
-        Service(
             name = "defer",
             overallSchema = """
+                directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
                 type Query {
                   defer: DeferApi
@@ -45,12 +37,19 @@ open class SimpleDeferTest : NadelIntegrationTest(
 
                 wiring
                     .type("Query") { type ->
-                        type.dataFetcher("defer") {
-                            DeferApi(
-                                "helloString",
+                        type
+                            .dataFetcher("defer") { env ->
+                                Any()
+                            }
+                    }
+                    .type("DeferApi") { type ->
+                        type
+                            .dataFetcher("hello") { env ->
+                                "helloString"
+                            }
+                            .dataFetcher("slow") { env ->
                                 "slowString"
-                            )
-                        }
+                            }
                     }
             },
         ),
