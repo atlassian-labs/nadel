@@ -30,7 +30,7 @@ fun joinExecutionResults(result: JsonMap, incrementalResults: List<JsonMap>): Js
                             setDeferred(resultData, path, data)
                         }
                         "items" in payload -> {
-                            throw UnsupportedOperationException()
+                            throw UnsupportedOperationException("Merging @stream results is not supported yet")
                         }
                     }
                 }
