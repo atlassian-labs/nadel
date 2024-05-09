@@ -40,12 +40,16 @@ class NadelIncrementalResultSupportTest {
 
         // When
         val firstAsync = subject.defer {
+            lockingJob.join()
+
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                 .incrementalItems(emptyList())
                 .hasNext(true)
                 .build()
         }
         val secondAsync = subject.defer {
+            lockingJob.join()
+
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                 .incrementalItems(emptyList())
                 .hasNext(true)
@@ -62,8 +66,8 @@ class NadelIncrementalResultSupportTest {
                         DeferPayload.newDeferredItem()
                             .data("Bye world")
                             .path(listOf("echo"))
-                            .build()
-                    )
+                            .build(),
+                    ),
                 )
                 .hasNext(true)
                 .build()
@@ -72,10 +76,9 @@ class NadelIncrementalResultSupportTest {
         subject.onInitialResultComplete()
 
         // Then
+        lockingJob.complete(true)
         firstAsync.join()
         secondAsync.join()
-
-        lockingJob.complete(true)
 
         val results = channel.consumeAsFlow().toList()
         assertTrue(results.dropLast(n = 1).all { it.hasNext() })

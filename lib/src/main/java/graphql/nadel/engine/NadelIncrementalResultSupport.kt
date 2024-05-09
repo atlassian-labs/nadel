@@ -17,6 +17,9 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * todo: we do not handle the case where defer jobs finish before [onInitialResultComplete]
+ */
 class NadelIncrementalResultSupport internal constructor(
     private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(
         capacity = 100,
