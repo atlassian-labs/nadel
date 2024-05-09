@@ -34,10 +34,10 @@ class NadelIncrementalResultSupport internal constructor(
     }
 
     /**
-     * The root [Job] to actually run the defer work.
+     * The root [Job] to run the defer and stream work etc on.
      */
-    private val deferCoroutineJob = SupervisorJob()
-    private val deferCoroutineScope = CoroutineScope(deferCoroutineJob + Dispatchers.Default)
+    private val coroutineJob = SupervisorJob()
+    private val coroutineScope = CoroutineScope(coroutineJob + Dispatchers.Default)
 
     /**
      * A single [Flow] that can only be collected from once.
@@ -45,7 +45,7 @@ class NadelIncrementalResultSupport internal constructor(
     private val resultFlow by lazy(delayedResultsChannel::consumeAsFlow)
 
     init {
-        deferCoroutineJob.invokeOnCompletion {
+        coroutineJob.invokeOnCompletion {
             require(outstandingJobCounter.isEmpty())
             delayedResultsChannel.close()
         }
@@ -107,11 +107,11 @@ class NadelIncrementalResultSupport internal constructor(
     }
 
     fun onInitialResultComplete() {
-        deferCoroutineJob.complete()
+        coroutineJob.complete()
     }
 
     fun close() {
-        deferCoroutineScope.cancel()
+        coroutineScope.cancel()
     }
 
     /**
@@ -125,7 +125,7 @@ class NadelIncrementalResultSupport internal constructor(
         val outstandingJobHandle = outstandingJobCounter.incrementJobCount()
 
         return try {
-            deferCoroutineScope
+            coroutineScope
                 .launch {
                     task(outstandingJobHandle)
                 }
