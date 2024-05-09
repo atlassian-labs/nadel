@@ -23,7 +23,8 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
-import graphql.nadel.util.LogKit
+import graphql.nadel.util.getLogger
+import graphql.nadel.util.getNotPrivacySafeLogger
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
@@ -435,8 +436,8 @@ class Nadel private constructor(
     }
 
     companion object {
-        private val logNotSafe: Logger = LogKit.getNotPrivacySafeLogger<Nadel>()
-        private val log: Logger = LogKit.getLogger<Nadel>()
+        private val logNotSafe: Logger = getNotPrivacySafeLogger<Nadel>()
+        private val log: Logger = getLogger<Nadel>()
 
         /**
          * @return a builder of Nadel objects

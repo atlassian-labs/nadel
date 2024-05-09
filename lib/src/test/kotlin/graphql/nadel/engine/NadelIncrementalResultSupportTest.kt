@@ -9,6 +9,8 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
@@ -36,46 +38,51 @@ class NadelIncrementalResultSupportTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
         val subject = NadelIncrementalResultSupport(channel)
-        val lockingJob = CompletableDeferred<Boolean>()
+        // Use locks to continue the deferred jobs when we release the lock
+        val firstLock = Mutex(true)
+        val secondLock = Mutex(true)
+        val thirdLock = Mutex(true)
 
         // When
-        val firstAsync = subject.defer {
-            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                .incrementalItems(emptyList())
-                .hasNext(true)
-                .build()
+        subject.defer {
+            firstLock.withLock {
+                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                    .incrementalItems(emptyList())
+                    .hasNext(true)
+                    .build()
+            }
         }
-        val secondAsync = subject.defer {
-            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                .incrementalItems(emptyList())
-                .hasNext(true)
-                .build()
+        subject.defer {
+            secondLock.withLock {
+                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                    .incrementalItems(emptyList())
+                    .hasNext(true)
+                    .build()
+            }
         }
-
         subject.defer {
             // Wait until test tells us to continue
-            lockingJob.join()
-
-            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                .incrementalItems(
-                    listOf(
-                        DeferPayload.newDeferredItem()
-                            .data("Bye world")
-                            .path(listOf("echo"))
-                            .build()
+            thirdLock.withLock {
+                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                    .incrementalItems(
+                        listOf(
+                            DeferPayload.newDeferredItem()
+                                .data("Bye world")
+                                .path(listOf("echo"))
+                                .build(),
+                        ),
                     )
-                )
-                .hasNext(true)
-                .build()
+                    .hasNext(true)
+                    .build()
+            }
         }
 
         subject.onInitialResultComplete()
 
         // Then
-        firstAsync.join()
-        secondAsync.join()
-
-        lockingJob.complete(true)
+        firstLock.unlock()
+        secondLock.unlock()
+        thirdLock.unlock()
 
         val results = channel.consumeAsFlow().toList()
         assertTrue(results.dropLast(n = 1).all { it.hasNext() })

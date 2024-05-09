@@ -221,7 +221,7 @@ internal class NadelHydrationTransform(
             )
         }
 
-        executionContext.deferSupport.defer {
+        executionContext.incrementalResultSupport.defer {
             val instructionSequence = hydrations
                 .map {
                     async {
@@ -263,7 +263,7 @@ internal class NadelHydrationTransform(
         executionBlueprint: NadelOverallExecutionBlueprint,
         fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
-    ): PreparedHydration {
+    ): NadelPreparedHydration {
         val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
             executionBlueprint = executionBlueprint,
             service = state.hydratedFieldService,
@@ -273,13 +273,13 @@ internal class NadelHydrationTransform(
 
         // Do nothing if there is no hydration instruction associated with this result
         if (instructions.isEmpty()) {
-            return PreparedHydration {
+            return NadelPreparedHydration {
                 emptyList()
             }
         }
 
         val instruction = getHydrationFieldInstruction(state, instructions, executionContext.hooks, parentNode)
-            ?: return PreparedHydration {
+            ?: return NadelPreparedHydration {
                 listOf(
                     NadelResultInstruction.Set(
                         subject = parentNode,
@@ -297,7 +297,7 @@ internal class NadelHydrationTransform(
             executionBlueprint = executionBlueprint,
         )
 
-        return PreparedHydration {
+        return NadelPreparedHydration {
             val actorQueryResults = coroutineScope {
                 actorQueries
                     .map { actorQuery ->
@@ -460,6 +460,6 @@ internal class NadelHydrationTransform(
  * Nadel removes artificial fields before the result gets sent back to the caller.
  * So we "prepare" a hydration to ensure we have the value of the artificial field before it gets removed.
  */
-private fun interface PreparedHydration {
+private fun interface NadelPreparedHydration {
     suspend fun hydrate(): List<NadelResultInstruction>
 }

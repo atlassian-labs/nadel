@@ -3,27 +3,41 @@ package graphql.nadel.engine
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
+import graphql.nadel.util.getLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * todo: we do not handle the case where defer jobs finish before [onInitialResultComplete]
+ */
 class NadelIncrementalResultSupport internal constructor(
-    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(UNLIMITED),
+    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(
+        capacity = 100,
+        onBufferOverflow = BufferOverflow.DROP_LATEST,
+        onUndeliveredElement = {
+            log.error("Dropping incremental result because of buffer overflow")
+        },
+    ),
 ) {
+    companion object {
+        private val log = getLogger<NadelIncrementalResultSupport>()
+    }
+
     /**
-     * The root [Job] to actually run the defer work.
+     * The root [Job] to run the defer and stream work etc on.
      */
-    private val deferCoroutineJob = SupervisorJob()
-    private val deferCoroutineScope = CoroutineScope(deferCoroutineJob + Dispatchers.Default)
+    private val coroutineJob = SupervisorJob()
+    private val coroutineScope = CoroutineScope(coroutineJob + Dispatchers.Default)
 
     /**
      * A single [Flow] that can only be collected from once.
@@ -31,7 +45,7 @@ class NadelIncrementalResultSupport internal constructor(
     private val resultFlow by lazy(delayedResultsChannel::consumeAsFlow)
 
     init {
-        deferCoroutineJob.invokeOnCompletion {
+        coroutineJob.invokeOnCompletion {
             require(outstandingJobCounter.isEmpty())
             delayedResultsChannel.close()
         }
@@ -93,11 +107,11 @@ class NadelIncrementalResultSupport internal constructor(
     }
 
     fun onInitialResultComplete() {
-        deferCoroutineJob.complete()
+        coroutineJob.complete()
     }
 
     fun close() {
-        deferCoroutineScope.cancel()
+        coroutineScope.cancel()
     }
 
     /**
@@ -111,7 +125,7 @@ class NadelIncrementalResultSupport internal constructor(
         val outstandingJobHandle = outstandingJobCounter.incrementJobCount()
 
         return try {
-            deferCoroutineScope
+            coroutineScope
                 .launch {
                     task(outstandingJobHandle)
                 }

@@ -19,6 +19,7 @@ import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLObjectType
 import graphql.validation.ValidationError
+import graphql.validation.ValidationError.newValidationError
 import graphql.validation.ValidationErrorType
 
 class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
@@ -39,9 +40,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
             ?: return null
 
         if (objectType.getField(overallField.name)?.getDirective("toBeDeleted") != null) {
-            return ValidationError.newValidationError()
-                .validationErrorType(ValidationErrorType.WrongType)
-                .build()
+            return newValidationError().validationErrorType(ValidationErrorType.WrongType).build()
         }
 
         return null
