@@ -2,6 +2,7 @@ package graphql.nadel.engine.transform.result.json
 
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.result.NadelResultPathSegment
 
 /**
  * todo: one day split this into a sealed class that acts like a union type for each possible type

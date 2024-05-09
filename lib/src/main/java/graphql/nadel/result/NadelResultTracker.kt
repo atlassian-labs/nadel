@@ -1,11 +1,9 @@
 package graphql.nadel.result
 
 import graphql.ExecutionResult
-import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.util.AnyList
-import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.engine.transform.result.json.JsonNodeIterator
 import kotlinx.coroutines.CompletableDeferred
 
 /**
@@ -13,12 +11,6 @@ import kotlinx.coroutines.CompletableDeferred
  */
 internal class NadelResultTracker {
     private val result = CompletableDeferred<ExecutionResult>()
-
-    private enum class NavigationOutcome {
-        QueuedChild,
-        ExpandedArray,
-        DeadEnd,
-    }
 
     /**
      * So… in Nadel the result can change a lot.
@@ -40,81 +32,13 @@ internal class NadelResultTracker {
         node: JsonNode,
     ): List<NadelResultPathSegment>? {
         val result = result.await()
-        val data = result.getData<Any?>()
+        val data = result.toSpecification()["data"]
 
-        val queryPathSegments = queryPath.segments
-        val currentResultPathSegments = mutableListOf<NadelResultPathSegment>()
-        val currentQueryPathSegments = mutableListOf<String>()
-
-        val queue = mutableListOf<Any?>(data)
-
-        while (queue.isNotEmpty()) {
-            val element = queue.removeLast()
-            if (element === node.value) {
-                return currentResultPathSegments
-            }
-
-            val outcome: NavigationOutcome = when (element) {
-                is AnyList -> {
-                    if (element.isNotEmpty()) {
-                        queue.addAll(element)
-                        currentResultPathSegments.add(NadelResultPathSegment.Array(element.lastIndex))
-                        NavigationOutcome.ExpandedArray
-                    } else {
-                        NavigationOutcome.DeadEnd
-                    }
-                }
-                is AnyMap -> {
-                    if (currentQueryPathSegments.size < queryPathSegments.size) {
-                        val nextQueryPathSegment = queryPathSegments[currentQueryPathSegments.size]
-                        val nextElement = element[nextQueryPathSegment]
-
-                        if (nextElement == null) {
-                            NavigationOutcome.DeadEnd
-                        } else {
-                            queue.add(nextElement)
-                            currentResultPathSegments.add(NadelResultPathSegment.Object(nextQueryPathSegment))
-                            currentQueryPathSegments.add(nextQueryPathSegment)
-                            NavigationOutcome.QueuedChild
-                        }
-                    } else {
-                        NavigationOutcome.DeadEnd
-                    }
-                }
-                else -> NavigationOutcome.DeadEnd
-            }
-
-            when (outcome) {
-                NavigationOutcome.QueuedChild -> {
-                }
-                NavigationOutcome.ExpandedArray -> {
-                }
-                NavigationOutcome.DeadEnd -> {
-                    if (queue.isNotEmpty()) { // i.e. we have other array elements to visit
-                        while (currentResultPathSegments.isNotEmpty()) {
-                            val last = currentResultPathSegments.lastOrNull() ?: break
-
-                            when (last) {
-                                is NadelResultPathSegment.Array -> {
-                                    if (last.index == 0) {
-                                        // Nothing more to visit in the array, remember that we traverse end -> front
-                                        currentResultPathSegments.removeLast()
-                                    } else {
-                                        // We're moving to the next element
-                                        currentResultPathSegments[currentResultPathSegments.lastIndex] =
-                                            NadelResultPathSegment.Array(last.index - 1)
-                                        // Nothing further to fix, stop
-                                        break
-                                    }
-                                }
-                                is NadelResultPathSegment.Object -> {
-                                    currentResultPathSegments.removeLast()
-                                    currentQueryPathSegments.removeLast()
-                                }
-                            }
-                        }
-                    }
-                }
+        val jsonNodeIterator = JsonNodeIterator(root = data, queryPath = queryPath, flatten = true)
+        for (ephemeralNode in jsonNodeIterator) {
+            if (ephemeralNode.queryPath.size == queryPath.segments.size && ephemeralNode.value === node.value) {
+                // Clone because underlying values are ephemeral too
+                return ephemeralNode.resultPath.toList()
             }
         }
 
@@ -123,10 +47,5 @@ internal class NadelResultTracker {
 
     fun complete(value: ExecutionResult) {
         result.complete(value)
-    }
-
-    fun complete(value: DelayedIncrementalPartialResult) {
-        // result.complete(value)
-        // todo: track here
     }
 }
