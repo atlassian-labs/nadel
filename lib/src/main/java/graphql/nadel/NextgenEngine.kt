@@ -120,7 +120,7 @@ internal class NextgenEngine(
                 )
             }
 
-            val deferSupport = NadelIncrementalResultSupport()
+            val incrementalResultSupport = NadelIncrementalResultSupport()
             val executionContext = NadelExecutionContext(
                 executionInput,
                 query,
@@ -128,7 +128,7 @@ internal class NextgenEngine(
                 executionHints,
                 instrumentationState,
                 timer,
-                deferSupport,
+                incrementalResultSupport,
             )
 
             val beginExecuteContext = instrumentation.beginExecute(
@@ -173,12 +173,12 @@ internal class NextgenEngine(
             }
 
             beginExecuteContext?.onCompleted(result, null)
-            deferSupport.onInitialResultComplete()
+            incrementalResultSupport.onInitialResultComplete()
 
-            return if (deferSupport.hasDeferredResults()) {
+            return if (incrementalResultSupport.hasDeferredResults()) {
                 IncrementalExecutionResultImpl.Builder()
                     .from(result)
-                    .incrementalItemPublisher(deferSupport.resultFlow().asPublisher())
+                    .incrementalItemPublisher(incrementalResultSupport.resultFlow().asPublisher())
                     .build()
             } else {
                 result
