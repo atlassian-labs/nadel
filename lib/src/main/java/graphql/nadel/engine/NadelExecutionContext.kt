@@ -20,10 +20,14 @@ data class NadelExecutionContext internal constructor(
     val hints: NadelExecutionHints,
     val instrumentationState: InstrumentationState?,
     internal val timer: NadelInstrumentationTimer,
-    internal val deferSupport: NadelIncrementalResultSupport,
+    internal val incrementalResultSupport: NadelIncrementalResultSupport,
     internal val hydrationDetails: ServiceExecutionHydrationDetails? = null,
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
+
+    @Deprecated("Use incrementalSupport instead", ReplaceWith("incrementalResultSupport"))
+    internal val deferSupport: NadelIncrementalResultSupport
+        get() = incrementalResultSupport
 
     val userContext: Any?
         get() {

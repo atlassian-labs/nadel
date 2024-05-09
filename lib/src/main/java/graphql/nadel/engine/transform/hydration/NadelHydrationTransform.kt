@@ -213,7 +213,7 @@ internal class NadelHydrationTransform(
             )
         }
 
-        executionContext.deferSupport.defer {
+        executionContext.incrementalResultSupport.defer {
             val instructionSequence = hydrations
                 .map {
                     async {
