@@ -322,7 +322,7 @@ internal class NextgenEngine(
         }
         
         if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
-            executionContext.deferSupport.defer(
+            executionContext.incrementalResultSupport.defer(
                 serviceExecResult.incrementalItemPublisher.asFlow()
             )
         }

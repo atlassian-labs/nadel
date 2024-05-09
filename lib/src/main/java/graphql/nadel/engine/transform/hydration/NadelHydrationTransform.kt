@@ -41,14 +41,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 /**
- * Defer notes:
- *
- * Hydration could be invoked in an incremental response (handled by system?)
- * Hydration could be invoked immediately
- *
- * How do we know what the result path is?
- */
-/**
  * Would recommend a read of [NadelGenericHydrationInstruction] for more context.
  */
 internal class NadelHydrationTransform(

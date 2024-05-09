@@ -23,7 +23,6 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.7.3")
 
-
     testImplementation(kotlin("test"))
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
