@@ -31,10 +31,12 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "issue": {
-                |     "id": "ari:cloud:jira::issue/1",
-                |     "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
-                |     "__typename__hydration__assignee": "Issue"
+                |   "data": {
+                |     "issue": {
+                |       "id": "ari:cloud:jira::issue/1",
+                |       "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
+                |       "__typename__hydration__assignee": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -53,8 +55,10 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "user": {
-                |     "name": "Franklin"
+                |   "data": {
+                |     "user": {
+                |       "name": "Franklin"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),

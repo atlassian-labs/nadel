@@ -18,6 +18,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.tests.compareJson
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
@@ -25,6 +26,7 @@ import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
+import io.kotest.assertions.Expected
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -201,12 +203,14 @@ abstract class NadelIntegrationTest(
 
             val actualQuery = getCanonicalQuery(actualCall.query)
             val actualVariables = actualCall.variables
+            val actualResult = actualCall.result
 
             val matchingCalls = unmatchedExpectedCalls
                 .filter { expected ->
                     actualCall.service == expected.service
                         && getCanonicalQuery(expected.query) == actualQuery
-                        && jsonObjectMapper.readValue<JsonMap>(expected.variables) == actualVariables
+                        && compareJson(expected = expected.variables, actual = actualVariables).passed()
+                        && compareJson(expected = expected.response, actual = actualResult).passed()
                 }
 
             // Multiple matches is ok, we match one at a time though

@@ -29,8 +29,10 @@ public class BasicObjectSchemaTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "issueById": {
-                |     "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+                |   "data": {
+                |     "issueById": {
+                |       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
