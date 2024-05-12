@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -28,7 +28,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "rename__issueById__getIssueById": {
@@ -38,7 +38,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -52,7 +52,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "rename__issueById__getIssueById": {
@@ -62,7 +62,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -76,7 +76,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "rename__issueById__getIssueById": {
@@ -86,7 +86,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -101,7 +101,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "rename__issueByKey__getIssueByKey": {
@@ -112,7 +112,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -125,7 +125,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "rename__quickUser__user_fast": {
@@ -134,7 +134,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -159,8 +159,8 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "issueByKey": {
@@ -178,7 +178,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
             |   }
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
             ),
         )
 }
