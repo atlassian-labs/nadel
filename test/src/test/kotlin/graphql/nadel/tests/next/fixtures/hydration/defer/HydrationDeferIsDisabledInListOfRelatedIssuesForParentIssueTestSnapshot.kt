@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -34,7 +34,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "issueByKey": {
@@ -54,7 +54,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -67,7 +67,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "userById": {
@@ -76,7 +76,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -104,8 +104,8 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "issueByKey": {
@@ -126,7 +126,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
             |   }
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
             ),
         )
 }

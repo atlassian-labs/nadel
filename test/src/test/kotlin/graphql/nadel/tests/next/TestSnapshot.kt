@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.Language
 
 abstract class TestSnapshot {
     abstract val calls: List<ExpectedServiceCall>
-    abstract val response: ExpectedNadelResponse
+    abstract val result: ExpectedNadelResult
 }
 
 data class ExpectedServiceCall(
@@ -17,8 +17,8 @@ data class ExpectedServiceCall(
     @Language("JSON")
     val variables: JsonMap,
     @Language("JSON")
-    val response: JsonMap,
-    val delayedResponses: List<JsonMap>,
+    val result: JsonMap,
+    val delayedResults: List<JsonMap>,
 ) {
     constructor(
         service: String,
@@ -27,19 +27,52 @@ data class ExpectedServiceCall(
         @Language("JSON")
         variables: String,
         @Language("JSON")
-        response: String,
-        delayedResponses: List<String>,
+        result: String,
+        delayedResults: List<String>,
     ) : this(
         service = service,
         query = query,
         variables = jsonObjectMapper.readValue(variables),
-        response = jsonObjectMapper.readValue(response),
-        delayedResponses = delayedResponses.map<String, JsonMap>(jsonObjectMapper::readValue),
+        result = jsonObjectMapper.readValue(result),
+        delayedResults = delayedResults.map<String, JsonMap>(jsonObjectMapper::readValue),
     )
+
+    override fun hashCode(): Int {
+        // Comparing the Maps is not accurate
+        throw UnsupportedOperationException("Avoid using")
+    }
+
+    override fun equals(other: Any?): Boolean {
+        // Comparing the Maps is not accurate
+        throw UnsupportedOperationException("Avoid using")
+    }
 }
 
-data class ExpectedNadelResponse(
+data class ExpectedNadelResult(
     @Language("JSON")
-    val response: String,
-    val delayedResponses: List<String>,
-)
+    val result: String,
+    val delayedResults: List<JsonMap>,
+) {
+    companion object {
+        operator fun invoke(
+            @Language("JSON")
+            result: String,
+            delayedResults: List<String>,
+        ): ExpectedNadelResult {
+            return ExpectedNadelResult(
+                result = result,
+                delayedResults = delayedResults.map(jsonObjectMapper::readValue),
+            )
+        }
+    }
+
+    override fun hashCode(): Int {
+        // Comparing the Maps is not accurate
+        throw UnsupportedOperationException("Avoid using")
+    }
+
+    override fun equals(other: Any?): Boolean {
+        // Comparing the Maps is not accurate
+        throw UnsupportedOperationException("Avoid using")
+    }
+}

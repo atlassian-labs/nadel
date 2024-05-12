@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.basic
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -27,7 +27,7 @@ public class BasicObjectSchemaTestSnapshot : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "issueById": {
@@ -36,7 +36,7 @@ public class BasicObjectSchemaTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -52,8 +52,8 @@ public class BasicObjectSchemaTestSnapshot : TestSnapshot() {
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "issueById": {
@@ -62,7 +62,7 @@ public class BasicObjectSchemaTestSnapshot : TestSnapshot() {
             |   }
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
             ),
         )
 }

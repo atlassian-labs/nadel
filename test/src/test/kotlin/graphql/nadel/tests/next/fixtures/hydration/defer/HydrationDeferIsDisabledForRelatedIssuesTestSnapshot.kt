@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -33,7 +33,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "issueByKey": {
@@ -50,7 +50,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -63,7 +63,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "userById": {
@@ -72,7 +72,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -85,7 +85,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "userById": {
@@ -94,7 +94,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -122,8 +122,8 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "issueByKey": {
@@ -140,7 +140,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
             |   "hasNext": true
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
                 """
                 | {
                 |   "hasNext": false,
