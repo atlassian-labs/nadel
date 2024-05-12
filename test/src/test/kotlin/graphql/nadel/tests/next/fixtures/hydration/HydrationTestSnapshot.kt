@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.hydration
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -28,7 +28,7 @@ public class HydrationTestSnapshot : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "userById": {
@@ -38,7 +38,7 @@ public class HydrationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -54,7 +54,7 @@ public class HydrationTestSnapshot : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
                 |   "data": {
                 |     "issueById": {
@@ -66,7 +66,7 @@ public class HydrationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -87,8 +87,8 @@ public class HydrationTestSnapshot : TestSnapshot() {
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "issueById": {
@@ -102,7 +102,7 @@ public class HydrationTestSnapshot : TestSnapshot() {
             |   }
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
             ),
         )
 }
