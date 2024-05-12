@@ -20,6 +20,7 @@ class BatchHydrationDeferTest : NadelIntegrationTest(
         Service(
             name = "issues",
             overallSchema = """
+                directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
                 type Query {
                   issues: [Issue!]
                 }
