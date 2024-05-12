@@ -1,5 +1,6 @@
 package graphql.nadel.tests.next.fixtures.hydration.defer.batch
 
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 
@@ -107,4 +108,10 @@ class BatchHydrationDeferTest : NadelIntegrationTest(
             }
         ),
     ),
-)
+) {
+    override fun makeExecutionHints(): NadelExecutionHints.Builder {
+        return super.makeExecutionHints()
+            .deferSupport { true }
+            .newBatchHydrationGrouping { true }
+    }
+}

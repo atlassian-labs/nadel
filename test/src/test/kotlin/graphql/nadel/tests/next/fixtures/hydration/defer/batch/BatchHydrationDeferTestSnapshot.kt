@@ -125,28 +125,57 @@ public class BatchHydrationDeferTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "key": "GQLGW-1",
-            |         "assignee": {
-            |           "name": "Franklin"
-            |         }
+            |         "key": "GQLGW-1"
             |       },
             |       {
-            |         "key": "GQLGW-2",
-            |         "assignee": {
-            |           "name": "Steven"
-            |         }
+            |         "key": "GQLGW-2"
             |       },
             |       {
-            |         "key": "GQLGW-3",
-            |         "assignee": {
-            |           "name": "Felipe"
-            |         }
+            |         "key": "GQLGW-3"
             |       }
             |     ]
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issues",
+                |         0,
+                |         "assignee"
+                |       ],
+                |       "data": {
+                |         "name": "Franklin"
+                |       }
+                |     },
+                |     {
+                |       "path": [
+                |         "issues",
+                |         1,
+                |         "assignee"
+                |       ],
+                |       "data": {
+                |         "name": "Steven"
+                |       }
+                |     },
+                |     {
+                |       "path": [
+                |         "issues",
+                |         2,
+                |         "assignee"
+                |       ],
+                |       "data": {
+                |         "name": "Felipe"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

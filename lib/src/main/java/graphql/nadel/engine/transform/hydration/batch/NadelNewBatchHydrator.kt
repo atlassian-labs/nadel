@@ -236,24 +236,37 @@ internal class NadelNewBatchHydrator(
 
                 val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
 
-                val incremental = sourceObjectsMetadata
-                    .map { (sourceObject, sourceInputsPairedWithInstruction) ->
-                        DeferPayload.Builder()
-                            .path(
-                                executionContext.resultTracker.getResultPath(
-                                    sourceField.queryPath,
-                                    sourceObject
-                                )!! + sourceField.resultKey,
+                println("??")
+                val incremental = try {
+                    sourceObjectsMetadata
+                        .mapNotNull { (sourceObject, sourceInputsPairedWithInstruction) ->
+                            val resultPath = executionContext.resultTracker.getResultPath(
+                                sourceField.queryPath.dropLast(n = 1),
+                                sourceObject,
                             )
-                            .data(
-                                getHydrationValueForSourceObject(
-                                    indexedResultsByInstruction,
-                                    sourceInputsPairedWithInstruction,
-                                ),
-                            )
-                            .build()
-                    }
-
+                            if (resultPath == null) {
+                                null
+                            } else {
+                                DeferPayload.Builder()
+                                    .path(
+                                        resultPath + sourceField.resultKey,
+                                    )
+                                    .data(
+                                        getHydrationValueForSourceObject(
+                                            indexedResultsByInstruction,
+                                            sourceInputsPairedWithInstruction,
+                                        ).value,
+                                    )
+                                    .build()
+                            }
+                        }
+                        .onEach {
+                            println(it)
+                        }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    emptyList()
+                }
                 // todo: support errors
 
                 DelayedIncrementalPartialResultImpl.Builder()
