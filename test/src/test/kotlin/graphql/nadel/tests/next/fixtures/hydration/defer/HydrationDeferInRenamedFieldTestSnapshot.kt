@@ -31,10 +31,12 @@ public class HydrationDeferInRenamedFieldTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "rename__issueByKey__getIssueByKey": {
-                |     "key": "GQLGW-1",
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |     "__typename__hydration__assignee": "Issue"
+                |   "data": {
+                |     "rename__issueByKey__getIssueByKey": {
+                |       "key": "GQLGW-1",
+                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |       "__typename__hydration__assignee": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -53,8 +55,10 @@ public class HydrationDeferInRenamedFieldTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "userById": {
-                |     "name": "Franklin"
+                |   "data": {
+                |     "userById": {
+                |       "name": "Franklin"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),

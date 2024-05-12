@@ -30,9 +30,11 @@ public class HydrationTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "userById": {
-                |     "id": "ari:cloud:identity::user/1",
-                |     "name": "Franklin Wang"
+                |   "data": {
+                |     "userById": {
+                |       "id": "ari:cloud:identity::user/1",
+                |       "name": "Franklin Wang"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -54,11 +56,13 @@ public class HydrationTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "issueById": {
-                |     "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1",
-                |     "key": "GQLGW-1",
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |     "__typename__hydration__assignee": "Issue"
+                |   "data": {
+                |     "issueById": {
+                |       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1",
+                |       "key": "GQLGW-1",
+                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |       "__typename__hydration__assignee": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),

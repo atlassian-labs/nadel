@@ -27,7 +27,9 @@ public class EchoTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "echo": "Hello World"
+                |   "data": {
+                |     "echo": "Hello World"
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResponses = listOfJsonStrings(

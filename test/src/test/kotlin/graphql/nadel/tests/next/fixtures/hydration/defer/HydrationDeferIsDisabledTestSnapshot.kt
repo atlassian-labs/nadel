@@ -31,42 +31,46 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "issues": [
-                |     {
-                |       "key": "GQLGW-1",
-                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |       "__typename__hydration__assignee": "Issue"
-                |     },
-                |     {
-                |       "key": "GQLGW-2",
-                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
-                |       "__typename__hydration__assignee": "Issue"
-                |     },
-                |     {
-                |       "key": "GQLGW-3",
-                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |       "__typename__hydration__assignee": "Issue"
+                |   "data": {
+                |     "issues": [
+                |       {
+                |         "key": "GQLGW-1",
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |         "__typename__hydration__assignee": "Issue"
+                |       },
+                |       {
+                |         "key": "GQLGW-2",
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
+                |         "__typename__hydration__assignee": "Issue"
+                |       },
+                |       {
+                |         "key": "GQLGW-3",
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |         "__typename__hydration__assignee": "Issue"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResponses = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "users",
+                query = """
+                | {
+                |   userById(id: "ari:cloud:identity::user/1") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                response = """
+                | {
+                |   "data": {
+                |     "userById": {
+                |       "name": "Franklin"
                 |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                response = """
-                | {
-                |   "userById": {
-                |     "name": "Franklin"
                 |   }
                 | }
                 """.trimMargin(),
@@ -85,8 +89,10 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "userById": {
-                |     "name": "Franklin"
+                |   "data": {
+                |     "userById": {
+                |       "name": "Franklin"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -105,8 +111,10 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 variables = "{}",
                 response = """
                 | {
-                |   "userById": {
-                |     "name": "Tom"
+                |   "data": {
+                |     "userById": {
+                |       "name": "Tom"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
