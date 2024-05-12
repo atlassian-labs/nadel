@@ -36,19 +36,21 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 variables = "{}",
                 response = """
                 | {
-                |   "issueByKey": {
-                |     "key": "GQLGW-3",
-                |     "related": [
-                |       {
-                |         "parent": null
-                |       },
-                |       {
-                |         "parent": {
-                |           "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |           "__typename__hydration__assignee": "Issue"
+                |   "data": {
+                |     "issueByKey": {
+                |       "key": "GQLGW-3",
+                |       "related": [
+                |         {
+                |           "parent": null
+                |         },
+                |         {
+                |           "parent": {
+                |             "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |             "__typename__hydration__assignee": "Issue"
+                |           }
                 |         }
-                |       }
-                |     ]
+                |       ]
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -67,8 +69,10 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 variables = "{}",
                 response = """
                 | {
-                |   "userById": {
-                |     "name": "Franklin"
+                |   "data": {
+                |     "userById": {
+                |       "name": "Franklin"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),

@@ -30,9 +30,11 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 variables = "{}",
                 response = """
                 | {
-                |   "rename__issueById__getIssueById": {
-                |     "hydration__assigneeV2__assigneeId": "ari:cloud:identity::user/1",
-                |     "__typename__hydration__assigneeV2": "Issue"
+                |   "data": {
+                |     "rename__issueById__getIssueById": {
+                |       "hydration__assigneeV2__assigneeId": "ari:cloud:identity::user/1",
+                |       "__typename__hydration__assigneeV2": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -52,9 +54,11 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 variables = "{}",
                 response = """
                 | {
-                |   "rename__issueById__getIssueById": {
-                |     "hydration__self__id": "1",
-                |     "__typename__hydration__self": "Issue"
+                |   "data": {
+                |     "rename__issueById__getIssueById": {
+                |       "hydration__self__id": "1",
+                |       "__typename__hydration__self": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -74,9 +78,11 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 variables = "{}",
                 response = """
                 | {
-                |   "rename__issueById__getIssueById": {
-                |     "hydration__self__id": "1",
-                |     "__typename__hydration__self": "Issue"
+                |   "data": {
+                |     "rename__issueById__getIssueById": {
+                |       "hydration__self__id": "1",
+                |       "__typename__hydration__self": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -97,10 +103,12 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 variables = "{}",
                 response = """
                 | {
-                |   "rename__issueByKey__getIssueByKey": {
-                |     "key": "GQLGW-1",
-                |     "hydration__self__id": "1",
-                |     "__typename__hydration__self": "Issue"
+                |   "data": {
+                |     "rename__issueByKey__getIssueByKey": {
+                |       "key": "GQLGW-1",
+                |       "hydration__self__id": "1",
+                |       "__typename__hydration__self": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -119,8 +127,10 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 variables = "{}",
                 response = """
                 | {
-                |   "rename__quickUser__user_fast": {
-                |     "name": "SPEED"
+                |   "data": {
+                |     "rename__quickUser__user_fast": {
+                |       "name": "SPEED"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),

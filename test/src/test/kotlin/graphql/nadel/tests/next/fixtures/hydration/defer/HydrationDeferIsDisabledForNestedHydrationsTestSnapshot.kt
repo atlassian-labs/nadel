@@ -30,9 +30,11 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                 variables = "{}",
                 response = """
                 | {
-                |   "issueByKey": {
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |     "__typename__hydration__assignee": "Issue"
+                |   "data": {
+                |     "issueByKey": {
+                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |       "__typename__hydration__assignee": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -53,10 +55,12 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                 variables = "{}",
                 response = """
                 | {
-                |   "issueByKey": {
-                |     "key": "GQLGW-3",
-                |     "hydration__self__key": "GQLGW-3",
-                |     "__typename__hydration__self": "Issue"
+                |   "data": {
+                |     "issueByKey": {
+                |       "key": "GQLGW-3",
+                |       "hydration__self__key": "GQLGW-3",
+                |       "__typename__hydration__self": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -75,8 +79,10 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                 variables = "{}",
                 response = """
                 | {
-                |   "userById": {
-                |     "name": "Franklin"
+                |   "data": {
+                |     "userById": {
+                |       "name": "Franklin"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
