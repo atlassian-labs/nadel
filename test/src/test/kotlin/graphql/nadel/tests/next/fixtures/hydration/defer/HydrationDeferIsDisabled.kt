@@ -1,6 +1,7 @@
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
 import graphql.ExecutionResult
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
@@ -22,7 +23,7 @@ class HydrationDeferIsDisabledTest : HydrationDeferIsDisabled(
         }
     """.trimIndent(),
 ) {
-    override fun assert(result: ExecutionResult) {
+    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
         assertTrue(result !is IncrementalExecutionResult)
     }
 }
@@ -74,7 +75,7 @@ class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTest : Hydratio
         }
     """.trimIndent(),
 ) {
-    override fun assert(result: ExecutionResult) {
+    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
         assertTrue(result !is IncrementalExecutionResult)
     }
 }
@@ -95,7 +96,7 @@ class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled
         }
     """.trimIndent(),
 ) {
-    override fun assert(result: ExecutionResult) {
+    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
         assertTrue(result !is IncrementalExecutionResult)
     }
 }

@@ -3,6 +3,10 @@ package graphql.nadel.tests.next
 import graphql.Assert.assertFalse
 import graphql.ExecutionResult
 import graphql.GraphQL
+import graphql.execution.DataFetcherExceptionHandler
+import graphql.execution.DataFetcherExceptionHandlerParameters
+import graphql.execution.DataFetcherExceptionHandlerResult
+import graphql.execution.SimpleDataFetcherExceptionHandler
 import graphql.execution.instrumentation.Instrumentation
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
@@ -15,9 +19,12 @@ import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NadelSchemas
 import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.tests.assertJsonEquals
 import graphql.nadel.tests.compareJson
 import graphql.nadel.tests.jsonObjectMapper
+import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
@@ -29,10 +36,10 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.test.runTest
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
-import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 abstract class NadelIntegrationTest(
     val operationName: String? = null,
@@ -47,20 +54,31 @@ abstract class NadelIntegrationTest(
     open val name: String get() = this::class.asTestName()
 
     @Test
-    fun execute() = runTest {
+    fun execute() = runTest(timeout = 10.minutes) {
         // Given
         val testData = getTestSnapshot()
 
         val nadel = makeNadel()
             .build()
 
+        val executionInput = makeExecutionInput().build()
+
         // When
-        val result = nadel.execute(makeExecutionInput().build())
+        val result = nadel.execute(executionInput)
+
+        val incrementalResults = if (result is IncrementalExecutionResult) {
+            result.incrementalItemPublisher
+                .asFlow()
+                .toList()
+        } else {
+            null
+        }
 
         // Then
-        assert(result)
-        assertNadelResult(result, testData)
+        assert(result, incrementalResults)
+        assertNadelResult(result, incrementalResults, testData)
         assertServiceCalls(testData)
+        assertIncrementalResult(nadel, executionInput, result, incrementalResults)
     }
 
     suspend fun capture(): TestExecutionCapture {
@@ -98,7 +116,8 @@ abstract class NadelIntegrationTest(
 
     open fun makeNadel(): Nadel.Builder {
         val schemas = makeNadelSchemas().build()
-        NadelSchemaValidation(schemas).validate()
+        val schemaErrors = NadelSchemaValidation(schemas).validate()
+        assertTrue(schemaErrors.isEmpty())
 
         return Nadel.newNadel()
             .schemas(schemas)
@@ -140,6 +159,27 @@ abstract class NadelIntegrationTest(
                             .also(service.runtimeWiring)
                             .build(),
                     ),
+            )
+            .defaultDataFetcherExceptionHandler(
+                object : DataFetcherExceptionHandler {
+                    private val defaultImpl = SimpleDataFetcherExceptionHandler()
+
+                    override fun handleException(
+                        handlerParameters: DataFetcherExceptionHandlerParameters,
+                    ): CompletableFuture<DataFetcherExceptionHandlerResult> {
+                        val exception = handlerParameters.exception
+
+                        return if (exception is NadelGraphQLErrorException) {
+                            CompletableFuture.completedFuture(
+                                DataFetcherExceptionHandlerResult.newResult()
+                                    .error(exception)
+                                    .build(),
+                            )
+                        } else {
+                            defaultImpl.handleException(handlerParameters)
+                        }
+                    }
+                },
             )
             .instrumentation(
                 object : Instrumentation {
@@ -183,7 +223,7 @@ abstract class NadelIntegrationTest(
         return _testSnapshot.value
     }
 
-    open fun assert(result: ExecutionResult) {
+    open fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
     }
 
     private fun assertServiceCalls(testSnapshot: TestSnapshot) {
@@ -240,25 +280,42 @@ abstract class NadelIntegrationTest(
             }
     }
 
-    private suspend fun assertNadelResult(result: ExecutionResult, testSnapshot: TestSnapshot) {
-        JSONAssert.assertEquals(
-            testSnapshot.result.result,
-            jsonObjectMapper.writeValueAsString(result.toSpecification()),
-            JSONCompareMode.STRICT,
+    private fun assertNadelResult(
+        result: ExecutionResult,
+        incrementalResults: List<DelayedIncrementalPartialResult>?,
+        testSnapshot: TestSnapshot,
+    ) {
+        val combinedResult = jsonObjectMapper
+            .withPrettierPrinter()
+            .writeValueAsString(
+                combineExecutionResults(
+                    result = result.toSpecification(),
+                    incrementalResults = incrementalResults
+                        ?.map(DelayedIncrementalPartialResult::toSpecification)
+                        ?: emptyList(),
+                ),
+            )
+            .replaceIndent(' '.toString().repeat(4))
+
+        println("Combined overall result was\n$combinedResult")
+
+        assertJsonEquals(
+            /* expectedStr = */ testSnapshot.result.result,
+            /* actualStr = */ result.toSpecification(),
+            /* compareMode = */ JSONCompareMode.STRICT,
         )
 
         if (testSnapshot.result.delayedResults.isEmpty()) {
             if (result is IncrementalExecutionResult) {
-                assertTrue(result.incrementalItemPublisher.asFlow().toList().isEmpty())
+                assertTrue(incrementalResults?.isEmpty() != false) // Can be [true, null] (i.e. empty or non-existent)
                 assertFalse(result.hasNext())
             }
         } else {
             // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
             assertTrue(result is IncrementalExecutionResult)
 
-            val actualDelayedResponses = result.incrementalItemPublisher
-                .asFlow()
-                .toList()
+            // Fuck why delayed & incremental?? Shouldn't incremental == delayed? Why is there an optional synchronous incremental??
+            val actualDelayedResponses = incrementalResults!!
 
             // Should only have one element that says hasNext=false, and it should be the last one
             assertTrue(actualDelayedResponses.dropLast(n = 1).all { it.hasNext() })
@@ -283,6 +340,57 @@ abstract class NadelIntegrationTest(
             // unmatched because the contents of the responses were different
             assertTrue(unmatchedExpectedDelayedResponses.isEmpty() && unmatchedActualDelayedResponses.isEmpty())
         }
+    }
+
+    private suspend fun assertIncrementalResult(
+        nadel: Nadel,
+        executionInput: NadelExecutionInput,
+        result: ExecutionResult,
+        incrementalResults: List<DelayedIncrementalPartialResult>?,
+    ) {
+        // Nothing to assert, it's going to be the same
+        if (incrementalResults.isNullOrEmpty()) {
+            return
+        }
+
+        // Given
+        val combinedDeferResultMap = combineExecutionResults(
+            result = result.toSpecification(),
+            incrementalResults = incrementalResults.map(DelayedIncrementalPartialResult::toSpecification),
+        )
+
+        // When
+        val noDeferResult = nadel.execute(
+            executionInput.copy(
+                query = stripDefer(executionInput.query),
+            ),
+        )
+
+        // Then
+        assertTrue(noDeferResult !is IncrementalExecutionResult)
+
+        // Compare data strictly, must equal 1-1
+        val noDeferResultMap = noDeferResult.toSpecification()
+        assertJsonEquals(
+            expected = mapOf("data" to noDeferResultMap["data"]),
+            actual = mapOf("data" to combinedDeferResultMap["data"]),
+            mode = JSONCompareMode.STRICT,
+        )
+        // Compare rest of data, these can be more lenient
+        // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
+        assertJsonEquals(
+            expected = mapOf(
+                "errors" to noDeferResultMap["errors"],
+                "extensions" to noDeferResultMap["extensions"],
+            ),
+            actual = mapOf(
+                "errors" to combinedDeferResultMap["errors"],
+                "extensions" to combinedDeferResultMap["extensions"],
+            ),
+            mode = JSONCompareMode.LENIENT,
+        )
+
+        assertTrue(noDeferResultMap.keys == combinedDeferResultMap.keys)
     }
 
     private fun <E, A> getUnmatchedElements(
