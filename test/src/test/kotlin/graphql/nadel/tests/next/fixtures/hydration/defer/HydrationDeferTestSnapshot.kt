@@ -74,9 +74,7 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
      *     "issue": {
      *       "id": "ari:cloud:jira::issue/1",
      *       "assignee": {
-     *         "value": {
-     *           "name": "Franklin"
-     *         }
+     *         "name": "Franklin"
      *       }
      *     }
      *   }
@@ -105,9 +103,7 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 |         "assignee"
                 |       ],
                 |       "data": {
-                |         "value": {
-                |           "name": "Franklin"
-                |         }
+                |         "name": "Franklin"
                 |       }
                 |     }
                 |   ]
