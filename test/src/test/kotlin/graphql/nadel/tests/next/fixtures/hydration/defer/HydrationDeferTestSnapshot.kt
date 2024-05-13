@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -29,16 +29,18 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
-                |   "issue": {
-                |     "id": "ari:cloud:jira::issue/1",
-                |     "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
-                |     "__typename__hydration__assignee": "Issue"
+                |   "data": {
+                |     "issue": {
+                |       "id": "ari:cloud:jira::issue/1",
+                |       "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
+                |       "__typename__hydration__assignee": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -51,14 +53,16 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
-                |   "user": {
-                |     "name": "Franklin"
+                |   "data": {
+                |     "user": {
+                |       "name": "Franklin"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -79,8 +83,8 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "issue": {
@@ -90,7 +94,7 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
             |   "hasNext": true
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
                 """
                 | {
                 |   "hasNext": false,

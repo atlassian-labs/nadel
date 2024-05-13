@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.hydration.defer
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -33,22 +33,24 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
-                |   "issueByKey": {
-                |     "key": "GQLGW-2",
-                |     "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
-                |     "__typename__hydration__assignee": "Issue",
-                |     "related": [
-                |       {
-                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |         "__typename__hydration__assignee": "Issue"
-                |       }
-                |     ]
+                |   "data": {
+                |     "issueByKey": {
+                |       "key": "GQLGW-2",
+                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
+                |       "__typename__hydration__assignee": "Issue",
+                |       "related": [
+                |         {
+                |           "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |           "__typename__hydration__assignee": "Issue"
+                |         }
+                |       ]
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -61,14 +63,16 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
-                |   "userById": {
-                |     "name": "Franklin"
+                |   "data": {
+                |     "userById": {
+                |       "name": "Franklin"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
             ExpectedServiceCall(
@@ -81,14 +85,16 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
-                |   "userById": {
-                |     "name": "Tom"
+                |   "data": {
+                |     "userById": {
+                |       "name": "Tom"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -116,8 +122,8 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "issueByKey": {
@@ -134,7 +140,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
             |   "hasNext": true
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
                 """
                 | {
                 |   "hasNext": false,

@@ -98,7 +98,7 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
     val callsType = List::class.asClassName().parameterizedBy(ExpectedServiceCall::class.asTypeName())
 
     // override val calls: List<ExpectedServiceCall> = listOf(…)
-    return PropertySpec.builder("calls", callsType)
+    return PropertySpec.builder(TestSnapshot::calls.name, callsType)
         .addModifiers(KModifier.OVERRIDE)
         .initializer(
             buildCodeBlock {
@@ -128,7 +128,7 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
 private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpec {
     val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", ::listOfJsonStrings.name)
 
-    val combinedResult = joinExecutionResults(
+    val combinedResult = combineExecutionResults(
         result = captured.result?.toSpecification() as JsonMap,
         incrementalResults = captured.delayedResults
             .map {
@@ -136,18 +136,18 @@ private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpe
             },
     )
 
-    // override val response: ExpectedNadelResponse = …
-    return PropertySpec.builder("response", ExpectedNadelResponse::class)
+    // override val result: ExpectedNadelResult = …
+    return PropertySpec.builder(TestSnapshot::result.name, ExpectedNadelResult::class)
         .addModifiers(KModifier.OVERRIDE)
         .initializer(
             buildCodeBlock {
                 // Invoke constructor
-                add("%T", ExpectedNadelResponse::class)
+                add("%T", ExpectedNadelResult::class)
                 add("(\n")
 
-                add("response = %S,\n", captured.result?.let(::writeResultJson))
+                add("result = %S,\n", captured.result?.let(::writeResultJson))
 
-                add("delayedResponses = %M", listOfJsonStringsMember)
+                add("delayedResults = %M", listOfJsonStringsMember)
                 add("(\n")
                 indented {
                     captured.delayedResults
@@ -178,9 +178,9 @@ private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCa
             add("%L = %S,\n", ExpectedServiceCall::service.name, call.service)
             add("%L = %S,\n", ExpectedServiceCall::query.name, call.query.replaceIndent(" "))
             add("%L = %S,\n", ExpectedServiceCall::variables.name, call.variables)
-            add("%L = %S,\n", ExpectedServiceCall::response.name, writeResultJson(call.result))
+            add("%L = %S,\n", ExpectedServiceCall::result.name, writeResultJson(call.result))
 
-            add("delayedResponses = %M", listOfJsonStringsMember)
+            add("delayedResults = %M", listOfJsonStringsMember)
             add("(\n")
             indented {
                 call.delayedResults

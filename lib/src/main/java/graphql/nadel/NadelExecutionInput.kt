@@ -4,7 +4,8 @@ import graphql.GraphQLContext
 import graphql.execution.ExecutionId
 import java.util.function.Consumer
 
-class NadelExecutionInput private constructor(
+@Suppress("DataClassPrivateConstructor") // Don't care
+data class NadelExecutionInput private constructor(
     val query: String,
     val operationName: String?,
     val context: Any?,

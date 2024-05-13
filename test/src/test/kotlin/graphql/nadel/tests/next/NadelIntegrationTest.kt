@@ -1,9 +1,12 @@
 package graphql.nadel.tests.next
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.Assert.assertFalse
 import graphql.ExecutionResult
 import graphql.GraphQL
+import graphql.execution.DataFetcherExceptionHandler
+import graphql.execution.DataFetcherExceptionHandlerParameters
+import graphql.execution.DataFetcherExceptionHandlerResult
+import graphql.execution.SimpleDataFetcherExceptionHandler
 import graphql.execution.instrumentation.Instrumentation
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
@@ -16,8 +19,10 @@ import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NadelSchemas
 import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
-import graphql.nadel.engine.util.MutableJsonMap
+import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.tests.assertJsonEquals
+import graphql.nadel.tests.compareJson
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
@@ -31,11 +36,10 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.test.runTest
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
-import org.skyscreamer.jsonassert.JSONAssert
-import org.skyscreamer.jsonassert.JSONCompare
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 abstract class NadelIntegrationTest(
     val operationName: String? = null,
@@ -50,20 +54,31 @@ abstract class NadelIntegrationTest(
     open val name: String get() = this::class.asTestName()
 
     @Test
-    fun execute() = runTest {
+    fun execute() = runTest(timeout = 10.minutes) {
         // Given
         val testData = getTestSnapshot()
 
         val nadel = makeNadel()
             .build()
 
+        val executionInput = makeExecutionInput().build()
+
         // When
-        val result = nadel.execute(makeExecutionInput().build())
+        val result = nadel.execute(executionInput)
+
+        val incrementalResults = if (result is IncrementalExecutionResult) {
+            result.incrementalItemPublisher
+                .asFlow()
+                .toList()
+        } else {
+            null
+        }
 
         // Then
-        assert(result)
-        assertNadelResult(result, testData)
+        assert(result, incrementalResults)
+        assertNadelResult(result, incrementalResults, testData)
         assertServiceCalls(testData)
+        assertIncrementalResult(nadel, executionInput, result, incrementalResults)
     }
 
     suspend fun capture(): TestExecutionCapture {
@@ -101,7 +116,8 @@ abstract class NadelIntegrationTest(
 
     open fun makeNadel(): Nadel.Builder {
         val schemas = makeNadelSchemas().build()
-        NadelSchemaValidation(schemas).validate()
+        val schemaErrors = NadelSchemaValidation(schemas).validate()
+        assertTrue(schemaErrors.isEmpty())
 
         return Nadel.newNadel()
             .schemas(schemas)
@@ -143,6 +159,27 @@ abstract class NadelIntegrationTest(
                             .also(service.runtimeWiring)
                             .build(),
                     ),
+            )
+            .defaultDataFetcherExceptionHandler(
+                object : DataFetcherExceptionHandler {
+                    private val defaultImpl = SimpleDataFetcherExceptionHandler()
+
+                    override fun handleException(
+                        handlerParameters: DataFetcherExceptionHandlerParameters,
+                    ): CompletableFuture<DataFetcherExceptionHandlerResult> {
+                        val exception = handlerParameters.exception
+
+                        return if (exception is NadelGraphQLErrorException) {
+                            CompletableFuture.completedFuture(
+                                DataFetcherExceptionHandlerResult.newResult()
+                                    .error(exception)
+                                    .build(),
+                            )
+                        } else {
+                            defaultImpl.handleException(handlerParameters)
+                        }
+                    }
+                },
             )
             .instrumentation(
                 object : Instrumentation {
@@ -186,63 +223,99 @@ abstract class NadelIntegrationTest(
         return _testSnapshot.value
     }
 
-    open fun assert(result: ExecutionResult) {
+    open fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
     }
 
     private fun assertServiceCalls(testSnapshot: TestSnapshot) {
-        // Unmatched calls, by the end of the function both should be empty if they're matched
-        val unmatchedExpectedCalls = testSnapshot.calls.toMutableList()
-        val unmatchedActualCalls = executionCapture.calls.toMutableList()
+        fun getCanonicalQuery(query: String): String {
+            return AstPrinter.printAstCompact(Parser().parseDocument(query))
+        }
 
-        unmatchedActualCalls.forEachElementInIterator { iterator, actualCall ->
-            fun getCanonicalQuery(query: String): String {
-                return AstPrinter.printAstCompact(Parser().parseDocument(query))
+        fun isDelayedResultsEqual(
+            expectedCall: ExpectedServiceCall,
+            actualCall: TestExecutionCapture.Call,
+        ): Boolean {
+            val (unmatchedExpectedDelayedResults, unmatchedActualDelayedResults) = getUnmatchedElements(
+                expected = expectedCall.delayedResults,
+                actual = actualCall.delayedResults
+            ) { expectedDelayedResult, actualDelayedResult ->
+                // Note: we compare hasNext further down in the function
+                compareJson(
+                    expectedDelayedResult - "hasNext",
+                    actualDelayedResult.toSpecification() - "hasNext",
+                ).passed()
             }
 
+            return unmatchedExpectedDelayedResults.isEmpty() && unmatchedActualDelayedResults.isEmpty()
+        }
+
+        val (unmatchedExpectedCalls, unmatchedActualCalls) = getUnmatchedElements(
+            expected = testSnapshot.calls,
+            actual = executionCapture.calls
+        ) { expectedCall, actualCall ->
             val actualQuery = getCanonicalQuery(actualCall.query)
             val actualVariables = actualCall.variables
+            val actualResult = actualCall.result
 
-            val matchingCalls = unmatchedExpectedCalls
-                .filter { expected ->
-                    actualCall.service == expected.service
-                        && getCanonicalQuery(expected.query) == actualQuery
-                        && jsonObjectMapper.readValue<JsonMap>(expected.variables) == actualVariables
-                }
-
-            // Multiple matches is ok, we match one at a time though
-            if (matchingCalls.isNotEmpty()) {
-                unmatchedExpectedCalls.remove(matchingCalls.first())
-                iterator.remove()
-            }
-
-            // todo: match delayed responses here too
+            actualCall.service == expectedCall.service
+                && expectedCall.delayedResults.size == actualCall.delayedResults.size
+                && getCanonicalQuery(expectedCall.query) == actualQuery
+                && compareJson(expected = expectedCall.variables, actual = actualVariables).passed()
+                && compareJson(expected = expectedCall.result, actual = actualResult).passed()
+                && isDelayedResultsEqual(expectedCall, actualCall)
         }
 
         // This will fail if there are any unmatched calls e.g.
         // unmatched because the number of calls was different
         // unmatched because the contents of the calls were different
         assertTrue(unmatchedExpectedCalls.isEmpty() && unmatchedActualCalls.isEmpty())
+
+        // Make sure the hasNext is correct
+        executionCapture.calls
+            .forEach { actualCall ->
+                val delayedResults = actualCall.delayedResults
+                if (delayedResults.isNotEmpty()) {
+                    assertTrue(delayedResults.drop(n = 1).all { it.hasNext() } && !delayedResults.last().hasNext())
+                }
+            }
     }
 
-    private suspend fun assertNadelResult(result: ExecutionResult, testSnapshot: TestSnapshot) {
-        JSONAssert.assertEquals(
-            testSnapshot.response.response,
-            jsonObjectMapper.writeValueAsString(result.toSpecification()),
-            JSONCompareMode.STRICT,
+    private fun assertNadelResult(
+        result: ExecutionResult,
+        incrementalResults: List<DelayedIncrementalPartialResult>?,
+        testSnapshot: TestSnapshot,
+    ) {
+        val combinedResult = jsonObjectMapper
+            .withPrettierPrinter()
+            .writeValueAsString(
+                combineExecutionResults(
+                    result = result.toSpecification(),
+                    incrementalResults = incrementalResults
+                        ?.map(DelayedIncrementalPartialResult::toSpecification)
+                        ?: emptyList(),
+                ),
+            )
+            .replaceIndent(' '.toString().repeat(4))
+
+        println("Combined overall result was\n$combinedResult")
+
+        assertJsonEquals(
+            /* expectedStr = */ testSnapshot.result.result,
+            /* actualStr = */ result.toSpecification(),
+            /* compareMode = */ JSONCompareMode.STRICT,
         )
 
-        if (testSnapshot.response.delayedResponses.isEmpty()) {
+        if (testSnapshot.result.delayedResults.isEmpty()) {
             if (result is IncrementalExecutionResult) {
-                assertTrue(result.incrementalItemPublisher.asFlow().toList().isEmpty())
+                assertTrue(incrementalResults?.isEmpty() != false) // Can be [true, null] (i.e. empty or non-existent)
                 assertFalse(result.hasNext())
             }
         } else {
             // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
             assertTrue(result is IncrementalExecutionResult)
 
-            val actualDelayedResponses = result.incrementalItemPublisher
-                .asFlow()
-                .toList()
+            // Fuck why delayed & incremental?? Shouldn't incremental == delayed? Why is there an optional synchronous incremental??
+            val actualDelayedResponses = incrementalResults!!
 
             // Should only have one element that says hasNext=false, and it should be the last one
             assertTrue(actualDelayedResponses.dropLast(n = 1).all { it.hasNext() })
@@ -251,10 +324,16 @@ abstract class NadelIntegrationTest(
             val (
                 unmatchedExpectedDelayedResponses,
                 unmatchedActualDelayedResponses,
-            ) = findUnmatchedDelayedResponses(
-                expectedResponses = testSnapshot.response.delayedResponses,
-                actualResponses = actualDelayedResponses,
-            )
+            ) = getUnmatchedElements(
+                expected = testSnapshot.result.delayedResults,
+                actual = actualDelayedResponses.map(DelayedIncrementalPartialResult::toSpecification),
+            ) { expectedResponse, actualResponse ->
+                compareJson(
+                    expectedResponse - "hasNext",
+                    actualResponse - "hasNext",
+                    JSONCompareMode.STRICT
+                ).passed()
+            }
 
             // This will fail if there are any unmatched responses e.g.
             // unmatched because the number of responses was different
@@ -263,63 +342,78 @@ abstract class NadelIntegrationTest(
         }
     }
 
-    /**
-     * This is specifically for root level delayed responses that Nadel returns.
-     */
-    private fun findUnmatchedDelayedResponses(
-        expectedResponses: List<String>, // Json object strings
-        actualResponses: List<DelayedIncrementalPartialResult>,
-    ): Pair<List<String>, List<String>> {
-        val unmatchedExpectedDelayedResponses = expectedResponses
-            .map { delayedResponse ->
-                // We don't care about the order, hasNext is asserted elsewhere
-                val withoutHasNext = jsonObjectMapper.readValue<MutableJsonMap>(delayedResponse)
-                    .also {
-                        it.remove("hasNext")
-                    }
+    private suspend fun assertIncrementalResult(
+        nadel: Nadel,
+        executionInput: NadelExecutionInput,
+        result: ExecutionResult,
+        incrementalResults: List<DelayedIncrementalPartialResult>?,
+    ) {
+        // Nothing to assert, it's going to be the same
+        if (incrementalResults.isNullOrEmpty()) {
+            return
+        }
 
-                jsonObjectMapper
-                    .withPrettierPrinter()
-                    .writeValueAsString(withoutHasNext)
-            }
-            .toMutableList()
+        // Given
+        val combinedDeferResultMap = combineExecutionResults(
+            result = result.toSpecification(),
+            incrementalResults = incrementalResults.map(DelayedIncrementalPartialResult::toSpecification),
+        )
 
-        val unmatchedActualDelayedResponses = actualResponses
-            .map { delayedResult ->
-                jsonObjectMapper
-                    .withPrettierPrinter()
-                    .writeValueAsString(
-                        delayedResult.toSpecification()
-                            .also {
-                                // Don't assert hasNext, we don't care about the order
-                                it.remove("hasNext")
-                            },
-                    )
-            }
-            .toMutableList()
+        // When
+        val noDeferResult = nadel.execute(
+            executionInput.copy(
+                query = stripDefer(executionInput.query),
+            ),
+        )
 
-        // Matching process, this will remove matches from the unmatched lists above
-        unmatchedActualDelayedResponses
-            .forEachElementInIterator { iterator, actualResponse ->
-                val matches = unmatchedExpectedDelayedResponses
-                    .filter { expectedResponse ->
-                        JSONCompare
-                            .compareJSON(
-                                expectedResponse,
-                                actualResponse,
-                                JSONCompareMode.STRICT
-                            )
-                            .passed()
-                    }
+        // Then
+        assertTrue(noDeferResult !is IncrementalExecutionResult)
 
-                // Multiple matches is ok, we match one at a time though
-                if (matches.isNotEmpty()) {
-                    unmatchedExpectedDelayedResponses.remove(matches.first())
-                    iterator.remove()
+        // Compare data strictly, must equal 1-1
+        val noDeferResultMap = noDeferResult.toSpecification()
+        assertJsonEquals(
+            expected = mapOf("data" to noDeferResultMap["data"]),
+            actual = mapOf("data" to combinedDeferResultMap["data"]),
+            mode = JSONCompareMode.STRICT,
+        )
+        // Compare rest of data, these can be more lenient
+        // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
+        assertJsonEquals(
+            expected = mapOf(
+                "errors" to noDeferResultMap["errors"],
+                "extensions" to noDeferResultMap["extensions"],
+            ),
+            actual = mapOf(
+                "errors" to combinedDeferResultMap["errors"],
+                "extensions" to combinedDeferResultMap["extensions"],
+            ),
+            mode = JSONCompareMode.LENIENT,
+        )
+
+        assertTrue(noDeferResultMap.keys == combinedDeferResultMap.keys)
+    }
+
+    private fun <E, A> getUnmatchedElements(
+        expected: List<E>,
+        actual: List<A>,
+        test: (E, A) -> Boolean,
+    ): Pair<List<E>, List<A>> {
+        val unmatchedExpected = expected.toMutableList()
+        val unmatchedActual = actual.toMutableList()
+
+        unmatchedExpected.forEachElementInIterator { unmatchedExpectedIterator, expectedElement ->
+            val actualMatchIndex = unmatchedActual
+                .indexOfFirst { actualElement ->
+                    test(expectedElement, actualElement)
                 }
-            }
 
-        return unmatchedExpectedDelayedResponses to unmatchedActualDelayedResponses
+            if (actualMatchIndex >= 0) {
+                unmatchedExpectedIterator.remove()
+                unmatchedActual.removeAt(actualMatchIndex)
+            }
+        }
+
+        return unmatchedExpected to unmatchedActual
     }
 
     data class Service(
