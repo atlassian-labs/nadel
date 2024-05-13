@@ -4,17 +4,26 @@ import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class NadelIncrementalResultSupportTest {
     @Test
@@ -172,6 +181,143 @@ class NadelIncrementalResultSupportTest {
         assertTrue(secondItem !== firstItem)
         assertTrue(secondItem.incremental?.isNotEmpty() == true)
         assertFalse(secondItem.hasNext())
+    }
+
+    @Test
+    fun `forwards responses from Flows`() = runTest {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+        val subject = NadelIncrementalResultSupport(channel)
+
+        // When
+        subject.defer(
+            flowOf(
+                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                    .incrementalItems(emptyList())
+                    .hasNext(true)
+                    .build(),
+                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                    .incrementalItems(emptyList())
+                    .hasNext(false)
+                    .build(),
+            ),
+        )
+        subject.defer(
+            flowOf(
+                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                    .incrementalItems(emptyList())
+                    .hasNext(false)
+                    .build(),
+            ),
+        )
+
+        // Then
+        subject.onInitialResultComplete()
+
+        val contents = channel.toList()
+        assertTrue(contents.size == 3)
+        assertTrue(contents.map { it.hasNext() } == listOf(true, true, false))
+    }
+
+    @Test
+    fun `channel completes even if a Flow failed`() {
+        var completed = false
+        try {
+            runTest {
+                val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+                val subject = NadelIncrementalResultSupport(channel)
+
+                val failureMutex = Mutex(true)
+
+                // When
+                subject.defer(
+                    flow {
+                        subject.defer(
+                            flow {
+                                emit(
+                                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                                        .incrementalItems(emptyList())
+                                        .hasNext(false)
+                                        .build(),
+                                )
+                            }
+                        )
+
+                        failureMutex.withLock {
+                            throw UnsupportedOperationException()
+                        }
+                    },
+                )
+
+                // Then
+                subject.onInitialResultComplete()
+                failureMutex.unlock()
+
+                val contents = channel.toList()
+                assertTrue(contents.size == 1)
+                assertTrue(contents.map { it.hasNext() } == listOf(false))
+
+                completed = true
+            }
+        } catch (e: UnsupportedOperationException) {
+            // Our exception Flow will cause runTest to fail at the very end, because a coroutine failed
+            // The exception is expected, so we ignore it here, and just assert that the test actually finished
+            assertTrue(completed)
+        }
+    }
+
+    /**
+     * todo: what actually happens here? this is not a well defined case right now
+     */
+    @Test
+    fun `handles empty Flow`() = runTest {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+        val subject = NadelIncrementalResultSupport(channel)
+
+        // When
+        subject.defer(emptyFlow())
+
+        // Then
+        subject.onInitialResultComplete()
+
+        val contents = channel.toList()
+        assertTrue(contents.isEmpty())
+    }
+
+    @Test
+    fun `errors if multiple elements in Flow are hasNext false`() {
+        val exception = assertThrows<IllegalStateException> {
+            runTest {
+                val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+                val subject = NadelIncrementalResultSupport(channel)
+
+                // When
+                subject.defer(
+                    flowOf(
+                        DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                            .incrementalItems(emptyList())
+                            .hasNext(false)
+                            .build(),
+                        DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                            .incrementalItems(emptyList())
+                            .hasNext(false)
+                            .build(),
+                    ),
+                )
+
+                // Then
+                subject.onInitialResultComplete()
+
+                val contents = channel.toList()
+                assertTrue(contents.size == 1)
+                assertTrue(contents.map { it.hasNext() } == listOf(false))
+            }
+        }
+
+        assertTrue(exception.message == "Cannot close outstanding job more than once")
     }
 
     @Test
