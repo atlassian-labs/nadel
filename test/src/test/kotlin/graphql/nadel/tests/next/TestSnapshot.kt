@@ -50,7 +50,7 @@ data class ExpectedServiceCall(
 
 data class ExpectedNadelResult(
     @Language("JSON")
-    val result: String,
+    val result: JsonMap,
     val delayedResults: List<JsonMap>,
 ) {
     companion object {
@@ -60,7 +60,7 @@ data class ExpectedNadelResult(
             delayedResults: List<String>,
         ): ExpectedNadelResult {
             return ExpectedNadelResult(
-                result = result,
+                result = jsonObjectMapper.readValue(result),
                 delayedResults = delayedResults.map(jsonObjectMapper::readValue),
             )
         }

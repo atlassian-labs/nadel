@@ -128,7 +128,7 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
 private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpec {
     val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", ::listOfJsonStrings.name)
 
-    val combinedResult = joinExecutionResults(
+    val combinedResult = combineExecutionResults(
         result = captured.result?.toSpecification() as JsonMap,
         incrementalResults = captured.delayedResults
             .map {

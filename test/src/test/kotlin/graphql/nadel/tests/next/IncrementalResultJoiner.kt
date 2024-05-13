@@ -5,7 +5,7 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.tests.jsonObjectMapper
 
-fun joinExecutionResults(result: JsonMap, incrementalResults: List<JsonMap>): JsonMap {
+fun combineExecutionResults(result: JsonMap, incrementalResults: List<JsonMap>): JsonMap {
     val deepClone = jsonObjectMapper.convertValue<MutableJsonMap>(result)
 
     @Suppress("UNCHECKED_CAST")
