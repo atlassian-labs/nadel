@@ -232,7 +232,7 @@ internal class NadelHydrationTransform(
                 .incrementalItems(
                     listOf(
                         DeferPayload.newDeferredItem()
-                            .data(results?.newValue)
+                            .data(results?.newValue?.value)
                             .path(overallField.listOfResultKeys as List<Any>?)
                             .errors(
                                 instructionSequence
