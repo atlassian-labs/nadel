@@ -74,9 +74,7 @@ public class HydrationDeferInRenamedFieldTestSnapshot : TestSnapshot() {
      *     "issueByKey": {
      *       "key": "GQLGW-1",
      *       "assignee": {
-     *         "value": {
-     *           "name": "Franklin"
-     *         }
+     *         "name": "Franklin"
      *       }
      *     }
      *   }
@@ -105,9 +103,7 @@ public class HydrationDeferInRenamedFieldTestSnapshot : TestSnapshot() {
                 |         "assignee"
                 |       ],
                 |       "data": {
-                |         "value": {
-                |           "name": "Franklin"
-                |         }
+                |         "name": "Franklin"
                 |       }
                 |     }
                 |   ]

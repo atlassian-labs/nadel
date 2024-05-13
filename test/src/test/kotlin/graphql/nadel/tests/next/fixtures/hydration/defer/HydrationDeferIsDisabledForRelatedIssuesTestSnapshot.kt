@@ -113,9 +113,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      *         }
      *       ],
      *       "assignee": {
-     *         "value": {
-     *           "name": "Tom"
-     *         }
+     *         "name": "Tom"
      *       }
      *     }
      *   }
@@ -151,9 +149,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |         "assignee"
                 |       ],
                 |       "data": {
-                |         "value": {
-                |           "name": "Tom"
-                |         }
+                |         "name": "Tom"
                 |       }
                 |     }
                 |   ]
