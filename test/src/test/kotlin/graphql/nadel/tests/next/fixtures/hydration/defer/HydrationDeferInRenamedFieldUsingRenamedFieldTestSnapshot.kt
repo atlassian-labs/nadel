@@ -74,9 +74,7 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
      *     "issueByKey": {
      *       "key": "GQLGW-1",
      *       "assigneeV2": {
-     *         "value": {
-     *           "name": "SPEED"
-     *         }
+     *         "name": "SPEED"
      *       }
      *     }
      *   }
@@ -105,9 +103,7 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
                 |         "assigneeV2"
                 |       ],
                 |       "data": {
-                |         "value": {
-                |           "name": "SPEED"
-                |         }
+                |         "name": "SPEED"
                 |       }
                 |     }
                 |   ]

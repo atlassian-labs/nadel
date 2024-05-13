@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.defer
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -33,14 +33,17 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
-                |   "defer": {
-                |     "fastField": "123"
-                |   }
+                |   "data": {
+                |     "defer": {
+                |       "fastField": "123"
+                |     }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                     """
                     | {
                     |   "hasNext": false,
@@ -50,7 +53,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowField": "slowString"
+                    |         "anotherSlowField": 123456789
                     |       }
                     |     }
                     |   ]
@@ -65,7 +68,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "anotherSlowField": 123456789
+                    |         "slowField": "slowString"
                     |       }
                     |     }
                     |   ]
@@ -80,14 +83,14 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
-     *       "slowField": "slowString"
+     *       "anotherSlowField": 123456789
      *     }
      *   }
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "defer": {
@@ -97,7 +100,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
             |   "hasNext": true
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
                 """
                 | {
                 |   "hasNext": false,
@@ -107,7 +110,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "slowField": "slowString"
+                |         "anotherSlowField": 123456789
                 |       }
                 |     }
                 |   ]
@@ -122,7 +125,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "anotherSlowField": 123456789
+                |         "slowField": "slowString"
                 |       }
                 |     }
                 |   ]

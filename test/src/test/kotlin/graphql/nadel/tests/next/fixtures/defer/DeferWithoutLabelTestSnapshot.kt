@@ -1,7 +1,7 @@
 // @formatter:off
 package graphql.nadel.tests.next.fixtures.defer
 
-import graphql.nadel.tests.next.ExpectedNadelResponse
+import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
@@ -30,14 +30,17 @@ public class DeferWithoutLabelTestSnapshot : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                response = """
+                result = """
                 | {
-                |   "defer": {
-                |     "hello": "helloString"
-                |   }
+                |   "data": {
+                |     "defer": {
+                |       "hello": "helloString"
+                |     }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
-                delayedResponses = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
                     """
                     | {
                     |   "hasNext": false,
@@ -68,8 +71,8 @@ public class DeferWithoutLabelTestSnapshot : TestSnapshot() {
      * }
      * ```
      */
-    override val response: ExpectedNadelResponse = ExpectedNadelResponse(
-            response = """
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
+            result = """
             | {
             |   "data": {
             |     "defer": {
@@ -79,7 +82,7 @@ public class DeferWithoutLabelTestSnapshot : TestSnapshot() {
             |   "hasNext": true
             | }
             """.trimMargin(),
-            delayedResponses = listOfJsonStrings(
+            delayedResults = listOfJsonStrings(
                 """
                 | {
                 |   "hasNext": false,
