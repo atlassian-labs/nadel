@@ -253,6 +253,7 @@ class NadelIncrementalResultSupportTest {
                     flow {
                         subject.defer(
                             flow {
+                                failureMutex.unlock()
                                 emit(
                                     DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                                         .incrementalItems(emptyList())
@@ -270,7 +271,6 @@ class NadelIncrementalResultSupportTest {
 
                 // Then
                 subject.onInitialResultComplete()
-                failureMutex.unlock()
 
                 val contents = channel.toList()
                 assertTrue(contents.size == 1)
