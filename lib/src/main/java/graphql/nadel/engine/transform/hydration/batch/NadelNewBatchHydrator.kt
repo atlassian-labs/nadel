@@ -240,22 +240,22 @@ internal class NadelNewBatchHydrator(
                 val incremental = try {
                     sourceObjectsMetadata
                         .mapNotNull { (sourceObject, sourceInputsPairedWithInstruction) ->
-                            val resultPath = executionContext.resultTracker.getResultPath(
+                            val sourceObjectResultPath = executionContext.resultTracker.getResultPath(
                                 sourceField.queryPath.dropLast(n = 1),
                                 sourceObject,
                             )
-                            if (resultPath == null) {
+                            if (sourceObjectResultPath == null) {
                                 null
                             } else {
                                 DeferPayload.Builder()
-                                    .path(
-                                        resultPath + sourceField.resultKey,
-                                    )
+                                    .path(sourceObjectResultPath)
                                     .data(
-                                        getHydrationValueForSourceObject(
-                                            indexedResultsByInstruction,
-                                            sourceInputsPairedWithInstruction,
-                                        ).value,
+                                        mapOf(
+                                            sourceField.resultKey to getHydrationValueForSourceObject(
+                                                indexedResultsByInstruction,
+                                                sourceInputsPairedWithInstruction,
+                                            ).value,
+                                        ),
                                     )
                                     .build()
                             }

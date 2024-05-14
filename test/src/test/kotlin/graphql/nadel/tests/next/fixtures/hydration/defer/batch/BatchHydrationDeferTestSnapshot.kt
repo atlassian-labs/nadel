@@ -146,31 +146,34 @@ public class BatchHydrationDeferTestSnapshot : TestSnapshot() {
                 |     {
                 |       "path": [
                 |         "issues",
-                |         0,
-                |         "assignee"
+                |         0
                 |       ],
                 |       "data": {
-                |         "name": "Franklin"
+                |         "assignee": {
+                |           "name": "Franklin"
+                |         }
                 |       }
                 |     },
                 |     {
                 |       "path": [
                 |         "issues",
-                |         1,
-                |         "assignee"
+                |         1
                 |       ],
                 |       "data": {
-                |         "name": "Steven"
+                |         "assignee": {
+                |           "name": "Steven"
+                |         }
                 |       }
                 |     },
                 |     {
                 |       "path": [
                 |         "issues",
-                |         2,
-                |         "assignee"
+                |         2
                 |       ],
                 |       "data": {
-                |         "name": "Felipe"
+                |         "assignee": {
+                |           "name": "Felipe"
+                |         }
                 |       }
                 |     }
                 |   ]
