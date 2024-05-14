@@ -133,6 +133,8 @@ suspend fun main() {
                 .query(query)
                 .build(),
         )
+        .asDeferred()
+        .await()
         .also {
             println(it)
         }
