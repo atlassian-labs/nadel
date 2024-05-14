@@ -5,6 +5,7 @@ import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import graphql.language.Document
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
@@ -110,5 +111,11 @@ interface NadelInstrumentation {
      *  @param parameters to this step
      */
     fun onError(parameters: NadelInstrumentationOnErrorParameters) {
+    }
+
+    /**
+     * todo: create a root "internal" implementation so we can effectively have internal interface methods
+     */
+    fun onExecutionContext(context: NadelExecutionContext) {
     }
 }
