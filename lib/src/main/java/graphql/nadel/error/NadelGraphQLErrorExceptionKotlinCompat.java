@@ -11,12 +11,12 @@ import java.util.List;
 /**
  * Yes this is in Java, because of a compiler bug with conflicting `getMessage` declarations.
  */
-public abstract class GraphQLErrorExceptionKotlinCompat extends RuntimeException implements GraphQLError {
-    public GraphQLErrorExceptionKotlinCompat(@NotNull String message) {
+public abstract class NadelGraphQLErrorExceptionKotlinCompat extends RuntimeException implements GraphQLError {
+    public NadelGraphQLErrorExceptionKotlinCompat(@NotNull String message) {
         super(message);
     }
 
-    public GraphQLErrorExceptionKotlinCompat(@NotNull String message, @Nullable Throwable cause) {
+    public NadelGraphQLErrorExceptionKotlinCompat(@NotNull String message, @Nullable Throwable cause) {
         super(message, cause);
     }
 
