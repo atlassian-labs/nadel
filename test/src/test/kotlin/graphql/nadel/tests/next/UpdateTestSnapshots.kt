@@ -126,7 +126,7 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
 }
 
 private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpec {
-    val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", ::listOfJsonStrings.name)
+    val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", "listOfJsonStrings")
 
     val combinedResult = combineExecutionResults(
         result = captured.result?.toSpecification() as JsonMap,
@@ -168,7 +168,7 @@ private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpe
 }
 
 private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCapture.Call): CodeBlock {
-    val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", ::listOfJsonStrings.name)
+    val listOfJsonStringsMember = MemberName("graphql.nadel.tests.next", "listOfJsonStrings")
 
     return buildCodeBlock {
         add("%T", ExpectedServiceCall::class.asClassName())
