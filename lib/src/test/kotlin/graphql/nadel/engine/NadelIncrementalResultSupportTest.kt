@@ -4,11 +4,9 @@ import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.toList
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
@@ -18,12 +16,10 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.seconds
 
 class NadelIncrementalResultSupportTest {
     @Test
@@ -195,10 +191,12 @@ class NadelIncrementalResultSupportTest {
                 DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                     .incrementalItems(emptyList())
                     .hasNext(true)
+                    .extensions(mapOf("one" to true))
                     .build(),
                 DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                     .incrementalItems(emptyList())
                     .hasNext(false)
+                    .extensions(mapOf("two" to true))
                     .build(),
             ),
         )
@@ -207,6 +205,7 @@ class NadelIncrementalResultSupportTest {
                 DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                     .incrementalItems(emptyList())
                     .hasNext(false)
+                    .extensions(mapOf("three" to true))
                     .build(),
             ),
         )
@@ -217,6 +216,11 @@ class NadelIncrementalResultSupportTest {
         val contents = channel.toList()
         assertTrue(contents.size == 3)
         assertTrue(contents.map { it.hasNext() } == listOf(true, true, false))
+
+        val extensions = contents.fold(emptyMap<Any?, Any?>()) { acc, element ->
+            acc + (element.extensions ?: emptyMap())
+        }
+        assertTrue(extensions == mapOf("one" to true, "two" to true, "three" to true))
     }
 
     @Test
@@ -284,6 +288,52 @@ class NadelIncrementalResultSupportTest {
 
         val contents = channel.toList()
         assertTrue(contents.isEmpty())
+    }
+
+    @Test
+    fun `Flow can launch more defer jobs`() = runTest {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+        val subject = NadelIncrementalResultSupport(channel)
+        val childLock = Mutex(locked = true)
+
+        // When
+        subject.defer(
+            flow {
+                subject.defer {
+                    childLock.withLock {
+                        DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                            .incrementalItems(emptyList())
+                            .hasNext(false)
+                            .extensions(mapOf("child" to true))
+                            .build()
+                    }
+                }
+
+                emit(
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(false)
+                        .extensions(mapOf("parent" to true))
+                        .build(),
+                )
+            }
+        )
+
+        // Then
+        subject.onInitialResultComplete()
+
+        val parent = channel.receive()
+        assertTrue(parent.hasNext())
+        assertTrue(parent.extensions == mapOf("parent" to true))
+
+        childLock.unlock()
+
+        val child = channel.receive()
+        assertFalse(child.hasNext())
+        assertTrue(child.extensions == mapOf("child" to true))
+
+        assertTrue(channel.toList().isEmpty())
     }
 
     @Test
