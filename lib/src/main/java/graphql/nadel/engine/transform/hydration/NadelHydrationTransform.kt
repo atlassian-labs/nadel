@@ -231,9 +231,18 @@ internal class NadelHydrationTransform(
             DelayedIncrementalPartialResultImpl.Builder()
                 .incrementalItems(
                     listOf(
-                        DeferPayload.newDeferredItem()
-                            .data(results?.newValue?.value)
-                            .path(overallField.listOfResultKeys as List<Any>?)
+                        DeferPayload.Builder()
+                            .data(
+                                mapOf(
+                                    overallField.resultKey to results?.newValue?.value,
+                                ),
+                            )
+                            .path(
+                                overallField.parent?.listOfResultKeys?.let {
+                                    @Suppress("USELESS_CAST") // It's not useless because Java (yay)
+                                    it as List<Any>
+                                } ?: emptyList()
+                            )
                             .errors(
                                 instructionSequence
                                     .filterIsInstance<NadelResultInstruction.AddError>()
