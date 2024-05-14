@@ -99,11 +99,12 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issueByKey",
-                |         "assigneeV2"
+                |         "issueByKey"
                 |       ],
                 |       "data": {
-                |         "name": "SPEED"
+                |         "assigneeV2": {
+                |           "name": "SPEED"
+                |         }
                 |       }
                 |     }
                 |   ]
