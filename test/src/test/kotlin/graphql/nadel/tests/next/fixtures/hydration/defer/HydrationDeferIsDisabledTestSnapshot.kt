@@ -161,28 +161,60 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "key": "GQLGW-1",
-            |         "assignee": {
-            |           "name": "Franklin"
-            |         }
+            |         "key": "GQLGW-1"
             |       },
             |       {
-            |         "key": "GQLGW-2",
-            |         "assignee": {
-            |           "name": "Tom"
-            |         }
+            |         "key": "GQLGW-2"
             |       },
             |       {
-            |         "key": "GQLGW-3",
-            |         "assignee": {
-            |           "name": "Franklin"
-            |         }
+            |         "key": "GQLGW-3"
             |       }
             |     ]
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issues",
+                |         0
+                |       ],
+                |       "data": {
+                |         "assignee": {
+                |           "name": "Franklin"
+                |         }
+                |       }
+                |     },
+                |     {
+                |       "path": [
+                |         "issues",
+                |         1
+                |       ],
+                |       "data": {
+                |         "assignee": {
+                |           "name": "Tom"
+                |         }
+                |       }
+                |     },
+                |     {
+                |       "path": [
+                |         "issues",
+                |         2
+                |       ],
+                |       "data": {
+                |         "assignee": {
+                |           "name": "Franklin"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

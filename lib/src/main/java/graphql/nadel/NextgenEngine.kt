@@ -160,6 +160,7 @@ internal class NextgenEngine(
             }
 
             val incrementalResultSupport = NadelIncrementalResultSupport()
+            val resultTracker = NadelResponseTracker()
             val executionContext = NadelExecutionContext(
                 executionInput,
                 query,
@@ -168,6 +169,7 @@ internal class NextgenEngine(
                 instrumentationState,
                 timer,
                 incrementalResultSupport,
+                resultTracker,
             )
 
             val beginExecuteContext = instrumentation.beginExecute(
@@ -213,6 +215,9 @@ internal class NextgenEngine(
 
             beginExecuteContext?.onCompleted(result, null)
             incrementalResultSupport.onInitialResultComplete()
+
+            // todo: maybe pass in the incremental version that's built below into here
+            resultTracker.complete(result)
 
             return if (incrementalResultSupport.hasDeferredResults()) {
                 IncrementalExecutionResultImpl.Builder()
