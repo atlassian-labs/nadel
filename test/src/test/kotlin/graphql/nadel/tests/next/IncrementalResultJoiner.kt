@@ -42,18 +42,9 @@ fun combineExecutionResults(result: JsonMap, incrementalResults: List<JsonMap>):
 }
 
 private fun setDeferred(result: JsonMap, path: List<Any>, data: Any) {
-    when (val lastPathSegment = path.last()) {
-        is Int -> {
-            val parent = result.getValueAt(path)
-            @Suppress("UNCHECKED_CAST")
-            (parent as MutableJsonMap?)?.putAll(data as JsonMap)
-        }
-        is String -> {
-            val parent = result.getValueAt(path.dropLast(n = 1))
-            @Suppress("UNCHECKED_CAST")
-            (parent as MutableJsonMap?)?.put(lastPathSegment, data)
-        }
-    }
+    val parent = result.getValueAt(path)
+    @Suppress("UNCHECKED_CAST")
+    (parent as MutableJsonMap?)?.putAll(data as JsonMap)
 }
 
 private fun JsonMap.getValueAt(path: List<Any>): Any? {

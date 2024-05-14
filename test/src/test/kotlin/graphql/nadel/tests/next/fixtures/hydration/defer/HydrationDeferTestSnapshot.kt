@@ -99,11 +99,12 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issue",
-                |         "assignee"
+                |         "issue"
                 |       ],
                 |       "data": {
-                |         "name": "Franklin"
+                |         "assignee": {
+                |           "name": "Franklin"
+                |         }
                 |       }
                 |     }
                 |   ]
