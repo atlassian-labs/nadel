@@ -8,8 +8,8 @@ import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.language.Document
-import graphql.nadel.engine.NadelIncrementalResultSupport
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelIncrementalResultSupport
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory

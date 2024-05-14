@@ -185,33 +185,47 @@ class NadelIncrementalResultSupportTest {
 
         val subject = NadelIncrementalResultSupport(channel)
 
+        val lock = Mutex(locked = true)
         // When
         subject.defer(
-            flowOf(
-                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                    .incrementalItems(emptyList())
-                    .hasNext(true)
-                    .extensions(mapOf("one" to true))
-                    .build(),
-                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                    .incrementalItems(emptyList())
-                    .hasNext(false)
-                    .extensions(mapOf("two" to true))
-                    .build(),
-            ),
+            flow {
+                lock.withLock {
+                }
+
+                emit(
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(true)
+                        .extensions(mapOf("one" to true))
+                        .build(),
+                )
+                emit(
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(false)
+                        .extensions(mapOf("two" to true))
+                        .build(),
+                )
+            },
         )
         subject.defer(
-            flowOf(
-                DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                    .incrementalItems(emptyList())
-                    .hasNext(false)
-                    .extensions(mapOf("three" to true))
-                    .build(),
-            ),
+            flow {
+                lock.withLock {
+                }
+
+                emit(
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(false)
+                        .extensions(mapOf("three" to true))
+                        .build(),
+                )
+            },
         )
 
         // Then
         subject.onInitialResultComplete()
+        lock.unlock()
 
         val contents = channel.toList()
         assertTrue(contents.size == 3)
