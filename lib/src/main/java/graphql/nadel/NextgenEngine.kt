@@ -44,11 +44,19 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import java.util.concurrent.CompletableFuture
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
 internal class NextgenEngine(
@@ -63,6 +71,7 @@ internal class NextgenEngine(
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) {
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = services.strictAssociateBy { it.name }
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         engineSchema = engineSchema,
@@ -90,7 +99,31 @@ internal class NextgenEngine(
         .maxChildrenDepth(maxQueryDepth)
         .maxFieldsCount(maxFieldCount)
 
-    suspend fun execute(
+    fun execute(
+        executionInput: ExecutionInput,
+        queryDocument: Document,
+        instrumentationState: InstrumentationState?,
+        nadelExecutionParams: NadelExecutionParams,
+    ): CompletableFuture<ExecutionResult> {
+        return coroutineScope.async {
+            executeCoroutine(
+                executionInput,
+                queryDocument,
+                instrumentationState,
+                nadelExecutionParams.nadelExecutionHints,
+            )
+        }.asCompletableFuture()
+    }
+
+    fun close() {
+        // Closes the scope after letting in flight requests go through
+        coroutineScope.launch {
+            delay(60_000) // Wait a minute
+            coroutineScope.cancel()
+        }
+    }
+
+    private suspend fun executeCoroutine(
         executionInput: ExecutionInput,
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
