@@ -275,7 +275,7 @@ abstract class NadelIntegrationTest(
             .forEach { actualCall ->
                 val delayedResults = actualCall.delayedResults
                 if (delayedResults.isNotEmpty()) {
-                    assertTrue(delayedResults.drop(n = 1).all { it.hasNext() } && !delayedResults.last().hasNext())
+                    assertTrue(delayedResults.dropLast(n = 1).all { it.hasNext() } && !delayedResults.last().hasNext())
                 }
             }
     }
