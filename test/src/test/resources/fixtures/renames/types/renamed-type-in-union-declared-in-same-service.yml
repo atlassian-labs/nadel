@@ -1,4 +1,4 @@
-name: "renamed type in union 2"
+name: "renamed type in union declared in same service"
 enabled: true
 # language=GraphQL
 overallSchema:
