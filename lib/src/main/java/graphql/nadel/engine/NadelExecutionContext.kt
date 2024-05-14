@@ -4,6 +4,7 @@ import graphql.ExecutionInput
 import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.NadelResponseTracker
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
@@ -21,6 +22,7 @@ data class NadelExecutionContext internal constructor(
     val instrumentationState: InstrumentationState?,
     internal val timer: NadelInstrumentationTimer,
     internal val incrementalResultSupport: NadelIncrementalResultSupport,
+    internal val resultTracker: NadelResponseTracker,
     internal val hydrationDetails: ServiceExecutionHydrationDetails? = null,
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()

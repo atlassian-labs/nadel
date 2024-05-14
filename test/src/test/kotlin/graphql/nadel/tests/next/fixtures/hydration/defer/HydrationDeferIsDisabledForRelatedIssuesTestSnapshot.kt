@@ -127,11 +127,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
             |     "issueByKey": {
             |       "key": "GQLGW-2",
             |       "related": [
-            |         {
-            |           "assignee": {
-            |             "name": "Franklin"
-            |           }
-            |         }
+            |         {}
             |       ]
             |     }
             |   },
@@ -142,6 +138,25 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 """
                 | {
                 |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey",
+                |         "related",
+                |         0
+                |       ],
+                |       "data": {
+                |         "assignee": {
+                |           "name": "Franklin"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
                 |   "incremental": [
                 |     {
                 |       "path": [

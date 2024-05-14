@@ -224,35 +224,34 @@ internal class NadelHydrationTransform(
                 .asSequence()
                 .flatten()
 
-            val results = instructionSequence
-                .filterIsInstance<NadelResultInstruction.Set>()
-                .emptyOrSingle()
-
             DelayedIncrementalPartialResultImpl.Builder()
                 .incrementalItems(
-                    listOf(
-                        DeferPayload.Builder()
-                            .data(
-                                mapOf(
-                                    overallField.resultKey to results?.newValue?.value,
-                                ),
-                            )
-                            .path(
-                                overallField.parent?.listOfResultKeys?.let {
-                                    @Suppress("USELESS_CAST") // It's not useless because Java (yay)
-                                    it as List<Any>
-                                } ?: emptyList()
-                            )
-                            .errors(
-                                instructionSequence
-                                    .filterIsInstance<NadelResultInstruction.AddError>()
-                                    .map {
-                                        it.error
-                                    }
-                                    .toList(),
-                            )
-                            .build(),
-                    ),
+                    instructionSequence
+                        .filterIsInstance<NadelResultInstruction.Set>()
+                        .toList() // There can be multiple if the hydration is right under a list i.e. we are hydrating [{assigneeId: 1}, {assigneeId: 2}]
+                        .map { result ->
+                            DeferPayload.newDeferredItem()
+                                .data(
+                                    mapOf(
+                                        overallField.resultKey to result.newValue?.value,
+                                    ),
+                                )
+                                .path(
+                                    executionContext.resultTracker.getResponsePath(
+                                        overallField.queryPath.dropLast(1),
+                                        result.subject,
+                                    )!!
+                                )
+                                .errors(
+                                    instructionSequence
+                                        .filterIsInstance<NadelResultInstruction.AddError>()
+                                        .map {
+                                            it.error
+                                        }
+                                        .toList(),
+                                )
+                                .build()
+                        }
                 )
                 .build()
         }
@@ -407,7 +406,8 @@ internal class NadelHydrationTransform(
 
         return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
             // We currently don't support defer if the hydration is inside a List
-            return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
+            // return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
+            return true
         } else {
             false
         }
