@@ -1,4 +1,4 @@
-name: "renamed type in union 1"
+name: "renamed type in union declared in same service"
 enabled: true
 # language=GraphQL
 overallSchema:
@@ -10,12 +10,12 @@ overallSchema:
       id: ID
     }
     union Node = Issue | JiraComment
+    type JiraComment @renamed(from: "Comment") {
+      id: ID
+    }
   CommentService: |
     type Query {
       comment: JiraComment
-    }
-    type JiraComment @renamed(from: "Comment") {
-      id: ID
     }
 # language=GraphQL
 underlyingSchema:
@@ -42,6 +42,12 @@ query: |
   query {
     nodes {
       __typename
+      ... on Issue {
+        id
+      }
+      ... on JiraComment {
+        id
+      }
     }
   }
 variables: { }
@@ -53,6 +59,12 @@ serviceCalls:
         {
           nodes {
             __typename
+            ... on Comment {
+              id
+            }
+            ... on Issue {
+              id
+            }
           }
         }
       variables: { }
@@ -62,10 +74,12 @@ serviceCalls:
         "data": {
           "nodes": [
             {
-              "__typename": "Issue"
+              "__typename": "Issue",
+              "id": "1"
             },
             {
-              "__typename": "Comment"
+              "__typename": "Comment",
+              "id": "2"
             }
           ]
         },
@@ -77,10 +91,12 @@ response: |-
     "data": {
       "nodes": [
         {
-          "__typename": "Issue"
+          "__typename": "Issue",
+          "id": "1"
         },
         {
-          "__typename": "JiraComment"
+          "__typename": "JiraComment",
+          "id": "2"
         }
       ]
     },

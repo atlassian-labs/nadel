@@ -91,14 +91,13 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         // Transforms are applied to hydration fields as well, and those fields always reference
         // elements from the underlying schema
         val underlyingTypeNamesOwnedByService = executionBlueprint.getUnderlyingTypeNamesForService(service)
-
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
             .filter {
                 // it is MUCH quicker to compare membership in 2 sets rather than
                 // concat 1 giant set and then check
                 it in typeNamesOwnedByService
                     || it in underlyingTypeNamesOwnedByService
-                    || executionBlueprint.getUnderlyingTypeName(it) in underlyingTypeNamesOwnedByService
+                    || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(it) in underlyingTypeNamesOwnedByService)
             }
 
         // All types are owned by service
