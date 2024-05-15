@@ -168,8 +168,14 @@ class NadelQueryTransformer private constructor(
     }
 
     private fun getUnderlyingTypeNames(objectTypeNames: Collection<String>): List<String> {
-        return objectTypeNames.map {
-            executionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
+        return if (executionContext.hints.sharedTypeRenames(service)) {
+            objectTypeNames.map {
+                executionBlueprint.getUnderlyingTypeName(overallTypeName = it)
+            }
+        } else {
+            objectTypeNames.map {
+                executionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
+            }
         }
     }
 

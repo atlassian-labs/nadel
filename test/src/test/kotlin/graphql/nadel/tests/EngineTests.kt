@@ -29,6 +29,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.reactive.asPublisher
 import org.junit.jupiter.api.fail
 import org.reactivestreams.Publisher
@@ -340,7 +341,7 @@ private suspend fun execute(
                     )
                 }
                 .build(),
-        )
+        ).await()
 
         if (fixture.exception != null) {
             fail("Expected exception did not occur")

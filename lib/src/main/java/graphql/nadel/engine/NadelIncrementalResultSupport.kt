@@ -159,7 +159,7 @@ class NadelIncrementalResultSupport internal constructor(
             return object : OutstandingJobHandle {
                 override fun decrementAndGetJobCount(): Int {
                     return if (closed.getAndSet(true)) {
-                        throw IllegalArgumentException("Cannot close outstanding job more than once")
+                        throw IllegalStateException("Cannot close outstanding job more than once")
                     } else {
                         count.decrementAndGet()
                     }

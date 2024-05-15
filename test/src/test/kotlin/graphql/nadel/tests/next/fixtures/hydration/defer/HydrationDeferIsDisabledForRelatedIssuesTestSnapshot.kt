@@ -145,11 +145,12 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issueByKey",
-                |         "assignee"
+                |         "issueByKey"
                 |       ],
                 |       "data": {
-                |         "name": "Tom"
+                |         "assignee": {
+                |           "name": "Tom"
+                |         }
                 |       }
                 |     }
                 |   ]

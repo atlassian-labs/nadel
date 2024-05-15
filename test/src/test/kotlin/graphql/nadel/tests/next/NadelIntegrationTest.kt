@@ -32,6 +32,7 @@ import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.test.runTest
 import org.intellij.lang.annotations.Language
@@ -64,7 +65,7 @@ abstract class NadelIntegrationTest(
         val executionInput = makeExecutionInput().build()
 
         // When
-        val result = nadel.execute(executionInput)
+        val result = nadel.execute(executionInput).await()
 
         val incrementalResults = if (result is IncrementalExecutionResult) {
             result.incrementalItemPublisher
@@ -78,8 +79,7 @@ abstract class NadelIntegrationTest(
         assert(result, incrementalResults)
         assertNadelResult(result, incrementalResults, testData)
         assertServiceCalls(testData)
-        // Temporarily disabling the below assertion until test framework is updated to handle this
-        // assertIncrementalResult(nadel, executionInput, result, incrementalResults)
+        assertIncrementalResult(nadel, executionInput, result, incrementalResults)
     }
 
     suspend fun capture(): TestExecutionCapture {
@@ -89,7 +89,7 @@ abstract class NadelIntegrationTest(
         val result = nadel
             .execute(makeExecutionInput().build())
             .let {
-                executionCapture.capture(it)
+                executionCapture.capture(it.await())
             }
 
         if (result is IncrementalExecutionResult) {
@@ -361,11 +361,13 @@ abstract class NadelIntegrationTest(
         )
 
         // When
-        val noDeferResult = nadel.execute(
-            executionInput.copy(
-                query = stripDefer(executionInput.query),
-            ),
-        )
+        val noDeferResult = nadel
+            .execute(
+                executionInput.copy(
+                    query = stripDefer(executionInput.query),
+                ),
+            )
+            .await()
 
         // Then
         assertTrue(noDeferResult !is IncrementalExecutionResult)

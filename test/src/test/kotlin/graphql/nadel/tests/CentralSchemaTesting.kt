@@ -14,6 +14,7 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
+import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
 
@@ -132,6 +133,8 @@ suspend fun main() {
                 .query(query)
                 .build(),
         )
+        .asDeferred()
+        .await()
         .also {
             println(it)
         }

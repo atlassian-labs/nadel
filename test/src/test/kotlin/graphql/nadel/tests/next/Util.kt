@@ -13,11 +13,120 @@ import org.intellij.lang.annotations.Language
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
+fun listOfJsonStrings(): List<String> {
+    return emptyList()
+}
+
 fun listOfJsonStrings(
     @Language("JSON")
-    vararg values: String,
+    value1: String,
 ): List<String> {
-    return listOf(*values)
+    return listOf(value1)
+}
+
+fun listOfJsonStrings(
+    @Language("JSON")
+    value1: String,
+    @Language("JSON")
+    value2: String,
+): List<String> {
+    return listOf(value1, value2)
+}
+
+fun listOfJsonStrings(
+    @Language("JSON")
+    value1: String,
+    @Language("JSON")
+    value2: String,
+    @Language("JSON")
+    value3: String,
+): List<String> {
+    return listOf(value1, value2, value3)
+}
+
+fun listOfJsonStrings(
+    @Language("JSON")
+    value1: String,
+    @Language("JSON")
+    value2: String,
+    @Language("JSON")
+    value3: String,
+    @Language("JSON")
+    value4: String,
+): List<String> {
+    return listOf(value1, value2, value3, value4)
+}
+
+fun listOfJsonStrings(
+    @Language("JSON")
+    value1: String,
+    @Language("JSON")
+    value2: String,
+    @Language("JSON")
+    value3: String,
+    @Language("JSON")
+    value4: String,
+    @Language("JSON")
+    value5: String,
+): List<String> {
+    return listOf(value1, value2, value3, value4, value5)
+}
+
+fun listOfJsonStrings(
+    @Language("JSON")
+    value1: String,
+    @Language("JSON")
+    value2: String,
+    @Language("JSON")
+    value3: String,
+    @Language("JSON")
+    value4: String,
+    @Language("JSON")
+    value5: String,
+    @Language("JSON")
+    value6: String,
+): List<String> {
+    return listOf(value1, value2, value3, value4, value5, value6)
+}
+
+fun listOfJsonStrings(
+    @Language("JSON")
+    value1: String,
+    @Language("JSON")
+    value2: String,
+    @Language("JSON")
+    value3: String,
+    @Language("JSON")
+    value4: String,
+    @Language("JSON")
+    value5: String,
+    @Language("JSON")
+    value6: String,
+    @Language("JSON")
+    value7: String,
+): List<String> {
+    return listOf(value1, value2, value3, value4, value5, value6, value7)
+}
+
+fun listOfJsonStrings(
+    @Language("JSON")
+    value1: String,
+    @Language("JSON")
+    value2: String,
+    @Language("JSON")
+    value3: String,
+    @Language("JSON")
+    value4: String,
+    @Language("JSON")
+    value5: String,
+    @Language("JSON")
+    value6: String,
+    @Language("JSON")
+    value7: String,
+    @Language("JSON")
+    value8: String,
+): List<String> {
+    return listOf(value1, value2, value3, value4, value5, value6, value7, value8)
 }
 
 fun <T : Any> KClass<T>.asTestName(): String {

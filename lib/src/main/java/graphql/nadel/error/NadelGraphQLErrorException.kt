@@ -7,7 +7,7 @@ abstract class NadelGraphQLErrorException(
     message: String,
     private val path: List<Any>? = null,
     private val errorClassification: ErrorClassification? = null,
-) : GraphQLErrorExceptionKotlinCompat(message) {
+) : NadelGraphQLErrorExceptionKotlinCompat(message) {
     override fun getPath(): List<Any>? {
         return path
     }

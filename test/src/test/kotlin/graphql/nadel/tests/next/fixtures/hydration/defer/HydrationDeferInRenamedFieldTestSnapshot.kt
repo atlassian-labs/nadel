@@ -99,11 +99,12 @@ public class HydrationDeferInRenamedFieldTestSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issueByKey",
-                |         "assignee"
+                |         "issueByKey"
                 |       ],
                 |       "data": {
-                |         "name": "Franklin"
+                |         "assignee": {
+                |           "name": "Franklin"
+                |         }
                 |       }
                 |     }
                 |   ]
