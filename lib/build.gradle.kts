@@ -7,7 +7,7 @@ plugins {
     id("com.bnorm.power.kotlin-power-assert")
 }
 
-val graphqlJavaVersion = "0.0.0-2024-04-30T01-25-21-2f5ff3c"
+val graphqlJavaVersion = "0.0.0-2024-05-14T01-38-26-f20b6f8"
 val slf4jVersion = "1.7.25"
 
 dependencies {
@@ -29,6 +29,8 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
 
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     testImplementation("org.openjdk.jmh:jmh-core:1.37")
     testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.37")
 
@@ -42,8 +44,6 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.8")
 
     testImplementation("com.tngtech.archunit:archunit:1.2.1")
-
-    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
 }
 
 // compileJava.source file("build/generated-src"), sourceSets.main.java
