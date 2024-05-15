@@ -1,9 +1,9 @@
 package graphql.nadel.engine.transform.result.json
 
 import graphql.nadel.engine.transform.query.NadelQueryPath
-import graphql.nadel.engine.transform.result.json.EphemeralJsonNode.Companion.component1
-import graphql.nadel.engine.transform.result.json.EphemeralJsonNode.Companion.component2
-import graphql.nadel.engine.transform.result.json.EphemeralJsonNode.Companion.component3
+import graphql.nadel.engine.transform.result.json.NadelEphemeralJsonNode.Companion.component1
+import graphql.nadel.engine.transform.result.json.NadelEphemeralJsonNode.Companion.component2
+import graphql.nadel.engine.transform.result.json.NadelEphemeralJsonNode.Companion.component3
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.result.NadelResultPathSegment
@@ -18,11 +18,11 @@ import graphql.nadel.result.NadelResultPathSegment
  *
  * So for now, I'll leave this in here in case a new feature uses it in the future.
  */
-internal class IteratingJsonNodes(
+internal class NadelIteratingJsonNodes(
     private val data: Any?,
 ) : JsonNodes {
     override fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean): List<JsonNode> {
-        val iterator = JsonNodeIterator(
+        val iterator = NadelJsonNodeIterator(
             root = data,
             queryPath = queryPath,
             flatten = flatten,
@@ -44,8 +44,8 @@ internal class IteratingJsonNodes(
 /**
  * A JSON node [value] with [queryPath] and [resultPath] values.
  *
- * You should not store the [EphemeralJsonNode] as there is only one instance.
- * Its values will change, but the enclosing [EphemeralJsonNode] instance iis the same.
+ * You should not store the [NadelEphemeralJsonNode] as there is only one instance.
+ * Its values will change, but the enclosing [NadelEphemeralJsonNode] instance iis the same.
  *
  * The values should not be stored either.
  *
@@ -54,33 +54,33 @@ internal class IteratingJsonNodes(
  *
  * The majority of the time the [resultPath] values are discarded anyway.
  */
-internal abstract class EphemeralJsonNode {
+internal abstract class NadelEphemeralJsonNode {
     abstract val queryPath: List<String>
     abstract val resultPath: List<NadelResultPathSegment>
     abstract val value: Any?
 
     companion object {
-        operator fun EphemeralJsonNode.component1(): List<String> = queryPath
-        operator fun EphemeralJsonNode.component2(): List<NadelResultPathSegment> = resultPath
-        operator fun EphemeralJsonNode.component3(): Any? = value
+        operator fun NadelEphemeralJsonNode.component1(): List<String> = queryPath
+        operator fun NadelEphemeralJsonNode.component2(): List<NadelResultPathSegment> = resultPath
+        operator fun NadelEphemeralJsonNode.component3(): Any? = value
     }
 }
 
 /**
  * Does a DFS search through the response to the given `queryPath`.
  */
-internal class JsonNodeIterator(
+internal class NadelJsonNodeIterator(
     root: Any?,
     queryPath: NadelQueryPath,
     private val flatten: Boolean,
-) : Iterator<EphemeralJsonNode> {
+) : Iterator<NadelEphemeralJsonNode> {
     private var hasNext = true
 
     override fun hasNext(): Boolean {
         return hasNext || calculateNext()
     }
 
-    override fun next(): EphemeralJsonNode {
+    override fun next(): NadelEphemeralJsonNode {
         if (!hasNext && !calculateNext()) {
             throw NoSuchElementException()
         }
@@ -99,7 +99,7 @@ internal class JsonNodeIterator(
         private val NONE = Any()
     }
 
-    private val ephemeralJsonNode = object : EphemeralJsonNode() {
+    private val ephemeralJsonNode = object : NadelEphemeralJsonNode() {
         override val queryPath get() = currentQueryPathSegments
         override val resultPath get() = currentResultPathSegments
         override var value: Any? = NONE
