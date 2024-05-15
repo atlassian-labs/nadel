@@ -30,11 +30,6 @@ open class DeferWithoutLabelTest : NadelIntegrationTest(
                
             """.trimIndent(),
             runtimeWiring = { wiring ->
-                data class DeferApi(
-                    val hello: String,
-                    val slow: String,
-                )
-
                 wiring
                     .type("Query") { type ->
                         type

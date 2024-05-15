@@ -66,6 +66,7 @@ public class DeferWithLabelTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
+     *       "hello": "helloString",
      *       "slow": "slowString"
      *     }
      *   }

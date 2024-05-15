@@ -83,6 +83,8 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
+     *       "fastField": "123",
+     *       "slowField": "slowString",
      *       "anotherSlowField": 123456789
      *     }
      *   }
