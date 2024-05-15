@@ -3,7 +3,7 @@ package graphql.nadel.result
 import graphql.ExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.transform.result.json.JsonNodeIterator
+import graphql.nadel.engine.transform.result.json.NadelJsonNodeIterator
 import kotlinx.coroutines.CompletableDeferred
 
 /**
@@ -34,7 +34,7 @@ internal class NadelResultTracker {
         val result = result.await()
         val data = result.toSpecification()["data"]
 
-        val jsonNodeIterator = JsonNodeIterator(root = data, queryPath = queryPath, flatten = true)
+        val jsonNodeIterator = NadelJsonNodeIterator(root = data, queryPath = queryPath, flatten = true)
         for (ephemeralNode in jsonNodeIterator) {
             if (ephemeralNode.queryPath.size == queryPath.segments.size && ephemeralNode.value === node.value) {
                 // Clone because underlying values are ephemeral too
