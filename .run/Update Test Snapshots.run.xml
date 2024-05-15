@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="CaptureTestData" type="JetRunConfigurationType">
-    <option name="MAIN_CLASS_NAME" value="graphql.nadel.tests.next.CaptureTestDataKt" />
+  <configuration default="false" name="Update Test Snapshots" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="graphql.nadel.tests.next.UpdateTestSnapshotsKt" />
     <module name="nadel.test.test" />
     <shortenClasspath name="NONE" />
     <method v="2">
