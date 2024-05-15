@@ -297,7 +297,7 @@ internal class NadelHydrationTransform(
 
         val instruction = getHydrationFieldInstruction(state, instructions, executionContext.hooks, parentNode)
             ?: return NadelPreparedHydration {
-                HydrationResult(
+                NadelHydrationResult(
                     parentNode = parentNode,
                     newValue = null,
                     errors = emptyList(),
@@ -353,7 +353,7 @@ internal class NadelHydrationTransform(
                         ).emptyOrSingle()
                     }
 
-                    HydrationResult(
+                    NadelHydrationResult(
                         parentNode = parentNode,
                         newValue = JsonNode(data?.value),
                         errors = result?.errors ?: emptyList(),
@@ -368,7 +368,7 @@ internal class NadelHydrationTransform(
                             ).emptyOrSingle()?.value
                         }
 
-                    HydrationResult(
+                    NadelHydrationResult(
                         parentNode = parentNode,
                         newValue = JsonNode(data),
                         errors = actorQueryResults.flatMap { it.errors },
@@ -470,10 +470,10 @@ internal class NadelHydrationTransform(
  * So we "prepare" a hydration to ensure we have the value of the artificial field before it gets removed.
  */
 private fun interface NadelPreparedHydration {
-    suspend fun hydrate(): HydrationResult
+    suspend fun hydrate(): NadelHydrationResult
 }
 
-private data class HydrationResult(
+private data class NadelHydrationResult(
     val parentNode: JsonNode,
     val newValue: JsonNode?,
     val errors: List<JsonMap>,
