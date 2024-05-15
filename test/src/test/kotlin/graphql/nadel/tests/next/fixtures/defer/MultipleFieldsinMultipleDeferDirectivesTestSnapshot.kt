@@ -55,8 +55,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowField4": "slowString4",
-                    |         "slowField3": "slowString3"
+                    |         "slowField": "slowString",
+                    |         "slowField2": "slowString2"
                     |       }
                     |     }
                     |   ]
@@ -71,8 +71,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowField": "slowString",
-                    |         "slowField2": "slowString2"
+                    |         "slowField4": "slowString4",
+                    |         "slowField3": "slowString3"
                     |       }
                     |     }
                     |   ]
@@ -88,10 +88,10 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
      *   "data": {
      *     "defer": {
      *       "fastField": "123",
-     *       "slowField": "slowString",
-     *       "slowField2": "slowString2",
      *       "slowField4": "slowString4",
-     *       "slowField3": "slowString3"
+     *       "slowField3": "slowString3",
+     *       "slowField": "slowString",
+     *       "slowField2": "slowString2"
      *     }
      *   }
      * }
@@ -118,8 +118,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "slowField4": "slowString4",
-                |         "slowField3": "slowString3"
+                |         "slowField": "slowString",
+                |         "slowField2": "slowString2"
                 |       }
                 |     }
                 |   ]
@@ -134,8 +134,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "slowField": "slowString",
-                |         "slowField2": "slowString2"
+                |         "slowField4": "slowString4",
+                |         "slowField3": "slowString3"
                 |       }
                 |     }
                 |   ]
