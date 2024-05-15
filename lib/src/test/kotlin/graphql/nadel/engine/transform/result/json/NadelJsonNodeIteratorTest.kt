@@ -9,13 +9,13 @@ import graphql.nadel.result.NadelResultPathSegment
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-class JsonNodeIteratorTest {
+class NadelJsonNodeIteratorTest {
     private data class TraversedJsonNode(
         override val queryPath: List<String>,
         override val resultPath: List<NadelResultPathSegment>,
         override val value: Any?,
-    ) : EphemeralJsonNode() {
-        constructor(other: EphemeralJsonNode) : this(
+    ) : NadelEphemeralJsonNode() {
+        constructor(other: NadelEphemeralJsonNode) : this(
             queryPath = other.queryPath.toList(),
             resultPath = other.resultPath.toList(),
             value = other.value,
@@ -80,7 +80,7 @@ class JsonNodeIteratorTest {
             ),
         )
 
-        val iterator = JsonNodeIterator(
+        val iterator = NadelJsonNodeIterator(
             root = root,
             queryPath = NadelQueryPath(listOf("users", "friend", "phoneNumber")),
             flatten = true,
@@ -145,7 +145,7 @@ class JsonNodeIteratorTest {
             ),
         )
 
-        val iterator = JsonNodeIterator(
+        val iterator = NadelJsonNodeIterator(
             root = root,
             queryPath = NadelQueryPath(listOf("users", "friend", "phoneNumber")),
             flatten = true,
@@ -311,7 +311,7 @@ class JsonNodeIteratorTest {
             ),
         )
 
-        val iterator = JsonNodeIterator(
+        val iterator = NadelJsonNodeIterator(
             root = root,
             queryPath = NadelQueryPath(listOf("activities", "workedOn", "data", "friend")),
             flatten = true,
@@ -575,7 +575,7 @@ class JsonNodeIteratorTest {
             ),
         )
 
-        val iterator = JsonNodeIterator(
+        val iterator = NadelJsonNodeIterator(
             root = root,
             queryPath = NadelQueryPath(listOf("activities", "workedOn", "data", "friend")),
             flatten = true,

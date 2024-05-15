@@ -7,7 +7,7 @@ import graphql.nadel.engine.util.JsonMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Use [CachingJsonNodes] for the most part because that is faster.
+ * Use [NadelCachingJsonNodes] for the most part because that is faster.
  *
  * In an ideal world we switch to
  */
@@ -19,7 +19,7 @@ interface JsonNodes {
 
     companion object {
         internal var nodesFactory: (JsonMap) -> JsonNodes = {
-            CachingJsonNodes(it)
+            NadelCachingJsonNodes(it)
         }
 
         operator fun invoke(data: JsonMap): JsonNodes {
@@ -31,7 +31,7 @@ interface JsonNodes {
 /**
  * Utility class to extract data out of the given [data].
  */
-class CachingJsonNodes(
+class NadelCachingJsonNodes(
     private val data: JsonMap,
 ) : JsonNodes {
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
