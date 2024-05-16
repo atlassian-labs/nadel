@@ -64,7 +64,7 @@ class NadelIncrementalResultSupport internal constructor(
 
             delayedResultsChannel.send(
                 // Copy of result but with the correct hasNext according to the info we know
-                result.copy(hasNext = hasNext)
+                quickCopy(result, hasNext),
             )
         }
     }
@@ -87,7 +87,7 @@ class NadelIncrementalResultSupport internal constructor(
 
                     delayedResultsChannel.send(
                         // Copy of result but with the correct hasNext according to the info we know
-                        result.copy(hasNext = hasNext)
+                        quickCopy(result, hasNext),
                     )
                 }
         }
@@ -112,6 +112,17 @@ class NadelIncrementalResultSupport internal constructor(
 
     fun close() {
         coroutineScope.cancel()
+    }
+
+    private fun quickCopy(
+        subject: DelayedIncrementalPartialResult,
+        hasNext: Boolean,
+    ): DelayedIncrementalPartialResult {
+        return if (subject.hasNext() == hasNext) {
+            subject
+        } else {
+            subject.copy(hasNext = hasNext)
+        }
     }
 
     /**
