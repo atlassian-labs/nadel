@@ -2,6 +2,7 @@ package graphql.nadel.tests.next
 
 import graphql.language.AstPrinter
 import graphql.language.Directive
+import graphql.language.DirectiveDefinition
 import graphql.language.DirectivesContainer
 import graphql.language.Document
 import graphql.language.EnumTypeDefinition
@@ -67,6 +68,8 @@ private val fakeQueryType = Parser()
             }
         """.trimIndent(),
     )
+    .definitions
+    .single()
 
 context(UnderlyingSchemaGeneratorContext)
 private fun make(overallSchema: Document): String {
@@ -74,18 +77,25 @@ private fun make(overallSchema: Document): String {
         .children
         .let { definitions ->
             val hasQueryType = definitions
-                .any { it ->
+                .any {
                     // Let's assume nobody is renaming the query type
                     it is ObjectTypeDefinition
                         && it !is ObjectTypeExtensionDefinition
                         && it.name == "Query"
                 }
+            val hasDefer = definitions
+                .any {
+                    it is DirectiveDefinition
+                        && it.name == "defer"
+                }
 
-            if (hasQueryType) {
-                definitions
-            } else {
-                definitions + fakeQueryType
-            }
+            definitions
+                .let {
+                    if (hasQueryType) it else (it + fakeQueryType)
+                }
+                .let {
+                    if (hasDefer) it else (it + NadelDirectives.deferDirectiveDefinition)
+                }
         }
         .asSequence()
         .map {

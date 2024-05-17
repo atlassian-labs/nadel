@@ -19,14 +19,6 @@ open class HydrationDeferTest : NadelIntegrationTest(
     """.trimIndent(),
     services = listOf(
         Service(
-            name = "shared",
-            overallSchema = """
-                directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
-            """.trimIndent(),
-            runtimeWiring = { wiring ->
-            },
-        ),
-        Service(
             name = "issues",
             overallSchema = """
                 type Query {

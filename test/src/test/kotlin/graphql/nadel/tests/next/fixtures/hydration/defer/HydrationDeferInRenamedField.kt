@@ -68,7 +68,6 @@ abstract class BaseHydrationDeferInRenamedFieldTest(
         Service(
             name = "issues",
             overallSchema = """
-              directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
               type Query {
                 issueById(id: ID!): Issue @renamed(from: "getIssueById")
                 issueByKey(key: String!): Issue @renamed(from: "getIssueByKey")

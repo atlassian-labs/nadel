@@ -110,7 +110,6 @@ abstract class HydrationDeferIsDisabled(
         Service(
             name = "issues",
             overallSchema = """
-              directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
               type Query {
                 issues: [Issue!]
                 issueByKey(key: String!): Issue
