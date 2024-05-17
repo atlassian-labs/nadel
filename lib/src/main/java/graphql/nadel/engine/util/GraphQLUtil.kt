@@ -11,6 +11,9 @@ import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl
+import graphql.incremental.IncrementalPayload
 import graphql.language.ArrayValue
 import graphql.language.BooleanValue
 import graphql.language.Definition
@@ -38,8 +41,8 @@ import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
 import graphql.nadel.NadelOperationKind
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
@@ -608,3 +611,26 @@ fun compileToDocument(
         )
     }
 }
+
+internal fun DelayedIncrementalPartialResult.copy(
+    incremental: List<IncrementalPayload>? = this.incremental,
+    extensions: Map<Any?, Any?>? = this.extensions,
+    hasNext: Boolean = this.hasNext(),
+): DelayedIncrementalPartialResult {
+    return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+        .hasNext(hasNext)
+        .incrementalItems(incremental)
+        .extensions(extensions)
+        .build()
+}
+
+internal fun ExecutableNormalizedField.getFieldDefinitionSequence(
+    schema: GraphQLSchema,
+): Sequence<GraphQLFieldDefinition> {
+    return objectTypeNames
+        .asSequence()
+        .map { parentTypeName ->
+            schema.getTypeAs<GraphQLObjectType>(parentTypeName).getField(name)
+        }
+}
+

@@ -6,8 +6,10 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.language.Document
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelIncrementalResultSupport
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
@@ -56,6 +58,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asPublisher
 import java.util.concurrent.CompletableFuture
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
@@ -150,6 +153,7 @@ internal class NextgenEngine(
                 )
             }
 
+            val incrementalResultSupport = NadelIncrementalResultSupport()
             val executionContext = NadelExecutionContext(
                 executionInput,
                 query,
@@ -157,7 +161,9 @@ internal class NextgenEngine(
                 executionHints,
                 instrumentationState,
                 timer,
+                incrementalResultSupport,
             )
+
             val beginExecuteContext = instrumentation.beginExecute(
                 query,
                 queryDocument,
@@ -200,7 +206,16 @@ internal class NextgenEngine(
             }
 
             beginExecuteContext?.onCompleted(result, null)
-            return result
+            incrementalResultSupport.onInitialResultComplete()
+
+            return if (incrementalResultSupport.hasDeferredResults()) {
+                IncrementalExecutionResultImpl.Builder()
+                    .from(result)
+                    .incrementalItemPublisher(incrementalResultSupport.resultFlow().asPublisher())
+                    .build()
+            } else {
+                result
+            }
         } catch (e: Throwable) {
             when (e) {
                 is GraphQLError -> return newExecutionResult(error = e)
@@ -209,11 +224,25 @@ internal class NextgenEngine(
         }
     }
 
-    internal suspend fun executeTopLevelField(
+    internal suspend fun executeHydration(
         topLevelField: ExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
-        serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
+        hydrationDetails: ServiceExecutionHydrationDetails,
+    ): ServiceExecutionResult {
+        return executeTopLevelField(
+            topLevelField = topLevelField,
+            service = service,
+            executionContext = executionContext.copy(
+                hydrationDetails = hydrationDetails,
+            ),
+        )
+    }
+
+    private suspend fun executeTopLevelField(
+        topLevelField: ExecutableNormalizedField,
+        service: Service,
+        executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
         val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
@@ -222,7 +251,7 @@ internal class NextgenEngine(
                 services = services,
                 service = service,
                 rootField = topLevelField,
-                serviceHydrationDetails = serviceHydrationDetails,
+                serviceHydrationDetails = executionContext.hydrationDetails,
             )
         }
         val queryTransform = timer.time(step = RootStep.QueryTransforming) {
@@ -234,7 +263,7 @@ internal class NextgenEngine(
                 service = service,
                 transformedQuery = transformedQuery,
                 executionContext = executionContext,
-                executionHydrationDetails = serviceHydrationDetails,
+                executionHydrationDetails = executionContext.hydrationDetails,
             )
         }
         val transformedResult: ServiceExecutionResult = when {

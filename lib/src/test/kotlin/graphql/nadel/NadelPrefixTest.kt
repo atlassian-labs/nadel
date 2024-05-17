@@ -17,6 +17,8 @@ class NadelPrefixTest {
         val rule = classes()
             .that()
             .areTopLevelClasses()
+            .and()
+            .areNotPrivate()
             .and(excludeGrandfatheredClassesFromNadelPrefix())
             .and().haveSimpleNameNotEndingWith("Util")
             .and().haveSimpleNameNotEndingWith("UtilKt")
