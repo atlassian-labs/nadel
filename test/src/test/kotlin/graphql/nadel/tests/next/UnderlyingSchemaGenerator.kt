@@ -40,7 +40,13 @@ private data class UnderlyingSchemaGeneratorContext(
  * This will not be helpful for ALL tests. Some tests may require you to do more modifications.
  */
 fun makeUnderlyingSchema(overallSchema: String): String {
-    val document = Parser.parse(overallSchema)
+    val document = Parser.parse(
+        if (!overallSchema.contains("@defer")) {
+            "$overallSchema\ndirective @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT"
+        } else {
+            overallSchema
+        },
+    )
     val typeRenames =
         document
             .children

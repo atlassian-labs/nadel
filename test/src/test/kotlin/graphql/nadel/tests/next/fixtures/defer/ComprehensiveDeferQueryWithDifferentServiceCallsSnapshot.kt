@@ -33,23 +33,31 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                 variables = "{}",
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Validation error (UnknownDirective@[product]) : Unknown directive 'defer'",
-                |       "locations": [
-                |         {
-                |           "line": 5,
-                |           "column": 9
-                |         }
-                |       ],
-                |       "extensions": {
-                |         "classification": "ValidationError"
-                |       }
+                |   "data": {
+                |     "product": {
+                |       "productName": "Awesome Product",
+                |       "productDescription": null
                 |     }
-                |   ]
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "product"
+                    |       ],
+                    |       "data": {
+                    |         "productImage": null
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
             ExpectedServiceCall(
@@ -71,47 +79,50 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                 variables = "{}",
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-                |       "locations": [
-                |         {
-                |           "line": 4,
-                |           "column": 9
-                |         }
-                |       ],
-                |       "extensions": {
-                |         "classification": "ValidationError"
-                |       }
-                |     },
-                |     {
-                |       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-                |       "locations": [
-                |         {
-                |           "line": 7,
-                |           "column": 9
-                |         }
-                |       ],
-                |       "extensions": {
-                |         "classification": "ValidationError"
-                |       }
-                |     },
-                |     {
-                |       "message": "Validation error (UnknownArgument@[user]) : Unknown field argument 'label'",
-                |       "locations": [
-                |         {
-                |           "line": 7,
-                |           "column": 16
-                |         }
-                |       ],
-                |       "extensions": {
-                |         "classification": "ValidationError"
-                |       }
+                |   "data": {
+                |     "user": {
+                |       "name": "Steven"
                 |     }
-                |   ]
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "user"
+                    |       ],
+                    |       "label": "team-details",
+                    |       "data": {
+                    |         "teamName": "The Unicorns",
+                    |         "teamMembers": [
+                    |           "Felipe",
+                    |           "Franklin"
+                    |         ]
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
+                    """
+                    | {
+                    |   "hasNext": true,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "user"
+                    |       ],
+                    |       "data": {
+                    |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -119,60 +130,21 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
     /**
      * ```json
      * {
-     *   "errors": [
-     *     {
-     *       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-     *       "locations": [
-     *         {
-     *           "line": 4,
-     *           "column": 9
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     },
-     *     {
-     *       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-     *       "locations": [
-     *         {
-     *           "line": 7,
-     *           "column": 9
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     },
-     *     {
-     *       "message": "Validation error (UnknownArgument@[user]) : Unknown field argument
-     * 'label'",
-     *       "locations": [
-     *         {
-     *           "line": 7,
-     *           "column": 16
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     },
-     *     {
-     *       "message": "Validation error (UnknownDirective@[product]) : Unknown directive 'defer'",
-     *       "locations": [
-     *         {
-     *           "line": 5,
-     *           "column": 9
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     }
-     *   ],
      *   "data": {
-     *     "user": null,
-     *     "product": null
+     *     "user": {
+     *       "name": "Steven",
+     *       "profilePicture": "https://examplesite.com/user/profile_picture.jpg",
+     *       "teamName": "The Unicorns",
+     *       "teamMembers": [
+     *         "Felipe",
+     *         "Franklin"
+     *       ]
+     *     },
+     *     "product": {
+     *       "productName": "Awesome Product",
+     *       "productDescription": null,
+     *       "productImage": null
+     *     }
      *   }
      * }
      * ```
@@ -180,63 +152,69 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "errors": [
-            |     {
-            |       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-            |       "locations": [
-            |         {
-            |           "line": 4,
-            |           "column": 9
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     },
-            |     {
-            |       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-            |       "locations": [
-            |         {
-            |           "line": 7,
-            |           "column": 9
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     },
-            |     {
-            |       "message": "Validation error (UnknownArgument@[user]) : Unknown field argument 'label'",
-            |       "locations": [
-            |         {
-            |           "line": 7,
-            |           "column": 16
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     },
-            |     {
-            |       "message": "Validation error (UnknownDirective@[product]) : Unknown directive 'defer'",
-            |       "locations": [
-            |         {
-            |           "line": 5,
-            |           "column": 9
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     }
-            |   ],
             |   "data": {
-            |     "user": null,
-            |     "product": null
-            |   }
+            |     "user": {
+            |       "name": "Steven"
+            |     },
+            |     "product": {
+            |       "productName": "Awesome Product",
+            |       "productDescription": null
+            |     }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "product"
+                |       ],
+                |       "data": {
+                |         "productImage": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "user"
+                |       ],
+                |       "label": "team-details",
+                |       "data": {
+                |         "teamName": "The Unicorns",
+                |         "teamMembers": [
+                |           "Felipe",
+                |           "Franklin"
+                |         ]
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "user"
+                |       ],
+                |       "data": {
+                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
