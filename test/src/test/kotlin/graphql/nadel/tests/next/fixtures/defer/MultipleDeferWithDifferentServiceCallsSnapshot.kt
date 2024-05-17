@@ -32,23 +32,30 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 variables = "{}",
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Validation error (UnknownDirective@[product]) : Unknown directive 'defer'",
-                |       "locations": [
-                |         {
-                |           "line": 4,
-                |           "column": 9
-                |         }
-                |       ],
-                |       "extensions": {
-                |         "classification": "ValidationError"
-                |       }
+                |   "data": {
+                |     "product": {
+                |       "productName": "Awesome Product"
                 |     }
-                |   ]
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "product"
+                    |       ],
+                    |       "data": {
+                    |         "productImage": null
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
             ExpectedServiceCall(
@@ -66,23 +73,30 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 variables = "{}",
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-                |       "locations": [
-                |         {
-                |           "line": 4,
-                |           "column": 9
-                |         }
-                |       ],
-                |       "extensions": {
-                |         "classification": "ValidationError"
-                |       }
+                |   "data": {
+                |     "user": {
+                |       "name": "Steven"
                 |     }
-                |   ]
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "user"
+                    |       ],
+                    |       "data": {
+                    |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -90,35 +104,15 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "errors": [
-     *     {
-     *       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-     *       "locations": [
-     *         {
-     *           "line": 4,
-     *           "column": 9
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     },
-     *     {
-     *       "message": "Validation error (UnknownDirective@[product]) : Unknown directive 'defer'",
-     *       "locations": [
-     *         {
-     *           "line": 4,
-     *           "column": 9
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     }
-     *   ],
      *   "data": {
-     *     "user": null,
-     *     "product": null
+     *     "user": {
+     *       "name": "Steven",
+     *       "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+     *     },
+     *     "product": {
+     *       "productName": "Awesome Product",
+     *       "productImage": null
+     *     }
      *   }
      * }
      * ```
@@ -126,39 +120,48 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "errors": [
-            |     {
-            |       "message": "Validation error (UnknownDirective@[user]) : Unknown directive 'defer'",
-            |       "locations": [
-            |         {
-            |           "line": 4,
-            |           "column": 9
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     },
-            |     {
-            |       "message": "Validation error (UnknownDirective@[product]) : Unknown directive 'defer'",
-            |       "locations": [
-            |         {
-            |           "line": 4,
-            |           "column": 9
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     }
-            |   ],
             |   "data": {
-            |     "user": null,
-            |     "product": null
-            |   }
+            |     "user": {
+            |       "name": "Steven"
+            |     },
+            |     "product": {
+            |       "productName": "Awesome Product"
+            |     }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "product"
+                |       ],
+                |       "data": {
+                |         "productImage": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "user"
+                |       ],
+                |       "data": {
+                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
