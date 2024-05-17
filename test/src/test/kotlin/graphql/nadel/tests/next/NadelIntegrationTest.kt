@@ -36,6 +36,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.test.runTest
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
@@ -79,7 +80,63 @@ abstract class NadelIntegrationTest(
         assert(result, incrementalResults)
         assertNadelResult(result, incrementalResults, testData)
         assertServiceCalls(testData)
-        assertIncrementalResult(nadel, executionInput, result, incrementalResults)
+    }
+
+    /**
+     * Executes the test without @defer to see if the result will be the same as combining
+     * the expected partial results.
+     */
+    @Test
+    fun executeNoDefer() = runTest {
+        val testSnapshot = getTestSnapshot()
+
+        assumeTrue(testSnapshot.result.delayedResults.isNotEmpty())
+
+        val nadel = makeNadel()
+            .build()
+
+        val executionInput = makeExecutionInput().build()
+
+        // Given
+        val combinedDeferResultMap = combineExecutionResults(
+            result = testSnapshot.result.result,
+            incrementalResults = testSnapshot.result.delayedResults,
+        )
+
+        // When
+        val noDeferResult = nadel
+            .execute(
+                executionInput.copy(
+                    query = stripDefer(executionInput.query),
+                ),
+            )
+            .await()
+
+        // Then
+        assertTrue(noDeferResult !is IncrementalExecutionResult)
+
+        // Compare data strictly, must equal 1-1
+        val noDeferResultMap = noDeferResult.toSpecification()
+        assertJsonEquals(
+            expected = mapOf("data" to noDeferResultMap["data"]),
+            actual = mapOf("data" to combinedDeferResultMap["data"]),
+            mode = JSONCompareMode.STRICT,
+        )
+        // Compare rest of data, these can be more lenient
+        // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
+        assertJsonEquals(
+            expected = mapOf(
+                "errors" to noDeferResultMap["errors"],
+                "extensions" to noDeferResultMap["extensions"],
+            ),
+            actual = mapOf(
+                "errors" to combinedDeferResultMap["errors"],
+                "extensions" to combinedDeferResultMap["extensions"],
+            ),
+            mode = JSONCompareMode.LENIENT,
+        )
+
+        assertTrue(noDeferResultMap.keys == combinedDeferResultMap.keys)
     }
 
     suspend fun capture(): TestExecutionCapture {
@@ -341,59 +398,6 @@ abstract class NadelIntegrationTest(
             // unmatched because the contents of the responses were different
             assertTrue(unmatchedExpectedDelayedResponses.isEmpty() && unmatchedActualDelayedResponses.isEmpty())
         }
-    }
-
-    private suspend fun assertIncrementalResult(
-        nadel: Nadel,
-        executionInput: NadelExecutionInput,
-        result: ExecutionResult,
-        incrementalResults: List<DelayedIncrementalPartialResult>?,
-    ) {
-        // Nothing to assert, it's going to be the same
-        if (incrementalResults.isNullOrEmpty()) {
-            return
-        }
-
-        // Given
-        val combinedDeferResultMap = combineExecutionResults(
-            result = result.toSpecification(),
-            incrementalResults = incrementalResults.map(DelayedIncrementalPartialResult::toSpecification),
-        )
-
-        // When
-        val noDeferResult = nadel
-            .execute(
-                executionInput.copy(
-                    query = stripDefer(executionInput.query),
-                ),
-            )
-            .await()
-
-        // Then
-        assertTrue(noDeferResult !is IncrementalExecutionResult)
-
-        // Compare data strictly, must equal 1-1
-        val noDeferResultMap = noDeferResult.toSpecification()
-        assertJsonEquals(
-            expected = mapOf("data" to noDeferResultMap["data"]),
-            actual = mapOf("data" to combinedDeferResultMap["data"]),
-            mode = JSONCompareMode.STRICT,
-        )
-        // Compare rest of data, these can be more lenient
-        // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
-        assertJsonEquals(
-            expected = mapOf(
-                "errors" to noDeferResultMap["errors"],
-                "extensions" to noDeferResultMap["extensions"],
-            ),
-            actual = mapOf(
-                "errors" to combinedDeferResultMap["errors"],
-                "extensions" to combinedDeferResultMap["extensions"],
-            ),
-            mode = JSONCompareMode.LENIENT,
-        )
-
-        assertTrue(noDeferResultMap.keys == combinedDeferResultMap.keys)
     }
 
     private fun <E, A> getUnmatchedElements(
