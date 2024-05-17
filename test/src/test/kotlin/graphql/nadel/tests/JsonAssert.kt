@@ -13,9 +13,9 @@ fun assertJsonEquals(
     mode: JSONCompareMode = JSONCompareMode.STRICT,
 ) {
     assertJsonEquals(
-        /* expectedStr = */ expected?.let(jsonObjectMapper::writeValueAsString),
-        /* actualStr = */ actual?.let(jsonObjectMapper::writeValueAsString),
-        /* compareMode = */ mode,
+        expected = expected?.let(jsonObjectMapper::writeValueAsString),
+        actual = actual?.let(jsonObjectMapper::writeValueAsString),
+        mode = mode,
     )
 }
 
@@ -25,9 +25,9 @@ fun assertJsonEquals(
     mode: JSONCompareMode = JSONCompareMode.STRICT,
 ) {
     assertJsonEquals(
-        /* expectedStr = */ expected?.let(jsonObjectMapper::writeValueAsString),
-        /* actualStr = */ actual?.let(jsonObjectMapper::writeValueAsString),
-        /* compareMode = */ mode,
+        expected = expected?.let(jsonObjectMapper::writeValueAsString),
+        actual = actual?.let(jsonObjectMapper::writeValueAsString),
+        mode = mode,
     )
 }
 
@@ -49,9 +49,9 @@ fun compareJson(
     mode: JSONCompareMode = JSONCompareMode.STRICT,
 ): JSONCompareResult {
     return compareJson(
-        /* expectedStr = */ expected?.let(jsonObjectMapper::writeValueAsString),
-        /* actualStr = */ actual?.let(jsonObjectMapper::writeValueAsString),
-        /* compareMode = */ mode,
+        expected = expected?.let(jsonObjectMapper::writeValueAsString),
+        actual = actual?.let(jsonObjectMapper::writeValueAsString),
+        mode = mode,
     )
 }
 
@@ -61,9 +61,9 @@ fun compareJson(
     mode: JSONCompareMode = JSONCompareMode.STRICT,
 ): JSONCompareResult {
     return compareJson(
-        /* expectedStr = */ expected?.let(jsonObjectMapper::writeValueAsString),
-        /* actualStr = */ actual?.let(jsonObjectMapper::writeValueAsString),
-        /* compareMode = */ mode,
+        expected = expected?.let(jsonObjectMapper::writeValueAsString),
+        actual = actual?.let(jsonObjectMapper::writeValueAsString),
+        mode = mode,
     )
 }
 
@@ -75,6 +75,6 @@ fun compareJson(
     return JSONCompare.compareJSON(
         /* expectedStr = */ expected,
         /* actualStr = */ actual,
-        /* compareMode = */ mode,
+        /* mode = */ mode,
     )
 }
