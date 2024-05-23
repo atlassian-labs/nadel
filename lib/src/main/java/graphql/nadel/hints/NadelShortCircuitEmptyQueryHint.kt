@@ -2,7 +2,7 @@ package graphql.nadel.hints
 
 import graphql.nadel.Service
 
-fun interface ShortCircuitEmptyQueryHint {
+fun interface NadelShortCircuitEmptyQueryHint {
     /**
      * Determines whether empty queries containing only top level __typename fields should be short-circuited without
      * calling the underlying service and executed on the internal introspection service

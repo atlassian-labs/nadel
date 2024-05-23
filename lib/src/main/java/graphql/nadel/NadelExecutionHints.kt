@@ -3,11 +3,10 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
-import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
+import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NewBatchHydrationGroupingHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
-import graphql.nadel.hints.ShortCircuitEmptyQueryHint
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
@@ -16,7 +15,7 @@ data class NadelExecutionHints(
     val newBatchHydrationGrouping: NewBatchHydrationGroupingHint,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
-    val shortCircuitEmptyQuery: ShortCircuitEmptyQueryHint,
+    val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -34,7 +33,7 @@ data class NadelExecutionHints(
         private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
         private var newBatchHydrationGrouping = NewBatchHydrationGroupingHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
-        private var shortCircuitEmptyQuery = ShortCircuitEmptyQueryHint { false }
+        private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
 
         constructor()
@@ -71,7 +70,7 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun shortCircuitEmptyQuery(flag: ShortCircuitEmptyQueryHint): Builder {
+        fun shortCircuitEmptyQuery(flag: NadelShortCircuitEmptyQueryHint): Builder {
             shortCircuitEmptyQuery = flag
             return this
         }
@@ -87,7 +86,6 @@ data class NadelExecutionHints(
                 allDocumentVariablesHint,
                 newResultMergerAndNamespacedTypename,
                 newBatchHydrationGrouping,
-                deferSupport,
                 deferSupport,
                 sharedTypeRenames,
                 shortCircuitEmptyQuery,
