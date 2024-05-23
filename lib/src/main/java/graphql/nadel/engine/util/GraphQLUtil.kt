@@ -11,6 +11,9 @@ import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl
+import graphql.incremental.IncrementalPayload
 import graphql.language.ArrayValue
 import graphql.language.BooleanValue
 import graphql.language.Definition
@@ -29,6 +32,7 @@ import graphql.language.ObjectTypeExtensionDefinition
 import graphql.language.ObjectValue
 import graphql.language.OperationDefinition
 import graphql.language.SDLDefinition
+import graphql.language.SDLNamedDefinition
 import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaExtensionDefinition
 import graphql.language.StringValue
@@ -37,6 +41,7 @@ import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
 import graphql.nadel.NadelOperationKind
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -62,13 +67,13 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
-import java.util.Arrays
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
 internal typealias AnyAstDefinition = Definition<*>
 internal typealias AnyImplementingTypeDefinition = ImplementingTypeDefinition<*>
 internal typealias AnyNamedNode = NamedNode<*>
+internal typealias AnySDLNamedDefinition = SDLNamedDefinition<*>
 internal typealias AnySDLDefinition = SDLDefinition<*>
 internal typealias AnyAstType = Type<*>
 
@@ -367,7 +372,7 @@ fun newServiceExecutionResult(
     errors: MutableList<MutableJsonMap> = mutableListOf(),
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
-    return ServiceExecutionResult(data, errors, extensions)
+    return NadelServiceExecutionResultImpl(data, errors, extensions)
 }
 
 fun newServiceExecutionResult(
@@ -406,7 +411,7 @@ fun newServiceExecutionErrorResult(
     field: ExecutableNormalizedField,
     error: GraphQLError,
 ): ServiceExecutionResult {
-    return ServiceExecutionResult(
+    return NadelServiceExecutionResultImpl(
         data = mutableMapOf(
             field.resultKey to null,
         ),
@@ -606,3 +611,26 @@ fun compileToDocument(
         )
     }
 }
+
+internal fun DelayedIncrementalPartialResult.copy(
+    incremental: List<IncrementalPayload>? = this.incremental,
+    extensions: Map<Any?, Any?>? = this.extensions,
+    hasNext: Boolean = this.hasNext(),
+): DelayedIncrementalPartialResult {
+    return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+        .hasNext(hasNext)
+        .incrementalItems(incremental)
+        .extensions(extensions)
+        .build()
+}
+
+internal fun ExecutableNormalizedField.getFieldDefinitionSequence(
+    schema: GraphQLSchema,
+): Sequence<GraphQLFieldDefinition> {
+    return objectTypeNames
+        .asSequence()
+        .map { parentTypeName ->
+            schema.getTypeAs<GraphQLObjectType>(parentTypeName).getField(name)
+        }
+}
+

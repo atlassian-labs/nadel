@@ -1,0 +1,104 @@
+name: "renamed type in union declared in same service"
+enabled: true
+# language=GraphQL
+overallSchema:
+  IssueService: |
+    type Query {
+      nodes: [Node]
+    }
+    type Issue {
+      id: ID
+    }
+    union Node = Issue | JiraComment
+    type JiraComment @renamed(from: "Comment") {
+      id: ID
+    }
+  CommentService: |
+    type Query {
+      comment: JiraComment
+    }
+# language=GraphQL
+underlyingSchema:
+  IssueService: |
+    type Query {
+      nodes: [Node]
+    }
+    type Issue {
+      id: ID
+    }
+    type Comment {
+      id: ID
+    }
+    union Node = Issue | Comment
+  CommentService: |
+    type Query {
+      comment: Comment
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+query: |
+  query {
+    nodes {
+      __typename
+      ... on Issue {
+        id
+      }
+      ... on JiraComment {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "IssueService"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          nodes {
+            __typename
+            ... on Comment {
+              id
+            }
+            ... on Issue {
+              id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "__typename": "Issue",
+              "id": "1"
+            },
+            {
+              "__typename": "Comment",
+              "id": "2"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "nodes": [
+        {
+          "__typename": "Issue",
+          "id": "1"
+        },
+        {
+          "__typename": "JiraComment",
+          "id": "2"
+        }
+      ]
+    },
+    "extensions": {}
+  }

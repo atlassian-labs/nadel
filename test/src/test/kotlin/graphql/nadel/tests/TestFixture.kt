@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT
 import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstSorter
 import graphql.language.Document
@@ -29,6 +30,7 @@ data class TestFixture(
     val serviceCalls: List<ServiceCall>,
     @JsonProperty("response")
     val responseJsonString: String?,
+    val incrementalResponse: IncrementalResponse?,
     @JsonInclude(NON_NULL)
     val exception: ExpectedException?,
 ) {
@@ -42,11 +44,14 @@ data class ServiceCall(
     val serviceName: String,
     val request: Request,
     @JsonProperty("response")
-    val responseJsonString: String,
+    val responseJsonString: String?,
+    val incrementalResponse: IncrementalResponse?,
 ) {
     @get:JsonIgnore
-    val response: JsonMap by lazy {
-        jsonObjectMapper.readValue(responseJsonString)
+    val response: JsonMap? by lazy {
+        responseJsonString?.let {
+            jsonObjectMapper.readValue(it)
+        }
     }
 
     data class Request(
@@ -86,5 +91,22 @@ data class ExpectedException(
                 },
             ),
         )
+    }
+}
+
+data class IncrementalResponse(
+    @JsonProperty("initialResponse")
+    val initialResponseJsonString: String,
+    @JsonProperty("delayedResponses")
+    val delayedResponsesJsonString: String,
+) {
+    @get:JsonIgnore
+    val initialResponse: JsonMap by lazy {
+        jsonObjectMapper.readValue(initialResponseJsonString)
+    }
+
+    @get:JsonIgnore
+    val delayedResponses: List<JsonMap> by lazy {
+        jsonObjectMapper.readValue(delayedResponsesJsonString, object : TypeReference<List<JsonMap>>() {})
     }
 }

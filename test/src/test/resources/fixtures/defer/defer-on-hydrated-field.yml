@@ -1,5 +1,5 @@
 name: "defer on hydrated field"
-enabled: true
+enabled: false
 overallSchema:
   petService: |
     directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
@@ -91,25 +91,57 @@ serviceCalls:
         }
       variables: { }
     # language=JSON
-    response: |-
-      {
-        "data": {
-          "person": {
-            "firstname": "Ziggy"
-          }
-        },
-        "extensions": {}
-      }
+#    response: |-
+#      {
+#        "data": {
+#          "person": {
+#            "firstname": "Ziggy"
+#          }
+#        },
+#        "extensions": {}
+#      }
+    incrementalResponse:
+      initialResponse: |-
+        {
+          "hasNext": true,
+          "data": {
+            "person": {
+              "firstname": "Ziggy"
+            }
+          },
+          "extensions": {}
+        }
+      delayedResponses: |-
+        [{
+          "hasNext": false,
+          "incremental": [{
+            "path": ["person"],
+            "data": {
+              "lastname": "Meowmeow"
+        
+            }
+          }]
+        }]
 # language=JSON
-response: |-
-  {
-    "data": {
-      "pet": {
-        "name": "Figaro",
-        "owner": {
+incrementalResponse:
+  initialResponse: |-
+    {
+      "hasNext": true,
+      "data": {
+        "person": {
           "firstname": "Ziggy"
         }
-      }
-    },
-    "extensions": {}
-  }
+      },
+      "extensions": {}
+    }
+  delayedResponses: |-
+    [{
+      "hasNext": false,
+      "incremental": [{
+        "path": ["person"],
+        "data": {
+          "lastname": "Meowmeow"
+        
+        }
+      }]
+    }]

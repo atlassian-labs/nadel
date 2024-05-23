@@ -1,4 +1,4 @@
-name: "operation depth limit"
+name: "operation field count limit"
 enabled: true
 # language=GraphQL
 overallSchema:
@@ -23,26 +23,20 @@ underlyingSchema:
 # language=GraphQL
 query: |
   query {
-    foo { # 1
-      child { # 2
-        child { # 3
-          child { # 4
-            child { # 5
-              child { # 6
-                child { # 7
-                  child { # 8
-                    child { # 9
-                      child { # 10
-                        name # 11
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+    foo {
+      __typename
+      name
+      child {
+        name
       }
+    }
+    __typename
+    bar: foo {
+        barName: name
+        barChild: child {
+          barTypeName: __typename
+          name
+        }
     }
   }
 variables: { }
@@ -53,7 +47,7 @@ response: |-
     "data": null,
     "errors": [
       {
-        "message": "Maximum query depth exceeded. 11 > 10",
+        "message": "Maximum field count exceeded. 11 > 10",
         "extensions": {
           "classification": "ExecutionAborted"
         }

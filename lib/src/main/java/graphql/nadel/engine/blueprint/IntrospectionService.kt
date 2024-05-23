@@ -9,6 +9,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toBuilderWithoutTypes
@@ -34,7 +35,9 @@ fun interface NadelIntrospectionRunnerFactory {
 }
 
 open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecution {
-    private val graphQL = GraphQL.newGraphQL(injectNamespaceDataFetchers(schema)).build()
+    protected val graphQL: GraphQL = GraphQL
+        .newGraphQL(injectNamespaceDataFetchers(schema))
+        .build()
 
     override fun execute(serviceExecutionParameters: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> {
         return graphQL
@@ -42,14 +45,18 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
                 ExecutionInput.newExecutionInput()
                     .query(AstPrinter.printAstCompact(serviceExecutionParameters.query))
                     .variables(serviceExecutionParameters.variables)
+                    .also(::makeExecutionInput)
                     .build()
             )
             .thenApply {
-                ServiceExecutionResult(
+                NadelServiceExecutionResultImpl(
                     data = it.getData() ?: mutableMapOf(),
                     errors = it.errors.mapTo(ArrayList(), ::toSpecification),
                 )
             }
+    }
+
+    protected open fun makeExecutionInput(input: ExecutionInput.Builder) {
     }
 
     companion object {

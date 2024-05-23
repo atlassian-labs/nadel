@@ -1,0 +1,53 @@
+name: "can specify max introspection response size"
+enabled: true
+# language=GraphQL
+overallSchema:
+  MyService: |
+    type Query {
+      hello: World
+    }
+    type World {
+      id: ID
+      name: String
+    }
+    type Mutation {
+      hello: String
+    }
+# language=GraphQL
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+# language=GraphQL
+query: |
+  query Test {
+    __schema {
+      types {
+        name
+        description
+      }
+    }
+  }
+variables: { }
+serviceCalls: [ ]
+# Note that the current mechanism does not generate an error, just null response
+# language=JSON
+response: |-
+  {
+    "data": {
+      "__schema": {
+        "types": null
+      }
+    },
+    "errors": []
+  }

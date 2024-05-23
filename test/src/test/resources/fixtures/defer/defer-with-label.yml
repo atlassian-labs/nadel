@@ -48,25 +48,49 @@ serviceCalls:
         }
       variables: { }
     # language=JSON
-    response: |-
-      {
-        "data": {
-          "defer": {
-            "hello": "world"
-          }
-        },
-        "extensions": {}
-      }
-# language=JSON
+    incrementalResponse:
+      initialResponse: |-
+        {
+          "hasNext": true,
+          "data": {
+            "defer": {
+              "hello": "world"
+            }
+          },
+          "extensions": {}
+        }
+      delayedResponses: |-
+        [{
+          "hasNext": false,
+          "incremental": [{
+            "label": "slow-defer",
+            "path": ["defer"],
+            "data": {
+              "slow": "snail"
+            }
+          }]
+        }]
 
-    # This is just checking that  can generate queries containing @defer.
-    # The response below will change once defer work is implemented.
-response: |-
-  {
-    "data": {
-      "defer": {
-        "hello": "world"
-      }
-    },
-    "extensions": {}
-  }
+# language=JSON
+incrementalResponse:
+  initialResponse: |-
+    {
+      "hasNext": true,
+      "data": {
+        "defer": {
+          "hello": "world"
+        }
+      },
+      "extensions": {}
+    }
+  delayedResponses: |-
+    [{
+      "hasNext": false,
+      "incremental": [{
+        "label": "slow-defer",
+        "path": ["defer"],
+        "data": {
+          "slow": "snail"
+        }
+      }]
+    }]

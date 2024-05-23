@@ -20,11 +20,12 @@ data class NadelOverallExecutionBlueprint(
     private val overallTypeNamesByService: Map<Service, Set<String>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,
+    private val typeRenamesByOverallTypeName: Map<String, NadelTypeRenameInstruction>,
 ) {
 
     private fun setOfServiceTypes(
         map: Map<Service, Set<String>>,
-        service: Service
+        service: Service,
     ): Set<String> {
         return (map[service] ?: error("Could not find service: ${service.name}"))
     }
@@ -46,6 +47,14 @@ data class NadelOverallExecutionBlueprint(
             return overallTypeName
         }
         return getUnderlyingBlueprint(service).typeInstructions.getUnderlyingName(overallTypeName)
+    }
+
+    fun getUnderlyingTypeName(overallTypeName: String): String {
+        return typeRenamesByOverallTypeName[overallTypeName]?.underlyingName ?: overallTypeName
+    }
+
+    fun getRename(overallTypeName: String): NadelTypeRenameInstruction? {
+        return typeRenamesByOverallTypeName[overallTypeName]
     }
 
     fun getOverallTypeName(

@@ -7,9 +7,9 @@ import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NadelSchemas
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.validation.NadelSchemaValidation
@@ -95,7 +95,7 @@ suspend fun main() {
                     )
 
                     CompletableFuture.completedFuture(
-                        ServiceExecutionResult(
+                        NadelServiceExecutionResultImpl(
                             response["data"] as MutableJsonMap
                         ),
                     )

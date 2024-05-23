@@ -7,7 +7,7 @@ plugins {
     id("com.bnorm.power.kotlin-power-assert")
 }
 
-val graphqlJavaVersion = "0.0.0-2024-01-29T22-23-58-bc2e2d2"
+val graphqlJavaVersion = "0.0.0-2024-04-30T01-25-21-2f5ff3c"
 val slf4jVersion = "1.7.25"
 
 dependencies {
@@ -21,6 +21,7 @@ dependencies {
     api(kotlin("reflect"))
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.7.3")
 
     testImplementation(kotlin("test"))
 

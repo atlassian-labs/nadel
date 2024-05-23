@@ -23,7 +23,8 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
-import graphql.nadel.util.LogKit
+import graphql.nadel.util.getLogger
+import graphql.nadel.util.getNotPrivacySafeLogger
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
@@ -233,9 +234,16 @@ class Nadel private constructor(
         private var transforms = emptyList<NadelTransform<out Any>>()
         private var introspectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner)
 
+        private var schemas: NadelSchemas? = null
         private var schemaBuilder = NadelSchemas.Builder()
 
         private var maxQueryDepth = Integer.MAX_VALUE
+        private var maxFieldCount = Integer.MAX_VALUE
+
+        fun schemas(schemas: NadelSchemas): Builder {
+            this.schemas = schemas
+            return this
+        }
 
         fun overallSchema(serviceName: String, nsdl: Reader): Builder {
             schemaBuilder.overallSchema(serviceName, nsdl)
@@ -347,8 +355,13 @@ class Nadel private constructor(
             return this
         }
 
+        fun maxFieldCount(maxFieldCount: Int): Builder {
+            this.maxFieldCount = maxFieldCount
+            return this
+        }
+
         fun build(): Nadel {
-            val (engineSchema, services) = schemaBuilder.build()
+            val (engineSchema, services) = schemas ?: schemaBuilder.build()
 
             val querySchema = QuerySchemaGenerator.generateQuerySchema(engineSchema)
 
@@ -363,6 +376,7 @@ class Nadel private constructor(
                     transforms = transforms,
                     introspectionRunnerFactory = introspectionRunnerFactory,
                     maxQueryDepth = maxQueryDepth,
+                    maxFieldCount = maxFieldCount,
                 ),
                 services = services,
                 engineSchema = engineSchema,
@@ -396,8 +410,8 @@ class Nadel private constructor(
     }
 
     companion object {
-        private val logNotSafe: Logger = LogKit.getNotPrivacySafeLogger<Nadel>()
-        private val log: Logger = LogKit.getLogger<Nadel>()
+        private val logNotSafe: Logger = getNotPrivacySafeLogger<Nadel>()
+        private val log: Logger = getLogger<Nadel>()
 
         /**
          * @return a builder of Nadel objects

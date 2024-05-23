@@ -1,18 +1,19 @@
 package graphql.nadel.validation.util
 
+import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
+import graphql.nadel.engine.util.AnySDLNamedDefinition
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
+import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
 import graphql.schema.GraphQLAppliedDirective
-import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLCompositeType
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
-import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputFieldsContainer
@@ -22,6 +23,7 @@ import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLList
 import graphql.schema.GraphQLModifiedType
 import graphql.schema.GraphQLNamedSchemaElement
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLNonNull
 import graphql.schema.GraphQLNullableType
 import graphql.schema.GraphQLObjectType
@@ -65,7 +67,7 @@ internal fun getReachableTypeNames(
             node: GraphQLUnionType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            addAll(node.types.map { it.name })
+            add(node.name)
             return CONTINUE
         }
 
@@ -134,6 +136,12 @@ internal fun getReachableTypeNames(
             node: GraphQLObjectType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
+            // Don't look at union members defined by external services
+            val parentNode = context.parentNode
+            if (parentNode is GraphQLUnionType && isUnionMemberExempt(service, parentNode, node)) {
+                return ABORT
+            }
+
             add(node.name)
             return CONTINUE
         }
@@ -254,4 +262,43 @@ internal fun getReachableTypeNames(
     }.depthFirst(traverser, serviceDefinitions)
 
     return reachableTypeNames
+}
+
+internal fun isUnionMemberExempt(
+    service: Service,
+    unionType: GraphQLUnionType,
+    memberInQuestion: GraphQLObjectType,
+): Boolean {
+    return isUnionMemberExternal(service, unionType, memberInQuestion) &&
+        isMemberMissingFromUnderlyingSchema(service, memberInQuestion)
+}
+
+/**
+ * Checks if the [unionType] definitions inside [service] actually declare [memberInQuestion].
+ *
+ * @return true if the [memberInQuestion] was NOT declared inside [service]
+ */
+internal fun isUnionMemberExternal(
+    service: Service,
+    unionType: GraphQLUnionType,
+    memberInQuestion: GraphQLObjectType,
+): Boolean {
+
+    return service.definitionRegistry.definitions
+        .asSequence()
+        .filterIsInstance<AnySDLNamedDefinition>()
+        .filter { it.name == unionType.name }
+        .flatMap {
+            (it as UnionTypeDefinition).memberTypes
+        }
+        .none {
+            it.unwrapAll().name == memberInQuestion.name
+        }
+}
+
+internal fun isMemberMissingFromUnderlyingSchema(
+    service: Service,
+    overallType: GraphQLNamedType,
+): Boolean {
+    return getUnderlyingType(overallType, service) == null
 }
