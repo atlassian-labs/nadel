@@ -2,11 +2,12 @@ package graphql.nadel.instrumentation.parameters
 
 import graphql.execution.instrumentation.InstrumentationState
 
-data class NadelInstrumentationOnErrorParameters(
-    val message: String,
+data class NadelInstrumentationOnExceptionParameters(
     val exception: Throwable,
-    val errorType: ErrorType,
-    val errorData: ErrorData,
+    /**
+     * Which service was being executed, if known.
+     */
+    val serviceName: String?,
     private val instrumentationState: InstrumentationState?,
 ) {
     fun <T : InstrumentationState?> getInstrumentationState(): T? {
@@ -15,13 +16,3 @@ data class NadelInstrumentationOnErrorParameters(
     }
 }
 
-sealed interface ErrorData {
-    data class ServiceExecutionErrorData(
-        val executionId: String,
-        val serviceName: String,
-    ) : ErrorData
-}
-
-enum class ErrorType {
-    ServiceExecutionError
-}
