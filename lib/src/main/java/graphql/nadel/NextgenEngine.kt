@@ -42,10 +42,9 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.createServiceExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
-import graphql.nadel.instrumentation.parameters.ErrorData
-import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnExceptionParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnGraphQLErrorsParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep.Companion.DocumentCompilation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.instrumentation.parameters.child
@@ -182,6 +181,7 @@ internal class NextgenEngine(
                 executionHooks,
                 executionHints,
                 instrumentationState,
+                executionInput.executionId ?: executionIdProvider.provide(executionInput),
                 timer,
                 incrementalResultSupport,
                 resultTracker,
@@ -212,7 +212,17 @@ internal class NextgenEngine(
                                     )
                                 } catch (e: Throwable) {
                                     when (e) {
-                                        is GraphQLError -> newServiceExecutionErrorResult(fields, error = e)
+                                        is GraphQLError -> {
+                                            instrumentation.onException(
+                                                NadelInstrumentationOnExceptionParameters(
+                                                    exception = e,
+                                                    instrumentationState = instrumentationState,
+                                                    serviceName = service.name,
+                                                ),
+                                            )
+
+                                            newServiceExecutionErrorResult(fields, error = e)
+                                        }
                                         else -> throw e
                                     }
                                 }
@@ -242,7 +252,17 @@ internal class NextgenEngine(
             }
         } catch (e: Throwable) {
             when (e) {
-                is GraphQLError -> newExecutionResult(error = e)
+                is GraphQLError -> {
+                    instrumentation.onException(
+                        NadelInstrumentationOnExceptionParameters(
+                            exception = e,
+                            instrumentationState = instrumentationState,
+                            serviceName = null,
+                        ),
+                    )
+
+                    newExecutionResult(error = e)
+                }
                 else -> throw e
             }
         }
@@ -348,12 +368,11 @@ internal class NextgenEngine(
                     }
             )
         }
-        val transformedResult: ServiceExecutionResult = when {
-            // Introspection fields are never batched with other fields (see NadelFieldToService),
-            // so an all-introspection batch needs no result transformation.
-            topLevelFields.all { it.name.startsWith("__") } -> result
-            else -> timer.time(step = RootStep.ResultTransforming) {
-                resultTransformer.transform(
+        // Introspection fields are never batched with other fields (see NadelFieldToService),
+        // so an all-introspection batch needs no result transformation.
+        if (!topLevelFields.all { it.name.startsWith("__") }) {
+            val transformResult = timer.time(step = RootStep.ResultTransforming) {
+                resultTransformer.mutate(
                     executionContext = executionContext,
                     serviceExecutionContext = serviceExecutionContext,
                     executionPlan = executionPlan,
@@ -363,9 +382,19 @@ internal class NextgenEngine(
                     result = result,
                 )
             }
+
+            if (transformResult.errorsAdded.isNotEmpty()) {
+                instrumentation.onGraphQLErrors(
+                    NadelInstrumentationOnGraphQLErrorsParameters(
+                        errors = transformResult.errorsAdded,
+                        instrumentationState = executionContext.instrumentationState,
+                        serviceName = service.name,
+                    ),
+                )
+            }
         }
 
-        return transformedResult
+        return result
     }
 
     private suspend fun executeService(
@@ -418,34 +447,29 @@ internal class NextgenEngine(
                 .asDeferred()
                 .await()
         } catch (e: Exception) {
-            val errorMessage = "An exception occurred invoking the service '${service.name}'"
-            val errorMessageNotSafe = "$errorMessage: ${e.message}"
-            val executionId = serviceExecParams.executionId.toString()
+            val serviceName = service.name
 
-            instrumentation.onError(
-                NadelInstrumentationOnErrorParameters(
-                    message = errorMessage,
+            instrumentation.onException(
+                NadelInstrumentationOnExceptionParameters(
                     exception = e,
                     instrumentationState = executionContext.instrumentationState,
-                    errorType = ServiceExecutionError,
-                    errorData = ErrorData.ServiceExecutionErrorData(
-                        executionId = executionId,
-                        serviceName = service.name
-                    )
-                )
-            )
-
-            newServiceExecutionResult(
-                errors = mutableListOf(
-                    newGraphQLError(
-                        message = errorMessageNotSafe, // End user can receive not safe message
-                        errorType = ErrorType.DataFetchingException,
-                        extensions = mutableMapOf(
-                            "executionId" to executionId,
-                        ),
-                    ).toSpecification(),
+                    serviceName = serviceName,
                 ),
             )
+
+            val error = if (e is GraphQLError) {
+                e
+            } else {
+                val exceptionClass = e.javaClass.simpleName
+                NadelUncaughtExecutionError(
+                    message = "An $exceptionClass occurred invoking the service $serviceName",
+                    cause = e,
+                    extensions = mutableMapOf(
+                        "executionId" to serviceExecParams.executionId.toString(),
+                    ),
+                )
+            }
+            newServiceExecutionResult(errors = mutableListOf(error.toSpecification()))
         }
 
         val transformedData: MutableJsonMap = serviceExecResult.data
