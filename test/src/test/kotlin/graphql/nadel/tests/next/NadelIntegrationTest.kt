@@ -56,7 +56,7 @@ abstract class NadelIntegrationTest(
     open val name: String get() = this::class.asTestName()
 
     @Test
-    fun execute() = runTest(timeout = 10.minutes) {
+    fun execute() = runTest {
         // Given
         val testData = getTestSnapshot()
 
