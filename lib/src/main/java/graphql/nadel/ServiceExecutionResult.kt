@@ -1,22 +1,26 @@
 package graphql.nadel
 
 import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.IncrementalPayload
 import org.reactivestreams.Publisher
 
-sealed class ServiceExecutionResult @JvmOverloads constructor(
-    val data: MutableMap<String, Any?> = LinkedHashMap(),
-    val errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
-    val extensions: MutableMap<String, Any?> = LinkedHashMap(),
-)
+sealed class ServiceExecutionResult {
+    abstract val data: MutableMap<String, Any?>
+    abstract val errors: MutableList<MutableMap<String, Any?>>
+    abstract val extensions: MutableMap<String, Any?>
+}
 
 class NadelIncrementalServiceExecutionResult(
-    serviceExecutionResult: ServiceExecutionResult,
+    override val data: MutableMap<String, Any?> = LinkedHashMap(),
+    override val errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
+    override val extensions: MutableMap<String, Any?> = LinkedHashMap(),
+    val incremental: List<IncrementalPayload>?,
     val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult>,
     val hasNext: Boolean,
-) : ServiceExecutionResult(serviceExecutionResult.data, serviceExecutionResult.errors, serviceExecutionResult.extensions)
+) : ServiceExecutionResult()
 
 class NadelServiceExecutionResultImpl @JvmOverloads constructor(
-    data: MutableMap<String, Any?> = LinkedHashMap(),
-    errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
-    extensions: MutableMap<String, Any?> = LinkedHashMap(),
-) : ServiceExecutionResult(data, errors, extensions)
+    override val data: MutableMap<String, Any?> = LinkedHashMap(),
+    override val errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
+    override val extensions: MutableMap<String, Any?> = LinkedHashMap(),
+) : ServiceExecutionResult()

@@ -17,8 +17,7 @@ open class Service(
      * These are the GraphQL definitions that a service contributes to the OVERALL schema.
      */
     val definitionRegistry: NadelDefinitionRegistry,
-
-    ) {
+) {
     override fun toString(): String {
         return "Service{name='$name'}"
     }
