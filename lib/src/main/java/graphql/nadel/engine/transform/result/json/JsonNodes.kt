@@ -85,15 +85,15 @@ class NadelCachingJsonNodes(
         flattenLists: Boolean,
     ): Sequence<JsonNode> {
         val value = map[segment]
+
         // We flatten lists as these nodes contribute to the BFS queue
         if (value is AnyList && flattenLists) {
             return getFlatNodes(value)
         }
-        val node = JsonNode(
-            value = value,
-        )
 
-        return sequenceOf(node)
+        return sequenceOf(
+            JsonNode(value = value),
+        )
     }
 
     /**

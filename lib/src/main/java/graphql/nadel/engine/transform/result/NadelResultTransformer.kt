@@ -56,7 +56,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
             deferredInstructions.add(
                 async {
-                    getRemoveArtificialFieldInstructions(executionContext, artificialFields, nodes)
+                    getRemoveArtificialFieldInstructions(artificialFields, nodes)
                 },
             )
         }
@@ -108,7 +108,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     }
 
     private fun getRemoveArtificialFieldInstructions(
-        executionContext: NadelExecutionContext,
         artificialFields: List<ExecutableNormalizedField>,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
