@@ -11,6 +11,9 @@ fun combineExecutionResults(result: JsonMap, incrementalResults: List<JsonMap>):
     @Suppress("UNCHECKED_CAST")
     val resultData = deepClone["data"] as JsonMap?
 
+    @Suppress("UNCHECKED_CAST") // Ok I wanted MutableList<*> but seems like that doesn't work for some reason…
+    val resultErrors: MutableList<Any?> = deepClone["errors"] as MutableList<Any?>? ?: mutableListOf()
+
     if (resultData != null) {
         incrementalResults
             .map {
@@ -33,11 +36,20 @@ fun combineExecutionResults(result: JsonMap, incrementalResults: List<JsonMap>):
                             throw UnsupportedOperationException("Merging @stream results is not supported yet")
                         }
                     }
+
+                    val elements: List<Any?> = (payload["errors"] as List<*>?) ?: emptyList()
+                    resultErrors.addAll(elements)
                 }
             }
     }
 
     deepClone.remove("hasNext")
+
+    // Errors could be absent, put it in
+    if (resultErrors.isNotEmpty() && "errors" !in deepClone) {
+        deepClone["errors"] = resultErrors
+    }
+
     return deepClone
 }
 
