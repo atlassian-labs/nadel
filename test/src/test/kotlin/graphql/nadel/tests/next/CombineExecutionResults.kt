@@ -11,7 +11,7 @@ fun combineExecutionResults(result: JsonMap, incrementalResults: List<JsonMap>):
     @Suppress("UNCHECKED_CAST")
     val resultData = deepClone["data"] as JsonMap?
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST") // Ok I wanted MutableList<*> but seems like that doesn't work for some reason…
     val resultErrors = deepClone["errors"] as MutableList<Any?>? ?: mutableListOf()
 
     if (resultData != null) {
