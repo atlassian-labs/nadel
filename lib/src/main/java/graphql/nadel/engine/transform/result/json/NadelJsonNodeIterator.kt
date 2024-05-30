@@ -92,10 +92,22 @@ internal class NadelJsonNodeIterator(
     }
 
     private val queryPathSegments = queryPath.segments
-    private val currentQueryPathSegments: MutableList<String> = ArrayList(queryPathSegments.size)
-    private val currentResultPathSegments: MutableList<NadelResultPathSegment> = ArrayList(queryPathSegments.size + 6)
+    private val currentQueryPathSegments = ArrayList<String>(queryPathSegments.size)
+    private val currentResultPathSegments = ArrayList<NadelResultPathSegment>(queryPathSegments.size + resultBuffer)
 
     companion object {
+        /**
+         * A random guess at a ceiling of how many indices a result path should have over the query path.
+         *
+         * e.g. query path could be [issues, users, next, friends, enemies] and a result path
+         * could be [issues, 0, users, 10, next, friends, 2, enemies, 5]
+         *
+         * So in this case our result path has 4 more elements than the query path.
+         *
+         * We use this buffer value to create a "right sized" [List] for storing the result path etc.
+         */
+        private const val resultBuffer = 6
+
         private val NONE = Any()
     }
 
@@ -109,7 +121,7 @@ internal class NadelJsonNodeIterator(
      * These are the parents of the current element, and includes the current element
      * at the end of a traversal iteration.
      */
-    private val parents: MutableList<Any?> = ArrayList<Any?>(queryPathSegments.size + 6).also {
+    private val parents: MutableList<Any?> = ArrayList<Any?>(queryPathSegments.size + resultBuffer).also {
         it.add(root)
     }
 
