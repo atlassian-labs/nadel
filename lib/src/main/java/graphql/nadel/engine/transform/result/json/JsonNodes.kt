@@ -7,9 +7,10 @@ import graphql.nadel.engine.util.JsonMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Use [NadelCachingJsonNodes] for the most part because that is faster.
+ * Generic interface to extract a [JsonNode] from the result for a given [NadelQueryPath].
  *
- * In an ideal world we switch to
+ * Use [NadelCachingJsonNodes] for the most part because that is faster.
+ * It is the default implementation.
  */
 interface JsonNodes {
     /**
