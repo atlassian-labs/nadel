@@ -31,9 +31,9 @@ internal class NadelIteratingJsonNodes(
         // So, I actually tested and using a Sequence here is somehow significantly slower
         // So let's stick with the good ol for loop
         val results = mutableListOf<JsonNode>()
-        iterator.forEach { (q, r, e) ->
-            if (q.size == queryPath.segments.size) {
-                results.add(JsonNode(e))
+        iterator.forEach { (elementQueryPath, elementResultPath, element) ->
+            if (elementQueryPath.size == queryPath.segments.size) {
+                results.add(JsonNode(element))
             }
         }
 
