@@ -39,10 +39,12 @@ internal object SchemaUtil {
     ): TypeDefinitionRegistry {
         return schemaParser.parse(
             schema,
-            ParserOptions.newParserOptions()
-                .maxTokens(maxTokens)
-                .captureSourceLocation(captureSourceLocation)
-                .build(),
+            ParserOptions.getDefaultSdlParserOptions()
+                .transform {
+                    it
+                        .maxTokens(maxTokens)
+                        .captureSourceLocation(captureSourceLocation)
+                }
         )
     }
 }
