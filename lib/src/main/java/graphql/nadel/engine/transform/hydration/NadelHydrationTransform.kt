@@ -19,19 +19,19 @@ import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform.State
-import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.getFieldDefinitionSequence
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
+import graphql.nadel.engine.util.toGraphQLError
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
@@ -175,7 +175,7 @@ internal class NadelHydrationTransform(
     ): List<NadelResultInstruction> {
         return coroutineScope {
             parentNodes
-                .map {
+                .mapNotNull {
                     prepareHydration(
                         parentNode = it,
                         state = state,
@@ -190,7 +190,25 @@ internal class NadelHydrationTransform(
                     }
                 }
                 .awaitAll()
-                .flatten()
+                .flatMap { hydration ->
+                    val setData = sequenceOf(
+                        NadelResultInstruction.Set(
+                            subject = hydration.parentNode,
+                            newValue = hydration.newValue,
+                            field = overallField,
+                        ),
+                    )
+                    val addErrors = hydration.errors
+                        .asSequence()
+                        .map { error ->
+                            toGraphQLError(error)
+                        }
+                        .map {
+                            NadelResultInstruction.AddError(it)
+                        }
+
+                    setData + addErrors
+                }
         }
     }
 
@@ -203,56 +221,56 @@ internal class NadelHydrationTransform(
     ) {
         // Prepare the hydrations before we go async
         // We need to do this because if we run it async below, we cannot guarantee that our artificial fields have not yet been removed
-        val hydrations = parentNodes.map {
-            prepareHydration(
-                parentNode = it,
-                state = state,
-                executionBlueprint = executionBlueprint,
-                fieldToHydrate = overallField,
-                executionContext = executionContext,
-            )
-        }
+        val preparedHydrations = parentNodes
+            .mapNotNull {
+                prepareHydration(
+                    parentNode = it,
+                    state = state,
+                    executionBlueprint = executionBlueprint,
+                    fieldToHydrate = overallField,
+                    executionContext = executionContext,
+                )
+            }
 
         executionContext.incrementalResultSupport.defer {
-            val instructionSequence = hydrations
+            val hydrations = preparedHydrations
                 .map {
                     async {
                         it.hydrate()
                     }
                 }
                 .awaitAll()
-                .asSequence()
-                .flatten()
-
-            val results = instructionSequence
-                .filterIsInstance<NadelResultInstruction.Set>()
-                .emptyOrSingle()
 
             DelayedIncrementalPartialResultImpl.Builder()
                 .incrementalItems(
-                    listOf(
-                        DeferPayload.Builder()
-                            .data(
-                                mapOf(
-                                    overallField.resultKey to results?.newValue?.value,
-                                ),
-                            )
-                            .path(
-                                overallField.parent?.listOfResultKeys?.let {
-                                    @Suppress("USELESS_CAST") // It's not useless because Java (yay)
-                                    it as List<Any>
-                                } ?: emptyList()
-                            )
-                            .errors(
-                                instructionSequence
-                                    .filterIsInstance<NadelResultInstruction.AddError>()
-                                    .map {
-                                        it.error
-                                    }
-                                    .toList(),
-                            )
-                            .build(),
-                    ),
+                    hydrations
+                        .map { hydration -> // Hydration of one parent node
+                            val data = hydration.newValue
+
+                            val parentPath = executionContext.resultTracker.getResultPath(
+                                overallField.queryPath.dropLast(1),
+                                hydration.parentNode,
+                            )!!
+                            val path = parentPath + overallField.resultKey
+
+                            DeferPayload.newDeferredItem()
+                                .data(
+                                    mapOf(
+                                        overallField.resultKey to data?.value,
+                                    ),
+                                )
+                                .path(parentPath)
+                                .errors(
+                                    hydration.errors
+                                        .map {
+                                            toGraphQLError(
+                                                raw = it,
+                                                path = path,
+                                            )
+                                        },
+                                )
+                                .build()
+                        }
                 )
                 .build()
         }
@@ -264,7 +282,7 @@ internal class NadelHydrationTransform(
         executionBlueprint: NadelOverallExecutionBlueprint,
         fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
-    ): NadelPreparedHydration {
+    ): NadelPreparedHydration? {
         val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
             executionBlueprint = executionBlueprint,
             service = state.hydratedFieldService,
@@ -274,19 +292,15 @@ internal class NadelHydrationTransform(
 
         // Do nothing if there is no hydration instruction associated with this result
         if (instructions.isEmpty()) {
-            return NadelPreparedHydration {
-                emptyList()
-            }
+            return null
         }
 
         val instruction = getHydrationFieldInstruction(state, instructions, executionContext.hooks, parentNode)
             ?: return NadelPreparedHydration {
-                listOf(
-                    NadelResultInstruction.Set(
-                        subject = parentNode,
-                        key = NadelResultKey(state.hydratedField.resultKey),
-                        newValue = null,
-                    ),
+                NadelHydrationResult(
+                    parentNode = parentNode,
+                    newValue = null,
+                    errors = emptyList(),
                 )
             }
 
@@ -339,33 +353,26 @@ internal class NadelHydrationTransform(
                         ).emptyOrSingle()
                     }
 
-                    val errors = result?.let(::getInstructionsToAddErrors) ?: emptyList()
-
-                    listOf(
-                        NadelResultInstruction.Set(
-                            subject = parentNode,
-                            key = NadelResultKey(fieldToHydrate.resultKey),
-                            newValue = JsonNode(data?.value),
-                        ),
-                    ) + errors
+                    NadelHydrationResult(
+                        parentNode = parentNode,
+                        newValue = JsonNode(data?.value),
+                        errors = result?.errors ?: emptyList(),
+                    )
                 }
                 is NadelHydrationStrategy.ManyToOne -> {
-                    val data = actorQueryResults.map { result ->
-                        JsonNodeExtractor.getNodesAt(
-                            data = result.data,
-                            queryPath = instruction.queryPathToActorField,
-                        ).emptyOrSingle()?.value
-                    }
+                    val data = actorQueryResults
+                        .map { result ->
+                            JsonNodeExtractor.getNodesAt(
+                                data = result.data,
+                                queryPath = instruction.queryPathToActorField,
+                            ).emptyOrSingle()?.value
+                        }
 
-                    val addErrors = getInstructionsToAddErrors(actorQueryResults)
-
-                    listOf(
-                        NadelResultInstruction.Set(
-                            subject = parentNode,
-                            key = NadelResultKey(fieldToHydrate.resultKey),
-                            newValue = JsonNode(data),
-                        ),
-                    ) + addErrors
+                    NadelHydrationResult(
+                        parentNode = parentNode,
+                        newValue = JsonNode(data),
+                        errors = actorQueryResults.flatMap { it.errors },
+                    )
                 }
             }
         }
@@ -407,7 +414,8 @@ internal class NadelHydrationTransform(
 
         return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
             // We currently don't support defer if the hydration is inside a List
-            return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
+            // return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
+            return true
         } else {
             false
         }
@@ -462,5 +470,11 @@ internal class NadelHydrationTransform(
  * So we "prepare" a hydration to ensure we have the value of the artificial field before it gets removed.
  */
 private fun interface NadelPreparedHydration {
-    suspend fun hydrate(): List<NadelResultInstruction>
+    suspend fun hydrate(): NadelHydrationResult
 }
+
+private data class NadelHydrationResult(
+    val parentNode: JsonNode,
+    val newValue: JsonNode?,
+    val errors: List<JsonMap>,
+)

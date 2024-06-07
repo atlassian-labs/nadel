@@ -15,7 +15,7 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot() {
+public class HydrationDeferInListTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
@@ -67,7 +67,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | {
                 |   "data": {
                 |     "userById": {
-                |       "name": "Franklin"
+                |       "name": "Frank"
                 |     }
                 |   }
                 | }
@@ -108,7 +108,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      *       "related": [
      *         {
      *           "assignee": {
-     *             "name": "Franklin"
+     *             "name": "Frank"
      *           }
      *         }
      *       ],
@@ -127,11 +127,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
             |     "issueByKey": {
             |       "key": "GQLGW-2",
             |       "related": [
-            |         {
-            |           "assignee": {
-            |             "name": "Franklin"
-            |           }
-            |         }
+            |         {}
             |       ]
             |     }
             |   },
@@ -142,6 +138,25 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 """
                 | {
                 |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey",
+                |         "related",
+                |         0
+                |       ],
+                |       "data": {
+                |         "assignee": {
+                |           "name": "Frank"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
                 |   "incremental": [
                 |     {
                 |       "path": [
