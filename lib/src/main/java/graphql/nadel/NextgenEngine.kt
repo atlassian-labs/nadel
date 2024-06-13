@@ -383,9 +383,7 @@ internal class NextgenEngine(
             return true
         }
         val operationType = engineSchema.getTypeAs<GraphQLObjectType>(executableNormalizedField.singleObjectTypeName)
-        val topLevelFieldDefinition =
-            operationType.fieldDefinitions.firstOrNull { it.name == executableNormalizedField.name }
-                ?: return false
+        val topLevelFieldDefinition = operationType.getField(executableNormalizedField.name)
         return if (topLevelFieldDefinition.hasAppliedDirective(namespacedDirectiveDefinition.name)) {
             executableNormalizedField.hasChildren()
                 && executableNormalizedField.children.all { it.name == TypeNameMetaFieldDef.name }

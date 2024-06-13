@@ -17,7 +17,6 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLObjectType
-import graphql.validation.ValidationError
 import graphql.validation.ValidationError.newValidationError
 import graphql.validation.ValidationErrorType
 
@@ -77,12 +76,10 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         state: GraphQLError,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val parentNodes = JsonNodes(result.data)
-            .getNodesAt(
-                queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
-                flatten = true,
-            )
-
+        val parentNodes = nodes.getNodesAt(
+            queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
+            flatten = true,
+        )
         return parentNodes.map { parentNode ->
             NadelResultInstruction.Set(
                 subject = parentNode,
