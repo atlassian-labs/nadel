@@ -6,6 +6,7 @@ import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLInt
 import graphql.Scalars.GraphQLString
 import graphql.nadel.engine.util.AnyNamedNode
+import graphql.nadel.schema.NadelDirectives.deferDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hiddenDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
@@ -42,6 +43,7 @@ object NadelBuiltInTypes {
         dynamicServiceDirectiveDefinition,
         namespacedDirectiveDefinition,
         hiddenDirectiveDefinition,
+        deferDirectiveDefinition,
 
         nadelHydrationFromArgumentDefinition,
         nadelBatchObjectIdentifiedByDefinition,

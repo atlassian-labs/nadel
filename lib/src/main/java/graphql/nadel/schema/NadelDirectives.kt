@@ -9,16 +9,15 @@ import graphql.language.InputObjectTypeDefinition
 import graphql.language.ObjectValue
 import graphql.language.SDLDefinition
 import graphql.language.StringValue
-import graphql.language.TypeDefinition
 import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
+import graphql.nadel.dsl.NadelHydrationConditionDefinition
+import graphql.nadel.dsl.NadelHydrationConditionPredicateDefinition
+import graphql.nadel.dsl.NadelHydrationDefinition
+import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.dsl.NadelHydrationDefinition
-import graphql.nadel.dsl.NadelHydrationConditionDefinition
-import graphql.nadel.dsl.NadelHydrationConditionPredicateDefinition
-import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
 import graphql.schema.GraphQLAppliedDirective
@@ -33,6 +32,13 @@ import java.util.Locale
  * If you update this file please add to NadelBuiltInTypes
  */
 object NadelDirectives {
+    val deferDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+          directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+        """.trimIndent(),
+    )
+
     val renamedDirectiveDefinition = parseDefinition<DirectiveDefinition>(
         // language=GraphQL
         """

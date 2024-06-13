@@ -203,14 +203,11 @@ private suspend fun execute(
                                     val serviceCall = serviceCalls.removeAt(indexOfCall)
                                     if (serviceCall.incrementalResponse != null && serviceCall.response != null) {
                                         failWithFixtureContext("Cannot have both an incremental and non-incremental response")
-                                    }
-                                    else if (serviceCall.incrementalResponse != null) {
+                                    } else if (serviceCall.incrementalResponse != null) {
                                         transformIncrementalExecutionResult(serviceCall)
-                                    }
-                                    else if (serviceCall.response != null) {
+                                    } else if (serviceCall.response != null) {
                                         transformExecutionResult(serviceCall.response!!)
-                                    }
-                                    else {
+                                    } else {
                                         failWithFixtureContext("Service call had no response")
                                     }
                                 } else {
@@ -225,19 +222,26 @@ private suspend fun execute(
                 }
 
                 private fun transformIncrementalExecutionResult(serviceCall: ServiceCall): CompletableFuture<ServiceExecutionResult> {
-                    val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = flowOf(*serviceCall.incrementalResponse!!.delayedResponses.toTypedArray()).map {
-                        transformDelayedIncrementalPartialResult(it)
-                    }.asPublisher()
+                    val incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> =
+                        flowOf(*serviceCall.incrementalResponse!!.delayedResponses.toTypedArray()).map {
+                            transformDelayedIncrementalPartialResult(it)
+                        }.asPublisher()
+                    val initialResponse = serviceCall.incrementalResponse.initialResponse
+
+                    if ("incremental" in initialResponse) {
+                        throw UnsupportedOperationException("We don't support this here")
+                    }
+
                     return CompletableFuture.completedFuture(
                         NadelIncrementalServiceExecutionResult(
-                            serviceExecutionResult = NadelServiceExecutionResultImpl(
-                                serviceCall.incrementalResponse.initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                                serviceCall.incrementalResponse.initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
-                                serviceCall.incrementalResponse.initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
-                            ),
+                            data = initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                            errors = initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                            extensions = initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
+                            incremental = emptyList(), // todo: support this if we need it
                             incrementalItemPublisher = incrementalItemPublisher,
-                            hasNext = true
-                        ))
+                            hasNext = true,
+                        )
+                    )
                 }
 
                 private fun transformExecutionResult(serviceCallResponse: JsonMap): CompletableFuture<ServiceExecutionResult> {
@@ -250,15 +254,15 @@ private suspend fun execute(
                     )
                 }
 
-                private fun transformDelayedIncrementalPartialResult(delayedResponse: JsonMap): DelayedIncrementalPartialResult{
+                private fun transformDelayedIncrementalPartialResult(delayedResponse: JsonMap): DelayedIncrementalPartialResult {
                     val incrementalDataVal = delayedResponse["incremental"] as List<JsonMap>
                     return newIncrementalExecutionResult()
                         .hasNext(delayedResponse["hasNext"] as Boolean)
                         .apply {
-                            if(delayedResponse["extensions"] != null) extensions(delayedResponse["extensions"] as Map<Any, Any>)
+                            if (delayedResponse["extensions"] != null) extensions(delayedResponse["extensions"] as Map<Any, Any>)
                         }
                         .incrementalItems(
-                            incrementalDataVal.map{
+                            incrementalDataVal.map {
                                 DeferPayload.newDeferredItem()
                                     .data(it["data"])
                                     .path(it["path"] as List<Object>)
