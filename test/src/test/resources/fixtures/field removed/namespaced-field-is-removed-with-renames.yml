@@ -1,11 +1,15 @@
-name: "top level field is removed"
+name: "namespaced field is removed with renames"
 enabled: true
 # language=GraphQL
 overallSchema:
   CommentService: |
     directive @toBeDeleted on FIELD_DEFINITION
+    directive @namespaced on FIELD_DEFINITION
     type Query {
-      commentById(id: ID): Comment @toBeDeleted
+      commentApi: CommentApi @namespaced
+    }
+    type CommentApi @renamed(from: "CommentApiUnderlying") {
+      commentById(id: ID): Comment @toBeDeleted @renamed(from: "commentByIdUnderlying")
     }
     type Comment {
       id: ID
@@ -14,7 +18,10 @@ overallSchema:
 underlyingSchema:
   CommentService: |
     type Query {
-      commentById(id: ID): Comment
+      commentApi: CommentApiUnderlying
+    }
+    type CommentApiUnderlying {
+      commentByIdUnderlying(id: ID): Comment
     }
     type Comment {
       id: ID
@@ -22,8 +29,10 @@ underlyingSchema:
 # language=GraphQL
 query: |
   query {
-    commentById(id: "C1") {
-      id
+    commentApi {
+      commentById(id: "C1") {
+        id
+      }
     }
   }
 variables: { }
@@ -41,6 +50,8 @@ response: |-
       }
     ],
     "data": {
-      "commentById": null
+      "commentApi": {
+        "commentById": null
+      }
     }
   }
