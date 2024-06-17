@@ -15,7 +15,7 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
+public class NestedDefersTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
@@ -23,11 +23,11 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 | {
                 |   defer {
                 |     fastField
-                |     ... @defer {
-                |       slowField
+                |     ... @defer(label: "outer defer") {
+                |       slowField1
                 |     }
-                |     ... @defer {
-                |       anotherSlowField
+                |     ... @defer(label: "inner defer") {
+                |       slowField2
                 |     }
                 |   }
                 | }
@@ -37,7 +37,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "defer": {
-                |       "fastField": "123"
+                |       "fastField": null
                 |     }
                 |   },
                 |   "hasNext": true
@@ -52,8 +52,9 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                     |       "path": [
                     |         "defer"
                     |       ],
+                    |       "label": "outer defer",
                     |       "data": {
-                    |         "slowField": "slowString"
+                    |         "slowField1": null
                     |       }
                     |     }
                     |   ]
@@ -67,8 +68,9 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                     |       "path": [
                     |         "defer"
                     |       ],
+                    |       "label": "inner defer",
                     |       "data": {
-                    |         "anotherSlowField": 123456789
+                    |         "slowField2": null
                     |       }
                     |     }
                     |   ]
@@ -83,9 +85,9 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
-     *       "fastField": "123",
-     *       "anotherSlowField": 123456789,
-     *       "slowField": "slowString"
+     *       "fastField": null,
+     *       "slowField2": null,
+     *       "slowField1": null
      *     }
      *   }
      * }
@@ -96,7 +98,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "defer": {
-            |       "fastField": "123"
+            |       "fastField": null
             |     }
             |   },
             |   "hasNext": true
@@ -111,8 +113,9 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 |       "path": [
                 |         "defer"
                 |       ],
+                |       "label": "outer defer",
                 |       "data": {
-                |         "slowField": "slowString"
+                |         "slowField1": null
                 |       }
                 |     }
                 |   ]
@@ -126,8 +129,9 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 |       "path": [
                 |         "defer"
                 |       ],
+                |       "label": "inner defer",
                 |       "data": {
-                |         "anotherSlowField": 123456789
+                |         "slowField2": null
                 |       }
                 |     }
                 |   ]
