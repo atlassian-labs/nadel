@@ -1,22 +1,22 @@
-name: "long scalar is passthrough and can be anything technically"
+name: "long scalar argument with default values"
 enabled: true
 # language=GraphQL
 overallSchema:
   service: |
     type Query {
-      aField: Long
+      getFoo(arg: Long = 123): String
     }
     scalar Long
 # language=GraphQL
 underlyingSchema:
   service: |
     type Query {
-      aField: Long
+      getFoo(arg: Long = 123): String
     }
     scalar Long
 query: |
   query {
-    aField
+    getFoo(arg: 15)
   }
 variables: { }
 serviceCalls:
@@ -25,14 +25,14 @@ serviceCalls:
       # language=GraphQL
       query: |
         query {
-          aField
+          getFoo(arg: 15)
         }
       variables: { }
     # language=JSON
     response: |-
       {
         "data": {
-          "aField": "KFC Good"
+          "getFoo": "KFC Good"
         },
         "extensions": {}
       }
@@ -40,6 +40,6 @@ serviceCalls:
 response: |-
   {
     "data": {
-      "aField": "KFC Good"
+      "getFoo": "KFC Good"
     }
   }
