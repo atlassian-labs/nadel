@@ -34,26 +34,56 @@ public class DeferOnListItemsSnapshot : TestSnapshot() {
                 variables = "{}",
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Can't resolve value (/defer/list) : type mismatch error, expected type LIST",
-                |       "path": [
-                |         "defer",
-                |         "list"
-                |       ],
-                |       "extensions": {
-                |         "classification": "DataFetchingException"
-                |       }
-                |     }
-                |   ],
                 |   "data": {
                 |     "defer": {
-                |       "list": null
+                |       "list": [
+                |         {
+                |           "fast": "fastString"
+                |         },
+                |         {
+                |           "fast": "fastString"
+                |         }
+                |       ]
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer",
+                    |         "list",
+                    |         1
+                    |       ],
+                    |       "data": {
+                    |         "slow": "slowString"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
+                    """
+                    | {
+                    |   "hasNext": true,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer",
+                    |         "list",
+                    |         0
+                    |       ],
+                    |       "data": {
+                    |         "slow": "slowString"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -61,23 +91,18 @@ public class DeferOnListItemsSnapshot : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "errors": [
-     *     {
-     *       "message": "Can't resolve value (/defer/list) : type mismatch error, expected type
-     * LIST",
-     *       "locations": [],
-     *       "path": [
-     *         "defer",
-     *         "list"
-     *       ],
-     *       "extensions": {
-     *         "classification": "DataFetchingException"
-     *       }
-     *     }
-     *   ],
      *   "data": {
      *     "defer": {
-     *       "list": null
+     *       "list": [
+     *         {
+     *           "fast": "fastString",
+     *           "slow": "slowString"
+     *         },
+     *         {
+     *           "fast": "fastString",
+     *           "slow": "slowString"
+     *         }
+     *       ]
      *     }
      *   }
      * }
@@ -86,27 +111,56 @@ public class DeferOnListItemsSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "errors": [
-            |     {
-            |       "message": "Can't resolve value (/defer/list) : type mismatch error, expected type LIST",
-            |       "locations": [],
-            |       "path": [
-            |         "defer",
-            |         "list"
-            |       ],
-            |       "extensions": {
-            |         "classification": "DataFetchingException"
-            |       }
-            |     }
-            |   ],
             |   "data": {
             |     "defer": {
-            |       "list": null
+            |       "list": [
+            |         {
+            |           "fast": "fastString"
+            |         },
+            |         {
+            |           "fast": "fastString"
+            |         }
+            |       ]
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer",
+                |         "list",
+                |         1
+                |       ],
+                |       "data": {
+                |         "slow": "slowString"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer",
+                |         "list",
+                |         0
+                |       ],
+                |       "data": {
+                |         "slow": "slowString"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
