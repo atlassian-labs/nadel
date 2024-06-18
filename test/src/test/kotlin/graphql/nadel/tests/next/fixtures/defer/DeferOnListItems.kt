@@ -3,7 +3,7 @@ package graphql.nadel.tests.next.fixtures.defer
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class DeferOnListItems : NadelIntegrationTest(
+open class DeferOnListItemsTest : NadelIntegrationTest(
     query = """
       query {
         defer {
@@ -45,17 +45,23 @@ open class DeferOnListItems : NadelIntegrationTest(
                     }
                     .type("DeferApi") { type ->
                         type
-                            .dataFetcher("list") {
-                                type
-                                    .dataFetcher("hello") { env ->
-                                        "helloString"
-                                    }
-                                    .dataFetcher("slow") { env ->
-                                        "slowString"
-                                    }
+                            .dataFetcher("list") { env ->
+                                listOf(
+                                    mapOf<String, Any>(),
+                                    mapOf<String, Any>(),
+                                )
                             }
                     }
-            },
+                    .type("Test") { type ->
+                        type
+                            .dataFetcher("fast") { env ->
+                                "fastString"
+                            }
+                            .dataFetcher("slow") { env ->
+                                "slowString"
+                            }
+                    }
+            }
         ),
     ),
 ) {
