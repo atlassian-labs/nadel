@@ -15,21 +15,16 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot() {
+public class DeferWithErrorTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
                 query = """
                 | {
                 |   defer {
-                |     fastField
-                |     ... @defer {
-                |       slowField
-                |       slowField2
-                |     }
-                |     ... @defer {
-                |       slowField3
-                |       slowField4
+                |     hello
+                |     ... @defer(label: "slow-defer") {
+                |       slow
                 |     }
                 |   }
                 | }
@@ -39,7 +34,7 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 | {
                 |   "data": {
                 |     "defer": {
-                |       "fastField": "123"
+                |       "hello": "helloString"
                 |     }
                 |   },
                 |   "hasNext": true
@@ -54,25 +49,9 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                     |       "path": [
                     |         "defer"
                     |       ],
+                    |       "label": "slow-defer",
                     |       "data": {
-                    |         "slowField": "slowString",
-                    |         "slowField2": "slowString2"
-                    |       }
-                    |     }
-                    |   ]
-                    | }
-                    """.trimMargin(),
-                    """
-                    | {
-                    |   "hasNext": true,
-                    |   "incremental": [
-                    |     {
-                    |       "path": [
-                    |         "defer"
-                    |       ],
-                    |       "data": {
-                    |         "slowField4": "slowString4",
-                    |         "slowField3": "slowString3"
+                    |         "slow": null
                     |       }
                     |     }
                     |   ]
@@ -87,11 +66,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
      * {
      *   "data": {
      *     "defer": {
-     *       "fastField": "123",
-     *       "slowField4": "slowString4",
-     *       "slowField3": "slowString3",
-     *       "slowField": "slowString",
-     *       "slowField2": "slowString2"
+     *       "hello": "helloString",
+     *       "slow": null
      *     }
      *   }
      * }
@@ -102,7 +78,7 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
             | {
             |   "data": {
             |     "defer": {
-            |       "fastField": "123"
+            |       "hello": "helloString"
             |     }
             |   },
             |   "hasNext": true
@@ -117,25 +93,9 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 |       "path": [
                 |         "defer"
                 |       ],
+                |       "label": "slow-defer",
                 |       "data": {
-                |         "slowField": "slowString",
-                |         "slowField2": "slowString2"
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "defer"
-                |       ],
-                |       "data": {
-                |         "slowField4": "slowString4",
-                |         "slowField3": "slowString3"
+                |         "slow": null
                 |       }
                 |     }
                 |   ]

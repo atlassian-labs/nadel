@@ -15,21 +15,18 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot() {
+public class DeferOnListItemsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
                 query = """
                 | {
                 |   defer {
-                |     fastField
-                |     ... @defer {
-                |       slowField
-                |       slowField2
-                |     }
-                |     ... @defer {
-                |       slowField3
-                |       slowField4
+                |     list {
+                |       fast
+                |       ... @defer {
+                |         slow
+                |       }
                 |     }
                 |   }
                 | }
@@ -39,7 +36,14 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 | {
                 |   "data": {
                 |     "defer": {
-                |       "fastField": "123"
+                |       "list": [
+                |         {
+                |           "fast": "fastString"
+                |         },
+                |         {
+                |           "fast": "fastString"
+                |         }
+                |       ]
                 |     }
                 |   },
                 |   "hasNext": true
@@ -52,11 +56,12 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "defer"
+                    |         "defer",
+                    |         "list",
+                    |         1
                     |       ],
                     |       "data": {
-                    |         "slowField": "slowString",
-                    |         "slowField2": "slowString2"
+                    |         "slow": "slowString"
                     |       }
                     |     }
                     |   ]
@@ -68,11 +73,12 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "defer"
+                    |         "defer",
+                    |         "list",
+                    |         0
                     |       ],
                     |       "data": {
-                    |         "slowField4": "slowString4",
-                    |         "slowField3": "slowString3"
+                    |         "slow": "slowString"
                     |       }
                     |     }
                     |   ]
@@ -87,11 +93,16 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
      * {
      *   "data": {
      *     "defer": {
-     *       "fastField": "123",
-     *       "slowField4": "slowString4",
-     *       "slowField3": "slowString3",
-     *       "slowField": "slowString",
-     *       "slowField2": "slowString2"
+     *       "list": [
+     *         {
+     *           "fast": "fastString",
+     *           "slow": "slowString"
+     *         },
+     *         {
+     *           "fast": "fastString",
+     *           "slow": "slowString"
+     *         }
+     *       ]
      *     }
      *   }
      * }
@@ -102,7 +113,14 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
             | {
             |   "data": {
             |     "defer": {
-            |       "fastField": "123"
+            |       "list": [
+            |         {
+            |           "fast": "fastString"
+            |         },
+            |         {
+            |           "fast": "fastString"
+            |         }
+            |       ]
             |     }
             |   },
             |   "hasNext": true
@@ -115,11 +133,12 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "defer"
+                |         "defer",
+                |         "list",
+                |         1
                 |       ],
                 |       "data": {
-                |         "slowField": "slowString",
-                |         "slowField2": "slowString2"
+                |         "slow": "slowString"
                 |       }
                 |     }
                 |   ]
@@ -131,11 +150,12 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "defer"
+                |         "defer",
+                |         "list",
+                |         0
                 |       ],
                 |       "data": {
-                |         "slowField4": "slowString4",
-                |         "slowField3": "slowString3"
+                |         "slow": "slowString"
                 |       }
                 |     }
                 |   ]
