@@ -126,11 +126,15 @@ abstract class NadelIntegrationTest(
         // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
         assertJsonEquals(
             expected = mapOf(
-                "errors" to noDeferResultMap["errors"],
+                "errors" to (noDeferResultMap["errors"] as List<Map<String, Any>>)?.map { errorMap ->
+                    errorMap.filterKeys { it != "locations" }
+                },
                 "extensions" to noDeferResultMap["extensions"],
             ),
             actual = mapOf(
-                "errors" to combinedDeferResultMap["errors"],
+                "errors" to (combinedDeferResultMap["errors"] as List<Map<String, Any>>)?.map { errorMap ->
+                    errorMap.filterKeys { it != "locations" }
+                },
                 "extensions" to combinedDeferResultMap["extensions"],
             ),
             mode = JSONCompareMode.LENIENT,

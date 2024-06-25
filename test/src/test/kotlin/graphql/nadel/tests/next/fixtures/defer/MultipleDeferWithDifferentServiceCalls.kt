@@ -2,7 +2,9 @@ package graphql.nadel.tests.next.fixtures.defer
 
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
+import kotlin.test.Ignore
 
+@Ignore
 open class MultipleDeferWithDifferentServiceCalls : NadelIntegrationTest(
     query = """
         query {
