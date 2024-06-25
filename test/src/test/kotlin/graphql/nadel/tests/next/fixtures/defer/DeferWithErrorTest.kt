@@ -6,7 +6,6 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 import kotlin.test.Ignore
 
-@Ignore
 open class DeferWithErrorTest : NadelIntegrationTest(
     query = """
       query {
