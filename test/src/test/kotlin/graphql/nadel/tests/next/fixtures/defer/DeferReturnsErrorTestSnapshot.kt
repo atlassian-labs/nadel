@@ -15,19 +15,16 @@ import kotlin.collections.listOf
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
+public class DeferReturnsErrorTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
                 query = """
                 | {
                 |   defer {
-                |     fastField
-                |     ... @defer {
-                |       slowField
-                |     }
-                |     ... @defer {
-                |       anotherSlowField
+                |     hello
+                |     ... @defer(label: "slow-defer") {
+                |       slow
                 |     }
                 |   }
                 | }
@@ -37,7 +34,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "defer": {
-                |       "fastField": "123"
+                |       "hello": "helloString"
                 |     }
                 |   },
                 |   "hasNext": true
@@ -52,23 +49,9 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                     |       "path": [
                     |         "defer"
                     |       ],
+                    |       "label": "slow-defer",
                     |       "data": {
-                    |         "anotherSlowField": 123456789
-                    |       }
-                    |     }
-                    |   ]
-                    | }
-                    """.trimMargin(),
-                    """
-                    | {
-                    |   "hasNext": true,
-                    |   "incremental": [
-                    |     {
-                    |       "path": [
-                    |         "defer"
-                    |       ],
-                    |       "data": {
-                    |         "slowField": "slowString"
+                    |         "slow": "java.lang.RuntimeException: An error occurred while fetching 'slow'"
                     |       }
                     |     }
                     |   ]
@@ -83,9 +66,8 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
-     *       "fastField": "123",
-     *       "slowField": "slowString",
-     *       "anotherSlowField": 123456789
+     *       "hello": "helloString",
+     *       "slow": "java.lang.RuntimeException: An error occurred while fetching 'slow'"
      *     }
      *   }
      * }
@@ -96,7 +78,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "defer": {
-            |       "fastField": "123"
+            |       "hello": "helloString"
             |     }
             |   },
             |   "hasNext": true
@@ -111,23 +93,9 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 |       "path": [
                 |         "defer"
                 |       ],
+                |       "label": "slow-defer",
                 |       "data": {
-                |         "anotherSlowField": 123456789
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "defer"
-                |       ],
-                |       "data": {
-                |         "slowField": "slowString"
+                |         "slow": "java.lang.RuntimeException: An error occurred while fetching 'slow'"
                 |       }
                 |     }
                 |   ]
