@@ -16,10 +16,12 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class NadelIncrementalResultSupportTest {
     @Test
@@ -97,6 +99,40 @@ class NadelIncrementalResultSupportTest {
     }
 
     @Test
+    fun `does not send anything before onInitialResultComplete is invoked`() = runTest {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+        val subject = NadelIncrementalResultSupport(channel)
+        val lock = CompletableDeferred<Boolean>()
+
+        // When
+        subject.defer {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(true)
+                .extensions(mapOf("hello" to "world"))
+                .build()
+                .also {
+                    lock.complete(true)
+                }
+        }
+
+        // Then
+        lock.join()
+
+        // Nothing comes out
+        val timeoutResult = withTimeoutOrNull(100.milliseconds) {
+            channel.receive()
+        }
+        assertTrue(timeoutResult == null)
+        assertTrue(channel.isEmpty)
+
+        // We receive the result once we invoke this
+        subject.onInitialResultComplete()
+        assertTrue(channel.receive().extensions == mapOf("hello" to "world"))
+    }
+
+    @Test
     fun `hasNext is true if last job launches more jobs`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
         val subject = NadelIncrementalResultSupport(channel)
@@ -167,6 +203,8 @@ class NadelIncrementalResultSupportTest {
         }
 
         // Then
+        subject.onInitialResultComplete()
+
         firstLock.complete(true)
         val firstItem = channel.receive()
         assertTrue(firstItem.incremental?.isEmpty() == true)
