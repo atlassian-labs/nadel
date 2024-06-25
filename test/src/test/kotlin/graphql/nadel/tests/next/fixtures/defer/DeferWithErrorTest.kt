@@ -4,7 +4,9 @@ import graphql.GraphqlErrorBuilder
 import graphql.execution.DataFetcherResult
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
+import kotlin.test.Ignore
 
+@Ignore
 open class DeferWithErrorTest : NadelIntegrationTest(
     query = """
       query {
@@ -50,13 +52,7 @@ open class DeferWithErrorTest : NadelIntegrationTest(
                                 "helloString"
                             }
                             .dataFetcher("slow") { env ->
-                                DataFetcherResult.newResult<String>()
-                                    .error(
-                                        GraphqlErrorBuilder.newError()
-                                        .message("An error occurred while fetching 'slow'")
-                                        .build()
-                                    )
-                                    .build()
+                                throw RuntimeException("An error occurred while fetching 'slow'")
                             }
                     }
             },

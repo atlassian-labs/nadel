@@ -50,6 +50,24 @@ public class DeferWithErrorTestSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "label": "slow-defer",
+                    |       "errors": [
+                    |         {
+                    |           "message": "Exception while fetching data (/defer/slow) : An error occurred while fetching 'slow'",
+                    |           "locations": [
+                    |             {
+                    |               "line": 5,
+                    |               "column": 7
+                    |             }
+                    |           ],
+                    |           "path": [
+                    |             "defer",
+                    |             "slow"
+                    |           ],
+                    |           "extensions": {
+                    |             "classification": "DataFetchingException"
+                    |           }
+                    |         }
+                    |       ],
                     |       "data": {
                     |         "slow": null
                     |       }
@@ -69,7 +87,26 @@ public class DeferWithErrorTestSnapshot : TestSnapshot() {
      *       "hello": "helloString",
      *       "slow": null
      *     }
-     *   }
+     *   },
+     *   "errors": [
+     *     {
+     *       "message": "Exception while fetching data (/defer/slow) : An error occurred while
+     * fetching 'slow'",
+     *       "locations": [
+     *         {
+     *           "line": 5,
+     *           "column": 7
+     *         }
+     *       ],
+     *       "path": [
+     *         "defer",
+     *         "slow"
+     *       ],
+     *       "extensions": {
+     *         "classification": "DataFetchingException"
+     *       }
+     *     }
+     *   ]
      * }
      * ```
      */
@@ -94,6 +131,24 @@ public class DeferWithErrorTestSnapshot : TestSnapshot() {
                 |         "defer"
                 |       ],
                 |       "label": "slow-defer",
+                |       "errors": [
+                |         {
+                |           "message": "Exception while fetching data (/defer/slow) : An error occurred while fetching 'slow'",
+                |           "locations": [
+                |             {
+                |               "line": 5,
+                |               "column": 7
+                |             }
+                |           ],
+                |           "path": [
+                |             "defer",
+                |             "slow"
+                |           ],
+                |           "extensions": {
+                |             "classification": "DataFetchingException"
+                |           }
+                |         }
+                |       ],
                 |       "data": {
                 |         "slow": null
                 |       }

@@ -69,7 +69,7 @@ open class ComprehensiveDeferQueryWithDifferentServiceCalls : NadelIntegrationTe
                                 "The Unicorns"
                             }
                             .dataFetcher("teamMembers") { env ->
-                                listOf("Felipe", "Franklin")
+                                listOf("Felipe", "Franklin", "Juliano")
                             }
                     }
             },
