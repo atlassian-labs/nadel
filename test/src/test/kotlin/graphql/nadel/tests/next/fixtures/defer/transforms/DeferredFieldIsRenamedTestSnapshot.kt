@@ -23,8 +23,10 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
                 | {
                 |   defer {
                 |     hello
-                |     rename__overallString__underlyingString: underlyingString
                 |     __typename__rename__overallString: __typename
+                |     ... @defer {
+                |       rename__overallString__underlyingString: underlyingString
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -34,13 +36,28 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "defer": {
                 |       "hello": "hello there",
-                |       "rename__overallString__underlyingString": "string for the deferred renamed field",
                 |       "__typename__rename__overallString": "DeferApi"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "data": {
+                    |         "rename__overallString__underlyingString": "string for the deferred renamed field"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -51,7 +68,8 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "defer": {
      *       "hello": "hello there",
-     *       "overallString": "string for the deferred renamed field"
+     *       "overallString": null,
+     *       "rename__overallString__underlyingString": "string for the deferred renamed field"
      *     }
      *   }
      * }
@@ -63,12 +81,28 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "defer": {
             |       "hello": "hello there",
-            |       "overallString": "string for the deferred renamed field"
+            |       "overallString": null
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer"
+                |       ],
+                |       "data": {
+                |         "rename__overallString__underlyingString": "string for the deferred renamed field"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
