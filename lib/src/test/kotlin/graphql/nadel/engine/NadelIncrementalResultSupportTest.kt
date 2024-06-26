@@ -12,7 +12,10 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.lastOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
@@ -88,10 +91,21 @@ class NadelIncrementalResultSupportTest {
 
         // Then
         firstLock.unlock()
-        secondLock.unlock()
-        thirdLock.unlock()
 
-        val results = channel.consumeAsFlow().toList()
+        val results = channel
+            .consumeAsFlow()
+            .withIndex()
+            .onEach { (index, _) ->
+                when (index) {
+                    0 -> secondLock.unlock()
+                    1 -> thirdLock.unlock()
+                    2 -> {} // Do nothing
+                    else -> throw IllegalArgumentException("Test does not expect this many elements")
+                }
+            }
+            .map { (_, value) -> value }
+            .toList()
+
         assertTrue(results.dropLast(n = 1).all { it.hasNext() })
         val lastResult = results.last()
         assertTrue((lastResult.incremental?.single() as DeferPayload).getData<String>() == "Bye world")
@@ -149,21 +163,30 @@ class NadelIncrementalResultSupportTest {
 
                 DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                     .incrementalItems(emptyList())
+                    .extensions(mapOf("id" to 2))
                     .hasNext(true)
                     .build()
             }
 
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                 .incrementalItems(emptyList())
+                .extensions(mapOf("id" to 1))
                 .hasNext(false)
                 .build()
         }
 
         // Then
+        subject.onInitialResultComplete()
         firstLock.complete(true)
 
-        val item = channel.receive()
-        assertTrue(item.hasNext())
+        val first = channel.receive()
+        assertTrue(first.hasNext())
+        assertTrue(first.extensions == mapOf("id" to 1))
+
+        secondLock.complete(true)
+        val second = channel.receive()
+        assertFalse(second.hasNext())
+        assertTrue(second.extensions == mapOf("id" to 2))
     }
 
     @Test
