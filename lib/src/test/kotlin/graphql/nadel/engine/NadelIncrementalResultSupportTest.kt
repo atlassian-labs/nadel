@@ -12,14 +12,19 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.lastOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class NadelIncrementalResultSupportTest {
     @Test
@@ -86,14 +91,59 @@ class NadelIncrementalResultSupportTest {
 
         // Then
         firstLock.unlock()
-        secondLock.unlock()
-        thirdLock.unlock()
 
-        val results = channel.consumeAsFlow().toList()
+        val results = channel
+            .consumeAsFlow()
+            .withIndex()
+            .onEach { (index, _) ->
+                when (index) {
+                    0 -> secondLock.unlock()
+                    1 -> thirdLock.unlock()
+                    2 -> {} // Do nothing
+                    else -> throw IllegalArgumentException("Test does not expect this many elements")
+                }
+            }
+            .map { (_, value) -> value }
+            .toList()
+
         assertTrue(results.dropLast(n = 1).all { it.hasNext() })
         val lastResult = results.last()
         assertTrue((lastResult.incremental?.single() as DeferPayload).getData<String>() == "Bye world")
         assertFalse(lastResult.hasNext())
+    }
+
+    @Test
+    fun `does not send anything before onInitialResultComplete is invoked`() = runTest {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+        val subject = NadelIncrementalResultSupport(channel)
+        val lock = CompletableDeferred<Boolean>()
+
+        // When
+        subject.defer {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(true)
+                .extensions(mapOf("hello" to "world"))
+                .build()
+                .also {
+                    lock.complete(true)
+                }
+        }
+
+        // Then
+        lock.join()
+
+        // Nothing comes out
+        val timeoutResult = withTimeoutOrNull(100.milliseconds) {
+            channel.receive()
+        }
+        assertTrue(timeoutResult == null)
+        assertTrue(channel.isEmpty)
+
+        // We receive the result once we invoke this
+        subject.onInitialResultComplete()
+        assertTrue(channel.receive().extensions == mapOf("hello" to "world"))
     }
 
     @Test
@@ -113,21 +163,30 @@ class NadelIncrementalResultSupportTest {
 
                 DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                     .incrementalItems(emptyList())
+                    .extensions(mapOf("id" to 2))
                     .hasNext(true)
                     .build()
             }
 
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                 .incrementalItems(emptyList())
+                .extensions(mapOf("id" to 1))
                 .hasNext(false)
                 .build()
         }
 
         // Then
+        subject.onInitialResultComplete()
         firstLock.complete(true)
 
-        val item = channel.receive()
-        assertTrue(item.hasNext())
+        val first = channel.receive()
+        assertTrue(first.hasNext())
+        assertTrue(first.extensions == mapOf("id" to 1))
+
+        secondLock.complete(true)
+        val second = channel.receive()
+        assertFalse(second.hasNext())
+        assertTrue(second.extensions == mapOf("id" to 2))
     }
 
     @Test
@@ -167,6 +226,8 @@ class NadelIncrementalResultSupportTest {
         }
 
         // Then
+        subject.onInitialResultComplete()
+
         firstLock.complete(true)
         val firstItem = channel.receive()
         assertTrue(firstItem.incremental?.isEmpty() == true)
