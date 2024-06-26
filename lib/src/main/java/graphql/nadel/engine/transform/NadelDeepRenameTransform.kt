@@ -253,6 +253,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                 queryPathToField = deepRename.queryPathToField,
                 fieldArguments = field.normalizedArguments,
                 fieldChildren = transformer.transform(field.children),
+                deferredExecutions = field.deferredExecutions
             ),
         )
     }

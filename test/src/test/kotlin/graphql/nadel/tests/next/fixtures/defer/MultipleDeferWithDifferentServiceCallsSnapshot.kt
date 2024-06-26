@@ -138,10 +138,10 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "user"
+                |         "product"
                 |       ],
                 |       "data": {
-                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                |         "productImage": null
                 |       }
                 |     }
                 |   ]
@@ -153,10 +153,10 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "product"
+                |         "user"
                 |       ],
                 |       "data": {
-                |         "productImage": null
+                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
                 |       }
                 |     }
                 |   ]
