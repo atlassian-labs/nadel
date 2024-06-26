@@ -52,9 +52,9 @@ public class NestedDefersTestSnapshot : TestSnapshot() {
                     |       "path": [
                     |         "defer"
                     |       ],
-                    |       "label": "inner defer",
+                    |       "label": "outer defer",
                     |       "data": {
-                    |         "slowField2": null
+                    |         "slowField1": null
                     |       }
                     |     }
                     |   ]
@@ -68,9 +68,9 @@ public class NestedDefersTestSnapshot : TestSnapshot() {
                     |       "path": [
                     |         "defer"
                     |       ],
-                    |       "label": "outer defer",
+                    |       "label": "inner defer",
                     |       "data": {
-                    |         "slowField1": null
+                    |         "slowField2": null
                     |       }
                     |     }
                     |   ]
@@ -86,8 +86,8 @@ public class NestedDefersTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "defer": {
      *       "fastField": null,
-     *       "slowField1": null,
-     *       "slowField2": null
+     *       "slowField2": null,
+     *       "slowField1": null
      *     }
      *   }
      * }
@@ -113,9 +113,9 @@ public class NestedDefersTestSnapshot : TestSnapshot() {
                 |       "path": [
                 |         "defer"
                 |       ],
-                |       "label": "inner defer",
+                |       "label": "outer defer",
                 |       "data": {
-                |         "slowField2": null
+                |         "slowField1": null
                 |       }
                 |     }
                 |   ]
@@ -129,9 +129,9 @@ public class NestedDefersTestSnapshot : TestSnapshot() {
                 |       "path": [
                 |         "defer"
                 |       ],
-                |       "label": "outer defer",
+                |       "label": "inner defer",
                 |       "data": {
-                |         "slowField1": null
+                |         "slowField2": null
                 |       }
                 |     }
                 |   ]
