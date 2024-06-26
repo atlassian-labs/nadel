@@ -1,15 +1,16 @@
-package graphql.nadel.tests.next.fixtures.defer
+package graphql.nadel.tests.next.fixtures.defer.transforms
 
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
+open class MultipleRenamedFieldsAreDeferredTogether : NadelIntegrationTest(
     query = """
       query {
         defer {
           hello
           ...@defer {
               overallString
+              overallString2
           }
         }
       }
@@ -26,6 +27,7 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                 type DeferApi {
                   hello: String
                   overallString: String @renamed(from: "underlyingString")
+                  overallString2: String @renamed(from: "underlyingString2")
                 }
                
             """.trimIndent(),
@@ -38,6 +40,7 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                 type DeferApi {
                   hello: String
                   underlyingString: String
+                  underlyingString2: String
                 }
                
             """.trimIndent(),
@@ -55,7 +58,10 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                                 "hello there"
                             }
                             .dataFetcher("underlyingString") { env ->
-                                "string for the deferred renamed field"
+                                "deferred string 1"
+                            }
+                            .dataFetcher("underlyingString2") { env ->
+                                "deferred string 2"
                             }
                     }
             },
