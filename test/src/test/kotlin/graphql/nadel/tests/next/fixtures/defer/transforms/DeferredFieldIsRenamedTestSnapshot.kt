@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.defer
+package graphql.nadel.tests.next.fixtures.defer.transforms
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall

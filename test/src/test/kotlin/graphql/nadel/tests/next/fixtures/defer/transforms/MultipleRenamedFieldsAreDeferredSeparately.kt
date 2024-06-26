@@ -1,15 +1,18 @@
-package graphql.nadel.tests.next.fixtures.defer
+package graphql.nadel.tests.next.fixtures.defer.transforms
 
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class QueryContainingDeferButNonDeferredFieldIsRenamedTest : NadelIntegrationTest(
+open class MultipleRenamedFieldsAreDeferredSeparately : NadelIntegrationTest(
     query = """
       query {
         defer {
-          overallString
-          ...@defer {
-             slow
+          hello
+          ...@defer(label: "defer1") {
+              overallString
+          }
+          ...@defer(label: "defer2") {
+              overallString
           }
         }
       }
@@ -24,8 +27,9 @@ open class QueryContainingDeferButNonDeferredFieldIsRenamedTest : NadelIntegrati
                   defer: DeferApi 
                 }
                 type DeferApi {
+                  hello: String
                   overallString: String @renamed(from: "underlyingString")
-                  slow: String
+                  overallString2: String @renamed(from: "underlyingString2")
                 }
                
             """.trimIndent(),
@@ -36,8 +40,9 @@ open class QueryContainingDeferButNonDeferredFieldIsRenamedTest : NadelIntegrati
                   defer: DeferApi
                 }
                 type DeferApi {
+                  hello: String
                   underlyingString: String
-                  slow: String
+                  underlyingString2: String
                 }
                
             """.trimIndent(),
@@ -51,11 +56,14 @@ open class QueryContainingDeferButNonDeferredFieldIsRenamedTest : NadelIntegrati
                     }
                     .type("DeferApi") { type ->
                         type
-                            .dataFetcher("underlyingString") { env ->
-                                "this is the (non-deferred) renamed string"
+                            .dataFetcher("hello") { env ->
+                                "hello there"
                             }
-                            .dataFetcher("slow") { env ->
-                                "this is the deferred string"
+                            .dataFetcher("underlyingString") { env ->
+                                "deferred string 1"
+                            }
+                            .dataFetcher("underlyingString2") { env ->
+                                "deferred string 2"
                             }
                     }
             },
