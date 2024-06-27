@@ -84,7 +84,7 @@ open class MultipleDeferWithDifferentServiceCalls : NadelIntegrationTest(
                             .dataFetcher("productName") { env ->
                                 "Awesome Product"
                             }
-                            .dataFetcher("profilePicture") { env ->
+                            .dataFetcher("productImage") { env ->
                                 "https://examplesite.com/product/product_image.jpg"
                             }
                     }

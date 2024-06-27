@@ -4,7 +4,7 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 import kotlin.test.Ignore
 
-@Ignore
+@Ignore("Ignored for now as test is failing. This will be implemented later. It may be a problem with ExecutableNormalisedFields in graphql-java")
 open class NestedDefersTest : NadelIntegrationTest(
     query = """
       query {
