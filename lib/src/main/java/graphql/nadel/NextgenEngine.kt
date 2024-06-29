@@ -62,6 +62,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
 import java.util.concurrent.CompletableFuture
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
@@ -355,6 +356,12 @@ internal class NextgenEngine(
                         ),
                     ).toSpecification(),
                 ),
+            )
+        }
+
+        if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
+            executionContext.incrementalResultSupport.defer(
+                serviceExecResult.incrementalItemPublisher.asFlow()
             )
         }
 
