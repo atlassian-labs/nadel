@@ -7,7 +7,8 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnExceptionParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnGraphQLErrorsParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
@@ -50,10 +51,17 @@ class ChainedNadelInstrumentation(
         }
     }
 
-    override fun onError(parameters: NadelInstrumentationOnErrorParameters) {
+    override fun onException(parameters: NadelInstrumentationOnExceptionParameters) {
         instrumentations.forEach { instrumentation: NadelInstrumentation ->
             val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
-            instrumentation.onError(parameters.copy(instrumentationState = state))
+            instrumentation.onException(parameters.copy(instrumentationState = state))
+        }
+    }
+
+    override fun onGraphQLErrors(parameters: NadelInstrumentationOnGraphQLErrorsParameters) {
+        instrumentations.forEach { instrumentation: NadelInstrumentation ->
+            val state = getStateFor(instrumentation, parameters.getInstrumentationState()!!)
+            instrumentation.onGraphQLErrors(parameters.copy(instrumentationState = state))
         }
     }
 

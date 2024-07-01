@@ -25,21 +25,21 @@ import strikt.assertions.single
 
 @UseHook
 class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-result` : EngineTestHook {
+    private class PopGoesTheWeaselException() : Exception()
+
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory
 
         return builder
-            .serviceExecutionFactory(object : ServiceExecutionFactory {
-                override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    return when (serviceName) {
-                        // This is the hydration service, we die on hydration
-                        "Bar" -> ServiceExecution {
-                            throw RuntimeException("Pop goes the weasel")
-                        }
-                        else -> serviceExecutionFactory.getServiceExecution(serviceName)
+            .serviceExecutionFactory { serviceName ->
+                when (serviceName) {
+                    // This is the hydration service, we die on hydration
+                    "Bar" -> ServiceExecution {
+                        throw PopGoesTheWeaselException()
                     }
+                    else -> serviceExecutionFactory.getServiceExecution(serviceName)
                 }
-            })
+            }
     }
 
     override fun assertResult(result: ExecutionResult) {
@@ -52,7 +52,7 @@ class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-r
         expectThat(result).errors
             .single()
             .message
-            .contains("Pop goes the weasel")
+            .contains("PopGoesTheWeaselException")
     }
 }
 
