@@ -34,11 +34,17 @@ response: |-
     "data": null,
     "errors": [
       {
-        "message": "Exactly one key must be specified for OneOf type 'SearchInput'.",
+        "message": "Validation error (WrongType@[search]) : Exactly one key must be specified for OneOf type 'SearchInput'.",
+        "locations": [
+          {
+            "line": 2,
+            "column": 10
+          }
+        ],
         "extensions": {
           "classification": "ValidationError"
         }
       }
-    ],
-    "extensions": {}
+    ]
   }
+
