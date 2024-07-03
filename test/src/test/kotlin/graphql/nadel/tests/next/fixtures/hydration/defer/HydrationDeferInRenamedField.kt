@@ -121,7 +121,7 @@ abstract class BaseHydrationDeferInRenamedFieldTest(
                                 issuesByKey[env.getArgument("key")]
                             }
                             .dataFetcher("getIssueById") { env ->
-                                issuesById[env.getArgument<String>("id").toIntOrNull()]
+                                issuesById[env.getArgument<String>("id")!!.toIntOrNull()]
                             }
                     }
             },
