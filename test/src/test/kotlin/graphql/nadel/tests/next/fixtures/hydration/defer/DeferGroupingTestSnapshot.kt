@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationDeferGroupingTest>()
+    graphql.nadel.tests.next.update<DeferGroupingTest>()
 }
 
 /**
@@ -19,15 +19,17 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
+public class DeferGroupingTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
                 | {
                 |   issue(id: 1) {
-                |     hydration__assignee__assigneeId: assigneeId
-                |     __typename__hydration__assignee: __typename
+                |     ... @defer {
+                |       key
+                |       id
+                |     }
                 |     ... @defer {
                 |       key
                 |     }
@@ -38,10 +40,7 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "issue": {
-                |       "hydration__assignee__assigneeId": "1",
-                |       "__typename__hydration__assignee": "Issue"
-                |     }
+                |     "issue": {}
                 |   },
                 |   "hasNext": true
                 | }
@@ -56,34 +55,28 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
                     |         "issue"
                     |       ],
                     |       "data": {
+                    |         "id": "1",
                     |         "key": "TEST-1"
                     |       }
                     |     }
                     |   ]
                     | }
                     """.trimMargin(),
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "monolith",
-                query = """
-                | {
-                |   user(id: "1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "user": {
-                |       "name": "Tester"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": true,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "issue"
+                    |       ],
+                    |       "data": {
+                    |         "key": "TEST-1"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -94,9 +87,7 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "issue": {
      *       "key": "TEST-1",
-     *       "assignee": {
-     *         "name": "Tester"
-     *       }
+     *       "id": "1"
      *     }
      *   }
      * }
@@ -121,10 +112,23 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
                 |         "issue"
                 |       ],
                 |       "data": {
-                |         "key": "TEST-1",
-                |         "assignee": {
-                |           "name": "Tester"
-                |         }
+                |         "id": "1",
+                |         "key": "TEST-1"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issue"
+                |       ],
+                |       "data": {
+                |         "key": "TEST-1"
                 |       }
                 |     }
                 |   ]

@@ -161,7 +161,7 @@ internal class NextgenEngine(
                 )
             }
 
-            val incrementalResultSupport = NadelIncrementalResultSupport(operation = operation)
+            val incrementalResultSupport = NadelIncrementalResultSupport(operation)
             val resultTracker = NadelResultTracker()
             val executionContext = NadelExecutionContext(
                 executionInput,
