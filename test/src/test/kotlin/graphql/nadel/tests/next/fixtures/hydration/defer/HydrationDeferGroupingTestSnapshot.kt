@@ -9,6 +9,10 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.listOf
 
+private suspend fun main() {
+    graphql.nadel.tests.next.update<HydrationDeferGroupingTest>()
+}
+
 /**
  * This class is generated. Do NOT modify.
  *
@@ -73,7 +77,9 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "user": null
+                |     "user": {
+                |       "name": "Tester"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -87,8 +93,10 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "issue": {
-     *       "assignee": null,
-     *       "key": "TEST-1"
+     *       "key": "TEST-1",
+     *       "assignee": {
+     *         "name": "Tester"
+     *       }
      *     }
      *   }
      * }
@@ -113,7 +121,10 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
                 |         "issue"
                 |       ],
                 |       "data": {
-                |         "key": "TEST-1"
+                |         "key": "TEST-1",
+                |         "assignee": {
+                |           "name": "Tester"
+                |         }
                 |       }
                 |     }
                 |   ]
@@ -122,16 +133,7 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
                 """
                 | {
                 |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issue"
-                |       ],
-                |       "data": {
-                |         "assignee": null
-                |       }
-                |     }
-                |   ]
+                |   "incremental": []
                 | }
                 """.trimMargin(),
             ),

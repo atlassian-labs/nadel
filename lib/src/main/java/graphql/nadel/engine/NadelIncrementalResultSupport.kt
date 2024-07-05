@@ -2,6 +2,7 @@ package graphql.nadel.engine
 
 import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
 import graphql.nadel.util.getLogger
@@ -114,6 +115,7 @@ class NadelIncrementalResultSupport internal constructor(
         val execution: NormalizedDeferredExecution,
     )
 
+    // todo: accumulate errors
     private val accumulatingDeferGroups = mutableMapOf<DeferGroupKey, MutableMap<String, Any?>>()
 
     private val outstandingJobCounter = OutstandingJobCounter()
@@ -123,17 +125,38 @@ class NadelIncrementalResultSupport internal constructor(
             val result = task()
             initialCompletionLock.await()
 
-            process(result)
-
             channelMutex.withLock {
+                accumulate(result)
+
                 val hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
 
-                delayedResultsChannel.send(
-                    // Copy of result but with the correct hasNext according to the info we know
-                    quickCopy(result, hasNext),
-                )
+                emitCompletedAccumulators(hasNext)
             }
         }
+    }
+
+    private suspend fun emitCompletedAccumulators(hasNext: Boolean) {
+        val payloadsToEmit = accumulatingDeferGroups
+            .filter { (key, accumulator) ->
+                // i.e. complete
+                deferGroups!!.fieldsByDefer[key.execution]!!.size == accumulator.size
+            }
+            .map {
+                // todo: not assume it's defer
+                // todo: handle errors too
+                DeferPayload.newDeferredItem()
+                    .data(it.value)
+                    .path(it.key.path)
+                    .build()
+            }
+
+        // todo: handle extensions
+        delayedResultsChannel.send(
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(payloadsToEmit)
+                .hasNext(hasNext)
+                .build(),
+        )
     }
 
     /**
@@ -147,9 +170,9 @@ class NadelIncrementalResultSupport internal constructor(
                 .collect { result ->
                     initialCompletionLock.await()
 
-                    process(result)
-
                     channelMutex.withLock {
+                        accumulate(result)
+
                         // Here we'll stipulate that the last element of the Flow sets hasNext=false
                         val hasNext = if (result.hasNext()) {
                             true
@@ -157,18 +180,18 @@ class NadelIncrementalResultSupport internal constructor(
                             outstandingJobHandle.decrementAndGetJobCount() > 0
                         }
 
-                        delayedResultsChannel.send(
-                            // Copy of result but with the correct hasNext according to the info we know
-                            quickCopy(result, hasNext),
-                        )
+                        emitCompletedAccumulators(hasNext)
                     }
                 }
         }
     }
 
-    private fun process(result: DelayedIncrementalPartialResult) {
+    /**
+     * todo: handle extensions
+     */
+    private fun accumulate(result: DelayedIncrementalPartialResult) {
         result.incremental
-            ?.forEach { payload ->
+            ?.mapNotNull { payload ->
                 when (payload) {
                     is DeferPayload -> {
                         val data = payload.getData<Map<String, Any?>?>()!! // todo: what happens if data is null?
@@ -192,13 +215,12 @@ class NadelIncrementalResultSupport internal constructor(
                                 mutableMapOf()
                             }
 
-                            accumulator.put(key, value)
-                            if (accumulator.size == deferGroups!!.fieldsByDefer[deferExecution]!!.size) {
-                                println("hello\n$accumulator")
-                            }
+                            accumulator[key] = value
                         }
                     }
-                    else -> {}
+                    else -> {
+                        null
+                    }
                 }
             }
     }

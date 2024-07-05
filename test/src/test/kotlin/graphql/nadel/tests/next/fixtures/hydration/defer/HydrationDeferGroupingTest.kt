@@ -75,7 +75,7 @@ class HydrationDeferGroupingTest : NadelIntegrationTest(
                                 val id = env.getArgument<String>("id")!!.toInt()
                                 issueById[id]
                             }
-                            .dataFetcher("users") { env ->
+                            .dataFetcher("user") { env ->
                                 val id = env.getArgument<String>("id")!!.toInt()
                                 userById[id]
                             }
