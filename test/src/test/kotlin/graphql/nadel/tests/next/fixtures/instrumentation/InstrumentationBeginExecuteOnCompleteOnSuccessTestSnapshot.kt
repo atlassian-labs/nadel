@@ -9,7 +9,7 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.listOf
 
-public suspend fun main() {
+private suspend fun main() {
     graphql.nadel.tests.next.update<InstrumentationBeginExecuteOnCompleteOnSuccessTest>()
 }
 

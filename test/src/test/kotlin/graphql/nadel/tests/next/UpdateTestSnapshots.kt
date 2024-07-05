@@ -80,7 +80,7 @@ private suspend fun main(vararg args: String) {
 
 fun makeUpdateSnapshotFunction(klass: KClass<NadelIntegrationTest>): FunSpec {
     return FunSpec.builder("main")
-        .addModifiers(KModifier.SUSPEND)
+        .addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
         .addCode("graphql.nadel.tests.next.update<%T>()", klass)
         .build()
 }
