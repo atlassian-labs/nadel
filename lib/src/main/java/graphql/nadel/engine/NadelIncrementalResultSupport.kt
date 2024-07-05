@@ -1,9 +1,13 @@
 package graphql.nadel.engine
 
+import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
 import graphql.nadel.util.getLogger
+import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedOperation
+import graphql.normalized.incremental.NormalizedDeferredExecution
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +32,8 @@ class NadelIncrementalResultSupport internal constructor(
             log.error("Dropping incremental result because of buffer overflow")
         },
     ),
+
+    private val operation: ExecutableNormalizedOperation? = null,
 ) {
     companion object {
         private val log = getLogger<NadelIncrementalResultSupport>()
@@ -53,12 +59,62 @@ class NadelIncrementalResultSupport internal constructor(
      */
     private val resultFlow by lazy(delayedResultsChannel::consumeAsFlow)
 
+    private val deferGroups: DeferGroups?
+
     init {
         coroutineJob.invokeOnCompletion {
             require(outstandingJobCounter.isEmpty())
             delayedResultsChannel.close()
         }
+
+        if (operation != null) {
+            deferGroups = parseDeferGroups(operation)
+        } else {
+            deferGroups = null
+        }
     }
+
+    private fun parseDeferGroups(operation: ExecutableNormalizedOperation): DeferGroups {
+        val fieldsByDefer = operation
+            .walkTopDown()
+            .filter {
+                it.deferredExecutions.isNotEmpty()
+            }
+            .groupBy { field ->
+                // todo: what do when there's multiple?
+                field.deferredExecutions.single()
+            }
+
+        val deferByFields = operation
+            .walkTopDown()
+            .filter {
+                it.deferredExecutions.isNotEmpty()
+            }
+            .associateWith {
+                // todo: what do when there's multiple?
+                it.deferredExecutions.single()
+            }
+
+        return DeferGroups(
+            fieldsByDefer,
+            deferByFields,
+        )
+    }
+
+    /**
+     * We are currently making the assumption that 1 field cannot span multiple defer groups
+     */
+    data class DeferGroups(
+        val fieldsByDefer: Map<NormalizedDeferredExecution, List<ExecutableNormalizedField>>,
+        val deferByFields: Map<ExecutableNormalizedField, NormalizedDeferredExecution>,
+    )
+
+    data class DeferGroupKey(
+        val path: List<Any>,
+        val execution: NormalizedDeferredExecution,
+    )
+
+    private val accumulatingDeferGroups = mutableMapOf<DeferGroupKey, MutableMap<String, Any?>>()
 
     private val outstandingJobCounter = OutstandingJobCounter()
 
@@ -66,6 +122,8 @@ class NadelIncrementalResultSupport internal constructor(
         return launch { outstandingJobHandle ->
             val result = task()
             initialCompletionLock.await()
+
+            process(result)
 
             channelMutex.withLock {
                 val hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
@@ -89,6 +147,8 @@ class NadelIncrementalResultSupport internal constructor(
                 .collect { result ->
                     initialCompletionLock.await()
 
+                    process(result)
+
                     channelMutex.withLock {
                         // Here we'll stipulate that the last element of the Flow sets hasNext=false
                         val hasNext = if (result.hasNext()) {
@@ -104,6 +164,43 @@ class NadelIncrementalResultSupport internal constructor(
                     }
                 }
         }
+    }
+
+    private fun process(result: DelayedIncrementalPartialResult) {
+        result.incremental
+            ?.forEach { payload ->
+                when (payload) {
+                    is DeferPayload -> {
+                        val data = payload.getData<Map<String, Any?>?>()!! // todo: what happens if data is null?
+
+                        data.forEach { (key, value) ->
+                            val deferExecution = deferGroups!!.deferByFields
+                                .entries
+                                .find { (field) ->
+                                    if (payload.path.isEmpty()) {
+                                        field.parent == null && field.resultKey == key
+                                    } else {
+                                        field.parent.listOfResultKeys == payload.path.filterIsInstance<String>()
+                                            && field.resultKey == key
+                                    }
+                                }!!
+                                .value
+
+                            val deferKey = DeferGroupKey(payload.path, deferExecution)
+
+                            val accumulator = accumulatingDeferGroups.computeIfAbsent(deferKey) {
+                                mutableMapOf()
+                            }
+
+                            accumulator.put(key, value)
+                            if (accumulator.size == deferGroups!!.fieldsByDefer[deferExecution]!!.size) {
+                                println("hello\n$accumulator")
+                            }
+                        }
+                    }
+                    else -> {}
+                }
+            }
     }
 
     fun hasDeferredResults(): Boolean {
@@ -207,3 +304,25 @@ class NadelIncrementalResultSupport internal constructor(
         }
     }
 }
+
+/**
+ * Similar to [java.io.File.walkTopDown] but for ENFs.
+ */
+fun ExecutableNormalizedOperation.walkTopDown(): Sequence<ExecutableNormalizedField> {
+    return topLevelFields
+        .asSequence()
+        .flatMap {
+            it.walkTopDown()
+        }
+}
+
+/**
+ * Similar to [java.io.File.walkTopDown] but for ENFs.
+ */
+fun ExecutableNormalizedField.walkTopDown(): Sequence<ExecutableNormalizedField> {
+    return sequenceOf(this) + children.asSequence()
+        .flatMap {
+            it.walkTopDown()
+        }
+}
+

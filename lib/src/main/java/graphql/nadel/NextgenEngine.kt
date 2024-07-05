@@ -150,7 +150,7 @@ internal class NextgenEngine(
             val operationParseOptions = baseParseOptions
                 .deferSupport(executionHints.deferSupport.invoke())
 
-            val query = timer.time(step = RootStep.ExecutableOperationParsing) {
+            val operation = timer.time(step = RootStep.ExecutableOperationParsing) {
                 createExecutableNormalizedOperationWithRawVariables(
                     querySchema,
                     queryDocument,
@@ -161,11 +161,11 @@ internal class NextgenEngine(
                 )
             }
 
-            val incrementalResultSupport = NadelIncrementalResultSupport()
+            val incrementalResultSupport = NadelIncrementalResultSupport(operation = operation)
             val resultTracker = NadelResultTracker()
             val executionContext = NadelExecutionContext(
                 executionInput,
-                query,
+                operation,
                 executionHooks,
                 executionHints,
                 instrumentationState,
@@ -175,7 +175,7 @@ internal class NextgenEngine(
             )
 
             val beginExecuteContext = instrumentation.beginExecute(
-                query,
+                operation,
                 queryDocument,
                 executionInput,
                 engineSchema,
@@ -183,7 +183,7 @@ internal class NextgenEngine(
             )
 
             val result: ExecutionResult = try {
-                val fields = fieldToService.getServicesForTopLevelFields(query, executionHints)
+                val fields = fieldToService.getServicesForTopLevelFields(operation, executionHints)
                 val results = coroutineScope {
                     fields
                         .map { (field, service) ->
