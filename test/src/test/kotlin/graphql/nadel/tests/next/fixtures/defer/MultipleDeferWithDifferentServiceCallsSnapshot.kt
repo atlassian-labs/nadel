@@ -9,6 +9,10 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.listOf
 
+private suspend fun main() {
+    graphql.nadel.tests.next.update<MultipleDeferWithDifferentServiceCalls>()
+}
+
 /**
  * This class is generated. Do NOT modify.
  *
