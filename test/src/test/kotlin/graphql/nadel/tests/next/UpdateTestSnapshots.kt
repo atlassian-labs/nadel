@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -25,13 +26,24 @@ import kotlin.reflect.KClass
 // For navigation so you can search up UpdateTestSnapshots
 private typealias UpdateTestSnapshots = Unit
 
-suspend fun main() {
+suspend inline fun <reified T : NadelIntegrationTest> update() {
+    return update(T::class)
+}
+
+suspend fun <T : NadelIntegrationTest> update(klass: KClass<T>) {
+    main(klass.qualifiedName!!)
+}
+
+private suspend fun main(vararg args: String) {
     val sourceRoot = File("test/src/test/kotlin/")
     require(sourceRoot.exists() && sourceRoot.isDirectory)
 
     getTestClassSequence()
         .onEach { klass ->
             println("Loading ${klass.qualifiedName}")
+        }
+        .filter {
+            args.isEmpty() || args.contains(it.qualifiedName)
         }
         .map {
             it to it.newInstanceNoArgConstructor()
@@ -45,6 +57,7 @@ suspend fun main() {
             val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
                 .indent(' '.toString().repeat(4))
                 .addFileComment("@formatter:off")
+                .addFunction(makeUpdateSnapshotFunction(klass))
                 .addType(makeTestSnapshotClass(klass, captured))
                 .build()
                 .writeTo(sourceRoot)
@@ -63,6 +76,13 @@ suspend fun main() {
                         ),
                 )
         }
+}
+
+fun makeUpdateSnapshotFunction(klass: KClass<NadelIntegrationTest>): FunSpec {
+    return FunSpec.builder("main")
+        .addModifiers(KModifier.SUSPEND)
+        .addCode("graphql.nadel.tests.next.update<%T>()", klass)
+        .build()
 }
 
 private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
