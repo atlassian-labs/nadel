@@ -4,18 +4,13 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-/**
- * Ensures that `assignee` (hydration) and `key` (not hydration) get returned together.
- *
- * The issue here is that `key` gets fulfilled by the underlying service, and `assignee` by us.
- */
 class HydrationDeferGroupingTest : NadelIntegrationTest(
     query = """
         query {
           issue(id: 1) {
             ... @defer {
-              key
-              assignee {
+              key # From underlying service defer
+              assignee { # From Nadel hydration defer
                 name
               }
             }
