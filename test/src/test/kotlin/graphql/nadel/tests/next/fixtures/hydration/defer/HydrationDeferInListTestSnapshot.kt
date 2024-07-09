@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationDeferIsDisabledForRelatedIssuesTest>()
+    graphql.nadel.tests.next.update<HydrationDeferInListTest>()
 }
 
 /**

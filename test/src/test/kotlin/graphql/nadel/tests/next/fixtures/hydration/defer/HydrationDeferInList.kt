@@ -164,14 +164,14 @@ abstract class HydrationDeferInList(
                     .type("Issue") { type ->
                         type
                             .dataFetcher("related") { env ->
-                                env.getSource<Issue>()
+                                env.getSource<Issue>()!!
                                     .relatedKeys
                                     .map {
                                         issuesByKey[it]!!
                                     }
                             }
                             .dataFetcher("parent") { env ->
-                                issuesByKey[env.getSource<Issue>().parentKey]
+                                issuesByKey[env.getSource<Issue>()!!.parentKey]
                             }
                     }
             },

@@ -126,7 +126,7 @@ abstract class HydrationDeferForwardsErrors(
                                 issuesByKey[env.getArgument("key")]
                             }
                             .dataFetcher("issuesByKeys") { env ->
-                                val keys = env.getArgument<List<String>>("keys").toSet()
+                                val keys = env.getArgument<List<String>>("keys")!!.toSet()
                                 issues
                                     .filter {
                                         it.key in keys
@@ -146,14 +146,14 @@ abstract class HydrationDeferForwardsErrors(
                     .type("Issue") { type ->
                         type
                             .dataFetcher("related") { env ->
-                                env.getSource<Issue>()
+                                env.getSource<Issue>()!!
                                     .relatedKeys
                                     .map {
                                         issuesByKey[it]!!
                                     }
                             }
                             .dataFetcher("parent") { env ->
-                                issuesByKey[env.getSource<Issue>().parentKey]
+                                issuesByKey[env.getSource<Issue>()!!.parentKey]
                             }
                     }
             },
@@ -197,7 +197,7 @@ abstract class HydrationDeferForwardsErrors(
                     .type("Query") { type ->
                         type
                             .dataFetcher("userById") { env ->
-                                val id = env.getArgument<String>("id")
+                                val id = env.getArgument<String>("id")!!
                                 usersById[id] ?: throw UserNotFoundError(id)
                             }
                     }
