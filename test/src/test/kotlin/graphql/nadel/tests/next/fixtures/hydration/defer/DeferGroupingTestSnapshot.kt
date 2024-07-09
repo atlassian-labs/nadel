@@ -112,7 +112,15 @@ public class DeferGroupingTestSnapshot : TestSnapshot() {
                 |         "issue"
                 |       ],
                 |       "data": {
-                |         "id": "1",
+                |         "key": "TEST-1",
+                |         "id": "1"
+                |       }
+                |     },
+                |     {
+                |       "path": [
+                |         "issue"
+                |       ],
+                |       "data": {
                 |         "key": "TEST-1"
                 |       }
                 |     }

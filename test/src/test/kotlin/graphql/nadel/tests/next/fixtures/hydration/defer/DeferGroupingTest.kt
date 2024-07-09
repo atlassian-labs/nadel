@@ -6,18 +6,18 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 
 class DeferGroupingTest : NadelIntegrationTest(
     query = """
-query {
-  issue(id: 1) {
-    ... @defer {
-      key
-      id
-    }
-    
-    ... @defer {
-      key
-    }
-  }
-}
+      query {
+        issue(id: 1) {
+          ... @defer {
+            key
+            id
+          }
+          
+          ... @defer {
+            key
+          }
+        }
+      }
     """.trimIndent(),
     services = listOf(
         Service(
