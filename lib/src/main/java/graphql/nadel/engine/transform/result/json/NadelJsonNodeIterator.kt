@@ -6,6 +6,7 @@ import graphql.nadel.engine.transform.result.json.NadelEphemeralJsonNode.Compani
 import graphql.nadel.engine.transform.result.json.NadelEphemeralJsonNode.Companion.component3
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.result.NadelResultPath
 import graphql.nadel.result.NadelResultPathSegment
 
 /**
@@ -56,12 +57,12 @@ internal class NadelIteratingJsonNodes(
  */
 internal abstract class NadelEphemeralJsonNode {
     abstract val queryPath: List<String>
-    abstract val resultPath: List<NadelResultPathSegment>
+    abstract val resultPath: NadelResultPath
     abstract val value: Any?
 
     companion object {
         operator fun NadelEphemeralJsonNode.component1(): List<String> = queryPath
-        operator fun NadelEphemeralJsonNode.component2(): List<NadelResultPathSegment> = resultPath
+        operator fun NadelEphemeralJsonNode.component2(): NadelResultPath = resultPath
         operator fun NadelEphemeralJsonNode.component3(): Any? = value
     }
 }
@@ -113,7 +114,7 @@ internal class NadelJsonNodeIterator(
 
     private val ephemeralJsonNode = object : NadelEphemeralJsonNode() {
         override val queryPath get() = currentQueryPathSegments
-        override val resultPath get() = currentResultPathSegments
+        override val resultPath get() = NadelResultPath(currentResultPathSegments)
         override var value: Any? = NONE
     }
 

@@ -4,20 +4,20 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.jsonObjectMapper
+import graphql.nadel.result.NadelResultPath
 import graphql.nadel.result.NadelResultPathBuilder
-import graphql.nadel.result.NadelResultPathSegment
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
 class NadelJsonNodeIteratorTest {
     private data class TraversedJsonNode(
         override val queryPath: List<String>,
-        override val resultPath: List<NadelResultPathSegment>,
+        override val resultPath: NadelResultPath,
         override val value: Any?,
     ) : NadelEphemeralJsonNode() {
         constructor(other: NadelEphemeralJsonNode) : this(
             queryPath = other.queryPath.toList(),
-            resultPath = other.resultPath.toList(),
+            resultPath = other.resultPath.clone(),
             value = other.value,
         )
     }
@@ -45,7 +45,7 @@ class NadelJsonNodeIteratorTest {
         val expectedTraversals = listOf(
             TraversedJsonNode(
                 queryPath = emptyList(),
-                resultPath = emptyList(),
+                resultPath = NadelResultPath.empty,
                 value = root,
             ),
             TraversedJsonNode(
@@ -123,7 +123,7 @@ class NadelJsonNodeIteratorTest {
         val expectedTraversals = listOf(
             TraversedJsonNode(
                 queryPath = emptyList(),
-                resultPath = emptyList(),
+                resultPath = NadelResultPath.empty,
                 value = root,
             ),
             TraversedJsonNode(
