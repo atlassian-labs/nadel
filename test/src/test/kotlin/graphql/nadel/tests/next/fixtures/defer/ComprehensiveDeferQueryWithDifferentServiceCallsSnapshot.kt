@@ -9,6 +9,10 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.listOf
 
+private suspend fun main() {
+    graphql.nadel.tests.next.update<ComprehensiveDeferQueryWithDifferentServiceCalls>()
+}
+
 /**
  * This class is generated. Do NOT modify.
  *
@@ -96,8 +100,14 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                     |       "path": [
                     |         "user"
                     |       ],
+                    |       "label": "team-details",
                     |       "data": {
-                    |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                    |         "teamName": "The Unicorns",
+                    |         "teamMembers": [
+                    |           "Felipe",
+                    |           "Franklin",
+                    |           "Juliano"
+                    |         ]
                     |       }
                     |     }
                     |   ]
@@ -111,14 +121,8 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                     |       "path": [
                     |         "user"
                     |       ],
-                    |       "label": "team-details",
                     |       "data": {
-                    |         "teamName": "The Unicorns",
-                    |         "teamMembers": [
-                    |           "Felipe",
-                    |           "Franklin",
-                    |           "Juliano"
-                    |         ]
+                    |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
                     |       }
                     |     }
                     |   ]
@@ -134,13 +138,13 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
      *   "data": {
      *     "user": {
      *       "name": "Steven",
+     *       "profilePicture": "https://examplesite.com/user/profile_picture.jpg",
      *       "teamName": "The Unicorns",
      *       "teamMembers": [
      *         "Felipe",
      *         "Franklin",
      *         "Juliano"
-     *       ],
-     *       "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+     *       ]
      *     },
      *     "product": {
      *       "productName": "Awesome Product",
@@ -175,8 +179,14 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                 |       "path": [
                 |         "user"
                 |       ],
+                |       "label": "team-details",
                 |       "data": {
-                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                |         "teamName": "The Unicorns",
+                |         "teamMembers": [
+                |           "Felipe",
+                |           "Franklin",
+                |           "Juliano"
+                |         ]
                 |       }
                 |     }
                 |   ]
@@ -205,14 +215,8 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                 |       "path": [
                 |         "user"
                 |       ],
-                |       "label": "team-details",
                 |       "data": {
-                |         "teamName": "The Unicorns",
-                |         "teamMembers": [
-                |           "Felipe",
-                |           "Franklin",
-                |           "Juliano"
-                |         ]
+                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
                 |       }
                 |     }
                 |   ]
