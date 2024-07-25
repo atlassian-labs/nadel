@@ -61,28 +61,36 @@ private suspend fun main(vararg args: String) {
 
             val captured = test.capture()
 
-            val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
-                .indent(' '.toString().repeat(4))
-                .addFileComment(FORMATTER_OFF)
-                .addFunction(makeUpdateSnapshotFunction(klass))
-                .addType(makeTestSnapshotClass(klass, captured))
-                .build()
-                .writeTo(sourceRoot)
-
-            // Fixes shitty indentation
-            outputFile
-                .writeText(
-                    outputFile.readText()
-                        .replace(
-                            "            ),\n            )\n",
-                            "            ),\n        )\n",
-                        )
-                        .replace(
-                            "            \"\"\".trimMargin(),\n            )\n",
-                            "            \"\"\".trimMargin(),\n        )\n",
-                        ),
-                )
+            writeTestSnapshotClass(klass, captured, sourceRoot)
         }
+}
+
+fun writeTestSnapshotClass(
+    klass: KClass<NadelIntegrationTest>,
+    captured: TestExecutionCapture,
+    sourceRoot: File,
+) {
+    val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
+        .indent(' '.toString().repeat(4))
+        .addFileComment(FORMATTER_OFF)
+        .addFunction(makeUpdateSnapshotFunction(klass))
+        .addType(makeTestSnapshotClass(klass, captured))
+        .build()
+        .writeTo(sourceRoot)
+
+    // Fixes shitty indentation
+    outputFile
+        .writeText(
+            outputFile.readText()
+                .replace(
+                    "            ),\n            )\n",
+                    "            ),\n        )\n",
+                )
+                .replace(
+                    "            \"\"\".trimMargin(),\n            )\n",
+                    "            \"\"\".trimMargin(),\n        )\n",
+                ),
+        )
 }
 
 private fun getNonExistentOrAll(klasses: List<KClass<NadelIntegrationTest>>): List<KClass<NadelIntegrationTest>> {

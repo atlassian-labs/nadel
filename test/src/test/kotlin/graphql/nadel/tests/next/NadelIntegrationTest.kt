@@ -21,8 +21,8 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
-import graphql.nadel.tests.assertJsonEquals
-import graphql.nadel.tests.compareJson
+import graphql.nadel.tests.assertJsonObjectEquals
+import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
@@ -41,7 +41,6 @@ import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.minutes
 
 abstract class NadelIntegrationTest(
     val operationName: String? = null,
@@ -117,14 +116,14 @@ abstract class NadelIntegrationTest(
 
         // Compare data strictly, must equal 1-1
         val noDeferResultMap = noDeferResult.toSpecification()
-        assertJsonEquals(
+        assertJsonObjectEquals(
             expected = mapOf("data" to noDeferResultMap["data"]),
             actual = mapOf("data" to combinedDeferResultMap["data"]),
             mode = JSONCompareMode.STRICT,
         )
         // Compare rest of data, these can be more lenient
         // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
-        assertJsonEquals(
+        assertJsonObjectEquals(
             expected = mapOf(
                 "errors" to (noDeferResultMap["errors"] as? List<Map<String, Any>>)?.map { errorMap ->
                     errorMap.filterKeys { it != "locations" }
@@ -302,7 +301,7 @@ abstract class NadelIntegrationTest(
                 actual = actualCall.delayedResults
             ) { expectedDelayedResult, actualDelayedResult ->
                 // Note: we compare hasNext further down in the function
-                compareJson(
+                compareJsonObject(
                     expectedDelayedResult - "hasNext",
                     actualDelayedResult.toSpecification() - "hasNext",
                 ).passed()
@@ -322,8 +321,8 @@ abstract class NadelIntegrationTest(
             actualCall.service == expectedCall.service
                 && expectedCall.delayedResults.size == actualCall.delayedResults.size
                 && getCanonicalQuery(expectedCall.query) == actualQuery
-                && compareJson(expected = expectedCall.variables, actual = actualVariables).passed()
-                && compareJson(expected = expectedCall.result, actual = actualResult).passed()
+                && compareJsonObject(expected = expectedCall.variables, actual = actualVariables).passed()
+                && compareJsonObject(expected = expectedCall.result, actual = actualResult).passed()
                 && isDelayedResultsEqual(expectedCall, actualCall)
         }
 
@@ -361,7 +360,7 @@ abstract class NadelIntegrationTest(
 
         println("Combined overall result was\n$combinedResult")
 
-        assertJsonEquals(
+        assertJsonObjectEquals(
             /* expectedStr = */ testSnapshot.result.result,
             /* actualStr = */ result.toSpecification(),
             /* compareMode = */ JSONCompareMode.STRICT,
@@ -390,7 +389,7 @@ abstract class NadelIntegrationTest(
                 expected = testSnapshot.result.delayedResults,
                 actual = actualDelayedResponses.map(DelayedIncrementalPartialResult::toSpecification),
             ) { expectedResponse, actualResponse ->
-                compareJson(
+                compareJsonObject(
                     expectedResponse - "hasNext",
                     actualResponse - "hasNext",
                     JSONCompareMode.STRICT
@@ -409,6 +408,8 @@ abstract class NadelIntegrationTest(
         actual: List<A>,
         test: (E, A) -> Boolean,
     ): Pair<List<E>, List<A>> {
+        assertTrue(expected.size == actual.size)
+
         val unmatchedExpected = expected.toMutableList()
         val unmatchedActual = actual.toMutableList()
 

@@ -7,7 +7,7 @@ import org.skyscreamer.jsonassert.JSONCompare
 import org.skyscreamer.jsonassert.JSONCompareMode
 import org.skyscreamer.jsonassert.JSONCompareResult
 
-fun assertJsonEquals(
+fun assertJsonArrayEquals(
     expected: AnyList?,
     actual: AnyList?,
     mode: JSONCompareMode = JSONCompareMode.STRICT,
@@ -19,7 +19,7 @@ fun assertJsonEquals(
     )
 }
 
-fun assertJsonEquals(
+fun assertJsonObjectEquals(
     expected: JsonMap?,
     actual: JsonMap?,
     mode: JSONCompareMode = JSONCompareMode.STRICT,
@@ -43,7 +43,7 @@ fun assertJsonEquals(
     )
 }
 
-fun compareJson(
+fun compareJsonArray(
     expected: AnyList?,
     actual: AnyList?,
     mode: JSONCompareMode = JSONCompareMode.STRICT,
@@ -55,7 +55,7 @@ fun compareJson(
     )
 }
 
-fun compareJson(
+fun compareJsonObject(
     expected: JsonMap?,
     actual: JsonMap?,
     mode: JSONCompareMode = JSONCompareMode.STRICT,
