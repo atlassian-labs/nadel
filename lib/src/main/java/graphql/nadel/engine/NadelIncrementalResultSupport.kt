@@ -35,7 +35,7 @@ class NadelIncrementalResultSupport internal constructor(
         private val log = getLogger<NadelIncrementalResultSupport>()
     }
 
-    private val channelMutex = Mutex()
+    private val operationMutex = Mutex()
 
     /**
      * The root [Job] to run the defer and stream work etc on.
@@ -69,11 +69,11 @@ class NadelIncrementalResultSupport internal constructor(
     fun defer(task: suspend CoroutineScope.() -> DelayedIncrementalPartialResult): Job {
         return launch { outstandingJobHandle ->
             val result = task()
-            accumulator.accumulate(result)
-
             initialCompletionLock.await()
 
-            channelMutex.withLock {
+            operationMutex.withLock {
+                accumulator.accumulate(result)
+
                 val hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
 
                 val next = accumulator.getIncrementalPartialResult(hasNext)
@@ -93,11 +93,11 @@ class NadelIncrementalResultSupport internal constructor(
         return launch { outstandingJobHandle ->
             serviceResults
                 .collect { result ->
-                    accumulator.accumulate(result)
-
                     initialCompletionLock.await()
 
-                    channelMutex.withLock {
+                    operationMutex.withLock {
+                        accumulator.accumulate(result)
+
                         // Here we'll stipulate that the last element of the Flow sets hasNext=false
                         val hasNext = if (result.hasNext()) {
                             true

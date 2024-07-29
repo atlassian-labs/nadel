@@ -46,7 +46,7 @@ class NadelIncrementalResultAccumulator(
     /**
      * todo: this doesn't account for type conditions
      */
-    private val deferExecutionToResultKeys: Map<NormalizedDeferredExecution, List<String>> =
+    private val deferExecutionToFields: Map<NormalizedDeferredExecution, List<ExecutableNormalizedField>> =
         operation.walkTopDown()
             .filter {
                 it.deferredExecutions.isNotEmpty()
@@ -62,27 +62,44 @@ class NadelIncrementalResultAccumulator(
                     deferExecution
                 },
                 valueTransform = { (_, field) ->
-                    field.resultKey
-                }
+                    field
+                },
             )
+            .filterValues {
+                it.isNotEmpty()
+            }
+            .mapValues { (_, fields) ->
+                val topLevel = fields.minOf {
+                    it.level
+                }
+                fields.filter {
+                    it.level == topLevel
+                }
+            }
 
     fun getIncrementalPartialResult(hasNext: Boolean): DelayedIncrementalPartialResult? {
-        val payloadsToEmit = deferAccumulators
+        val readyAccumulators = deferAccumulators
             .filter {
                 // i.e. complete
-                it.value.data.size == deferExecutionToResultKeys[it.key.deferExecution]!!.size
+                it.value.data.size == deferExecutionToFields[it.key.deferExecution]!!.size
             }
+            .onEach {
+                deferAccumulators.remove(it.key)
+            }
+
+        if (readyAccumulators.isEmpty()) {
+            return null
+        }
+
+        val payloadsToEmit = readyAccumulators
             .map { (key, accumulator) ->
                 DeferPayload.newDeferredItem()
                     .data(accumulator.data)
                     .errors(accumulator.errors)
                     .path(key.incrementalPayloadPath)
+                    .label(key.deferExecution.label)
                     .build()
             }
-
-        if (payloadsToEmit.isEmpty()) {
-            return null
-        }
 
         // todo: handle extensions
         return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
@@ -102,27 +119,33 @@ class NadelIncrementalResultAccumulator(
                         val deferredExecutions =
                             queryPathToExecutions[queryPath]!! // todo: handle case where this wasn't picked up somehow
 
-                        // todo: accumulate errors
                         deferredExecutions
-                            .forEach { deferExecution ->
+                            .asSequence()
+                            .filter {
+                                payload.label == it.label
+                            }
+                            .forEachIndexed { index, deferExecution ->
                                 val accumulatorKey = DeferAccumulatorKey(
                                     incrementalPayloadPath = payload.path,
                                     deferExecution = deferExecution,
                                 )
 
-                                val resultKeys = deferExecutionToResultKeys[deferExecution]!!
-
                                 val deferAccumulator = deferAccumulators.computeIfAbsent(accumulatorKey) {
                                     DeferAccumulator(
-                                        mutableMapOf(),
-                                        mutableListOf(),
+                                        data = mutableMapOf(),
+                                        errors = mutableListOf(),
                                     )
                                 }
 
-                                resultKeys.forEach { resultKey ->
-                                    if (resultKey in data) {
-                                        deferAccumulator.data[resultKey] = data[resultKey]
+                                deferExecutionToFields[deferExecution]!!.forEach { field ->
+                                    if (field.resultKey in data) {
+                                        deferAccumulator.data[field.resultKey] = data[field.resultKey]
                                     }
+                                }
+
+                                // todo: there's no good way to determine which defer execution a payload belongs to
+                                if (index == 0) {
+                                    deferAccumulator.errors.addAll(payload.errors ?: emptyList())
                                 }
                             }
                     }

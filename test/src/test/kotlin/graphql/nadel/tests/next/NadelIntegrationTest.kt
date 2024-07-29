@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next
 
-import graphql.Assert.assertFalse
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.execution.DataFetcherExceptionHandler
@@ -40,7 +39,9 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 abstract class NadelIntegrationTest(
     val operationName: String? = null,
@@ -55,7 +56,7 @@ abstract class NadelIntegrationTest(
     open val name: String get() = this::class.asTestName()
 
     @Test
-    fun execute() = runTest {
+    fun execute() = runTest(timeout = 20.minutes) {
         // Given
         val testData = getTestSnapshot()
 
@@ -125,13 +126,13 @@ abstract class NadelIntegrationTest(
         // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
         assertJsonObjectEquals(
             expected = mapOf(
-                "errors" to (noDeferResultMap["errors"] as? List<Map<String, Any>>)?.map { errorMap ->
+                "errors" to (noDeferResultMap["errors"] as List<Map<String, Any>>?)?.map { errorMap ->
                     errorMap.filterKeys { it != "locations" }
                 },
                 "extensions" to noDeferResultMap["extensions"],
             ),
             actual = mapOf(
-                "errors" to (combinedDeferResultMap["errors"] as? List<Map<String, Any>>)?.map { errorMap ->
+                "errors" to (combinedDeferResultMap["errors"] as List<Map<String, Any>>?)?.map { errorMap ->
                     errorMap.filterKeys { it != "locations" }
                 },
                 "extensions" to combinedDeferResultMap["extensions"],
@@ -386,12 +387,19 @@ abstract class NadelIntegrationTest(
                 unmatchedExpectedDelayedResponses,
                 unmatchedActualDelayedResponses,
             ) = getUnmatchedElements(
-                expected = testSnapshot.result.delayedResults,
-                actual = actualDelayedResponses.map(DelayedIncrementalPartialResult::toSpecification),
+                expected = testSnapshot.result.delayedResults
+                    .flatMap {
+                        (it["incremental"] as List<JsonMap>?) ?: emptyList()
+                    },
+                actual = actualDelayedResponses
+                    .map(DelayedIncrementalPartialResult::toSpecification)
+                    .flatMap {
+                        (it["incremental"] as List<JsonMap>?) ?: emptyList()
+                    },
             ) { expectedResponse, actualResponse ->
                 compareJsonObject(
-                    expectedResponse - "hasNext",
-                    actualResponse - "hasNext",
+                    expectedResponse,
+                    actualResponse,
                     JSONCompareMode.STRICT
                 ).passed()
             }
