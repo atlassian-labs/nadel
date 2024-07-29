@@ -22,17 +22,29 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class NadelIncrementalResultSupport internal constructor(
-    private val operation: ExecutableNormalizedOperation,
-    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(
-        capacity = 100,
-        onBufferOverflow = BufferOverflow.DROP_LATEST,
-        onUndeliveredElement = {
-            log.error("Dropping incremental result because of buffer overflow")
-        },
-    ),
+    private val accumulator: NadelIncrementalResultAccumulator,
+    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
 ) {
+    internal constructor(
+        operation: ExecutableNormalizedOperation,
+        delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
+    ) : this(
+        accumulator = NadelIncrementalResultAccumulator(
+            operation = operation,
+        ),
+        delayedResultsChannel = delayedResultsChannel,
+    )
+
     companion object {
         private val log = getLogger<NadelIncrementalResultSupport>()
+
+        private fun makeDefaultChannel(): Channel<DelayedIncrementalPartialResult> = Channel(
+            capacity = 100,
+            onBufferOverflow = BufferOverflow.DROP_LATEST,
+            onUndeliveredElement = {
+                log.error("Dropping incremental result because of buffer overflow")
+            },
+        )
     }
 
     private val operationMutex = Mutex()
@@ -54,8 +66,6 @@ class NadelIncrementalResultSupport internal constructor(
      * A single [Flow] that can only be collected from once.
      */
     private val resultFlow by lazy(delayedResultsChannel::consumeAsFlow)
-
-    private val accumulator = NadelIncrementalResultAccumulator(operation)
 
     init {
         coroutineJob.invokeOnCompletion {

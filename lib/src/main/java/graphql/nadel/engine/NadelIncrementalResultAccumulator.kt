@@ -160,7 +160,7 @@ class NadelIncrementalResultAccumulator(
 /**
  * Similar to [java.io.File.walkTopDown] but for ENFs.
  */
-fun ExecutableNormalizedOperation.walkTopDown(): Sequence<ExecutableNormalizedField> {
+private fun ExecutableNormalizedOperation.walkTopDown(): Sequence<ExecutableNormalizedField> {
     return topLevelFields
         .asSequence()
         .flatMap {
@@ -171,7 +171,7 @@ fun ExecutableNormalizedOperation.walkTopDown(): Sequence<ExecutableNormalizedFi
 /**
  * Similar to [java.io.File.walkTopDown] but for ENFs.
  */
-fun ExecutableNormalizedField.walkTopDown(): Sequence<ExecutableNormalizedField> {
+private fun ExecutableNormalizedField.walkTopDown(): Sequence<ExecutableNormalizedField> {
     return sequenceOf(this) + children.asSequence()
         .flatMap {
             it.walkTopDown()
