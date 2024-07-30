@@ -80,6 +80,85 @@ class NadelUnionValidationTest {
     }
 
     @Test
+    fun `passes valid schema where union member was renamed`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "entities" to /* language=GraphQL */ """
+                    type Query {
+                        entity(id: ID!): Entity
+                    }
+                    union Entity = Dog
+                    type Human @renamed(from: "Homo") {
+                        id: ID!
+                    }
+                    type Dog {
+                        name: String
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "entities" to /* language=GraphQL */ """
+                    type Query {
+                        entity(id: ID!): Entity
+                    }
+                    union Entity = Homo | Dog
+                    type Homo {
+                        id: ID!
+                    }
+                    type Dog {
+                        name: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `fails if irrelevant union member was renamed to same name of valid union member`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "entities" to /* language=GraphQL */ """
+                    type Query {
+                        entity(id: ID!): Entity
+                    }
+                    union Entity = Human
+                    type Human @renamed(from: "Issue") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "entities" to /* language=GraphQL */ """
+                    type Query {
+                        entity(id: ID!): Entity
+                    }
+                    union Entity = Human | Dog
+                    type Human {
+                        id: ID!
+                    }
+                    type Dog {
+                        name: String
+                    }
+                    type Issue {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelSchemaValidationError.UnionHasExtraType>()
+        assertTrue(error.service.name == "entities")
+        assertTrue(error.unionType.name == "Entity")
+        assertTrue(error.extraType.name == "Human")
+    }
+
+    @Test
     fun `errors if union in overall schema declares members not in underlying schema union`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
