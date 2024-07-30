@@ -20,6 +20,29 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class NestedDefersTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   defer {
+     *     fastField
+     *     ... @defer(label: "outer defer") {
+     *       slowField1
+     *       ... @defer(label: "inner defer") {
+     *           slowField2
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
@@ -85,6 +108,8 @@ public class NestedDefersTestSnapshot : TestSnapshot() {
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

@@ -20,6 +20,27 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class MultipleFieldsinSingleDeferDirectiveTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   defer {
+     *     fastField
+     *     ... @defer {
+     *       slowField
+     *       anotherSlowField
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
@@ -67,6 +88,8 @@ public class MultipleFieldsinSingleDeferDirectiveTestSnapshot : TestSnapshot() {
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

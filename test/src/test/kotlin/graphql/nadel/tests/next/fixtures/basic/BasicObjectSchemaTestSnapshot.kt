@@ -20,6 +20,23 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class BasicObjectSchemaTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
+     *     id
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "test",
@@ -46,6 +63,8 @@ public class BasicObjectSchemaTestSnapshot : TestSnapshot() {
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

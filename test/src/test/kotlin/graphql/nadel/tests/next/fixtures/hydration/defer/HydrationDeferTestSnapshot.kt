@@ -20,6 +20,28 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class HydrationDeferTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   issue(id: "ari:cloud:jira::issue/1") {
+     *     id
+     *     ... @defer {
+     *       assignee {
+     *         name
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
@@ -72,6 +94,8 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

@@ -21,6 +21,32 @@ private suspend fun main() {
 @Suppress("unused")
 public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnapshot :
         TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   issueByKey(key: "GQLGW-3") { # Not a list
+     *     key
+     *     related { # Is a list
+     *       parent { # Not a list
+     *         ... @defer {
+     *           assignee { # Should NOT defer
+     *             name
+     *           }
+     *         }
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
@@ -86,6 +112,8 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

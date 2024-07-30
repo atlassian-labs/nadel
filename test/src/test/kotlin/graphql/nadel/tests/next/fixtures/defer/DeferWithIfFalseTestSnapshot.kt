@@ -20,6 +20,26 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class DeferWithIfFalseTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   defer {
+     *     hello
+     *     ... @defer(if: false) {
+     *       slow
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
@@ -48,6 +68,8 @@ public class DeferWithIfFalseTestSnapshot : TestSnapshot() {
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

@@ -20,6 +20,28 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   issueByKey(key: "GQLGW-1") { # Renamed
+     *     key
+     *     ... @defer {
+     *       assigneeV2 { # Renamed
+     *         name
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
@@ -72,6 +94,8 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

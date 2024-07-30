@@ -56,7 +56,7 @@ private suspend fun main(vararg args: String) {
 
             val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
                 .indent(' '.toString().repeat(4))
-                .addFileComment("@formatter:off")
+                .addFileComment("@formatter" + ":off")
                 .addFunction(makeUpdateSnapshotFunction(klass))
                 .addType(makeTestSnapshotClass(klass, captured))
                 .build()
@@ -107,7 +107,7 @@ private fun makeTestSnapshotClass(
     return TypeSpec.classBuilder(klass.simpleName + "Snapshot")
         .superclass(TestSnapshot::class)
         .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots")
-        .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S","unused").build())
+        .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
         .addProperty(makeServiceCallsProperty(captured))
         .addProperty(makeNadelResultProperty(captured))
         .build()
@@ -118,8 +118,14 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
     val callsType = List::class.asClassName().parameterizedBy(ExpectedServiceCall::class.asTypeName())
 
     // override val calls: List<ExpectedServiceCall> = listOf(…)
+    val executionInput = captured.executionInput!!
     return PropertySpec.builder(TestSnapshot::calls.name, callsType)
         .addModifiers(KModifier.OVERRIDE)
+        .addKdoc(
+            "Query\n\n```graphql\n%L\n```\n\nVariables\n\n```json\n%L\n```",
+            executionInput.query,
+            jsonObjectMapper.withPrettierPrinter().writeValueAsString(executionInput.variables),
+        )
         .initializer(
             buildCodeBlock {
                 add("%M", listOf)
@@ -171,7 +177,7 @@ private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpe
                 add("(\n")
                 indented {
                     captured.delayedResults
-                        .map (::writeResultJson)
+                        .map(::writeResultJson)
                         .sorted() // Delayed results are not in deterministic order, so we sort them so the output is consistent
                         .forEach { json ->
                             add("%S", json)
@@ -183,7 +189,10 @@ private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpe
                 add(")")
             },
         )
-        .addKdoc("```json\n%L\n```", jsonObjectMapper.withPrettierPrinter().writeValueAsString(combinedResult))
+        .addKdoc(
+            "Combined Result\n\n```json\n%L\n```",
+            jsonObjectMapper.withPrettierPrinter().writeValueAsString(combinedResult)
+        )
         .build()
 }
 
@@ -204,7 +213,7 @@ private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCa
             add("(\n")
             indented {
                 call.delayedResults
-                    .map (::writeResultJson)
+                    .map(::writeResultJson)
                     .sorted() // Delayed results are not in deterministic order, so we sort them so the output is consistent
                     .forEach { json ->
                         add("%S", json)

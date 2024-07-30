@@ -20,6 +20,32 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   user {
+     *     name
+     *     ... @defer {
+     *       profilePicture
+     *     }
+     *   }
+     *   product {
+     *     productName
+     *     ... @defer {
+     *       productImage
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "product",
@@ -106,6 +132,8 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

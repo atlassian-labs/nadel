@@ -20,6 +20,26 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class DeferThrowsErrorTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   defer {
+     *     hello
+     *     ... @defer(label: "slow-defer") {
+     *       slow
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
@@ -84,6 +104,8 @@ public class DeferThrowsErrorTestSnapshot : TestSnapshot() {
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {

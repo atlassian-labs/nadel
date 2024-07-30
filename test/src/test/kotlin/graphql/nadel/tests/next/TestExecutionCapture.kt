@@ -1,10 +1,12 @@
 package graphql.nadel.tests.next
 
 import com.fasterxml.jackson.module.kotlin.convertValue
+import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.incremental.IncrementalExecutionResultImpl
+import graphql.nadel.NadelExecutionInput
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.jsonObjectMapper
 import kotlinx.coroutines.flow.onEach
@@ -16,6 +18,9 @@ class TestExecutionCapture {
     private val _calls = synchronizedMutableListOf<Call>()
     val calls: List<Call>
         get() = _calls
+
+    var executionInput: NadelExecutionInput? = null
+        private set
 
     var result: ExecutionResult? = null
         private set
@@ -55,7 +60,8 @@ class TestExecutionCapture {
         }
     }
 
-    fun capture(result: ExecutionResult): ExecutionResult {
+    fun capture(executionInput: NadelExecutionInput, result: ExecutionResult): ExecutionResult {
+        this.executionInput = executionInput
         this.result = result
         return spyOnIncrementalResults(result) {
             _delayedResults.add(it)

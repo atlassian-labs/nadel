@@ -41,7 +41,6 @@ import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.minutes
 
 abstract class NadelIntegrationTest(
     val operationName: String? = null,
@@ -147,10 +146,11 @@ abstract class NadelIntegrationTest(
         val nadel = makeNadel()
             .build()
 
+        val executionInput = makeExecutionInput().build()
         val result = nadel
-            .execute(makeExecutionInput().build())
+            .execute(executionInput)
             .let {
-                executionCapture.capture(it.await())
+                executionCapture.capture(executionInput, it.await())
             }
 
         if (result is IncrementalExecutionResult) {

@@ -20,6 +20,21 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class InstrumentationBeginQueryExecutionOnCompleteOnSuccessTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   echo
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "tester",
@@ -42,6 +57,8 @@ public class InstrumentationBeginQueryExecutionOnCompleteOnSuccessTestSnapshot :
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {
