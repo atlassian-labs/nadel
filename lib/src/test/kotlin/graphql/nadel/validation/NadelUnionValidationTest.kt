@@ -80,7 +80,7 @@ class NadelUnionValidationTest {
     }
 
     @Test
-    fun `errors if union in overall schema declares members not in underlying schema`() {
+    fun `errors if union in overall schema declares members not in underlying schema union`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "entities" to /* language=GraphQL */ """
