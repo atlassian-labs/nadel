@@ -25,8 +25,6 @@ class NadelIncrementalResultAccumulator(
 
     private val deferAccumulators = mutableMapOf<DeferAccumulatorKey, DeferAccumulator>()
 
-    private val extensions = mutableListOf<MutableJsonMap>()
-
     private val queryPathToExecutions: Map<NadelQueryPath, List<NormalizedDeferredExecution>> = operation.walkTopDown()
         .filter {
             it.deferredExecutions.isNotEmpty()
@@ -113,45 +111,47 @@ class NadelIncrementalResultAccumulator(
             ?.forEach { payload ->
                 when (payload) {
                     is DeferPayload -> {
-                        val data = payload.getData<Map<String, Any?>?>()!! // todo: what happens if data is null?
-
-                        val queryPath = NadelQueryPath.fromResultPath(payload.path)
-                        val deferredExecutions =
-                            queryPathToExecutions[queryPath]!! // todo: handle case where this wasn't picked up somehow
-
-                        deferredExecutions
-                            .asSequence()
-                            .filter {
-                                payload.label == it.label
-                            }
-                            .forEachIndexed { index, deferExecution ->
-                                val accumulatorKey = DeferAccumulatorKey(
-                                    incrementalPayloadPath = payload.path,
-                                    deferExecution = deferExecution,
-                                )
-
-                                val deferAccumulator = deferAccumulators.computeIfAbsent(accumulatorKey) {
-                                    DeferAccumulator(
-                                        data = mutableMapOf(),
-                                        errors = mutableListOf(),
-                                    )
-                                }
-
-                                deferExecutionToFields[deferExecution]!!.forEach { field ->
-                                    if (field.resultKey in data) {
-                                        deferAccumulator.data[field.resultKey] = data[field.resultKey]
-                                    }
-                                }
-
-                                // todo: there's no good way to determine which defer execution a payload belongs to
-                                if (index == 0) {
-                                    deferAccumulator.errors.addAll(payload.errors ?: emptyList())
-                                }
-                            }
+                        accumulate(payload)
                     }
-                    else -> {
-                        null
+                }
+            }
+    }
+
+    private fun accumulate(payload: DeferPayload) {
+        val data = payload.getData<Map<String, Any?>?>()
+            ?: return
+
+        val queryPath = NadelQueryPath.fromResultPath(payload.path)
+        val deferredExecutions = queryPathToExecutions[queryPath]
+            ?: return
+
+        deferredExecutions
+            .asSequence()
+            .filter {
+                payload.label == it.label
+            }
+            .forEachIndexed { index, deferExecution ->
+                val accumulatorKey = DeferAccumulatorKey(
+                    incrementalPayloadPath = payload.path,
+                    deferExecution = deferExecution,
+                )
+
+                val deferAccumulator = deferAccumulators.computeIfAbsent(accumulatorKey) {
+                    DeferAccumulator(
+                        data = mutableMapOf(),
+                        errors = mutableListOf(),
+                    )
+                }
+
+                deferExecutionToFields[deferExecution]!!.forEach { field ->
+                    if (field.resultKey in data) {
+                        deferAccumulator.data[field.resultKey] = data[field.resultKey]
                     }
+                }
+
+                // todo: there's no good way to determine which defer execution a payload belongs to
+                if (index == 0) {
+                    deferAccumulator.errors.addAll(payload.errors ?: emptyList())
                 }
             }
     }
