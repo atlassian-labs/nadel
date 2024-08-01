@@ -42,6 +42,7 @@ data class NadelExecutionContext internal constructor(
     /**
      * Get the service context for a given service
      */
+    @Deprecated("Replaced with NadelServiceExecutionContext")
     fun getContextForService(service: Service): CompletableFuture<Any?> {
         return serviceContexts.getOrPut(service.name) {
             hooks.createServiceContext(

@@ -6,6 +6,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
@@ -31,6 +32,7 @@ import java.util.concurrent.CompletableFuture
 private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -43,6 +45,7 @@ private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
@@ -55,6 +58,7 @@ private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
@@ -71,6 +75,7 @@ private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
 private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
     override fun isApplicable(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -82,6 +87,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
 
     override fun transformField(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
@@ -93,6 +99,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
 
     override fun getResultInstructions(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
