@@ -58,6 +58,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
@@ -269,7 +270,10 @@ internal class NextgenEngine(
                 service = service,
                 transformedQuery = transformedQuery,
                 executionContext = executionContext,
+                executionPlan = executionPlan,
                 executionHydrationDetails = executionContext.hydrationDetails,
+                artificialFields = queryTransform.artificialFields,
+                overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
             )
         }
         val transformedResult: ServiceExecutionResult = when {
@@ -293,7 +297,10 @@ internal class NextgenEngine(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
         executionContext: NadelExecutionContext,
+        executionPlan: NadelExecutionPlan,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
 
@@ -361,7 +368,21 @@ internal class NextgenEngine(
 
         if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
             executionContext.incrementalResultSupport.defer(
-                serviceExecResult.incrementalItemPublisher.asFlow()
+                serviceExecResult.incrementalItemPublisher
+                    .asFlow()
+                    .map {
+                        // Transform
+                        resultTransformer
+                            .transform(
+                                executionContext = executionContext,
+                                executionPlan = executionPlan,
+                                artificialFields = artificialFields,
+                                overallToUnderlyingFields = overallToUnderlyingFields,
+                                service = service,
+                                result = serviceExecResult
+                            )
+                        it
+                    }
             )
         }
 

@@ -106,7 +106,6 @@ object NFUtil {
         return ExecutableNormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
-            //.deferredExecutions() // <-- add defer execution
             .deferredExecutions(deferredExecutions)
             .also { builder ->
                 if (pathToFieldIndex == queryPathToField.segments.lastIndex) {
