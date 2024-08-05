@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationDeferIsDisabledForRelatedIssuesTest>()
+    graphql.nadel.tests.next.update<HydrationDeferForwardsErrorsTest>()
 }
 
 /**
@@ -19,20 +19,15 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot() {
+public class HydrationDeferForwardsErrorsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
                 query = """
                 | {
                 |   issueByKey(key: "GQLGW-2") {
-                |     key
                 |     hydration__assignee__assigneeId: assigneeId
                 |     __typename__hydration__assignee: __typename
-                |     related {
-                |       hydration__assignee__assigneeId: assigneeId
-                |       __typename__hydration__assignee: __typename
-                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -41,15 +36,8 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 | {
                 |   "data": {
                 |     "issueByKey": {
-                |       "key": "GQLGW-2",
-                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
-                |       "__typename__hydration__assignee": "Issue",
-                |       "related": [
-                |         {
-                |           "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |           "__typename__hydration__assignee": "Issue"
-                |         }
-                |       ]
+                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/0",
+                |       "__typename__hydration__assignee": "Issue"
                 |     }
                 |   }
                 | }
@@ -61,7 +49,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 service = "users",
                 query = """
                 | {
-                |   userById(id: "ari:cloud:identity::user/1") {
+                |   userById(id: "ari:cloud:identity::user/0") {
                 |     name
                 |   }
                 | }
@@ -69,32 +57,16 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "userById": {
-                |       "name": "Franklin"
+                |   "errors": [
+                |     {
+                |       "message": "No user: ari:cloud:identity::user/0",
+                |       "extensions": {
+                |         "classification": "UserNotFoundError"
+                |       }
                 |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/2") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
+                |   ],
                 |   "data": {
-                |     "userById": {
-                |       "name": "Tom"
-                |     }
+                |     "userById": null
                 |   }
                 | }
                 """.trimMargin(),
@@ -108,19 +80,22 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      * {
      *   "data": {
      *     "issueByKey": {
-     *       "key": "GQLGW-2",
-     *       "related": [
-     *         {
-     *           "assignee": {
-     *             "name": "Franklin"
-     *           }
-     *         }
+     *       "assignee": null
+     *     }
+     *   },
+     *   "errors": [
+     *     {
+     *       "message": "No user: ari:cloud:identity::user/0",
+     *       "locations": [],
+     *       "path": [
+     *         "issueByKey",
+     *         "assignee"
      *       ],
-     *       "assignee": {
-     *         "name": "Tom"
+     *       "extensions": {
+     *         "classification": "UserNotFoundError"
      *       }
      *     }
-     *   }
+     *   ]
      * }
      * ```
      */
@@ -128,16 +103,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
             result = """
             | {
             |   "data": {
-            |     "issueByKey": {
-            |       "key": "GQLGW-2",
-            |       "related": [
-            |         {
-            |           "assignee": {
-            |             "name": "Franklin"
-            |           }
-            |         }
-            |       ]
-            |     }
+            |     "issueByKey": {}
             |   },
             |   "hasNext": true
             | }
@@ -151,10 +117,21 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |       "path": [
                 |         "issueByKey"
                 |       ],
-                |       "data": {
-                |         "assignee": {
-                |           "name": "Tom"
+                |       "errors": [
+                |         {
+                |           "message": "No user: ari:cloud:identity::user/0",
+                |           "locations": [],
+                |           "path": [
+                |             "issueByKey",
+                |             "assignee"
+                |           ],
+                |           "extensions": {
+                |             "classification": "UserNotFoundError"
+                |           }
                 |         }
+                |       ],
+                |       "data": {
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]

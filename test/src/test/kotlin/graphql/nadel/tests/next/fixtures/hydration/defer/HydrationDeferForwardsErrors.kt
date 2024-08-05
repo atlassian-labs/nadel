@@ -5,20 +5,18 @@ import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.tests.next.NadelIntegrationTest
 import org.intellij.lang.annotations.Language
 import kotlin.test.assertTrue
 
-class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled(
+class HydrationDeferForwardsErrorsTest : HydrationDeferForwardsErrors(
     query = """
         query {
-          issueByKey(key: "GQLGW-3") { # Not a list
-            key
-            self { # Hydration
-              ... @defer {
-                assignee { # Should NOT defer
-                  name
-                }
+          issueByKey(key: "GQLGW-2") {
+            ... @defer {
+              assignee {
+                name
               }
             }
           }
@@ -26,12 +24,33 @@ class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled
     """.trimIndent(),
 ) {
     override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
-        assertTrue(result !is IncrementalExecutionResult)
-        assertTrue(incrementalResults == null)
+        assertTrue(result is IncrementalExecutionResult)
+        assertTrue(incrementalResults?.isNotEmpty() == true)
+        assertTrue(incrementalResults?.single()?.incremental?.single()?.errors?.isNotEmpty() == true)
     }
 }
 
-abstract class HydrationDeferIsDisabled(
+class HydrationDeferForwardsErrorsFromEachHydrationTest : HydrationDeferForwardsErrors(
+    query = """
+        query {
+          issuesByKeys(keys: ["GQLGW-2", "GQLGW-3", "GQLGW-4"]) {
+            key
+            ... @defer {
+              assignee {
+                name
+              }
+            }
+          }
+        }
+    """.trimIndent(),
+) {
+    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
+        assertTrue(result is IncrementalExecutionResult)
+        assertTrue(incrementalResults?.isNotEmpty() == true)
+    }
+}
+
+abstract class HydrationDeferForwardsErrors(
     @Language("GraphQL")
     query: String,
 ) : NadelIntegrationTest(
@@ -40,8 +59,11 @@ abstract class HydrationDeferIsDisabled(
         Service(
             name = "issues",
             overallSchema = """
+              directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
               type Query {
                 issues: [Issue!]
+                issuesByKeys(keys: [String!]!): [Issue!]
+                issueGroups: [[Issue]]
                 issueByKey(key: String!): Issue
               }
               type Issue {
@@ -78,15 +100,21 @@ abstract class HydrationDeferIsDisabled(
                     ),
                     Issue(
                         key = "GQLGW-2",
-                        assigneeId = "ari:cloud:identity::user/2",
-                        relatedKeys = listOf("GQLGW-1"),
+                        assigneeId = "ari:cloud:identity::user/0",
                         parentKey = "GQLGW-1",
+                        relatedKeys = listOf("GQLGW-1"),
                     ),
                     Issue(
                         key = "GQLGW-3",
                         assigneeId = "ari:cloud:identity::user/1",
                         parentKey = "GQLGW-1",
                         relatedKeys = listOf("GQLGW-1", "GQLGW-2"),
+                    ),
+                    Issue(
+                        key = "GQLGW-4",
+                        assigneeId = "ari:cloud:identity::user/10",
+                        parentKey = "GQLGW-1",
+                        relatedKeys = listOf("GQLGW-1", "GQLGW-2", "GQLGW-3"),
                     ),
                 )
                 val issuesByKey = issues.strictAssociateBy { it.key }
@@ -97,8 +125,22 @@ abstract class HydrationDeferIsDisabled(
                             .dataFetcher("issueByKey") { env ->
                                 issuesByKey[env.getArgument("key")]
                             }
+                            .dataFetcher("issuesByKeys") { env ->
+                                val keys = env.getArgument<List<String>>("keys")!!.toSet()
+                                issues
+                                    .filter {
+                                        it.key in keys
+                                    }
+                            }
                             .dataFetcher("issues") { env ->
                                 issues
+                            }
+                            .dataFetcher("issueGroups") {
+                                issues
+                                    .groupBy {
+                                        it.key.substringAfter("-").toInt() % 2 == 0
+                                    }
+                                    .values
                             }
                     }
                     .type("Issue") { type ->
@@ -136,20 +178,27 @@ abstract class HydrationDeferIsDisabled(
                 val users = listOf(
                     User(
                         id = "ari:cloud:identity::user/1",
-                        name = "Franklin",
+                        name = "Frank",
                     ),
                     User(
                         id = "ari:cloud:identity::user/2",
                         name = "Tom",
                     ),
+                    User(
+                        id = "ari:cloud:identity::user/3",
+                        name = "Lin",
+                    ),
                 )
                 val usersById = users.strictAssociateBy { it.id }
+
+                class UserNotFoundError(id: String) : NadelGraphQLErrorException(message = "No user: $id")
 
                 wiring
                     .type("Query") { type ->
                         type
                             .dataFetcher("userById") { env ->
-                                usersById[env.getArgument("id")]
+                                val id = env.getArgument<String>("id")!!
+                                usersById[id] ?: throw UserNotFoundError(id)
                             }
                     }
             },

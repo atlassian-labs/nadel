@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTest>()
+    graphql.nadel.tests.next.update<HydrationDeferInListNestedTest>()
 }
 
 /**
@@ -19,8 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnapshot :
-        TestSnapshot() {
+public class HydrationDeferInListNestedTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "issues",
@@ -75,7 +74,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 | {
                 |   "data": {
                 |     "userById": {
-                |       "name": "Franklin"
+                |       "name": "Frank"
                 |     }
                 |   }
                 | }
@@ -98,7 +97,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
      *         {
      *           "parent": {
      *             "assignee": {
-     *               "name": "Franklin"
+     *               "name": "Frank"
      *             }
      *           }
      *         }
@@ -119,18 +118,35 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
             |           "parent": null
             |         },
             |         {
-            |           "parent": {
-            |             "assignee": {
-            |               "name": "Franklin"
-            |             }
-            |           }
+            |           "parent": {}
             |         }
             |       ]
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey",
+                |         "related",
+                |         1,
+                |         "parent"
+                |       ],
+                |       "data": {
+                |         "assignee": {
+                |           "name": "Frank"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

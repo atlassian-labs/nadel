@@ -114,15 +114,17 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         return artificialFields
             .asSequence()
             .flatMap { field ->
-                nodes.getNodesAt(
-                    queryPath = field.queryPath.dropLast(1),
-                    flatten = true,
-                ).map { parentNode ->
-                    NadelResultInstruction.Remove(
-                        subject = parentNode,
-                        key = NadelResultKey(field.resultKey),
+                nodes
+                    .getNodesAt(
+                        queryPath = field.queryPath.dropLast(1),
+                        flatten = true,
                     )
-                }
+                    .map { parentNode ->
+                        NadelResultInstruction.Remove(
+                            subject = parentNode,
+                            key = NadelResultKey(field.resultKey),
+                        )
+                    }
             }
             .toList()
     }
