@@ -167,6 +167,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 queryPathToField = NadelQueryPath(listOf(rename.underlyingName)),
                 fieldArguments = field.normalizedArguments,
                 fieldChildren = transformer.transform(field.children),
+                deferredExecutions = field.deferredExecutions
             )
         )
     }
