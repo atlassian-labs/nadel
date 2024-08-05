@@ -213,6 +213,9 @@ internal class NadelHydrationTransform(
             )
         }
 
+        // This isn't really right… but we start with this
+        val label = overallField.deferredExecutions.firstNotNullOfOrNull { it.label }
+
         executionContext.incrementalResultSupport.defer {
             val instructionSequence = hydrations
                 .map {
@@ -232,6 +235,7 @@ internal class NadelHydrationTransform(
                 .incrementalItems(
                     listOf(
                         DeferPayload.Builder()
+                            .label(label)
                             .data(
                                 mapOf(
                                     overallField.resultKey to results?.newValue?.value,
