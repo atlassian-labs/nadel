@@ -39,11 +39,18 @@ private suspend fun main(vararg args: String) {
     require(sourceRoot.exists() && sourceRoot.isDirectory)
 
     getTestClassSequence()
-        .onEach { klass ->
-            println("Loading ${klass.qualifiedName}")
-        }
         .filter {
             args.isEmpty() || args.contains(it.qualifiedName)
+        }
+        .toList()
+        .let { klasses ->
+            // Running this wll first generate snapshots for tests that do not have snapshots
+            // If all tests have snapshots, then we update them all
+            getNonExistentOrAll(klasses)
+                .asSequence()
+        }
+        .onEach { klass ->
+            println("Loading ${klass.qualifiedName}")
         }
         .map {
             it to it.newInstanceNoArgConstructor()
@@ -56,7 +63,7 @@ private suspend fun main(vararg args: String) {
 
             val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
                 .indent(' '.toString().repeat(4))
-                .addFileComment("@formatter:off")
+                .addFileComment(FORMATTER_OFF)
                 .addFunction(makeUpdateSnapshotFunction(klass))
                 .addType(makeTestSnapshotClass(klass, captured))
                 .build()
@@ -76,6 +83,17 @@ private suspend fun main(vararg args: String) {
                         ),
                 )
         }
+}
+
+private fun getNonExistentOrAll(klasses: List<KClass<NadelIntegrationTest>>): List<KClass<NadelIntegrationTest>> {
+    return klasses
+        .filter { klass ->
+            classForNameOrNull(klass.qualifiedName + "Snapshot") == null
+        }
+        .takeIf {
+            it.isNotEmpty()
+        }
+        ?: klasses
 }
 
 fun makeUpdateSnapshotFunction(klass: KClass<NadelIntegrationTest>): FunSpec {
@@ -107,7 +125,7 @@ private fun makeTestSnapshotClass(
     return TypeSpec.classBuilder(klass.simpleName + "Snapshot")
         .superclass(TestSnapshot::class)
         .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots")
-        .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S","unused").build())
+        .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
         .addProperty(makeServiceCallsProperty(captured))
         .addProperty(makeNadelResultProperty(captured))
         .build()
@@ -171,7 +189,7 @@ private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpe
                 add("(\n")
                 indented {
                     captured.delayedResults
-                        .map (::writeResultJson)
+                        .map(::writeResultJson)
                         .sorted() // Delayed results are not in deterministic order, so we sort them so the output is consistent
                         .forEach { json ->
                             add("%S", json)
@@ -204,7 +222,7 @@ private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCa
             add("(\n")
             indented {
                 call.delayedResults
-                    .map (::writeResultJson)
+                    .map(::writeResultJson)
                     .sorted() // Delayed results are not in deterministic order, so we sort them so the output is consistent
                     .forEach { json ->
                         add("%S", json)
@@ -237,3 +255,18 @@ private fun writeResultJson(result: DelayedIncrementalPartialResult): String {
         .writeValueAsString(result.toSpecification())
         .replaceIndent(" ")
 }
+
+private fun classForNameOrNull(name: String): Class<*>? {
+    return try {
+        Class.forName(name)
+    } catch (_: ClassNotFoundException) {
+        null
+    }
+}
+
+/**
+ * Don't declare this as one string, it will turn off the formatter.
+ *
+ * Just don't touch it.
+ */
+private const val FORMATTER_OFF = "@formatter" + ":off"
