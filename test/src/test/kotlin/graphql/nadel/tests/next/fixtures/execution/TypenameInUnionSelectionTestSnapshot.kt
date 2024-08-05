@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.instrumentation
+package graphql.nadel.tests.next.fixtures.execution
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<InstrumentationBeginExecuteOnCompleteOnSuccessTest>()
+    graphql.nadel.tests.next.update<TypenameInUnionSelectionTest>()
 }
 
 /**
@@ -19,20 +19,46 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class InstrumentationBeginExecuteOnCompleteOnSuccessTestSnapshot : TestSnapshot() {
+public class TypenameInUnionSelectionTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   abstract {
+     *     __typename
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "tester",
+                service = "abstract",
                 query = """
                 | {
-                |   echo
+                |   abstract {
+                |     __typename
+                |   }
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 result = """
                 | {
                 |   "data": {
-                |     "echo": "Hello World"
+                |     "abstract": [
+                |       {
+                |         "__typename": "User"
+                |       },
+                |       {
+                |         "__typename": "Issue"
+                |       }
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -42,10 +68,19 @@ public class InstrumentationBeginExecuteOnCompleteOnSuccessTestSnapshot : TestSn
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {
-     *     "echo": "Hello World"
+     *     "abstract": [
+     *       {
+     *         "__typename": "User"
+     *       },
+     *       {
+     *         "__typename": "Issue"
+     *       }
+     *     ]
      *   }
      * }
      * ```
@@ -54,7 +89,14 @@ public class InstrumentationBeginExecuteOnCompleteOnSuccessTestSnapshot : TestSn
             result = """
             | {
             |   "data": {
-            |     "echo": "Hello World"
+            |     "abstract": [
+            |       {
+            |         "__typename": "User"
+            |       },
+            |       {
+            |         "__typename": "Issue"
+            |       }
+            |     ]
             |   }
             | }
             """.trimMargin(),

@@ -9,6 +9,10 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.listOf
 
+private suspend fun main() {
+    graphql.nadel.tests.next.update<MultipleDeferWithDifferentServiceCalls>()
+}
+
 /**
  * This class is generated. Do NOT modify.
  *
@@ -50,7 +54,7 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                     |         "product"
                     |       ],
                     |       "data": {
-                    |         "productImage": null
+                    |         "productImage": "https://examplesite.com/product/product_image.jpg"
                     |       }
                     |     }
                     |   ]
@@ -111,7 +115,7 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
      *     },
      *     "product": {
      *       "productName": "Awesome Product",
-     *       "productImage": null
+     *       "productImage": "https://examplesite.com/product/product_image.jpg"
      *     }
      *   }
      * }
@@ -138,10 +142,10 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "user"
+                |         "product"
                 |       ],
                 |       "data": {
-                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                |         "productImage": "https://examplesite.com/product/product_image.jpg"
                 |       }
                 |     }
                 |   ]
@@ -153,10 +157,10 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "product"
+                |         "user"
                 |       ],
                 |       "data": {
-                |         "productImage": null
+                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
                 |       }
                 |     }
                 |   ]

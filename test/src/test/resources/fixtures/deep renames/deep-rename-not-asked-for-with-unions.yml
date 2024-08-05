@@ -22,7 +22,7 @@ overallSchema:
 # language=GraphQL
 underlyingSchema:
   Issues: |
-    union HasName = Issue | Edible
+    union HasName = Issue | Edible | Troll | User
     type Query {
       names: [HasName]
     }

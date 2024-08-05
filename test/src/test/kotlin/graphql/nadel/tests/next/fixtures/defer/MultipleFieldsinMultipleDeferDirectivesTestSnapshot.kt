@@ -9,6 +9,10 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.listOf
 
+private suspend fun main() {
+    graphql.nadel.tests.next.update<MultipleFieldsinMultipleDeferDirectivesTest>()
+}
+
 /**
  * This class is generated. Do NOT modify.
  *
@@ -55,8 +59,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowField4": "slowString4",
-                    |         "slowField3": "slowString3"
+                    |         "slowField": "slowString",
+                    |         "slowField2": "slowString2"
                     |       }
                     |     }
                     |   ]
@@ -71,8 +75,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowField": "slowString",
-                    |         "slowField2": "slowString2"
+                    |         "slowField4": "slowString4",
+                    |         "slowField3": "slowString3"
                     |       }
                     |     }
                     |   ]
@@ -88,10 +92,10 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
      *   "data": {
      *     "defer": {
      *       "fastField": "123",
-     *       "slowField": "slowString",
-     *       "slowField2": "slowString2",
      *       "slowField4": "slowString4",
-     *       "slowField3": "slowString3"
+     *       "slowField3": "slowString3",
+     *       "slowField": "slowString",
+     *       "slowField2": "slowString2"
      *     }
      *   }
      * }
@@ -118,8 +122,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "slowField4": "slowString4",
-                |         "slowField3": "slowString3"
+                |         "slowField": "slowString",
+                |         "slowField2": "slowString2"
                 |       }
                 |     }
                 |   ]
@@ -134,8 +138,8 @@ public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot(
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "slowField": "slowString",
-                |         "slowField2": "slowString2"
+                |         "slowField4": "slowString4",
+                |         "slowField3": "slowString3"
                 |       }
                 |     }
                 |   ]

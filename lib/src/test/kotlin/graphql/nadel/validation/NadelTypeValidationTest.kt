@@ -474,50 +474,6 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(error.overallField.name == "nextgenSpecific")
         }
 
-        it("ignores extension union members declared by other services") {
-            val fixture = NadelValidationTestFixture(
-                overallSchema = mapOf(
-                    "users" to """
-                        type Query {
-                            stuff: Stuff
-                        }
-                        union Stuff = User
-                        type User {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                    "issues" to """
-                        extend union Stuff = | Issue
-                        type Issue {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                ),
-                underlyingSchema = mapOf(
-                    "users" to """
-                        type Query {
-                            stuff: Stuff
-                        }
-                        union Stuff = User
-                        type User {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                    "issues" to """
-                        type Query {
-                            echo: String
-                        }
-                        type Issue {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                ),
-            )
-
-            val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
-        }
-
         it("validates extension union member if defined by own service") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(

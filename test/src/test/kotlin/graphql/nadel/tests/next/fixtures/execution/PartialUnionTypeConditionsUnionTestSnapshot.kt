@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.instrumentation
+package graphql.nadel.tests.next.fixtures.execution
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<InstrumentationBeginExecuteOnCompleteOnSuccessTest>()
+    graphql.nadel.tests.next.update<PartialUnionTypeConditionsUnionTest>()
 }
 
 /**
@@ -19,20 +19,51 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class InstrumentationBeginExecuteOnCompleteOnSuccessTestSnapshot : TestSnapshot() {
+public class PartialUnionTypeConditionsUnionTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   abstract {
+     *     ... on Issue {
+     *       __typename
+     *       key
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "tester",
+                service = "abstract",
                 query = """
                 | {
-                |   echo
+                |   abstract {
+                |     ... on Issue {
+                |       __typename
+                |       key
+                |     }
+                |   }
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 result = """
                 | {
                 |   "data": {
-                |     "echo": "Hello World"
+                |     "abstract": [
+                |       {},
+                |       {
+                |         "__typename": "Issue",
+                |         "key": "HEL"
+                |       }
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -42,10 +73,18 @@ public class InstrumentationBeginExecuteOnCompleteOnSuccessTestSnapshot : TestSn
         )
 
     /**
+     * Combined Result
+     *
      * ```json
      * {
      *   "data": {
-     *     "echo": "Hello World"
+     *     "abstract": [
+     *       {},
+     *       {
+     *         "__typename": "Issue",
+     *         "key": "HEL"
+     *       }
+     *     ]
      *   }
      * }
      * ```
@@ -54,7 +93,13 @@ public class InstrumentationBeginExecuteOnCompleteOnSuccessTestSnapshot : TestSn
             result = """
             | {
             |   "data": {
-            |     "echo": "Hello World"
+            |     "abstract": [
+            |       {},
+            |       {
+            |         "__typename": "Issue",
+            |         "key": "HEL"
+            |       }
+            |     ]
             |   }
             | }
             """.trimMargin(),
