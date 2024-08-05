@@ -99,9 +99,9 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
     private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<ServiceExecutionContext>())
 
     private class ServiceExecutionContext : NadelServiceExecutionContext() {
-        val isApplicable = mutableListOf<String>()
-        val transformField = mutableListOf<String>()
-        val getResultInstructions = mutableListOf<String>()
+        val isApplicable = Collections.synchronizedList(mutableListOf<String>())
+        val transformField = Collections.synchronizedList(mutableListOf<String>())
+        val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
 
         override fun toString(): String {
             return "ServiceExecutionContext(isApplicable=$isApplicable, transformField=$transformField, getResultInstructions=$getResultInstructions)"
@@ -160,6 +160,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             field: ExecutableNormalizedField,
                             state: Unit,
                         ): NadelTransformFieldResult {
+                            (serviceExecutionContext as ServiceExecutionContext).transformField.add(field.toExecutionString())
                             return NadelTransformFieldResult.unmodified(field)
                         }
 
