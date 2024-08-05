@@ -418,13 +418,7 @@ internal class NadelHydrationTransform(
             return false
         }
 
-        return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
-            // We currently don't support defer if the hydration is inside a List
-            // return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
-            return true
-        } else {
-            false
-        }
+        return executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()
     }
 
     private fun areAnyParentFieldsOutputtingLists(
