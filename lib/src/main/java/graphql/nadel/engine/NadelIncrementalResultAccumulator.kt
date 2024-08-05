@@ -10,6 +10,35 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.incremental.NormalizedDeferredExecution
 
+/**
+ * This class helps to return defer payloads in the correct groupings.
+ * This can become an issue if part of the defer payload is executed by Nadel, and
+ * another part is executed by an underlying service.
+ *
+ * e.g.
+ *
+ * ```
+ * query {
+ *   me {
+ *     ... @defer {
+ *       name # Executed by underlying service
+ *       manager { # Executed by Nadel hydration
+ *         name
+ *       }
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * In this case we will receive two [DeferPayload]s, one from the underlying service
+ * and one from Nadel itself.
+ *
+ * Thing is, because of how the `@defer` was applied, these results need to be returned together.
+ *
+ * This class accumulates the multiple [DeferPayload]s until they are complete i.e. in the above
+ * example `name` and `manager` are both present. Only then is the [DeferPayload] sent back to
+ * the user.
+ */
 class NadelIncrementalResultAccumulator(
     private val operation: ExecutableNormalizedOperation,
 ) {
