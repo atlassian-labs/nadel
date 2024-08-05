@@ -10,8 +10,20 @@ import java.util.concurrent.ConcurrentHashMap
  * Utility class to extract data out of the given [data].
  */
 class JsonNodes(
+    // {
+    //   "incremental": [
+    //     {
+    //       "data": {
+    //         "rename__overallString__underlyingString": "string for the deferred renamed field"
+    //       },
+    //       "path": ["defer"]
+    //     }
     private val data: JsonMap,
+    private val prefix: NadelQueryPath? = null, // [defer]
 ) {
+    // query
+    // issues -> users -> name
+    // issues[0] -> users[1] -> name
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
 
     /**
@@ -26,6 +38,16 @@ class JsonNodes(
      * Extracts the nodes at the given query selection path.
      */
     private fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
+
+        // queryPath parameter = [defer, issues]
+        // [issues]
+
+        // if (queryPath.startsWith(prefix)) {
+        //   getNodesAt(queryPath.removePrefix(prefix))
+        // } else {
+        //   emptyList()
+        // }
+
         var queue = listOf(rootNode)
 
         // todo work backwards here instead of forwards

@@ -370,7 +370,7 @@ internal class NextgenEngine(
             executionContext.incrementalResultSupport.defer(
                 serviceExecResult.incrementalItemPublisher
                     .asFlow()
-                    .map {
+                    .map {delayedIncrementalResult->
                         // Transform
                         resultTransformer
                             .transform(
@@ -379,9 +379,9 @@ internal class NextgenEngine(
                                 artificialFields = artificialFields,
                                 overallToUnderlyingFields = overallToUnderlyingFields,
                                 service = service,
-                                result = serviceExecResult
+                                result = delayedIncrementalResult
                             )
-                        it
+                        delayedIncrementalResult
                     }
             )
         }

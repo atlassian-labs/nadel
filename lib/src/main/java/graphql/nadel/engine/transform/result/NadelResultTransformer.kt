@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.incremental.DeferPayload
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.Service
@@ -21,6 +23,26 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactive.asFlow
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
+    suspend fun transform(
+        executionContext: NadelExecutionContext,
+        executionPlan: NadelExecutionPlan,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        service: Service,
+        result: DelayedIncrementalPartialResult,
+    ): ServiceExecutionResult {
+        result.incremental
+            ?.filterIsInstance<DeferPayload>()
+            ?.map { deferPayload ->
+                val nodes = JsonNodes(
+                    deferPayload.getData<JsonMap?>() ?: emptyMap(),
+                    prefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>()),
+                )
+
+                // mutate result here
+            }
+    }
+
     suspend fun transform(
         executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,

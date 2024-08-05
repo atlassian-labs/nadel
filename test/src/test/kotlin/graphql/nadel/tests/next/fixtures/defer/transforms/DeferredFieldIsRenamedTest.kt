@@ -39,7 +39,6 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                   hello: String
                   underlyingString: String
                 }
-               
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

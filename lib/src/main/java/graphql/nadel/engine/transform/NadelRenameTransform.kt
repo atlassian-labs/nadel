@@ -183,7 +183,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
-            queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
+            queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root, // [defer]
             flatten = true,
         )
 
