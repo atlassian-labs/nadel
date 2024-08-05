@@ -19,6 +19,7 @@ import graphql.nadel.hooks.NadelCreateServiceExecutionContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.normalized.ExecutableNormalizedField
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertTrue
 
@@ -95,12 +96,16 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
     ),
 ) {
-    private val serviceExecutionContexts = mutableListOf<ServiceExecutionContext>()
+    private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<ServiceExecutionContext>())
 
     private class ServiceExecutionContext : NadelServiceExecutionContext() {
         val isApplicable = mutableListOf<String>()
         val transformField = mutableListOf<String>()
         val getResultInstructions = mutableListOf<String>()
+
+        override fun toString(): String {
+            return "ServiceExecutionContext(isApplicable=$isApplicable, transformField=$transformField, getResultInstructions=$getResultInstructions)"
+        }
     }
 
     fun ExecutableNormalizedField.toExecutionString(): String {
@@ -155,7 +160,6 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             field: ExecutableNormalizedField,
                             state: Unit,
                         ): NadelTransformFieldResult {
-                            (serviceExecutionContext as ServiceExecutionContext).transformField.add(field.toExecutionString())
                             return NadelTransformFieldResult.unmodified(field)
                         }
 
@@ -200,8 +204,8 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
             "[Issue].title()",
         )
         assertTrue(me.isApplicable == expectedMeExecutions)
-        assertTrue(me.transformField == expectedMeExecutions)
-        assertTrue(me.getResultInstructions == expectedMeExecutions)
+        assertTrue(me.transformField == expectedMeExecutions.dropLast(1)) // dropLast as child is removed due to hydration
+        assertTrue(me.getResultInstructions == expectedMeExecutions.dropLast(1))
 
         val bug = serviceExecutionContexts.single {
             it.isApplicable.first().contains("bug")
