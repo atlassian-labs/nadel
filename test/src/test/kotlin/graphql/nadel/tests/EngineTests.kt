@@ -349,7 +349,7 @@ private suspend fun execute(
         val expectedResponse = fixture.response
         if (expectedResponse != null) {
             // TODO: check extensions one day - right now they don't match up as dumped tests weren't fully E2E but tests are
-            assertJsonEquals(
+            assertJsonObjectEquals(
                 actual = response.toSpecification().let {
                     mapOf(
                         "data" to it["data"],
