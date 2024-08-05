@@ -3,7 +3,7 @@ package graphql.nadel.tests.next.fixtures.defer
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class MultipleFieldsinMultipleDeferDirectivesTest : NadelIntegrationTest(
+open class MultipleFieldsInMultipleDeferDirectivesTest : NadelIntegrationTest(
     query = """
       query {
         defer {
