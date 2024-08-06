@@ -28,7 +28,9 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 |   issue(id: "ari:cloud:jira::issue/1") {
                 |     id
                 |     hydration__assignee__assigneeId: assigneeId
-                |     __typename__hydration__assignee: __typename
+                |     ... @defer {
+                |       __typename__hydration__assignee: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -38,35 +40,28 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "issue": {
                 |       "id": "ari:cloud:jira::issue/1",
-                |       "hydration__assignee__assigneeId": "ari:cloud:jira::user/1",
-                |       "__typename__hydration__assignee": "Issue"
+                |       "hydration__assignee__assigneeId": "ari:cloud:jira::user/1"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   user(id: "ari:cloud:jira::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "user": {
-                |       "name": "Franklin"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "issue"
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assignee": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -77,9 +72,8 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "issue": {
      *       "id": "ari:cloud:jira::issue/1",
-     *       "assignee": {
-     *         "name": "Franklin"
-     *       }
+     *       "assignee": null,
+     *       "__typename__hydration__assignee": "Issue"
      *     }
      *   }
      * }
@@ -106,9 +100,22 @@ public class HydrationDeferTestSnapshot : TestSnapshot() {
                 |         "issue"
                 |       ],
                 |       "data": {
-                |         "assignee": {
-                |           "name": "Franklin"
-                |         }
+                |         "__typename__hydration__assignee": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issue"
+                |       ],
+                |       "data": {
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]

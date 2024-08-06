@@ -20,29 +20,6 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class UnionWithInterfacesExecutionTestSnapshot : TestSnapshot() {
-    /**
-     * Query
-     *
-     * ```graphql
-     * query {
-     *   union {
-     *     __typename
-     *     ... on Interface {
-     *       id
-     *     }
-     *     ... on User {
-     *       name
-     *     }
-     *   }
-     * }
-     * ```
-     *
-     * Variables
-     *
-     * ```json
-     * {}
-     * ```
-     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "abstract",
@@ -80,8 +57,6 @@ public class UnionWithInterfacesExecutionTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

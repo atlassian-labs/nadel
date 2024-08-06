@@ -20,26 +20,6 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class PartialUnionTypeConditionsUnionTestSnapshot : TestSnapshot() {
-    /**
-     * Query
-     *
-     * ```graphql
-     * query {
-     *   abstract {
-     *     ... on Issue {
-     *       __typename
-     *       key
-     *     }
-     *   }
-     * }
-     * ```
-     *
-     * Variables
-     *
-     * ```json
-     * {}
-     * ```
-     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "abstract",
@@ -73,8 +53,6 @@ public class PartialUnionTypeConditionsUnionTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

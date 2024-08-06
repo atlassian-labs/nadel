@@ -27,7 +27,9 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 | {
                 |   rename__issueById__getIssueById: getIssueById(id: "1") {
                 |     hydration__assigneeV2__assigneeId: assigneeId
-                |     __typename__hydration__assigneeV2: __typename
+                |     ... @defer {
+                |       __typename__hydration__assigneeV2: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -36,13 +38,28 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 | {
                 |   "data": {
                 |     "rename__issueById__getIssueById": {
-                |       "hydration__assigneeV2__assigneeId": "ari:cloud:identity::user/1",
-                |       "__typename__hydration__assigneeV2": "Issue"
+                |       "hydration__assigneeV2__assigneeId": "ari:cloud:identity::user/1"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "rename__issueById__getIssueById"
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assigneeV2": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
             ExpectedServiceCall(
@@ -119,28 +136,6 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   rename__quickUser__user_fast: user_fast(id: "ari:cloud:identity::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "rename__quickUser__user_fast": {
-                |       "name": "SPEED"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**
@@ -151,11 +146,7 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
      *       "key": "GQLGW-1",
      *       "self": {
      *         "self": {
-     *           "self": {
-     *             "assigneeV2": {
-     *               "name": "SPEED"
-     *             }
-     *           }
+     *           "self": {}
      *         }
      *       }
      *     }
@@ -171,18 +162,30 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
             |       "key": "GQLGW-1",
             |       "self": {
             |         "self": {
-            |           "self": {
-            |             "assigneeV2": {
-            |               "name": "SPEED"
-            |             }
-            |           }
+            |           "self": {}
             |         }
             |       }
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "rename__issueById__getIssueById"
+                |       ],
+                |       "data": {
+                |         "__typename__hydration__assigneeV2": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

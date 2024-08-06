@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class JsonNodes(
     private val data: JsonMap,
+    private val prefix: List<String>? = null, // [defer]
 ) {
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
 
@@ -26,6 +27,15 @@ class JsonNodes(
      * Extracts the nodes at the given query selection path.
      */
     private fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
+
+        if (prefix != null) {
+            if (queryPath.startsWith(prefix)) {
+                getNodesAt(queryPath.removePrefix(prefix))
+            } else {
+                emptyList()
+            }
+        }
+
         var queue = listOf(rootNode)
 
         // todo work backwards here instead of forwards

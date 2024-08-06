@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.incremental.DeferPayload
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.Service
@@ -27,6 +29,67 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
+        result:  NadelIncrementalServiceExecutionResult //DelayedIncrementalPartialResult // NadelIncrementalServiceExecutionResult,
+    ): ServiceExecutionResult {
+        val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
+
+        coroutineScope {
+            result.incremental
+                ?.filterIsInstance<DeferPayload>() // need this filter because IncrementalPayload could be stream or defer
+                ?.map { deferPayload ->
+                    val nodes = JsonNodes(
+                        deferPayload.getData<JsonMap?>() ?: emptyMap(),
+                        prefix = deferPayload.path.filterIsInstance<String>(), //converts resultPath to queryPath todo: is it better for this to be NadelQueryPath?
+                    )
+
+                    // transform step of field [issue -> user -> name]
+                    for ((field, steps) in executionPlan.transformationSteps) {
+                        // This can be null if we did not end up sending the field e.g. for hydration
+                        val underlyingFields = overallToUnderlyingFields[field]
+                        if (underlyingFields.isNullOrEmpty()) {
+                            continue
+                        }
+
+                        for (step in steps) {
+                            asyncInstructions.add(
+                                async {
+                                    step.transform.getResultInstructions(
+                                        executionContext,
+                                        executionBlueprint,
+                                        service,
+                                        field,
+                                        underlyingFields.first().parent,
+                                        result,
+                                        step.state,
+                                        nodes,
+                                    )
+                                },
+                            )
+                        }
+
+                        asyncInstructions.add(
+                            async {
+                                getRemoveArtificialFieldInstructions(artificialFields, nodes)
+                            },
+                        )
+                    }
+                }
+        }
+        val instructions = asyncInstructions
+            .awaitAll()
+            .flatten()
+
+        mutate(result, instructions)
+
+        return result
+    }
+
+    suspend fun transform(
+        executionContext: NadelExecutionContext,
+        executionPlan: NadelExecutionPlan,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
         //NadelIncrementalServiceExecutionResult -> IncrementalItemPublisher.map (apply transforms to every itme in publisher)
@@ -39,35 +102,17 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
                         }
                     DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-
                         .extensions(it.extensions)
                         .build()
                 }
         }
+
         // maybe here or in NextGenEngine
         val nodes = JsonNodes(result.data)
         nodes.getNodesAt(NadelQueryPath(listOf("issue", "user")))
 
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
-        // issue {
-        //      ... @defer {
-        //        user {
-        //          name # @renamed(from: "asdfaiowjefwef")
-        //        }
-        //      }
-        //      key # @renamed(from: "asdf")
-        // }
-        // "incremtanl": [
-        //  {
-        //      "data": {
-        //          "user": {
-        //              name: "Steven"
-        //          }
-        //      }
-        //   "path": [issue]
-        //  }
-        // ]
         coroutineScope {
             // transform step of field [issue -> user -> name]
             for ((field, steps) in executionPlan.transformationSteps) {

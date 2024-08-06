@@ -31,7 +31,9 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 |     related {
                 |       parent {
                 |         hydration__assignee__assigneeId: assigneeId
-                |         __typename__hydration__assignee: __typename
+                |         ... @defer {
+                |           __typename__hydration__assignee: __typename
+                |         }
                 |       }
                 |     }
                 |   }
@@ -49,38 +51,34 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 |         },
                 |         {
                 |           "parent": {
-                |             "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |             "__typename__hydration__assignee": "Issue"
+                |             "hydration__assignee__assigneeId": "ari:cloud:identity::user/1"
                 |           }
                 |         }
                 |       ]
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "userById": {
-                |       "name": "Franklin"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "issueByKey",
+                    |         "related",
+                    |         1,
+                    |         "parent"
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assignee": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -97,9 +95,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
      *         },
      *         {
      *           "parent": {
-     *             "assignee": {
-     *               "name": "Franklin"
-     *             }
+     *             "__typename__hydration__assignee": "Issue"
      *           }
      *         }
      *       ]
@@ -119,18 +115,33 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
             |           "parent": null
             |         },
             |         {
-            |           "parent": {
-            |             "assignee": {
-            |               "name": "Franklin"
-            |             }
-            |           }
+            |           "parent": {}
             |         }
             |       ]
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey",
+                |         "related",
+                |         1,
+                |         "parent"
+                |       ],
+                |       "data": {
+                |         "__typename__hydration__assignee": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

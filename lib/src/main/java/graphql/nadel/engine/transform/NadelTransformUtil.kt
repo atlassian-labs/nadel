@@ -11,7 +11,9 @@ import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
+import graphql.normalized.incremental.NormalizedDeferredExecution
 import graphql.schema.GraphQLFieldDefinition
+import java.util.LinkedHashSet
 
 object NadelTransformUtil {
     fun getOverallTypeNameOfNode(
@@ -36,11 +38,13 @@ object NadelTransformUtil {
     fun makeTypeNameField(
         aliasHelper: NadelAliasHelper,
         objectTypeNames: List<String>,
+        deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>
     ): ExecutableNormalizedField {
         return newNormalizedField()
             .alias(aliasHelper.typeNameResultKey)
             .fieldName(TypeNameMetaFieldDef.name)
             .objectTypeNames(objectTypeNames)
+            .deferredExecutions(deferredExecutions)
             .build()
     }
 

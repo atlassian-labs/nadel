@@ -20,23 +20,6 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class HiddenUnionMembersTypenameTestSnapshot : TestSnapshot() {
-    /**
-     * Query
-     *
-     * ```graphql
-     * query {
-     *   abstract {
-     *     __typename
-     *   }
-     * }
-     * ```
-     *
-     * Variables
-     *
-     * ```json
-     * {}
-     * ```
-     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "abstract",
@@ -68,8 +51,6 @@ public class HiddenUnionMembersTypenameTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

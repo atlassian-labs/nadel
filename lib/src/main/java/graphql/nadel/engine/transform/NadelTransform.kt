@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform
 
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.language.Directive
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails

@@ -20,31 +20,10 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class HiddenUnionMembersInlineFragmentTestSnapshot : TestSnapshot() {
-    /**
-     * Query
-     *
-     * ```graphql
-     * query {
-     *   abstract {
-     *     ... on Issue {
-     *       key
-     *     }
-     *   }
-     * }
-     * ```
-     *
-     * Variables
-     *
-     * ```json
-     * {}
-     * ```
-     */
     override val calls: List<ExpectedServiceCall> = listOf(
             )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "errors": [

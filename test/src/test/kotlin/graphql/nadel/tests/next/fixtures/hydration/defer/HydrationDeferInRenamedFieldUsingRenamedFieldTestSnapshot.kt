@@ -28,7 +28,9 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
                 |   rename__issueByKey__getIssueByKey: getIssueByKey(key: "GQLGW-1") {
                 |     key
                 |     hydration__assigneeV2__assigneeId: assigneeId
-                |     __typename__hydration__assigneeV2: __typename
+                |     ... @defer {
+                |       __typename__hydration__assigneeV2: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -38,35 +40,28 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
                 |   "data": {
                 |     "rename__issueByKey__getIssueByKey": {
                 |       "key": "GQLGW-1",
-                |       "hydration__assigneeV2__assigneeId": "ari:cloud:identity::user/1",
-                |       "__typename__hydration__assigneeV2": "Issue"
+                |       "hydration__assigneeV2__assigneeId": "ari:cloud:identity::user/1"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   rename__quickUser__user_fast: user_fast(id: "ari:cloud:identity::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "rename__quickUser__user_fast": {
-                |       "name": "SPEED"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "rename__issueByKey__getIssueByKey"
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assigneeV2": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -77,9 +72,7 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
      *   "data": {
      *     "issueByKey": {
      *       "key": "GQLGW-1",
-     *       "assigneeV2": {
-     *         "name": "SPEED"
-     *       }
+     *       "assigneeV2": null
      *     }
      *   }
      * }
@@ -103,12 +96,25 @@ public class HydrationDeferInRenamedFieldUsingRenamedFieldTestSnapshot : TestSna
                 |   "incremental": [
                 |     {
                 |       "path": [
+                |         "rename__issueByKey__getIssueByKey"
+                |       ],
+                |       "data": {
+                |         "__typename__hydration__assigneeV2": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
                 |         "issueByKey"
                 |       ],
                 |       "data": {
-                |         "assigneeV2": {
-                |           "name": "SPEED"
-                |         }
+                |         "assigneeV2": null
                 |       }
                 |     }
                 |   ]

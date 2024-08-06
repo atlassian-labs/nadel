@@ -136,6 +136,7 @@ internal class NadelBatchHydrationTransform(
         return makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = objectTypeNames,
+            deferredExecutions = field.deferredExecutions
         )
     }
 }

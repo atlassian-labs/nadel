@@ -28,7 +28,9 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |   issues {
                 |     key
                 |     hydration__assignee__assigneeId: assigneeId
-                |     __typename__hydration__assignee: __typename
+                |     ... @defer {
+                |       __typename__hydration__assignee: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -39,90 +41,70 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |     "issues": [
                 |       {
                 |         "key": "GQLGW-1",
-                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |         "__typename__hydration__assignee": "Issue"
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1"
                 |       },
                 |       {
                 |         "key": "GQLGW-2",
-                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
-                |         "__typename__hydration__assignee": "Issue"
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/2"
                 |       },
                 |       {
                 |         "key": "GQLGW-3",
-                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |         "__typename__hydration__assignee": "Issue"
+                |         "hydration__assignee__assigneeId": "ari:cloud:identity::user/1"
                 |       }
                 |     ]
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "userById": {
-                |       "name": "Franklin"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "userById": {
-                |       "name": "Franklin"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/2") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "userById": {
-                |       "name": "Tom"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "issues",
+                    |         2
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assignee": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
+                    """
+                    | {
+                    |   "hasNext": true,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "issues",
+                    |         0
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assignee": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
+                    """
+                    | {
+                    |   "hasNext": true,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "issues",
+                    |         1
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assignee": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -134,21 +116,15 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
      *     "issues": [
      *       {
      *         "key": "GQLGW-1",
-     *         "assignee": {
-     *           "name": "Franklin"
-     *         }
+     *         "__typename__hydration__assignee": "Issue"
      *       },
      *       {
      *         "key": "GQLGW-2",
-     *         "assignee": {
-     *           "name": "Tom"
-     *         }
+     *         "__typename__hydration__assignee": "Issue"
      *       },
      *       {
      *         "key": "GQLGW-3",
-     *         "assignee": {
-     *           "name": "Franklin"
-     *         }
+     *         "__typename__hydration__assignee": "Issue"
      *       }
      *     ]
      *   }
@@ -161,28 +137,68 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "key": "GQLGW-1",
-            |         "assignee": {
-            |           "name": "Franklin"
-            |         }
+            |         "key": "GQLGW-1"
             |       },
             |       {
-            |         "key": "GQLGW-2",
-            |         "assignee": {
-            |           "name": "Tom"
-            |         }
+            |         "key": "GQLGW-2"
             |       },
             |       {
-            |         "key": "GQLGW-3",
-            |         "assignee": {
-            |           "name": "Franklin"
-            |         }
+            |         "key": "GQLGW-3"
             |       }
             |     ]
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issues",
+                |         2
+                |       ],
+                |       "data": {
+                |         "__typename__hydration__assignee": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issues",
+                |         0
+                |       ],
+                |       "data": {
+                |         "__typename__hydration__assignee": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issues",
+                |         1
+                |       ],
+                |       "data": {
+                |         "__typename__hydration__assignee": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

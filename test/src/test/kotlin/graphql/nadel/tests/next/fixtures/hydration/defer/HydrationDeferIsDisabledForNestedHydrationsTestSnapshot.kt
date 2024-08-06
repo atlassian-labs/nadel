@@ -27,7 +27,9 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                 | {
                 |   issueByKey(key: "GQLGW-3") {
                 |     hydration__assignee__assigneeId: assigneeId
-                |     __typename__hydration__assignee: __typename
+                |     ... @defer {
+                |       __typename__hydration__assignee: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -36,13 +38,28 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                 | {
                 |   "data": {
                 |     "issueByKey": {
-                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |       "__typename__hydration__assignee": "Issue"
+                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/1"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "issueByKey"
+                    |       ],
+                    |       "data": {
+                    |         "__typename__hydration__assignee": "Issue"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
             ExpectedServiceCall(
@@ -71,28 +88,6 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "userById": {
-                |       "name": "Franklin"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**
@@ -101,11 +96,8 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
      *   "data": {
      *     "issueByKey": {
      *       "key": "GQLGW-3",
-     *       "self": {
-     *         "assignee": {
-     *           "name": "Franklin"
-     *         }
-     *       }
+     *       "self": {},
+     *       "__typename__hydration__assignee": "Issue"
      *     }
      *   }
      * }
@@ -117,16 +109,28 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
             |   "data": {
             |     "issueByKey": {
             |       "key": "GQLGW-3",
-            |       "self": {
-            |         "assignee": {
-            |           "name": "Franklin"
-            |         }
-            |       }
+            |       "self": {}
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {
+                |         "__typename__hydration__assignee": "Issue"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

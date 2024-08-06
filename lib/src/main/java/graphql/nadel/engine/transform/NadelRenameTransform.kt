@@ -117,6 +117,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = objectTypeNames,
+            deferredExecutions = field.deferredExecutions
         )
     }
 

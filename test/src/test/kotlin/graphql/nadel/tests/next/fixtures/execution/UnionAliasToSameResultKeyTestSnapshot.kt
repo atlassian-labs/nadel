@@ -20,29 +20,6 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class UnionAliasToSameResultKeyTestSnapshot : TestSnapshot() {
-    /**
-     * Query
-     *
-     * ```graphql
-     * query {
-     *   abstract {
-     *     __typename
-     *     ... on Issue {
-     *       id: key
-     *     }
-     *     ... on User {
-     *       id: name
-     *     }
-     *   }
-     * }
-     * ```
-     *
-     * Variables
-     *
-     * ```json
-     * {}
-     * ```
-     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "abstract",
@@ -82,8 +59,6 @@ public class UnionAliasToSameResultKeyTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

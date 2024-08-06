@@ -9,6 +9,10 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.listOf
 
+private suspend fun main() {
+    graphql.nadel.tests.next.update<MultipleRenamedFieldsAreDeferredSeparately>()
+}
+
 /**
  * This class is generated. Do NOT modify.
  *
@@ -23,8 +27,14 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
                 | {
                 |   defer {
                 |     hello
-                |     rename__overallString__underlyingString: underlyingString
-                |     __typename__rename__overallString: __typename
+                |     ... @defer(label: "defer1") {
+                |       rename__overallString__underlyingString: underlyingString
+                |       __typename__rename__overallString: __typename
+                |     }
+                |     ... @defer(label: "defer2") {
+                |       rename__overallString__underlyingString: underlyingString
+                |       __typename__rename__overallString: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -33,14 +43,47 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
                 | {
                 |   "data": {
                 |     "defer": {
-                |       "hello": "hello there",
-                |       "rename__overallString__underlyingString": "deferred string 1",
-                |       "__typename__rename__overallString": "DeferApi"
+                |       "hello": "hello there"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "label": "defer2",
+                    |       "data": {
+                    |         "rename__overallString__underlyingString": "deferred string 1",
+                    |         "__typename__rename__overallString": "DeferApi"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
+                    """
+                    | {
+                    |   "hasNext": true,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "label": "defer1",
+                    |       "data": {
+                    |         "rename__overallString__underlyingString": "deferred string 1",
+                    |         "__typename__rename__overallString": "DeferApi"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -51,7 +94,8 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
      *   "data": {
      *     "defer": {
      *       "hello": "hello there",
-     *       "overallString": "deferred string 1"
+     *       "rename__overallString__underlyingString": "deferred string 1",
+     *       "__typename__rename__overallString": "DeferApi"
      *     }
      *   }
      * }
@@ -62,13 +106,47 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
             | {
             |   "data": {
             |     "defer": {
-            |       "hello": "hello there",
-            |       "overallString": "deferred string 1"
+            |       "hello": "hello there"
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer"
+                |       ],
+                |       "label": "defer2",
+                |       "data": {
+                |         "rename__overallString__underlyingString": "deferred string 1",
+                |         "__typename__rename__overallString": "DeferApi"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer"
+                |       ],
+                |       "label": "defer1",
+                |       "data": {
+                |         "rename__overallString__underlyingString": "deferred string 1",
+                |         "__typename__rename__overallString": "DeferApi"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
