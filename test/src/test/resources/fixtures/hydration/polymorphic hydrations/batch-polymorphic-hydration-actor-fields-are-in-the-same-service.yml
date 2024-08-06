@@ -76,11 +76,6 @@ query: |
       __typename
       id
       data {
-        ... on Pet {
-          __typename
-          id
-          breed
-        }
         ... on Human {
           __typename
           id
@@ -148,11 +143,7 @@ serviceCalls:
       query: |
         query {
           petById(ids: ["PET-0", "PET-1"]) {
-            __typename
-            breed
-            id
-            batch_hydration__data__id: id
-          }
+            batch_hydration__data__id: id          }
         }
       variables: { }
     # language=JSON
@@ -161,15 +152,9 @@ serviceCalls:
         "data": {
           "petById": [
             {
-              "__typename": "Pet",
-              "breed": "Akita",
-              "id": "PET-0",
               "batch_hydration__data__id": "PET-0"
             },
             {
-              "__typename": "Pet",
-              "breed": "Labrador",
-              "id": "PET-1",
               "batch_hydration__data__id": "PET-1"
             }
           ]
@@ -218,11 +203,7 @@ response: |-
         {
           "__typename": "Foo",
           "id": "FOO-0",
-          "data": {
-            "__typename": "Pet",
-            "id": "PET-0",
-            "breed": "Akita"
-          }
+          "data": {}
         },
         {
           "__typename": "Foo",
@@ -236,11 +217,7 @@ response: |-
         {
           "__typename": "Foo",
           "id": "FOO-2",
-          "data": {
-            "__typename": "Pet",
-            "id": "PET-1",
-            "breed": "Labrador"
-          }
+          "data": {}
         },
         {
           "__typename": "Foo",
@@ -253,5 +230,5 @@ response: |-
         }
       ]
     },
-    "extensions": {}
+    "errors": []
   }
