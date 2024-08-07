@@ -172,7 +172,6 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
                 ): CompletableFuture<List<NadelResultInstruction>> {
@@ -198,7 +197,6 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 service,
                 overallField,
                 underlyingParentField,
-                result,
                 state,
                 nodes,
             )
@@ -213,7 +211,6 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     service,
                     overallField,
                     underlyingParentField,
-                    result,
                     state,
                     nodes,
                 )

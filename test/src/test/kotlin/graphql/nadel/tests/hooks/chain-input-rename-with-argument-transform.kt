@@ -81,7 +81,6 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {

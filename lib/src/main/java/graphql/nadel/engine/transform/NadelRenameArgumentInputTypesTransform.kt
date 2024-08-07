@@ -2,7 +2,6 @@ package graphql.nadel.engine.transform
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform.State
@@ -67,7 +66,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

@@ -59,7 +59,6 @@ private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
@@ -97,7 +96,6 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>> {

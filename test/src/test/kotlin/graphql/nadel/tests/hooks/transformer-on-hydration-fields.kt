@@ -84,7 +84,6 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {

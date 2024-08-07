@@ -151,7 +151,6 @@ internal class NadelHydrationTransform(
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

@@ -2,7 +2,6 @@ package graphql.nadel.engine.transform
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -54,7 +53,6 @@ interface NadelTransformJavaCompat<State : Any> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>>
@@ -112,7 +110,6 @@ interface NadelTransformJavaCompat<State : Any> {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: State,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
@@ -122,7 +119,6 @@ interface NadelTransformJavaCompat<State : Any> {
                         service = service,
                         overallField = overallField,
                         underlyingParentField = underlyingParentField,
-                        result = result,
                         state = state,
                         nodes = nodes,
                     ).asDeferred().await()

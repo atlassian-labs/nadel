@@ -128,7 +128,6 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                                  @NotNull Service service,
                                                                                  @NotNull ExecutableNormalizedField overallField,
                                                                                  @Nullable ExecutableNormalizedField underlyingParentField,
-                                                                                 @NotNull ServiceExecutionResult result,
                                                                                  @NotNull Set<String> strings,
                                                                                  @NotNull JsonNodes nodes) {
         return CompletableFuture.completedFuture(emptyList());

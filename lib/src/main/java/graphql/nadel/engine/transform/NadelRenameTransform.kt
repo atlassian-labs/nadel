@@ -177,7 +177,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
-        result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

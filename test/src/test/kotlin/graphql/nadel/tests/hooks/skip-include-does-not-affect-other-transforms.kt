@@ -54,7 +54,6 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {

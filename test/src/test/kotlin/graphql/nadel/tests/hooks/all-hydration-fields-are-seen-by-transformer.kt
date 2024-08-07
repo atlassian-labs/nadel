@@ -56,7 +56,6 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: Unit,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {

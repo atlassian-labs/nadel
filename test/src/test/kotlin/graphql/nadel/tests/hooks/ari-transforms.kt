@@ -87,7 +87,6 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: Set<String>,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

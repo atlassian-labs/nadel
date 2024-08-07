@@ -101,7 +101,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
@@ -141,7 +140,6 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
                     state: GraphQLAppliedDirective,
                     nodes: JsonNodes,
                 ): List<NadelResultInstruction> {

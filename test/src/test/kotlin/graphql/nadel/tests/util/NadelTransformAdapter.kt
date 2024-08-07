@@ -41,7 +41,6 @@ interface NadelTransformAdapter : NadelTransform<Unit> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

@@ -111,7 +111,6 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

@@ -72,7 +72,6 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: GraphQLError,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

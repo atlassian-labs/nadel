@@ -181,7 +181,7 @@ internal fun DirectiveDefinition.Builder.inputValueDefinition(
 ): DirectiveDefinition.Builder {
     return inputValueDefinition(
         name = name,
-        type = TypeName.newTypeName(type.name).build(),
+        type = newTypeName(type.name).build(),
         description = description,
         defaultValue = defaultValue,
     )
@@ -213,7 +213,7 @@ internal fun InputObjectTypeDefinition.Builder.inputValueDefinition(
 ): InputObjectTypeDefinition.Builder {
     return inputValueDefinition(
         name = name,
-        type = TypeName.newTypeName(type.name).build(),
+        type = newTypeName(type.name).build(),
         description = description,
         defaultValue = defaultValue,
     )

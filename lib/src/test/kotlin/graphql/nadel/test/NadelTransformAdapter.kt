@@ -2,7 +2,6 @@ package graphql.nadel.test
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
@@ -41,7 +40,6 @@ interface NadelTransformAdapter : NadelTransform<Unit> {
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

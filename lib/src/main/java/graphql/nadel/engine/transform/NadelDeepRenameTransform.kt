@@ -290,7 +290,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?, // Overall field
-        result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
