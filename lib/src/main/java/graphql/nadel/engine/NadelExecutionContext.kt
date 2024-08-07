@@ -2,6 +2,7 @@ package graphql.nadel.engine
 
 import graphql.ExecutionInput
 import graphql.GraphQLContext
+import graphql.execution.ExecutionId
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
@@ -20,6 +21,7 @@ data class NadelExecutionContext internal constructor(
     internal val hooks: NadelExecutionHooks,
     val hints: NadelExecutionHints,
     val instrumentationState: InstrumentationState?,
+    val executionId: ExecutionId,
     internal val timer: NadelInstrumentationTimer,
     internal val incrementalResultSupport: NadelIncrementalResultSupport,
     internal val resultTracker: NadelResultTracker,

@@ -21,18 +21,18 @@ import java.util.concurrent.CompletableFuture
 
 @UseHook
 class `exceptions-in-service-execution-result-completable-future-in-graphql-errors` : EngineTestHook {
+    private class PopGoesTheWeaselException() : Exception()
+
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionFactory(object : ServiceExecutionFactory {
-                override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    return ServiceExecution {
-                        CompletableFuture.completedFuture(null)
-                            .thenCompose {
-                                throw RuntimeException("Pop goes the weasel")
-                            }
-                    }
+            .serviceExecutionFactory {
+                ServiceExecution {
+                    CompletableFuture.completedFuture(null)
+                        .thenCompose {
+                            throw PopGoesTheWeaselException()
+                        }
                 }
-            })
+            }
     }
 
     override fun assertResult(result: ExecutionResult) {
@@ -43,6 +43,6 @@ class `exceptions-in-service-execution-result-completable-future-in-graphql-erro
         expectThat(result).errors
             .single()
             .message
-            .contains("Pop goes the weasel")
+            .contains("An PopGoesTheWeaselException occurred invoking the service MyService")
     }
 }
