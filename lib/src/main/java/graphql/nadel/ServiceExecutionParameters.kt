@@ -4,6 +4,7 @@ import graphql.GraphQLContext
 import graphql.execution.ExecutionId
 import graphql.language.Document
 import graphql.language.OperationDefinition
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.normalized.ExecutableNormalizedField
 
 class ServiceExecutionParameters internal constructor(
@@ -13,6 +14,7 @@ class ServiceExecutionParameters internal constructor(
     val variables: Map<String, Any>,
     val operationDefinition: OperationDefinition,
     val executionId: ExecutionId,
+    val serviceExecutionContext: NadelServiceExecutionContext,
     private val serviceContext: Any?,
     /**
      * @return details abut this service hydration or null if it's not a hydration call
@@ -20,6 +22,7 @@ class ServiceExecutionParameters internal constructor(
     val hydrationDetails: ServiceExecutionHydrationDetails?,
     val executableNormalizedField: ExecutableNormalizedField,
 ) {
+    @Deprecated("Use serviceExecutionContext instead")
     fun <T> getServiceContext(): T? {
         @Suppress("UNCHECKED_CAST") // Trust caller
         return serviceContext as T?

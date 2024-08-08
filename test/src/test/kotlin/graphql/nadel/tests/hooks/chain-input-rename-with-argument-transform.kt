@@ -7,6 +7,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
@@ -27,6 +28,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
             object : NadelTransform<Any> {
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
@@ -42,6 +44,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
 
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
@@ -77,6 +80,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
 
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     overallField: ExecutableNormalizedField,

@@ -5,6 +5,7 @@ import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionHydrationDetails;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.engine.NadelExecutionContext;
+import graphql.nadel.engine.NadelServiceExecutionContext;
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint;
 import graphql.nadel.engine.transform.NadelTransform;
 import graphql.nadel.engine.transform.NadelTransformFieldResult;
@@ -48,6 +49,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
     @NotNull
     @Override
     public CompletableFuture<Set<String>> isApplicable(@NotNull NadelExecutionContext executionContext,
+                                                       @NotNull NadelServiceExecutionContext serviceExecutionContext,
                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                        @NotNull Map<String, ? extends Service> services,
                                                        @NotNull Service service,
@@ -78,6 +80,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
     @NotNull
     @Override
     public CompletableFuture<NadelTransformFieldResult> transformField(@NotNull NadelExecutionContext executionContext,
+                                                                       @NotNull NadelServiceExecutionContext serviceExecutionContext,
                                                                        @NotNull NadelQueryTransformerJavaCompat transformer,
                                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                        @NotNull Service service,
@@ -124,6 +127,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
     @NotNull
     @Override
     public CompletableFuture<List<NadelResultInstruction>> getResultInstructions(@NotNull NadelExecutionContext executionContext,
+                                                                                 @NotNull NadelServiceExecutionContext serviceExecutionContext,
                                                                                  @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                                  @NotNull Service service,
                                                                                  @NotNull ExecutableNormalizedField overallField,

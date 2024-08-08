@@ -4,6 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform.State
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -29,6 +30,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -47,6 +49,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
@@ -63,6 +66,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,

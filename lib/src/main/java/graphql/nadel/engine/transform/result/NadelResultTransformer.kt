@@ -3,6 +3,7 @@ package graphql.nadel.engine.transform.result
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -18,6 +19,7 @@ import kotlinx.coroutines.coroutineScope
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
     suspend fun transform(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
@@ -41,6 +43,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                         async {
                             step.transform.getResultInstructions(
                                 executionContext,
+                                serviceExecutionContext,
                                 executionBlueprint,
                                 service,
                                 field,

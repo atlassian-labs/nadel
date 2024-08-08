@@ -2,6 +2,7 @@ package graphql.nadel.engine.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
@@ -13,6 +14,7 @@ class NadelQueryTransformer private constructor(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val service: Service,
     private val executionContext: NadelExecutionContext,
+    private val serviceExecutionContext: NadelServiceExecutionContext,
     private val executionPlan: NadelExecutionPlan,
     private val transformContext: TransformContext,
 ) {
@@ -21,6 +23,7 @@ class NadelQueryTransformer private constructor(
             executionBlueprint: NadelOverallExecutionBlueprint,
             service: Service,
             executionContext: NadelExecutionContext,
+            serviceExecutionContext: NadelServiceExecutionContext,
             executionPlan: NadelExecutionPlan,
             field: ExecutableNormalizedField,
         ): TransformResult {
@@ -30,6 +33,7 @@ class NadelQueryTransformer private constructor(
                 executionBlueprint,
                 service,
                 executionContext,
+                serviceExecutionContext,
                 executionPlan,
                 transformContext,
             )
@@ -148,6 +152,7 @@ class NadelQueryTransformer private constructor(
         for ((_, _, transform, state) in transformationSteps) {
             val transformResultForStep = transform.transformField(
                 executionContext,
+                serviceExecutionContext,
                 this,
                 executionBlueprint,
                 service,
