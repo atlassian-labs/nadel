@@ -4,6 +4,7 @@ import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
 import graphql.nadel.engine.util.copy
 import graphql.nadel.util.getLogger
+import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,19 +22,32 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class NadelIncrementalResultSupport internal constructor(
-    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(
-        capacity = 100,
-        onBufferOverflow = BufferOverflow.DROP_LATEST,
-        onUndeliveredElement = {
-            log.error("Dropping incremental result because of buffer overflow")
-        },
-    ),
+    private val accumulator: NadelIncrementalResultAccumulator,
+    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
 ) {
+    internal constructor(
+        operation: ExecutableNormalizedOperation,
+        delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
+    ) : this(
+        accumulator = NadelIncrementalResultAccumulator(
+            operation = operation,
+        ),
+        delayedResultsChannel = delayedResultsChannel,
+    )
+
     companion object {
         private val log = getLogger<NadelIncrementalResultSupport>()
+
+        private fun makeDefaultChannel(): Channel<DelayedIncrementalPartialResult> = Channel(
+            capacity = 100,
+            onBufferOverflow = BufferOverflow.DROP_LATEST,
+            onUndeliveredElement = {
+                log.error("Dropping incremental result because of buffer overflow")
+            },
+        )
     }
 
-    private val channelMutex = Mutex()
+    private val operationMutex = Mutex()
 
     /**
      * The root [Job] to run the defer and stream work etc on.
@@ -67,13 +81,15 @@ class NadelIncrementalResultSupport internal constructor(
             val result = task()
             initialCompletionLock.await()
 
-            channelMutex.withLock {
+            operationMutex.withLock {
+                accumulator.accumulate(result)
+
                 val hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
 
-                delayedResultsChannel.send(
-                    // Copy of result but with the correct hasNext according to the info we know
-                    quickCopy(result, hasNext),
-                )
+                val next = accumulator.getIncrementalPartialResult(hasNext)
+                if (next != null) {
+                    delayedResultsChannel.send(next)
+                }
             }
         }
     }
@@ -89,7 +105,9 @@ class NadelIncrementalResultSupport internal constructor(
                 .collect { result ->
                     initialCompletionLock.await()
 
-                    channelMutex.withLock {
+                    operationMutex.withLock {
+                        accumulator.accumulate(result)
+
                         // Here we'll stipulate that the last element of the Flow sets hasNext=false
                         val hasNext = if (result.hasNext()) {
                             true
@@ -97,10 +115,10 @@ class NadelIncrementalResultSupport internal constructor(
                             outstandingJobHandle.decrementAndGetJobCount() > 0
                         }
 
-                        delayedResultsChannel.send(
-                            // Copy of result but with the correct hasNext according to the info we know
-                            quickCopy(result, hasNext),
-                        )
+                        val next = accumulator.getIncrementalPartialResult(hasNext)
+                        if (next != null) {
+                            delayedResultsChannel.send(next)
+                        }
                     }
                 }
         }

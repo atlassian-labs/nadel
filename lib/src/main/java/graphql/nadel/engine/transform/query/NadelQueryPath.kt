@@ -25,5 +25,9 @@ data class NadelQueryPath(val segments: List<String>) {
 
     companion object {
         val root = NadelQueryPath(emptyList())
+
+        fun fromResultPath(path: List<Any>): NadelQueryPath {
+            return NadelQueryPath(path.filterIsInstance<String>())
+        }
     }
 }
