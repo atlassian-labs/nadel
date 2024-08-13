@@ -4,6 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
@@ -51,6 +52,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
 
                 override fun isApplicable(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
@@ -64,6 +66,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
+            val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val services = mock<Map<String, Service>>()
             val service = mock<Service>()
@@ -73,6 +76,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             // when
             val isApplicable = transformer.isApplicable(
                 executionContext,
+                serviceExecutionContext,
                 executionBlueprint,
                 services,
                 service,
@@ -86,6 +90,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             verify(exactly = 1) {
                 compat.isApplicable(
                     executionContext,
+                    serviceExecutionContext,
                     executionBlueprint,
                     services,
                     service,
@@ -106,6 +111,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
 
                 override fun transformField(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     transformer: NadelQueryTransformerJavaCompat,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
@@ -119,6 +125,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
+            val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val queryTransformer = mock<NadelQueryTransformer>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val service = mock<Service>()
@@ -128,6 +135,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             // when
             val transformField = transformer.transformField(
                 executionContext,
+                serviceExecutionContext,
                 queryTransformer,
                 executionBlueprint,
                 service,
@@ -141,6 +149,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             verify(exactly = 1) {
                 compat.transformField(
                     executionContext,
+                    serviceExecutionContext,
                     // This is another wrapper for Java compat
                     match { it.queryTransformer == queryTransformer },
                     executionBlueprint,
@@ -168,6 +177,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
 
                 override fun getResultInstructions(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     overallField: ExecutableNormalizedField,
@@ -183,6 +193,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
+            val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val service = mock<Service>()
             val overallField = mock<ExecutableNormalizedField>()
@@ -194,6 +205,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             // when
             val getResultInstructions = transformer.getResultInstructions(
                 executionContext,
+                serviceExecutionContext,
                 executionBlueprint,
                 service,
                 overallField,
@@ -209,6 +221,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             verify(exactly = 1) {
                 compat.getResultInstructions(
                     executionContext,
+                    serviceExecutionContext,
                     executionBlueprint,
                     service,
                     overallField,
