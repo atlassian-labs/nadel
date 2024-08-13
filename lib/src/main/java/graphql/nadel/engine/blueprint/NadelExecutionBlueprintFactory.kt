@@ -43,7 +43,6 @@ import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLType
 import java.math.BigInteger
 
 internal object NadelExecutionBlueprintFactory {
@@ -329,7 +328,7 @@ private class Factory(
                     return@mapNotNull null
                 }
 
-                val underlyingParentType = getUnderlyingType(hydratedFieldParentType)
+                val underlyingParentType = getUnderlyingType(hydratedFieldParentType, hydratedFieldDef)
                     ?: error("No underlying type for: ${hydratedFieldParentType.name}")
                 val fieldDefs = underlyingParentType.getFieldsAlong(inputValueDef.valueSource.queryPathToField.segments)
                 inputValueDef.takeIf {
@@ -410,7 +409,7 @@ private class Factory(
     private fun getBatchHydrationSourceFields(
         matchStrategy: NadelBatchHydrationMatchStrategy,
         hydrationArgs: List<NadelHydrationActorInputDef>,
-        condition: NadelHydrationCondition?
+        condition: NadelHydrationCondition?,
     ): List<NadelQueryPath> {
         val paths = (when (matchStrategy) {
             NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
@@ -541,7 +540,7 @@ private class Factory(
                     val pathToField = argSourceType.pathToField
                     FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
-                        fieldDefinition = getUnderlyingType(hydratedFieldParentType)
+                        fieldDefinition = getUnderlyingType(hydratedFieldParentType, hydratedFieldDef)
                             ?.getFieldAt(pathToField)
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
@@ -561,11 +560,25 @@ private class Factory(
         }
     }
 
-    private fun <T : GraphQLType> getUnderlyingType(overallType: T): T? {
+    /**
+     * Gets the underlying type for an [GraphQLObjectType]
+     *
+     * The [childField] is there in case the [overallType] is an operation type.
+     * In that case we still need to know which service's operation type to return.
+     */
+    private fun getUnderlyingType(
+        overallType: GraphQLObjectType,
+        childField: GraphQLFieldDefinition,
+    ): GraphQLObjectType? {
         val renameInstruction = makeTypeRenameInstruction(overallType as? GraphQLDirectiveContainer ?: return null)
-        val service = definitionNamesToService[overallType.name]
-            ?: error("Unknown service for type: ${overallType.name}")
         val underlyingName = renameInstruction?.underlyingName ?: overallType.name
+
+        val fieldCoordinates = makeFieldCoordinates(overallType, childField)
+
+        val service = definitionNamesToService[overallType.name]
+            ?: coordinatesToService[fieldCoordinates]
+            ?: error("Unable to determine service for $fieldCoordinates")
+
         return service.underlyingSchema.getTypeAs(underlyingName)
     }
 
