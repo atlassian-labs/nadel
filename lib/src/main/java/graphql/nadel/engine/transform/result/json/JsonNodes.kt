@@ -14,6 +14,7 @@ class JsonNodes(
     private val prefix: List<String>? = null, // [defer]
 ) {
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
+    private var removedPrefix: Boolean = false
 
     /**
      * Extracts the nodes at the given query selection path.
@@ -28,13 +29,16 @@ class JsonNodes(
      */
     private fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
 
-        if (prefix != null) {
-            if (queryPath.startsWith(prefix)) {
-                getNodesAt(queryPath.removePrefix(prefix))
+        // if incremental, remove prefix
+        if (prefix != null && !removedPrefix) {
+            if (queryPath.startsWith(prefix.toList())) {
+                removedPrefix = true
+                getNodesAt(queryPath.removePrefix(prefix), flatten)
             } else {
                 emptyList()
             }
         }
+        removedPrefix = false
 
         var queue = listOf(rootNode)
 
@@ -47,6 +51,7 @@ class JsonNodes(
             val pathSegment = queryPath.segments[index]
 
             queue = if (hasMore || flatten) {
+                // nodes map populated here
                 nodes.computeIfAbsent(subPath) {
                     queue.flatMap { node ->
                         getNodes(node, pathSegment, flattenLists = true)
@@ -75,11 +80,18 @@ class JsonNodes(
         segment: String,
         flattenLists: Boolean,
     ): Sequence<JsonNode> {
+
         val value = map[segment]
 
         // We flatten lists as these nodes contribute to the BFS queue
         if (value is AnyList && flattenLists) {
             return getFlatNodes(value)
+        }
+
+        if (prefix != null){ //TODO: this is shit
+            return sequenceOf(
+                JsonNode(map),
+            )
         }
 
         return sequenceOf(

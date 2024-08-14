@@ -56,7 +56,7 @@ public class HydrationDeferInRenamedFieldTestSnapshot : TestSnapshot() {
                     |         "rename__issueByKey__getIssueByKey"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "issueByKey": null
                     |       }
                     |     }
                     |   ]
@@ -111,10 +111,25 @@ public class HydrationDeferInRenamedFieldTestSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {
+                |         "assignee": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
                 |         "rename__issueByKey__getIssueByKey"
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "issueByKey": null
                 |       }
                 |     }
                 |   ]

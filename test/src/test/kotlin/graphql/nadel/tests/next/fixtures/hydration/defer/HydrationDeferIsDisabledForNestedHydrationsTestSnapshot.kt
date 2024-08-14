@@ -54,7 +54,7 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                     |         "issueByKey"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "assignee": null
                     |       }
                     |     }
                     |   ]
@@ -97,7 +97,7 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
      *     "issueByKey": {
      *       "key": "GQLGW-3",
      *       "self": {},
-     *       "__typename__hydration__assignee": "Issue"
+     *       "assignee": null
      *     }
      *   }
      * }
@@ -125,7 +125,7 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
                 |         "issueByKey"
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]

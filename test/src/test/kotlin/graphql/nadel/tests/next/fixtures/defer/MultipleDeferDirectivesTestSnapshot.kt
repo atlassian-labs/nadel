@@ -57,7 +57,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowField": "slowString"
+                    |         "anotherSlowField": 123456789
                     |       }
                     |     }
                     |   ]
@@ -72,7 +72,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "anotherSlowField": 123456789
+                    |         "slowField": "slowString"
                     |       }
                     |     }
                     |   ]
@@ -88,8 +88,8 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "defer": {
      *       "fastField": "123",
-     *       "anotherSlowField": 123456789,
-     *       "slowField": "slowString"
+     *       "slowField": "slowString",
+     *       "anotherSlowField": 123456789
      *     }
      *   }
      * }
@@ -116,7 +116,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "slowField": "slowString"
+                |         "anotherSlowField": 123456789
                 |       }
                 |     }
                 |   ]
@@ -131,7 +131,7 @@ public class MultipleDeferDirectivesTestSnapshot : TestSnapshot() {
                 |         "defer"
                 |       ],
                 |       "data": {
-                |         "anotherSlowField": 123456789
+                |         "slowField": "slowString"
                 |       }
                 |     }
                 |   ]

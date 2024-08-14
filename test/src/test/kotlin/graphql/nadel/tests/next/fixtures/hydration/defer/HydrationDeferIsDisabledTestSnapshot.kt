@@ -67,7 +67,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                     |         2
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "assignee": null
                     |       }
                     |     }
                     |   ]
@@ -83,7 +83,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                     |         0
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "assignee": null
                     |       }
                     |     }
                     |   ]
@@ -99,7 +99,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                     |         1
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "assignee": null
                     |       }
                     |     }
                     |   ]
@@ -116,15 +116,15 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
      *     "issues": [
      *       {
      *         "key": "GQLGW-1",
-     *         "__typename__hydration__assignee": "Issue"
+     *         "assignee": null
      *       },
      *       {
      *         "key": "GQLGW-2",
-     *         "__typename__hydration__assignee": "Issue"
+     *         "assignee": null
      *       },
      *       {
      *         "key": "GQLGW-3",
-     *         "__typename__hydration__assignee": "Issue"
+     *         "assignee": null
      *       }
      *     ]
      *   }
@@ -161,7 +161,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |         2
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]
@@ -177,7 +177,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |         0
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]
@@ -193,7 +193,7 @@ public class HydrationDeferIsDisabledTestSnapshot : TestSnapshot() {
                 |         1
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]

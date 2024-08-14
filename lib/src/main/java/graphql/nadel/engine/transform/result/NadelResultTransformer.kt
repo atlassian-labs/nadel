@@ -29,12 +29,14 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
-        result:  NadelIncrementalServiceExecutionResult //DelayedIncrementalPartialResult // NadelIncrementalServiceExecutionResult,
-    ): ServiceExecutionResult {
+        result: NadelIncrementalServiceExecutionResult,
+        dipr: DelayedIncrementalPartialResult // NadelIncrementalServiceExecutionResult,
+    ): DelayedIncrementalPartialResult {
+        //IN THE GOOD ONE
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
         coroutineScope {
-            result.incremental
+            dipr.incremental
                 ?.filterIsInstance<DeferPayload>() // need this filter because IncrementalPayload could be stream or defer
                 ?.map { deferPayload ->
                     val nodes = JsonNodes(
@@ -79,9 +81,9 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             .awaitAll()
             .flatten()
 
-        mutate(result, instructions)
+        mutate(dipr, instructions)
 
-        return result
+        return dipr
     }
 
     suspend fun transform(
@@ -109,7 +111,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
         // maybe here or in NextGenEngine
         val nodes = JsonNodes(result.data)
-        nodes.getNodesAt(NadelQueryPath(listOf("issue", "user")))
+        //nodes.getNodesAt(NadelQueryPath(listOf("issue", "user")))
 
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
@@ -166,6 +168,16 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         }
     }
 
+    private fun mutate(result: DelayedIncrementalPartialResult, instructions: List<NadelResultInstruction>) {
+        instructions.forEach { transformation ->
+            when (transformation) {
+                is NadelResultInstruction.Set -> process(transformation)
+                is NadelResultInstruction.Remove -> process(transformation)
+                is NadelResultInstruction.AddError -> process(transformation, emptyList())// result.incremental?.first()?.errors)   TODO: this line
+            }
+        }
+    }
+
     private fun process(
         instruction: NadelResultInstruction.Set,
     ) {
@@ -195,7 +207,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
     private fun getRemoveArtificialFieldInstructions(
         artificialFields: List<ExecutableNormalizedField>,
-        nodes: JsonNodes,
+        nodes: JsonNodes
     ): List<NadelResultInstruction> {
         return artificialFields
             .asSequence()

@@ -69,7 +69,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                     |         0
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "assignee": null
                     |       }
                     |     }
                     |   ]
@@ -84,7 +84,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                     |         "issueByKey"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "assignee": null
                     |       }
                     |     }
                     |   ]
@@ -102,11 +102,10 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      *       "key": "GQLGW-2",
      *       "related": [
      *         {
-     *           "__typename__hydration__assignee": "Issue"
+     *           "assignee": null
      *         }
      *       ],
-     *       "assignee": null,
-     *       "__typename__hydration__assignee": "Issue"
+     *       "assignee": null
      *     }
      *   }
      * }
@@ -138,7 +137,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |         0
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]
@@ -153,7 +152,37 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |         "issueByKey"
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "assignee": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {
+                |         "assignee": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]

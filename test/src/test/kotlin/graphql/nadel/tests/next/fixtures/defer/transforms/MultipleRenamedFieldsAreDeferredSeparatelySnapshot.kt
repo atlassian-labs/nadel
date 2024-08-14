@@ -60,8 +60,7 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
                     |       ],
                     |       "label": "defer2",
                     |       "data": {
-                    |         "rename__overallString__underlyingString": "deferred string 1",
-                    |         "__typename__rename__overallString": "DeferApi"
+                    |         "overallString": "deferred string 1"
                     |       }
                     |     }
                     |   ]
@@ -77,8 +76,7 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
                     |       ],
                     |       "label": "defer1",
                     |       "data": {
-                    |         "rename__overallString__underlyingString": "deferred string 1",
-                    |         "__typename__rename__overallString": "DeferApi"
+                    |         "overallString": "deferred string 1"
                     |       }
                     |     }
                     |   ]
@@ -94,8 +92,7 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
      *   "data": {
      *     "defer": {
      *       "hello": "hello there",
-     *       "rename__overallString__underlyingString": "deferred string 1",
-     *       "__typename__rename__overallString": "DeferApi"
+     *       "overallString": "deferred string 1"
      *     }
      *   }
      * }
@@ -123,8 +120,7 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
                 |       ],
                 |       "label": "defer2",
                 |       "data": {
-                |         "rename__overallString__underlyingString": "deferred string 1",
-                |         "__typename__rename__overallString": "DeferApi"
+                |         "overallString": "deferred string 1"
                 |       }
                 |     }
                 |   ]
@@ -140,8 +136,7 @@ public class MultipleRenamedFieldsAreDeferredSeparatelySnapshot : TestSnapshot()
                 |       ],
                 |       "label": "defer1",
                 |       "data": {
-                |         "rename__overallString__underlyingString": "deferred string 1",
-                |         "__typename__rename__overallString": "DeferApi"
+                |         "overallString": "deferred string 1"
                 |       }
                 |     }
                 |   ]

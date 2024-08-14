@@ -73,7 +73,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                     |         "parent"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "assignee": null
                     |       }
                     |     }
                     |   ]
@@ -95,7 +95,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
      *         },
      *         {
      *           "parent": {
-     *             "__typename__hydration__assignee": "Issue"
+     *             "assignee": null
      *           }
      *         }
      *       ]
@@ -136,7 +136,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 |         "parent"
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "assignee": null
                 |       }
                 |     }
                 |   ]

@@ -54,7 +54,8 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                     |         "rename__issueById__getIssueById"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assigneeV2": "Issue"
+                    |         "issueById": null,
+                    |         "assigneeV2": null
                     |       }
                     |     }
                     |   ]
@@ -180,7 +181,8 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
                 |         "rename__issueById__getIssueById"
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assigneeV2": "Issue"
+                |         "issueById": null,
+                |         "assigneeV2": null
                 |       }
                 |     }
                 |   ]
