@@ -3,13 +3,13 @@ package graphql.nadel.tests.next.fixtures.defer.transforms
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
+open class MultipleRenameTransformsInsideAndOutsideDefer : NadelIntegrationTest(
     query = """
       query {
         defer {
-          hello
+          fastRenamedString
           ...@defer {
-            overallString
+              slowRenamedString
           }
         }
       }
@@ -25,7 +25,8 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                 }
                 type DeferApi {
                   hello: String
-                  overallString: String @renamed(from: "underlyingString")
+                  slowRenamedString: String @renamed(from: "slowString")
+                  fastRenamedString: String @renamed(from: "fastString")
                 }
                
             """.trimIndent(),
@@ -37,7 +38,8 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                 }
                 type DeferApi {
                   hello: String
-                  underlyingString: String
+                  slowString: String
+                  fastString: String
                 }
                
             """.trimIndent(),
@@ -51,11 +53,11 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                     }
                     .type("DeferApi") { type ->
                         type
-                            .dataFetcher("hello") { env ->
-                                "hello there"
+                            .dataFetcher("slowString") { env ->
+                                "this is the slow string (deferred)"
                             }
-                            .dataFetcher("underlyingString") { env ->
-                                "string for the deferred renamed field"
+                            .dataFetcher("fastString") { env ->
+                                "this is the fast string (not deferred)"
                             }
                     }
             },

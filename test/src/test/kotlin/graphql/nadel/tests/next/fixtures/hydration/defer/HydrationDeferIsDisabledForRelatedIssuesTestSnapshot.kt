@@ -69,7 +69,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                     |         0
                     |       ],
                     |       "data": {
-                    |         "assignee": null
+                    |         "__typename__hydration__assignee": "Issue"
                     |       }
                     |     }
                     |   ]
@@ -83,9 +83,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                     |       "path": [
                     |         "issueByKey"
                     |       ],
-                    |       "data": {
-                    |         "assignee": null
-                    |       }
+                    |       "data": {}
                     |     }
                     |   ]
                     | }
@@ -102,7 +100,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      *       "key": "GQLGW-2",
      *       "related": [
      *         {
-     *           "assignee": null
+     *           "__typename__hydration__assignee": "Issue"
      *         }
      *       ],
      *       "assignee": null
@@ -132,72 +130,70 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |   "incremental": [
                 |     {
                 |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {
+                |         "assignee": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {
+                |         "assignee": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {
+                |         "assignee": null
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "issueByKey"
+                |       ],
+                |       "data": {}
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
                 |         "issueByKey",
                 |         "related",
                 |         0
                 |       ],
                 |       "data": {
-                |         "assignee": null
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey"
-                |       ],
-                |       "data": {
-                |         "assignee": null
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey"
-                |       ],
-                |       "data": {
-                |         "assignee": null
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey"
-                |       ],
-                |       "data": {
-                |         "assignee": null
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey"
-                |       ],
-                |       "data": {
-                |         "assignee": null
+                |         "__typename__hydration__assignee": "Issue"
                 |       }
                 |     }
                 |   ]

@@ -3,13 +3,14 @@ package graphql.nadel.tests.next.fixtures.defer.transforms
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
+open class RenameInnerFieldInsideDefer : NadelIntegrationTest(
     query = """
       query {
         defer {
-          hello
-          ...@defer {
-            overallString
+          ...@defer(if: true) {
+              user {
+                firstName
+              }
           }
         }
       }
@@ -24,8 +25,11 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                   defer: DeferApi 
                 }
                 type DeferApi {
-                  hello: String
-                  overallString: String @renamed(from: "underlyingString")
+                  user: User
+                }
+                type User {
+                  firstName: String @renamed(from: "name")
+                  lastName: String
                 }
                
             """.trimIndent(),
@@ -36,8 +40,11 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                   defer: DeferApi
                 }
                 type DeferApi {
-                  hello: String
-                  underlyingString: String
+                  user: User
+                }
+                type User {
+                  name: String
+                  lastName: String
                 }
                
             """.trimIndent(),
@@ -51,11 +58,14 @@ open class DeferredFieldIsRenamedTest : NadelIntegrationTest(
                     }
                     .type("DeferApi") { type ->
                         type
-                            .dataFetcher("hello") { env ->
-                                "hello there"
+                            .dataFetcher("user") { env ->
+                                Any()
                             }
-                            .dataFetcher("underlyingString") { env ->
-                                "string for the deferred renamed field"
+                    }
+                    .type("User") { type ->
+                        type
+                            .dataFetcher("name") { env ->
+                                "Steven"
                             }
                     }
             },

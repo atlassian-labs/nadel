@@ -40,6 +40,11 @@ class JsonNodes(
         }
         removedPrefix = false
 
+        // todo: check if this is valid
+        // if (prefix != null && queryPath.startsWith(prefix.toList())) {
+        //         getNodesAt(queryPath.removePrefix(prefix), flatten)
+        // }
+
         var queue = listOf(rootNode)
 
         // todo work backwards here instead of forwards
@@ -81,6 +86,12 @@ class JsonNodes(
         flattenLists: Boolean,
     ): Sequence<JsonNode> {
 
+
+        if (prefix != null && prefix.last() == segment){
+                return sequenceOf(
+                    JsonNode(map),
+                )
+        }
         val value = map[segment]
 
         // We flatten lists as these nodes contribute to the BFS queue
@@ -88,11 +99,6 @@ class JsonNodes(
             return getFlatNodes(value)
         }
 
-        if (prefix != null){ //TODO: this is shit
-            return sequenceOf(
-                JsonNode(map),
-            )
-        }
 
         return sequenceOf(
             JsonNode(value),

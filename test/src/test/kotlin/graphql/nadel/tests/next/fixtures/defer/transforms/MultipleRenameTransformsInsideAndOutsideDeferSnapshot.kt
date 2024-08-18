@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.hydration.defer
+package graphql.nadel.tests.next.fixtures.defer.transforms
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTest>()
+    graphql.nadel.tests.next.update<MultipleRenameTransformsInsideAndOutsideDefer>()
 }
 
 /**
@@ -19,22 +19,18 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnapshot :
-        TestSnapshot() {
+public class MultipleRenameTransformsInsideAndOutsideDeferSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "issues",
+                service = "defer",
                 query = """
                 | {
-                |   issueByKey(key: "GQLGW-3") {
-                |     key
-                |     related {
-                |       parent {
-                |         hydration__assignee__assigneeId: assigneeId
-                |         ... @defer {
-                |           __typename__hydration__assignee: __typename
-                |         }
-                |       }
+                |   defer {
+                |     rename__fastRenamedString__fastString: fastString
+                |     __typename__rename__fastRenamedString: __typename
+                |     ... @defer {
+                |       rename__slowRenamedString__slowString: slowString
+                |       __typename__rename__slowRenamedString: __typename
                 |     }
                 |   }
                 | }
@@ -43,18 +39,9 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 result = """
                 | {
                 |   "data": {
-                |     "issueByKey": {
-                |       "key": "GQLGW-3",
-                |       "related": [
-                |         {
-                |           "parent": null
-                |         },
-                |         {
-                |           "parent": {
-                |             "hydration__assignee__assigneeId": "ari:cloud:identity::user/1"
-                |           }
-                |         }
-                |       ]
+                |     "defer": {
+                |       "rename__fastRenamedString__fastString": "this is the fast string (not deferred)",
+                |       "__typename__rename__fastRenamedString": "DeferApi"
                 |     }
                 |   },
                 |   "hasNext": true
@@ -67,13 +54,10 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "issueByKey",
-                    |         "related",
-                    |         1,
-                    |         "parent"
+                    |         "defer"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "slowRenamedString": "this is the slow string (deferred)"
                     |       }
                     |     }
                     |   ]
@@ -87,18 +71,9 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
      * ```json
      * {
      *   "data": {
-     *     "issueByKey": {
-     *       "key": "GQLGW-3",
-     *       "related": [
-     *         {
-     *           "parent": null
-     *         },
-     *         {
-     *           "parent": {
-     *             "__typename__hydration__assignee": "Issue"
-     *           }
-     *         }
-     *       ]
+     *     "defer": {
+     *       "fastRenamedString": "this is the fast string (not deferred)",
+     *       "slowRenamedString": "this is the slow string (deferred)"
      *     }
      *   }
      * }
@@ -108,16 +83,8 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
             result = """
             | {
             |   "data": {
-            |     "issueByKey": {
-            |       "key": "GQLGW-3",
-            |       "related": [
-            |         {
-            |           "parent": null
-            |         },
-            |         {
-            |           "parent": {}
-            |         }
-            |       ]
+            |     "defer": {
+            |       "fastRenamedString": "this is the fast string (not deferred)"
             |     }
             |   },
             |   "hasNext": true
@@ -130,13 +97,10 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issueByKey",
-                |         "related",
-                |         1,
-                |         "parent"
+                |         "defer"
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "slowRenamedString": "this is the slow string (deferred)"
                 |       }
                 |     }
                 |   ]

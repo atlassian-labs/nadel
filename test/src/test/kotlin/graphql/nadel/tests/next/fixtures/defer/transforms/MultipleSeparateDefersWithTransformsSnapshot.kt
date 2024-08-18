@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.defer
+package graphql.nadel.tests.next.fixtures.defer.transforms
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<MultipleDeferWithDifferentServiceCalls>()
+    graphql.nadel.tests.next.update<MultipleSeparateDefersWithTransforms>()
 }
 
 /**
@@ -19,16 +19,22 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
+public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "product",
+                service = "defer",
                 query = """
                 | {
-                |   product {
-                |     productName
+                |   defer {
+                |     rename__fastRenamedString__fastString: fastString
+                |     __typename__rename__fastRenamedString: __typename
                 |     ... @defer {
-                |       productImage
+                |       rename__slowRenamedString__slowString: slowString
+                |       __typename__rename__slowRenamedString: __typename
+                |     }
+                |     ... @defer {
+                |       rename__anotherSlowRenamedString__anotherSlowString: anotherSlowString
+                |       __typename__rename__anotherSlowRenamedString: __typename
                 |     }
                 |   }
                 | }
@@ -37,8 +43,9 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "product": {
-                |       "productName": "Awesome Product"
+                |     "defer": {
+                |       "rename__fastRenamedString__fastString": "this is the fast string (not deferred)",
+                |       "__typename__rename__fastRenamedString": "DeferApi"
                 |     }
                 |   },
                 |   "hasNext": true
@@ -51,51 +58,25 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "product"
+                    |         "defer"
                     |       ],
                     |       "data": {
-                    |         "productImage": "https://examplesite.com/product/product_image.jpg"
+                    |         "anotherSlowRenamedString": "this is the other slow string (deferred)"
                     |       }
                     |     }
                     |   ]
                     | }
                     """.trimMargin(),
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "users",
-                query = """
-                | {
-                |   user {
-                |     name
-                |     ... @defer {
-                |       profilePicture
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "user": {
-                |       "name": "Steven"
-                |     }
-                |   },
-                |   "hasNext": true
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
                     """
                     | {
-                    |   "hasNext": false,
+                    |   "hasNext": true,
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "user"
+                    |         "defer"
                     |       ],
                     |       "data": {
-                    |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                    |         "slowRenamedString": "this is the slow string (deferred)"
                     |       }
                     |     }
                     |   ]
@@ -109,13 +90,10 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "user": {
-     *       "name": "Steven",
-     *       "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
-     *     },
-     *     "product": {
-     *       "productName": "Awesome Product",
-     *       "productImage": "https://examplesite.com/product/product_image.jpg"
+     *     "defer": {
+     *       "fastRenamedString": "this is the fast string (not deferred)",
+     *       "slowRenamedString": "this is the slow string (deferred)",
+     *       "anotherSlowRenamedString": "this is the other slow string (deferred)"
      *     }
      *   }
      * }
@@ -125,11 +103,8 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "user": {
-            |       "name": "Steven"
-            |     },
-            |     "product": {
-            |       "productName": "Awesome Product"
+            |     "defer": {
+            |       "fastRenamedString": "this is the fast string (not deferred)"
             |     }
             |   },
             |   "hasNext": true
@@ -142,10 +117,10 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "user"
+                |         "defer"
                 |       ],
                 |       "data": {
-                |         "profilePicture": "https://examplesite.com/user/profile_picture.jpg"
+                |         "anotherSlowRenamedString": "this is the other slow string (deferred)"
                 |       }
                 |     }
                 |   ]
@@ -157,10 +132,10 @@ public class MultipleDeferWithDifferentServiceCallsSnapshot : TestSnapshot() {
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "product"
+                |         "defer"
                 |       ],
                 |       "data": {
-                |         "productImage": "https://examplesite.com/product/product_image.jpg"
+                |         "slowRenamedString": "this is the slow string (deferred)"
                 |       }
                 |     }
                 |   ]
