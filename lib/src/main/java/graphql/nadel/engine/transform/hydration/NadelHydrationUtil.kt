@@ -13,35 +13,35 @@ internal object NadelHydrationUtil {
     @JvmName("getInstructionsToAddErrors_2")
     fun getInstructionsToAddErrors(
         results: List<NadelResolvedObjectBatch>,
-    ): List<NadelResultInstruction> {
+    ): List<NadelResultInstruction.AddError> {
         return results
             .asSequence()
             .map(NadelResolvedObjectBatch::result)
-            .flatMap(::sequenceOfInstructionsToAddErrors)
+            .flatMap(::getInstructionsToAddErrorsSequence)
             .toList()
     }
 
     fun getInstructionsToAddErrors(
         results: List<ServiceExecutionResult>,
-    ): List<NadelResultInstruction> {
+    ): List<NadelResultInstruction.AddError> {
         return results
             .asSequence()
-            .flatMap(::sequenceOfInstructionsToAddErrors)
+            .flatMap(::getInstructionsToAddErrorsSequence)
             .toList()
     }
 
     fun getInstructionsToAddErrors(
         result: ServiceExecutionResult,
-    ): List<NadelResultInstruction> {
-        return sequenceOfInstructionsToAddErrors(result).toList()
+    ): List<NadelResultInstruction.AddError> {
+        return getInstructionsToAddErrorsSequence(result).toList()
     }
 
     /**
      * Do not expose sequences as those
      */
-    private fun sequenceOfInstructionsToAddErrors(
+    private fun getInstructionsToAddErrorsSequence(
         result: ServiceExecutionResult,
-    ): Sequence<NadelResultInstruction> {
+    ): Sequence<NadelResultInstruction.AddError> {
         return result.errors
             .asSequence()
             .map(::toGraphQLError)

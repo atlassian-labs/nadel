@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTest>()
+    graphql.nadel.tests.next.update<HydrationDeferGroupingTest>()
 }
 
 /**
@@ -19,22 +19,17 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnapshot :
-        TestSnapshot() {
+public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "issues",
+                service = "monolith",
                 query = """
                 | {
-                |   issueByKey(key: "GQLGW-3") {
-                |     key
-                |     related {
-                |       parent {
-                |         hydration__assignee__assigneeId: assigneeId
-                |         ... @defer {
-                |           __typename__hydration__assignee: __typename
-                |         }
-                |       }
+                |   issue(id: 1) {
+                |     hydration__assignee__assigneeId: assigneeId
+                |     __typename__hydration__assignee: __typename
+                |     ... @defer {
+                |       key
                 |     }
                 |   }
                 | }
@@ -43,18 +38,9 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 result = """
                 | {
                 |   "data": {
-                |     "issueByKey": {
-                |       "key": "GQLGW-3",
-                |       "related": [
-                |         {
-                |           "parent": null
-                |         },
-                |         {
-                |           "parent": {
-                |             "hydration__assignee__assigneeId": "ari:cloud:identity::user/1"
-                |           }
-                |         }
-                |       ]
+                |     "issue": {
+                |       "hydration__assignee__assigneeId": "1",
+                |       "__typename__hydration__assignee": "Issue"
                 |     }
                 |   },
                 |   "hasNext": true
@@ -67,18 +53,37 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "issueByKey",
-                    |         "related",
-                    |         1,
-                    |         "parent"
+                    |         "issue"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "key": "TEST-1"
                     |       }
                     |     }
                     |   ]
                     | }
                     """.trimMargin(),
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "monolith",
+                query = """
+                | {
+                |   user(id: "1") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "user": {
+                |       "name": "Tester"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
                 ),
             ),
         )
@@ -87,18 +92,11 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
      * ```json
      * {
      *   "data": {
-     *     "issueByKey": {
-     *       "key": "GQLGW-3",
-     *       "related": [
-     *         {
-     *           "parent": null
-     *         },
-     *         {
-     *           "parent": {
-     *             "__typename__hydration__assignee": "Issue"
-     *           }
-     *         }
-     *       ]
+     *     "issue": {
+     *       "key": "TEST-1",
+     *       "assignee": {
+     *         "name": "Tester"
+     *       }
      *     }
      *   }
      * }
@@ -108,17 +106,7 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
             result = """
             | {
             |   "data": {
-            |     "issueByKey": {
-            |       "key": "GQLGW-3",
-            |       "related": [
-            |         {
-            |           "parent": null
-            |         },
-            |         {
-            |           "parent": {}
-            |         }
-            |       ]
-            |     }
+            |     "issue": {}
             |   },
             |   "hasNext": true
             | }
@@ -130,13 +118,13 @@ public class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTestSnap
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issueByKey",
-                |         "related",
-                |         1,
-                |         "parent"
+                |         "issue"
                 |       ],
                 |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "key": "TEST-1",
+                |         "assignee": {
+                |           "name": "Tester"
+                |         }
                 |       }
                 |     }
                 |   ]

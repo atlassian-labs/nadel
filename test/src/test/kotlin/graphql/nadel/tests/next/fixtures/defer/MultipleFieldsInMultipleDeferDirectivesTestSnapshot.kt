@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<MultipleFieldsinMultipleDeferDirectivesTest>()
+    graphql.nadel.tests.next.update<MultipleFieldsInMultipleDeferDirectivesTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class MultipleFieldsinMultipleDeferDirectivesTestSnapshot : TestSnapshot() {
+public class MultipleFieldsInMultipleDeferDirectivesTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",

@@ -9,77 +9,6 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import org.intellij.lang.annotations.Language
 import kotlin.test.assertTrue
 
-class HydrationDeferIsDisabledTest : HydrationDeferIsDisabled(
-    query = """
-        query {
-          issues { # List
-            key
-            ... @defer {
-              assignee { # Should not defer
-                name
-              }
-            }
-          }
-        }
-    """.trimIndent(),
-) {
-    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
-        assertTrue(result !is IncrementalExecutionResult)
-    }
-}
-
-/**
- * There's actually two hydrations here.
- *
- * There's one hydration at `issueByKey.assignee` which is fine because there's no List.
- *
- * Then there's the hydration at `issueByKey.related.assignee` which does not defer because `Issue.related` is a List.
- */
-class HydrationDeferIsDisabledForRelatedIssuesTest : HydrationDeferIsDisabled(
-    query = """
-        query {
-          issueByKey(key: "GQLGW-2") { # Not a list
-            key
-            ... @defer {
-              assignee { # Should defer
-                name
-              }
-            }
-            related { # Is a list
-              ... @defer {
-                assignee { # Should NOT defer
-                  name
-                }
-              }
-            }
-          }
-        }
-    """.trimIndent(),
-)
-
-class HydrationDeferIsDisabledInListOfRelatedIssuesForParentIssueTest : HydrationDeferIsDisabled(
-    query = """
-        query {
-          issueByKey(key: "GQLGW-3") { # Not a list
-            key
-            related { # Is a list
-              parent { # Not a list
-                ... @defer {
-                  assignee { # Should NOT defer
-                    name
-                  }
-                }
-              }
-            }
-          }
-        }
-    """.trimIndent(),
-) {
-    override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
-        assertTrue(result !is IncrementalExecutionResult)
-    }
-}
-
 class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled(
     query = """
         query {
@@ -98,6 +27,7 @@ class HydrationDeferIsDisabledForNestedHydrationsTest : HydrationDeferIsDisabled
 ) {
     override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
         assertTrue(result !is IncrementalExecutionResult)
+        assertTrue(incrementalResults == null)
     }
 }
 

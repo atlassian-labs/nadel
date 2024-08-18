@@ -7,19 +7,40 @@ import graphql.nadel.engine.util.JsonMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Utility class to extract data out of the given [data].
+ * Generic interface to extract a [JsonNode] from the result for a given [NadelQueryPath].
+ *
+ * Use [NadelCachingJsonNodes] for the most part because that is faster.
+ * It is the default implementation.
  */
-class JsonNodes(
-    private val data: JsonMap,
-    private val prefix: List<String>? = null, // [defer]
-) {
-    private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
-    private var removedPrefix: Boolean = false
 
+interface JsonNodes {
     /**
      * Extracts the nodes at the given query selection path.
      */
-    fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
+    fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode>
+
+    companion object {
+        internal var nodesFactory: (JsonMap) -> JsonNodes = {
+            NadelCachingJsonNodes(it)
+        }
+
+        operator fun invoke(data: JsonMap): JsonNodes {
+            return nodesFactory(data)
+        }
+    }
+}
+
+/**
+ * Utility class to extract data out of the given [data].
+ */
+class NadelCachingJsonNodes(
+    private val data: JsonMap,
+    private val prefix: List<String>? = null, // [defer]
+) : JsonNodes {
+    private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
+    private var removedPrefix: Boolean = false
+
+    override fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean): List<JsonNode> {
         val rootNode = JsonNode(data)
         return getNodesAt(rootNode, queryPath, flatten)
     }
@@ -101,7 +122,7 @@ class JsonNodes(
 
 
         return sequenceOf(
-            JsonNode(value),
+            JsonNode(value = value),
         )
     }
 
@@ -117,15 +138,15 @@ class JsonNodes(
      *
      * etc.
      */
-    private fun getFlatNodes(values: AnyList): Sequence<JsonNode> {
+    private fun getFlatNodes(
+        values: AnyList,
+    ): Sequence<JsonNode> {
         return values
             .asSequence()
             .flatMap { value ->
                 when (value) {
                     is AnyList -> getFlatNodes(value)
-                    else -> sequenceOf(
-                        JsonNode(value),
-                    )
+                    else -> sequenceOf(JsonNode(value = value))
                 }
             }
     }

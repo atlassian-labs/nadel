@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationDeferIsDisabledForRelatedIssuesTest>()
+    graphql.nadel.tests.next.update<DeferGroupingTest>()
 }
 
 /**
@@ -19,23 +19,19 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot() {
+public class DeferGroupingTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "issues",
+                service = "monolith",
                 query = """
                 | {
-                |   issueByKey(key: "GQLGW-2") {
-                |     key
-                |     hydration__assignee__assigneeId: assigneeId
-                |     related {
-                |       hydration__assignee__assigneeId: assigneeId
-                |       ... @defer {
-                |         __typename__hydration__assignee: __typename
-                |       }
+                |   issue(id: 1) {
+                |     ... @defer {
+                |       key
+                |       id
                 |     }
                 |     ... @defer {
-                |       __typename__hydration__assignee: __typename
+                |       key
                 |     }
                 |   }
                 | }
@@ -44,15 +40,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 result = """
                 | {
                 |   "data": {
-                |     "issueByKey": {
-                |       "key": "GQLGW-2",
-                |       "hydration__assignee__assigneeId": "ari:cloud:identity::user/2",
-                |       "related": [
-                |         {
-                |           "hydration__assignee__assigneeId": "ari:cloud:identity::user/1"
-                |         }
-                |       ]
-                |     }
+                |     "issue": {}
                 |   },
                 |   "hasNext": true
                 | }
@@ -64,12 +52,11 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "issueByKey",
-                    |         "related",
-                    |         0
+                    |         "issue"
                     |       ],
                     |       "data": {
-                    |         "__typename__hydration__assignee": "Issue"
+                    |         "id": "1",
+                    |         "key": "TEST-1"
                     |       }
                     |     }
                     |   ]
@@ -81,9 +68,11 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                     |   "incremental": [
                     |     {
                     |       "path": [
-                    |         "issueByKey"
+                    |         "issue"
                     |       ],
-                    |       "data": {}
+                    |       "data": {
+                    |         "key": "TEST-1"
+                    |       }
                     |     }
                     |   ]
                     | }
@@ -96,14 +85,9 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
      * ```json
      * {
      *   "data": {
-     *     "issueByKey": {
-     *       "key": "GQLGW-2",
-     *       "related": [
-     *         {
-     *           "__typename__hydration__assignee": "Issue"
-     *         }
-     *       ],
-     *       "assignee": null
+     *     "issue": {
+     *       "key": "TEST-1",
+     *       "id": "1"
      *     }
      *   }
      * }
@@ -113,12 +97,7 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
             result = """
             | {
             |   "data": {
-            |     "issueByKey": {
-            |       "key": "GQLGW-2",
-            |       "related": [
-            |         {}
-            |       ]
-            |     }
+            |     "issue": {}
             |   },
             |   "hasNext": true
             | }
@@ -130,10 +109,19 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issueByKey"
+                |         "issue"
                 |       ],
                 |       "data": {
-                |         "assignee": null
+                |         "key": "TEST-1",
+                |         "id": "1"
+                |       }
+                |     },
+                |     {
+                |       "path": [
+                |         "issue"
+                |       ],
+                |       "data": {
+                |         "key": "TEST-1"
                 |       }
                 |     }
                 |   ]
@@ -145,55 +133,10 @@ public class HydrationDeferIsDisabledForRelatedIssuesTestSnapshot : TestSnapshot
                 |   "incremental": [
                 |     {
                 |       "path": [
-                |         "issueByKey"
+                |         "issue"
                 |       ],
                 |       "data": {
-                |         "assignee": null
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey"
-                |       ],
-                |       "data": {
-                |         "assignee": null
-                |       }
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey"
-                |       ],
-                |       "data": {}
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                """
-                | {
-                |   "hasNext": true,
-                |   "incremental": [
-                |     {
-                |       "path": [
-                |         "issueByKey",
-                |         "related",
-                |         0
-                |       ],
-                |       "data": {
-                |         "__typename__hydration__assignee": "Issue"
+                |         "key": "TEST-1"
                 |       }
                 |     }
                 |   ]
