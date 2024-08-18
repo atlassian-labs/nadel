@@ -397,6 +397,7 @@ internal class NextgenEngine(
                         resultTransformer
                             .transform(
                                 executionContext = executionContext,
+                                serviceExecutionContext = serviceExecutionContext,
                                 executionPlan = executionPlan,
                                 artificialFields = artificialFields,
                                 overallToUnderlyingFields = overallToUnderlyingFields,

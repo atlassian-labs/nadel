@@ -10,8 +10,8 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
-import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.transform.result.json.NadelCachingJsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.queryPath
@@ -41,7 +41,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             dipr.incremental
                 ?.filterIsInstance<DeferPayload>() // need this filter because IncrementalPayload could be stream or defer
                 ?.map { deferPayload ->
-                    val nodes = JsonNodes(
+                    val nodes = NadelCachingJsonNodes(
                         deferPayload.getData<JsonMap?>() ?: emptyMap(),
                         prefix = deferPayload.path.filterIsInstance<String>(), //converts resultPath to queryPath todo: is it better for this to be NadelQueryPath?
                     )
@@ -59,6 +59,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                                 async {
                                     step.transform.getResultInstructions(
                                         executionContext,
+                                        serviceExecutionContext,
                                         executionBlueprint,
                                         service,
                                         field,
@@ -90,6 +91,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
     suspend fun transform(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
