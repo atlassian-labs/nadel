@@ -216,6 +216,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = objectTypeNames,
+            deferredExecutions = field.deferredExecutions,
         )
     }
 
@@ -256,6 +257,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                 queryPathToField = deepRename.queryPathToField,
                 fieldArguments = field.normalizedArguments,
                 fieldChildren = transformer.transform(field.children),
+                deferredExecutions = field.deferredExecutions,
             ),
         )
     }

@@ -27,10 +27,12 @@ public class MultipleRenamedFieldsAreDeferredTogetherSnapshot : TestSnapshot() {
                 | {
                 |   defer {
                 |     hello
-                |     rename__overallString__underlyingString: underlyingString
-                |     __typename__rename__overallString: __typename
-                |     rename__overallString2__underlyingString2: underlyingString2
-                |     __typename__rename__overallString2: __typename
+                |     ... @defer {
+                |       rename__overallString__underlyingString: underlyingString
+                |       __typename__rename__overallString: __typename
+                |       rename__overallString2__underlyingString2: underlyingString2
+                |       __typename__rename__overallString2: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -39,16 +41,31 @@ public class MultipleRenamedFieldsAreDeferredTogetherSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "defer": {
-                |       "hello": "hello there",
-                |       "rename__overallString__underlyingString": "deferred string 1",
-                |       "__typename__rename__overallString": "DeferApi",
-                |       "rename__overallString2__underlyingString2": "deferred string 2",
-                |       "__typename__rename__overallString2": "DeferApi"
+                |       "hello": "hello there"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "data": {
+                    |         "__typename__rename__overallString2": "DeferApi",
+                    |         "rename__overallString2__underlyingString2": "deferred string 2",
+                    |         "rename__overallString__underlyingString": "deferred string 1",
+                    |         "__typename__rename__overallString": "DeferApi"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -58,9 +75,7 @@ public class MultipleRenamedFieldsAreDeferredTogetherSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
-     *       "hello": "hello there",
-     *       "overallString": "deferred string 1",
-     *       "overallString2": "deferred string 2"
+     *       "hello": "hello there"
      *     }
      *   }
      * }
@@ -71,11 +86,10 @@ public class MultipleRenamedFieldsAreDeferredTogetherSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "defer": {
-            |       "hello": "hello there",
-            |       "overallString": "deferred string 1",
-            |       "overallString2": "deferred string 2"
+            |       "hello": "hello there"
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

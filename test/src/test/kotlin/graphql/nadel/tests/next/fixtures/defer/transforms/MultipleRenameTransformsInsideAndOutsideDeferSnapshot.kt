@@ -28,8 +28,10 @@ public class MultipleRenameTransformsInsideAndOutsideDeferSnapshot : TestSnapsho
                 |   defer {
                 |     rename__fastRenamedString__fastString: fastString
                 |     __typename__rename__fastRenamedString: __typename
-                |     rename__slowRenamedString__slowString: slowString
-                |     __typename__rename__slowRenamedString: __typename
+                |     ... @defer {
+                |       rename__slowRenamedString__slowString: slowString
+                |       __typename__rename__slowRenamedString: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -39,14 +41,29 @@ public class MultipleRenameTransformsInsideAndOutsideDeferSnapshot : TestSnapsho
                 |   "data": {
                 |     "defer": {
                 |       "rename__fastRenamedString__fastString": "this is the fast string (not deferred)",
-                |       "__typename__rename__fastRenamedString": "DeferApi",
-                |       "rename__slowRenamedString__slowString": "this is the slow string (deferred)",
-                |       "__typename__rename__slowRenamedString": "DeferApi"
+                |       "__typename__rename__fastRenamedString": "DeferApi"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "data": {
+                    |         "rename__slowRenamedString__slowString": "this is the slow string (deferred)",
+                    |         "__typename__rename__slowRenamedString": "DeferApi"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -56,8 +73,7 @@ public class MultipleRenameTransformsInsideAndOutsideDeferSnapshot : TestSnapsho
      * {
      *   "data": {
      *     "defer": {
-     *       "fastRenamedString": "this is the fast string (not deferred)",
-     *       "slowRenamedString": "this is the slow string (deferred)"
+     *       "fastRenamedString": "this is the fast string (not deferred)"
      *     }
      *   }
      * }
@@ -68,10 +84,10 @@ public class MultipleRenameTransformsInsideAndOutsideDeferSnapshot : TestSnapsho
             | {
             |   "data": {
             |     "defer": {
-            |       "fastRenamedString": "this is the fast string (not deferred)",
-            |       "slowRenamedString": "this is the slow string (deferred)"
+            |       "fastRenamedString": "this is the fast string (not deferred)"
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.incremental.DelayedIncrementalPartialResultImpl
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
@@ -15,6 +17,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.reactive.asFlow
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
     suspend fun transform(
@@ -26,9 +30,23 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
+        if (result is NadelIncrementalServiceExecutionResult) {
+            result.incrementalItemPublisher.asFlow()
+                .map {
+                    val incremental = it.incremental
+                        ?.map {
+
+                        }
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+
+                        .extensions(it.extensions)
+                        .build()
+                }
+        }
+
         val nodes = JsonNodes(result.data)
 
-        val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
+        val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
         coroutineScope {
             for ((field, steps) in executionPlan.transformationSteps) {
@@ -39,7 +57,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 }
 
                 for (step in steps) {
-                    deferredInstructions.add(
+                    asyncInstructions.add(
                         async {
                             step.transform.getResultInstructions(
                                 executionContext,
@@ -57,14 +75,14 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 }
             }
 
-            deferredInstructions.add(
+            asyncInstructions.add(
                 async {
                     getRemoveArtificialFieldInstructions(artificialFields, nodes)
                 },
             )
         }
 
-        val instructions = deferredInstructions
+        val instructions = asyncInstructions
             .awaitAll()
             .flatten()
 

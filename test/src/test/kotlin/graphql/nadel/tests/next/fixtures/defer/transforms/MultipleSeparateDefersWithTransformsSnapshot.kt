@@ -28,10 +28,14 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
                 |   defer {
                 |     rename__fastRenamedString__fastString: fastString
                 |     __typename__rename__fastRenamedString: __typename
-                |     rename__slowRenamedString__slowString: slowString
-                |     __typename__rename__slowRenamedString: __typename
-                |     rename__anotherSlowRenamedString__anotherSlowString: anotherSlowString
-                |     __typename__rename__anotherSlowRenamedString: __typename
+                |     ... @defer {
+                |       rename__slowRenamedString__slowString: slowString
+                |       __typename__rename__slowRenamedString: __typename
+                |     }
+                |     ... @defer {
+                |       rename__anotherSlowRenamedString__anotherSlowString: anotherSlowString
+                |       __typename__rename__anotherSlowRenamedString: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -41,16 +45,45 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "defer": {
                 |       "rename__fastRenamedString__fastString": "this is the fast string (not deferred)",
-                |       "__typename__rename__fastRenamedString": "DeferApi",
-                |       "rename__slowRenamedString__slowString": "this is the slow string (deferred)",
-                |       "__typename__rename__slowRenamedString": "DeferApi",
-                |       "rename__anotherSlowRenamedString__anotherSlowString": "this is the other slow string (deferred)",
-                |       "__typename__rename__anotherSlowRenamedString": "DeferApi"
+                |       "__typename__rename__fastRenamedString": "DeferApi"
                 |     }
-                |   }
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "data": {
+                    |         "rename__slowRenamedString__slowString": "this is the slow string (deferred)",
+                    |         "__typename__rename__slowRenamedString": "DeferApi"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
+                    """
+                    | {
+                    |   "hasNext": true,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "data": {
+                    |         "rename__anotherSlowRenamedString__anotherSlowString": "this is the other slow string (deferred)",
+                    |         "__typename__rename__anotherSlowRenamedString": "DeferApi"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -60,9 +93,7 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
-     *       "fastRenamedString": "this is the fast string (not deferred)",
-     *       "slowRenamedString": "this is the slow string (deferred)",
-     *       "anotherSlowRenamedString": "this is the other slow string (deferred)"
+     *       "fastRenamedString": "this is the fast string (not deferred)"
      *     }
      *   }
      * }
@@ -73,11 +104,10 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "defer": {
-            |       "fastRenamedString": "this is the fast string (not deferred)",
-            |       "slowRenamedString": "this is the slow string (deferred)",
-            |       "anotherSlowRenamedString": "this is the other slow string (deferred)"
+            |       "fastRenamedString": "this is the fast string (not deferred)"
             |     }
-            |   }
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
