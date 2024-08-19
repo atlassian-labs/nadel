@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.incremental.DeferPayload
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.Service
@@ -9,6 +11,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.transform.result.json.NadelCachingJsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.queryPath
@@ -91,12 +94,85 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         return result
     }
 
+    suspend fun transform(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionPlan: NadelExecutionPlan,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        service: Service,
+        result: NadelIncrementalServiceExecutionResult,
+        delayedIncrementalPartialResult: DelayedIncrementalPartialResult // NadelIncrementalServiceExecutionResult,
+    ): DelayedIncrementalPartialResult {
+        val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
+
+        coroutineScope {
+            delayedIncrementalPartialResult.incremental
+                ?.filterIsInstance<DeferPayload>() // We need this filter because IncrementalPayloads could be stream or defer
+                ?.map { deferPayload ->
+                    val nodes = NadelCachingJsonNodes(
+                        deferPayload.getData<JsonMap?>() ?: emptyMap(),
+                        prefix = deferPayload.path.filterIsInstance<String>(), //converts resultPath to queryPath TODO: is it better for this to be NadelQueryPath? as that gives us better type safety
+                    )
+
+                    for ((field, steps) in executionPlan.transformationSteps) {
+                        // This can be null if we did not end up sending the field e.g. for hydration
+                        val underlyingFields = overallToUnderlyingFields[field]
+                        if (underlyingFields.isNullOrEmpty()) {
+                            continue
+                        }
+
+                        for (step in steps) {
+                            asyncInstructions.add(
+                                async {
+                                    step.transform.getResultInstructions(
+                                        executionContext,
+                                        serviceExecutionContext,
+                                        executionBlueprint,
+                                        service,
+                                        field,
+                                        underlyingFields.first().parent,
+                                        result,
+                                        step.state,
+                                        nodes,
+                                    )
+                                },
+                            )
+                        }
+
+                        asyncInstructions.add(
+                            async {
+                                getRemoveArtificialFieldInstructions(artificialFields, nodes)
+                            },
+                        )
+                    }
+                }
+        }
+        val instructions = asyncInstructions
+            .awaitAll()
+            .flatten()
+
+        mutate(delayedIncrementalPartialResult, instructions)
+
+        return delayedIncrementalPartialResult
+    }
+
     private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
         instructions.forEach { transformation ->
             when (transformation) {
                 is NadelResultInstruction.Set -> process(transformation)
                 is NadelResultInstruction.Remove -> process(transformation)
                 is NadelResultInstruction.AddError -> process(transformation, result.errors)
+            }
+        }
+    }
+
+    private fun mutate(result: DelayedIncrementalPartialResult, instructions: List<NadelResultInstruction>) {
+        instructions.forEach { transformation ->
+            when (transformation) {
+                is NadelResultInstruction.Set -> process(transformation)
+                is NadelResultInstruction.Remove -> process(transformation)
+                is NadelResultInstruction.AddError -> process(transformation, emptyList()) // result.incremental?.first()?.errors)   TODO: add errors properly on this line
             }
         }
     }

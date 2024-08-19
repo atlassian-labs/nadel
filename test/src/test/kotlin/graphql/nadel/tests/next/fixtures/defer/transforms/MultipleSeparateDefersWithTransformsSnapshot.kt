@@ -61,8 +61,7 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "rename__slowRenamedString__slowString": "this is the slow string (deferred)",
-                    |         "__typename__rename__slowRenamedString": "DeferApi"
+                    |         "slowRenamedString": "this is the slow string (deferred)"
                     |       }
                     |     }
                     |   ]
@@ -77,8 +76,7 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "rename__anotherSlowRenamedString__anotherSlowString": "this is the other slow string (deferred)",
-                    |         "__typename__rename__anotherSlowRenamedString": "DeferApi"
+                    |         "anotherSlowRenamedString": "this is the other slow string (deferred)"
                     |       }
                     |     }
                     |   ]
@@ -93,7 +91,9 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
-     *       "fastRenamedString": "this is the fast string (not deferred)"
+     *       "fastRenamedString": "this is the fast string (not deferred)",
+     *       "anotherSlowRenamedString": "this is the other slow string (deferred)",
+     *       "slowRenamedString": "this is the slow string (deferred)"
      *     }
      *   }
      * }
@@ -111,6 +111,36 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer"
+                |       ],
+                |       "data": {
+                |         "slowRenamedString": "this is the slow string (deferred)"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
+                """
+                | {
+                |   "hasNext": true,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer"
+                |       ],
+                |       "data": {
+                |         "anotherSlowRenamedString": "this is the other slow string (deferred)"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

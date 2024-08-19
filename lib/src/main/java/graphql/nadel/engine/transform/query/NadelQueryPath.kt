@@ -23,6 +23,17 @@ data class NadelQueryPath(val segments: List<String>) {
         return segments.last()
     }
 
+    fun startsWith(prefix: List<String>): Boolean {
+        return segments.take(prefix.size) == prefix
+    }
+
+    fun removePrefix(prefix: List<String>): NadelQueryPath {
+        if (this.startsWith(prefix)) {
+            return NadelQueryPath(segments.drop(prefix.size))
+        }
+        throw Error("NadelQueryPath did not start with prefix") //todo: make proper error
+    }
+
     companion object {
         val root = NadelQueryPath(emptyList())
 
