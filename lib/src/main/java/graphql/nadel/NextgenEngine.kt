@@ -403,7 +403,7 @@ internal class NextgenEngine(
                                 overallToUnderlyingFields = overallToUnderlyingFields,
                                 service = service,
                                 result = serviceExecResult, //NO LONGER USED
-                                // dipr = delayedIncrementalResult
+                                delayedIncrementalPartialResult = delayedIncrementalResult,
                             )
                         delayedIncrementalResult
                     }

@@ -34,8 +34,10 @@ interface JsonNodes {
  */
 class NadelCachingJsonNodes(
     private val data: JsonMap,
+    private val prefix: List<String>? = null,
 ) : JsonNodes {
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
+    private var removedPrefix: Boolean = false
 
     override fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean): List<JsonNode> {
         val rootNode = JsonNode(data)
@@ -46,6 +48,22 @@ class NadelCachingJsonNodes(
      * Extracts the nodes at the given query selection path.
      */
     private fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
+        // if incremental payload, remove prefix
+        if (prefix != null && !removedPrefix) {
+            if (queryPath.startsWith(prefix.toList())) {
+                removedPrefix = true
+                getNodesAt(queryPath.removePrefix(prefix), flatten)
+            } else {
+                emptyList()
+            }
+        }
+        removedPrefix = false
+
+        // TODO: check if this is valid
+        // if (prefix != null && queryPath.startsWith(prefix.toList())) {
+        //         getNodesAt(queryPath.removePrefix(prefix), flatten)
+        // }
+
         var queue = listOf(rootNode)
 
         // todo work backwards here instead of forwards
@@ -85,6 +103,15 @@ class NadelCachingJsonNodes(
         segment: String,
         flattenLists: Boolean,
     ): Sequence<JsonNode> {
+        // if incremental and last item of prefix matches the segment,
+        // then return the map itself (instead of the value in the map)
+        // TODO: does this need the flattenLists logic?
+        if (prefix != null && prefix.last() == segment){
+            return sequenceOf(
+                JsonNode(map),
+            )
+        }
+
         val value = map[segment]
 
         // We flatten lists as these nodes contribute to the BFS queue

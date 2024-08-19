@@ -55,8 +55,7 @@ public class RenameInnerFieldInsideDeferSnapshot : TestSnapshot() {
                     |       ],
                     |       "data": {
                     |         "user": {
-                    |           "rename__firstName__name": "Steven",
-                    |           "__typename__rename__firstName": "User"
+                    |           "firstName": "Steven"
                     |         }
                     |       }
                     |     }
@@ -73,8 +72,7 @@ public class RenameInnerFieldInsideDeferSnapshot : TestSnapshot() {
      *   "data": {
      *     "defer": {
      *       "user": {
-     *         "rename__firstName__name": "Steven",
-     *         "__typename__rename__firstName": "User"
+     *         "firstName": "Steven"
      *       }
      *     }
      *   }
@@ -101,8 +99,7 @@ public class RenameInnerFieldInsideDeferSnapshot : TestSnapshot() {
                 |       ],
                 |       "data": {
                 |         "user": {
-                |           "rename__firstName__name": "Steven",
-                |           "__typename__rename__firstName": "User"
+                |           "firstName": "Steven"
                 |         }
                 |       }
                 |     }
