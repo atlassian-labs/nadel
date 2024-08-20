@@ -112,7 +112,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 ?.map { deferPayload ->
                     val nodes = NadelCachingJsonNodes(
                         deferPayload.getData<JsonMap?>() ?: emptyMap(),
-                        prefix = deferPayload.path.filterIsInstance<String>(), //converts resultPath to queryPath TODO: is it better for this to be NadelQueryPath? as that gives us better type safety
+                        pathPrefix = deferPayload.path.filterIsInstance<String>(), //converts resultPath to queryPath TODO: is it better for this to be NadelQueryPath? as that gives us better type safety
                     )
 
                     for ((field, steps) in executionPlan.transformationSteps) {
