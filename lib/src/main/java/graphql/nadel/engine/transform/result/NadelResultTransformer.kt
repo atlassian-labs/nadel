@@ -34,20 +34,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        if (result is NadelIncrementalServiceExecutionResult) {
-            result.incrementalItemPublisher.asFlow()
-                .map {
-                    val incremental = it.incremental
-                        ?.map {
-
-                        }
-                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-
-                        .extensions(it.extensions)
-                        .build()
-                }
-        }
-
         val nodes = JsonNodes(result.data)
 
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
