@@ -402,7 +402,7 @@ internal class NextgenEngine(
                                 artificialFields = artificialFields,
                                 overallToUnderlyingFields = overallToUnderlyingFields,
                                 service = service,
-                                result = serviceExecResult, //NO LONGER USED
+                                result = serviceExecResult,
                                 delayedIncrementalPartialResult = delayedIncrementalResult,
                             )
                         delayedIncrementalResult

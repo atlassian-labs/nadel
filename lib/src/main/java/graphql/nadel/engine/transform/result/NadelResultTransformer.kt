@@ -10,6 +10,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
+import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.transform.result.json.NadelCachingJsonNodes
 import graphql.nadel.engine.util.JsonMap
@@ -112,7 +113,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 ?.map { deferPayload ->
                     val nodes = NadelCachingJsonNodes(
                         deferPayload.getData<JsonMap?>() ?: emptyMap(),
-                        pathPrefix = deferPayload.path.filterIsInstance<String>(), //converts resultPath to queryPath TODO: is it better for this to be NadelQueryPath? as that gives us better type safety
+                        pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>()),
                     )
 
                     for ((field, steps) in executionPlan.transformationSteps) {

@@ -34,7 +34,7 @@ interface JsonNodes {
  */
 class NadelCachingJsonNodes(
     private val data: JsonMap,
-    private val pathPrefix: List<String>? = null, // for incremental (defer) payloads, we pass in the prefix we need to remove from path
+    private val pathPrefix: NadelQueryPath? = null, // for incremental (defer) payloads, we pass in the prefix we need to remove from path
 ) : JsonNodes {
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
 
@@ -43,8 +43,8 @@ class NadelCachingJsonNodes(
 
         return if (pathPrefix == null) {
             getNodesAt(rootNode, queryPath, flatten)
-        } else if (queryPath.startsWith(pathPrefix)) {
-            getNodesAt(rootNode, queryPath.removePrefix(pathPrefix), flatten)
+        } else if (queryPath.startsWith(pathPrefix.segments)) {
+            getNodesAt(rootNode, queryPath.removePrefix(pathPrefix.segments), flatten)
         } else {
             emptyList()
         }
