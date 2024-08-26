@@ -6,6 +6,7 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.DeferPayload
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.language.Document
@@ -394,17 +395,21 @@ internal class NextgenEngine(
                     .asFlow()
                     .map {delayedIncrementalResult ->
                         // Transform
-                        resultTransformer
-                            .transform(
-                                executionContext = executionContext,
-                                serviceExecutionContext = serviceExecutionContext,
-                                executionPlan = executionPlan,
-                                artificialFields = artificialFields,
-                                overallToUnderlyingFields = overallToUnderlyingFields,
-                                service = service,
-                                result = serviceExecResult,
-                                delayedIncrementalPartialResult = delayedIncrementalResult,
-                            )
+                        delayedIncrementalResult.incremental
+                            ?.filterIsInstance<DeferPayload>()
+                            ?.map {deferPayload ->
+                                resultTransformer
+                                .transform(
+                                    executionContext = executionContext,
+                                    serviceExecutionContext = serviceExecutionContext,
+                                    executionPlan = executionPlan,
+                                    artificialFields = artificialFields,
+                                    overallToUnderlyingFields = overallToUnderlyingFields,
+                                    service = service,
+                                    result = serviceExecResult,
+                                    deferPayload = deferPayload,
+                                ) }
+
                         delayedIncrementalResult
                     }
             )
