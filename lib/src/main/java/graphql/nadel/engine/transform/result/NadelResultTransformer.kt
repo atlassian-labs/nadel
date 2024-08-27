@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.GraphQLError
 import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
@@ -156,12 +157,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             when (transformation) {
                 is NadelResultInstruction.Set -> process(transformation)
                 is NadelResultInstruction.Remove -> process(transformation)
-                is NadelResultInstruction.AddError -> process(
-                    transformation,
-                    result.errors?.map { graphQLError ->
-                        mapOf("message" to graphQLError.message, "locations" to graphQLError.locations)
-                    } ?: emptyList()
-                )
+                is NadelResultInstruction.AddError -> processGraphQLErrors(transformation, result.errors)
             }
         }
     }
@@ -191,6 +187,17 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
         val mutableErrors = errors.asMutable()
         mutableErrors.add(newError)
+    }
+
+    private fun processGraphQLErrors(
+        instruction: NadelResultInstruction.AddError,
+        errors: List<GraphQLError>?,
+    ) {
+        val errorsAsJsonMap = errors?.map { graphQLError ->
+            mapOf("message" to graphQLError.message, "locations" to graphQLError.locations)
+        } ?: emptyList()
+
+        process(instruction, errorsAsJsonMap)
     }
 
     private fun getRemoveArtificialFieldInstructions(
