@@ -296,6 +296,33 @@ internal class NextgenEngine(
                 overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
             )
         }
+
+        if (result is NadelIncrementalServiceExecutionResult) {
+            executionContext.incrementalResultSupport.defer(
+                result.incrementalItemPublisher
+                    .asFlow()
+                    .map {delayedIncrementalResult ->
+                        // Transform
+                        delayedIncrementalResult.incremental
+                            ?.filterIsInstance<DeferPayload>()
+                            ?.map {deferPayload ->
+                                resultTransformer
+                                .transform(
+                                    executionContext = executionContext,
+                                    serviceExecutionContext = serviceExecutionContext,
+                                    executionPlan = executionPlan,
+                                    artificialFields = queryTransform.artificialFields,
+                                    overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                                    service = service,
+                                    result = result,
+                                    deferPayload = deferPayload,
+                                ) }
+
+                        delayedIncrementalResult
+                    }
+            )
+        }
+
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
             else -> timer.time(step = RootStep.ResultTransforming) {
@@ -389,31 +416,31 @@ internal class NextgenEngine(
             )
         }
 
-        if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
-            executionContext.incrementalResultSupport.defer(
-                serviceExecResult.incrementalItemPublisher
-                    .asFlow()
-                    .map {delayedIncrementalResult ->
-                        // Transform
-                        delayedIncrementalResult.incremental
-                            ?.filterIsInstance<DeferPayload>()
-                            ?.map {deferPayload ->
-                                resultTransformer
-                                .transform(
-                                    executionContext = executionContext,
-                                    serviceExecutionContext = serviceExecutionContext,
-                                    executionPlan = executionPlan,
-                                    artificialFields = artificialFields,
-                                    overallToUnderlyingFields = overallToUnderlyingFields,
-                                    service = service,
-                                    result = serviceExecResult,
-                                    deferPayload = deferPayload,
-                                ) }
-
-                        delayedIncrementalResult
-                    }
-            )
-        }
+        // if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
+        //     executionContext.incrementalResultSupport.defer(
+        //         serviceExecResult.incrementalItemPublisher
+        //             .asFlow()
+        //             .map {delayedIncrementalResult ->
+        //                 // Transform
+        //                 delayedIncrementalResult.incremental
+        //                     ?.filterIsInstance<DeferPayload>()
+        //                     ?.map {deferPayload ->
+        //                         resultTransformer
+        //                         .transform(
+        //                             executionContext = executionContext,
+        //                             serviceExecutionContext = serviceExecutionContext,
+        //                             executionPlan = executionPlan,
+        //                             artificialFields = artificialFields,
+        //                             overallToUnderlyingFields = overallToUnderlyingFields,
+        //                             service = service,
+        //                             result = serviceExecResult,
+        //                             deferPayload = deferPayload,
+        //                         ) }
+        //
+        //                 delayedIncrementalResult
+        //             }
+        //     )
+        // }
 
         return serviceExecResult.copy(
             data = serviceExecResult.data.let { data ->
