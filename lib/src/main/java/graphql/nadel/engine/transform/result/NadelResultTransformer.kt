@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.GraphQLError
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
@@ -16,8 +17,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
-internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
-    suspend fun transform(
+internal class NadelResultTransformer(
+    private val executionBlueprint: NadelOverallExecutionBlueprint,
+) {
+    internal data class MutateResult(
+        val errorsAdded: List<GraphQLError>,
+    )
+
+    suspend fun mutate(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
@@ -25,7 +32,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
-    ): ServiceExecutionResult {
+    ): MutateResult {
         val nodes = JsonNodes(result.data)
 
         val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
@@ -66,11 +73,16 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
         val instructions = deferredInstructions
             .awaitAll()
-            .flatten()
+            .flatten() // todo: why do we even flatten here? we can just iterate
 
         mutate(result, instructions)
 
-        return result
+        val errors = instructions
+            .mapNotNull {
+                (it as? NadelResultInstruction.AddError)?.error
+            }
+
+        return MutateResult(errors)
     }
 
     private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
