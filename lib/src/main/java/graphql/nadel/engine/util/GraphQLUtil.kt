@@ -40,6 +40,7 @@ import graphql.language.Type
 import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecutionResult
@@ -67,6 +68,7 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
+import org.reactivestreams.Publisher
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
@@ -365,7 +367,18 @@ fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
     return provide(executionInput.query, executionInput.operationName, executionInput.context)
 }
 
-fun ServiceExecutionResult.copy(
+fun NadelIncrementalServiceExecutionResult.copy(
+    data: MutableJsonMap = this.data,
+    errors: MutableList<MutableJsonMap> = this.errors,
+    extensions: MutableJsonMap = this.extensions,
+    incremental: List<IncrementalPayload>? = this.incremental,
+    incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = this.incrementalItemPublisher,
+    hasNext: Boolean = this.hasNext,
+): ServiceExecutionResult {
+    return newIncrementalServiceExecutionResult(data, errors, extensions, incremental, incrementalItemPublisher, hasNext)
+}
+
+fun NadelServiceExecutionResultImpl.copy(
     data: MutableJsonMap = this.data,
     errors: MutableList<MutableJsonMap> = this.errors,
     extensions: MutableJsonMap = this.extensions,
@@ -379,6 +392,17 @@ fun newServiceExecutionResult(
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
     return NadelServiceExecutionResultImpl(data, errors, extensions)
+}
+
+fun newIncrementalServiceExecutionResult(
+    data: MutableJsonMap = mutableMapOf(),
+    errors: MutableList<MutableJsonMap> = mutableListOf(),
+    extensions: MutableJsonMap = mutableMapOf(),
+    incremental: List<IncrementalPayload>?,
+    incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult>,
+    hasNext: Boolean,
+): ServiceExecutionResult {
+    return NadelIncrementalServiceExecutionResult(data, errors, extensions, incremental, incrementalItemPublisher, hasNext)
 }
 
 fun newServiceExecutionResult(
