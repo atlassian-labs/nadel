@@ -2,9 +2,6 @@ package graphql.nadel.engine.transform.result
 
 import graphql.GraphQLError
 import graphql.incremental.DeferPayload
-import graphql.incremental.DelayedIncrementalPartialResult
-import graphql.incremental.DelayedIncrementalPartialResultImpl
-import graphql.incremental.IncrementalPayload
 import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
@@ -14,7 +11,6 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.transform.result.json.NadelCachingJsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.queryPath
@@ -23,8 +19,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.reactive.asFlow
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
     suspend fun transform(
@@ -34,52 +28,20 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
-        result: ServiceExecutionResult,
+        result: ServiceExecutionResult
     ): ServiceExecutionResult {
         val nodes = JsonNodes(result.data)
-
-        val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
-
-        coroutineScope {
-            for ((field, steps) in executionPlan.transformationSteps) {
-                // This can be null if we did not end up sending the field e.g. for hydration
-                val underlyingFields = overallToUnderlyingFields[field]
-                if (underlyingFields.isNullOrEmpty()) {
-                    continue
-                }
-
-                for (step in steps) {
-                    asyncInstructions.add(
-                        async {
-                            step.transform.getResultInstructions(
-                                executionContext,
-                                serviceExecutionContext,
-                                executionBlueprint,
-                                service,
-                                field,
-                                underlyingFields.first().parent,
-                                result,
-                                step.state,
-                                nodes,
-                            )
-                        },
-                    )
-                }
-            }
-
-            asyncInstructions.add(
-                async {
-                    getRemoveArtificialFieldInstructions(artificialFields, nodes)
-                },
-            )
-        }
-
-        val instructions = asyncInstructions
-            .awaitAll()
-            .flatten()
-
+        val instructions = getMutationInstructions(
+            executionContext,
+            serviceExecutionContext,
+            executionPlan,
+            artificialFields,
+            overallToUnderlyingFields,
+            service,
+            result,
+            nodes
+        )
         mutate(result, instructions)
-
         return result
     }
 
@@ -90,23 +52,43 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
-        result: NadelIncrementalServiceExecutionResult,
+        result: ServiceExecutionResult,
         deferPayload: DeferPayload
     ): DeferPayload {
+        val nodes = JsonNodes(
+            deferPayload.getData<JsonMap?>() ?: emptyMap(),
+            pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>())
+        )
+        val instructions = getMutationInstructions(
+            executionContext,
+            serviceExecutionContext,
+            executionPlan,
+            artificialFields,
+            overallToUnderlyingFields,
+            service,
+            result,
+            nodes
+        )
+        mutate(deferPayload, instructions)
+        return deferPayload
+    }
+
+    private suspend fun getMutationInstructions(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionPlan: NadelExecutionPlan,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        service: Service,
+        result: ServiceExecutionResult,
+        nodes: JsonNodes
+    ): List<NadelResultInstruction> {
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
         coroutineScope {
-            val nodes = NadelCachingJsonNodes(
-                deferPayload.getData<JsonMap?>() ?: emptyMap(),
-                pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>()),
-            )
-
             for ((field, steps) in executionPlan.transformationSteps) {
-                // This can be null if we did not end up sending the field e.g. for hydration
                 val underlyingFields = overallToUnderlyingFields[field]
-                if (underlyingFields.isNullOrEmpty()) {
-                    continue
-                }
+                if (underlyingFields.isNullOrEmpty()) continue
 
                 for (step in steps) {
                     asyncInstructions.add(
@@ -120,27 +102,23 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                                 underlyingFields.first().parent,
                                 result,
                                 step.state,
-                                nodes,
+                                nodes
                             )
-                        },
+                        }
                     )
                 }
-
-                asyncInstructions.add(
-                    async {
-                        getRemoveArtificialFieldInstructions(artificialFields, nodes)
-                    },
-                )
             }
+
+            asyncInstructions.add(
+                async {
+                    getRemoveArtificialFieldInstructions(artificialFields, nodes)
+                }
+            )
         }
-        val instructions = asyncInstructions
-            .awaitAll()
-            .flatten()
 
-        mutate(deferPayload, instructions)
-
-        return deferPayload
+        return asyncInstructions.awaitAll().flatten()
     }
+
 
     private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
         instructions.forEach { transformation ->

@@ -19,12 +19,12 @@ interface JsonNodes {
     fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode>
 
     companion object {
-        internal var nodesFactory: (JsonMap) -> JsonNodes = {
-            NadelCachingJsonNodes(it)
+        internal var nodesFactory: (JsonMap, NadelQueryPath?) -> JsonNodes = { data, pathPrefix ->
+            NadelCachingJsonNodes(data, pathPrefix)
         }
 
-        operator fun invoke(data: JsonMap): JsonNodes {
-            return nodesFactory(data)
+        operator fun invoke(data: JsonMap, pathPrefix: NadelQueryPath? = null): JsonNodes {
+            return nodesFactory(data, pathPrefix)
         }
     }
 }
