@@ -10,7 +10,7 @@ sealed class ServiceExecutionResult {
     abstract val extensions: MutableMap<String, Any?>
 }
 
-class NadelIncrementalServiceExecutionResult(
+data class NadelIncrementalServiceExecutionResult(
     override val data: MutableMap<String, Any?> = LinkedHashMap(),
     override val errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
     override val extensions: MutableMap<String, Any?> = LinkedHashMap(),
@@ -19,7 +19,7 @@ class NadelIncrementalServiceExecutionResult(
     val hasNext: Boolean,
 ) : ServiceExecutionResult()
 
-class NadelServiceExecutionResultImpl @JvmOverloads constructor(
+data class NadelServiceExecutionResultImpl @JvmOverloads constructor(
     override val data: MutableMap<String, Any?> = LinkedHashMap(),
     override val errors: MutableList<MutableMap<String, Any?>> = ArrayList(),
     override val extensions: MutableMap<String, Any?> = LinkedHashMap(),

@@ -367,52 +367,12 @@ fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
     return provide(executionInput.query, executionInput.operationName, executionInput.context)
 }
 
-fun NadelIncrementalServiceExecutionResult.copy(
-    data: MutableJsonMap = this.data,
-    errors: MutableList<MutableJsonMap> = this.errors,
-    extensions: MutableJsonMap = this.extensions,
-    incremental: List<IncrementalPayload>? = this.incremental,
-    incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult> = this.incrementalItemPublisher,
-    hasNext: Boolean = this.hasNext,
-): ServiceExecutionResult {
-    return newIncrementalServiceExecutionResult(data, errors, extensions, incremental, incrementalItemPublisher, hasNext)
-}
-
-fun NadelServiceExecutionResultImpl.copy(
-    data: MutableJsonMap = this.data,
-    errors: MutableList<MutableJsonMap> = this.errors,
-    extensions: MutableJsonMap = this.extensions,
-): ServiceExecutionResult {
-    return newServiceExecutionResult(data, errors, extensions)
-}
-
 fun newServiceExecutionResult(
     data: MutableJsonMap = mutableMapOf(),
     errors: MutableList<MutableJsonMap> = mutableListOf(),
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
     return NadelServiceExecutionResultImpl(data, errors, extensions)
-}
-
-fun newIncrementalServiceExecutionResult(
-    data: MutableJsonMap = mutableMapOf(),
-    errors: MutableList<MutableJsonMap> = mutableListOf(),
-    extensions: MutableJsonMap = mutableMapOf(),
-    incremental: List<IncrementalPayload>?,
-    incrementalItemPublisher: Publisher<DelayedIncrementalPartialResult>,
-    hasNext: Boolean,
-): ServiceExecutionResult {
-    return NadelIncrementalServiceExecutionResult(data, errors, extensions, incremental, incrementalItemPublisher, hasNext)
-}
-
-fun newServiceExecutionResult(
-    error: GraphQLError,
-): ServiceExecutionResult {
-    return newServiceExecutionResult(
-        errors = mutableListOf(
-            error.toSpecification(),
-        ),
-    )
 }
 
 fun newExecutionResult(
