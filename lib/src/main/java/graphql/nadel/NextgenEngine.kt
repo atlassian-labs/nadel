@@ -65,6 +65,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
@@ -290,22 +291,19 @@ internal class NextgenEngine(
                 service = service,
                 transformedQuery = transformedQuery,
                 executionContext = executionContext,
-                executionPlan = executionPlan,
                 serviceExecutionContext = serviceExecutionContext,
                 executionHydrationDetails = executionContext.hydrationDetails,
-                artificialFields = queryTransform.artificialFields,
-                overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
             )
         }
         if (result is NadelIncrementalServiceExecutionResult) {
             executionContext.incrementalResultSupport.defer(
                 result.incrementalItemPublisher
                     .asFlow()
-                    .map {delayedIncrementalResult ->
+                    .onEach {delayedIncrementalResult ->
                         // Transform
                         delayedIncrementalResult.incremental
                             ?.filterIsInstance<DeferPayload>()
-                            ?.map {deferPayload ->
+                            ?.forEach {deferPayload ->
                                 resultTransformer
                                     .transform(
                                         executionContext = executionContext,
@@ -317,8 +315,6 @@ internal class NextgenEngine(
                                         result = result,
                                         deferPayload = deferPayload,
                                     ) }
-
-                        delayedIncrementalResult
                     }
             )
         }
@@ -344,11 +340,8 @@ internal class NextgenEngine(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
         executionContext: NadelExecutionContext,
-        executionPlan: NadelExecutionPlan,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
-        artificialFields: List<ExecutableNormalizedField>,
-        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
 

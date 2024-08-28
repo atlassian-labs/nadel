@@ -26,7 +26,11 @@ data class NadelQueryPath(val segments: List<String>) {
     }
 
     fun startsWith(prefix: List<String>): Boolean {
-        return segments.take(prefix.size) == prefix
+        if (prefix.size > segments.size) return false
+        for (i in 0..<prefix.size) {
+            if (prefix[i] != segments[i]) return false
+        }
+        return true
     }
 
     fun removePrefix(prefix: List<String>): NadelQueryPath {

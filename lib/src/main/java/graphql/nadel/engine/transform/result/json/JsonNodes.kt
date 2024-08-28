@@ -13,6 +13,9 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Use [NadelCachingJsonNodes] for the most part because that is faster.
  * It is the default implementation.
+ *
+ * @param data The JSON map data.
+ * @param pathPrefix For incremental (defer) payloads, this is the prefix that needs to be removed from the path.
  */
 interface JsonNodes {
     /**
@@ -48,7 +51,7 @@ class NadelCachingJsonNodes(
         } else if (queryPath.startsWith(pathPrefix.segments)) {
             getNodesAt(rootNode, queryPath.removePrefix(pathPrefix.segments), flatten)
         } else {
-            assertShouldNeverHappen("The supplied path prefix did not match the start of the query path")
+            emptyList()
         }
     }
 

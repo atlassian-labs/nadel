@@ -171,11 +171,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         instruction: NadelResultInstruction.AddError,
         errors: List<GraphQLError>?,
     ) {
-        val errorsAsJsonMap = errors?.map { graphQLError ->
-            mapOf("message" to graphQLError.message, "locations" to graphQLError.locations)
-        } ?: emptyList()
-
-        process(instruction, errorsAsJsonMap)
+        errors?.asMutable()?.add(instruction.error)
     }
 
     private fun getRemoveArtificialFieldInstructions(
