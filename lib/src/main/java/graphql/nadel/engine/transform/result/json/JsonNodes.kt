@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.result.json
 
+import graphql.Assert
+import graphql.Assert.assertShouldNeverHappen
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
@@ -46,7 +48,7 @@ class NadelCachingJsonNodes(
         } else if (queryPath.startsWith(pathPrefix.segments)) {
             getNodesAt(rootNode, queryPath.removePrefix(pathPrefix.segments), flatten)
         } else {
-            emptyList()
+            assertShouldNeverHappen("The supplied path prefix did not match the start of the query path")
         }
     }
 
