@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<DeferredDeepRenameTest>()
+    graphql.nadel.tests.next.update<DeferredFieldIsSkippedIfTrueTest>()
 }
 
 /**
@@ -19,17 +19,16 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
+public class DeferredFieldIsSkippedIfTrueTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
                 query = """
                 | {
-                |   details {
-                |     deep_rename__name__issue: issue {
-                |       name
+                |   defer {
+                |     ... @defer {
+                |       hello
                 |     }
-                |     __typename__deep_rename__name: __typename
                 |   }
                 | }
                 """.trimMargin(),
@@ -37,16 +36,27 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "details": {
-                |       "deep_rename__name__issue": {
-                |         "name": "Issue-1"
-                |       },
-                |       "__typename__deep_rename__name": "IssueDetail"
-                |     }
-                |   }
+                |     "defer": {}
+                |   },
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [
+                    |         "defer"
+                    |       ],
+                    |       "data": {
+                    |         "hello": "hello there"
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -55,8 +65,8 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "details": {
-     *       "name": "Issue-1"
+     *     "defer": {
+     *       "hello": "hello there"
      *     }
      *   }
      * }
@@ -66,13 +76,27 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "details": {
-            |       "name": "Issue-1"
-            |     }
-            |   }
+            |     "defer": {}
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [
+                |         "defer"
+                |       ],
+                |       "data": {
+                |         "hello": "hello there"
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }

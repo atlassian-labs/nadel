@@ -3,11 +3,22 @@ package graphql.nadel.tests.next.fixtures.defer.transforms
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class DeferredDeepRenameTest : NadelIntegrationTest(
+open class RenamedTypeIsDeferredTest : NadelIntegrationTest(
     query = """
       query {
-        details {
-            name # Deep renamed from Issue.name
+        zoo {
+          ...@defer {
+            monkey {
+              name
+              __typename
+            }
+          }
+          cat {
+            name
+            ...@defer {
+              __typename
+            }
+          }          
         }
       }
     """.trimIndent(),
@@ -18,47 +29,48 @@ open class DeferredDeepRenameTest : NadelIntegrationTest(
                 directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
                 type Query {
-                  details: IssueDetail
+                  zoo: ZooApi 
                 }
-                type IssueDetail {
-                  name: String @renamed(from: "issue.name")
+                type ZooApi {
+                  monkey: Monkey 
+                  cat: Cat
                 }
-
-            """.trimIndent(),
-            underlyingSchema = """
-                directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
-
-                type Issue {
+                type Monkey @renamed(from: "Donkey"){
                   name: String
                 }
-            
-                type IssueDetail {
-                  issue: Issue
+                type Cat @renamed(from: "Rat"){
+                  name: String
                 }
-            
-                type Query {
-                  details: IssueDetail
-                }
+                
 
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
                         type
-                            .dataFetcher("details") { env ->
+                            .dataFetcher("zoo") { env ->
                                 Any()
                             }
                     }
-                    .type("IssueDetail") { type ->
+                    .type("ZooApi") { type ->
                         type
-                            .dataFetcher("issue") { env ->
+                            .dataFetcher("monkey") { env ->
+                                Any()
+                            }
+                            .dataFetcher("cat") { env ->
                                 Any()
                             }
                     }
-                    .type("Issue") { type ->
+                    .type("Donkey") { type ->
                         type
                             .dataFetcher("name") { env ->
-                                "Issue-1"
+                                "Harambe"
+                            }
+                    }
+                    .type("Rat") { type ->
+                        type
+                            .dataFetcher("name") { env ->
+                                "Garfield"
                             }
                     }
             },

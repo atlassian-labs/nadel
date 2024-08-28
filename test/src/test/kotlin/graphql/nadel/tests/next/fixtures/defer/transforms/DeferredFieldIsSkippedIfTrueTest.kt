@@ -3,11 +3,14 @@ package graphql.nadel.tests.next.fixtures.defer.transforms
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class DeferredDeepRenameTest : NadelIntegrationTest(
+open class DeferredFieldIsSkippedIfTrueTest : NadelIntegrationTest(
     query = """
       query {
-        details {
-            name # Deep renamed from Issue.name
+        defer {
+          ...@defer {
+            hello @skip(if: false)
+            overallString @skip (if: true)
+          }
         }
       }
     """.trimIndent(),
@@ -18,26 +21,23 @@ open class DeferredDeepRenameTest : NadelIntegrationTest(
                 directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
                 type Query {
-                  details: IssueDetail
+                  defer: DeferApi 
                 }
-                type IssueDetail {
-                  name: String @renamed(from: "issue.name")
+                type DeferApi {
+                  hello: String
+                  overallString: String @renamed(from: "underlyingString")
                 }
 
             """.trimIndent(),
             underlyingSchema = """
                 directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
 
-                type Issue {
-                  name: String
-                }
-            
-                type IssueDetail {
-                  issue: Issue
-                }
-            
                 type Query {
-                  details: IssueDetail
+                  defer: DeferApi
+                }
+                type DeferApi {
+                  hello: String
+                  underlyingString: String
                 }
 
             """.trimIndent(),
@@ -45,20 +45,17 @@ open class DeferredDeepRenameTest : NadelIntegrationTest(
                 wiring
                     .type("Query") { type ->
                         type
-                            .dataFetcher("details") { env ->
+                            .dataFetcher("defer") { env ->
                                 Any()
                             }
                     }
-                    .type("IssueDetail") { type ->
+                    .type("DeferApi") { type ->
                         type
-                            .dataFetcher("issue") { env ->
-                                Any()
+                            .dataFetcher("hello") { env ->
+                                "hello there"
                             }
-                    }
-                    .type("Issue") { type ->
-                        type
-                            .dataFetcher("name") { env ->
-                                "Issue-1"
+                            .dataFetcher("underlyingString") { env ->
+                                "string for the deferred renamed field"
                             }
                     }
             },
