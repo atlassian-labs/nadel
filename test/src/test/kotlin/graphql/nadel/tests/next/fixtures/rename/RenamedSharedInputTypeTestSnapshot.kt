@@ -24,7 +24,7 @@ public class RenamedSharedInputTypeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "confluence_something",
                 query = """
-                | query (${'$'}v0: ConfluenceLegacyPathType!) {
+                | query (${'$'}v0: PathType!) {
                 |   something {
                 |     users {
                 |       profilePicture {
@@ -41,20 +41,17 @@ public class RenamedSharedInputTypeTestSnapshot : TestSnapshot() {
                 """.trimMargin(),
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Validation error (UnknownType) : Unknown type 'ConfluenceLegacyPathType'",
-                |       "locations": [
+                |   "data": {
+                |     "something": {
+                |       "users": [
                 |         {
-                |           "line": 1,
-                |           "column": 13
+                |           "profilePicture": {
+                |             "path": "https://atlassian.net/wiki/aa-avatar/5ee0a4ef55749e0ab6e0fb70"
+                |           }
                 |         }
-                |       ],
-                |       "extensions": {
-                |         "classification": "ValidationError"
-                |       }
+                |       ]
                 |     }
-                |   ]
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -65,22 +62,16 @@ public class RenamedSharedInputTypeTestSnapshot : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "errors": [
-     *     {
-     *       "message": "Validation error (UnknownType) : Unknown type 'ConfluenceLegacyPathType'",
-     *       "locations": [
-     *         {
-     *           "line": 1,
-     *           "column": 13
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     }
-     *   ],
      *   "data": {
-     *     "something": null
+     *     "something": {
+     *       "users": [
+     *         {
+     *           "profilePicture": {
+     *             "path": "https://atlassian.net/wiki/aa-avatar/5ee0a4ef55749e0ab6e0fb70"
+     *           }
+     *         }
+     *       ]
+     *     }
      *   }
      * }
      * ```
@@ -88,22 +79,16 @@ public class RenamedSharedInputTypeTestSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "errors": [
-            |     {
-            |       "message": "Validation error (UnknownType) : Unknown type 'ConfluenceLegacyPathType'",
-            |       "locations": [
-            |         {
-            |           "line": 1,
-            |           "column": 13
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     }
-            |   ],
             |   "data": {
-            |     "something": null
+            |     "something": {
+            |       "users": [
+            |         {
+            |           "profilePicture": {
+            |             "path": "https://atlassian.net/wiki/aa-avatar/5ee0a4ef55749e0ab6e0fb70"
+            |           }
+            |         }
+            |       ]
+            |     }
             |   }
             | }
             """.trimMargin(),
