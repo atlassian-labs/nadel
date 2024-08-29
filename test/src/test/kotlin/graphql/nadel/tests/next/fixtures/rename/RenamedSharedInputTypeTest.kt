@@ -111,10 +111,10 @@ class RenamedSharedInputTypeTest : NadelIntegrationTest(
                         type
                             .dataFetcher("path") { env ->
                                 val pfp = env.getSource<ProfilePicture>()!!
-                                when (val type = env.getArgument<String>("type")) {
+                                when (val urlType = env.getArgument<String>("type")) {
                                     "ABSOLUTE" -> pfp.absolutePath
                                     "RELATIVE" -> pfp.relativePath
-                                    else -> throw IllegalArgumentException(type)
+                                    else -> throw IllegalArgumentException(urlType)
                                 }
                             }
                     }
