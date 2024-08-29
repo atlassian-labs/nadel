@@ -54,22 +54,26 @@ public class DeferredListFieldIsRenamedTestSnapshot : TestSnapshot() {
                     |           {
                     |             "key": "GQLGW-1",
                     |             "assigneeId": "ari:cloud:identity::user/1",
-                    |             "awesomeIssueName": "Issue 1"
+                    |             "rename__awesomeIssueName__title": "Issue 1",
+                    |             "__typename__rename__awesomeIssueName": "Issue"
                     |           },
                     |           {
                     |             "key": "GQLGW-2",
                     |             "assigneeId": "ari:cloud:identity::user/2",
-                    |             "awesomeIssueName": "Issue 2"
+                    |             "rename__awesomeIssueName__title": "Issue 2",
+                    |             "__typename__rename__awesomeIssueName": "Issue"
                     |           },
                     |           {
                     |             "key": "GQLGW-3",
                     |             "assigneeId": "ari:cloud:identity::user/1",
-                    |             "awesomeIssueName": "Issue 3"
+                    |             "rename__awesomeIssueName__title": "Issue 3",
+                    |             "__typename__rename__awesomeIssueName": "Issue"
                     |           },
                     |           {
                     |             "key": "GQLGW-4",
                     |             "assigneeId": "ari:cloud:identity::user/3",
-                    |             "awesomeIssueName": null
+                    |             "rename__awesomeIssueName__title": null,
+                    |             "__typename__rename__awesomeIssueName": "Issue"
                     |           }
                     |         ]
                     |       }

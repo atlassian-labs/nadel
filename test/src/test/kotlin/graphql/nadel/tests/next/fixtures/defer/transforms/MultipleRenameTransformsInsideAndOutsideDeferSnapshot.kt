@@ -57,7 +57,8 @@ public class MultipleRenameTransformsInsideAndOutsideDeferSnapshot : TestSnapsho
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowRenamedString": "this is the slow string (deferred)"
+                    |         "rename__slowRenamedString__slowString": "this is the slow string (deferred)",
+                    |         "__typename__rename__slowRenamedString": "DeferApi"
                     |       }
                     |     }
                     |   ]

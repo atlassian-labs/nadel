@@ -55,7 +55,8 @@ public class RenameInnerFieldInsideDeferSnapshot : TestSnapshot() {
                     |       ],
                     |       "data": {
                     |         "user": {
-                    |           "firstName": "Steven"
+                    |           "rename__firstName__name": "Steven",
+                    |           "__typename__rename__firstName": "User"
                     |         }
                     |       }
                     |     }
