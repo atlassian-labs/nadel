@@ -4,7 +4,8 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
- * The ConfluenceLegacyPathType type is renamed, and we share it between the two defined services in this test.
+ * The ConfluenceLegacyPathType enum type is renamed, and we share it between the two defined services in this test.
+ * The enum is also exclusively used as an input type, never as an output type.
  *
  * We need to ensure that it's renamed when sent to the underlying service.
  */
