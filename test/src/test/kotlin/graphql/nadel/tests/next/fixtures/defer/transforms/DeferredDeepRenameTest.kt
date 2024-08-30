@@ -6,8 +6,10 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 open class DeferredDeepRenameTest : NadelIntegrationTest(
     query = """
       query {
-        details {
-            name # Deep renamed from Issue.name
+        ...@defer {
+          details {
+              name # Deep renamed from Issue.name
+          }
         }
       }
     """.trimIndent(),

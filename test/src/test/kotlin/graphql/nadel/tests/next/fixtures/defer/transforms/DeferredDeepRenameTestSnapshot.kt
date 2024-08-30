@@ -25,28 +25,39 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
                 service = "defer",
                 query = """
                 | {
-                |   details {
-                |     deep_rename__name__issue: issue {
-                |       name
+                |   ... @defer {
+                |     details {
+                |       deep_rename__name__issue: issue {
+                |         name
+                |       }
+                |       __typename__deep_rename__name: __typename
                 |     }
-                |     __typename__deep_rename__name: __typename
                 |   }
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "details": {
-                |       "deep_rename__name__issue": {
-                |         "name": "Issue-1"
-                |       },
-                |       "__typename__deep_rename__name": "IssueDetail"
-                |     }
-                |   }
+                |   "data": {},
+                |   "hasNext": true
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
+                    """
+                    | {
+                    |   "hasNext": false,
+                    |   "incremental": [
+                    |     {
+                    |       "path": [],
+                    |       "data": {
+                    |         "details": {
+                    |           "name": "Issue-1"
+                    |         }
+                    |       }
+                    |     }
+                    |   ]
+                    | }
+                    """.trimMargin(),
                 ),
             ),
         )
@@ -66,13 +77,27 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "details": {
-            |       "name": "Issue-1"
-            |     }
-            |   }
+            |     "details": null
+            |   },
+            |   "hasNext": true
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
+                """
+                | {
+                |   "hasNext": false,
+                |   "incremental": [
+                |     {
+                |       "path": [],
+                |       "data": {
+                |         "details": {
+                |           "name": "Issue-1"
+                |         }
+                |       }
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
             ),
         )
 }
