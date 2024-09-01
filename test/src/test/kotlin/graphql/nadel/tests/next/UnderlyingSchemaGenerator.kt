@@ -333,11 +333,11 @@ private fun transformFields(fieldDefinitions: List<FieldDefinition>): List<Field
         }
         .map { field ->
             field.transform { fieldBuilder ->
-
                 fieldBuilder
                     .name(field.getUnderlyingName())
                     .directives(field.directives.filterNotNadelDirectives())
                     .type(field.type.getUnderlyingType())
+                    .inputValueDefinitions(transformInputValueDefinitions(field.inputValueDefinitions))
             }
         }
         .toList()

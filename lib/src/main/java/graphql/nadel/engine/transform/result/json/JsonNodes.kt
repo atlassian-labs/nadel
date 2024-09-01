@@ -21,11 +21,10 @@ interface JsonNodes {
     fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode>
 
     companion object {
-
         internal var nodesFactory: (JsonMap, NadelQueryPath?) -> JsonNodes = { data, pathPrefix ->
             NadelCachingJsonNodes(data, pathPrefix)
         }
-
+        
         /**
          * @param data The JSON map data.
          * @param pathPrefix For incremental (defer) payloads, this is the prefix that needs to be removed from the path.
