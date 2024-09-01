@@ -10,14 +10,14 @@ import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
+import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.AnyNamedNode
@@ -771,44 +771,68 @@ private class SharedTypesAnalysis(
         overallParentType: AnyImplementingTypeDefinition,
         underlyingParentType: GraphQLFieldsContainer,
     ): List<NadelTypeRenameInstruction> {
-        val overallOutputTypeName = overallField.type.unwrapAll().name
-
         val underlyingField = getUnderlyingField(overallField, overallParentType, underlyingParentType)
             ?: return emptyList()
 
-        val renameInstruction = if (overallOutputTypeName !in serviceDefinedTypes) {
+        val overallOutputTypeName = overallField.type.unwrapAll().name
+        val underlyingOutputTypeName = underlyingField.type.unwrapAll().name
+        val outputTypeRenameInstruction = getTypeRenameInstructionOrNull(
+            overallTypeName = overallOutputTypeName,
+            underlyingTypeName = underlyingOutputTypeName,
+            serviceDefinedTypes = serviceDefinedTypes,
+            service = service,
+        )
+
+        val argumentTypeRenameInstructions = overallField.inputValueDefinitions
+            .mapNotNull { overallArgument ->
+                val underlyingArgument = underlyingField.getArgument(overallArgument.name)
+                getTypeRenameInstructionOrNull(
+                    overallTypeName = overallArgument.type.unwrapAll().name,
+                    underlyingTypeName = underlyingArgument.type.unwrapAll().name,
+                    serviceDefinedTypes = serviceDefinedTypes,
+                    service = service,
+                )
+            }
+
+        val overallOutputTypeDefinition = (engineSchema.getType(overallOutputTypeName) as? GraphQLFieldsContainer?)
+            ?.definition as AnyImplementingTypeDefinition?
+
+        return listOfNotNull(outputTypeRenameInstruction) + argumentTypeRenameInstructions + (overallOutputTypeDefinition
+            ?.let {
+                investigateTypeRenames(
+                    visitedTypes,
+                    service,
+                    serviceDefinedTypes,
+                    overallType = overallOutputTypeDefinition,
+                    underlyingType = underlyingField.type.unwrapAll() as GraphQLFieldsContainer,
+                )
+            } ?: emptyList())
+    }
+
+    private fun getTypeRenameInstructionOrNull(
+        overallTypeName: String,
+        underlyingTypeName: String,
+        serviceDefinedTypes: Set<String>,
+        service: Service,
+    ): NadelTypeRenameInstruction? {
+        return if (overallTypeName !in serviceDefinedTypes) {
             // Service does not own type, it is shared
             // If the name is different than the overall type, then we mark the rename
-            when (val underlyingOutputTypeName = underlyingField.type.unwrapAll().name) {
-                overallOutputTypeName -> null
+            when (underlyingTypeName) {
+                overallTypeName -> null
                 in scalarTypeNames -> null
-                else -> when (typeRenameInstructions[overallOutputTypeName]) {
+                else -> when (typeRenameInstructions[overallTypeName]) {
                     null -> error("Nadel does not allow implicit renames")
                     else -> NadelTypeRenameInstruction(
                         service,
-                        overallName = overallOutputTypeName,
-                        underlyingName = underlyingOutputTypeName,
+                        overallName = overallTypeName,
+                        underlyingName = underlyingTypeName,
                     )
                 }
             }
         } else {
             null
         }
-
-        val overallOutputType = engineSchema.getType(overallOutputTypeName)
-            // Ensure type exists, schema transformation can delete types, so let's just ignore it
-            .let { it ?: return emptyList() }
-            // Return if not field container
-            .let { it as? GraphQLFieldsContainer ?: return emptyList() }
-            .let { it.definition as AnyImplementingTypeDefinition }
-
-        return listOfNotNull(renameInstruction) + investigateTypeRenames(
-            visitedTypes,
-            service,
-            serviceDefinedTypes,
-            overallType = overallOutputType,
-            underlyingType = underlyingField.type.unwrapAll() as GraphQLFieldsContainer,
-        )
     }
 
     private fun getUnderlyingField(
