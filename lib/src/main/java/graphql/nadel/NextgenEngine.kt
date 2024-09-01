@@ -6,6 +6,7 @@ import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.incremental.DeferPayload
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.language.Document
@@ -25,6 +26,7 @@ import graphql.nadel.engine.transform.query.DynamicServiceResolution
 import graphql.nadel.engine.transform.query.NadelFieldToService
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultTransformer
+import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
 import graphql.nadel.engine.util.copy
@@ -62,6 +64,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
@@ -291,6 +295,29 @@ internal class NextgenEngine(
                 executionHydrationDetails = executionContext.hydrationDetails,
             )
         }
+        if (result is NadelIncrementalServiceExecutionResult) {
+            executionContext.incrementalResultSupport.defer(
+                result.incrementalItemPublisher
+                    .asFlow()
+                    .onEach {delayedIncrementalResult ->
+                        // Transform
+                        delayedIncrementalResult.incremental
+                            ?.filterIsInstance<DeferPayload>()
+                            ?.forEach {deferPayload ->
+                                resultTransformer
+                                    .transform(
+                                        executionContext = executionContext,
+                                        serviceExecutionContext = serviceExecutionContext,
+                                        executionPlan = executionPlan,
+                                        artificialFields = queryTransform.artificialFields,
+                                        overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                                        service = service,
+                                        result = result,
+                                        deferPayload = deferPayload,
+                                    ) }
+                    }
+            )
+        }
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
             else -> timer.time(step = RootStep.ResultTransforming) {
@@ -381,18 +408,15 @@ internal class NextgenEngine(
             )
         }
 
-        if (serviceExecResult is NadelIncrementalServiceExecutionResult) {
-            executionContext.incrementalResultSupport.defer(
-                serviceExecResult.incrementalItemPublisher.asFlow()
-            )
+        val transformedData: MutableJsonMap = serviceExecResult.data.let { data ->
+            data.takeIf { transformedQuery.resultKey in data }
+                ?: mutableMapOf(transformedQuery.resultKey to null)
         }
 
-        return serviceExecResult.copy(
-            data = serviceExecResult.data.let { data ->
-                data.takeIf { transformedQuery.resultKey in data }
-                    ?: mutableMapOf(transformedQuery.resultKey to null)
-            },
-        )
+        return when(serviceExecResult) {
+            is NadelServiceExecutionResultImpl -> serviceExecResult.copy(data = transformedData)
+            is NadelIncrementalServiceExecutionResult -> serviceExecResult.copy(data = transformedData)
+        }
     }
 
     private fun chooseServiceExecution(

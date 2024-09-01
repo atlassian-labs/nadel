@@ -2,6 +2,7 @@ package graphql.nadel.engine.transform.query
 
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
+import graphql.normalized.incremental.NormalizedDeferredExecution
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
@@ -18,6 +19,7 @@ object NFUtil {
         pathToField: NadelQueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
+        deferredExecutions: LinkedHashSet<NormalizedDeferredExecution> = LinkedHashSet(),
     ): List<ExecutableNormalizedField> {
         return createFieldRecursively(
             schema,
@@ -26,6 +28,7 @@ object NFUtil {
             fieldArguments,
             fieldChildren,
             pathToFieldIndex = 0,
+            deferredExecutions,
         )
     }
 
@@ -35,6 +38,7 @@ object NFUtil {
         queryPathToField: NadelQueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
+        deferredExecutions: LinkedHashSet<NormalizedDeferredExecution> = LinkedHashSet(),
     ): ExecutableNormalizedField {
         return createParticularField(
             schema,
@@ -43,6 +47,7 @@ object NFUtil {
             fieldArguments,
             fieldChildren,
             pathToFieldIndex = 0,
+            deferredExecutions,
         )
     }
 
@@ -53,6 +58,7 @@ object NFUtil {
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,
+        deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
     ): List<ExecutableNormalizedField> {
         // Note: remember that we are creating fields that do not exist in the original NF
         // Thus, we need to handle interfaces and object types
@@ -65,6 +71,7 @@ object NFUtil {
                     fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
+                    deferredExecutions,
                 )
             }
             is GraphQLObjectType -> listOf(
@@ -75,6 +82,7 @@ object NFUtil {
                     fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
+                    deferredExecutions,
                 )
             )
             else -> error("Unsupported type '${parentType.javaClass.name}'")
@@ -88,6 +96,7 @@ object NFUtil {
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,
+        deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
     ): ExecutableNormalizedField {
         val fieldName = queryPathToField.segments[pathToFieldIndex]
         val fieldDef = parentType.getFieldDefinition(fieldName)
@@ -96,6 +105,7 @@ object NFUtil {
         return ExecutableNormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
+            .deferredExecutions(deferredExecutions)
             .also { builder ->
                 if (pathToFieldIndex == queryPathToField.segments.lastIndex) {
                     builder.normalizedArguments(fieldArguments)
@@ -112,6 +122,7 @@ object NFUtil {
                         fieldArguments,
                         fieldChildren,
                         pathToFieldIndex = pathToFieldIndex + 1,
+                        deferredExecutions,
                     )
                 }
             )

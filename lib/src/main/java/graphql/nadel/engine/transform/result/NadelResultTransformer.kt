@@ -1,11 +1,15 @@
 package graphql.nadel.engine.transform.result
 
+import graphql.GraphQLError
+import graphql.incremental.DeferPayload
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
+import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
@@ -24,22 +28,70 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
-        result: ServiceExecutionResult,
+        result: ServiceExecutionResult
     ): ServiceExecutionResult {
         val nodes = JsonNodes(result.data)
+        val instructions = getMutationInstructions(
+            executionContext,
+            serviceExecutionContext,
+            executionPlan,
+            artificialFields,
+            overallToUnderlyingFields,
+            service,
+            result,
+            nodes
+        )
+        mutate(result, instructions)
+        return result
+    }
 
-        val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
+    suspend fun transform(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionPlan: NadelExecutionPlan,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        service: Service,
+        result: ServiceExecutionResult,
+        deferPayload: DeferPayload
+    ): DeferPayload {
+        val nodes = JsonNodes(
+            deferPayload.getData<JsonMap?>() ?: emptyMap(),
+            pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>())
+        )
+        val instructions = getMutationInstructions(
+            executionContext,
+            serviceExecutionContext,
+            executionPlan,
+            artificialFields,
+            overallToUnderlyingFields,
+            service,
+            result,
+            nodes
+        )
+        mutate(deferPayload, instructions)
+        return deferPayload
+    }
+
+    private suspend fun getMutationInstructions(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionPlan: NadelExecutionPlan,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        service: Service,
+        result: ServiceExecutionResult,
+        nodes: JsonNodes
+    ): List<NadelResultInstruction> {
+        val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
         coroutineScope {
             for ((field, steps) in executionPlan.transformationSteps) {
-                // This can be null if we did not end up sending the field e.g. for hydration
                 val underlyingFields = overallToUnderlyingFields[field]
-                if (underlyingFields.isNullOrEmpty()) {
-                    continue
-                }
+                if (underlyingFields.isNullOrEmpty()) continue
 
                 for (step in steps) {
-                    deferredInstructions.add(
+                    asyncInstructions.add(
                         async {
                             step.transform.getResultInstructions(
                                 executionContext,
@@ -50,28 +102,23 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                                 underlyingFields.first().parent,
                                 result,
                                 step.state,
-                                nodes,
+                                nodes
                             )
-                        },
+                        }
                     )
                 }
             }
 
-            deferredInstructions.add(
+            asyncInstructions.add(
                 async {
                     getRemoveArtificialFieldInstructions(artificialFields, nodes)
-                },
+                }
             )
         }
 
-        val instructions = deferredInstructions
-            .awaitAll()
-            .flatten()
-
-        mutate(result, instructions)
-
-        return result
+        return asyncInstructions.awaitAll().flatten()
     }
+
 
     private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
         instructions.forEach { transformation ->
@@ -79,6 +126,16 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 is NadelResultInstruction.Set -> process(transformation)
                 is NadelResultInstruction.Remove -> process(transformation)
                 is NadelResultInstruction.AddError -> process(transformation, result.errors)
+            }
+        }
+    }
+
+    private fun mutate(result: DeferPayload, instructions: List<NadelResultInstruction>) {
+        instructions.forEach { transformation ->
+            when (transformation) {
+                is NadelResultInstruction.Set -> process(transformation)
+                is NadelResultInstruction.Remove -> process(transformation)
+                is NadelResultInstruction.AddError -> processGraphQLErrors(transformation, result.errors)
             }
         }
     }
@@ -108,6 +165,13 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
         val mutableErrors = errors.asMutable()
         mutableErrors.add(newError)
+    }
+
+    private fun processGraphQLErrors(
+        instruction: NadelResultInstruction.AddError,
+        errors: List<GraphQLError>?,
+    ) {
+        errors?.asMutable()?.add(instruction.error)
     }
 
     private fun getRemoveArtificialFieldInstructions(

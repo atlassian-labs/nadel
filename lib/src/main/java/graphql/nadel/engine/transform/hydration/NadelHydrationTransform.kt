@@ -145,6 +145,7 @@ internal class NadelHydrationTransform(
         return makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = objectTypeNames,
+            deferredExecutions = linkedSetOf(),
         )
     }
 
