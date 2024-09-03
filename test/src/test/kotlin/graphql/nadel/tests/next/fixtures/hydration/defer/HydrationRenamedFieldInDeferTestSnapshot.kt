@@ -49,11 +49,10 @@ public class HydrationRenamedFieldInDeferTestSnapshot : TestSnapshot() {
                     |     {
                     |       "path": [],
                     |       "data": {
-                    |         "issueByKey": {
+                    |         "rename__issueByKey__getIssueByKey": {
                     |           "key": "GQLGW-1",
-                    |           "assignee": {
-                    |             "name": "Franklin"
-                    |           }
+                    |           "hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                    |           "__typename__hydration__assignee": "Issue"
                     |         }
                     |       }
                     |     }

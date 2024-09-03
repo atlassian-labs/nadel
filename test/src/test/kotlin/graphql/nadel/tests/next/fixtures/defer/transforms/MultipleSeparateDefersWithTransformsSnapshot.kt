@@ -61,7 +61,8 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "slowRenamedString": "this is the slow string (deferred)"
+                    |         "rename__slowRenamedString__slowString": "this is the slow string (deferred)",
+                    |         "__typename__rename__slowRenamedString": "DeferApi"
                     |       }
                     |     }
                     |   ]
@@ -76,7 +77,8 @@ public class MultipleSeparateDefersWithTransformsSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "anotherSlowRenamedString": "this is the other slow string (deferred)"
+                    |         "rename__anotherSlowRenamedString__anotherSlowString": "this is the other slow string (deferred)",
+                    |         "__typename__rename__anotherSlowRenamedString": "DeferApi"
                     |       }
                     |     }
                     |   ]

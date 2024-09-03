@@ -65,7 +65,7 @@ public class RenamedTypeIsDeferredTestSnapshot : TestSnapshot() {
                     |         "cat"
                     |       ],
                     |       "data": {
-                    |         "__typename": "Cat"
+                    |         "__typename": "Rat"
                     |       }
                     |     }
                     |   ]
@@ -82,7 +82,7 @@ public class RenamedTypeIsDeferredTestSnapshot : TestSnapshot() {
                     |       "data": {
                     |         "monkey": {
                     |           "name": "Harambe",
-                    |           "__typename": "Monkey"
+                    |           "__typename": "Donkey"
                     |         }
                     |       }
                     |     }

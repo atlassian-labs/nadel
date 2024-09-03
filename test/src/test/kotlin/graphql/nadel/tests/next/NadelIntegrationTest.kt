@@ -304,7 +304,7 @@ abstract class NadelIntegrationTest(
                 // Note: we compare hasNext further down in the function
                 compareJsonObject(
                     expectedDelayedResult - "hasNext",
-                    actualDelayedResult.toSpecification() - "hasNext",
+                    actualDelayedResult - "hasNext",
                 ).passed()
             }
 
@@ -337,7 +337,10 @@ abstract class NadelIntegrationTest(
             .forEach { actualCall ->
                 val delayedResults = actualCall.delayedResults
                 if (delayedResults.isNotEmpty()) {
-                    assertTrue(delayedResults.dropLast(n = 1).all { it.hasNext() } && !delayedResults.last().hasNext())
+                    assertTrue(
+                        delayedResults.dropLast(n = 1).all { it["hasNext"] == true }
+                            && delayedResults.last()["hasNext"] == false
+                    )
                 }
             }
     }

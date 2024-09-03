@@ -55,7 +55,8 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "data": {
-                    |         "overallString": "string for the deferred renamed field"
+                    |         "rename__overallString__underlyingString": "string for the deferred renamed field",
+                    |         "__typename__rename__overallString": "DeferApi"
                     |       }
                     |     }
                     |   ]
