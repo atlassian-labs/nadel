@@ -51,7 +51,10 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
                     |       "path": [],
                     |       "data": {
                     |         "details": {
-                    |           "name": "Issue-1"
+                    |           "deep_rename__name__issue": {
+                    |             "name": "Issue-1"
+                    |           },
+                    |           "__typename__deep_rename__name": "IssueDetail"
                     |         }
                     |       }
                     |     }
