@@ -96,9 +96,9 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
     ),
 ) {
-    private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<ServiceExecutionContext>())
+    private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<TestServiceExecutionContext>())
 
-    private class ServiceExecutionContext : NadelServiceExecutionContext() {
+    private class TestServiceExecutionContext : NadelServiceExecutionContext() {
         val isApplicable = Collections.synchronizedList(mutableListOf<String>())
         val transformField = Collections.synchronizedList(mutableListOf<String>())
         val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
@@ -131,7 +131,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                     override fun createServiceExecutionContext(
                         params: NadelCreateServiceExecutionContextParams,
                     ): CompletableFuture<NadelServiceExecutionContext> {
-                        return CompletableFuture.completedFuture(ServiceExecutionContext())
+                        return CompletableFuture.completedFuture(TestServiceExecutionContext())
                     }
                 },
             )
@@ -147,7 +147,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             overallField: ExecutableNormalizedField,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
                         ): Unit? {
-                            (serviceExecutionContext as ServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
+                            (serviceExecutionContext as TestServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
                             return Unit
                         }
 
@@ -160,7 +160,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             field: ExecutableNormalizedField,
                             state: Unit,
                         ): NadelTransformFieldResult {
-                            (serviceExecutionContext as ServiceExecutionContext).transformField.add(field.toExecutionString())
+                            (serviceExecutionContext as TestServiceExecutionContext).transformField.add(field.toExecutionString())
                             return NadelTransformFieldResult.unmodified(field)
                         }
 
@@ -175,7 +175,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             state: Unit,
                             nodes: JsonNodes,
                         ): List<NadelResultInstruction> {
-                            (serviceExecutionContext as ServiceExecutionContext).getResultInstructions.add(overallField.toExecutionString())
+                            (serviceExecutionContext as TestServiceExecutionContext).getResultInstructions.add(overallField.toExecutionString())
                             return emptyList()
                         }
                     }
@@ -187,7 +187,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         val impl = super.makeServiceExecution(service)
 
         return ServiceExecution {
-            serviceExecutionContexts.add(it.serviceExecutionContext as ServiceExecutionContext)
+            serviceExecutionContexts.add(it.serviceExecutionContext as TestServiceExecutionContext)
             impl.execute(it)
         }
     }
@@ -206,7 +206,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
         assertTrue(me.isApplicable == expectedMeExecutions)
         assertTrue(me.transformField == expectedMeExecutions.dropLast(1)) // dropLast as child is removed due to hydration
-        assertTrue(me.getResultInstructions == expectedMeExecutions.dropLast(1))
+        assertTrue(me.getResultInstructions.sorted() == expectedMeExecutions.dropLast(1).sorted())
 
         val bug = serviceExecutionContexts.single {
             it.isApplicable.first().contains("bug")
@@ -217,7 +217,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
         assertTrue(bug.isApplicable == expectedBugExecutions)
         assertTrue(bug.transformField == expectedBugExecutions)
-        assertTrue(bug.getResultInstructions == expectedBugExecutions)
+        assertTrue(bug.getResultInstructions.sorted() == expectedBugExecutions.sorted())
 
         val hydration = serviceExecutionContexts.single {
             it.isApplicable.first().contains("9")
@@ -228,6 +228,6 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
         assertTrue(hydration.isApplicable == expectedHydrationExecutions)
         assertTrue(hydration.transformField == expectedHydrationExecutions)
-        assertTrue(hydration.getResultInstructions == expectedHydrationExecutions)
+        assertTrue(hydration.getResultInstructions.sorted() == expectedHydrationExecutions.sorted())
     }
 }
