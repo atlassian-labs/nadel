@@ -40,7 +40,7 @@ import graphql.normalized.incremental.NormalizedDeferredExecution
  * the user.
  */
 class NadelIncrementalResultAccumulator(
-    private val operation: ExecutableNormalizedOperation,
+    operation: ExecutableNormalizedOperation,
 ) {
     data class DeferAccumulatorKey(
         val incrementalPayloadPath: List<Any>,

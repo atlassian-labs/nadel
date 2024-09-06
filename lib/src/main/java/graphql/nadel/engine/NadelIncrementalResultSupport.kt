@@ -1,8 +1,8 @@
 package graphql.nadel.engine
 
 import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
-import graphql.nadel.engine.util.copy
 import graphql.nadel.util.getLogger
 import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.CompletableDeferred
@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -89,6 +90,8 @@ class NadelIncrementalResultSupport internal constructor(
                 val next = accumulator.getIncrementalPartialResult(hasNext)
                 if (next != null) {
                     delayedResultsChannel.send(next)
+                } else if (!hasNext) {
+                    delayedResultsChannel.send(emptyLastResult())
                 }
             }
         }
@@ -118,6 +121,8 @@ class NadelIncrementalResultSupport internal constructor(
                         val next = accumulator.getIncrementalPartialResult(hasNext)
                         if (next != null) {
                             delayedResultsChannel.send(next)
+                        } else if (!hasNext) {
+                            delayedResultsChannel.send(emptyLastResult())
                         }
                     }
                 }
@@ -134,7 +139,9 @@ class NadelIncrementalResultSupport internal constructor(
      * There should never be more than one consumer. If you need multiple, you can wrap the [Flow] object.
      */
     fun resultFlow(): Flow<DelayedIncrementalPartialResult> {
-        return resultFlow
+        return resultFlow.onCompletion {
+            close()
+        }
     }
 
     fun onInitialResultComplete() {
@@ -145,19 +152,17 @@ class NadelIncrementalResultSupport internal constructor(
         initialCompletionLock.complete(Unit)
     }
 
-    fun close() {
+    private fun close() {
         coroutineScope.cancel()
     }
 
-    private fun quickCopy(
-        subject: DelayedIncrementalPartialResult,
-        hasNext: Boolean,
-    ): DelayedIncrementalPartialResult {
-        return if (subject.hasNext() == hasNext) {
-            subject
-        } else {
-            subject.copy(hasNext = hasNext)
-        }
+    // We have to return hasNext=false to indicate to clients that there's no more data coming.
+    // Note: the spec allows an empty payload which only contains hastNext=false to be returned.
+    private fun emptyLastResult(): DelayedIncrementalPartialResult {
+        return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+            .incrementalItems(emptyList())
+            .hasNext(false)
+            .build()
     }
 
     /**

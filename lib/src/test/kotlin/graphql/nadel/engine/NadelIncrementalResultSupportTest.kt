@@ -373,7 +373,11 @@ class NadelIncrementalResultSupportTest {
         // Then
         subject.onInitialResultComplete()
 
-        assertTrue(channel.toList().isEmpty())
+        val elements = channel.toList()
+
+        assertTrue(elements.size == 1)
+        assertFalse(elements[0].hasNext())
+        assertTrue(elements[0].incremental!!.isEmpty())
 
         verifyOrder {
             accumulator.accumulate(any())
