@@ -181,6 +181,36 @@ class NadelIncrementalResultAccumulatorTest {
     }
 
     @Test
+    fun `yields empty payload if hasNext=false and accumulator is empty`() {
+        val accumulator = makeAccumulator(
+            query = """
+                        query {
+                          issue(id: "1") {
+                            ... @defer {
+                              id
+                              assignee {
+                                name
+                              }
+                            }
+                          }
+                        }
+                    """.trimIndent(),
+        )
+
+        // When
+        accumulator.accumulate(
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .build(),
+        )
+
+        // Then
+        val result = accumulator.getIncrementalPartialResult(false)
+        assertTrue(result!!.incremental!!.isEmpty())
+        assertFalse(result.hasNext())
+    }
+
+    @Test
     fun `yields list elements that are complete`() {
         val accumulator = makeAccumulator(
             query = """
