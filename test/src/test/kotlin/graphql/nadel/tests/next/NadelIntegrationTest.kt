@@ -379,7 +379,9 @@ abstract class NadelIntegrationTest(
             // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
             assertTrue(result is IncrementalExecutionResult)
 
-            // Fuck why delayed & incremental?? Shouldn't incremental == delayed? Why is there an optional synchronous incremental??
+            // Note: the spec allows for a list of "incremental" results which is sent as part of the initial
+            // result (so not delivered in a delayed fashion). This var represents the incremental results that were
+            // sent in a delayed fashion.
             val actualDelayedResponses = incrementalResults!!
 
             // Should only have one element that says hasNext=false, and it should be the last one

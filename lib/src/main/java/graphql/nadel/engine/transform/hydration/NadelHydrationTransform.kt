@@ -239,6 +239,10 @@ internal class NadelHydrationTransform(
                 )
             }
 
+        if(preparedHydrations.isEmpty()) {
+            return
+        }
+
         // This isn't really right… but we start with this
         val label = overallField.deferredExecutions.firstNotNullOfOrNull { it.label }
 
