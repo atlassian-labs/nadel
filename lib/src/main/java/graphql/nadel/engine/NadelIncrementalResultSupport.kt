@@ -2,7 +2,6 @@ package graphql.nadel.engine
 
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
-import graphql.nadel.engine.util.copy
 import graphql.nadel.util.getLogger
 import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.CompletableDeferred
@@ -10,7 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -143,21 +141,6 @@ class NadelIncrementalResultSupport internal constructor(
 
         // Unblocks work to yield results to the channel
         initialCompletionLock.complete(Unit)
-    }
-
-    fun close() {
-        coroutineScope.cancel()
-    }
-
-    private fun quickCopy(
-        subject: DelayedIncrementalPartialResult,
-        hasNext: Boolean,
-    ): DelayedIncrementalPartialResult {
-        return if (subject.hasNext() == hasNext) {
-            subject
-        } else {
-            subject.copy(hasNext = hasNext)
-        }
     }
 
     /**
