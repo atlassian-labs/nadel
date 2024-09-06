@@ -174,7 +174,7 @@ class NadelIncrementalResultAccumulatorTest {
                 )
 
                 // Then
-                val result = accumulator.getIncrementalPartialResult(false)
+                val result = accumulator.getIncrementalPartialResult(true)
                 assertTrue(result == null)
             }
         }
