@@ -115,14 +115,6 @@ class NadelIncrementalResultAccumulator(
             }
 
         if (readyAccumulators.isEmpty()) {
-            if(!hasNext) {
-                // We have to return hasNext=false to indicate to clients that there's no more data coming.
-                // Note: the spec allows an empty payload which only contains hastNext=false to be returned.
-                return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                    .incrementalItems(emptyList())
-                    .hasNext(false)
-                    .build()
-            }
             return null
         }
 
