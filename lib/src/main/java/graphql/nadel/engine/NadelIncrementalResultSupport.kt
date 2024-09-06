@@ -156,8 +156,10 @@ class NadelIncrementalResultSupport internal constructor(
         coroutineScope.cancel()
     }
 
-    // We have to return hasNext=false to indicate to clients that there's no more data coming.
-    // Note: the spec allows an empty payload which only contains hastNext=false to be returned.
+    /**
+     * We have to return hasNext=false to indicate to clients that there's no more data coming.
+     * Note: the spec allows an empty payload which only contains hastNext=false to be returned.
+     */
     private fun emptyLastResult(): DelayedIncrementalPartialResult {
         return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
             .incrementalItems(emptyList())
