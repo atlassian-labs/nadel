@@ -29,7 +29,6 @@ import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
-import graphql.nadel.engine.util.copy
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
 import graphql.nadel.engine.util.newGraphQLError
@@ -64,7 +63,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
@@ -298,11 +296,11 @@ internal class NextgenEngine(
             executionContext.incrementalResultSupport.defer(
                 result.incrementalItemPublisher
                     .asFlow()
-                    .onEach {delayedIncrementalResult ->
+                    .onEach { delayedIncrementalResult ->
                         // Transform
                         delayedIncrementalResult.incremental
                             ?.filterIsInstance<DeferPayload>()
-                            ?.forEach {deferPayload ->
+                            ?.forEach { deferPayload ->
                                 resultTransformer
                                     .transform(
                                         executionContext = executionContext,
@@ -313,7 +311,8 @@ internal class NextgenEngine(
                                         service = service,
                                         result = result,
                                         deferPayload = deferPayload,
-                                    ) }
+                                    )
+                            }
                     }
             )
         }
@@ -416,14 +415,18 @@ internal class NextgenEngine(
 
         val transformedData: MutableJsonMap = serviceExecResult.data
             .let { data ->
-                val newData: MutableJsonMap = mutableMapOf()
-                topLevelFields.forEach { field ->
-                    newData[field.resultKey] = data[field.resultKey]
-                }
-                newData
+                // Ensures data always has root fields as keys
+                topLevelFields
+                    .asSequence()
+                    .map {
+                        it.resultKey
+                    }
+                    .associateWithTo(mutableMapOf()) { resultKey ->
+                        data[resultKey]
+                    }
             }
 
-        return when(serviceExecResult) {
+        return when (serviceExecResult) {
             is NadelServiceExecutionResultImpl -> serviceExecResult.copy(data = transformedData)
             is NadelIncrementalServiceExecutionResult -> serviceExecResult.copy(data = transformedData)
         }
