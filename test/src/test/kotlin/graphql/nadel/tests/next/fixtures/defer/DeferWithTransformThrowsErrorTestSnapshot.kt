@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.defer.transforms
+package graphql.nadel.tests.next.fixtures.defer
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<DeferredFieldIsRenamedTest>()
+    graphql.nadel.tests.next.update<DeferWithTransformThrowsErrorTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
+public class DeferWithTransformThrowsErrorTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "defer",
@@ -27,19 +27,19 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
                 | {
                 |   defer {
                 |     hello
-                |     ... @defer {
-                |       rename__overallString__underlyingString: underlyingString
-                |       __typename__rename__overallString: __typename
+                |     ... @defer(label: "slow-defer") {
+                |       rename__slow__underlyingSlow: underlyingSlow
+                |       __typename__rename__slow: __typename
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = " {}",
                 result = """
                 | {
                 |   "data": {
                 |     "defer": {
-                |       "hello": "hello there"
+                |       "hello": "helloString"
                 |     }
                 |   },
                 |   "hasNext": true
@@ -54,9 +54,9 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
                     |       "path": [
                     |         "defer"
                     |       ],
+                    |       "label": "slow-defer",
                     |       "data": {
-                    |         "rename__overallString__underlyingString": "string for the deferred renamed field",
-                    |         "__typename__rename__overallString": "DeferApi"
+                    |         "slow": null
                     |       }
                     |     }
                     |   ]
@@ -71,8 +71,8 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "defer": {
-     *       "hello": "hello there",
-     *       "overallString": "string for the deferred renamed field"
+     *       "hello": "helloString",
+     *       "slow": null
      *     }
      *   }
      * }
@@ -83,7 +83,7 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "defer": {
-            |       "hello": "hello there"
+            |       "hello": "helloString"
             |     }
             |   },
             |   "hasNext": true
@@ -98,8 +98,9 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
                 |       "path": [
                 |         "defer"
                 |       ],
+                |       "label": "slow-defer",
                 |       "data": {
-                |         "overallString": "string for the deferred renamed field"
+                |         "slow": null
                 |       }
                 |     }
                 |   ]
