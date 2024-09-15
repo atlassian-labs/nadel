@@ -21,46 +21,45 @@ private suspend fun main() {
 @Suppress("unused")
 public class DeferredServiceTypeFilterTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "A",
+                query = """
+                | {
+                |   aErrors {
+                |     __typename__type_filter__id: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = " {}",
+                result = """
+                | {
+                |   "data": {
+                |     "aErrors": {
+                |       "__typename__type_filter__id": "AError"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json
      * {
-     *   "errors": [
-     *     {
-     *       "message": "Validation error (FieldUndefined@[aErrors]) : Field 'aErrors' in type
-     * 'Query' is undefined",
-     *       "locations": [
-     *         {
-     *           "line": 2,
-     *           "column": 3
-     *         }
-     *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
-     *       }
-     *     }
-     *   ]
+     *   "data": {
+     *     "aErrors": {}
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "errors": [
-            |     {
-            |       "message": "Validation error (FieldUndefined@[aErrors]) : Field 'aErrors' in type 'Query' is undefined",
-            |       "locations": [
-            |         {
-            |           "line": 2,
-            |           "column": 3
-            |         }
-            |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
-            |       }
-            |     }
-            |   ]
+            |   "data": {
+            |     "aErrors": {}
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

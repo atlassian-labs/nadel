@@ -3,39 +3,37 @@ package graphql.nadel.tests.next.fixtures.defer.transforms
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-/*
+/**
  * This tests the NadelServiceTypeFilterTransform with defer
  */
 open class DeferredServiceTypeFilterTest : NadelIntegrationTest(
     query = """
       query {
         aErrors {
-          ... on BError {
-            id
+          ...@defer {
+            ...on BError {
+              id
+            }
           }
         }
       }
     """.trimIndent(),
     services = listOf(
         Service(
-            name = "defer",
+            name = "A",
             overallSchema = """
-                service shared {
-                  interface Error { id: ID }
+                type Query {
+                    aErrors: Error
                 }
-                service A {
-                  type Query {
-                     aErrors: [Error]
-                  }
-                  type AError implements Error { id: ID }
+                type AError implements Error { id: ID }
+                interface Error { id: ID }
+            """.trimIndent(),
+            underlyingSchema = """
+                type Query {
+                    aErrors: Error
                 }
-                service B {
-                  type BError implements Error {
-                    id: ID
-                    b: String
-                  }
-                }
-
+                type AError implements Error { id: ID }
+                interface Error { id: ID } 
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
@@ -51,10 +49,41 @@ open class DeferredServiceTypeFilterTest : NadelIntegrationTest(
                                 "A-ERROR-1"
                             }
                     }
-                    .type("BError") { type ->
+                    .type("Error") { type ->
                         type
-                            .dataFetcher("id") { env ->
-                                "B-ERROR-1"
+                            .typeResolver { env ->
+                                env.schema.getObjectType("AError")
+                            }
+                    }
+            },
+        ),
+        Service(
+            name = "B",
+            overallSchema = """
+                type Query {
+                  echo: String
+                }
+                type BError implements Error {
+                  id: ID
+                  b: String
+                }
+            """.trimIndent(),
+            underlyingSchema = """
+                type Query {
+                  echo: String
+                }
+                type BError implements Error {
+                  id: ID
+                  b: String
+                }
+                interface Error { id: ID }
+            """.trimIndent(),
+            runtimeWiring = { wiring ->
+                wiring
+                    .type("Error") { type ->
+                        type
+                            .typeResolver { env ->
+                                env.schema.getObjectType("BError")
                             }
                     }
             },
