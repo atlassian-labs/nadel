@@ -1,4 +1,4 @@
-package graphql.nadel.tests.next.fixtures.defer
+package graphql.nadel.tests.next.fixtures.defer.transforms
 
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
