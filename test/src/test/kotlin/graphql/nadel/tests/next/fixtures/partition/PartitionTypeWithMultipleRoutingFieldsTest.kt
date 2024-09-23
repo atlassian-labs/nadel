@@ -5,10 +5,15 @@ import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class SimplePartitionTest : NadelIntegrationTest(
+open class PartitionTypeWithMultipleRoutingFieldsTest : NadelIntegrationTest(
     query = """
-      query getPartitionedThings{
-        things(ids: ["thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B"]) {
+      query getPartitionedThings {
+        things(filter: { thingsIds: [
+            { primaryId: "thing-1-primary:partition-A", secondaryId: "thing-1-secondary" }, 
+            { primaryId: "thing-2-same-partition:partition-B", secondaryId: "thing-2-secondary-same-partition:partition-B" },
+            { primaryId: "thing-3-primary-no-partition", secondaryId: "thing-3-secondary:partition-A" },
+            { primaryId: "thing-4-primary:partition-B", secondaryId: "thing-4-secondary" } 
+        ]}) {
           id
           name
         }
@@ -21,7 +26,16 @@ open class SimplePartitionTest : NadelIntegrationTest(
 directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
-  things(ids: [ID!]! ): [Thing]  @routing(pathToSplitPoint: ["ids"])
+  things(filter: ThingsFilter): [Thing] @routing(pathToSplitPoint: ["filter", "thingsIds"])
+}
+
+input ThingsFilter {
+  thingsIds: [ThingId!]!
+}
+
+input ThingId {
+    primaryId: ID!
+    secondaryId: ID!
 }
 
 type Thing {
@@ -34,10 +48,11 @@ type Thing {
                     .type("Query") { type ->
                         type
                             .dataFetcher("things") { env ->
-                                val ids = env.getArgument<List<String>>("ids")
+                                val filter = env.getArgument<Map<String, List<Map<String, String>>>>("filter")!!
+                                val thingsIds = filter["thingsIds"]!!
 
-                                ids!!.map { id ->
-                                    val parts = id.split(":")
+                                thingsIds.map { thingId ->
+                                    val parts = thingId["primaryId"]!!.split(":")
                                     mapOf(
                                         "id" to parts[0],
                                         "name" to parts[0].uppercase(),

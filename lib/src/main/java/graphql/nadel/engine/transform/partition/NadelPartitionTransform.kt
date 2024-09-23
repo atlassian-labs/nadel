@@ -100,6 +100,7 @@ internal class NadelPartitionTransform(
                         it.normalizedArguments,
                         it.children
                     )
+                    // TODO: Maybe add a suffix to the operation name to identity this is a partitioned call
                     engine.executePartitionedCall(topLevelField, service, state.executionContext)
                 }
             }

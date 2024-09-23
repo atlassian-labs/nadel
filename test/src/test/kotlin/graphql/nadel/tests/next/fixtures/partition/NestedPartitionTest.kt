@@ -7,7 +7,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 
 open class NestedPartitionTest : NadelIntegrationTest(
     query = """
-      query {
+      query getPartitionedThings {
         things(filter: { thingsIds: [
             { id: "thing-1:partition-A" }, 
             { id: "thing-2:partition-B" },

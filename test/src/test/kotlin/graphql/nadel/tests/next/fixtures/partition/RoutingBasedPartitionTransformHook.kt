@@ -33,9 +33,15 @@ class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
 
     override fun getPartitionKeyExtractor(): (ScalarValue<*>, GraphQLInputValueDefinition) -> String? {
         return { scalarValue, _ ->
-            val stringValue = scalarValue as StringValue
-
-            stringValue.value.split(":")[1]
+            if (scalarValue !is StringValue) {
+                null
+            } else {
+                if (scalarValue.value.contains(":").not()) {
+                    null
+                } else {
+                    scalarValue.value.split(":")[1]
+                }
+            }
         }
     }
 }

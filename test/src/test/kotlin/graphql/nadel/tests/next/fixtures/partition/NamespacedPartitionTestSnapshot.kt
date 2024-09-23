@@ -24,7 +24,7 @@ public class NamespacedPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | {
+                | query getPartitionedThings {
                 |   thingsApi {
                 |     things(filter: {thingsIds : [{id : "thing-1:partition-A"}, {id : "thing-3:partition-A"}]}) {
                 |       id
@@ -58,7 +58,7 @@ public class NamespacedPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | {
+                | query getPartitionedThings {
                 |   thingsApi {
                 |     things(filter: {thingsIds : [{id : "thing-2:partition-B"}, {id : "thing-4:partition-B"}]}) {
                 |       id

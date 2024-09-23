@@ -24,7 +24,7 @@ public class NestedPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | {
+                | query getPartitionedThings {
                 |   things(filter: {thingsIds : [{id : "thing-1:partition-A"}, {id : "thing-3:partition-A"}]}) {
                 |     id
                 |     name
@@ -54,7 +54,7 @@ public class NestedPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | {
+                | query getPartitionedThings {
                 |   things(filter: {thingsIds : [{id : "thing-2:partition-B"}, {id : "thing-4:partition-B"}]}) {
                 |     id
                 |     name
@@ -87,26 +87,24 @@ public class NestedPartitionTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "things": {
-     *       "things": [
-     *         {
-     *           "id": "thing-1",
-     *           "name": "THING-1"
-     *         },
-     *         {
-     *           "id": "thing-3",
-     *           "name": "THING-3"
-     *         },
-     *         {
-     *           "id": "thing-2",
-     *           "name": "THING-2"
-     *         },
-     *         {
-     *           "id": "thing-4",
-     *           "name": "THING-4"
-     *         }
-     *       ]
-     *     }
+     *     "things": [
+     *       {
+     *         "id": "thing-1",
+     *         "name": "THING-1"
+     *       },
+     *       {
+     *         "id": "thing-3",
+     *         "name": "THING-3"
+     *       },
+     *       {
+     *         "id": "thing-2",
+     *         "name": "THING-2"
+     *       },
+     *       {
+     *         "id": "thing-4",
+     *         "name": "THING-4"
+     *       }
+     *     ]
      *   }
      * }
      * ```
@@ -115,26 +113,24 @@ public class NestedPartitionTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "things": {
-            |       "things": [
-            |         {
-            |           "id": "thing-1",
-            |           "name": "THING-1"
-            |         },
-            |         {
-            |           "id": "thing-3",
-            |           "name": "THING-3"
-            |         },
-            |         {
-            |           "id": "thing-2",
-            |           "name": "THING-2"
-            |         },
-            |         {
-            |           "id": "thing-4",
-            |           "name": "THING-4"
-            |         }
-            |       ]
-            |     }
+            |     "things": [
+            |       {
+            |         "id": "thing-1",
+            |         "name": "THING-1"
+            |       },
+            |       {
+            |         "id": "thing-3",
+            |         "name": "THING-3"
+            |       },
+            |       {
+            |         "id": "thing-2",
+            |         "name": "THING-2"
+            |       },
+            |       {
+            |         "id": "thing-4",
+            |         "name": "THING-4"
+            |       }
+            |     ]
             |   }
             | }
             """.trimMargin(),

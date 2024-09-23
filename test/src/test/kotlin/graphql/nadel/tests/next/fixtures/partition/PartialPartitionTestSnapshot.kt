@@ -24,7 +24,7 @@ public class PartialPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | {
+                | query getPartitionedThings {
                 |   api {
                 |     things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
                 |       id
@@ -66,7 +66,7 @@ public class PartialPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | {
+                | query getPartitionedThings {
                 |   api {
                 |     things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
                 |       id

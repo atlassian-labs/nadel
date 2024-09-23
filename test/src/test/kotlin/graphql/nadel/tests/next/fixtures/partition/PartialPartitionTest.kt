@@ -7,7 +7,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 
 open class PartialPartitionTest : NadelIntegrationTest(
     query = """
-      query {
+      query getPartitionedThings {
         api {
             things(ids: ["thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B"]) {
               id

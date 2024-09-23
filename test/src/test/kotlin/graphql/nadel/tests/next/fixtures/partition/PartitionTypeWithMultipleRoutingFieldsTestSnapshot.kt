@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<SimplePartitionTest>()
+    graphql.nadel.tests.next.update<PartitionTypeWithMultipleRoutingFieldsTest>()
 }
 
 /**
@@ -19,13 +19,13 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class SimplePartitionTestSnapshot : TestSnapshot() {
+public class PartitionTypeWithMultipleRoutingFieldsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
+                |   things(filter: {thingsIds : [{primaryId : "thing-1-primary:partition-A", secondaryId : "thing-1-secondary"}, {primaryId : "thing-3-primary-no-partition", secondaryId : "thing-3-secondary:partition-A"}]}) {
                 |     id
                 |     name
                 |   }
@@ -37,12 +37,12 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "things": [
                 |       {
-                |         "id": "thing-1",
-                |         "name": "THING-1"
+                |         "id": "thing-1-primary",
+                |         "name": "THING-1-PRIMARY"
                 |       },
                 |       {
-                |         "id": "thing-3",
-                |         "name": "THING-3"
+                |         "id": "thing-3-primary-no-partition",
+                |         "name": "THING-3-PRIMARY-NO-PARTITION"
                 |       }
                 |     ]
                 |   }
@@ -55,7 +55,7 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
+                |   things(filter: {thingsIds : [{primaryId : "thing-2-same-partition:partition-B", secondaryId : "thing-2-secondary-same-partition:partition-B"}, {primaryId : "thing-4-primary:partition-B", secondaryId : "thing-4-secondary"}]}) {
                 |     id
                 |     name
                 |   }
@@ -67,12 +67,12 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "things": [
                 |       {
-                |         "id": "thing-2",
-                |         "name": "THING-2"
+                |         "id": "thing-2-same-partition",
+                |         "name": "THING-2-SAME-PARTITION"
                 |       },
                 |       {
-                |         "id": "thing-4",
-                |         "name": "THING-4"
+                |         "id": "thing-4-primary",
+                |         "name": "THING-4-PRIMARY"
                 |       }
                 |     ]
                 |   }
@@ -89,20 +89,20 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "things": [
      *       {
-     *         "id": "thing-1",
-     *         "name": "THING-1"
+     *         "id": "thing-1-primary",
+     *         "name": "THING-1-PRIMARY"
      *       },
      *       {
-     *         "id": "thing-3",
-     *         "name": "THING-3"
+     *         "id": "thing-3-primary-no-partition",
+     *         "name": "THING-3-PRIMARY-NO-PARTITION"
      *       },
      *       {
-     *         "id": "thing-2",
-     *         "name": "THING-2"
+     *         "id": "thing-2-same-partition",
+     *         "name": "THING-2-SAME-PARTITION"
      *       },
      *       {
-     *         "id": "thing-4",
-     *         "name": "THING-4"
+     *         "id": "thing-4-primary",
+     *         "name": "THING-4-PRIMARY"
      *       }
      *     ]
      *   }
@@ -115,20 +115,20 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "things": [
             |       {
-            |         "id": "thing-1",
-            |         "name": "THING-1"
+            |         "id": "thing-1-primary",
+            |         "name": "THING-1-PRIMARY"
             |       },
             |       {
-            |         "id": "thing-3",
-            |         "name": "THING-3"
+            |         "id": "thing-3-primary-no-partition",
+            |         "name": "THING-3-PRIMARY-NO-PARTITION"
             |       },
             |       {
-            |         "id": "thing-2",
-            |         "name": "THING-2"
+            |         "id": "thing-2-same-partition",
+            |         "name": "THING-2-SAME-PARTITION"
             |       },
             |       {
-            |         "id": "thing-4",
-            |         "name": "THING-4"
+            |         "id": "thing-4-primary",
+            |         "name": "THING-4-PRIMARY"
             |       }
             |     ]
             |   }

@@ -42,7 +42,7 @@ class FieldPartition(
         return partitionInstructions.values.groupBy { value ->
             val partitionKeys = partitionInstructions.inputValueDefinitions.flatMap { inputValueDefinition ->
                 collectPartitionKeysForValue(value, inputValueDefinition)
-            }
+            }.distinct()
 
             check(partitionKeys.size == 1) { "Expected only one partition key but got $partitionKeys" }
 
