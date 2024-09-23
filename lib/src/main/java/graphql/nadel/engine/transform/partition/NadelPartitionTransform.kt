@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.partition
 
+import graphql.ErrorClassification
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -28,11 +29,23 @@ internal class NadelPartitionTransform(
 ) : NadelTransform<NadelPartitionTransform.State> {
     data class State(
         val executionContext: NadelExecutionContext,
-        val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf(),
         val pathToPartitionPoint: List<String>,
+        var partitionState: PartitionState = PartitionStateEmpty,
     )
 
-    private val fieldPartition = FieldPartition(instructions.getPartitionKeyExtractor())
+    sealed interface PartitionState
+
+    data object PartitionStateEmpty : PartitionState
+
+    data class PartitionStateSuccess(
+        val partitionCalls: List<Deferred<ServiceExecutionResult>>,
+    ) : PartitionState
+
+    data class PartitionStateError(
+        val errors: MutableList<Throwable>,
+    ) : PartitionState
+
+    private val fieldPartition = NadelFieldPartition(instructions.getPartitionKeyExtractor())
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
@@ -76,22 +89,22 @@ internal class NadelPartitionTransform(
         state: State,
     ): NadelTransformFieldResult {
 
-        val fieldPartitions = fieldPartition.createFieldPartitions(
-            field = field,
-            pathToPartitionPoint = state.pathToPartitionPoint,
-            graphQLSchema = executionBlueprint.engineSchema
-        )
+        val fieldPartitions = try {
+            fieldPartition.createFieldPartitions(
+                field = field,
+                pathToPartitionPoint = state.pathToPartitionPoint,
+                graphQLSchema = executionBlueprint.engineSchema
+            )
+        } catch (exception: NadelCannotPartitionFieldException) {
+            state.partitionState = PartitionStateError(errors = mutableListOf(exception))
+            return NadelTransformFieldResult.unmodified(field)
+        }
 
         val firstPartition = fieldPartitions.values.first()
 
         val partitionCalls = coroutineScope {
             fieldPartitions.values.drop(1).map {
                 async {
-                    val underlyingTypeName =
-                        executionBlueprint.getUnderlyingTypeName(service, it.objectTypeNamesToString())
-                    val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
-                        ?: error("No underlying object type")
-
                     val topLevelField = NFUtil.createField(
                         executionBlueprint.engineSchema,
                         // TODO: root can also be a mutation
@@ -106,11 +119,9 @@ internal class NadelPartitionTransform(
             }
         }
 
-        state.partitionCalls.addAll(partitionCalls)
+        state.partitionState = PartitionStateSuccess(partitionCalls = partitionCalls)
 
-        return NadelTransformFieldResult(
-            newField = firstPartition
-        )
+        return NadelTransformFieldResult(newField = firstPartition)
     }
 
     override suspend fun getResultInstructions(
@@ -124,8 +135,20 @@ internal class NadelPartitionTransform(
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
+        if (state.partitionState is PartitionStateError) {
+            return (state.partitionState as PartitionStateError).errors.map {
+                NadelResultInstruction.AddError(
+                    NadelPartitionException(
+                        "The call for field '${overallField.resultKey}' was not partitioned due to the following error: '${it.message}'",
+                        path = overallField.queryPath.segments,
+                        errorClassification = ErrorClassification.errorClassification(it.javaClass.simpleName)
+                    )
+                )
+            }
+        }
+
         // TODO: handle HTTP errors
-        val resultFromPartitionCalls = state.partitionCalls.awaitAll()
+        val resultFromPartitionCalls = (state.partitionState as PartitionStateSuccess).partitionCalls.awaitAll()
 
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
@@ -146,6 +169,7 @@ internal class NadelPartitionTransform(
             JsonNodes(resultFromPartitionCall.data).getNodesAt(overallField.queryPath, flatten = true)
                 .map { node -> node.value }
         }
+
 
         if(thisNodesData is List<*>) {
             return listOf(

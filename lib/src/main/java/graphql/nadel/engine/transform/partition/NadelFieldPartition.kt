@@ -11,7 +11,7 @@ import graphql.schema.GraphQLInputValueDefinition
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 
-class FieldPartition(
+class NadelFieldPartition(
     private val partitionKeyExtractor: (scalarValue: ScalarValue<*>, inputValueDef: GraphQLInputValueDefinition) -> String?,
 ) {
     // TODO: consider returning Optional instead of throwing exceptions everywhere
@@ -44,7 +44,9 @@ class FieldPartition(
                 collectPartitionKeysForValue(value, inputValueDefinition)
             }.distinct()
 
-            check(partitionKeys.size == 1) { "Expected only one partition key but got $partitionKeys" }
+            if (partitionKeys.size > 1) {
+                throw NadelCannotPartitionFieldException("Expected only one partition key but got ${partitionKeys.size}")
+            }
 
             partitionKeys[0]
         }
@@ -67,7 +69,7 @@ class FieldPartition(
                     }
                 } else {
                     // TODO: better message & more idiomatic kotlin
-                    throw IllegalStateException("Expected inputObjectType but got $inputValueDefinition")
+                    throw NadelCannotPartitionFieldException("Expected inputObjectType but got $inputValueDefinition")
                 }
             }
             is NormalizedInputValue -> {
@@ -88,7 +90,7 @@ class FieldPartition(
         }
 
         // TODO: better message & more idiomatic Kotlin
-        throw IllegalStateException("Cannot partition value $value ")
+        throw NadelCannotPartitionFieldException("Cannot partition value $value of type ${inputValueDefinition.name} ")
     }
 
     private fun copyInsertingNewValue(
