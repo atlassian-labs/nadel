@@ -47,7 +47,7 @@ open class DeferWithTransformThrowsErrorTest : NadelIntegrationTest(
                             .dataFetcher("hello") { env ->
                                 "helloString"
                             }
-                            .dataFetcher("slow") { env ->
+                            .dataFetcher("underlyingSlow") { env ->
                                 throw RuntimeException("An error occurred while fetching 'slow'")
                             }
                     }

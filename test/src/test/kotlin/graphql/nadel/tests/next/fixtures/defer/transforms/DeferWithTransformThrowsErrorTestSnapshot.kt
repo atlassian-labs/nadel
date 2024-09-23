@@ -55,6 +55,24 @@ public class DeferWithTransformThrowsErrorTestSnapshot : TestSnapshot() {
                     |         "defer"
                     |       ],
                     |       "label": "slow-defer",
+                    |       "errors": [
+                    |         {
+                    |           "message": "Exception while fetching data (/defer/rename__slow__underlyingSlow) : An error occurred while fetching 'slow'",
+                    |           "locations": [
+                    |             {
+                    |               "line": 5,
+                    |               "column": 7
+                    |             }
+                    |           ],
+                    |           "path": [
+                    |             "defer",
+                    |             "rename__slow__underlyingSlow"
+                    |           ],
+                    |           "extensions": {
+                    |             "classification": "DataFetchingException"
+                    |           }
+                    |         }
+                    |       ],
                     |       "data": {
                     |         "rename__slow__underlyingSlow": null,
                     |         "__typename__rename__slow": "DeferApi"
@@ -75,7 +93,26 @@ public class DeferWithTransformThrowsErrorTestSnapshot : TestSnapshot() {
      *       "hello": "helloString",
      *       "slow": null
      *     }
-     *   }
+     *   },
+     *   "errors": [
+     *     {
+     *       "message": "Exception while fetching data (/defer/rename__slow__underlyingSlow) : An
+     * error occurred while fetching 'slow'",
+     *       "locations": [
+     *         {
+     *           "line": 5,
+     *           "column": 7
+     *         }
+     *       ],
+     *       "path": [
+     *         "defer",
+     *         "rename__slow__underlyingSlow"
+     *       ],
+     *       "extensions": {
+     *         "classification": "DataFetchingException"
+     *       }
+     *     }
+     *   ]
      * }
      * ```
      */
@@ -100,6 +137,24 @@ public class DeferWithTransformThrowsErrorTestSnapshot : TestSnapshot() {
                 |         "defer"
                 |       ],
                 |       "label": "slow-defer",
+                |       "errors": [
+                |         {
+                |           "message": "Exception while fetching data (/defer/rename__slow__underlyingSlow) : An error occurred while fetching 'slow'",
+                |           "locations": [
+                |             {
+                |               "line": 5,
+                |               "column": 7
+                |             }
+                |           ],
+                |           "path": [
+                |             "defer",
+                |             "rename__slow__underlyingSlow"
+                |           ],
+                |           "extensions": {
+                |             "classification": "DataFetchingException"
+                |           }
+                |         }
+                |       ],
                 |       "data": {
                 |         "slow": null
                 |       }
