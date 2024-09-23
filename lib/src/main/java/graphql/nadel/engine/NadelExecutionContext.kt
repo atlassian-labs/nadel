@@ -24,6 +24,7 @@ data class NadelExecutionContext internal constructor(
     internal val incrementalResultSupport: NadelIncrementalResultSupport,
     internal val resultTracker: NadelResultTracker,
     internal val hydrationDetails: ServiceExecutionHydrationDetails? = null,
+    internal val isPartitionedCall: Boolean = false
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
 
