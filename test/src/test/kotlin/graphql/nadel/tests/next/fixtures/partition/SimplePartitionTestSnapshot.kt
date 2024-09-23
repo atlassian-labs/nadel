@@ -87,26 +87,24 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "things": {
-     *       "things": [
-     *         {
-     *           "id": "thing-1",
-     *           "name": "THING-1"
-     *         },
-     *         {
-     *           "id": "thing-3",
-     *           "name": "THING-3"
-     *         },
-     *         {
-     *           "id": "thing-2",
-     *           "name": "THING-2"
-     *         },
-     *         {
-     *           "id": "thing-4",
-     *           "name": "THING-4"
-     *         }
-     *       ]
-     *     }
+     *     "things": [
+     *       {
+     *         "id": "thing-1",
+     *         "name": "THING-1"
+     *       },
+     *       {
+     *         "id": "thing-3",
+     *         "name": "THING-3"
+     *       },
+     *       {
+     *         "id": "thing-2",
+     *         "name": "THING-2"
+     *       },
+     *       {
+     *         "id": "thing-4",
+     *         "name": "THING-4"
+     *       }
+     *     ]
      *   }
      * }
      * ```
@@ -115,26 +113,24 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "things": {
-            |       "things": [
-            |         {
-            |           "id": "thing-1",
-            |           "name": "THING-1"
-            |         },
-            |         {
-            |           "id": "thing-3",
-            |           "name": "THING-3"
-            |         },
-            |         {
-            |           "id": "thing-2",
-            |           "name": "THING-2"
-            |         },
-            |         {
-            |           "id": "thing-4",
-            |           "name": "THING-4"
-            |         }
-            |       ]
-            |     }
+            |     "things": [
+            |       {
+            |         "id": "thing-1",
+            |         "name": "THING-1"
+            |       },
+            |       {
+            |         "id": "thing-3",
+            |         "name": "THING-3"
+            |       },
+            |       {
+            |         "id": "thing-2",
+            |         "name": "THING-2"
+            |       },
+            |       {
+            |         "id": "thing-4",
+            |         "name": "THING-4"
+            |       }
+            |     ]
             |   }
             | }
             """.trimMargin(),

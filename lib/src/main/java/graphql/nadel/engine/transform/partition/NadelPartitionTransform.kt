@@ -16,7 +16,6 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.queryPath
-import graphql.nadel.util.MapUtil
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -95,7 +94,8 @@ internal class NadelPartitionTransform(
 
                     val topLevelField = NFUtil.createField(
                         executionBlueprint.engineSchema,
-                        underlyingObjectType,
+                        // TODO: root can also be a mutation
+                        executionBlueprint.engineSchema.queryType,
                         field.queryPath,
                         it.normalizedArguments,
                         it.children
@@ -131,20 +131,32 @@ internal class NadelPartitionTransform(
             flatten = true,
         )
 
-        return parentNodes.flatMap { parentNode ->
-            val data = parentNode.value as Map<String, Any>
+        if (parentNodes.size != 1) {
+            // TODO: Log strange log - should always be 1, right?
+            return emptyList()
+        }
 
-            val dataFromPartitionCalls = resultFromPartitionCalls.map { it.data }
+        val parentNode = parentNodes.first()
 
-            val mergedData = MapUtil.mergeListAtPath(data, dataFromPartitionCalls, overallField.queryPath.segments)
+        val thisNodesData = nodes.getNodesAt(queryPath = overallField.queryPath, flatten = true)
+            .map { it.value }
 
-            dataFromPartitionCalls.map {
+        val dataFromPartitionCalls = resultFromPartitionCalls.flatMap { resultFromPartitionCall ->
+            JsonNodes(resultFromPartitionCall.data).getNodesAt(overallField.queryPath, flatten = true)
+                .map { node -> node.value }
+        }
+
+        if(thisNodesData is List<*>) {
+            return listOf(
                 NadelResultInstruction.Set(
                     subject = parentNode,
-                    newValue = JsonNode(mergedData),
+                    newValue = JsonNode(thisNodesData + dataFromPartitionCalls),
                     field = overallField
                 )
-            }
+            )
         }
+
+        // TODO: handle other response shapes (MutationPayload, etc.)
+        return emptyList()
     }
 }

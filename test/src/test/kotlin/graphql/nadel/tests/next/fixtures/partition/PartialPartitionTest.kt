@@ -5,16 +5,15 @@ import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-open class NamespacedPartitionTest : NadelIntegrationTest(
+open class PartialPartitionTest : NadelIntegrationTest(
     query = """
       query {
-        thingsApi {
-            things(filter: { thingsIds: [
-                { id: "thing-1:partition-A" }, 
-                { id: "thing-2:partition-B" },
-                { id: "thing-3:partition-A" },
-                { id: "thing-4:partition-B" } 
-            ]}) {
+        api {
+            things(ids: ["thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B"]) {
+              id
+              name
+            }
+            stuff(id: "Stuff-1") {
               id
               name
             }
@@ -28,22 +27,20 @@ open class NamespacedPartitionTest : NadelIntegrationTest(
 directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
-  thingsApi: ThingsApi
+  api: Api
 }
 
-type ThingsApi {
-  things(filter: ThingsFilter): [Thing] @routing(pathToSplitPoint: ["filter", "thingsIds"])
-}
-
-input ThingsFilter {
-  thingsIds: [ThingId!]!
-}
-
-input ThingId {
-    id: ID!
+type Api {
+  things(ids: [ID!]! ): [Thing]  @routing(pathToSplitPoint: ["ids"])
+  stuff(id: ID!): Stuff
 }
 
 type Thing {
+  id: ID!
+  name: String
+}
+
+type Stuff {
   id: ID!
   name: String
 }
@@ -51,21 +48,28 @@ type Thing {
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
-                        type.dataFetcher("thingsApi") { _ -> Any() }
+                        type.dataFetcher("api") { _ -> Any() }
                     }
-                    .type("ThingsApi") { type ->
+                    .type("Api") { type ->
                         type
                             .dataFetcher("things") { env ->
-                                val filter = env.getArgument<Map<String, List<Map<String, String>>>>("filter")!!
-                                val thingsIds = filter["thingsIds"]!!
+                                val ids = env.getArgument<List<String>>("ids")
 
-                                thingsIds.map { thingId ->
-                                    val parts = thingId["id"]!!.split(":")
+                                ids!!.map { id ->
+                                    val parts = id.split(":")
                                     mapOf(
                                         "id" to parts[0],
                                         "name" to parts[0].uppercase(),
                                     )
                                 }
+                            }
+                            .dataFetcher("stuff") { env ->
+                                val id = env.getArgument<String>("id")!!
+
+                                mapOf(
+                                    "id" to id,
+                                    "name" to id.uppercase(),
+                                )
                             }
                     }
             },
