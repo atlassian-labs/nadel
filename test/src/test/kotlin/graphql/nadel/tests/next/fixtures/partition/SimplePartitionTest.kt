@@ -4,11 +4,15 @@ import graphql.nadel.Nadel
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
+import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 
 open class SimplePartitionTest : NadelIntegrationTest(
     query = """
       query getPartitionedThings{
-        things(ids: ["thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B"]) {
+        things(ids: [
+            "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B",
+            "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-4:partition-D"
+        ]) {
           id
           name
         }

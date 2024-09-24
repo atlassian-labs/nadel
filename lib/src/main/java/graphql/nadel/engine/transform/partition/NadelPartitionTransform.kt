@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.partition
 
-import graphql.ErrorClassification
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -16,7 +15,9 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
+import graphql.nadel.engine.util.toGraphQLError
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -135,13 +136,13 @@ internal class NadelPartitionTransform(
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
+
         if (state.partitionState is PartitionStateError) {
             return (state.partitionState as PartitionStateError).errors.map {
                 NadelResultInstruction.AddError(
-                    NadelPartitionException(
+                    NadelPartitionGraphQLErrorException(
                         "The call for field '${overallField.resultKey}' was not partitioned due to the following error: '${it.message}'",
                         path = overallField.queryPath.segments,
-                        errorClassification = ErrorClassification.errorClassification(it.javaClass.simpleName)
                     )
                 )
             }
@@ -162,26 +163,62 @@ internal class NadelPartitionTransform(
 
         val parentNode = parentNodes.first()
 
-        val thisNodesData = nodes.getNodesAt(queryPath = overallField.queryPath, flatten = true)
-            .map { it.value }
-
-        val dataFromPartitionCalls = resultFromPartitionCalls.flatMap { resultFromPartitionCall ->
-            JsonNodes(resultFromPartitionCall.data).getNodesAt(overallField.queryPath, flatten = true)
-                .map { node -> node.value }
+        val thisNodesData = nodes.getNodesAt(queryPath = overallField.queryPath, flatten = false).let {
+            check(it.size == 1) { "Expected exactly one node at ${overallField.queryPath}, but found ${it.size}" }
+            it.first().value
         }
 
+        val dataFromPartitionCalls = resultFromPartitionCalls.map { resultFromPartitionCall ->
+            JsonNodes(resultFromPartitionCall.data).getNodesAt(overallField.queryPath, flatten = false).let {
+                check(it.size == 1) { "Expected exactly one node at ${overallField.queryPath}, but found ${it.size}" }
+                it.first().value
+            }
+        }
 
-        if(thisNodesData is List<*>) {
-            return listOf(
+        val overallFieldType = overallField.getType(executionBlueprint.engineSchema)
+
+        val mergedData = if (overallFieldType.isList) {
+            val listDataFromPartitionCalls = dataFromPartitionCalls
+                .mapNotNull {
+                    if (it == null) {
+                        null
+                    } else {
+                        check(it is List<*>) { "Expected a list, but got ${it::class.simpleName}" }
+                        it
+                    }
+                }.flatten()
+
+            val thisNodesDataCast = thisNodesData?.let {
+                check(it is List<*>) { "Expected a list, but got ${it::class.simpleName}" }
+                it
+            } ?: emptyList<Any>()
+
+
+            listOf(
                 NadelResultInstruction.Set(
                     subject = parentNode,
-                    newValue = JsonNode(thisNodesData + dataFromPartitionCalls),
+                    newValue = JsonNode(thisNodesDataCast + listDataFromPartitionCalls),
                     field = overallField
                 )
             )
+        } else {
+            // TODO: handle other response shapes (MutationPayload, etc.)
+            emptyList<NadelResultInstruction>()
         }
 
-        // TODO: handle other response shapes (MutationPayload, etc.)
-        return emptyList()
+        val errorInstructions = resultFromPartitionCalls
+            .flatMap { it.errors }
+            .map { error ->
+                NadelResultInstruction.AddError(
+                    toGraphQLError(
+                        error,
+                        extensions = (error["extensions"] as? Map<String, Any> ?: emptyMap()).let {
+                            it + mapOf("errorHappenedOnPartitionedCall" to true)
+                        },
+                    )
+                )
+            }
+
+        return mergedData + errorInstructions
     }
 }

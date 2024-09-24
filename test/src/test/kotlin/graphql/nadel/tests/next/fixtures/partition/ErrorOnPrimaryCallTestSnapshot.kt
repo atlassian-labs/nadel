@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<SimplePartitionTest>()
+    graphql.nadel.tests.next.update<ErrorOnPrimaryCallTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class SimplePartitionTestSnapshot : TestSnapshot() {
+public class ErrorOnPrimaryCallTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "things_service",
@@ -34,17 +34,25 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 variables = " {}",
                 result = """
                 | {
-                |   "data": {
-                |     "things": [
-                |       {
-                |         "id": "thing-1",
-                |         "name": "THING-1"
-                |       },
-                |       {
-                |         "id": "thing-3",
-                |         "name": "THING-3"
+                |   "errors": [
+                |     {
+                |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-1:partition-A, thing-3:partition-A]",
+                |       "locations": [
+                |         {
+                |           "line": 2,
+                |           "column": 3
+                |         }
+                |       ],
+                |       "path": [
+                |         "things"
+                |       ],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
                 |       }
-                |     ]
+                |     }
+                |   ],
+                |   "data": {
+                |     "things": null
                 |   }
                 | }
                 """.trimMargin(),
@@ -146,16 +154,26 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
     /**
      * ```json
      * {
+     *   "errors": [
+     *     {
+     *       "message": "Exception while fetching data (/things) : Error fetching things:
+     * [thing-1:partition-A, thing-3:partition-A]",
+     *       "locations": [
+     *         {
+     *           "line": 2,
+     *           "column": 3
+     *         }
+     *       ],
+     *       "path": [
+     *         "things"
+     *       ],
+     *       "extensions": {
+     *         "classification": "DataFetchingException"
+     *       }
+     *     }
+     *   ],
      *   "data": {
      *     "things": [
-     *       {
-     *         "id": "thing-1",
-     *         "name": "THING-1"
-     *       },
-     *       {
-     *         "id": "thing-3",
-     *         "name": "THING-3"
-     *       },
      *       {
      *         "id": "thing-2",
      *         "name": "THING-2"
@@ -188,16 +206,25 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
+            |   "errors": [
+            |     {
+            |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-1:partition-A, thing-3:partition-A]",
+            |       "locations": [
+            |         {
+            |           "line": 2,
+            |           "column": 3
+            |         }
+            |       ],
+            |       "path": [
+            |         "things"
+            |       ],
+            |       "extensions": {
+            |         "classification": "DataFetchingException"
+            |       }
+            |     }
+            |   ],
             |   "data": {
             |     "things": [
-            |       {
-            |         "id": "thing-1",
-            |         "name": "THING-1"
-            |       },
-            |       {
-            |         "id": "thing-3",
-            |         "name": "THING-3"
-            |       },
             |       {
             |         "id": "thing-2",
             |         "name": "THING-2"

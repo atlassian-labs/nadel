@@ -1,4 +1,4 @@
-package graphql.nadel.tests.next.fixtures.partition
+package graphql.nadel.tests.next.fixtures.partition.hooks
 
 import graphql.language.ArrayValue
 import graphql.language.ScalarValue

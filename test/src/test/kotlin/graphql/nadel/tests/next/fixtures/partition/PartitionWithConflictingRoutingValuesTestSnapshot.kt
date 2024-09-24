@@ -73,7 +73,7 @@ public class PartitionWithConflictingRoutingValuesTestSnapshot : TestSnapshot() 
      *         "things"
      *       ],
      *       "extensions": {
-     *         "classification": "NadelCannotPartitionFieldException"
+     *         "classification": "PartitioningError"
      *       }
      *     }
      *   ],
@@ -111,7 +111,7 @@ public class PartitionWithConflictingRoutingValuesTestSnapshot : TestSnapshot() 
             |         "things"
             |       ],
             |       "extensions": {
-            |         "classification": "NadelCannotPartitionFieldException"
+            |         "classification": "PartitioningError"
             |       }
             |     }
             |   ],

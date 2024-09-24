@@ -7,18 +7,15 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 import graphql.nadel.tests.next.fixtures.partition.hooks.ThingsDataFetcherFactory
 
-open class PartialPartitionTest : NadelIntegrationTest(
+open class ErrorOnPrimaryCallTest : NadelIntegrationTest(
     query = """
-      query getPartitionedThings {
-        api {
-            things(ids: ["thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B"]) {
-              id
-              name
-            }
-            stuff(id: "Stuff-1") {
-              id
-              name
-            }
+      query getPartitionedThings{
+        things(ids: [
+            "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B",
+            "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-4:partition-D"
+        ]) {
+          id
+          name
         }
       }
     """.trimIndent(),
@@ -29,20 +26,10 @@ open class PartialPartitionTest : NadelIntegrationTest(
 directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
-  api: Api
-}
-
-type Api {
   things(ids: [ID!]! ): [Thing]  @routing(pathToSplitPoint: ["ids"])
-  stuff(id: ID!): Stuff
 }
 
 type Thing {
-  id: ID!
-  name: String
-}
-
-type Stuff {
   id: ID!
   name: String
 }
@@ -50,19 +37,12 @@ type Stuff {
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
-                        type.dataFetcher("api") { _ -> Any() }
-                    }
-                    .type("Api") { type ->
                         type
-                            .dataFetcher("things", ThingsDataFetcherFactory.makeIdsDataFetcher())
-                            .dataFetcher("stuff") { env ->
-                                val id = env.getArgument<String>("id")!!
-
-                                mapOf(
-                                    "id" to id,
-                                    "name" to id.uppercase(),
+                            .dataFetcher(
+                                "things", ThingsDataFetcherFactory.makeIdsDataFetcher(
+                                    listOf("partition-A")
                                 )
-                            }
+                            )
                     }
             },
         ),

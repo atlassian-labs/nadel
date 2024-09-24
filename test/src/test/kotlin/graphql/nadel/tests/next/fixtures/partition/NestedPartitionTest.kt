@@ -4,6 +4,8 @@ import graphql.nadel.Nadel
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
+import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
+import graphql.nadel.tests.next.fixtures.partition.hooks.ThingsDataFetcherFactory
 
 open class NestedPartitionTest : NadelIntegrationTest(
     query = """
@@ -46,18 +48,7 @@ type Thing {
                 wiring
                     .type("Query") { type ->
                         type
-                            .dataFetcher("things") { env ->
-                                val filter = env.getArgument<Map<String, List<Map<String, String>>>>("filter")!!
-                                val thingsIds = filter["thingsIds"]!!
-
-                                thingsIds.map { thingId ->
-                                    val parts = thingId["id"]!!.split(":")
-                                    mapOf(
-                                        "id" to parts[0],
-                                        "name" to parts[0].uppercase(),
-                                    )
-                                }
-                            }
+                            .dataFetcher("things", ThingsDataFetcherFactory.makeFilterDataFetcher())
                     }
             },
         ),

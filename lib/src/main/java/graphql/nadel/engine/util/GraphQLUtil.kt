@@ -35,6 +35,7 @@ import graphql.language.SDLDefinition
 import graphql.language.SDLNamedDefinition
 import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaExtensionDefinition
+import graphql.language.SourceLocation
 import graphql.language.StringValue
 import graphql.language.Type
 import graphql.language.TypeName

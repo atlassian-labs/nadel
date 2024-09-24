@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<SimplePartitionTest>()
+    graphql.nadel.tests.next.update<ErrorOnPartitionCallsTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class SimplePartitionTestSnapshot : TestSnapshot() {
+public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "things_service",
@@ -94,17 +94,25 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 variables = " {}",
                 result = """
                 | {
-                |   "data": {
-                |     "things": [
-                |       {
-                |         "id": "thing-5",
-                |         "name": "THING-5"
-                |       },
-                |       {
-                |         "id": "thing-7",
-                |         "name": "THING-7"
+                |   "errors": [
+                |     {
+                |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-5:partition-C, thing-7:partition-C]",
+                |       "locations": [
+                |         {
+                |           "line": 2,
+                |           "column": 3
+                |         }
+                |       ],
+                |       "path": [
+                |         "things"
+                |       ],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
                 |       }
-                |     ]
+                |     }
+                |   ],
+                |   "data": {
+                |     "things": null
                 |   }
                 | }
                 """.trimMargin(),
@@ -124,17 +132,25 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 variables = " {}",
                 result = """
                 | {
-                |   "data": {
-                |     "things": [
-                |       {
-                |         "id": "thing-6",
-                |         "name": "THING-6"
-                |       },
-                |       {
-                |         "id": "thing-4",
-                |         "name": "THING-4"
+                |   "errors": [
+                |     {
+                |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-6:partition-D, thing-4:partition-D]",
+                |       "locations": [
+                |         {
+                |           "line": 2,
+                |           "column": 3
+                |         }
+                |       ],
+                |       "path": [
+                |         "things"
+                |       ],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
                 |       }
-                |     ]
+                |     }
+                |   ],
+                |   "data": {
+                |     "things": null
                 |   }
                 | }
                 """.trimMargin(),
@@ -146,6 +162,32 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
     /**
      * ```json
      * {
+     *   "errors": [
+     *     {
+     *       "message": "Exception while fetching data (/things) : Error fetching things:
+     * [thing-5:partition-C, thing-7:partition-C]",
+     *       "locations": [],
+     *       "path": [
+     *         "things"
+     *       ],
+     *       "extensions": {
+     *         "classification": "DataFetchingException",
+     *         "errorHappenedOnPartitionedCall": true
+     *       }
+     *     },
+     *     {
+     *       "message": "Exception while fetching data (/things) : Error fetching things:
+     * [thing-6:partition-D, thing-4:partition-D]",
+     *       "locations": [],
+     *       "path": [
+     *         "things"
+     *       ],
+     *       "extensions": {
+     *         "classification": "DataFetchingException",
+     *         "errorHappenedOnPartitionedCall": true
+     *       }
+     *     }
+     *   ],
      *   "data": {
      *     "things": [
      *       {
@@ -163,22 +205,6 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
      *       {
      *         "id": "thing-4",
      *         "name": "THING-4"
-     *       },
-     *       {
-     *         "id": "thing-5",
-     *         "name": "THING-5"
-     *       },
-     *       {
-     *         "id": "thing-7",
-     *         "name": "THING-7"
-     *       },
-     *       {
-     *         "id": "thing-6",
-     *         "name": "THING-6"
-     *       },
-     *       {
-     *         "id": "thing-4",
-     *         "name": "THING-4"
      *       }
      *     ]
      *   }
@@ -188,6 +214,30 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
+            |   "errors": [
+            |     {
+            |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-5:partition-C, thing-7:partition-C]",
+            |       "locations": [],
+            |       "path": [
+            |         "things"
+            |       ],
+            |       "extensions": {
+            |         "classification": "DataFetchingException",
+            |         "errorHappenedOnPartitionedCall": true
+            |       }
+            |     },
+            |     {
+            |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-6:partition-D, thing-4:partition-D]",
+            |       "locations": [],
+            |       "path": [
+            |         "things"
+            |       ],
+            |       "extensions": {
+            |         "classification": "DataFetchingException",
+            |         "errorHappenedOnPartitionedCall": true
+            |       }
+            |     }
+            |   ],
             |   "data": {
             |     "things": [
             |       {
@@ -201,22 +251,6 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
             |       {
             |         "id": "thing-2",
             |         "name": "THING-2"
-            |       },
-            |       {
-            |         "id": "thing-4",
-            |         "name": "THING-4"
-            |       },
-            |       {
-            |         "id": "thing-5",
-            |         "name": "THING-5"
-            |       },
-            |       {
-            |         "id": "thing-7",
-            |         "name": "THING-7"
-            |       },
-            |       {
-            |         "id": "thing-6",
-            |         "name": "THING-6"
             |       },
             |       {
             |         "id": "thing-4",

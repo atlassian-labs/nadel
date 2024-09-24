@@ -4,6 +4,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
+import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 
 open class PartitionWithConflictingRoutingValuesTest : NadelIntegrationTest(
     query = """
