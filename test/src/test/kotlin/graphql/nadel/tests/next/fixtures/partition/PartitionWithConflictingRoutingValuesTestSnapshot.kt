@@ -78,24 +78,7 @@ public class PartitionWithConflictingRoutingValuesTestSnapshot : TestSnapshot() 
      *     }
      *   ],
      *   "data": {
-     *     "things": [
-     *       {
-     *         "id": "thing-1-primary",
-     *         "name": "THING-1-PRIMARY"
-     *       },
-     *       {
-     *         "id": "thing-2-different-partition",
-     *         "name": "THING-2-DIFFERENT-PARTITION"
-     *       },
-     *       {
-     *         "id": "thing-3-primary-no-partition",
-     *         "name": "THING-3-PRIMARY-NO-PARTITION"
-     *       },
-     *       {
-     *         "id": "thing-4-primary",
-     *         "name": "THING-4-PRIMARY"
-     *       }
-     *     ]
+     *     "things": null
      *   }
      * }
      * ```
@@ -116,24 +99,7 @@ public class PartitionWithConflictingRoutingValuesTestSnapshot : TestSnapshot() 
             |     }
             |   ],
             |   "data": {
-            |     "things": [
-            |       {
-            |         "id": "thing-1-primary",
-            |         "name": "THING-1-PRIMARY"
-            |       },
-            |       {
-            |         "id": "thing-2-different-partition",
-            |         "name": "THING-2-DIFFERENT-PARTITION"
-            |       },
-            |       {
-            |         "id": "thing-3-primary-no-partition",
-            |         "name": "THING-3-PRIMARY-NO-PARTITION"
-            |       },
-            |       {
-            |         "id": "thing-4-primary",
-            |         "name": "THING-4-PRIMARY"
-            |       }
-            |     ]
+            |     "things": null
             |   }
             | }
             """.trimMargin(),

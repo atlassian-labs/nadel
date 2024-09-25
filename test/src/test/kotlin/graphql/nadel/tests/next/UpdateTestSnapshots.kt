@@ -113,12 +113,11 @@ fun makeUpdateSnapshotFunction(klass: KClass<NadelIntegrationTest>): FunSpec {
 
 private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
     return ClassPath.from(ClassLoader.getSystemClassLoader())
-        .getTopLevelClassesRecursive("graphql.nadel.tests.next.fixtures.partition")
+        .getTopLevelClassesRecursive("graphql.nadel.tests")
         .asSequence()
         .map {
             it.load().kotlin
         }
-        .filter { it.simpleName == "PartitionWithConflictingRoutingValuesTest" }
         .filterNot {
             it.isAbstract
         }

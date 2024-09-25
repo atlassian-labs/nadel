@@ -92,7 +92,7 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
                 |         "success": false,
                 |         "errors": [
                 |           {
-                |             "message": "Could not link things [{from=thing-3:partition-B, to=thing-4:partition-B}]"
+                |             "message": "Could not link things: [{from=thing-3:partition-B, to=thing-4:partition-B}]"
                 |           }
                 |         ],
                 |         "linkedThings": null
@@ -131,7 +131,7 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
                 |         "success": false,
                 |         "errors": [
                 |           {
-                |             "message": "Could not link things [{from=thing-5:partition-C, to=thing-6:partition-C}]"
+                |             "message": "Could not link things: [{from=thing-5:partition-C, to=thing-6:partition-C}]"
                 |           }
                 |         ],
                 |         "linkedThings": null
@@ -198,11 +198,11 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
      *         "success": false,
      *         "errors": [
      *           {
-     *             "message": "Could not link things [{from=thing-3:partition-B,
+     *             "message": "Could not link things: [{from=thing-3:partition-B,
      * to=thing-4:partition-B}]"
      *           },
      *           {
-     *             "message": "Could not link things [{from=thing-5:partition-C,
+     *             "message": "Could not link things: [{from=thing-5:partition-C,
      * to=thing-6:partition-C}]"
      *           }
      *         ],
@@ -239,10 +239,10 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
             |         "success": false,
             |         "errors": [
             |           {
-            |             "message": "Could not link things [{from=thing-3:partition-B, to=thing-4:partition-B}]"
+            |             "message": "Could not link things: [{from=thing-3:partition-B, to=thing-4:partition-B}]"
             |           },
             |           {
-            |             "message": "Could not link things [{from=thing-5:partition-C, to=thing-6:partition-C}]"
+            |             "message": "Could not link things: [{from=thing-5:partition-C, to=thing-6:partition-C}]"
             |           }
             |         ],
             |         "linkedThings": [
