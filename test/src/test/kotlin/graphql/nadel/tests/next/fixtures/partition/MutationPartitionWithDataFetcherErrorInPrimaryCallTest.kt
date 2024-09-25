@@ -6,7 +6,7 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 
-open class MutationPartitionTest : NadelIntegrationTest(
+open class MutationPartitionWithDataFetcherErrorInPrimaryCallTest : NadelIntegrationTest(
     query = """
       mutation linkABunchOfThings {
         thingsApi {
@@ -84,6 +84,10 @@ type LinkThingsPayload {
                                 val filter =
                                     env.getArgument<Map<String, List<Map<String, String>>>>("linkThingsInput")!!
                                 val thingsLinked = filter["thinksLinked"]!!
+
+                                if(thingsLinked.any { it["from"]?.contains("partition-A") == true }) {
+                                    throw RuntimeException("Could not link things in partition-A")
+                                }
 
                                 val linkedThings = thingsLinked.flatMap {
                                     listOf(

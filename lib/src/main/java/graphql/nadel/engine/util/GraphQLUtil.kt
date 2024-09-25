@@ -35,13 +35,11 @@ import graphql.language.SDLDefinition
 import graphql.language.SDLNamedDefinition
 import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaExtensionDefinition
-import graphql.language.SourceLocation
 import graphql.language.StringValue
 import graphql.language.Type
 import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
-import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecutionResult
@@ -61,7 +59,10 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLList
 import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLOutputType
+import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
@@ -69,7 +70,6 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
-import org.reactivestreams.Publisher
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
