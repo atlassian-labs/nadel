@@ -6,15 +6,19 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 
-open class SimplePartitionTest : NadelIntegrationTest(
+open class MutationPartitionTest : NadelIntegrationTest(
     query = """
-      query getPartitionedThings{
-        things(ids: [
-            "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B",
-            "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-8:partition-D"
-        ]) {
-          id
-          name
+      query getPartitionedThings {
+        thingsApi {
+            things(filter: { thingsIds: [
+                { id: "thing-1:partition-A" }, 
+                { id: "thing-2:partition-B" },
+                { id: "thing-3:partition-A" },
+                { id: "thing-4:partition-B" } 
+            ]}) {
+              id
+              name
+            }
         }
       }
     """.trimIndent(),
@@ -24,24 +28,60 @@ open class SimplePartitionTest : NadelIntegrationTest(
             overallSchema = """
 directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
-type Query {
-  things(ids: [ID!]! ): [Thing]  @routing(pathToSplitPoint: ["ids"])
+type Mutation {
+  thingsApi: ThingsApi
+}
+
+type ThingsApi {
+  linkThings(linkThingsInput: LinkThingsInput!): LinkThingsPayload 
+}
+
+input LinkThingsInput {
+  thinksLinked: [ThingsLinked!]!
+}
+
+input ThingsLinked {
+    from: ID!
+    to: ID!
 }
 
 type Thing {
   id: ID!
   name: String
 }
+
+type MutationError {
+    message: String
+}
+
+interface Payload {
+    success: Boolean
+    errors: [MutationError!]
+}
+
+type LinkThingsPayload implements Payload {
+    success: Boolean!
+    errors: [MutationError!]
+    linkedThings: [Thing]
+}
+
+
+
+
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
+                        type.dataFetcher("thingsApi") { _ -> Any() }
+                    }
+                    .type("ThingsApi") { type ->
                         type
                             .dataFetcher("things") { env ->
-                                val ids = env.getArgument<List<String>>("ids")
+                                val filter = env.getArgument<Map<String, List<Map<String, String>>>>("filter")!!
+                                val thingsIds = filter["thingsIds"]!!
 
-                                ids!!.map { id ->
-                                    val parts = id.split(":")
+                                thingsIds.map { thingId ->
+                                    val parts = thingId["id"]!!.split(":")
                                     mapOf(
                                         "id" to parts[0],
                                         "name" to parts[0].uppercase(),

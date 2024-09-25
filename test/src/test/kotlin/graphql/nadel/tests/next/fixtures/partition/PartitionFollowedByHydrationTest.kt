@@ -6,7 +6,7 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 
-open class SimplePartitionTest : NadelIntegrationTest(
+open class PartitionFollowedByHydrationTest : NadelIntegrationTest(
     query = """
       query getPartitionedThings{
         things(ids: [
@@ -15,6 +15,10 @@ open class SimplePartitionTest : NadelIntegrationTest(
         ]) {
           id
           name
+          owner {
+            id
+            name
+          }
         }
       }
     """.trimIndent(),
@@ -31,13 +35,61 @@ type Query {
 type Thing {
   id: ID!
   name: String
+  owner: User 
+  @hydrated(
+    service: "users_service"
+    field: "users"
+    arguments: [{name: "ids", value: "$source.ownerId"}]
+  )
+}
+            """.trimIndent(),
+            underlyingSchema = """
+type Query {
+  things(ids: [ID!]! ): [Thing]
+}
+
+type Thing {
+  id: ID!
+  name: String
+  ownerId: ID
+}
+            """,
+            runtimeWiring = { wiring ->
+                wiring
+                    .type("Query") { type ->
+                        type
+                            .dataFetcher("things") { env ->
+                                val ids = env.getArgument<List<String>>("ids")
+
+                                ids!!.map { id ->
+                                    val parts = id.split(":")
+                                    mapOf(
+                                        "id" to parts[0],
+                                        "name" to parts[0].uppercase(),
+                                        "ownerId" to "owner-${parts[0]}"
+                                    )
+                                }
+                            }
+                    }
+            },
+        ),
+        Service(
+            name = "users_service",
+            overallSchema = """
+type Query {
+  users(ids: [ID!]! ): [User]
+}
+
+type User {
+  id: ID!
+  name: String
 }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
                         type
-                            .dataFetcher("things") { env ->
+                            .dataFetcher("users") { env ->
                                 val ids = env.getArgument<List<String>>("ids")
 
                                 ids!!.map { id ->

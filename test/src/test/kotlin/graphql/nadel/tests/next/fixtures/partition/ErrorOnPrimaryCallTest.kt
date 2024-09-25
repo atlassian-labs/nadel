@@ -12,7 +12,7 @@ open class ErrorOnPrimaryCallTest : NadelIntegrationTest(
       query getPartitionedThings{
         things(ids: [
             "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B",
-            "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-4:partition-D"
+            "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-8:partition-D"
         ]) {
           id
           name

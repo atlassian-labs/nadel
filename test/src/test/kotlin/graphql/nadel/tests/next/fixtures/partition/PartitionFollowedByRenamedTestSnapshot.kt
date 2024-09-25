@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<ErrorOnPartitionCallsTest>()
+    graphql.nadel.tests.next.update<PartitionFollowedByRenamedTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
+public class PartitionFollowedByRenamedTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "things_service",
@@ -27,7 +27,8 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
                 | query getPartitionedThings {
                 |   things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
                 |     id
-                |     name
+                |     rename__name__underlyingName: underlyingName
+                |     __typename__rename__name: __typename
                 |   }
                 | }
                 """.trimMargin(),
@@ -38,11 +39,13 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
                 |     "things": [
                 |       {
                 |         "id": "thing-1",
-                |         "name": "THING-1"
+                |         "rename__name__underlyingName": "THING-1",
+                |         "__typename__rename__name": "Thing"
                 |       },
                 |       {
                 |         "id": "thing-3",
-                |         "name": "THING-3"
+                |         "rename__name__underlyingName": "THING-3",
+                |         "__typename__rename__name": "Thing"
                 |       }
                 |     ]
                 |   }
@@ -57,7 +60,8 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
                 | query getPartitionedThings {
                 |   things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
                 |     id
-                |     name
+                |     rename__name__underlyingName: underlyingName
+                |     __typename__rename__name: __typename
                 |   }
                 | }
                 """.trimMargin(),
@@ -68,11 +72,13 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
                 |     "things": [
                 |       {
                 |         "id": "thing-2",
-                |         "name": "THING-2"
+                |         "rename__name__underlyingName": "THING-2",
+                |         "__typename__rename__name": "Thing"
                 |       },
                 |       {
                 |         "id": "thing-4",
-                |         "name": "THING-4"
+                |         "rename__name__underlyingName": "THING-4",
+                |         "__typename__rename__name": "Thing"
                 |       }
                 |     ]
                 |   }
@@ -87,32 +93,27 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
                 | query getPartitionedThings {
                 |   things(ids: ["thing-5:partition-C", "thing-7:partition-C"]) {
                 |     id
-                |     name
+                |     rename__name__underlyingName: underlyingName
+                |     __typename__rename__name: __typename
                 |   }
                 | }
                 """.trimMargin(),
                 variables = " {}",
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-5:partition-C, thing-7:partition-C]",
-                |       "locations": [
-                |         {
-                |           "line": 2,
-                |           "column": 3
-                |         }
-                |       ],
-                |       "path": [
-                |         "things"
-                |       ],
-                |       "extensions": {
-                |         "classification": "DataFetchingException"
-                |       }
-                |     }
-                |   ],
                 |   "data": {
-                |     "things": null
+                |     "things": [
+                |       {
+                |         "id": "thing-5",
+                |         "rename__name__underlyingName": "THING-5",
+                |         "__typename__rename__name": "Thing"
+                |       },
+                |       {
+                |         "id": "thing-7",
+                |         "rename__name__underlyingName": "THING-7",
+                |         "__typename__rename__name": "Thing"
+                |       }
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -125,32 +126,27 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
                 | query getPartitionedThings {
                 |   things(ids: ["thing-6:partition-D", "thing-8:partition-D"]) {
                 |     id
-                |     name
+                |     rename__name__underlyingName: underlyingName
+                |     __typename__rename__name: __typename
                 |   }
                 | }
                 """.trimMargin(),
                 variables = " {}",
                 result = """
                 | {
-                |   "errors": [
-                |     {
-                |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-6:partition-D, thing-8:partition-D]",
-                |       "locations": [
-                |         {
-                |           "line": 2,
-                |           "column": 3
-                |         }
-                |       ],
-                |       "path": [
-                |         "things"
-                |       ],
-                |       "extensions": {
-                |         "classification": "DataFetchingException"
-                |       }
-                |     }
-                |   ],
                 |   "data": {
-                |     "things": null
+                |     "things": [
+                |       {
+                |         "id": "thing-6",
+                |         "rename__name__underlyingName": "THING-6",
+                |         "__typename__rename__name": "Thing"
+                |       },
+                |       {
+                |         "id": "thing-8",
+                |         "rename__name__underlyingName": "THING-8",
+                |         "__typename__rename__name": "Thing"
+                |       }
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -162,32 +158,6 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "errors": [
-     *     {
-     *       "message": "Exception while fetching data (/things) : Error fetching things:
-     * [thing-5:partition-C, thing-7:partition-C]",
-     *       "locations": [],
-     *       "path": [
-     *         "things"
-     *       ],
-     *       "extensions": {
-     *         "classification": "DataFetchingException",
-     *         "errorHappenedOnPartitionedCall": true
-     *       }
-     *     },
-     *     {
-     *       "message": "Exception while fetching data (/things) : Error fetching things:
-     * [thing-6:partition-D, thing-8:partition-D]",
-     *       "locations": [],
-     *       "path": [
-     *         "things"
-     *       ],
-     *       "extensions": {
-     *         "classification": "DataFetchingException",
-     *         "errorHappenedOnPartitionedCall": true
-     *       }
-     *     }
-     *   ],
      *   "data": {
      *     "things": [
      *       {
@@ -205,6 +175,22 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
      *       {
      *         "id": "thing-4",
      *         "name": "THING-4"
+     *       },
+     *       {
+     *         "id": "thing-5",
+     *         "name": "THING-5"
+     *       },
+     *       {
+     *         "id": "thing-7",
+     *         "name": "THING-7"
+     *       },
+     *       {
+     *         "id": "thing-6",
+     *         "name": "THING-6"
+     *       },
+     *       {
+     *         "id": "thing-8",
+     *         "name": "THING-8"
      *       }
      *     ]
      *   }
@@ -214,30 +200,6 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "errors": [
-            |     {
-            |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-5:partition-C, thing-7:partition-C]",
-            |       "locations": [],
-            |       "path": [
-            |         "things"
-            |       ],
-            |       "extensions": {
-            |         "classification": "DataFetchingException",
-            |         "errorHappenedOnPartitionedCall": true
-            |       }
-            |     },
-            |     {
-            |       "message": "Exception while fetching data (/things) : Error fetching things: [thing-6:partition-D, thing-8:partition-D]",
-            |       "locations": [],
-            |       "path": [
-            |         "things"
-            |       ],
-            |       "extensions": {
-            |         "classification": "DataFetchingException",
-            |         "errorHappenedOnPartitionedCall": true
-            |       }
-            |     }
-            |   ],
             |   "data": {
             |     "things": [
             |       {
@@ -255,6 +217,22 @@ public class ErrorOnPartitionCallsTestSnapshot : TestSnapshot() {
             |       {
             |         "id": "thing-4",
             |         "name": "THING-4"
+            |       },
+            |       {
+            |         "id": "thing-5",
+            |         "name": "THING-5"
+            |       },
+            |       {
+            |         "id": "thing-7",
+            |         "name": "THING-7"
+            |       },
+            |       {
+            |         "id": "thing-6",
+            |         "name": "THING-6"
+            |       },
+            |       {
+            |         "id": "thing-8",
+            |         "name": "THING-8"
             |       }
             |     ]
             |   }

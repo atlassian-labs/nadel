@@ -6,7 +6,7 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 
-open class SimplePartitionTest : NadelIntegrationTest(
+open class PartitionFollowedByRenamedTest : NadelIntegrationTest(
     query = """
       query getPartitionedThings{
         things(ids: [
@@ -30,9 +30,19 @@ type Query {
 
 type Thing {
   id: ID!
-  name: String
+  name: String @renamed(from: "underlyingName")
 }
             """.trimIndent(),
+            underlyingSchema = """
+type Query {
+  things(ids: [ID!]! ): [Thing]
+}
+
+type Thing {
+  id: ID!
+  underlyingName: String
+}
+            """,
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
@@ -44,7 +54,7 @@ type Thing {
                                     val parts = id.split(":")
                                     mapOf(
                                         "id" to parts[0],
-                                        "name" to parts[0].uppercase(),
+                                        "underlyingName" to parts[0].uppercase(),
                                     )
                                 }
                             }

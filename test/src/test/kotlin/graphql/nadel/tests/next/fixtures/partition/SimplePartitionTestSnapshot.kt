@@ -115,7 +115,7 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   things(ids: ["thing-6:partition-D", "thing-4:partition-D"]) {
+                |   things(ids: ["thing-6:partition-D", "thing-8:partition-D"]) {
                 |     id
                 |     name
                 |   }
@@ -131,8 +131,8 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
                 |         "name": "THING-6"
                 |       },
                 |       {
-                |         "id": "thing-4",
-                |         "name": "THING-4"
+                |         "id": "thing-8",
+                |         "name": "THING-8"
                 |       }
                 |     ]
                 |   }
@@ -177,8 +177,8 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
      *         "name": "THING-6"
      *       },
      *       {
-     *         "id": "thing-4",
-     *         "name": "THING-4"
+     *         "id": "thing-8",
+     *         "name": "THING-8"
      *       }
      *     ]
      *   }
@@ -219,8 +219,8 @@ public class SimplePartitionTestSnapshot : TestSnapshot() {
             |         "name": "THING-6"
             |       },
             |       {
-            |         "id": "thing-4",
-            |         "name": "THING-4"
+            |         "id": "thing-8",
+            |         "name": "THING-8"
             |       }
             |     ]
             |   }
