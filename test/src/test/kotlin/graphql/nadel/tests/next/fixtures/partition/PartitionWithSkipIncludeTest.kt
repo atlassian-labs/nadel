@@ -7,15 +7,16 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 import graphql.nadel.tests.next.fixtures.partition.hooks.ThingsDataFetcherFactory
 
-open class SimplePartitionTest : NadelIntegrationTest(
+open class PartitionWithSkipIncludeTest : NadelIntegrationTest(
     query = """
       query getPartitionedThings{
         things(ids: [
             "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B",
             "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-8:partition-D"
         ]) {
-          id
-          name
+          id @skip(if: true)
+          name @include(if: false)
+          age @skip(if: false)
         }
       }
     """.trimIndent(),
@@ -32,6 +33,7 @@ type Query {
 type Thing {
   id: ID!
   name: String
+  age: Int
 }
             """.trimIndent(),
             runtimeWiring = { wiring ->

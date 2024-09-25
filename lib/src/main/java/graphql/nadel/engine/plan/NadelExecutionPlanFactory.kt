@@ -111,7 +111,6 @@ internal class NadelExecutionPlanFactory(
                     NadelServiceTypeFilterTransform(),
                     NadelPartitionTransform(engine, executionHooks.partitionTransformerHook()),
                     *transforms.toTypedArray(),
-                    // *executionHooks.transformersWithQueryExecutor(QueryExecutor(engine::executeTopLevelField)).toTypedArray(),
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),
                     NadelHydrationTransform(engine),

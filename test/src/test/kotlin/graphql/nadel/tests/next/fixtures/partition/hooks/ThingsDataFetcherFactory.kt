@@ -18,6 +18,7 @@ object ThingsDataFetcherFactory {
                 mapOf(
                     "id" to parts[0],
                     "name" to parts[0].uppercase(),
+                    "age" to  "10"
                 )
             }
         }
@@ -33,6 +34,7 @@ object ThingsDataFetcherFactory {
                 mapOf(
                     "id" to parts[0],
                     "name" to parts[0].uppercase(),
+                    "age" to  "10"
                 )
             }
         }
