@@ -23,6 +23,7 @@ class NadelFieldPartition(
     ): Map<String, ExecutableNormalizedField> {
         val partitionInstructions = extractPartitionInstructions(field, pathToPartitionPoint, graphQLSchema)
 
+        // TODO: better message
         checkNotNull(partitionInstructions) { "Expected values to be partitioned but got null" }
 
         val partitionedValues = partitionValues(partitionInstructions)
