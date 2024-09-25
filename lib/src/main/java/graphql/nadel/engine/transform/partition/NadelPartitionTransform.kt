@@ -14,6 +14,7 @@ import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.isList
@@ -29,7 +30,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.io.Serializable
 
 internal class NadelPartitionTransform(
     private val engine: NextgenEngine,
@@ -65,7 +65,6 @@ internal class NadelPartitionTransform(
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
 
-        // TODO: surely there's a more idiomatic way to write this
         return if (executionContext.isPartitionedCall) {
             null
         } else {
@@ -126,7 +125,7 @@ internal class NadelPartitionTransform(
                         it.normalizedArguments,
                         it.children
                     )
-                    // TODO: Maybe add a suffix to the operation name to identity this is a partitioned call
+
                     engine.executePartitionedCall(topLevelField, service, state.executionContext)
                 }
             }
@@ -149,20 +148,6 @@ internal class NadelPartitionTransform(
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
 
-        if (state.partitionState is PartitionStateError) {
-            return (state.partitionState as PartitionStateError).errors.map {
-                NadelResultInstruction.AddError(
-                    NadelPartitionGraphQLErrorException(
-                        "The call for field '${overallField.resultKey}' was not partitioned due to the following error: '${it.message}'",
-                        path = overallField.queryPath.segments,
-                    )
-                )
-            }
-        }
-
-        // TODO: handle HTTP errors
-        val resultFromPartitionCalls = (state.partitionState as PartitionStateSuccess).partitionCalls.awaitAll()
-
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
@@ -172,6 +157,26 @@ internal class NadelPartitionTransform(
             // TODO: Log strange log - should always be 1, right?
             return emptyList()
         }
+
+        val nullifyField = NadelResultInstruction.Set(
+            subject = parentNodes.first(),
+            key = NadelResultKey(overallField.resultKey),
+            newValue = null
+        )
+
+        if (state.partitionState is PartitionStateError) {
+            return (state.partitionState as PartitionStateError).errors.map {
+                NadelResultInstruction.AddError(
+                    NadelPartitionGraphQLErrorException(
+                        "The call for field '${overallField.resultKey}' was not partitioned due to the following error: '${it.message}'",
+                        path = overallField.queryPath.segments,
+                    )
+                )
+            } + nullifyField
+        }
+
+        // TODO: handle HTTP errors
+        val resultFromPartitionCalls = (state.partitionState as PartitionStateSuccess).partitionCalls.awaitAll()
 
         val thisNodesData = nodes.getNodesAt(queryPath = overallField.queryPath, flatten = false).let {
             check(it.size == 1) { "Expected exactly one node at ${overallField.queryPath}, but found ${it.size}" }
@@ -202,7 +207,16 @@ internal class NadelPartitionTransform(
                 overallField = overallField,
             )
         } else {
-            error("Unsupported type for partitioning: $overallFieldType")
+            return listOf(
+                NadelResultInstruction.AddError(
+                    NadelPartitionGraphQLErrorException(
+                        "The call for field '${overallField.resultKey}' was not partitioned because the field type is " +
+                            "not supported. The types supported are lists and mutation payloads.",
+                        path = overallField.queryPath.segments,
+                    )
+                ),
+                nullifyField
+            )
         }
 
         val errorInstructions = resultFromPartitionCalls
@@ -290,7 +304,11 @@ internal class NadelPartitionTransform(
                 if (it == "success") {
                     Pair(it, acc[it].safeToBoolean() && next[it].safeToBoolean())
                 } else {
-                    Pair(it, acc[it].safeToList() + next[it].safeToList())
+                    if(acc[it] == null && next[it] == null) {
+                        Pair(it, null)
+                    } else {
+                        Pair(it, acc[it].safeToList() + next[it].safeToList())
+                    }
                 }
             }
         }
