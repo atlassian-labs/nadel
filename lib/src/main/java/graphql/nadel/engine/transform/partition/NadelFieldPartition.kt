@@ -12,27 +12,30 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 
 class NadelFieldPartition(
-    private val partitionKeyExtractor: (scalarValue: ScalarValue<*>, inputValueDef: GraphQLInputValueDefinition) -> String?,
+    private val fieldPartitionContext: NadelFieldPartitionContext,
+    private val graphQLSchema: GraphQLSchema,
+    private val partitionKeyExtractor: (
+        scalarValue: ScalarValue<*>,
+        inputValueDef: GraphQLInputValueDefinition,
+        userContext: Any?,
+    ) -> String?,
 ) {
-    // TODO: consider returning Optional instead of throwing exceptions everywhere
-    // Another option is the create a new checked exception and let the caller handle it
     fun createFieldPartitions(
         field: ExecutableNormalizedField,
-        pathToPartitionPoint: List<String>,
-        graphQLSchema: GraphQLSchema,
     ): Map<String, ExecutableNormalizedField> {
-        val partitionInstructions = extractPartitionInstructions(field, pathToPartitionPoint, graphQLSchema)
+        val partitionInstructions = extractPartitionInstructions(field)
 
         // TODO: better message
         checkNotNull(partitionInstructions) { "Expected values to be partitioned but got null" }
 
         val partitionedValues = partitionValues(partitionInstructions)
+        val pathToPartitionArg = fieldPartitionContext.pathToPartitionArg
 
         return partitionedValues.mapValues { (_, value) ->
-            val partitionArg = copyInsertingNewValue(partitionInstructions.argumentRoot, pathToPartitionPoint, value)
+            val partitionArg = copyInsertingNewValue(partitionInstructions.argumentRoot, pathToPartitionArg, value)
             field.transform { builder ->
                 val newArgs = HashMap(field.normalizedArguments)
-                newArgs[pathToPartitionPoint[0]] = partitionArg
+                newArgs[pathToPartitionArg[0]] = partitionArg
                 builder.normalizedArguments(newArgs)
             }
         }
@@ -65,7 +68,7 @@ class NadelFieldPartition(
                     return value.entries.flatMap { entry ->
                         collectPartitionKeysForValue(
                             entry.value,
-                            inputObjectType.getField(entry.key.toString())
+                            inputObjectType.getField(entry.key.toString()),
                         )
                     }
                 } else {
@@ -77,7 +80,7 @@ class NadelFieldPartition(
                 return collectPartitionKeysForValue(value.value, inputValueDefinition)
             }
             is ScalarValue<*> -> {
-                val partitionKey = partitionKeyExtractor(value, inputValueDefinition)
+                val partitionKey = partitionKeyExtractor(value, inputValueDefinition, fieldPartitionContext.userContext)
 
                 return if (partitionKey != null) {
                     listOf(partitionKey)
@@ -123,24 +126,24 @@ class NadelFieldPartition(
     @VisibleForTesting
     fun extractPartitionInstructions(
         field: ExecutableNormalizedField,
-        pathToPartitionPoint: List<String>,
-        graphQLSchema: GraphQLSchema,
     ): PartitionInstructions? {
-        if (pathToPartitionPoint.isEmpty()) {
+        val pathToPartitionArg = fieldPartitionContext.pathToPartitionArg
+
+        if (pathToPartitionArg.isEmpty()) {
             // TODO: msg "cannot partition empty path"
             return null
         }
         // The first item in the path is the argument name
-        val argumentRoot = field.getNormalizedArgument(pathToPartitionPoint[0])
+        val argumentRoot = field.getNormalizedArgument(pathToPartitionArg[0])
         var value = argumentRoot
 
         var inputValueDefinitions: List<GraphQLInputValueDefinition> = field.getFieldDefinitions(graphQLSchema)
             .flatMap { fd: GraphQLFieldDefinition -> fd.arguments }
-            .filter { arg: GraphQLArgument -> arg.name == pathToPartitionPoint[0] }
+            .filter { arg: GraphQLArgument -> arg.name == pathToPartitionArg[0] }
 
         // start at 1 because we've already checked the first item
-        for (i in 1 until pathToPartitionPoint.size) {
-            val key = pathToPartitionPoint[i]
+        for (i in 1 until pathToPartitionArg.size) {
+            val key = pathToPartitionArg[i]
 
             val map = value!!.value as Map<*, *>
             val newValue = map[key] as NormalizedInputValue

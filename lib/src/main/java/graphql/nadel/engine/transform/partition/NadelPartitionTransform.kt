@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transform.partition
 
-import graphql.language.OperationDefinition.Operation
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -10,22 +9,18 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.partition.NadelPartitionMutationPayloadMerger.isMutationPayloadLike
 import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
-import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.util.getType
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toGraphQLError
-import graphql.nadel.engine.util.unwrapNonNull
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.GraphQLList
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLOutputType
-import graphql.schema.GraphQLScalarType
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -33,27 +28,16 @@ import kotlinx.coroutines.coroutineScope
 
 internal class NadelPartitionTransform(
     private val engine: NextgenEngine,
-    private val instructions: NadelPartitionTransformHook,
+    private val partitionTransformHook: NadelPartitionTransformHook,
 ) : NadelTransform<NadelPartitionTransform.State> {
     data class State(
         val executionContext: NadelExecutionContext,
-        val pathToPartitionPoint: List<String>,
-        var partitionState: PartitionState = PartitionStateEmpty,
-    )
-
-    sealed interface PartitionState
-
-    data object PartitionStateEmpty : PartitionState
-
-    data class PartitionStateSuccess(
-        val partitionCalls: List<Deferred<ServiceExecutionResult>>,
-    ) : PartitionState
-
-    data class PartitionStateError(
-        val errors: MutableList<Throwable>,
-    ) : PartitionState
-
-    private val fieldPartition = NadelFieldPartition(instructions.getPartitionKeyExtractor())
+        val fieldPartitionContext: NadelFieldPartitionContext,
+        val fieldPartitions: Map<String, ExecutableNormalizedField>? = null,
+        val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf(),
+        val errors: List<Throwable>? = null,
+    ) {
+    }
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
@@ -65,10 +49,13 @@ internal class NadelPartitionTransform(
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
 
-        return if (executionContext.isPartitionedCall) {
-            null
-        } else {
-            val pathToPartitionPoint = instructions.getPathToPartitionPoint(
+        if (executionContext.isPartitionedCall) {
+            // We don't want to partition a call that is already partitioned
+            return null
+        }
+
+        // TODO: This could be in the blueprint
+        val fieldPartitionContext = partitionTransformHook.getFieldPartitionContext(
                 executionContext,
                 serviceExecutionContext,
                 executionBlueprint,
@@ -78,12 +65,39 @@ internal class NadelPartitionTransform(
                 hydrationDetails,
             )
 
-            if (pathToPartitionPoint == null) {
-                null
-            } else {
-                State(executionContext = executionContext, pathToPartitionPoint = pathToPartitionPoint)
-            }
+        if (fieldPartitionContext == null) {
+            // A field without a partition context can't be partitioned
+            return null
         }
+
+        val fieldPartition = NadelFieldPartition(
+            fieldPartitionContext = fieldPartitionContext,
+            graphQLSchema = executionBlueprint.engineSchema,
+            partitionKeyExtractor = partitionTransformHook.getPartitionKeyExtractor()
+        )
+
+        val fieldPartitions = try {
+            fieldPartition.createFieldPartitions(field = overallField)
+        } catch (exception: Exception) {
+            return State(
+                executionContext = executionContext,
+                fieldPartitionContext = fieldPartitionContext,
+                errors = mutableListOf(exception)
+            )
+        }
+
+        if (fieldPartitions.size < 2) {
+            // We can't partition a field that doesn't have at least two partitions
+            return null
+        }
+
+        partitionTransformHook.willPartitionCallback(executionContext, fieldPartitions)
+
+        return State(
+            executionContext = executionContext,
+            fieldPartitionContext = fieldPartitionContext,
+            fieldPartitions = fieldPartitions
+        )
     }
 
     override suspend fun transformField(
@@ -96,24 +110,20 @@ internal class NadelPartitionTransform(
         state: State,
     ): NadelTransformFieldResult {
 
-        val fieldPartitions = try {
-            fieldPartition.createFieldPartitions(
-                field = field,
-                pathToPartitionPoint = state.pathToPartitionPoint,
-                graphQLSchema = executionBlueprint.engineSchema
-            )
-        } catch (exception: NadelCannotPartitionFieldException) {
-            state.partitionState = PartitionStateError(errors = mutableListOf(exception))
+        if (state.errors != null) {
+            // At this point we know we can't partition the field, but removing it could result
+            // in a query with no top-level fields, which would be invalid.
+            // Adding __typename as an artificial field also wouldn't work because that field
+            // belongs to all operation types, which causes issues further down the execution.
             return NadelTransformFieldResult.unmodified(field)
         }
 
-        val firstPartition = fieldPartitions.values.first()
+        val fieldPartitions = checkNotNull(state.fieldPartitions) { "Expected fieldPartitions to be set" }
 
-        val rootType = when (executionContext.query.operation!!) {
-            Operation.QUERY -> executionBlueprint.engineSchema.queryType
-            Operation.MUTATION -> executionBlueprint.engineSchema.mutationType
-            Operation.SUBSCRIPTION -> error("Subscriptions are not supported")
-        }
+        val primaryPartition = fieldPartitions.values.first()
+
+        // TODO: throw error if operation is Subscription?
+        val rootType = executionContext.query.operation.getType(executionBlueprint.engineSchema)
 
         val partitionCalls = coroutineScope {
             fieldPartitions.values.drop(1).map {
@@ -121,6 +131,7 @@ internal class NadelPartitionTransform(
                     val topLevelField = NFUtil.createField(
                         executionBlueprint.engineSchema,
                         rootType,
+                        // TODO: queryPath contains field aliases, not field names, which results in an error.
                         field.queryPath,
                         it.normalizedArguments,
                         it.children
@@ -131,9 +142,9 @@ internal class NadelPartitionTransform(
             }
         }
 
-        state.partitionState = PartitionStateSuccess(partitionCalls = partitionCalls)
+        state.partitionCalls.addAll(partitionCalls)
 
-        return NadelTransformFieldResult(newField = firstPartition)
+        return NadelTransformFieldResult(newField = primaryPartition)
     }
 
     override suspend fun getResultInstructions(
@@ -147,14 +158,13 @@ internal class NadelPartitionTransform(
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
-
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
 
         if (parentNodes.size != 1) {
-            // TODO: Log strange log - should always be 1, right?
+            // TODO: Support multiple parent nodes (interfaces, unions)
             return emptyList()
         }
 
@@ -164,8 +174,8 @@ internal class NadelPartitionTransform(
             newValue = null
         )
 
-        if (state.partitionState is PartitionStateError) {
-            return (state.partitionState as PartitionStateError).errors.map {
+        if (state.errors != null) {
+            return state.errors.map {
                 NadelResultInstruction.AddError(
                     NadelPartitionGraphQLErrorException(
                         "The call for field '${overallField.resultKey}' was not partitioned due to the following error: '${it.message}'",
@@ -176,7 +186,7 @@ internal class NadelPartitionTransform(
         }
 
         // TODO: handle HTTP errors
-        val resultFromPartitionCalls = (state.partitionState as PartitionStateSuccess).partitionCalls.awaitAll()
+        val resultFromPartitionCalls = state.partitionCalls.awaitAll()
 
         val thisNodesData = nodes.getNodesAt(queryPath = overallField.queryPath, flatten = false).let {
             check(it.size == 1) { "Expected exactly one node at ${overallField.queryPath}, but found ${it.size}" }
@@ -192,15 +202,16 @@ internal class NadelPartitionTransform(
 
         val overallFieldType = overallField.getType(executionBlueprint.engineSchema)
 
+        // TODO: how to merge data when other transforms have manipulated the nodes (renames, etc)?
         val mergedData = if (overallFieldType.isList) {
-            mergeDataFromList(
+            NadelPartitionListMerger.mergeDataFromList(
                 dataFromPartitionCalls = dataFromPartitionCalls,
                 thisNodesData = thisNodesData,
                 parentNodes = parentNodes,
                 overallField = overallField,
             )
         } else if (overallFieldType.isMutationPayloadLike()) {
-            mergeDataFromMutationPayloadLike(
+            NadelPartitionMutationPayloadMerger.mergeDataFromMutationPayloadLike(
                 dataFromPartitionCalls = dataFromPartitionCalls,
                 thisNodesData = thisNodesData,
                 parentNodes = parentNodes,
@@ -233,112 +244,9 @@ internal class NadelPartitionTransform(
                 )
             }
 
+        // TODO: Add "extensions" to the result?
+        // {"partitionedCall": true, "partitionsCalled": ["cloudId-1", "cloudId-2"]}
         return mergedData + errorInstructions
     }
 
-    private fun mergeDataFromList(
-        dataFromPartitionCalls: List<Any?>,
-        thisNodesData: Any?,
-        parentNodes: List<JsonNode>,
-        overallField: ExecutableNormalizedField,
-    ): List<NadelResultInstruction.Set> {
-        val parentNode = parentNodes.first()
-
-        val listDataFromPartitionCalls = dataFromPartitionCalls
-            .mapNotNull {
-                if (it == null) {
-                    null
-                } else {
-                    check(it is List<*>) { "Expected a list, but got ${it::class.simpleName}" }
-                    it
-                }
-            }.flatten()
-
-        val thisNodesDataCast = thisNodesData?.let {
-            check(it is List<*>) { "Expected a list, but got ${it::class.simpleName}" }
-            it
-        } ?: emptyList<NadelResultInstruction.Set>()
-
-        return listOf(
-            NadelResultInstruction.Set(
-                subject = parentNode,
-                newValue = JsonNode(thisNodesDataCast + listDataFromPartitionCalls),
-                field = overallField
-            )
-        )
-    }
-
-    private fun mergeDataFromMutationPayloadLike(
-        dataFromPartitionCalls: List<Any?>,
-        thisNodesData: Any?,
-        parentNodes: List<JsonNode>,
-        overallField: ExecutableNormalizedField,
-    ): List<NadelResultInstruction.Set> {
-        val parentNode = parentNodes.first()
-
-        // TODO: I'm not sure what's the best way to handle non-successful calls
-        // - force `success` to be false?
-        // - leave `success` alone?
-        val nonSuccessPayload = mapOf("success" to false)
-
-        val mutationPayloadLikeDataFromPartitionCalls = dataFromPartitionCalls
-            .mapNotNull {
-                if (it == null) {
-                    nonSuccessPayload
-                } else {
-                    check(it is Map<*, *>) { "Expected a Map, but got ${it::class.simpleName}" }
-                    it
-                }
-            }
-
-        val thisNodesDataCast = thisNodesData?.let {
-            check(it is Map<*, *>) { "Expected a Map, but got ${it::class.simpleName}" }
-            it
-        } ?: nonSuccessPayload
-
-        val allListKeys = (thisNodesDataCast.keys + mutationPayloadLikeDataFromPartitionCalls.flatMap { it.keys })
-            .distinct()
-
-        val mergedData = mutationPayloadLikeDataFromPartitionCalls.fold(thisNodesDataCast) { acc, next ->
-            allListKeys.associate {
-                if (it == "success") {
-                    Pair(it, acc[it].safeToBoolean() && next[it].safeToBoolean())
-                } else {
-                    if(acc[it] == null && next[it] == null) {
-                        Pair(it, null)
-                    } else {
-                        Pair(it, acc[it].safeToList() + next[it].safeToList())
-                    }
-                }
-            }
-        }
-
-        return listOf(
-            NadelResultInstruction.Set(
-                subject = parentNode,
-                newValue = JsonNode(mergedData),
-                field = overallField
-            )
-        )
-    }
-}
-
-fun Any?.safeToBoolean(): Boolean {
-    return (this as? Boolean) ?: false
-}
-
-fun Any?.safeToList(): List<Any> {
-    return (this as? List<Any>) ?: emptyList()
-}
-
-/**
- * A GraphQL type is considered to be a "mutation payload" (for the purposes of this transform)  if
- * it has a `success` field of type `Boolean!` plus an `errors` field of type List and any other number
- * of fields of type List
- */
-fun GraphQLOutputType.isMutationPayloadLike(): Boolean {
-    return this is GraphQLObjectType
-        && this.getField("success")?.let { it.type.unwrapNonNull() as? GraphQLScalarType }?.name == "Boolean"
-        && this.getField("errors") != null
-        && this.fields.filter { it.name != "success" }.all { it.type.unwrapNonNull() is GraphQLList }
 }

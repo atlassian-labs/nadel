@@ -7,12 +7,13 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLInputValueDefinition
 
 class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
-    override fun getPathToPartitionPoint(
+    override fun getFieldPartitionContext(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -20,19 +21,20 @@ class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
         service: graphql.nadel.Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): List<String>? {
+    ): NadelFieldPartitionContext? {
         val fieldDef = overallField.getFieldDefinitions(executionBlueprint.engineSchema).first()
-        val routingDirective = fieldDef.getDirective("routing") ?: return null
+        val routingDirective = fieldDef.getAppliedDirective("routing") ?: return null
         val pathToSplitPoint = routingDirective.getArgument("pathToSplitPoint")
-            ?.toAppliedArgument()
             ?.argumentValue
             ?.value as ArrayValue?
 
-        return pathToSplitPoint?.values?.map { it as StringValue }?.map { it.value }
+        return NadelFieldPartitionContext(
+            pathToPartitionArg = pathToSplitPoint?.values?.map { it as StringValue }?.map { it.value }!!
+        )
     }
 
-    override fun getPartitionKeyExtractor(): (ScalarValue<*>, GraphQLInputValueDefinition) -> String? {
-        return { scalarValue, _ ->
+    override fun getPartitionKeyExtractor(): (ScalarValue<*>, GraphQLInputValueDefinition, Any?) -> String? {
+        return { scalarValue, _, _ ->
             if (scalarValue !is StringValue) {
                 null
             } else {
