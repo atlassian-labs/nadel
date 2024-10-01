@@ -11,6 +11,9 @@ open class DeferredServiceTypeFilterTest : NadelIntegrationTest(
       query {
         aErrors {
           ...@defer {
+            ...on AError {
+                id
+            }
             ...on BError {
               id
             }

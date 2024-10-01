@@ -26,7 +26,7 @@ public class DeferredServiceTypeFilterTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   aErrors {
-                |     __typename__type_filter__id: __typename
+                |     id
                 |   }
                 | }
                 """.trimMargin(),
@@ -35,7 +35,7 @@ public class DeferredServiceTypeFilterTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "aErrors": {
-                |       "__typename__type_filter__id": "AError"
+                |       "id": "A-ERROR-1"
                 |     }
                 |   }
                 | }
@@ -49,7 +49,9 @@ public class DeferredServiceTypeFilterTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "aErrors": {}
+     *     "aErrors": {
+     *       "id": "A-ERROR-1"
+     *     }
      *   }
      * }
      * ```
@@ -58,7 +60,9 @@ public class DeferredServiceTypeFilterTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "aErrors": {}
+            |     "aErrors": {
+            |       "id": "A-ERROR-1"
+            |     }
             |   }
             | }
             """.trimMargin(),
