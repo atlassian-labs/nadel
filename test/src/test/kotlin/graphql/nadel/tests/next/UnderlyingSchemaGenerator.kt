@@ -98,6 +98,14 @@ private fun make(overallSchema: Document): String {
                 }
         }
         .asSequence()
+        .filter {
+            // Ignore synthetic elements
+            if (it is DirectivesContainer<*>) {
+                !it.hasDirective("synthetic")
+            } else {
+                true
+            }
+        }
         .map {
             // In theory the overall schema can extend types not in this schema… Let's leave that for another day
             when (val type = it) {
