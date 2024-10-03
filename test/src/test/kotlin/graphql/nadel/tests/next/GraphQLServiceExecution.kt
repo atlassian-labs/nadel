@@ -1,6 +1,7 @@
 package graphql.nadel.tests.next
 
 import graphql.ExecutionInput
+import graphql.ExecutionResult
 import graphql.ExperimentalApi
 import graphql.GraphQL
 import graphql.incremental.IncrementalExecutionResult
