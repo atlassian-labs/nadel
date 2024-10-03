@@ -30,23 +30,18 @@ internal class NadelResultTracker {
     suspend fun getResultPath(
         queryPath: NadelQueryPath,
         node: JsonNode,
-    ): List<NadelResultPathSegment>? {
+    ): NadelResultPath? {
         val result = result.await()
         val data = result.toSpecification()["data"]
 
-        println()
-        println("Looking at $queryPath for $node")
-
         val jsonNodeIterator = NadelJsonNodeIterator(root = data, queryPath = queryPath, flatten = true)
         for (ephemeralNode in jsonNodeIterator) {
-            println("Traversing node\n\tQuery path: ${ephemeralNode.queryPath}\n\tResult path: ${ephemeralNode.resultPath}\n\tValue: ${ephemeralNode.value}")
             if (ephemeralNode.queryPath.size == queryPath.segments.size && ephemeralNode.value === node.value) {
                 // Clone because underlying values are ephemeral too
-                return ephemeralNode.resultPath.toList()
+                return ephemeralNode.resultPath.clone()
             }
         }
 
-        println()
         return null
     }
 

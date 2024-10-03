@@ -4,6 +4,7 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelDeepRenameTransform
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
@@ -35,6 +36,7 @@ internal class NadelExecutionPlanFactory(
      */
     suspend fun create(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         services: Map<String, Service>,
         service: Service,
         rootField: ExecutableNormalizedField,
@@ -55,6 +57,7 @@ internal class NadelExecutionPlanFactory(
                     val state = timer.time(step = timingStep) {
                         transform.isApplicable(
                             executionContext,
+                            serviceExecutionContext,
                             executionBlueprint,
                             services,
                             service,

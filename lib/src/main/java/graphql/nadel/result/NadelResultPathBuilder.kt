@@ -3,7 +3,7 @@ package graphql.nadel.result
 internal interface NadelResultPathBuilder {
     fun add(key: String): NadelResultPathBuilder
     fun add(index: Int): NadelResultPathBuilder
-    fun build(): List<NadelResultPathSegment>
+    fun build(): NadelResultPath
 
     companion object {
         operator fun invoke(
@@ -22,12 +22,16 @@ internal interface NadelResultPathBuilder {
                     return this
                 }
 
-                override fun build(): List<NadelResultPathSegment> {
-                    return segments
+                override fun build(): NadelResultPath {
+                    return NadelResultPath(segments)
                 }
             }
         }
     }
+}
+
+internal fun NadelResultPath.toBuilder(): NadelResultPathBuilder {
+    return NadelResultPathBuilder(value)
 }
 
 internal fun List<NadelResultPathSegment>.toBuilder(): NadelResultPathBuilder {

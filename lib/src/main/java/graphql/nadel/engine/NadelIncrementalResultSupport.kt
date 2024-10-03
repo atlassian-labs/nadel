@@ -1,9 +1,11 @@
 package graphql.nadel.engine
 
 import graphql.incremental.DelayedIncrementalPartialResult
+import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.engine.NadelIncrementalResultSupport.OutstandingJobCounter.OutstandingJobHandle
-import graphql.nadel.engine.util.copy
 import graphql.nadel.util.getLogger
+import graphql.normalized.ExecutableNormalizedOperation
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -13,31 +15,53 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * todo: we do not handle the case where defer jobs finish before [onInitialResultComplete]
- */
 class NadelIncrementalResultSupport internal constructor(
-    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = Channel(
-        capacity = 100,
-        onBufferOverflow = BufferOverflow.DROP_LATEST,
-        onUndeliveredElement = {
-            log.error("Dropping incremental result because of buffer overflow")
-        },
-    ),
+    private val accumulator: NadelIncrementalResultAccumulator,
+    private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
 ) {
+    internal constructor(
+        operation: ExecutableNormalizedOperation,
+        delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
+    ) : this(
+        accumulator = NadelIncrementalResultAccumulator(
+            operation = operation,
+        ),
+        delayedResultsChannel = delayedResultsChannel,
+    )
+
     companion object {
         private val log = getLogger<NadelIncrementalResultSupport>()
+
+        private fun makeDefaultChannel(): Channel<DelayedIncrementalPartialResult> = Channel(
+            capacity = 100,
+            onBufferOverflow = BufferOverflow.DROP_LATEST,
+            onUndeliveredElement = {
+                log.error("Dropping incremental result because of buffer overflow")
+            },
+        )
     }
+
+    private val operationMutex = Mutex()
 
     /**
      * The root [Job] to run the defer and stream work etc on.
      */
     private val coroutineJob = SupervisorJob()
     private val coroutineScope = CoroutineScope(coroutineJob + Dispatchers.Default)
+
+    /**
+     * Temporary _kind of_ hack to wait for the initial result to complete before kicking off other jobs.
+     *
+     * Doesn't really handle a defer job kicking off more deferrals, but we'll cross that bridge later.
+     */
+    private val initialCompletionLock = CompletableDeferred<Unit>()
 
     /**
      * A single [Flow] that can only be collected from once.
@@ -55,17 +79,21 @@ class NadelIncrementalResultSupport internal constructor(
 
     fun defer(task: suspend CoroutineScope.() -> DelayedIncrementalPartialResult): Job {
         return launch { outstandingJobHandle ->
-            val hasNext: Boolean
-            val result = try {
-                task()
-            } finally {
-                hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
-            }
+            val result = task()
+            initialCompletionLock.await()
 
-            delayedResultsChannel.send(
-                // Copy of result but with the correct hasNext according to the info we know
-                result.copy(hasNext = hasNext)
-            )
+            operationMutex.withLock {
+                accumulator.accumulate(result)
+
+                val hasNext = outstandingJobHandle.decrementAndGetJobCount() > 0
+
+                val next = accumulator.getIncrementalPartialResult(hasNext)
+                if (next != null) {
+                    delayedResultsChannel.send(next)
+                } else if (!hasNext) {
+                    delayedResultsChannel.send(emptyLastResult())
+                }
+            }
         }
     }
 
@@ -78,17 +106,25 @@ class NadelIncrementalResultSupport internal constructor(
         return launch { outstandingJobHandle ->
             serviceResults
                 .collect { result ->
-                    // Here we'll stipulate that the last element of the Flow sets hasNext=false
-                    val hasNext = if (result.hasNext()) {
-                        true
-                    } else {
-                        outstandingJobHandle.decrementAndGetJobCount() > 0
-                    }
+                    initialCompletionLock.await()
 
-                    delayedResultsChannel.send(
-                        // Copy of result but with the correct hasNext according to the info we know
-                        result.copy(hasNext = hasNext)
-                    )
+                    operationMutex.withLock {
+                        accumulator.accumulate(result)
+
+                        // Here we'll stipulate that the last element of the Flow sets hasNext=false
+                        val hasNext = if (result.hasNext()) {
+                            true
+                        } else {
+                            outstandingJobHandle.decrementAndGetJobCount() > 0
+                        }
+
+                        val next = accumulator.getIncrementalPartialResult(hasNext)
+                        if (next != null) {
+                            delayedResultsChannel.send(next)
+                        } else if (!hasNext) {
+                            delayedResultsChannel.send(emptyLastResult())
+                        }
+                    }
                 }
         }
     }
@@ -103,15 +139,32 @@ class NadelIncrementalResultSupport internal constructor(
      * There should never be more than one consumer. If you need multiple, you can wrap the [Flow] object.
      */
     fun resultFlow(): Flow<DelayedIncrementalPartialResult> {
-        return resultFlow
+        return resultFlow.onCompletion {
+            close()
+        }
     }
 
     fun onInitialResultComplete() {
+        // This signals the end for the job; not immediately, but as soon as the child jobs are all done
         coroutineJob.complete()
+
+        // Unblocks work to yield results to the channel
+        initialCompletionLock.complete(Unit)
     }
 
-    fun close() {
+    private fun close() {
         coroutineScope.cancel()
+    }
+
+    /**
+     * We have to return hasNext=false to indicate to clients that there's no more data coming.
+     * Note: the spec allows an empty payload which only contains hastNext=false to be returned.
+     */
+    private fun emptyLastResult(): DelayedIncrementalPartialResult {
+        return DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+            .incrementalItems(emptyList())
+            .hasNext(false)
+            .build()
     }
 
     /**

@@ -15,7 +15,7 @@ import graphql.normalized.ExecutableNormalizedOperation
 import graphql.schema.GraphQLSchema
 
 internal class NadelFieldToService(
-    private val querySchema: GraphQLSchema,
+    querySchema: GraphQLSchema,
     private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     private val dynamicServiceResolution: DynamicServiceResolution,

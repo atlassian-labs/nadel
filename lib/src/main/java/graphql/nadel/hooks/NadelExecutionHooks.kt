@@ -1,11 +1,13 @@
 package graphql.nadel.hooks
 
 import graphql.nadel.Service
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.normalized.ExecutableNormalizedField
+import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -13,13 +15,22 @@ import java.util.concurrent.CompletableFuture
  */
 interface NadelExecutionHooks {
     /**
-     * Called per top level field for a service.  This allows you to create a "context" object that will be passed into further calls.
+     * Creates one context per [Service] per request.
+     *
+     * So even if a request has multiple calls to one [Service] we will reuse the same context.
+     *
+     * This is deprecated now, please use [createServiceExecutionContext] instead.
      *
      * @param params the parameters to this call
      * @return an async context object of your choosing
      */
+    @Deprecated("Use createServiceExecutionContext instead")
     fun createServiceContext(params: CreateServiceContextParams): CompletableFuture<Any?> {
         return CompletableFuture.completedFuture(null)
+    }
+
+    fun createServiceExecutionContext(params: NadelCreateServiceExecutionContextParams): CompletableFuture<NadelServiceExecutionContext> {
+        return CompletableFuture.completedFuture(NadelServiceExecutionContext.None)
     }
 
     /**
@@ -91,4 +102,15 @@ interface NadelExecutionHooks {
     ): List<List<T>> {
         return listOf(argumentValues)
     }
+}
+
+/**
+ * Util function for internal use.
+ */
+internal suspend fun NadelExecutionHooks.createServiceExecutionContext(service: Service): NadelServiceExecutionContext {
+    return createServiceExecutionContext(
+        NadelCreateServiceExecutionContextParams(
+            service = service,
+        ),
+    ).await()
 }

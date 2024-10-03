@@ -29,7 +29,7 @@ class TestExecutionCapture {
         val query: String,
         val variables: JsonMap,
         val result: JsonMap,
-        val delayedResults: List<DelayedIncrementalPartialResult>,
+        val delayedResults: List<JsonMap>,
     )
 
     fun capture(
@@ -38,7 +38,7 @@ class TestExecutionCapture {
         variables: JsonMap,
         result: ExecutionResult,
     ): ExecutionResult {
-        val delayedResults = synchronizedMutableListOf<DelayedIncrementalPartialResult>()
+        val delayedResults = synchronizedMutableListOf<JsonMap>()
 
         _calls.add(
             Call(
@@ -51,7 +51,7 @@ class TestExecutionCapture {
         )
 
         return spyOnIncrementalResults(result) {
-            delayedResults.add(it)
+            delayedResults.add(deepClone(it))
         }
     }
 
@@ -90,6 +90,10 @@ class TestExecutionCapture {
      * We need to capture the original response before that happens.
      */
     private fun deepClone(result: ExecutionResult): JsonMap {
+        return jsonObjectMapper.convertValue(result.toSpecification()!!)
+    }
+
+    private fun deepClone(result: DelayedIncrementalPartialResult): JsonMap {
         return jsonObjectMapper.convertValue(result.toSpecification()!!)
     }
 

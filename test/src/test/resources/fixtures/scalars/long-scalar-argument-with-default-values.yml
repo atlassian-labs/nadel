@@ -1,0 +1,45 @@
+name: "long scalar argument with default values"
+enabled: true
+# language=GraphQL
+overallSchema:
+  service: |
+    type Query {
+      getFoo(arg: Long = 123): String
+    }
+    scalar Long
+# language=GraphQL
+underlyingSchema:
+  service: |
+    type Query {
+      getFoo(arg: Long = 123): String
+    }
+    scalar Long
+query: |
+  query {
+    getFoo(arg: 15)
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          getFoo(arg: 15)
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "getFoo": "KFC Good"
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "getFoo": "KFC Good"
+    }
+  }

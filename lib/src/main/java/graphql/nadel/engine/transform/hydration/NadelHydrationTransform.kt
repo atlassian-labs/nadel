@@ -7,6 +7,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -34,6 +35,8 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toGraphQLError
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
+import graphql.nadel.result.NadelResultPath
+import graphql.nadel.result.NadelResultPathSegment
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async
@@ -67,6 +70,7 @@ internal class NadelHydrationTransform(
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -91,6 +95,7 @@ internal class NadelHydrationTransform(
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
@@ -140,11 +145,13 @@ internal class NadelHydrationTransform(
         return makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = objectTypeNames,
+            deferredExecutions = linkedSetOf(),
         )
     }
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
@@ -232,6 +239,13 @@ internal class NadelHydrationTransform(
                 )
             }
 
+        if(preparedHydrations.isEmpty()) {
+            return
+        }
+
+        // This isn't really right… but we start with this
+        val label = overallField.deferredExecutions.firstNotNullOfOrNull { it.label }
+
         executionContext.incrementalResultSupport.defer {
             val hydrations = preparedHydrations
                 .map {
@@ -254,18 +268,19 @@ internal class NadelHydrationTransform(
                             val path = parentPath + overallField.resultKey
 
                             DeferPayload.newDeferredItem()
+                                .label(label)
                                 .data(
                                     mapOf(
                                         overallField.resultKey to data?.value,
                                     ),
                                 )
-                                .path(parentPath)
+                                .path(parentPath.toRawPath())
                                 .errors(
                                     hydration.errors
                                         .map {
                                             toGraphQLError(
                                                 raw = it,
-                                                path = path,
+                                                path = path.toRawPath(),
                                             )
                                         },
                                 )
@@ -412,13 +427,7 @@ internal class NadelHydrationTransform(
             return false
         }
 
-        return if (executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()) {
-            // We currently don't support defer if the hydration is inside a List
-            // return !areAnyParentFieldsOutputtingLists(overallField, executionBlueprint)
-            return true
-        } else {
-            false
-        }
+        return executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()
     }
 
     private fun areAnyParentFieldsOutputtingLists(

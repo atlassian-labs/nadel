@@ -22,10 +22,12 @@ internal object SchemaUtil {
                 ParserEnvironment.newParserEnvironment()
                     .document(schema)
                     .parserOptions(
-                        ParserOptions.newParserOptions()
-                            .maxTokens(maxTokens)
-                            .captureSourceLocation(captureSourceLocation)
-                            .build(),
+                        ParserOptions.getDefaultSdlParserOptions()
+                            .transform {
+                                it
+                                    .maxTokens(maxTokens)
+                                    .captureSourceLocation(captureSourceLocation)
+                            }
                     )
                     .build(),
             )
@@ -39,10 +41,12 @@ internal object SchemaUtil {
     ): TypeDefinitionRegistry {
         return schemaParser.parse(
             schema,
-            ParserOptions.newParserOptions()
-                .maxTokens(maxTokens)
-                .captureSourceLocation(captureSourceLocation)
-                .build(),
+            ParserOptions.getDefaultSdlParserOptions()
+                .transform {
+                    it
+                        .maxTokens(maxTokens)
+                        .captureSourceLocation(captureSourceLocation)
+                }
         )
     }
 }

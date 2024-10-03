@@ -46,8 +46,7 @@ import java.util.concurrent.CompletableFuture
  * 3. Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
 private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
-    .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
-    .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
+    .removePrefix("java:test://graphql.nadel.tests.EngineTests/")
     .removeSuffix(".yml")
     .removeSuffix(".yaml")
     .trim()
@@ -350,7 +349,7 @@ private suspend fun execute(
         val expectedResponse = fixture.response
         if (expectedResponse != null) {
             // TODO: check extensions one day - right now they don't match up as dumped tests weren't fully E2E but tests are
-            assertJsonEquals(
+            assertJsonObjectEquals(
                 actual = response.toSpecification().let {
                     mapOf(
                         "data" to it["data"],

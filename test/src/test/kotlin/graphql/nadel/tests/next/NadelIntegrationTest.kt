@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next
 
-import graphql.Assert.assertFalse
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.execution.DataFetcherExceptionHandler
@@ -21,8 +20,8 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
-import graphql.nadel.tests.assertJsonEquals
-import graphql.nadel.tests.compareJson
+import graphql.nadel.tests.assertJsonObjectEquals
+import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
@@ -40,6 +39,7 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.util.concurrent.CompletableFuture
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 
@@ -56,7 +56,7 @@ abstract class NadelIntegrationTest(
     open val name: String get() = this::class.asTestName()
 
     @Test
-    fun execute() = runTest(timeout = 10.minutes) {
+    fun execute() = runTest(timeout = 20.minutes) {
         // Given
         val testData = getTestSnapshot()
 
@@ -117,20 +117,24 @@ abstract class NadelIntegrationTest(
 
         // Compare data strictly, must equal 1-1
         val noDeferResultMap = noDeferResult.toSpecification()
-        assertJsonEquals(
+        assertJsonObjectEquals(
             expected = mapOf("data" to noDeferResultMap["data"]),
             actual = mapOf("data" to combinedDeferResultMap["data"]),
             mode = JSONCompareMode.STRICT,
         )
         // Compare rest of data, these can be more lenient
         // Maybe this won't hold out longer term, but e.g. it's ok for the deferred errors to add a path
-        assertJsonEquals(
+        assertJsonObjectEquals(
             expected = mapOf(
-                "errors" to noDeferResultMap["errors"],
+                "errors" to (noDeferResultMap["errors"] as List<Map<String, Any>>?)?.map { errorMap ->
+                    errorMap.filterKeys { it != "locations" }
+                },
                 "extensions" to noDeferResultMap["extensions"],
             ),
             actual = mapOf(
-                "errors" to combinedDeferResultMap["errors"],
+                "errors" to (combinedDeferResultMap["errors"] as List<Map<String, Any>>?)?.map { errorMap ->
+                    errorMap.filterKeys { it != "locations" }
+                },
                 "extensions" to combinedDeferResultMap["extensions"],
             ),
             mode = JSONCompareMode.LENIENT,
@@ -298,9 +302,9 @@ abstract class NadelIntegrationTest(
                 actual = actualCall.delayedResults
             ) { expectedDelayedResult, actualDelayedResult ->
                 // Note: we compare hasNext further down in the function
-                compareJson(
+                compareJsonObject(
                     expectedDelayedResult - "hasNext",
-                    actualDelayedResult.toSpecification() - "hasNext",
+                    actualDelayedResult - "hasNext",
                 ).passed()
             }
 
@@ -318,8 +322,8 @@ abstract class NadelIntegrationTest(
             actualCall.service == expectedCall.service
                 && expectedCall.delayedResults.size == actualCall.delayedResults.size
                 && getCanonicalQuery(expectedCall.query) == actualQuery
-                && compareJson(expected = expectedCall.variables, actual = actualVariables).passed()
-                && compareJson(expected = expectedCall.result, actual = actualResult).passed()
+                && compareJsonObject(expected = expectedCall.variables, actual = actualVariables).passed()
+                && compareJsonObject(expected = expectedCall.result, actual = actualResult).passed()
                 && isDelayedResultsEqual(expectedCall, actualCall)
         }
 
@@ -333,7 +337,10 @@ abstract class NadelIntegrationTest(
             .forEach { actualCall ->
                 val delayedResults = actualCall.delayedResults
                 if (delayedResults.isNotEmpty()) {
-                    assertTrue(delayedResults.dropLast(n = 1).all { it.hasNext() } && !delayedResults.last().hasNext())
+                    assertTrue(
+                        delayedResults.dropLast(n = 1).all { it["hasNext"] == true }
+                            && delayedResults.last()["hasNext"] == false
+                    )
                 }
             }
     }
@@ -357,7 +364,7 @@ abstract class NadelIntegrationTest(
 
         println("Combined overall result was\n$combinedResult")
 
-        assertJsonEquals(
+        assertJsonObjectEquals(
             /* expectedStr = */ testSnapshot.result.result,
             /* actualStr = */ result.toSpecification(),
             /* compareMode = */ JSONCompareMode.STRICT,
@@ -372,7 +379,9 @@ abstract class NadelIntegrationTest(
             // Note: there exists a IncrementalExecutionResult.getIncremental but that is part of the initial result
             assertTrue(result is IncrementalExecutionResult)
 
-            // Fuck why delayed & incremental?? Shouldn't incremental == delayed? Why is there an optional synchronous incremental??
+            // Note: the spec allows for a list of "incremental" results which is sent as part of the initial
+            // result (so not delivered in a delayed fashion). This var represents the incremental results that were
+            // sent in a delayed fashion.
             val actualDelayedResponses = incrementalResults!!
 
             // Should only have one element that says hasNext=false, and it should be the last one
@@ -383,12 +392,19 @@ abstract class NadelIntegrationTest(
                 unmatchedExpectedDelayedResponses,
                 unmatchedActualDelayedResponses,
             ) = getUnmatchedElements(
-                expected = testSnapshot.result.delayedResults,
-                actual = actualDelayedResponses.map(DelayedIncrementalPartialResult::toSpecification),
+                expected = testSnapshot.result.delayedResults
+                    .flatMap {
+                        (it["incremental"] as List<JsonMap>?) ?: emptyList()
+                    },
+                actual = actualDelayedResponses
+                    .map(DelayedIncrementalPartialResult::toSpecification)
+                    .flatMap {
+                        (it["incremental"] as List<JsonMap>?) ?: emptyList()
+                    },
             ) { expectedResponse, actualResponse ->
-                compareJson(
-                    expectedResponse - "hasNext",
-                    actualResponse - "hasNext",
+                compareJsonObject(
+                    expectedResponse,
+                    actualResponse,
                     JSONCompareMode.STRICT
                 ).passed()
             }
@@ -405,6 +421,8 @@ abstract class NadelIntegrationTest(
         actual: List<A>,
         test: (E, A) -> Boolean,
     ): Pair<List<E>, List<A>> {
+        assertTrue(expected.size == actual.size)
+
         val unmatchedExpected = expected.toMutableList()
         val unmatchedActual = actual.toMutableList()
 

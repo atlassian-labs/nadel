@@ -3,29 +3,47 @@ package graphql.nadel.engine
 import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl
+import graphql.nadel.test.mock
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.verifyAll
+import io.mockk.verifyOrder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.lastOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class NadelIncrementalResultSupportTest {
+    private val accumulator = mock<NadelIncrementalResultAccumulator>()
+
+    @AfterEach
+    fun after() {
+        confirmVerified(accumulator)
+    }
+
     @Test
     fun `channel closes once initial result comes in and there are no pending defer jobs`() {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
-        val subject = NadelIncrementalResultSupport(channel)
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
 
         assertFalse(channel.isClosedForSend)
         assertFalse(channel.isClosedForReceive)
@@ -42,11 +60,23 @@ class NadelIncrementalResultSupportTest {
     fun `after last job the hasNext is false`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(channel)
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
         // Use locks to continue the deferred jobs when we release the lock
         val firstLock = Mutex(true)
         val secondLock = Mutex(true)
         val thirdLock = Mutex(true)
+
+        every {
+            accumulator.accumulate(any())
+        } returns Unit
+        every {
+            accumulator.getIncrementalPartialResult(any())
+        } answers {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(firstArg())
+                .build()
+        }
 
         // When
         subject.defer {
@@ -66,17 +96,9 @@ class NadelIncrementalResultSupportTest {
             }
         }
         subject.defer {
-            // Wait until test tells us to continue
             thirdLock.withLock {
                 DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                    .incrementalItems(
-                        listOf(
-                            DeferPayload.newDeferredItem()
-                                .data("Bye world")
-                                .path(listOf("echo"))
-                                .build(),
-                        ),
-                    )
+                    .incrementalItems(emptyList())
                     .hasNext(true)
                     .build()
             }
@@ -86,22 +108,110 @@ class NadelIncrementalResultSupportTest {
 
         // Then
         firstLock.unlock()
-        secondLock.unlock()
-        thirdLock.unlock()
 
-        val results = channel.consumeAsFlow().toList()
+        val results = channel
+            .consumeAsFlow()
+            .withIndex()
+            .onEach { (index, _) ->
+                when (index) {
+                    0 -> secondLock.unlock()
+                    1 -> thirdLock.unlock()
+                    2 -> {} // Do nothing
+                    else -> throw IllegalArgumentException("Test does not expect this many elements")
+                }
+            }
+            .map { (_, value) -> value }
+            .toList()
+
+        assertTrue(results.size == 3)
         assertTrue(results.dropLast(n = 1).all { it.hasNext() })
         val lastResult = results.last()
-        assertTrue((lastResult.incremental?.single() as DeferPayload).getData<String>() == "Bye world")
         assertFalse(lastResult.hasNext())
+
+        verifyOrder {
+            accumulator.accumulate(any())
+            accumulator.getIncrementalPartialResult(true)
+            accumulator.accumulate(any())
+            accumulator.getIncrementalPartialResult(true)
+            accumulator.accumulate(any())
+            accumulator.getIncrementalPartialResult(false)
+        }
+    }
+
+    @Test
+    fun `does not send anything before onInitialResultComplete is invoked`() = runTest {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val lock = CompletableDeferred<Boolean>()
+
+        every {
+            accumulator.accumulate(any())
+        } returns Unit
+        every {
+            accumulator.getIncrementalPartialResult(any())
+        } answers {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(firstArg())
+                .extensions(mapOf("hello" to "world"))
+                .build()
+        }
+
+        // When
+        subject.defer {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(true)
+                .extensions(mapOf("hello" to "world"))
+                .build()
+                .also {
+                    lock.complete(true)
+                }
+        }
+
+        // Then
+        lock.join()
+
+        // Nothing comes out
+        val timeoutResult = withTimeoutOrNull(100.milliseconds) {
+            channel.receive()
+        }
+        assertTrue(timeoutResult == null)
+        assertTrue(channel.isEmpty)
+
+        // We receive the result once we invoke this
+        subject.onInitialResultComplete()
+        assertTrue(channel.receive().extensions == mapOf("hello" to "world"))
+
+        verifyOrder {
+            accumulator.accumulate(
+                match { result ->
+                    result.hasNext() && result.extensions == mapOf("hello" to "world")
+                },
+            )
+            accumulator.getIncrementalPartialResult(false)
+        }
     }
 
     @Test
     fun `hasNext is true if last job launches more jobs`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
-        val subject = NadelIncrementalResultSupport(channel)
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
         val firstLock = CompletableDeferred<Boolean>()
         val secondLock = CompletableDeferred<Boolean>()
+
+        every {
+            accumulator.accumulate(any())
+        } returns Unit
+        every {
+            accumulator.getIncrementalPartialResult(any())
+        } answers {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(firstArg())
+                .build()
+        }
 
         // When
         subject.defer {
@@ -113,30 +223,67 @@ class NadelIncrementalResultSupportTest {
 
                 DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                     .incrementalItems(emptyList())
+                    .extensions(mapOf("id" to 2))
                     .hasNext(true)
                     .build()
             }
 
             DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                 .incrementalItems(emptyList())
+                .extensions(mapOf("id" to 1))
                 .hasNext(false)
                 .build()
         }
 
         // Then
+        subject.onInitialResultComplete()
         firstLock.complete(true)
 
-        val item = channel.receive()
-        assertTrue(item.hasNext())
+        val first = channel.receive()
+        assertTrue(first.hasNext())
+
+        secondLock.complete(true)
+        val second = channel.receive()
+        assertFalse(second.hasNext())
+
+        assertTrue(channel.toList().isEmpty())
+
+        verifyOrder {
+            accumulator.accumulate(
+                match { result ->
+                    result.extensions == mapOf("id" to 1)
+                },
+            )
+            accumulator.getIncrementalPartialResult(true)
+
+            accumulator.accumulate(
+                match { result ->
+                    result.extensions == mapOf("id" to 2)
+                },
+            )
+            accumulator.getIncrementalPartialResult(false)
+        }
     }
 
     @Test
     fun `hasNext is true if there is another job still running`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(channel)
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
         val firstLock = CompletableDeferred<Boolean>()
         val secondLock = CompletableDeferred<Boolean>()
+
+        every {
+            accumulator.accumulate(any())
+        } returns Unit
+        every {
+            accumulator.getIncrementalPartialResult(any())
+        } answers {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(firstArg())
+                .build()
+        }
 
         // When
         subject.defer {
@@ -167,25 +314,99 @@ class NadelIncrementalResultSupportTest {
         }
 
         // Then
+        subject.onInitialResultComplete()
+
         firstLock.complete(true)
         val firstItem = channel.receive()
-        assertTrue(firstItem.incremental?.isEmpty() == true)
         assertTrue(firstItem.hasNext())
 
         secondLock.complete(true)
         val secondItem = channel.receive()
         assertTrue(secondItem !== firstItem)
-        assertTrue(secondItem.incremental?.isNotEmpty() == true)
         assertFalse(secondItem.hasNext())
+
+        verifyOrder {
+            accumulator.accumulate(
+                match { result ->
+                    result.incremental?.isEmpty() == true
+                },
+            )
+            accumulator.getIncrementalPartialResult(true)
+
+            accumulator.accumulate(
+                match { result ->
+                    (result.incremental?.singleOrNull() as DeferPayload?)?.getData<String>() == "Hello world"
+                },
+            )
+            accumulator.getIncrementalPartialResult(false)
+        }
     }
 
     @Test
-    fun `forwards responses from Flows`() = runTest {
+    fun `emits nothing if accumulator returns null`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(channel)
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
+
+        every {
+            accumulator.accumulate(any())
+        } returns Unit
+        every {
+            accumulator.getIncrementalPartialResult(any())
+        } returns null
+
+        // When
+        subject.defer {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(false)
+                .build()
+        }
+
+        subject.defer {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(false)
+                .build()
+        }
+
+        // Then
+        subject.onInitialResultComplete()
+
+        val elements = channel.toList()
+
+        assertTrue(elements.size == 1)
+        assertFalse(elements[0].hasNext())
+        assertTrue(elements[0].incremental!!.isEmpty())
+
+        verifyOrder {
+            accumulator.accumulate(any())
+            accumulator.getIncrementalPartialResult(true)
+            accumulator.accumulate(any())
+            accumulator.getIncrementalPartialResult(false)
+        }
+    }
+
+    @Test
+    fun `forwards responses from multiple Flows`() = runTest {
+        val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
+
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
+
+        every {
+            accumulator.accumulate(any())
+        } returns Unit
+        every {
+            accumulator.getIncrementalPartialResult(any())
+        } answers {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(firstArg())
+                .build()
+        }
 
         val lock = Mutex(locked = true)
+
         // When
         subject.defer(
             flow {
@@ -196,7 +417,6 @@ class NadelIncrementalResultSupportTest {
                     DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
                         .incrementalItems(emptyList())
                         .hasNext(true)
-                        .extensions(mapOf("one" to true))
                         .build(),
                 )
                 emit(
@@ -231,10 +451,28 @@ class NadelIncrementalResultSupportTest {
         assertTrue(contents.size == 3)
         assertTrue(contents.map { it.hasNext() } == listOf(true, true, false))
 
-        val extensions = contents.fold(emptyMap<Any?, Any?>()) { acc, element ->
-            acc + (element.extensions ?: emptyMap())
+        verifyAll {
+            accumulator.accumulate(
+                match { result ->
+                    result.incremental?.isEmpty() == true && result.extensions == null
+                },
+            )
+            accumulator.getIncrementalPartialResult(true)
+
+            accumulator.accumulate(
+                match { result ->
+                    result.extensions == mapOf("two" to true)
+                },
+            )
+            accumulator.getIncrementalPartialResult(true)
+
+            accumulator.accumulate(
+                match { result ->
+                    result.extensions == mapOf("three" to true)
+                },
+            )
+            accumulator.getIncrementalPartialResult(false)
         }
-        assertTrue(extensions == mapOf("one" to true, "two" to true, "three" to true))
     }
 
     @Test
@@ -244,9 +482,21 @@ class NadelIncrementalResultSupportTest {
             runTest {
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-                val subject = NadelIncrementalResultSupport(channel)
+                val subject = NadelIncrementalResultSupport(accumulator, channel)
 
                 val failureMutex = Mutex(true)
+
+                every {
+                    accumulator.accumulate(any())
+                } returns Unit
+                every {
+                    accumulator.getIncrementalPartialResult(any())
+                } answers {
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(firstArg())
+                        .build()
+                }
 
                 // When
                 subject.defer(
@@ -277,6 +527,11 @@ class NadelIncrementalResultSupportTest {
                 // todo: we need to add error handling i.e. forward a GraphQL error in the delayed response with hasNext=false
                 // assertTrue(contents.map { it.hasNext() } == listOf(false))
 
+                verifyOrder {
+                    accumulator.accumulate(any())
+                    accumulator.getIncrementalPartialResult(any())
+                }
+
                 completed = true
             }
         } catch (e: UnsupportedOperationException) {
@@ -293,7 +548,7 @@ class NadelIncrementalResultSupportTest {
     fun `handles empty Flow`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(channel)
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
 
         // When
         subject.defer(emptyFlow())
@@ -309,8 +564,20 @@ class NadelIncrementalResultSupportTest {
     fun `Flow can launch more defer jobs`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(channel)
+        val subject = NadelIncrementalResultSupport(accumulator, channel)
         val childLock = Mutex(locked = true)
+
+        every {
+            accumulator.accumulate(any())
+        } returns Unit
+        every {
+            accumulator.getIncrementalPartialResult(any())
+        } answers {
+            DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                .incrementalItems(emptyList())
+                .hasNext(firstArg())
+                .build()
+        }
 
         // When
         subject.defer(
@@ -340,15 +607,29 @@ class NadelIncrementalResultSupportTest {
 
         val parent = channel.receive()
         assertTrue(parent.hasNext())
-        assertTrue(parent.extensions == mapOf("parent" to true))
 
         childLock.unlock()
 
         val child = channel.receive()
         assertFalse(child.hasNext())
-        assertTrue(child.extensions == mapOf("child" to true))
 
         assertTrue(channel.toList().isEmpty())
+
+        verifyOrder {
+            accumulator.accumulate(
+                match { parent ->
+                    parent.extensions == mapOf("parent" to true)
+                },
+            )
+            accumulator.getIncrementalPartialResult(true)
+
+            accumulator.accumulate(
+                match { child ->
+                    child.extensions == mapOf("child" to true)
+                },
+            )
+            accumulator.getIncrementalPartialResult(false)
+        }
     }
 
     @Test
@@ -357,21 +638,33 @@ class NadelIncrementalResultSupportTest {
             runTest {
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-                val subject = NadelIncrementalResultSupport(channel)
+                val subject = NadelIncrementalResultSupport(accumulator, channel)
+
+                every {
+                    accumulator.accumulate(any())
+                } returns Unit
+                every {
+                    accumulator.getIncrementalPartialResult(any())
+                } answers {
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(firstArg())
+                        .build()
+                }
+
+                val inputResults = listOf(
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(false)
+                        .build(),
+                    DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
+                        .incrementalItems(emptyList())
+                        .hasNext(false)
+                        .build(),
+                )
 
                 // When
-                subject.defer(
-                    flowOf(
-                        DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                            .incrementalItems(emptyList())
-                            .hasNext(false)
-                            .build(),
-                        DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult()
-                            .incrementalItems(emptyList())
-                            .hasNext(false)
-                            .build(),
-                    ),
-                )
+                subject.defer(inputResults.asFlow())
 
                 // Then
                 subject.onInitialResultComplete()
@@ -379,6 +672,12 @@ class NadelIncrementalResultSupportTest {
                 val contents = channel.toList()
                 assertTrue(contents.size == 1)
                 assertTrue(contents.map { it.hasNext() } == listOf(false))
+
+                verifyOrder {
+                    accumulator.accumulate(inputResults[0])
+                    accumulator.getIncrementalPartialResult(false)
+                    accumulator.accumulate(inputResults[1])
+                }
             }
         }
 
@@ -393,7 +692,7 @@ class NadelIncrementalResultSupportTest {
             runTest {
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-                val subject = NadelIncrementalResultSupport(channel)
+                val subject = NadelIncrementalResultSupport(accumulator, channel)
                 val lock = CompletableDeferred<Boolean>()
 
                 assertFalse(channel.isClosedForSend)

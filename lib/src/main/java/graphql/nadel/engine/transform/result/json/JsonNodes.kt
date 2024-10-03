@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.result.json
 
+import graphql.Assert
+import graphql.Assert.assertShouldNeverHappen
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
@@ -7,9 +9,13 @@ import graphql.nadel.engine.util.JsonMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Use [NadelCachingJsonNodes] for the most part because that is faster.
+ * Generic interface to extract a [JsonNode] from the result for a given [NadelQueryPath].
  *
- * In an ideal world we switch to
+ * Use [NadelCachingJsonNodes] for the most part because that is faster.
+ * It is the default implementation.
+ *
+ * @param data The JSON map data.
+ * @param pathPrefix For incremental (defer) payloads, this is the prefix that needs to be removed from the path.
  */
 interface JsonNodes {
     /**
@@ -18,12 +24,12 @@ interface JsonNodes {
     fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode>
 
     companion object {
-        internal var nodesFactory: (JsonMap) -> JsonNodes = {
-            NadelCachingJsonNodes(it)
+        internal var nodesFactory: (JsonMap, NadelQueryPath?) -> JsonNodes = { data, pathPrefix ->
+            NadelCachingJsonNodes(data, pathPrefix)
         }
 
-        operator fun invoke(data: JsonMap): JsonNodes {
-            return nodesFactory(data)
+        operator fun invoke(data: JsonMap, pathPrefix: NadelQueryPath? = null): JsonNodes {
+            return nodesFactory(data, pathPrefix)
         }
     }
 }
@@ -33,18 +39,27 @@ interface JsonNodes {
  */
 class NadelCachingJsonNodes(
     private val data: JsonMap,
+    private val pathPrefix: NadelQueryPath? = null, // for incremental (defer) payloads, we pass in the prefix we need to remove from path
 ) : JsonNodes {
     private val nodes = ConcurrentHashMap<NadelQueryPath, List<JsonNode>>()
 
     override fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean): List<JsonNode> {
         val rootNode = JsonNode(data)
-        return getNodesAt(rootNode, queryPath, flatten)
+
+        return if (pathPrefix == null) {
+            getNodesAt(rootNode, queryPath, flatten)
+        } else if (queryPath.startsWith(pathPrefix.segments)) {
+            getNodesAt(rootNode, queryPath.removePrefix(pathPrefix.segments), flatten)
+        } else {
+            emptyList()
+        }
     }
 
     /**
      * Extracts the nodes at the given query selection path.
      */
     private fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
+
         var queue = listOf(rootNode)
 
         // todo work backwards here instead of forwards
@@ -89,11 +104,10 @@ class NadelCachingJsonNodes(
         if (value is AnyList && flattenLists) {
             return getFlatNodes(value)
         }
-        val node = JsonNode(
-            value = value,
-        )
 
-        return sequenceOf(node)
+        return sequenceOf(
+            JsonNode(value = value),
+        )
     }
 
     /**

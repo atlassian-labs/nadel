@@ -40,6 +40,7 @@ import graphql.language.Type
 import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.ServiceExecutionResult
@@ -67,6 +68,7 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
+import org.reactivestreams.Publisher
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
@@ -365,30 +367,12 @@ fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
     return provide(executionInput.query, executionInput.operationName, executionInput.context)
 }
 
-fun ServiceExecutionResult.copy(
-    data: MutableJsonMap = this.data,
-    errors: MutableList<MutableJsonMap> = this.errors,
-    extensions: MutableJsonMap = this.extensions,
-): ServiceExecutionResult {
-    return newServiceExecutionResult(data, errors, extensions)
-}
-
 fun newServiceExecutionResult(
     data: MutableJsonMap = mutableMapOf(),
     errors: MutableList<MutableJsonMap> = mutableListOf(),
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
     return NadelServiceExecutionResultImpl(data, errors, extensions)
-}
-
-fun newServiceExecutionResult(
-    error: GraphQLError,
-): ServiceExecutionResult {
-    return newServiceExecutionResult(
-        errors = mutableListOf(
-            error.toSpecification(),
-        ),
-    )
 }
 
 fun newExecutionResult(

@@ -188,6 +188,7 @@ class NadelResultTrackerTest {
             if (value is AnyList || value is AnyMap) {
                 val queryPath = NadelQueryPath(
                     path
+                        .value
                         .filterIsInstance<NadelResultPathSegment.Object>()
                         .map(NadelResultPathSegment.Object::key),
                 )
@@ -379,6 +380,7 @@ class NadelResultTrackerTest {
             if (value is AnyList || value is AnyMap) {
                 val queryPath = NadelQueryPath(
                     path
+                        .value
                         .filterIsInstance<NadelResultPathSegment.Object>()
                         .map(NadelResultPathSegment.Object::key),
                 )
@@ -439,7 +441,7 @@ class NadelResultTrackerTest {
         val data = result.getData<JsonMap>()
 
         // When
-        val visited = mutableListOf<Pair<List<NadelResultPathSegment>, Any?>>()
+        val visited = mutableListOf<Pair<NadelResultPath, Any?>>()
         JsonNode(data).dfs { path, value ->
             visited.add(path to value)
         }
@@ -529,8 +531,8 @@ class NadelResultTrackerTest {
      * It's much easier to reason the logic in this recursive function.
      */
     private suspend fun JsonNode.dfs(
-        path: List<NadelResultPathSegment> = emptyList(),
-        onConsume: suspend (List<NadelResultPathSegment>, Any?) -> Unit,
+        path: NadelResultPath = NadelResultPath.empty,
+        onConsume: suspend (NadelResultPath, Any?) -> Unit,
     ) {
         onConsume(path, value)
 
@@ -543,6 +545,12 @@ class NadelResultTrackerTest {
                 JsonNode(element).dfs(path.toBuilder().add(index).build(), onConsume)
             }
         }
+    }
+
+    private fun JsonNode.getAt(
+        path: NadelResultPath,
+    ): Any? {
+        return getAt(path.value)
     }
 
     private fun JsonNode.getAt(

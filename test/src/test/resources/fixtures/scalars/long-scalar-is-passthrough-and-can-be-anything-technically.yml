@@ -4,16 +4,16 @@ enabled: true
 overallSchema:
   service: |
     type Query {
-      aField: URL
+      aField: Long
     }
-    scalar URL
+    scalar Long
 # language=GraphQL
 underlyingSchema:
   service: |
     type Query {
-      aField: URL
+      aField: Long
     }
-    scalar URL
+    scalar Long
 query: |
   query {
     aField

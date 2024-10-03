@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -25,11 +26,29 @@ import kotlin.reflect.KClass
 // For navigation so you can search up UpdateTestSnapshots
 private typealias UpdateTestSnapshots = Unit
 
-suspend fun main() {
+suspend inline fun <reified T : NadelIntegrationTest> update() {
+    return update(T::class)
+}
+
+suspend fun <T : NadelIntegrationTest> update(klass: KClass<T>) {
+    main(klass.qualifiedName!!)
+}
+
+private suspend fun main(vararg args: String) {
     val sourceRoot = File("test/src/test/kotlin/")
     require(sourceRoot.exists() && sourceRoot.isDirectory)
 
     getTestClassSequence()
+        .filter {
+            args.isEmpty() || args.contains(it.qualifiedName)
+        }
+        .toList()
+        .let { klasses ->
+            // Running this wll first generate snapshots for tests that do not have snapshots
+            // If all tests have snapshots, then we update them all
+            getNonExistentOrAll(klasses)
+                .asSequence()
+        }
         .onEach { klass ->
             println("Loading ${klass.qualifiedName}")
         }
@@ -42,27 +61,54 @@ suspend fun main() {
 
             val captured = test.capture()
 
-            val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
-                .indent(' '.toString().repeat(4))
-                .addFileComment("@formatter:off")
-                .addType(makeTestSnapshotClass(klass, captured))
-                .build()
-                .writeTo(sourceRoot)
-
-            // Fixes shitty indentation
-            outputFile
-                .writeText(
-                    outputFile.readText()
-                        .replace(
-                            "            ),\n            )\n",
-                            "            ),\n        )\n",
-                        )
-                        .replace(
-                            "            \"\"\".trimMargin(),\n            )\n",
-                            "            \"\"\".trimMargin(),\n        )\n",
-                        ),
-                )
+            writeTestSnapshotClass(klass, captured, sourceRoot)
         }
+}
+
+fun writeTestSnapshotClass(
+    klass: KClass<NadelIntegrationTest>,
+    captured: TestExecutionCapture,
+    sourceRoot: File,
+) {
+    val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
+        .indent(' '.toString().repeat(4))
+        .addFileComment(FORMATTER_OFF)
+        .addFunction(makeUpdateSnapshotFunction(klass))
+        .addType(makeTestSnapshotClass(klass, captured))
+        .build()
+        .writeTo(sourceRoot)
+
+    // Fixes shitty indentation
+    outputFile
+        .writeText(
+            outputFile.readText()
+                .replace(
+                    "            ),\n            )\n",
+                    "            ),\n        )\n",
+                )
+                .replace(
+                    "            \"\"\".trimMargin(),\n            )\n",
+                    "            \"\"\".trimMargin(),\n        )\n",
+                ),
+        )
+}
+
+private fun getNonExistentOrAll(klasses: List<KClass<NadelIntegrationTest>>): List<KClass<NadelIntegrationTest>> {
+    return klasses
+        .filter { klass ->
+            classForNameOrNull(klass.qualifiedName + "Snapshot") == null
+        }
+        .takeIf {
+            it.isNotEmpty()
+        }
+        ?: klasses
+}
+
+fun makeUpdateSnapshotFunction(klass: KClass<NadelIntegrationTest>): FunSpec {
+    return FunSpec.builder("main")
+        .addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
+        .addCode("graphql.nadel.tests.next.update<%T>()", klass)
+        .build()
 }
 
 private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
@@ -87,7 +133,7 @@ private fun makeTestSnapshotClass(
     return TypeSpec.classBuilder(klass.simpleName + "Snapshot")
         .superclass(TestSnapshot::class)
         .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots")
-        .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S","unused").build())
+        .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
         .addProperty(makeServiceCallsProperty(captured))
         .addProperty(makeNadelResultProperty(captured))
         .build()
@@ -151,7 +197,7 @@ private fun makeNadelResultProperty(captured: TestExecutionCapture): PropertySpe
                 add("(\n")
                 indented {
                     captured.delayedResults
-                        .map (::writeResultJson)
+                        .map(::writeResultJson)
                         .sorted() // Delayed results are not in deterministic order, so we sort them so the output is consistent
                         .forEach { json ->
                             add("%S", json)
@@ -177,14 +223,14 @@ private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCa
             ExpectedServiceCall::query.name
             add("%L = %S,\n", ExpectedServiceCall::service.name, call.service)
             add("%L = %S,\n", ExpectedServiceCall::query.name, call.query.replaceIndent(" "))
-            add("%L = %S,\n", ExpectedServiceCall::variables.name, call.variables)
+            add("%L = %S,\n", ExpectedServiceCall::variables.name, writeResultJson(call.variables))
             add("%L = %S,\n", ExpectedServiceCall::result.name, writeResultJson(call.result))
 
             add("delayedResults = %M", listOfJsonStringsMember)
             add("(\n")
             indented {
                 call.delayedResults
-                    .map (::writeResultJson)
+                    .map(::writeResultJson)
                     .sorted() // Delayed results are not in deterministic order, so we sort them so the output is consistent
                     .forEach { json ->
                         add("%S", json)
@@ -217,3 +263,18 @@ private fun writeResultJson(result: DelayedIncrementalPartialResult): String {
         .writeValueAsString(result.toSpecification())
         .replaceIndent(" ")
 }
+
+private fun classForNameOrNull(name: String): Class<*>? {
+    return try {
+        Class.forName(name)
+    } catch (_: ClassNotFoundException) {
+        null
+    }
+}
+
+/**
+ * Don't declare this as one string, it will turn off the formatter.
+ *
+ * Just don't touch it.
+ */
+private const val FORMATTER_OFF = "@formatter" + ":off"

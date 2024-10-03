@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.query
 
+import graphql.Assert.assertShouldNeverHappen
+
 data class NadelQueryPath(val segments: List<String>) {
     val size: Int get() = segments.size
 
@@ -23,7 +25,26 @@ data class NadelQueryPath(val segments: List<String>) {
         return segments.last()
     }
 
+    fun startsWith(prefix: List<String>): Boolean {
+        if (prefix.size > segments.size) return false
+        for (i in 0..<prefix.size) {
+            if (prefix[i] != segments[i]) return false
+        }
+        return true
+    }
+
+    fun removePrefix(prefix: List<String>): NadelQueryPath {
+        if (this.startsWith(prefix)) {
+            return NadelQueryPath(segments.drop(prefix.size))
+        }
+        return assertShouldNeverHappen("NadelQueryPath did not start with prefix")
+    }
+
     companion object {
         val root = NadelQueryPath(emptyList())
+
+        fun fromResultPath(path: List<Any>): NadelQueryPath {
+            return NadelQueryPath(path.filterIsInstance<String>())
+        }
     }
 }

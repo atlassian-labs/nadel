@@ -6,6 +6,7 @@ import graphql.nadel.engine.transform.result.json.NadelEphemeralJsonNode.Compani
 import graphql.nadel.engine.transform.result.json.NadelEphemeralJsonNode.Companion.component3
 import graphql.nadel.engine.util.AnyList
 import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.result.NadelResultPath
 import graphql.nadel.result.NadelResultPathSegment
 
 /**
@@ -31,9 +32,9 @@ internal class NadelIteratingJsonNodes(
         // So, I actually tested and using a Sequence here is somehow significantly slower
         // So let's stick with the good ol for loop
         val results = mutableListOf<JsonNode>()
-        iterator.forEach { (q, r, e) ->
-            if (q.size == queryPath.segments.size) {
-                results.add(JsonNode(e))
+        iterator.forEach { (elementQueryPath, elementResultPath, element) ->
+            if (elementQueryPath.size == queryPath.segments.size) {
+                results.add(JsonNode(element))
             }
         }
 
@@ -56,12 +57,12 @@ internal class NadelIteratingJsonNodes(
  */
 internal abstract class NadelEphemeralJsonNode {
     abstract val queryPath: List<String>
-    abstract val resultPath: List<NadelResultPathSegment>
+    abstract val resultPath: NadelResultPath
     abstract val value: Any?
 
     companion object {
         operator fun NadelEphemeralJsonNode.component1(): List<String> = queryPath
-        operator fun NadelEphemeralJsonNode.component2(): List<NadelResultPathSegment> = resultPath
+        operator fun NadelEphemeralJsonNode.component2(): NadelResultPath = resultPath
         operator fun NadelEphemeralJsonNode.component3(): Any? = value
     }
 }
@@ -92,16 +93,28 @@ internal class NadelJsonNodeIterator(
     }
 
     private val queryPathSegments = queryPath.segments
-    private val currentQueryPathSegments: MutableList<String> = ArrayList(queryPathSegments.size)
-    private val currentResultPathSegments: MutableList<NadelResultPathSegment> = ArrayList(queryPathSegments.size + 6)
+    private val currentQueryPathSegments = ArrayList<String>(queryPathSegments.size)
+    private val currentResultPathSegments = ArrayList<NadelResultPathSegment>(queryPathSegments.size + resultBuffer)
 
     companion object {
+        /**
+         * A random guess at a ceiling of how many indices a result path should have over the query path.
+         *
+         * e.g. query path could be [issues, users, next, friends, enemies] and a result path
+         * could be [issues, 0, users, 10, next, friends, 2, enemies, 5]
+         *
+         * So in this case our result path has 4 more elements than the query path.
+         *
+         * We use this buffer value to create a "right sized" [List] for storing the result path etc.
+         */
+        private const val resultBuffer = 6
+
         private val NONE = Any()
     }
 
     private val ephemeralJsonNode = object : NadelEphemeralJsonNode() {
         override val queryPath get() = currentQueryPathSegments
-        override val resultPath get() = currentResultPathSegments
+        override val resultPath get() = NadelResultPath(currentResultPathSegments)
         override var value: Any? = NONE
     }
 
@@ -109,7 +122,7 @@ internal class NadelJsonNodeIterator(
      * These are the parents of the current element, and includes the current element
      * at the end of a traversal iteration.
      */
-    private val parents: MutableList<Any?> = ArrayList<Any?>(queryPathSegments.size + 6).also {
+    private val parents: MutableList<Any?> = ArrayList<Any?>(queryPathSegments.size + resultBuffer).also {
         it.add(root)
     }
 
