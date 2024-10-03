@@ -118,7 +118,6 @@ private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
         .map {
             it.load().kotlin
         }
-        .filter { it.simpleName == "PartitionWithConflictingRoutingValuesTest" }
         .filterNot {
             it.isAbstract
         }

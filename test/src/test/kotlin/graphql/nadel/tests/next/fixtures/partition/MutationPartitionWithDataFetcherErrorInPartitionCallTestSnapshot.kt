@@ -26,7 +26,7 @@ public class MutationPartitionWithDataFetcherErrorInPartitionCallTestSnapshot : 
                 query = """
                 | mutation linkABunchOfThings {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thinksLinked : [{from : "thing-1:partition-A", to : "thing-2:partition-A"}]}) {
+                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-1:partition-A", to : "thing-2:partition-A"}]}) {
                 |       success
                 |       errors {
                 |         message
@@ -70,7 +70,7 @@ public class MutationPartitionWithDataFetcherErrorInPartitionCallTestSnapshot : 
                 query = """
                 | mutation linkABunchOfThings {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thinksLinked : [{from : "thing-3:partition-B", to : "thing-4:partition-B"}]}) {
+                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-3:partition-B", to : "thing-4:partition-B"}]}) {
                 |       success
                 |       errors {
                 |         message
@@ -114,7 +114,7 @@ public class MutationPartitionWithDataFetcherErrorInPartitionCallTestSnapshot : 
                 query = """
                 | mutation linkABunchOfThings {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thinksLinked : [{from : "thing-5:partition-C", to : "thing-6:partition-C"}]}) {
+                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-5:partition-C", to : "thing-6:partition-C"}]}) {
                 |       success
                 |       errors {
                 |         message
@@ -163,7 +163,7 @@ public class MutationPartitionWithDataFetcherErrorInPartitionCallTestSnapshot : 
                 query = """
                 | mutation linkABunchOfThings {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thinksLinked : [{from : "thing-7:partition-D", to : "thing-8:partition-D"}]}) {
+                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-7:partition-D", to : "thing-8:partition-D"}]}) {
                 |       success
                 |       errors {
                 |         message

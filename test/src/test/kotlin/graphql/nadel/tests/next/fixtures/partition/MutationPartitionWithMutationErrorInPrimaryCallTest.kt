@@ -11,7 +11,7 @@ open class MutationPartitionWithMutationErrorInPrimaryCallTest : NadelIntegratio
       mutation linkABunchOfThings {
         thingsApi {
           linkThings(linkThingsInput: {
-            thinksLinked: [
+            thingsLinked: [
               {from: "thing-1:partition-A", to: "thing-2:partition-A"},
               {from: "thing-3:partition-B", to: "thing-4:partition-B"},
               {from: "thing-5:partition-C", to: "thing-6:partition-C"},
@@ -45,11 +45,11 @@ type Mutation {
 
 type ThingsApi {
   linkThings(linkThingsInput: LinkThingsInput!): LinkThingsPayload 
-  @partition(pathToSplitPoint: ["linkThingsInput", "thinksLinked"])
+  @partition(pathToSplitPoint: ["linkThingsInput", "thingsLinked"])
 }
 
 input LinkThingsInput {
-  thinksLinked: [ThingsLinked!]!
+  thingsLinked: [ThingsLinked!]!
 }
 
 input ThingsLinked {
@@ -82,7 +82,7 @@ type LinkThingsPayload {
                             .dataFetcher("linkThings") { env ->
                                 val filter =
                                     env.getArgument<Map<String, List<Map<String, String>>>>("linkThingsInput")!!
-                                val thingsLinked = filter["thinksLinked"]!!
+                                val thingsLinked = filter["thingsLinked"]!!
 
                                 if(thingsLinked.any { it["from"]?.contains("partition-A") == true }) {
                                     return@dataFetcher mapOf(

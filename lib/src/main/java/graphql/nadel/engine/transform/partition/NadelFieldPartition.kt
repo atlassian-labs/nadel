@@ -26,7 +26,6 @@ class NadelFieldPartition(
     ): Map<String, ExecutableNormalizedField> {
         val partitionInstructions = extractPartitionInstructions(field)
 
-        // TODO: better message
         checkNotNull(partitionInstructions) { "Expected values to be partitioned but got null" }
 
         val partitionedValues = partitionValues(partitionInstructions)
@@ -42,7 +41,6 @@ class NadelFieldPartition(
     }
 
     private fun partitionValues(partitionInstructions: PartitionInstructions): Map<String, List<*>> {
-        // TODO: Null check
         return partitionInstructions.values.groupBy { value ->
             val partitionKeys = partitionInstructions.inputValueDefinitions.flatMap { inputValueDefinition ->
                 collectPartitionKeysForValue(value, inputValueDefinition)
@@ -72,7 +70,6 @@ class NadelFieldPartition(
                         )
                     }
                 } else {
-                    // TODO: better message & more idiomatic kotlin
                     throw NadelCannotPartitionFieldException("Expected inputObjectType but got $inputValueDefinition")
                 }
             }
@@ -93,7 +90,6 @@ class NadelFieldPartition(
             }
         }
 
-        // TODO: better message & more idiomatic Kotlin
         throw NadelCannotPartitionFieldException("Cannot partition value $value of type ${inputValueDefinition.name} ")
     }
 
@@ -127,10 +123,11 @@ class NadelFieldPartition(
     fun extractPartitionInstructions(
         field: ExecutableNormalizedField,
     ): PartitionInstructions? {
+
         if (pathToPartitionArg.isEmpty()) {
-            // TODO: msg "cannot partition empty path"
-            return null
+            throw NadelCannotPartitionFieldException("Expected path to partitioning argument to be non-empty for field ${field.name}")
         }
+
         // The first item in the path is the argument name
         val argumentRoot = field.getNormalizedArgument(pathToPartitionArg[0])
         var value = argumentRoot
@@ -151,11 +148,15 @@ class NadelFieldPartition(
             value = newValue
         }
 
-        return if (value != null && value.value is List<*>) {
-            PartitionInstructions(inputValueDefinitions, value.value as List<*>, argumentRoot)
+        return if (value != null) {
+            if (value.value is List<*>) {
+                PartitionInstructions(inputValueDefinitions, value.value as List<*>, argumentRoot)
+            } else {
+                throw NadelCannotPartitionFieldException("Only list values can be partitioned but got '${value.value}' for field ${field.name}")
+            }
         } else {
-            // TODO: msg "cannot partition when type of value is not list"
-            null
+            // if the value is null then we can't partition
+            return null
         }
     }
 
