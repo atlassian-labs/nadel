@@ -216,6 +216,17 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
+    val partitionDirectiveDefinition = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+            "This allows you to partition a field"
+            directive @partition(
+                "The path to the split point"
+                pathToSplitPoint: [String!]!
+            ) on FIELD_DEFINITION
+        """.trimIndent()
+    )
+
     internal fun createUnderlyingServiceHydration(
         fieldDefinition: GraphQLFieldDefinition,
         overallSchema: GraphQLSchema,

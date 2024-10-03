@@ -96,6 +96,7 @@ internal class NextgenEngine(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
         transforms = transforms,
+        executionHooks = executionHooks,
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val dynamicServiceResolution = DynamicServiceResolution(
@@ -252,6 +253,20 @@ internal class NextgenEngine(
             service = service,
             executionContext = executionContext.copy(
                 hydrationDetails = hydrationDetails,
+            ),
+        )
+    }
+
+    internal suspend fun executePartitionedCall(
+        topLevelField: ExecutableNormalizedField,
+        service: Service,
+        executionContext: NadelExecutionContext,
+    ): ServiceExecutionResult {
+        return executeTopLevelField(
+            topLevelField = topLevelField,
+            service = service,
+            executionContext = executionContext.copy(
+                isPartitionedCall = true,
             ),
         )
     }
