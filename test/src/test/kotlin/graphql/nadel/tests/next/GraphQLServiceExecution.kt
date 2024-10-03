@@ -78,7 +78,6 @@ class GraphQLServiceExecution(
         success: JsonMap?,
         failure: Throwable?,
     ) {
-        val fourSpaces = ' '.toString().repeat(4)
         val query = input.query
 
         val variables = jsonObjectMapper
