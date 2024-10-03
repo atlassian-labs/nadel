@@ -247,8 +247,8 @@ internal class NadelNewBatchHydrator(
                             if (sourceObjectResultPath == null) {
                                 null
                             } else {
-                                DeferPayload.Builder()
-                                    .path(sourceObjectResultPath)
+                                DeferPayload.newDeferredItem()
+                                    .path(sourceObjectResultPath.value)
                                     .data(
                                         mapOf(
                                             sourceField.resultKey to getHydrationValueForSourceObject(

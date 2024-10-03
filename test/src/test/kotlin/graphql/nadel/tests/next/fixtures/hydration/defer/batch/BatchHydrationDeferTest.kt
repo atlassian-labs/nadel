@@ -101,8 +101,7 @@ class BatchHydrationDeferTest : NadelIntegrationTest(
                 wiring
                     .type("Query") { type ->
                         type.dataFetcher("usersByIds") { env ->
-                            env.getArgument<List<String>>("ids")
-                                .map(usersByIds::get)
+                            env.getArgument<List<String>>("ids")!!.map(usersByIds::get)
                         }
                     }
             }
