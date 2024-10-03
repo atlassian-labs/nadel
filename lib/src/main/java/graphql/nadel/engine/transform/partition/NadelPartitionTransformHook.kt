@@ -10,7 +10,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLInputValueDefinition
 
 /**
- * TODO: Add documentation
+ * This hook allows you to provide custom partitioning logic for fields.
  */
 interface NadelPartitionTransformHook {
 
@@ -36,7 +36,6 @@ interface NadelPartitionTransformHook {
         return null
     }
 
-    // TODO: can this function be moved to the NadelFieldPartitionContext class?
     /**
      * This hook allows you to provide a partition key for a given scalar value.
      * Arguments with the same partition key will be sent on the same request.
