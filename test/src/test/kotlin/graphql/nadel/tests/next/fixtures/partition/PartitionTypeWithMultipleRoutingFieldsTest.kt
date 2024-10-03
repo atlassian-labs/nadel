@@ -24,10 +24,9 @@ open class PartitionTypeWithMultipleRoutingFieldsTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
-  things(filter: ThingsFilter): [Thing] @routing(pathToSplitPoint: ["filter", "thingsIds"])
+  things(filter: ThingsFilter): [Thing] @partition(pathToSplitPoint: ["filter", "thingsIds"])
 }
 
 input ThingsFilter {

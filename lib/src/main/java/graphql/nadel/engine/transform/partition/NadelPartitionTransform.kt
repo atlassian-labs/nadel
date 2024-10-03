@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.partition
 
+import graphql.language.ArrayValue
+import graphql.language.StringValue
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -20,7 +22,9 @@ import graphql.nadel.engine.util.getType
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toGraphQLError
+import graphql.nadel.schema.NadelDirectives
 import graphql.normalized.ExecutableNormalizedField
+import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -32,12 +36,11 @@ internal class NadelPartitionTransform(
 ) : NadelTransform<NadelPartitionTransform.State> {
     data class State(
         val executionContext: NadelExecutionContext,
-        val fieldPartitionContext: NadelFieldPartitionContext,
+        val fieldPartitionContext: Any,
         val fieldPartitions: Map<String, ExecutableNormalizedField>? = null,
         val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf(),
         val errors: List<Throwable>? = null,
-    ) {
-    }
+    )
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
@@ -71,6 +74,7 @@ internal class NadelPartitionTransform(
         }
 
         val fieldPartition = NadelFieldPartition(
+            pathToPartitionArg = getPathToPartitionArg(overallField, executionBlueprint.engineSchema) ?: return null,
             fieldPartitionContext = fieldPartitionContext,
             graphQLSchema = executionBlueprint.engineSchema,
             partitionKeyExtractor = partitionTransformHook.getPartitionKeyExtractor()
@@ -98,6 +102,16 @@ internal class NadelPartitionTransform(
             fieldPartitionContext = fieldPartitionContext,
             fieldPartitions = fieldPartitions
         )
+    }
+
+    private fun getPathToPartitionArg(overallField: ExecutableNormalizedField, schema: GraphQLSchema): List<String>?  {
+        val fieldDef = overallField.getFieldDefinitions(schema).first()
+        val routingDirective = fieldDef.getAppliedDirective(NadelDirectives.partitionDirectiveDefinition.name) ?: return null
+        val pathToSplitPoint = routingDirective.getArgument("pathToSplitPoint")
+            ?.argumentValue
+            ?.value as ArrayValue?
+
+        return pathToSplitPoint?.values?.map { it as StringValue }?.map { it.value }
     }
 
     override suspend fun transformField(

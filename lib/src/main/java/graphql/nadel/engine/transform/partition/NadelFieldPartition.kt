@@ -12,12 +12,13 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 
 class NadelFieldPartition(
-    private val fieldPartitionContext: NadelFieldPartitionContext,
+    private val pathToPartitionArg: List<String>,
+    private val fieldPartitionContext: Any,
     private val graphQLSchema: GraphQLSchema,
     private val partitionKeyExtractor: (
         scalarValue: ScalarValue<*>,
         inputValueDef: GraphQLInputValueDefinition,
-        userContext: Any?,
+        context: Any,
     ) -> String?,
 ) {
     fun createFieldPartitions(
@@ -29,7 +30,6 @@ class NadelFieldPartition(
         checkNotNull(partitionInstructions) { "Expected values to be partitioned but got null" }
 
         val partitionedValues = partitionValues(partitionInstructions)
-        val pathToPartitionArg = fieldPartitionContext.pathToPartitionArg
 
         return partitionedValues.mapValues { (_, value) ->
             val partitionArg = copyInsertingNewValue(partitionInstructions.argumentRoot, pathToPartitionArg, value)
@@ -80,7 +80,7 @@ class NadelFieldPartition(
                 return collectPartitionKeysForValue(value.value, inputValueDefinition)
             }
             is ScalarValue<*> -> {
-                val partitionKey = partitionKeyExtractor(value, inputValueDefinition, fieldPartitionContext.userContext)
+                val partitionKey = partitionKeyExtractor(value, inputValueDefinition, fieldPartitionContext)
 
                 return if (partitionKey != null) {
                     listOf(partitionKey)
@@ -127,8 +127,6 @@ class NadelFieldPartition(
     fun extractPartitionInstructions(
         field: ExecutableNormalizedField,
     ): PartitionInstructions? {
-        val pathToPartitionArg = fieldPartitionContext.pathToPartitionArg
-
         if (pathToPartitionArg.isEmpty()) {
             // TODO: msg "cannot partition empty path"
             return null

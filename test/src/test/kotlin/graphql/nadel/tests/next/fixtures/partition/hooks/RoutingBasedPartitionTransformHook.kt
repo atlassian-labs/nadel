@@ -1,13 +1,11 @@
 package graphql.nadel.tests.next.fixtures.partition.hooks
 
-import graphql.language.ArrayValue
 import graphql.language.ScalarValue
 import graphql.language.StringValue
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLInputValueDefinition
@@ -21,16 +19,8 @@ class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
         service: graphql.nadel.Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): NadelFieldPartitionContext? {
-        val fieldDef = overallField.getFieldDefinitions(executionBlueprint.engineSchema).first()
-        val routingDirective = fieldDef.getAppliedDirective("routing") ?: return null
-        val pathToSplitPoint = routingDirective.getArgument("pathToSplitPoint")
-            ?.argumentValue
-            ?.value as ArrayValue?
-
-        return NadelFieldPartitionContext(
-            pathToPartitionArg = pathToSplitPoint?.values?.map { it as StringValue }?.map { it.value }!!
-        )
+    ): Unit {
+        return Unit
     }
 
     override fun getPartitionKeyExtractor(): (ScalarValue<*>, GraphQLInputValueDefinition, Any?) -> String? {

@@ -26,10 +26,9 @@ open class PartitionWithFieldAliasTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
-  things(ids: [ID!]! ): [Thing]  @routing(pathToSplitPoint: ["ids"])
+  things(ids: [ID!]! ): [Thing]  @partition(pathToSplitPoint: ["ids"])
 }
 
 type Thing {

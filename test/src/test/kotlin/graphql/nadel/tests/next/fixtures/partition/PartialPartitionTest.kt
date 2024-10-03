@@ -26,14 +26,13 @@ open class PartialPartitionTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
   api: Api
 }
 
 type Api {
-  things(ids: [ID!]! ): [Thing]  @routing(pathToSplitPoint: ["ids"])
+  things(ids: [ID!]! ): [Thing]  @partition(pathToSplitPoint: ["ids"])
   stuff(id: ID!): Stuff
 }
 

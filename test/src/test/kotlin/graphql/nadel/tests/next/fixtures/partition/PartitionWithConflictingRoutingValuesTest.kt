@@ -11,7 +11,7 @@ open class PartitionWithConflictingRoutingValuesTest : NadelIntegrationTest(
       query getPartitionedThings {
         things(filter: { thingsIds: [
             { primaryId: "thing-1-primary:partition-A", secondaryId: "thing-1-secondary" }, 
-            { primaryId: "thing-2-different-partition:partition-A", secondaryId: "thing-2-secondary-same-partition:partition-B" },
+            { primaryId: "thing-2-different-partition:partition-A", secondaryId: "thing-2-secondary-different-partition:partition-B" },
             { primaryId: "thing-3-primary-no-partition", secondaryId: "thing-3-secondary:partition-A" },
             { primaryId: "thing-4-primary:partition-B", secondaryId: "thing-4-secondary" } 
         ]}) {
@@ -24,10 +24,8 @@ open class PartitionWithConflictingRoutingValuesTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
-
 type Query {
-  things(filter: ThingsFilter): [Thing] @routing(pathToSplitPoint: ["filter", "thingsIds"])
+  things(filter: ThingsFilter): [Thing] @partition(pathToSplitPoint: ["filter", "thingsIds"])
 }
 
 input ThingsFilter {

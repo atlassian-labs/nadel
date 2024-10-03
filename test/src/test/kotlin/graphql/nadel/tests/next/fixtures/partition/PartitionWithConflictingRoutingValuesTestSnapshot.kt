@@ -25,7 +25,7 @@ public class PartitionWithConflictingRoutingValuesTestSnapshot : TestSnapshot() 
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   things(filter: {thingsIds : [{primaryId : "thing-1-primary:partition-A", secondaryId : "thing-1-secondary"}, {primaryId : "thing-2-different-partition:partition-A", secondaryId : "thing-2-secondary-same-partition:partition-B"}, {primaryId : "thing-3-primary-no-partition", secondaryId : "thing-3-secondary:partition-A"}, {primaryId : "thing-4-primary:partition-B", secondaryId : "thing-4-secondary"}]}) {
+                |   things(filter: {thingsIds : [{primaryId : "thing-1-primary:partition-A", secondaryId : "thing-1-secondary"}, {primaryId : "thing-2-different-partition:partition-A", secondaryId : "thing-2-secondary-different-partition:partition-B"}, {primaryId : "thing-3-primary-no-partition", secondaryId : "thing-3-secondary:partition-A"}, {primaryId : "thing-4-primary:partition-B", secondaryId : "thing-4-secondary"}]}) {
                 |     id
                 |     name
                 |   }

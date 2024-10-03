@@ -34,7 +34,6 @@ open class MutationPartitionWithErrorsOnlyTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
     echo: String
@@ -46,7 +45,7 @@ type Mutation {
 
 type ThingsApi {
   linkThings(linkThingsInput: LinkThingsInput!): LinkThingsPayload 
-  @routing(pathToSplitPoint: ["linkThingsInput", "thinksLinked"])
+  @partition(pathToSplitPoint: ["linkThingsInput", "thinksLinked"])
 }
 
 input LinkThingsInput {

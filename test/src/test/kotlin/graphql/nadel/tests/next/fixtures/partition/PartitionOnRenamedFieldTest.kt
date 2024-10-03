@@ -26,10 +26,9 @@ open class PartitionOnRenamedFieldTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-directive @routing (pathToSplitPoint: [String!]!) on FIELD_DEFINITION
 
 type Query {
-  renamedThings(ids: [ID!]! ): [Thing]  @routing(pathToSplitPoint: ["ids"]) @renamed(from: "things")
+  renamedThings(ids: [ID!]! ): [Thing]  @partition(pathToSplitPoint: ["ids"]) @renamed(from: "things")
   renamedEcho: String @renamed(from: "echo")
 }
 
