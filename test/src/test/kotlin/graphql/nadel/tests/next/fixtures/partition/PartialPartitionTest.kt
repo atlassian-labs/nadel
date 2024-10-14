@@ -28,7 +28,7 @@ open class PartialPartitionTest : NadelIntegrationTest(
             overallSchema = """
 
 type Query {
-  api: Api @namespace
+  api: Api @namespaced
 }
 
 type Api {
