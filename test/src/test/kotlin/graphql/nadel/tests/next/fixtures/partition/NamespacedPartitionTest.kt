@@ -29,7 +29,7 @@ open class NamespacedPartitionTest : NadelIntegrationTest(
             overallSchema = """
 
 type Query {
-  thingsApi: ThingsApi
+  thingsApi: ThingsApi @namespaced
 }
 
 type ThingsApi {
