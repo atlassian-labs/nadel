@@ -4,7 +4,9 @@ import graphql.nadel.Service
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
+import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
+import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.future.await
@@ -101,6 +103,10 @@ interface NadelExecutionHooks {
         userContext: Any?,
     ): List<List<T>> {
         return listOf(argumentValues)
+    }
+
+    fun partitionTransformerHook(): NadelPartitionTransformHook {
+        return object: NadelPartitionTransformHook {}
     }
 }
 

@@ -35,8 +35,6 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toGraphQLError
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
-import graphql.nadel.result.NadelResultPath
-import graphql.nadel.result.NadelResultPathSegment
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async

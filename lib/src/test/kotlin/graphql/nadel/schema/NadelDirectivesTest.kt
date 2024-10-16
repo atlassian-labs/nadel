@@ -12,6 +12,7 @@ import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
+import graphql.nadel.schema.NadelDirectives.partitionDirectiveDefinition
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -36,6 +37,7 @@ class NadelDirectivesTest : DescribeSpec({
         ${AstPrinter.printAst(nadelHydrationConditionDefinition)}
         ${AstPrinter.printAst(nadelHydrationResultFieldPredicateDefinition)}
         ${AstPrinter.printAst(nadelHydrationResultConditionDefinition)}
+        ${AstPrinter.printAst(partitionDirectiveDefinition)}
         scalar JSON
     """
 
