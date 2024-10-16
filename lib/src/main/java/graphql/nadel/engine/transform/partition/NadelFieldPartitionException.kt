@@ -6,8 +6,7 @@ import graphql.nadel.error.NadelGraphQLErrorException
 class NadelPartitionGraphQLErrorException(
     message: String,
     path: List<Any>? = null,
-    errorClassification: ErrorClassification? = partitioningErrorClassification,
-) : NadelGraphQLErrorException(message, path, errorClassification)
+) : NadelGraphQLErrorException(message, path, partitioningErrorClassification)
 
 class NadelCannotPartitionFieldException(
     message: String,

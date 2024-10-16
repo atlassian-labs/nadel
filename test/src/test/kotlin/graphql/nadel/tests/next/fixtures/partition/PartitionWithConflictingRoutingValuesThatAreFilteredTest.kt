@@ -7,6 +7,8 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
+import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
@@ -104,25 +106,29 @@ type Thing {
                                 service: graphql.nadel.Service,
                                 overallField: ExecutableNormalizedField,
                                 hydrationDetails: ServiceExecutionHydrationDetails?,
-                            ): Predicate<String> {
-                                return Predicate { partitionValue ->
-                                    partitionValue.contains("primary")
-                                }
+                            ): NadelFieldPartitionContext {
+                                return TestPartitionContext
                             }
 
-                            override fun getPartitionKeyExtractor(): (ScalarValue<*>, GraphQLInputValueDefinition, Any?) -> String? {
-                                return { scalarValue, _, context ->
-                                    if (scalarValue !is StringValue) {
-                                        null
-                                    } else {
-                                        if (scalarValue.value.contains(":").not()) {
-                                            null
-                                        } else if ((context as Predicate<String>).test(scalarValue.value as String)
-                                                .not()
-                                        ) {
+                            override fun getPartitionKeyExtractor(): NadelPartitionKeyExtractor {
+                                return object : NadelPartitionKeyExtractor {
+                                    override fun getPartitionKey(
+                                        scalarValue: ScalarValue<*>,
+                                        inputValueDef: GraphQLInputValueDefinition,
+                                        context: NadelFieldPartitionContext
+                                    ): String? {
+                                        return if (scalarValue !is StringValue) {
                                             null
                                         } else {
-                                            scalarValue.value.split(":")[1]
+                                            if (scalarValue.value.contains(":").not()) {
+                                                null
+                                            } else if ((context as TestPartitionContext).getPredicate().test(scalarValue.value as String)
+                                                    .not()
+                                            ) {
+                                                null
+                                            } else {
+                                                scalarValue.value.split(":")[1]
+                                            }
                                         }
                                     }
                                 }
@@ -131,5 +137,13 @@ type Thing {
                     }
                 }
             )
+    }
+}
+
+object TestPartitionContext: NadelFieldPartitionContext() {
+    fun getPredicate(): Predicate<String> {
+        return Predicate { partitionValue ->
+            partitionValue.contains("primary")
+        }
     }
 }

@@ -9,29 +9,25 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
 
-object NadelPartitionListMerger {
+internal object NadelPartitionListMerger {
     fun mergeDataFromList(
         dataFromPartitionCalls: List<Any?>,
         thisNodesData: Any?,
-        parentNodes: List<JsonNode>,
+        parentNode: JsonNode,
         overallField: ExecutableNormalizedField,
     ): List<NadelResultInstruction.Set> {
-        val parentNode = parentNodes.first()
-
         val listDataFromPartitionCalls = dataFromPartitionCalls
-            .mapNotNull {
+            .flatMap {
                 if (it == null) {
-                    null
+                    emptyList()
                 } else {
-                    check(it is List<*>) { "Expected a list, but got ${it::class.simpleName}" }
-                    it
+                    it as List<*>
                 }
-            }.flatten()
+            }
 
         val thisNodesDataCast = thisNodesData?.let {
-            check(it is List<*>) { "Expected a list, but got ${it::class.simpleName}" }
-            it
-        } ?: emptyList<NadelResultInstruction.Set>()
+            it as List<*>
+        } ?: emptyList<Any?>()
 
         return listOf(
             NadelResultInstruction.Set(

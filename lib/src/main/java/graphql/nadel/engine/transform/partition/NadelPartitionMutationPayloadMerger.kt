@@ -9,15 +9,14 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
 
-object NadelPartitionMutationPayloadMerger {
+internal object NadelPartitionMutationPayloadMerger {
 
     fun mergeDataFromMutationPayloadLike(
         dataFromPartitionCalls: List<Any?>,
         thisNodesData: Any?,
-        parentNodes: List<JsonNode>,
+        parentNode: JsonNode,
         overallField: ExecutableNormalizedField,
     ): List<NadelResultInstruction.Set> {
-        val parentNode = parentNodes.first()
 
         // TODO: I'm not sure what's the best way to handle non-successful calls
         // - force `success` to be false?
@@ -29,14 +28,12 @@ object NadelPartitionMutationPayloadMerger {
                 if (it == null) {
                     nonSuccessPayload
                 } else {
-                    check(it is Map<*, *>) { "Expected a Map, but got ${it::class.simpleName}" }
-                    it
+                    it as Map<*, *>
                 }
             }
 
         val thisNodesDataCast = thisNodesData?.let {
-            check(it is Map<*, *>) { "Expected a Map, but got ${it::class.simpleName}" }
-            it
+            it as Map<*, *>
         } ?: nonSuccessPayload
 
         val allListKeys = (thisNodesDataCast.keys + mutationPayloadLikeDataFromPartitionCalls.flatMap { it.keys })
@@ -74,14 +71,14 @@ object NadelPartitionMutationPayloadMerger {
         return this is GraphQLObjectType
             && this.getField("success")?.let { it.type.unwrapNonNull() as? GraphQLScalarType }?.name == "Boolean"
             && this.getField("errors") != null
-            && this.fields.filter { it.name != "success" }.all { it.type.unwrapNonNull() is GraphQLList }
+            && this.fields.all { it.name == "success" || it.type.unwrapNonNull() is GraphQLList }
     }
 }
 
-fun Any?.safeToBoolean(): Boolean {
+private fun Any?.safeToBoolean(): Boolean {
     return (this as? Boolean) ?: false
 }
 
-fun Any?.safeToList(): List<Any> {
+private fun Any?.safeToList(): List<Any> {
     return (this as? List<Any>) ?: emptyList()
 }
