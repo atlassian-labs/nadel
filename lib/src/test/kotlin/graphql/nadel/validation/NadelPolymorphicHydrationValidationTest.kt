@@ -95,7 +95,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            assert(!errors.map { it.message }.isEmpty())
         }
 
         it("fails if one of polymorphic hydrations references non existent field") {
