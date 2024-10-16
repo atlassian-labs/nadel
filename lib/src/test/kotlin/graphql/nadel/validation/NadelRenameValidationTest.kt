@@ -7,6 +7,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 val renameDirectiveDef = """
     directive @renamed(
@@ -38,7 +40,7 @@ class NadelRenameValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            errors.shouldBeEmpty()
         }
 
         it("passes if rename references existing underlying type") {
@@ -68,7 +70,7 @@ class NadelRenameValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            errors.shouldBeEmpty()
         }
 
         it("raises error if type is renamed twice") {
@@ -106,9 +108,9 @@ class NadelRenameValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<DuplicatedUnderlyingType>()
-            assert(error.service.name == "test")
-            assert(error.duplicates.map { it.overall.name }.toSet() == setOf("User", "Profile"))
-            assert(error.duplicates.map { it.underlying.name }.toSet().singleOrNull() == "Account")
+            error.service.name.shouldBe("test")
+            error.duplicates.map { it.overall.name }.toSet().shouldBe(setOf("User", "Profile"))
+            error.duplicates.map { it.underlying.name }.toSet().singleOrNull().shouldBe("Account")
         }
 
         it("allows fields to be duplicated") {
@@ -152,7 +154,7 @@ class NadelRenameValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         // When we say implicitly renamed, we refer to the fact that the output type of the field
@@ -209,10 +211,10 @@ class NadelRenameValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val incompatibleTypeName = errors.assertSingleOfType<IncompatibleFieldOutputType>()
-            assert(incompatibleTypeName.parentType.overall.name == "Query")
-            assert(incompatibleTypeName.parentType.underlying.name == "Query")
-            assert(incompatibleTypeName.overallField.type.unwrapAll().name == "Test")
-            assert(incompatibleTypeName.underlyingField.type.unwrapAll().name == "Account")
+            incompatibleTypeName.parentType.overall.name.shouldBe("Query")
+            incompatibleTypeName.parentType.underlying.name.shouldBe("Query")
+            incompatibleTypeName.overallField.type.unwrapAll().name.shouldBe("Test")
+            incompatibleTypeName.underlyingField.type.unwrapAll().name.shouldBe("Account")
         }
 
         xit("passes if field uses renamed shared type") {
@@ -290,11 +292,11 @@ class NadelRenameValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingRename>()
-            assert(error.service.name == "test")
-            assert(error.subject.name == "test")
-            assert(error.overallField.name == "test")
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
+            error.service.name.shouldBe("test")
+            error.subject.name.shouldBe("test")
+            error.overallField.name.shouldBe("test")
+            error.parentType.overall.name.shouldBe("Query")
+            error.parentType.underlying.name.shouldBe("Query")
         }
 
         it("raises error if renamed type references non existent underlying type") {
@@ -328,8 +330,8 @@ class NadelRenameValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingType>()
-            assert(error.subject.name == "User")
-            assert(error.overallType.name == "User")
+            error.subject.name.shouldBe("User")
+            error.overallType.name.shouldBe("User")
         }
     }
 })

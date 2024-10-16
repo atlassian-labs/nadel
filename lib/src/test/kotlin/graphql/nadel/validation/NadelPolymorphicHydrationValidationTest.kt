@@ -9,6 +9,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 private const val source = "$" + "source"
 
@@ -95,7 +97,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(!errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if one of polymorphic hydrations references non existent field") {
@@ -182,10 +184,10 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.singleOfType<MissingHydrationActorField>()
-            assert(error.service.name == "issues")
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.hydration.pathToActorField == listOf("internalUser"))
+            error.service.name.shouldBe("issues")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.hydration.pathToActorField.shouldBe(listOf("internalUser"))
         }
 
         it("fails if a mix of batched and non-batched hydrations is used") {
@@ -272,8 +274,8 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationsMismatch>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.overallField.name == "creator")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
         }
 
         it("can detect if polymorphic hydration from the same service returns a type that does not exist in the underlying schema") {
@@ -333,8 +335,8 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             val error = errors.assertSingleOfType<MissingUnderlyingType>()
-            assert(error.overallType.name == "Issue")
-            assert(error.service.name == "issues")
+            error.overallType.name.shouldBe("Issue")
+            error.service.name.shouldBe("issues")
         }
 
         it("can detect if polymorphic hydration from the same service references a type that does not exist in the underlying schema") {
@@ -403,8 +405,8 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             val error = errors.assertSingleOfType<MissingUnderlyingType>()
-            assert(error.overallType.name == "Comment")
-            assert(error.service.name == "issues")
+            error.overallType.name.shouldBe("Comment")
+            error.service.name.shouldBe("issues")
         }
 
         it("passes if polymorphic hydration is valid when actor field returns a renamed type") {
@@ -477,7 +479,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if return type is not a union") {
@@ -552,8 +554,8 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.isNotEmpty())
             val error = errors.filterIsInstance<FieldWithPolymorphicHydrationMustReturnAUnion>().single()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.overallField.name == "creator")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
         }
 
         it("fails if one of the hydrations' return types is not in the union") {
@@ -628,10 +630,10 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.isNotEmpty())
             val error = errors.singleOfType<HydrationIncompatibleOutputType>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.actorField.name == "externalUser")
-            assert((error.actorField.type as GraphQLNamedType).name == "ExternalUser")
-            assert(error.incompatibleOutputType.name == "ExternalUser")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.actorField.name.shouldBe("externalUser")
+            (error.actorField.type as GraphQLNamedType).name.shouldBe("ExternalUser")
+            error.incompatibleOutputType.name.shouldBe("ExternalUser")
         }
     }
 })

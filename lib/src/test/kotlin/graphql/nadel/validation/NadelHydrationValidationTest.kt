@@ -14,6 +14,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationA
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
@@ -71,7 +73,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails when batch hydration with multiple \$source args") {
@@ -127,9 +129,9 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.size == 1)
+            errors.size.shouldBe(1)
             assert(errors.single() is NadelSchemaValidationError.MultipleSourceArgsInBatchHydration)
-            assert(errors.single().message == "Multiple \$source.xxx arguments are not supported for batch hydration. Field: JiraIssue.creator")
+            errors.single().message.shouldBe("Multiple \$source.xxx arguments are not supported for batch hydration. Field: JiraIssue.creator")
         }
 
         it("fails when batch hydration with no \$source args") {
@@ -184,9 +186,9 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.size == 1)
+            errors.size.shouldBe(1)
             assert(errors.single() is NadelSchemaValidationError.NoSourceArgsInBatchHydration)
-            assert(errors.single().message == "No \$source.xxx arguments for batch hydration. Field: JiraIssue.creator")
+            errors.single().message.shouldBe("No \$source.xxx arguments for batch hydration. Field: JiraIssue.creator")
         }
 
         it("passes when batch hydration with a single \$source arg and an \$argument arg") {
@@ -241,7 +243,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            errors.shouldBeEmpty()
         }
 
         it("fails if non-existent hydration reference field") {
@@ -349,12 +351,12 @@ class NadelHydrationValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
 
-            assert(errors.size == 1)
+            errors.size.shouldBe(1)
             val error = errors.assertSingleOfType<MissingHydrationActorField>()
-            assert(error.service.name == "issues")
-            assert(error.hydration.serviceName == "users")
-            assert(error.overallField.name == "creator")
-            assert(error.parentType.overall.name == "Issue")
+            error.service.name.shouldBe("issues")
+            error.hydration.serviceName.shouldBe("users")
+            error.overallField.name.shouldBe("creator")
+            error.parentType.overall.name.shouldBe("Issue")
         }
 
         it("fails if hydrated field has rename") {
@@ -412,9 +414,9 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<CannotRenameHydratedField>()
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
         }
 
         it("can extend type with hydration") {
@@ -470,7 +472,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if hydration actor service does not exist") {
@@ -526,11 +528,11 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationActorService>()
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.subject == error.overallField)
-            assert(error.hydration.serviceName == "userService")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.subject.shouldBe(error.overallField)
+            error.hydration.serviceName.shouldBe("userService")
         }
 
         it("fails if hydrated field is not nullable") {
@@ -585,9 +587,9 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationFieldMustBeNullable>()
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
         }
 
         it("fails if hydration actor field does not exist") {
@@ -639,11 +641,11 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationActorField>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.hydration.pathToActorField == listOf("userById"))
-            assert(error.overallField == error.subject)
+            error.parentType.overall.name.shouldBe("Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.hydration.pathToActorField.shouldBe(listOf("userById"))
+            error.overallField.shouldBe(error.subject)
         }
 
         it("fails if hydration argument references non existent field") {
@@ -698,10 +700,10 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationFieldValueSource>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArgSource.pathToField == listOf("creatorId"))
+            error.parentType.overall.name.shouldBe("Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArgSource.pathToField.shouldBe(listOf("creatorId"))
         }
 
         it("fails if hydration argument references non existent argument") {
@@ -761,10 +763,10 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationArgumentValueSource>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArgSource.argumentName == "secrets")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArgSource.argumentName.shouldBe("secrets")
         }
 
         it("fails if hydration argument references non existent remote argument") {
@@ -824,10 +826,10 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<NonExistentHydrationActorFieldArgument>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.argument == "someArg")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.argument.shouldBe("someArg")
         }
 
         it("fails if hydration defines duplicated arguments") {
@@ -888,10 +890,10 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<DuplicatedHydrationArgument>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.duplicates.map { it.name }.toSet() == setOf("id"))
+            error.parentType.overall.name.shouldBe("Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.duplicates.map { it.name }.toSet().shouldBe(setOf("id"))
         }
 
         it("fails if hydration field has missing non-nullable arguments with underlying top level fields") {
@@ -950,10 +952,10 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingRequiredHydrationActorFieldArgument>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.argument == "other")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.argument.shouldBe("other")
         }
 
         it("passes if hydration field has missing nullable arguments with underlying top level fields") {
@@ -1009,7 +1011,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("checks the output type of the actor field against the output type of the hydrated field") {
@@ -1082,10 +1084,10 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationIncompatibleOutputType>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.subject == error.overallField)
-            assert(error.incompatibleOutputType.name == "Account")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("creator")
+            error.subject.shouldBe(error.overallField)
+            error.incompatibleOutputType.name.shouldBe("Account")
         }
 
         it("fails if one of the hydration return types is not in the union") {
@@ -1153,10 +1155,10 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.isNotEmpty())
             val error = errors.singleOfType<HydrationIncompatibleOutputType>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.actorField.name == "externalUser")
-            assert((error.actorField.type as GraphQLNamedType).name == "ExternalUser")
-            assert(error.incompatibleOutputType.name == "ExternalUser")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.actorField.name.shouldBe("externalUser")
+            (error.actorField.type as GraphQLNamedType).name.shouldBe("ExternalUser")
+            error.incompatibleOutputType.name.shouldBe("ExternalUser")
         }
 
         it("fails if actor output type does not implement interface") {
@@ -1229,9 +1231,9 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.isNotEmpty())
             val error = errors.singleOfType<HydrationIncompatibleOutputType>()
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.actorField.name == "externalUser")
-            assert(error.incompatibleOutputType.name == "ExternalUser")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.actorField.name.shouldBe("externalUser")
+            error.incompatibleOutputType.name.shouldBe("ExternalUser")
         }
 
         it("passes if actor output type implements the interface") {
@@ -1302,7 +1304,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("passes if actor output type belongs in union") {
@@ -1369,7 +1371,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
     }
 })

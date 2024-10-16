@@ -9,6 +9,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.StaticArgIsNotAssigna
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLTypeUtil
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
@@ -75,15 +77,15 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
             //actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "Int")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("id")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("Int")
             // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
-            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creator")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ID!")
+            remoteArgumentSource.pathToField.joinToString(separator = ".").shouldBe("creator")
+            GraphQLTypeUtil.simplePrint(error.hydrationType).shouldBe("ID!")
         }
 
         it("allows a source field of type String to be assigned to actor field argument of type ID") {
@@ -138,7 +140,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("allows a source field of type Int to be assigned to actor field argument of type ID") {
@@ -193,7 +195,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("allows a non-null source field to be applied to a nullable actor field argument") {
@@ -248,7 +250,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("allows a nullable source field to be applied to a non-null actor field argument") {
@@ -303,7 +305,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails when trying to assign a nullable input argument to a non-null actor field argument") {
@@ -365,14 +367,14 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
             // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "ID!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("id")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("ID!")
             // supplied hydration for arg:
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.FieldArgument
-            assert(remoteArgumentSource.argumentName == "creatorId")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ID")
+            remoteArgumentSource.argumentName.shouldBe("creatorId")
+            GraphQLTypeUtil.simplePrint(error.hydrationType).shouldBe("ID")
         }
 
         it("actor field array arg assignability is allowed (batch hydration)") {
@@ -427,7 +429,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("testing array - compatible list of lists passes validation") {
@@ -482,7 +484,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("testing array - incompatible list of lists fails validation") {
@@ -545,15 +547,15 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
             // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "ids")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[[String!]!]!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("ids")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("[[String!]!]!")
             // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
-            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creators")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[[Int!]!]!")
+            remoteArgumentSource.pathToField.joinToString(separator = ".").shouldBe("creators")
+            GraphQLTypeUtil.simplePrint(error.hydrationType).shouldBe("[[Int!]!]!")
         }
 
         it("input object - validation allows compatible input objects") {
@@ -621,7 +623,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("input object - fails if incompatible input objects (missing field)") {
@@ -699,15 +701,15 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<MissingFieldInHydratedInputObject>()
             // assert the missing type is the correct one
-            assert(error.missingFieldName == "middleName")
+            error.missingFieldName.shouldBe("middleName")
             // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "name")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("name")
             // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
-            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creator")
+            remoteArgumentSource.pathToField.joinToString(separator = ".").shouldBe("creator")
         }
 
         it("input object - validation allows a valid array nested inside object") {
@@ -778,7 +780,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("input object - allows a valid input nested inside an input") {
@@ -860,7 +862,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("input object - fails validation an invalid type inside input inside another input") {
@@ -948,13 +950,13 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             // using value from Issue.creator but the types are not compatible
             val error = errors.assertSingleOfType<IncompatibleFieldInHydratedInputObject>()
             // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "userInfo")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("userInfo")
             // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
-            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creator")
+            remoteArgumentSource.pathToField.joinToString(separator = ".").shouldBe("creator")
 
         }
 
@@ -1023,7 +1025,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("testing array - validation fails on incompatible array of objects") {
@@ -1101,15 +1103,15 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
             // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creators")
-            assert(error.remoteArg.name == "names")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[FullNameInput]!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creators")
+            error.remoteArg.name.shouldBe("names")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("[FullNameInput]!")
             // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
-            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creators")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[FullName]!")
+            remoteArgumentSource.pathToField.joinToString(separator = ".").shouldBe("creators")
+            GraphQLTypeUtil.simplePrint(error.hydrationType).shouldBe("[FullName]!")
 
         }
 
@@ -1172,12 +1174,12 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
             // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "someArg")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "Int!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("someArg")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("Int!")
             // supplied hydration for arg:
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ID!")
+            GraphQLTypeUtil.simplePrint(error.hydrationType).shouldBe("ID!")
 
         }
 
@@ -1256,15 +1258,15 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
             // required actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creators")
-            assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[UserInput]")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creators")
+            error.remoteArg.name.shouldBe("id")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("[UserInput]")
             // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
-            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "creators")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "[UserRef]")
+            remoteArgumentSource.pathToField.joinToString(separator = ".").shouldBe("creators")
+            GraphQLTypeUtil.simplePrint(error.hydrationType).shouldBe("[UserRef]")
         }
 
         it("Batch hydration edge case - feeding an ID into an [ID] arg is allowed") {
@@ -1322,7 +1324,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            errors.shouldBeEmpty()
 
         }
 
@@ -1377,7 +1379,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            errors.shouldBeEmpty()
         }
 
         it("passes a valid enum hydration argument") {
@@ -1474,7 +1476,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails validation on mismatching enums hydration argument") {
@@ -1565,15 +1567,15 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<IncompatibleHydrationArgumentType>()
             //actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "providerType")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "SomeOtherEnumType")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("providerType")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("SomeOtherEnumType")
             // supplied hydration for arg:
-            assert(error.parentType.underlying.name == "Issue")
+            error.parentType.underlying.name.shouldBe("Issue")
             val remoteArgumentSource = error.remoteArg.remoteArgumentSource as RemoteArgumentSource.ObjectField
-            assert(remoteArgumentSource.pathToField.joinToString(separator = ".") == "providerType")
-            assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ProviderType")
+            remoteArgumentSource.pathToField.joinToString(separator = ".").shouldBe("providerType")
+            GraphQLTypeUtil.simplePrint(error.hydrationType).shouldBe("ProviderType")
         }
     }
     describe("Hydration static arg validation") {
@@ -1637,10 +1639,10 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<StaticArgIsNotAssignable>()
             //actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "Int")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("id")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("Int")
         }
 
         it("allows a source field of type String to be assigned to actor field argument of type ID") {
@@ -1695,7 +1697,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("allows a source field of type Int to be assigned to actor field argument of type ID") {
@@ -1750,7 +1752,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("batch hydration is not allowed with only static args (i.e. when there is no \$source arg)") {
@@ -1860,7 +1862,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("testing array - incompatible list of lists fails validation") {
@@ -1924,10 +1926,10 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<StaticArgIsNotAssignable>()
             //actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "ids")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[[String!]!]!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("ids")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("[[String!]!]!")
         }
 
         it("input object - validation allows compatible input objects") {
@@ -1995,7 +1997,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if incompatible input objects (missing field)") {
@@ -2073,10 +2075,10 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<StaticArgIsNotAssignable>()
             //actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "name")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "FullNameInput!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("name")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("FullNameInput!")
         }
 
         it("validation allows a valid array nested inside object") {
@@ -2154,7 +2156,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("allows a valid object nested inside an object") {
@@ -2245,7 +2247,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails validation an invalid scalar type inside object inside another object") {
@@ -2344,10 +2346,10 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<StaticArgIsNotAssignable>()
             //actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "userInfo")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "UserBasicInfo!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("userInfo")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("UserBasicInfo!")
 
         }
 
@@ -2432,7 +2434,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
                 ),
             )
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("testing array - validation fails on incompatible array of objects") {
@@ -2526,10 +2528,10 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
 
             val error = errors.assertSingleOfType<StaticArgIsNotAssignable>()
             //actor field arg:
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.overallField.name == "creator")
-            assert(error.remoteArg.name == "names")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[FullNameInput]!")
+            error.parentType.overall.name.shouldBe("JiraIssue")
+            error.overallField.name.shouldBe("creator")
+            error.remoteArg.name.shouldBe("names")
+            GraphQLTypeUtil.simplePrint(error.actorArgInputType).shouldBe("[FullNameInput]!")
         }
     }
 })

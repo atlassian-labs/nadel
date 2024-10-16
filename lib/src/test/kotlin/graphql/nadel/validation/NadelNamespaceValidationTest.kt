@@ -3,6 +3,8 @@ package graphql.nadel.validation
 import graphql.nadel.validation.NadelSchemaValidationError.NamespacedTypeMustBeObject
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 class NadelNamespaceValidationTest : DescribeSpec({
     describe("validate") {
@@ -47,7 +49,7 @@ class NadelNamespaceValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if namespaced type is an interface") {
@@ -100,7 +102,7 @@ class NadelNamespaceValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<NamespacedTypeMustBeObject>()
-            assert(error.subject.name == "IssueQuery")
+            error.subject.name.shouldBe("IssueQuery")
         }
 
         it("fails if namespaced type is an enum") {
@@ -149,7 +151,7 @@ class NadelNamespaceValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<NamespacedTypeMustBeObject>()
-            assert(error.subject.name == "IssueQuery")
+            error.subject.name.shouldBe("IssueQuery")
         }
     }
 })

@@ -4,6 +4,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingConcreteTypes
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 class NadelInterfaceValidationTest : DescribeSpec({
     describe("validate") {
@@ -48,7 +50,7 @@ class NadelInterfaceValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("passes if there are valid renamed implementations of the interface") {
@@ -100,7 +102,7 @@ class NadelInterfaceValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if renamed implementation of interface is missing fields") {
@@ -154,10 +156,10 @@ class NadelInterfaceValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.parentType.overall.name == "Human")
-            assert(error.parentType.underlying.name == "Person")
-            assert(error.overallField.name == "age")
-            assert(error.service.name == "entities")
+            error.parentType.overall.name.shouldBe("Human")
+            error.parentType.underlying.name.shouldBe("Person")
+            error.overallField.name.shouldBe("age")
+            error.service.name.shouldBe("entities")
         }
 
         it("it fails if there are no concrete implementations of interface") {
@@ -194,8 +196,8 @@ class NadelInterfaceValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingConcreteTypes>()
-            assert(error.interfaceType.overall.name == "Entity")
-            assert(error.interfaceType.service.name == "entities")
+            error.interfaceType.overall.name.shouldBe("Entity")
+            error.interfaceType.service.name.shouldBe("entities")
         }
 
         it("it passes if shared interfaces have concrete types on all services") {
@@ -262,7 +264,7 @@ class NadelInterfaceValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("it fails if shared interface does not have concrete implementation in one service") {
@@ -320,8 +322,8 @@ class NadelInterfaceValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingConcreteTypes>()
-            assert(error.interfaceType.overall.name == "Entity")
-            assert(error.interfaceType.service.name == "entities")
+            error.interfaceType.overall.name.shouldBe("Entity")
+            error.interfaceType.service.name.shouldBe("entities")
         }
 
         it("it fails if shared interface does not have concrete implementation in multiple service") {
@@ -430,10 +432,10 @@ class NadelInterfaceValidationTest : DescribeSpec({
                 .none { it == "cats" })
 
             val error = errors.assertSingleOfType<MissingConcreteTypes> { it.interfaceType.service.name == "dogs" }
-            assert(error.interfaceType.overall.name == "QueryErrorExtension")
+            error.interfaceType.overall.name.shouldBe("QueryErrorExtension")
 
             val error2 = errors.assertSingleOfType<MissingConcreteTypes> { it.interfaceType.service.name == "humans" }
-            assert(error2.interfaceType.overall.name == "QueryErrorExtension")
+            error2.interfaceType.overall.name.shouldBe("QueryErrorExtension")
         }
 
         it("it does not fail if there is concrete implementation but not exposed") {
@@ -471,7 +473,7 @@ class NadelInterfaceValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
     }
 })

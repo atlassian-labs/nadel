@@ -2,6 +2,7 @@ package graphql.nadel.validation
 
 import graphql.nadel.NadelSchemas.Companion.newNadelSchemas
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 
 class NadelSchemaValidationTest : DescribeSpec({
     describe("validate") {
@@ -24,7 +25,7 @@ class NadelSchemaValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            errors.shouldBeEmpty()
         }
     }
 })

@@ -7,6 +7,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingFiel
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 val namespaceDirectiveDef = """
     directive @namespaced on FIELD_DEFINITION
@@ -33,7 +35,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if argument value is missing") {
@@ -58,11 +60,11 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingArgumentOnUnderlying>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallField.name == "echo")
-            assert(error.subject == error.overallField)
-            assert(error.argument.name == "world")
+            error.parentType.overall.name.shouldBe("Query")
+            error.parentType.underlying.name.shouldBe("Query")
+            error.overallField.name.shouldBe("echo")
+            error.subject.shouldBe(error.overallField)
+            error.argument.name.shouldBe("world")
         }
 
         it("passes if overall argument value is stricter") {
@@ -84,7 +86,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("passes if overall argument value is stricter with more wrappings") {
@@ -106,7 +108,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("passes if overall argument value is stricter with more wrappings 2") {
@@ -131,12 +133,12 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
-            assert(error.subject == error.overallInputArg)
-            assert(error.overallField.name == "echo")
-            assert(error.overallInputArg.name == "world")
+            error.parentType.overall.name.shouldBe("Query")
+            error.parentType.underlying.name.shouldBe("Query")
+            error.overallInputArg.type.unwrapAll().name.shouldBe("Boolean")
+            error.subject.shouldBe(error.overallInputArg)
+            error.overallField.name.shouldBe("echo")
+            error.overallInputArg.name.shouldBe("world")
         }
 
         context("fails if argument type list wrappings are not equal") {
@@ -172,12 +174,12 @@ class NadelFieldValidationTest : DescribeSpec({
                 assert(errors.map { it.message }.isNotEmpty())
 
                 val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-                assert(error.parentType.overall.name == "Query")
-                assert(error.parentType.underlying.name == "Query")
-                assert(error.subject == error.overallInputArg)
-                assert(error.overallField.name == "echo")
-                assert(error.overallInputArg.name == "world")
-                assert(error.overallInputArg.type.unwrapAll().name == error.overallInputArg.type.unwrapAll().name)
+                error.parentType.overall.name.shouldBe("Query")
+                error.parentType.underlying.name.shouldBe("Query")
+                error.subject.shouldBe(error.overallInputArg)
+                error.overallField.name.shouldBe("echo")
+                error.overallInputArg.name.shouldBe("world")
+                error.overallInputArg.type.unwrapAll().name.shouldBe(error.overallInputArg.type.unwrapAll().name)
             }
         }
 
@@ -203,10 +205,10 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
-            assert(error.subject == error.overallInputArg)
+            error.parentType.overall.name.shouldBe("Query")
+            error.parentType.underlying.name.shouldBe("Query")
+            error.overallInputArg.type.unwrapAll().name.shouldBe("Boolean")
+            error.subject.shouldBe(error.overallInputArg)
         }
 
         it("fails if argument value is not matching") {
@@ -231,11 +233,11 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
-            assert(error.underlyingInputArg.type.unwrapAll().name == "String")
-            assert(error.subject == error.overallInputArg)
+            error.parentType.overall.name.shouldBe("Query")
+            error.parentType.underlying.name.shouldBe("Query")
+            error.overallInputArg.type.unwrapAll().name.shouldBe("Boolean")
+            error.underlyingInputArg.type.unwrapAll().name.shouldBe("String")
+            error.subject.shouldBe(error.overallInputArg)
         }
 
         it("checks the output type") {
@@ -276,10 +278,10 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.parentType.overall.name == "Echo")
-            assert(error.parentType.underlying.name == "Echo")
-            assert(error.overallField.name == "hello")
-            assert(error.subject == error.overallField)
+            error.parentType.overall.name.shouldBe("Echo")
+            error.parentType.underlying.name.shouldBe("Echo")
+            error.overallField.name.shouldBe("hello")
+            error.subject.shouldBe(error.overallField)
         }
 
         it("handles types whose fields are contributed from multiple services") {
@@ -341,7 +343,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if field in namespace does not exist") {
@@ -406,11 +408,11 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.service.name == "echo")
-            assert(error.parentType.overall.name == "TestQuery")
-            assert(error.parentType.underlying.name == "TestQuery")
-            assert(error.overallField.name == "worlds")
-            assert(error.subject == error.overallField)
+            error.service.name.shouldBe("echo")
+            error.parentType.overall.name.shouldBe("TestQuery")
+            error.parentType.underlying.name.shouldBe("TestQuery")
+            error.overallField.name.shouldBe("worlds")
+            error.subject.shouldBe(error.overallField)
         }
 
         it("checks mutation and subscription namespaced fields") {
@@ -535,28 +537,28 @@ class NadelFieldValidationTest : DescribeSpec({
             val queryError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestQuery"
             }
-            assert(queryError.service.name == "echo")
-            assert(queryError.parentType.underlying.name == "TestQuery")
-            assert(queryError.overallField.name == "worlds")
-            assert(queryError.subject == queryError.overallField)
+            queryError.service.name.shouldBe("echo")
+            queryError.parentType.underlying.name.shouldBe("TestQuery")
+            queryError.overallField.name.shouldBe("worlds")
+            queryError.subject.shouldBe(queryError.overallField)
 
             val mutationError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestMutation"
             }
-            assert(mutationError.service.name == "echo")
-            assert(mutationError.parentType.underlying.name == "TestMutation")
-            assert(mutationError.overallField.name == "active")
-            assert(mutationError.subject == mutationError.overallField)
+            mutationError.service.name.shouldBe("echo")
+            mutationError.parentType.underlying.name.shouldBe("TestMutation")
+            mutationError.overallField.name.shouldBe("active")
+            mutationError.subject.shouldBe(mutationError.overallField)
 
             val subscriptionError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestSubscription"
             }
-            assert(subscriptionError.service.name == "issues")
-            assert(subscriptionError.parentType.underlying.name == "TestSubscription")
-            assert(subscriptionError.overallField.name == "issue")
-            assert(subscriptionError.subject == subscriptionError.overallField)
+            subscriptionError.service.name.shouldBe("issues")
+            subscriptionError.parentType.underlying.name.shouldBe("TestSubscription")
+            subscriptionError.overallField.name.shouldBe("issue")
+            subscriptionError.subject.shouldBe(subscriptionError.overallField)
 
-            assert(errors.count { it is MissingUnderlyingField } == 3)
+            errors.count { it is MissingUnderlyingField }.shouldBe(3)
         }
 
         it("passes if hydrated type is not present in underlying") {
@@ -608,7 +610,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            errors.shouldBeEmpty()
         }
 
         it("fails if fields declared in extensions are missing in underlying") {
@@ -643,10 +645,10 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.size == 1)
+            errors.size.shouldBe(1)
 
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
-            assert(error.message == "Could not find overall field TypeA.fieldFromExtension on the underlying type TypeA on service test")
+            error.message.shouldBe("Could not find overall field TypeA.fieldFromExtension on the underlying type TypeA on service test")
         }
 
         it("fails if fields in extended Query are missing in underlying") {
@@ -670,11 +672,11 @@ class NadelFieldValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
 
-            assert(errors.size == 1)
+            errors.size.shouldBe(1)
 
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
 
-            assert(error.message == "The overall field Query.fieldA defines argument id which does not exist in service test field Query.fieldA")
+            error.message.shouldBe("The overall field Query.fieldA defines argument id which does not exist in service test field Query.fieldA")
         }
     }
 })

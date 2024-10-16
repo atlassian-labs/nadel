@@ -7,6 +7,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInpu
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 
 class NadelInputValidationTest : DescribeSpec({
     describe("validate") {
@@ -63,7 +65,7 @@ class NadelInputValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("passes if all input values exist in underlying type and input types match accounting for rename") {
@@ -99,7 +101,7 @@ class NadelInputValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("passes if input type was renamed") {
@@ -148,7 +150,7 @@ class NadelInputValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if input field in renamed type does not exist in underlying type") {
@@ -200,11 +202,11 @@ class NadelInputValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingInputField>()
-            assert(error.service.name == "test")
-            assert(error.parentType.overall.name == "Role")
-            assert(error.parentType.underlying.name == "PayFilter")
-            assert(error.overallField.name == "m")
-            assert(error.subject == error.overallField)
+            error.service.name.shouldBe("test")
+            error.parentType.overall.name.shouldBe("Role")
+            error.parentType.underlying.name.shouldBe("PayFilter")
+            error.overallField.name.shouldBe("m")
+            error.subject.shouldBe(error.overallField)
         }
 
         it("fails if input field does not exist in underlying type") {
@@ -256,11 +258,11 @@ class NadelInputValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingInputField>()
-            assert(error.service.name == "test")
-            assert(error.parentType.overall.name == "Role")
-            assert(error.parentType.underlying.name == error.parentType.overall.name)
-            assert(error.overallField.name == "m")
-            assert(error.subject == error.overallField)
+            error.service.name.shouldBe("test")
+            error.parentType.overall.name.shouldBe("Role")
+            error.parentType.underlying.name.shouldBe(error.parentType.overall.name)
+            error.overallField.name.shouldBe("m")
+            error.subject.shouldBe(error.overallField)
         }
 
         it("fails if input types dont match") {
@@ -302,12 +304,12 @@ class NadelInputValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleFieldInputType>()
-            assert(error.service.name == "test")
-            assert(error.parentType.overall.name == "Role")
-            assert(error.parentType.underlying.name == error.parentType.overall.name)
-            assert(error.overallInputField.type.unwrapAll().name == "Boss")
-            assert(error.underlyingInputField.type.unwrapAll().name == "Manager")
-            assert(error.subject == error.overallInputField)
+            error.service.name.shouldBe("test")
+            error.parentType.overall.name.shouldBe("Role")
+            error.parentType.underlying.name.shouldBe(error.parentType.overall.name)
+            error.overallInputField.type.unwrapAll().name.shouldBe("Boss")
+            error.underlyingInputField.type.unwrapAll().name.shouldBe("Manager")
+            error.subject.shouldBe(error.overallInputField)
         }
 
         it("fails if overall input is less strict") {
@@ -340,12 +342,12 @@ class NadelInputValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleFieldInputType>()
-            assert(error.service.name == "test")
-            assert(error.parentType.overall.name == "Role")
-            assert(error.parentType.underlying.name == error.parentType.overall.name)
+            error.service.name.shouldBe("test")
+            error.parentType.overall.name.shouldBe("Role")
+            error.parentType.underlying.name.shouldBe(error.parentType.overall.name)
             assert(!error.overallInputField.type.isNonNull)
             assert(error.underlyingInputField.type.isNonNull)
-            assert(error.subject == error.overallInputField)
+            error.subject.shouldBe(error.overallInputField)
         }
 
         it("passes if underlying input type is less strict") {
@@ -375,7 +377,7 @@ class NadelInputValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("passes if underlying input type is less strict with more wrappings") {
@@ -405,7 +407,7 @@ class NadelInputValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         context("fails if argument type list wrappings are not equal") {
@@ -448,11 +450,11 @@ class NadelInputValidationTest : DescribeSpec({
                 val errors = validate(fixture)
 
                 val error = errors.assertSingleOfType<IncompatibleFieldInputType>()
-                assert(error.service.name == "test")
-                assert(error.parentType.overall.name == "Role")
-                assert(error.parentType.underlying.name == error.parentType.overall.name)
-                assert(error.overallInputField.type.unwrapAll().name == error.underlyingInputField.type.unwrapAll().name)
-                assert(error.overallInputField.name == "m")
+                error.service.name.shouldBe("test")
+                error.parentType.overall.name.shouldBe("Role")
+                error.parentType.underlying.name.shouldBe(error.parentType.overall.name)
+                error.overallInputField.type.unwrapAll().name.shouldBe(error.underlyingInputField.type.unwrapAll().name)
+                error.overallInputField.name.shouldBe("m")
             }
         }
     }

@@ -8,6 +8,8 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInpu
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.seconds
 
 class NadelTypeValidationTest : DescribeSpec({
@@ -43,7 +45,7 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if a type is implicitly renamed") {
@@ -87,13 +89,13 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val missingTypeError = errors.assertSingleOfType<MissingUnderlyingType>()
-            assert(missingTypeError.service.name == "delta")
-            assert(missingTypeError.overallType.name == "Echo")
+            missingTypeError.service.name.shouldBe("delta")
+            missingTypeError.overallType.name.shouldBe("Echo")
 
             val fieldTypeError = errors.assertSingleOfType<IncompatibleFieldOutputType>()
-            assert(fieldTypeError.service.name == "delta")
-            assert(fieldTypeError.overallField.name == "delta")
-            assert(fieldTypeError.parentType.overall.name == "Query")
+            fieldTypeError.service.name.shouldBe("delta")
+            fieldTypeError.overallField.name.shouldBe("delta")
+            fieldTypeError.parentType.overall.name.shouldBe("Query")
         }
 
         it("does not crash on schema definition") {
@@ -130,7 +132,7 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("cannot have a synthetic union") {
@@ -204,7 +206,7 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("prohibits synthetic union if not exclusively used for @hydrated fields") {
@@ -247,8 +249,8 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingType>()
-            assert(error.service.name == "test")
-            assert(error.overallType.name == "Something")
+            error.service.name.shouldBe("test")
+            error.overallType.name.shouldBe("Something")
         }
 
         it("tracks visited types to avoid stack overflow").config(timeout = 1.seconds) {
@@ -288,7 +290,7 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if underlying type is duplicated via renames") {
@@ -328,9 +330,9 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<DuplicatedUnderlyingType>()
-            assert(error.service.name == "test")
-            assert(error.duplicates.map { it.overall.name }.toSet() == setOf("World", "Microcosm"))
-            assert(error.duplicates.map { it.underlying.name }.toSet() == setOf("World"))
+            error.service.name.shouldBe("test")
+            error.duplicates.map { it.overall.name }.toSet().shouldBe(setOf("World", "Microcosm"))
+            error.duplicates.map { it.underlying.name }.toSet().shouldBe(setOf("World"))
         }
 
         it("treats service named shared as fake service for holding types") {
@@ -358,7 +360,7 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("picks up types only used at output type") {
@@ -405,8 +407,8 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.service.name == "users")
-            assert(error.overallField.name == "nextgenSpecific")
+            error.service.name.shouldBe("users")
+            error.overallField.name.shouldBe("nextgenSpecific")
         }
 
         it("picks up types defined in other services and used in unions") {
@@ -470,8 +472,8 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.service.name == "users")
-            assert(error.overallField.name == "nextgenSpecific")
+            error.service.name.shouldBe("users")
+            error.overallField.name.shouldBe("nextgenSpecific")
         }
 
         it("validates extension union member if defined by own service") {
@@ -517,8 +519,8 @@ class NadelTypeValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
             val error = errors.assertSingleOfType<MissingUnderlyingType>()
-            assert(error.service.name == "users")
-            assert(error.overallType.name == "Issue")
+            error.service.name.shouldBe("users")
+            error.overallType.name.shouldBe("Issue")
         }
 
         it("validates external member if service defines it") {
@@ -567,9 +569,9 @@ class NadelTypeValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.service.name == "users")
-            assert(error.parentType.overall.name == "Issue")
-            assert(error.overallField.name == "id")
+            error.service.name.shouldBe("users")
+            error.parentType.overall.name.shouldBe("Issue")
+            error.overallField.name.shouldBe("id")
         }
 
         it("picks up types defined in other services used as input types") {
@@ -613,9 +615,9 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingInputField>()
-            assert(error.service.name == "users")
-            assert(error.parentType.overall.name == "UserFilter")
-            assert(error.overallField.name == "a")
+            error.service.name.shouldBe("users")
+            error.parentType.overall.name.shouldBe("UserFilter")
+            error.overallField.name.shouldBe("a")
         }
 
         it("picks up types not directly referenced") {
@@ -686,20 +688,20 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.size == 3)
+            errors.map { it.message }.size.shouldBe(3)
 
             val missingField = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(missingField.service.name == "users")
-            assert(missingField.parentType.overall.name == "Issue")
-            assert(missingField.overallField.name == "epic")
+            missingField.service.name.shouldBe("users")
+            missingField.parentType.overall.name.shouldBe("Issue")
+            missingField.overallField.name.shouldBe("epic")
 
             val missingIssueFilter = errors.assertSingleOfType<MissingUnderlyingType> {
                 it.overallType.name == "IssueFilter"
             }
-            assert(missingIssueFilter.service.name == "users")
+            missingIssueFilter.service.name.shouldBe("users")
 
             val missingEpic = errors.assertSingleOfType<MissingUnderlyingType> { it.overallType.name == "Epic" }
-            assert(missingEpic.service.name == "users")
+            missingEpic.service.name.shouldBe("users")
         }
 
         it("fails if type kinds are incompatible") {
@@ -736,9 +738,9 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleType>()
-            assert(error.schemaElement.service.name == "test")
-            assert(error.schemaElement.overall.name == "World")
-            assert(error.schemaElement.underlying.name == "World")
+            error.schemaElement.service.name.shouldBe("test")
+            error.schemaElement.overall.name.shouldBe("World")
+            error.schemaElement.underlying.name.shouldBe("World")
         }
 
         it("fails if renamed type kinds are incompatible") {
@@ -775,9 +777,9 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleType>()
-            assert(error.schemaElement.service.name == "test")
-            assert(error.schemaElement.overall.name == "World")
-            assert(error.schemaElement.underlying.name == "Pluto")
+            error.schemaElement.service.name.shouldBe("test")
+            error.schemaElement.overall.name.shouldBe("World")
+            error.schemaElement.underlying.name.shouldBe("Pluto")
         }
 
         it("can validate shared types") {
@@ -861,20 +863,20 @@ class NadelTypeValidationTest : DescribeSpec({
             val missingNextPage = errors.assertSingleOfType<MissingUnderlyingField> {
                 it.overallField.name == "hasNextPage"
             }
-            assert(missingNextPage.service.name == "jira")
-            assert(missingNextPage.parentType.overall.name == "PageInfo")
+            missingNextPage.service.name.shouldBe("jira")
+            missingNextPage.parentType.overall.name.shouldBe("PageInfo")
 
             val missingPrevPage = errors.assertSingleOfType<MissingUnderlyingField> {
                 it.overallField.name == "hasPreviousPage"
             }
-            assert(missingPrevPage.service.name == "jira")
-            assert(missingPrevPage.parentType.overall.name == "PageInfo")
+            missingPrevPage.service.name.shouldBe("jira")
+            missingPrevPage.parentType.overall.name.shouldBe("PageInfo")
 
             val missingStartCursor = errors.assertSingleOfType<MissingUnderlyingField> {
                 it.overallField.name == "startCursor"
             }
-            assert(missingStartCursor.service.name == "users")
-            assert(missingStartCursor.parentType.overall.name == "PageInfo")
+            missingStartCursor.service.name.shouldBe("users")
+            missingStartCursor.parentType.overall.name.shouldBe("PageInfo")
         }
     }
 
@@ -919,11 +921,11 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleFieldOutputType>()
-            assert(error.parentType.overall.name == "Echo")
-            assert(error.parentType.underlying.name == "Echo")
-            assert(error.overallField.name == "world")
-            assert(error.underlyingField.name == "world")
-            assert(error.subject == error.overallField)
+            error.parentType.overall.name.shouldBe("Echo")
+            error.parentType.underlying.name.shouldBe("Echo")
+            error.overallField.name.shouldBe("world")
+            error.underlyingField.name.shouldBe("world")
+            error.subject.shouldBe(error.overallField)
         }
 
         it("passes if underlying output type is non null but overall output type is nullable") {
@@ -963,7 +965,7 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
 
         it("fails if array dimensions are wrong") {
@@ -1007,10 +1009,10 @@ class NadelTypeValidationTest : DescribeSpec({
                 assert(errors.map { it.message }.isNotEmpty())
 
                 val error = errors.assertSingleOfType<IncompatibleFieldOutputType>()
-                assert(error.parentType.overall.name == "Query")
-                assert(error.parentType.underlying.name == "Query")
-                assert(error.overallField.name == "worlds")
-                assert(error.underlyingField.name == "worlds")
+                error.parentType.overall.name.shouldBe("Query")
+                error.parentType.underlying.name.shouldBe("Query")
+                error.overallField.name.shouldBe("worlds")
+                error.underlyingField.name.shouldBe("worlds")
             }
         }
 
@@ -1054,7 +1056,7 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             // We could say .none but this will print out the perpetrator
-            assert(errors.firstOrNull { it !is IncompatibleFieldOutputType } == null)
+            errors.firstOrNull { it !is IncompatibleFieldOutputType }.shouldBe(null)
         }
 
         it("fails if underlying output array type is nullable but overall array type is not null") {
@@ -1097,9 +1099,9 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleFieldOutputType>()
-            assert(error.parentType.overall.name == "Echo")
-            assert(error.parentType.underlying.name == "Echo")
-            assert(error.overallField.name == "worlds")
+            error.parentType.overall.name.shouldBe("Echo")
+            error.parentType.underlying.name.shouldBe("Echo")
+            error.overallField.name.shouldBe("worlds")
         }
 
         it("passes even if output type is renamed") {
@@ -1139,7 +1141,7 @@ class NadelTypeValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            errors.map { it.message }.shouldBeEmpty()
         }
     }
 })

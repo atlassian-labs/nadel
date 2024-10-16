@@ -1,7 +1,6 @@
 package graphql.nadel.engine.instrumentation
 
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
@@ -293,7 +292,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             }
 
             // then
-            assert(instrumentationParams.isEmpty())
+            instrumentationParams.shouldBeEmpty()
 
             // when
             batchTimer.submit()
