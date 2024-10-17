@@ -7,72 +7,45 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
-import graphql.nadel.engine.util.getField
-import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.normalized.incremental.NormalizedDeferredExecution
-import graphql.schema.GraphQLFieldDefinition
 
-object NadelTransformUtil {
-    fun getOverallTypeNameOfNode(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        aliasHelper: NadelAliasHelper,
-        node: JsonNode,
-    ): String? {
-        @Suppress("UNCHECKED_CAST")
-        val nodeValueAsMap = node.value as? JsonMap ?: return null
+/**
+ * Try to limit the usage of this to limit potential refactoring issues in the future.
+ *
+ * i.e. try to use preexisting functions, and never make this public
+ */
+private fun getOverallTypeNameOfNode(
+    executionBlueprint: NadelOverallExecutionBlueprint,
+    service: Service,
+    aliasHelper: NadelAliasHelper,
+    node: JsonNode,
+): String? {
+    @Suppress("UNCHECKED_CAST")
+    val nodeValueAsMap = node.value as? JsonMap ?: return null
 
-        return if (aliasHelper.typeNameResultKey in nodeValueAsMap) {
-            executionBlueprint.getOverallTypeName(
-                service = service,
-                underlyingTypeName = nodeValueAsMap[aliasHelper.typeNameResultKey] as String,
-            )
-        } else {
-            null
-        }
-    }
-
-    fun makeTypeNameField(
-        aliasHelper: NadelAliasHelper,
-        objectTypeNames: List<String>,
-        deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>
-    ): ExecutableNormalizedField {
-        return newNormalizedField()
-            .alias(aliasHelper.typeNameResultKey)
-            .fieldName(TypeNameMetaFieldDef.name)
-            .objectTypeNames(objectTypeNames)
-            .deferredExecutions(deferredExecutions)
-            .build()
-    }
-
-    /**
-     * Gets the field definition for a specific node using the `__typename` from the result node.
-     *
-     * @param overallField the field to get the definition for
-     * @param parentNode the underlying parent node that has the field selected, used to get the type name
-     * @param service the service that the parent node was returned from
-     */
-    fun getOverallFieldDef(
-        // Subject arguments
-        overallField: ExecutableNormalizedField,
-        parentNode: JsonNode,
-        service: Service,
-        // Supplementary arguments
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        aliasHelper: NadelAliasHelper,
-    ): GraphQLFieldDefinition? {
-        val overallTypeName = getOverallTypeNameOfNode(
-            executionBlueprint = executionBlueprint,
+    return if (aliasHelper.typeNameResultKey in nodeValueAsMap) {
+        executionBlueprint.getOverallTypeName(
             service = service,
-            aliasHelper = aliasHelper,
-            node = parentNode,
-        ) ?: return null
-
-        val coordinates = makeFieldCoordinates(overallTypeName, overallField.name)
-        return executionBlueprint.engineSchema.getField(coordinates)
+            underlyingTypeName = nodeValueAsMap[aliasHelper.typeNameResultKey] as String,
+        )
+    } else {
+        null
     }
+}
+
+fun makeTypeNameField(
+    aliasHelper: NadelAliasHelper,
+    objectTypeNames: List<String>,
+    deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
+): ExecutableNormalizedField {
+    return newNormalizedField()
+        .alias(aliasHelper.typeNameResultKey)
+        .fieldName(TypeNameMetaFieldDef.name)
+        .objectTypeNames(objectTypeNames)
+        .deferredExecutions(deferredExecutions)
+        .build()
 }
 
 /**
@@ -84,7 +57,7 @@ fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, T>.getInstructionForN
     aliasHelper: NadelAliasHelper,
     parentNode: JsonNode,
 ): T? = let { instructions ->
-    val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(
+    val overallTypeName = getOverallTypeNameOfNode(
         executionBlueprint = executionBlueprint,
         service = service,
         aliasHelper = aliasHelper,
@@ -100,7 +73,7 @@ fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, List<T>>.getInstructi
     aliasHelper: NadelAliasHelper,
     parentNode: JsonNode,
 ): List<T> = let { instructions ->
-    val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(
+    val overallTypeName = getOverallTypeNameOfNode(
         executionBlueprint = executionBlueprint,
         service = service,
         aliasHelper = aliasHelper,

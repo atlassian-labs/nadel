@@ -28,19 +28,28 @@ internal object NadelHydrationFieldsBuilder {
         parentNode: JsonNode,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
-        return NadelHydrationInputBuilder.getInputValues(
-            instruction = instruction,
-            aliasHelper = aliasHelper,
-            fieldToHydrate = fieldToHydrate,
-            parentNode = parentNode,
-        ).map { args ->
-            makeActorQueries(
+        return NadelHydrationInputBuilder
+            .getInputValues(
                 instruction = instruction,
-                fieldArguments = args,
-                fieldChildren = deepClone(fields = fieldToHydrate.children),
-                executionBlueprint = executionBlueprint,
+                aliasHelper = aliasHelper,
+                fieldToHydrate = fieldToHydrate,
+                parentNode = parentNode,
             )
-        }
+            .map { args ->
+                makeActorQueries(
+                    instruction = instruction,
+                    fieldArguments = args,
+                    fieldChildren = deepClone(fieldToHydrate.children),
+                    executionBlueprint = executionBlueprint,
+                )
+            }
+            // Fix types for virtual fields
+            .onEach { field ->
+                setBackingObjectTypeNames(instruction, field)
+                field.traverseSubTree { child ->
+                    setBackingObjectTypeNames(instruction, child)
+                }
+            }
     }
 
     fun makeBatchActorQueries(
@@ -166,5 +175,19 @@ internal object NadelHydrationFieldsBuilder {
             fieldArguments = fieldArguments,
             fieldChildren = fieldChildren,
         )
+    }
+
+    private fun setBackingObjectTypeNames(
+        instruction: NadelHydrationFieldInstruction,
+        field: ExecutableNormalizedField,
+    ) {
+        val virtualTypeToBackingType = instruction.virtualTypeContext?.virtualTypeToBackingType
+            ?: return // Nothing to do
+
+        field.objectTypeNames.forEach { virtualType ->
+            val backingType = virtualTypeToBackingType[virtualType] ?: return@forEach
+            field.objectTypeNames.remove(virtualType)
+            field.objectTypeNames.add(backingType)
+        }
     }
 }

@@ -28,6 +28,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.NoSourceArgsInBatchHy
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
+import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInterfaceType
@@ -226,6 +227,10 @@ internal class NadelHydrationValidation(
     ): List<NadelSchemaValidationError> {
         // Ensures that the underlying type of the actor field matches with the expected overall output type
         val overallType = overallField.type.unwrapAll()
+
+        if ((overallType as? GraphQLDirectiveContainer)?.hasAppliedDirective("virtualType") == true) {
+            return emptyList() // Bypass validation for now
+        }
 
         // Polymorphic hydration must have union output
         if (hasMoreThanOneHydration && overallType !is GraphQLUnionType) {

@@ -152,6 +152,21 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                 .toList()
 
             if (objectTypeNames.isEmpty()) {
+                // All virtual types
+                if (field.objectTypeNames.all {
+                        executionBlueprint.engineSchema.getObjectType(it).hasAppliedDirective("virtualType")
+                    }) {
+                    return NadelTransformFieldResult(
+                        newField = null,
+                        artificialFields = listOf(
+                            newNormalizedField()
+                                .objectTypeNames(listOf("GraphStoreQueryEdge"))
+                                .alias(state.aliasHelper.typeNameResultKey)
+                                .fieldName(Introspection.TypeNameMetaFieldDef.name)
+                                .build(),
+                        ),
+                    )
+                }
                 error("Service does not own return type. Unable to insert __typename as schema is not configured properly.")
             }
 

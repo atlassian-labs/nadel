@@ -24,6 +24,7 @@ import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.getReachableTypeNames
+import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLImplementingType
@@ -207,7 +208,12 @@ internal class NadelTypeValidation(
                 val underlyingType = getUnderlyingType(overallType, service)
 
                 if (underlyingType == null) {
-                    addMissingUnderlyingTypeError(overallType).let { null }
+                    if ((overallType as? GraphQLDirectiveContainer)?.hasAppliedDirective("virtualType") == true) {
+                        // Do nothing
+                    } else {
+                        addMissingUnderlyingTypeError(overallType)
+                    }
+                    null
                 } else {
                     NadelServiceSchemaElement(
                         service = service,

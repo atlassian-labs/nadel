@@ -4,7 +4,6 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.transform.NadelTransformUtil
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getHydrationActorNodes
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
@@ -17,7 +16,6 @@ import graphql.nadel.engine.util.asNullableJsonMap
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.isList
-import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.unwrapNonNull
 
 internal object NadelBatchHydrationByObjectId {
@@ -120,6 +118,7 @@ internal object NadelBatchHydrationByObjectId {
             getHydrateInstructionsForNodeMatchingObjectId(
                 executionBlueprint = executionBlueprint,
                 state = state,
+                instruction = instruction,
                 sourceNode = sourceNode,
                 sourceIds = sourceIds,
                 resultNodesByObjectId = resultNodesByObjectId
@@ -130,17 +129,20 @@ internal object NadelBatchHydrationByObjectId {
     private fun getHydrateInstructionsForNodeMatchingObjectId(
         executionBlueprint: NadelOverallExecutionBlueprint,
         state: NadelBatchHydrationTransform.State,
+        instruction: NadelBatchHydrationFieldInstruction,
         sourceNode: JsonNode,
         sourceIds: List<List<Any?>>,
         resultNodesByObjectId: Map<List<Any?>, JsonMap>,
     ): NadelResultInstruction {
-        val hydratedFieldDef = NadelTransformUtil.getOverallFieldDef(
-            overallField = state.hydratedField,
-            parentNode = sourceNode,
-            service = state.hydratedFieldService,
-            executionBlueprint = executionBlueprint,
-            aliasHelper = state.aliasHelper,
-        ) ?: error("Unable to find field definition for ${state.hydratedField.queryPath}")
+        val hydratedFieldDef = instruction.hydratedFieldDef
+
+        // val hydratedFieldDef = NadelTransformUtil.getOverallFieldDef(
+        //     overallField = state.hydratedField,
+        //     parentNode = sourceNode,
+        //     service = state.hydratedFieldService,
+        //     executionBlueprint = executionBlueprint,
+        //     aliasHelper = state.aliasHelper,
+        // ) ?: error("Unable to find field definition for ${state.hydratedField.queryPath}")
 
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
             // Set to null if there were no identifier nodes
