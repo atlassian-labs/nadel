@@ -63,9 +63,10 @@ internal class NadelPartitionTransform(
         val partitionInstructions = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionMap<NadelPartitionInstruction>(overallField)
 
-        // We can't partition a field that has multiple partition instructions in different types
+        // We can't partition a field that has multiple partition instructions in different types. But, since
+        // @partition can only be applied to fields in operation and namespaced types, we don't have to worry abou
+        // this case.
         if (partitionInstructions.size != 1) {
-            // TODO add validation to ensure @partition is not used in a way that would result in a ENF to have multiple partition instructions
             return null
         }
 
