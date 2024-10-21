@@ -7,7 +7,6 @@ import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.schema.NadelDirectives.partitionDirectiveDefinition
@@ -29,7 +28,6 @@ class NadelDirectivesTest : DescribeSpec({
         ${AstPrinter.printAst(hydratedDirectiveDefinition)}
         ${AstPrinter.printAst(nadelHydrationArgumentDefinition)}
         ${AstPrinter.printAst(nadelBatchObjectIdentifiedByDefinition)}
-        ${AstPrinter.printAst(nadelHydrationFromArgumentDefinition)}
         ${AstPrinter.printAst(nadelHydrationConditionDefinition)}
         ${AstPrinter.printAst(nadelHydrationResultFieldPredicateDefinition)}
         ${AstPrinter.printAst(nadelHydrationResultConditionDefinition)}

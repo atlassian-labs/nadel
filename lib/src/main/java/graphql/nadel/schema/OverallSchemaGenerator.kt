@@ -65,7 +65,6 @@ internal class OverallSchemaGenerator {
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.renamedDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hiddenDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationFromArgumentDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelBatchObjectIdentifiedByDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationResultFieldPredicateDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationResultConditionDefinition)

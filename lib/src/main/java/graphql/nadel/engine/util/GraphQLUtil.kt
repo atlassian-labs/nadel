@@ -54,6 +54,7 @@ import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult
 import graphql.normalized.NormalizedInputValue
 import graphql.normalized.VariablePredicate
+import graphql.parser.Parser
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLFieldDefinition
@@ -647,3 +648,6 @@ internal fun ExecutableNormalizedField.getFieldDefinitionSequence(
         }
 }
 
+internal inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {
+    return Parser.parse(sdl).definitions.singleOfType()
+}

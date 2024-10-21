@@ -1,7 +1,9 @@
 package graphql.nadel.definition.hydration
 
+import graphql.language.InputObjectTypeDefinition
 import graphql.language.ObjectValue
 import graphql.language.StringValue
+import graphql.nadel.engine.util.parseDefinition
 import graphql.nadel.util.AnyAstValue
 import graphql.nadel.util.getObjectField
 
@@ -11,6 +13,19 @@ import graphql.nadel.util.getObjectField
 class NadelHydrationArgumentDefinition(
     private val argumentObject: ObjectValue,
 ) {
+    companion object {
+        val inputValueDefinition = parseDefinition<InputObjectTypeDefinition>(
+            // language=GraphQL
+            """
+                "This allows you to hydrate new values into fields"
+                input NadelHydrationArgument {
+                    name: String!
+                    value: JSON!
+                }
+            """.trimIndent(),
+        )
+    }
+
     /**
      * Name of the backing field's argument.
      */

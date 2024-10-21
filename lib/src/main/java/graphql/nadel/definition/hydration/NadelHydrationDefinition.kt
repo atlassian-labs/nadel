@@ -1,10 +1,12 @@
 package graphql.nadel.definition.hydration
 
 import graphql.language.ArrayValue
+import graphql.language.DirectiveDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ObjectValue
 import graphql.nadel.definition.hydration.NadelHydrationDefinition.Keyword
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLFieldDefinition
 
@@ -21,36 +23,40 @@ fun GraphQLFieldDefinition.getHydrationDefinitions(): List<NadelHydrationDefinit
         .map(::NadelHydrationDefinition)
 }
 
-/**
- * ```graphql
- * "This allows you to hydrate new values into fields"
- * directive @hydrated(
- *     "The target service"
- *     service: String!
- *     "The target top level field"
- *     field: String!
- *     "How to identify matching results"
- *     identifiedBy: String! = "id"
- *     "How to identify matching results"
- *     inputIdentifiedBy: [NadelBatchObjectIdentifiedBy!]! = []
- *     "Are results indexed"
- *     indexed: Boolean! = false
- *     "Is querying batched"
- *     batched: Boolean! = false
- *     "The batch size"
- *     batchSize: Int! = 200
- *     "The timeout to use when completing hydration"
- *     timeout: Int! = -1
- *     "The arguments to the hydrated field"
- *     arguments: [NadelHydrationArgument!]!
- *     "Specify a condition for the hydration to activate"
- *     when: NadelHydrationCondition
- * ) repeatable on FIELD_DEFINITION
- * ```
- */
 class NadelHydrationDefinition(
     private val appliedDirective: GraphQLAppliedDirective,
 ) {
+    companion object {
+        val directiveDefinition = parseDefinition<DirectiveDefinition>(
+            // language=GraphQL
+            """
+                "This allows you to hydrate new values into fields"
+                directive @hydrated(
+                    "The target service"
+                    service: String!
+                    "The target top level field"
+                    field: String!
+                    "How to identify matching results"
+                    identifiedBy: String! = "id"
+                    "How to identify matching results"
+                    inputIdentifiedBy: [NadelBatchObjectIdentifiedBy!]! = []
+                    "Are results indexed"
+                    indexed: Boolean! = false
+                    "Is querying batched"
+                    batched: Boolean! = false
+                    "The batch size"
+                    batchSize: Int! = 200
+                    "The timeout to use when completing hydration"
+                    timeout: Int! = -1
+                    "The arguments to the hydrated field"
+                    arguments: [NadelHydrationArgument!]!
+                    "Specify a condition for the hydration to activate"
+                    when: NadelHydrationCondition
+                ) repeatable on FIELD_DEFINITION
+            """.trimIndent(),
+        )
+    }
+
     val backingField: List<String>
         get() = appliedDirective.getArgument(Keyword.field).getValue<String>().split(".")
 

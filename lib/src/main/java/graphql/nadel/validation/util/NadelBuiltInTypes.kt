@@ -13,7 +13,6 @@ import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
@@ -44,7 +43,6 @@ object NadelBuiltInTypes {
         deferDirectiveDefinition,
         partitionDirectiveDefinition,
 
-        nadelHydrationFromArgumentDefinition,
         nadelBatchObjectIdentifiedByDefinition,
 
         nadelHydrationResultFieldPredicateDefinition,
