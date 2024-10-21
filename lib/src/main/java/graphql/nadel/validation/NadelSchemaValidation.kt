@@ -6,7 +6,7 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.schema.GraphQLNamedSchemaElement
 
 class NadelSchemaValidation(private val schemas: NadelSchemas) {
-    fun validate(): Set<NadelSchemaValidationError> {
+    fun validate(): List<NadelSchemaValidationResult> {
         val (engineSchema, services) = schemas
 
         val servicesByName = services.strictAssociateBy(Service::name)
@@ -14,9 +14,7 @@ class NadelSchemaValidation(private val schemas: NadelSchemas) {
         val typeValidation = NadelTypeValidation(context, engineSchema, servicesByName)
 
         return services
-            .asSequence()
             .flatMap(typeValidation::validate)
-            .toSet()
     }
 }
 

@@ -3,7 +3,6 @@ package graphql.nadel.validation
 import graphql.ErrorClassification
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
-import graphql.language.InputValueDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
@@ -12,7 +11,6 @@ import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLArgument
-import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectField
@@ -32,7 +30,7 @@ private class NadelSchemaValidationErrorClassification(
     }
 }
 
-sealed interface NadelSchemaValidationError {
+sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     /**
      * Human-readable message associated with the error
      * e.g. could not find underlying type for overall type Foo in service Bar
@@ -53,7 +51,7 @@ sealed interface NadelSchemaValidationError {
     val subject: GraphQLNamedSchemaElement
 
     @Suppress("DeprecatedCallableAddReplaceWith")
-    @Deprecated("This is only here for backwards compatability purposes")
+    @Deprecated("This is only here for backwards compatibility purposes")
     fun toGraphQLError(): GraphQLError {
         return GraphqlErrorBuilder.newError()
             .message(message)
@@ -620,46 +618,6 @@ sealed interface NadelSchemaValidationError {
         }
 
         override val subject = schemaElement.overall
-    }
-
-    data class IncompatibleTypeName(
-        val schemaElement: NadelServiceSchemaElement,
-    ) : NadelSchemaValidationError {
-        val service: Service get() = schemaElement.service
-
-        override val message = run {
-            val s = schemaElement.service.name
-            val o = toString(schemaElement.overall)
-            val u = toString(schemaElement.underlying)
-            "Type name of overall type $o in service $s does not match underlying type name $u"
-        }
-
-        override val subject = schemaElement.overall
-    }
-
-    data class MissingDirectiveArgument(
-        val parent: NadelServiceSchemaElement? = null,
-        val location: GraphQLNamedSchemaElement,
-        val directive: GraphQLDirective,
-        val missing: InputValueDefinition,
-    ) : NadelSchemaValidationError {
-        override val message = run {
-            val l = when (location) {
-                is GraphQLFieldDefinition -> when (parent) {
-                    null -> "field ${location.name}"
-                    else -> "field ${makeFieldCoordinates(parent.overall.name, location.name)}"
-                }
-
-                is GraphQLType -> "type ${location.name}"
-                else -> "${location.javaClass.simpleName} ${location.name}"
-            }
-            val d = directive.name
-            val a = missing.name
-
-            "Directive on $l has directive $d which is missing argument $a"
-        }
-
-        override val subject = location
     }
 
     data class DuplicatedHydrationArgument(

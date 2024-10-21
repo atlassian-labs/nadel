@@ -52,7 +52,7 @@ internal class NadelTypeValidation(
 
     fun validate(
         service: Service,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val (serviceTypes, serviceTypeErrors) = getServiceTypes(service)
         val typeValidationResult = serviceTypes.flatMap(::validate)
         return serviceTypeErrors + typeValidationResult
@@ -60,7 +60,7 @@ internal class NadelTypeValidation(
 
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         if (!visitElement(schemaElement)) {
             return emptyList()
         }
@@ -83,7 +83,7 @@ internal class NadelTypeValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val overallType = overallField.type.unwrapAll()
         val underlyingType = underlyingField.type.unwrapAll()
 
@@ -183,7 +183,7 @@ internal class NadelTypeValidation(
 
     private fun getServiceTypes(
         service: Service,
-    ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationError>> {
+    ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationResult>> {
         val errors = mutableListOf<NadelSchemaValidationError>()
         val hydrationUnions = getHydrationUnions(service)
         val namesUsed = getTypeNamesUsed(service, externalTypes = hydrationUnions)

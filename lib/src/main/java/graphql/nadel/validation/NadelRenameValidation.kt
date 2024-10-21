@@ -20,7 +20,7 @@ internal class NadelRenameValidation(
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         if (overallField.isHydrated()) {
             return listOf(
                 CannotRenameHydratedField(parent, overallField),

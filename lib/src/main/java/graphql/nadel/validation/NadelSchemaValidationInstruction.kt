@@ -1,0 +1,3 @@
+package graphql.nadel.validation
+
+sealed interface NadelSchemaValidationSuccess : NadelSchemaValidationResult

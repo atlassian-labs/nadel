@@ -22,7 +22,7 @@ import graphql.schema.GraphQLUnmodifiedType
 internal class NadelInputValidation {
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (schemaElement.overall is GraphQLInputObjectType && schemaElement.underlying is GraphQLInputObjectType) {
             validate(
                 parent = schemaElement,
@@ -38,7 +38,7 @@ internal class NadelInputValidation {
         parent: NadelServiceSchemaElement,
         overallFields: List<GraphQLInputObjectField>,
         underlyingFields: List<GraphQLInputObjectField>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
         return overallFields.flatMap { overallField ->
@@ -50,7 +50,7 @@ internal class NadelInputValidation {
         parent: NadelServiceSchemaElement,
         overallInputField: GraphQLInputObjectField,
         underlyingFieldsByName: Map<String, GraphQLInputObjectField>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val underlyingInputField = underlyingFieldsByName[overallInputField.name]
         return if (underlyingInputField == null) {
             listOf(
@@ -65,7 +65,7 @@ internal class NadelInputValidation {
         parent: NadelServiceSchemaElement,
         overallInputField: GraphQLInputObjectField,
         underlyingInputField: GraphQLInputObjectField,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (!isInputTypeValid(overallInputField.type, underlyingInputField.type)) {
             listOf(IncompatibleFieldInputType(parent, overallInputField, underlyingInputField))
         } else {
@@ -78,7 +78,7 @@ internal class NadelInputValidation {
         overallField: GraphQLFieldDefinition,
         overallInputArgument: GraphQLArgument,
         underlyingInputArgument: GraphQLArgument,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (!isInputTypeValid(overallInputArgument.type, underlyingInputArgument.type)) {
             listOf(IncompatibleArgumentInputType(parent, overallField, overallInputArgument, underlyingInputArgument))
         } else {

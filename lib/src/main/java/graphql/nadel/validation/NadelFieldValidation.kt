@@ -23,7 +23,7 @@ internal class NadelFieldValidation(
 
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (schemaElement.overall is GraphQLFieldsContainer && schemaElement.underlying is GraphQLFieldsContainer) {
             validate(
                 schemaElement,
@@ -39,7 +39,7 @@ internal class NadelFieldValidation(
         parent: NadelServiceSchemaElement,
         overallFields: List<GraphQLFieldDefinition>,
         underlyingFields: List<GraphQLFieldDefinition>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
         return overallFields
@@ -63,7 +63,7 @@ internal class NadelFieldValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (overallField.isRenamed()) {
             renameValidation.validate(parent, overallField)
         } else if (overallField.isHydrated()) {
@@ -88,7 +88,7 @@ internal class NadelFieldValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val argumentIssues = overallField.arguments.flatMap { overallArg ->
             val underlyingArg = underlyingField.getArgument(overallArg.name)
             if (underlyingArg == null) {

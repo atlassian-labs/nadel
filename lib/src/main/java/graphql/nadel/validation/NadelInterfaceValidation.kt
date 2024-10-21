@@ -6,7 +6,7 @@ import graphql.schema.GraphQLInterfaceType
 internal class NadelInterfaceValidation {
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (schemaElement.overall is GraphQLInterfaceType) {
             validateHasImplementations(schemaElement)
         } else {
@@ -16,7 +16,7 @@ internal class NadelInterfaceValidation {
 
     private fun validateHasImplementations(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val underlyingSchema = schemaElement.service.underlyingSchema
         val underlyingInterfaceType = schemaElement.underlying as GraphQLInterfaceType
         val underlyingImplementations = underlyingSchema.getImplementations(underlyingInterfaceType)

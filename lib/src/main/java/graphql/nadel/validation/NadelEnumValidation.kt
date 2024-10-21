@@ -8,7 +8,7 @@ import graphql.schema.GraphQLEnumValueDefinition
 internal class NadelEnumValidation {
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (schemaElement.overall is GraphQLEnumType && schemaElement.underlying is GraphQLEnumType) {
             validate(
                 parent = schemaElement,
@@ -24,7 +24,7 @@ internal class NadelEnumValidation {
         parent: NadelServiceSchemaElement,
         overallValues: List<GraphQLEnumValueDefinition>,
         underlyingValues: List<GraphQLEnumValueDefinition>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val underlyingValuesByName = underlyingValues.strictAssociateBy { it.name }
 
         return overallValues.mapNotNull { overallValue ->
