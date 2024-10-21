@@ -33,7 +33,7 @@ class NadelHydrationDefinition(
                 "This allows you to hydrate new values into fields"
                 directive @hydrated(
                     "The target service"
-                    service: String!
+                    service: String
                     "The target top level field"
                     field: String!
                     "How to identify matching results"
