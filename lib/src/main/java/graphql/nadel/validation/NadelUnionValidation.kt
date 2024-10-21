@@ -10,7 +10,7 @@ internal class NadelUnionValidation(
 ) {
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         return if (schemaElement.overall is GraphQLUnionType && schemaElement.underlying is GraphQLUnionType) {
             schemaElement.overall.types
                 .flatMap { memberOverallType ->

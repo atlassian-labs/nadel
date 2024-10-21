@@ -48,7 +48,7 @@ internal class NadelHydrationValidation(
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         if (overallField.isRenamed()) {
             return listOf(
                 CannotRenameHydratedField(parent, overallField),
@@ -83,7 +83,7 @@ internal class NadelHydrationValidation(
         overallField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
         hasMoreThanOneHydration: Boolean,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val actorField = overallSchema.queryType.getFieldAt(hydration.backingField)
             ?: return listOf(
                 MissingHydrationActorField(parent, overallField, hydration),
@@ -98,7 +98,7 @@ internal class NadelHydrationValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         // e.g. context.jiraComment
         val pathToSourceInputField = hydration.arguments
             .map { arg -> arg.value }
@@ -130,7 +130,7 @@ internal class NadelHydrationValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         hydrations: List<NadelHydrationDefinition>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val (batched, notBatched) = hydrations.partitionCount(::isBatched)
 
         return if (batched > 0 && notBatched > 0) {
@@ -146,7 +146,7 @@ internal class NadelHydrationValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         hydrations: List<NadelHydrationDefinition>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         if (hydrations.size > 1) {
             val pathsToSourceFields = hydrations
                 .asSequence()
@@ -189,7 +189,7 @@ internal class NadelHydrationValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         hydrations: List<NadelHydrationDefinition>,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         // todo: or maybe just don't allow polymorphic index hydration
         val (indexCount, nonIndexCount) = hydrations.partitionCount { it.isIndexed }
         if (indexCount > 0 && nonIndexCount > 0) {
@@ -211,7 +211,7 @@ internal class NadelHydrationValidation(
         overallField: GraphQLFieldDefinition,
         actorField: GraphQLFieldDefinition,
         hasMoreThanOneHydration: Boolean,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         // Ensures that the underlying type of the actor field matches with the expected overall output type
         val overallType = overallField.type.unwrapAll()
 
@@ -269,7 +269,7 @@ internal class NadelHydrationValidation(
         overallField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
         actorField: GraphQLFieldDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         // Can only provide one value for an argument
         val duplicatedArgumentsErrors = hydration.arguments
             .groupBy { it.name }
@@ -312,7 +312,7 @@ internal class NadelHydrationValidation(
             }
 
         val isBatchHydration = actorField.type.unwrapNonNull().isList
-        val batchHydrationArgumentErrors: List<NadelSchemaValidationError> = when {
+        val batchHydrationArgumentErrors: List<NadelSchemaValidationResult> = when {
             isBatchHydration -> {
                 val numberOfSourceArgs =
                     hydration.arguments.count { it.value is NadelHydrationArgumentDefinition.ValueSource.ObjectField }
@@ -338,7 +338,7 @@ internal class NadelHydrationValidation(
         remoteArgDef: NadelHydrationArgumentDefinition,
         actorField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         val remoteArgSource = remoteArgDef.value
         val actorFieldArg = actorField.getArgument(remoteArgDef.name)
         val isBatchHydration = actorField.type.unwrapNonNull().isList

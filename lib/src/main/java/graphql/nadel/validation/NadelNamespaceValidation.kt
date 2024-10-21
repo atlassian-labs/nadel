@@ -12,7 +12,7 @@ class NadelNamespaceValidation(
 ) {
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): List<NadelSchemaValidationResult> {
         if (!isNamespacedOperationType(typeName = schemaElement.overall.name)) {
             return emptyList()
         }

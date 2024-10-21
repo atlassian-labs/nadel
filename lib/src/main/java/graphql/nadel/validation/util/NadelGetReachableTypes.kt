@@ -2,6 +2,7 @@ package graphql.nadel.validation.util
 
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
+import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.engine.util.AnySDLNamedDefinition
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
