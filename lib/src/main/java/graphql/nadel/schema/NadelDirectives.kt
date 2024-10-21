@@ -2,31 +2,24 @@ package graphql.nadel.schema
 
 import graphql.GraphQLContext
 import graphql.execution.ValuesResolver
-import graphql.language.ArrayValue
 import graphql.language.DirectiveDefinition
 import graphql.language.EnumTypeDefinition
 import graphql.language.InputObjectTypeDefinition
-import graphql.language.ObjectValue
 import graphql.language.SDLDefinition
-import graphql.language.StringValue
-import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.NadelHydrationConditionDefinition
 import graphql.nadel.dsl.NadelHydrationConditionPredicateDefinition
-import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
 import graphql.nadel.dsl.NadelPartitionDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
-import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.TypeMappingDefinition
+import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
-import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLSchema
 import java.util.Locale
 
 /**
@@ -170,53 +163,6 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelHydrationTemplateEnumDefinition = parseDefinition<EnumTypeDefinition>(
-        // language=GraphQL
-        """
-            enum NadelHydrationTemplate {
-                NADEL_PLACEHOLDER
-            }
-        """.trimIndent(),
-    )
-
-    val hydratedFromDirectiveDefinition = parseDefinition<DirectiveDefinition>(
-        // language=GraphQL
-        """
-            "This allows you to hydrate new values into fields"
-            directive @hydratedFrom(
-                "The arguments to the hydrated field"
-                arguments: [NadelHydrationFromArgument!]! = []
-                "The hydration template to use"
-                template: NadelHydrationTemplate!
-            ) repeatable on FIELD_DEFINITION
-        """.trimIndent(),
-    )
-
-    val hydratedTemplateDirectiveDefinition = parseDefinition<DirectiveDefinition>(
-        // language=GraphQL
-        """
-            "This template directive provides common values to hydrated fields"
-            directive @hydratedTemplate(
-                "The target service"
-                service: String!
-                "The target top level field"
-                field: String!
-                "How to identify matching results"
-                identifiedBy: String! = "id"
-                "How to identify matching results"
-                inputIdentifiedBy: [NadelBatchObjectIdentifiedBy!]! = []
-                "Are results indexed"
-                indexed: Boolean = false
-                "Is querying batched"
-                batched: Boolean = false
-                "The batch size"
-                batchSize: Int = 200
-                "The timeout in milliseconds"
-                timeout: Int = -1
-            ) on ENUM_VALUE
-        """.trimIndent(),
-    )
-
     val partitionDirectiveDefinition = parseDefinition<DirectiveDefinition>(
         // language=GraphQL
         """
@@ -227,173 +173,6 @@ object NadelDirectives {
             ) on FIELD_DEFINITION
         """.trimIndent()
     )
-
-    internal fun createUnderlyingServiceHydration(
-        fieldDefinition: GraphQLFieldDefinition,
-        overallSchema: GraphQLSchema,
-    ): List<NadelHydrationDefinition> {
-        val hydrations = fieldDefinition.getAppliedDirectives(hydratedDirectiveDefinition.name)
-            .map { directive ->
-                val arguments = createRemoteArgs(directive.getArgument("arguments").argumentValue.value as ArrayValue)
-
-                val inputIdentifiedBy = directive.getArgument("inputIdentifiedBy")
-                val identifiedByValues = resolveArgumentValue<List<Any>>(inputIdentifiedBy)
-                val identifiedBy = createObjectIdentifiers(identifiedByValues)
-
-                val conditionalHydration = directive.getArgument("when")
-                    ?.let {
-                        buildConditionalHydrationObject(it)?.result
-                    }
-
-                buildHydrationParameters(directive, arguments, identifiedBy, conditionalHydration)
-            }
-
-        val templatedHydrations = fieldDefinition.getAppliedDirectives(hydratedFromDirectiveDefinition.name)
-            .map { directive ->
-                createTemplatedUnderlyingServiceHydration(directive, overallSchema)
-            }
-
-        return hydrations + templatedHydrations
-    }
-
-    private fun buildHydrationParameters(
-        directive: GraphQLAppliedDirective,
-        arguments: List<RemoteArgumentDefinition>,
-        identifiedBy: List<NadelHydrationDefinition.ObjectIdentifier>,
-        conditionalHydration: NadelHydrationResultConditionDefinition? = null,
-    ): NadelHydrationDefinition {
-        val service = getDirectiveValue<String>(directive, "service")
-        val fieldNames = getDirectiveValue<String>(directive, "field").split('.')
-        val objectIdentifier = getDirectiveValue<String>(directive, "identifiedBy")
-        val objectIndexed = getDirectiveValue<Boolean>(directive, "indexed")
-
-        // Note: this is not properly implemented yet, so the value does not matter
-        val batched = false // getDirectiveValue(directive, "batched", Boolean.class, false);
-
-        val batchSize = getDirectiveValue<Int>(directive, "batchSize")
-        val timeout = getDirectiveValue<Int>(directive, "timeout")
-
-        require(fieldNames.isNotEmpty())
-
-        // nominally this should be some other data class that's not an AST element
-        // but history is what it is, and it's an AST element that's' really a data class
-        return NadelHydrationDefinition(
-            service,
-            fieldNames,
-            arguments,
-            objectIdentifier,
-            identifiedBy,
-            objectIndexed,
-            batched,
-            batchSize,
-            timeout,
-            conditionalHydration
-        )
-    }
-
-    private fun createTemplatedUnderlyingServiceHydration(
-        hydratedFromDirective: GraphQLAppliedDirective,
-        overallSchema: GraphQLSchema,
-    ): NadelHydrationDefinition {
-        val template = hydratedFromDirective.getArgument("template")
-        val enumTargetName = resolveArgumentValue<String?>(template)
-        val templateEnumType = overallSchema.getTypeAs<GraphQLEnumType?>("NadelHydrationTemplate")
-        requireNotNull(templateEnumType) { "There MUST be a enum called NadelHydrationTemplate" }
-        val enumValue = templateEnumType.getValue(enumTargetName)
-        requireNotNull(enumValue) {
-            "There MUST be a enum value in NadelHydrationTemplate called '${enumTargetName}'"
-        }
-        val templateDirective = enumValue.getAppliedDirective(hydratedTemplateDirectiveDefinition.name)
-        requireNotNull(templateDirective) {
-            "The enum value '${enumTargetName}' in NadelHydrationTemplate must have a directive called '${hydratedTemplateDirectiveDefinition.name}'"
-        }
-
-        val graphQLArgument = hydratedFromDirective.getArgument("arguments")
-        val argumentValues = resolveArgumentValue<List<Any>>(graphQLArgument)
-        val arguments = createTemplatedHydratedArgs(argumentValues)
-        return buildHydrationParameters(
-            templateDirective,
-            arguments,
-            emptyList()
-        )
-    }
-
-    private fun createRemoteArgs(arguments: ArrayValue): List<RemoteArgumentDefinition> {
-        return arguments.values
-            .map { arg ->
-                @Suppress("UNCHECKED_CAST") // trust GraphQL type system and caller
-                val argMap = arg as ObjectValue
-                val remoteArgName = (argMap.objectFields.single { it.name == "name" }.value as StringValue).value
-                val remoteArgValue = argMap.objectFields.single { it.name == "value" }.value
-                val remoteArgumentSource = createRemoteArgumentSource(remoteArgValue)
-                RemoteArgumentDefinition(remoteArgName, remoteArgumentSource)
-            }
-    }
-
-    private fun createObjectIdentifiers(arguments: List<Any>): List<NadelHydrationDefinition.ObjectIdentifier> {
-        fun Map<String, String>.requireArgument(key: String): String {
-            return requireNotNull(this[key]) {
-                "${nadelBatchObjectIdentifiedByDefinition.name} definition requires '$key' to be not-null"
-            }
-        }
-        return arguments.map { arg ->
-            @Suppress("UNCHECKED_CAST") // trust GraphQL type system and caller
-            val argMap = arg as MutableMap<String, String>
-            val sourceId = argMap.requireArgument("sourceId")
-            val resultId = argMap.requireArgument("resultId")
-            NadelHydrationDefinition.ObjectIdentifier(sourceId, resultId)
-        }
-    }
-
-    private fun createRemoteArgumentSource(value: Value<*>): RemoteArgumentSource {
-        return if (value is StringValue) {
-            val values = value.value.split('.')
-
-            when (values.first()) {
-                "\$source" -> RemoteArgumentSource.ObjectField(
-                    pathToField = values.subList(1, values.size),
-                )
-                "\$argument" -> RemoteArgumentSource.FieldArgument(
-                    argumentName = values.subList(1, values.size).single(),
-                )
-                else -> RemoteArgumentSource.StaticArgument(staticValue = value)
-            }
-        } else {
-            RemoteArgumentSource.StaticArgument(staticValue = value)
-        }
-    }
-
-    private fun createTemplatedHydratedArgs(arguments: List<Any>): List<RemoteArgumentDefinition> {
-        val inputObjectTypeName = nadelHydrationFromArgumentDefinition.name
-        val valueFromFieldKey = "valueFromField"
-        val valueFromArgKey = "valueFromArg"
-
-        return arguments.map { arg ->
-            @Suppress("UNCHECKED_CAST") // trust graphQL type system and caller
-            val argMap = arg as Map<String, String>
-
-            val remoteArgName = requireNotNull(argMap["name"]) {
-                "$inputObjectTypeName requires 'name' to be not-null"
-            }
-
-            val remoteArgFieldValue = argMap[valueFromFieldKey]
-            val remoteArgArgValue = argMap[valueFromArgKey]
-
-            val remoteArgumentSource = if (remoteArgFieldValue != null && remoteArgArgValue != null) {
-                throw IllegalArgumentException("$inputObjectTypeName can not have both $valueFromFieldKey and $valueFromArgKey set")
-            } else {
-                if (remoteArgFieldValue != null) {
-                    RemoteArgumentSource.ObjectField(remoteArgFieldValue.removePrefix("\$source.").split('.'))
-                } else if (remoteArgArgValue != null) {
-                    RemoteArgumentSource.FieldArgument(remoteArgArgValue.removePrefix("\$argument."))
-                } else {
-                    throw IllegalArgumentException("$inputObjectTypeName requires one of $valueFromFieldKey or $valueFromArgKey to be set")
-                }
-            }
-
-            RemoteArgumentDefinition(remoteArgName, remoteArgumentSource)
-        }
-    }
 
     internal fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
         val directive = fieldDefinition.getAppliedDirective(renamedDirectiveDefinition.name)
@@ -438,31 +217,6 @@ object NadelDirectives {
             GraphQLContext.getDefault(),
             Locale.getDefault()
         ) as T
-    }
-
-    private fun buildConditionalHydrationObject(
-        conditionArgument: GraphQLAppliedDirectiveArgument,
-    ): NadelHydrationConditionDefinition? {
-        @Suppress("UNCHECKED_CAST")
-        val result = conditionArgument.getValue<Map<String, Any?>>()
-            ?.get("result") as Map<String, Any>?
-            ?: return null
-
-        val sourceField = result["sourceField"]!! as String
-
-        @Suppress("UNCHECKED_CAST")
-        val predicate = result["predicate"]!! as Map<String, Any>
-
-        return NadelHydrationConditionDefinition(
-            result = NadelHydrationResultConditionDefinition(
-                pathToSourceField = sourceField.split("."),
-                predicate = NadelHydrationConditionPredicateDefinition(
-                    equals = predicate["equals"],
-                    startsWith = predicate["startsWith"] as String?,
-                    matches = predicate["matches"] as String?,
-                ),
-            ),
-        )
     }
 
     private inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {

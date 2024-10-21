@@ -1,7 +1,6 @@
 package graphql.nadel.engine.blueprint
 
-import graphql.nadel.engine.blueprint.directives.getHydratedOrNull
-import graphql.nadel.engine.blueprint.directives.isHydration
+import graphql.nadel.engine.blueprint.directives.getHydrationDefinitions
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLFieldDefinition
@@ -50,7 +49,7 @@ internal class NadelVirtualTypeBlueprintFactory {
     private fun createTypeMappings(
         virtualFieldDef: GraphQLFieldDefinition,
     ): List<VirtualTypeMapping> {
-        val hydration = virtualFieldDef.getHydratedOrNull()
+        val hydration = virtualFieldDef.getHydrationDefinitions().firstOrNull()
             ?: return emptyList() // We should use the non-null method once we delete @hydratedFrom
         val backingFieldDef = engineSchema.queryType.getFieldAt(hydration.backingField)!!
         val backingType = backingFieldDef.type.unwrapAll() as? GraphQLObjectType
