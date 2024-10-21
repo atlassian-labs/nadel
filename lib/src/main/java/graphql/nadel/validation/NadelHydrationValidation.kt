@@ -2,10 +2,10 @@ package graphql.nadel.validation
 
 import graphql.GraphQLContext
 import graphql.nadel.Service
-import graphql.nadel.dsl.RemoteArgumentSource
-import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
-import graphql.nadel.engine.blueprint.directives.getHydrationDefinitions
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.getHydrationDefinitions
+import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.isList
@@ -26,7 +26,6 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrat
 import graphql.nadel.validation.NadelSchemaValidationError.MultipleSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NoSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
-import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -50,7 +49,7 @@ internal class NadelHydrationValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
     ): List<NadelSchemaValidationError> {
-        if (hasRename(overallField)) {
+        if (overallField.isRenamed()) {
             return listOf(
                 CannotRenameHydratedField(parent, overallField),
             )
@@ -103,7 +102,7 @@ internal class NadelHydrationValidation(
         // e.g. context.jiraComment
         val pathToSourceInputField = hydration.arguments
             .map { arg -> arg.value }
-            .singleOfTypeOrNull<RemoteArgumentSource.ObjectField>()
+            .singleOfTypeOrNull<NadelHydrationArgumentDefinition.ValueSource.ObjectField>()
             ?.pathToField
             ?: return emptyList() // Ignore this, checked elsewhere
 

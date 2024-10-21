@@ -1,4 +1,4 @@
-package graphql.nadel.dsl
+package graphql.nadel.definition.hydration
 
 import graphql.nadel.engine.util.JsonMap
 
@@ -41,11 +41,17 @@ data class NadelHydrationConditionDefinition(
     }
 }
 
+/**
+ * What field should match what value.
+ */
 data class NadelHydrationResultConditionDefinition(
     val pathToSourceField: List<String>,
     val predicate: NadelHydrationConditionPredicateDefinition,
 )
 
+/**
+ * How a given value must match.
+ */
 data class NadelHydrationConditionPredicateDefinition(
     val equals: Any?,
     val startsWith: String?,

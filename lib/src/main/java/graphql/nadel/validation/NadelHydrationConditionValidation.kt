@@ -1,9 +1,9 @@
 package graphql.nadel.validation
 
 import graphql.Scalars
-import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinition
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull

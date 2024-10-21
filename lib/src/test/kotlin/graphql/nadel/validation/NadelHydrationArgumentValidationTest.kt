@@ -1,6 +1,6 @@
 package graphql.nadel.validation
 
-import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInHydratedInputObject
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleHydrationArgumentType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingFieldInHydratedInputObject

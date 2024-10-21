@@ -24,6 +24,7 @@ import graphql.language.Type
 import graphql.language.TypeDefinition
 import graphql.language.UnionTypeDefinition
 import graphql.language.UnionTypeExtensionDefinition
+import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
@@ -47,7 +48,7 @@ fun makeUnderlyingSchema(overallSchema: String): String {
             .children
             .filterIsInstance<TypeDefinition<*>>()
             .filter {
-                it.hasRenamed()
+                it.isRenamed()
             }
             .associate {
                 it.name to it.getRenamedFrom()
@@ -258,10 +259,6 @@ private fun transformEnumTypeDefinition(type: EnumTypeDefinition): EnumTypeDefin
             .name(type.getUnderlyingName())
             .directives(type.directives.filterNotNadelDirectives())
     }
-}
-
-private fun DirectivesContainer<*>.hasRenamed(): Boolean {
-    return hasDirective(NadelDirectives.renamedDirectiveDefinition.name)
 }
 
 private fun DirectivesContainer<*>.getRenamedFromOrNull(): String? {

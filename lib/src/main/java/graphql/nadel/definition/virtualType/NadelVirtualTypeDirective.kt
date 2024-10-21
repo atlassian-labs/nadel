@@ -1,4 +1,4 @@
-package graphql.nadel.engine.blueprint.directives
+package graphql.nadel.definition.virtualType
 
 import graphql.schema.GraphQLDirectiveContainer
 

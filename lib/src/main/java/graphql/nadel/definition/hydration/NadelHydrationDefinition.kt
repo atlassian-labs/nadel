@@ -1,22 +1,18 @@
-package graphql.nadel.engine.blueprint.directives
+package graphql.nadel.definition.hydration
 
 import graphql.language.ArrayValue
 import graphql.language.FieldDefinition
-import graphql.language.ObjectField
 import graphql.language.ObjectValue
-import graphql.language.StringValue
-import graphql.nadel.dsl.NadelHydrationConditionDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition.Keyword
+import graphql.nadel.definition.hydration.NadelHydrationDefinition.Keyword
 import graphql.nadel.engine.util.JsonMap
-import graphql.nadel.util.AnyAstValue
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLFieldDefinition
 
-fun FieldDefinition.hasHydration(): Boolean {
+fun FieldDefinition.isHydrated(): Boolean {
     return hasDirective(Keyword.hydrated)
 }
 
-fun GraphQLFieldDefinition.hasHydration(): Boolean {
+fun GraphQLFieldDefinition.isHydrated(): Boolean {
     return hasAppliedDirective(Keyword.hydrated)
 }
 
@@ -105,81 +101,4 @@ class NadelHydrationDefinition(
         const val `when` = "when"
         const val inputIdentifiedBy = "inputIdentifiedBy"
     }
-}
-
-class NadelBatchObjectIdentifiedByDefinition(
-    private val objectValue: ObjectValue,
-) {
-    val sourceId: String
-        get() = (objectValue.getObjectField(Keyword.sourceId).value as StringValue).value
-    val resultId: String
-        get() = (objectValue.getObjectField(Keyword.resultId).value as StringValue).value
-
-    internal object Keyword {
-        const val sourceId = "sourceId"
-        const val resultId = "resultId"
-    }
-}
-
-/**
- * Argument belonging to [NadelHydrationDefinition.arguments]
- */
-class NadelHydrationArgumentDefinition(
-    private val argumentObject: ObjectValue,
-) {
-    /**
-     * Name of the backing field's argument.
-     */
-    val name: String
-        get() = (argumentObject.getObjectField(Keyword.name).value as StringValue).value
-
-    /**
-     * Value to support to the backing field's argument at runtime.
-     */
-    val value: ValueSource
-        get() = ValueSource.from(argumentObject.getObjectField(Keyword.value).value)
-
-    internal object Keyword {
-        const val name = "name"
-        const val value = "value"
-    }
-
-    sealed class ValueSource {
-        data class ObjectField(
-            val pathToField: List<String>,
-        ) : ValueSource()
-
-        data class FieldArgument(
-            val argumentName: String,
-        ) : ValueSource()
-
-        data class StaticArgument(
-            val staticValue: AnyAstValue,
-        ) : ValueSource()
-
-        companion object {
-            fun from(astValue: AnyAstValue): ValueSource {
-                return if (astValue is StringValue && astValue.value.startsWith("$")) {
-                    val command = astValue.value.substringBefore(".")
-                    val values = astValue.value.substringAfter(".").split('.')
-
-                    when (command) {
-                        "\$source" -> ObjectField(
-                            pathToField = values,
-                        )
-                        "\$argument" -> FieldArgument(
-                            argumentName = values.single(),
-                        )
-                        else -> StaticArgument(staticValue = astValue)
-                    }
-                } else {
-                    StaticArgument(staticValue = astValue)
-                }
-            }
-        }
-    }
-}
-
-internal fun ObjectValue.getObjectField(name: String): ObjectField {
-    return objectFields.first { it.name == name }
 }
