@@ -1,6 +1,5 @@
 package graphql.nadel.validation
 
-import graphql.nadel.Service
 import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.strictAssociateBy
@@ -16,12 +15,11 @@ import graphql.schema.GraphQLSchema
 
 internal class NadelFieldValidation(
     private val overallSchema: GraphQLSchema,
-    services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
 ) {
     private val renameValidation = NadelRenameValidation(this)
     private val inputValidation = NadelInputValidation()
-    private val hydrationValidation = NadelHydrationValidation(services, typeValidation, overallSchema)
+    private val hydrationValidation = NadelHydrationValidation(typeValidation, overallSchema)
 
     fun validate(
         schemaElement: NadelServiceSchemaElement,

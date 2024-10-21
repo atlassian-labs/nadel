@@ -42,7 +42,7 @@ internal class NadelTypeValidation(
     private val overallSchema: GraphQLSchema,
     services: Map<String, Service>,
 ) {
-    private val fieldValidation = NadelFieldValidation(overallSchema, services, this)
+    private val fieldValidation = NadelFieldValidation(overallSchema, this)
     private val inputValidation = NadelInputValidation()
     private val unionValidation = NadelUnionValidation(this)
     private val enumValidation = NadelEnumValidation()
@@ -53,12 +53,8 @@ internal class NadelTypeValidation(
         service: Service,
     ): List<NadelSchemaValidationResult> {
         val (serviceTypes, serviceTypeErrors) = getServiceTypes(service)
-
-        val fieldIssues = serviceTypes.asSequence()
-            .flatMap(::validate)
-            .toList()
-
-        return serviceTypeErrors + fieldIssues
+        val typeValidationResult = serviceTypes.flatMap(::validate)
+        return serviceTypeErrors + typeValidationResult
     }
 
     fun validate(
