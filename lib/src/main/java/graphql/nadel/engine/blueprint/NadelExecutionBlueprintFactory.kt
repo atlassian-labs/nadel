@@ -9,11 +9,11 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
-import graphql.nadel.engine.blueprint.directives.getHydrationDefinitions
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.getHydrationDefinitions
+import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.nadel.engine.blueprint.directives.isVirtualType
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
@@ -36,12 +36,11 @@ import graphql.nadel.engine.util.mapFrom
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.util.AnyAstValue
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
@@ -189,14 +188,14 @@ private class Factory(
                     .asSequence()
                     // Get the field mapping def
                     .flatMap { field ->
-                        when (val mappingDefinition = getFieldMappingDefinition(field)) {
+                        when (val renamedDefinition = field.getRenamedOrNull()) {
                             null -> {
                                 field.getHydrationDefinitions()
                                     .map { makeHydrationFieldInstruction(type, field, it) } + makePartitionInstruction(type, field)
                             }
-                            else -> when (mappingDefinition.inputPath.size) {
-                                1 -> listOf(makeRenameInstruction(type, field, mappingDefinition))
-                                else -> listOf(makeDeepRenameFieldInstruction(type, field, mappingDefinition))
+                            else -> when (renamedDefinition.from.size) {
+                                1 -> listOf(makeRenameInstruction(type, field, renamedDefinition))
+                                else -> listOf(makeDeepRenameFieldInstruction(type, field, renamedDefinition))
                             }
                         }
                     }
@@ -207,13 +206,13 @@ private class Factory(
     private fun makeDeepRenameFieldInstruction(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
-        mappingDefinition: FieldMappingDefinition,
+        renamedDefinition: NadelRenamedDefinition.Field,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, field)
 
         return NadelDeepRenameFieldInstruction(
             location,
-            NadelQueryPath(mappingDefinition.inputPath),
+            NadelQueryPath(renamedDefinition.from),
         )
     }
 
@@ -266,7 +265,7 @@ private class Factory(
             virtualTypeContext = virtualTypeBlueprintFactory.makeVirtualTypeContext(
                 engineSchema = engineSchema,
                 containerType = hydratedFieldParentType,
-                virtualFieldDef = hydratedFieldDef
+                virtualFieldDef = hydratedFieldDef,
             ),
             sourceFields = getHydrationSourceFields(hydrationArgs, condition),
             condition = condition,
@@ -478,11 +477,11 @@ private class Factory(
     private fun makeRenameInstruction(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
-        mappingDefinition: FieldMappingDefinition,
+        renamedDefinition: NadelRenamedDefinition.Field,
     ): NadelRenameFieldInstruction {
         return NadelRenameFieldInstruction(
             location = makeFieldCoordinates(parentType, field),
-            underlyingName = mappingDefinition.inputPath.single(),
+            underlyingName = renamedDefinition.from.single(),
         )
     }
 
@@ -504,38 +503,23 @@ private class Factory(
     private fun makeTypeRenameInstructions(): Sequence<NadelTypeRenameInstruction> {
         return engineSchema.typeMap.values
             .asSequence()
-            .filterIsInstance<GraphQLDirectiveContainer>()
             .mapNotNull(this::makeTypeRenameInstruction)
     }
 
-    private fun makeTypeRenameInstruction(type: GraphQLDirectiveContainer): NadelTypeRenameInstruction? {
-        return when (type.definition) {
-            else -> when (val typeMappingDef = createTypeMapping(type)) {
-                null -> null
-                else -> makeTypeRenameInstruction(typeMappingDef)
-            }
-        }
-    }
-
-    private fun createTypeMapping(type: GraphQLDirectiveContainer): TypeMappingDefinition? {
+    private fun makeTypeRenameInstruction(overallType: GraphQLNamedType): NadelTypeRenameInstruction? {
         // Fixes bug with jsw schema
         // These don't really mean anything anyway as these cannot be used as fragment type conditions
         // And we don't have variables in normalized queries so they can't be var types
-        if (type is GraphQLScalarType) {
+        if (overallType is GraphQLScalarType) {
             return null
         }
 
-        return NadelDirectives.createTypeMapping(type)
-    }
-
-    private fun makeTypeRenameInstruction(typeMappingDefinition: TypeMappingDefinition): NadelTypeRenameInstruction {
-        val overallName = typeMappingDefinition.overallName
+        val renamed = overallType.getRenamedOrNull() ?: return null
 
         return NadelTypeRenameInstruction(
-            service = definitionNamesToService[overallName]
-                ?: error("Unable to determine what service owns type: $overallName"),
-            overallName = overallName,
-            underlyingName = typeMappingDefinition.underlyingName,
+            service = definitionNamesToService[overallType.name]!!,
+            overallName = overallType.name,
+            underlyingName = renamed.from,
         )
     }
 
@@ -607,8 +591,7 @@ private class Factory(
         overallType: GraphQLObjectType,
         childField: GraphQLFieldDefinition,
     ): GraphQLObjectType? {
-        val renameInstruction = makeTypeRenameInstruction(overallType as? GraphQLDirectiveContainer ?: return null)
-        val underlyingName = renameInstruction?.underlyingName ?: overallType.name
+        val underlyingName = overallType.getRenamedOrNull()?.from ?: overallType.name
 
         val fieldCoordinates = makeFieldCoordinates(overallType, childField)
 
@@ -617,10 +600,6 @@ private class Factory(
             ?: error("Unable to determine service for $fieldCoordinates")
 
         return service.underlyingSchema.getTypeAs(underlyingName)
-    }
-
-    private fun getFieldMappingDefinition(field: GraphQLFieldDefinition): FieldMappingDefinition? {
-        return NadelDirectives.createFieldMapping(field)
     }
 
     private fun deriveUnderlyingBlueprints(

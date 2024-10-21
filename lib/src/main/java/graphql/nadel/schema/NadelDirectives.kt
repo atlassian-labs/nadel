@@ -3,22 +3,13 @@ package graphql.nadel.schema
 import graphql.GraphQLContext
 import graphql.execution.ValuesResolver
 import graphql.language.DirectiveDefinition
-import graphql.language.EnumTypeDefinition
 import graphql.language.InputObjectTypeDefinition
 import graphql.language.SDLDefinition
-import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.NadelHydrationConditionDefinition
-import graphql.nadel.dsl.NadelHydrationConditionPredicateDefinition
-import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
 import graphql.nadel.dsl.NadelPartitionDefinition
-import graphql.nadel.dsl.RemoteArgumentDefinition
-import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
-import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import java.util.Locale
 
@@ -174,22 +165,7 @@ object NadelDirectives {
         """.trimIndent()
     )
 
-    internal fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
-        val directive = fieldDefinition.getAppliedDirective(renamedDirectiveDefinition.name)
-            ?: return null
-        val fromValue = getDirectiveValue<String>(directive, "from")
-
-        return FieldMappingDefinition(inputPath = fromValue.split('.'))
-    }
-
-    internal fun createTypeMapping(directivesContainer: GraphQLDirectiveContainer): TypeMappingDefinition? {
-        val directive = directivesContainer.getAppliedDirective(renamedDirectiveDefinition.name)
-            ?: return null
-        val from = getDirectiveValue<String>(directive, "from")
-
-        return TypeMappingDefinition(underlyingName = from, overallName = directivesContainer.name)
-    }
-
+    @Deprecated(message = "To be replaced with directive wrapper class")
     internal fun createPartitionDefinition(fieldDefinition: GraphQLFieldDefinition): NadelPartitionDefinition? {
         val directive = fieldDefinition.getAppliedDirective(partitionDirectiveDefinition.name)
             ?: return null

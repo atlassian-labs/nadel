@@ -1,15 +1,14 @@
 package graphql.nadel.validation
 
 import graphql.nadel.Service
+import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
-import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
-import graphql.nadel.validation.util.NadelSchemaUtil.hasPartition
-import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
@@ -68,9 +67,9 @@ internal class NadelFieldValidation(
         overallField: GraphQLFieldDefinition,
         underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
     ): List<NadelSchemaValidationError> {
-        return if (hasRename(overallField)) {
+        return if (overallField.isRenamed()) {
             renameValidation.validate(parent, overallField)
-        } else if (hasHydration(overallField)) {
+        } else if (overallField.isHydrated()) {
             hydrationValidation.validate(parent, overallField)
         } else {
             val underlyingField = underlyingFieldsByName[overallField.name]
