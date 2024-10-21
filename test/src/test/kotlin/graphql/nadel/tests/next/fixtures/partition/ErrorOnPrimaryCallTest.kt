@@ -25,7 +25,7 @@ open class ErrorOnPrimaryCallTest : NadelIntegrationTest(
             overallSchema = """
 
 type Query {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToSplitPoint: ["ids"])
+  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
 }
 
 type Thing {
