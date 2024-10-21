@@ -7,7 +7,9 @@ import graphql.language.InputObjectTypeExtensionDefinition
 import graphql.language.InterfaceTypeExtensionDefinition
 import graphql.language.NamedNode
 import graphql.language.Node
+import graphql.language.ObjectField
 import graphql.language.ObjectTypeExtensionDefinition
+import graphql.language.ObjectValue
 import graphql.language.SDLDefinition
 import graphql.language.SDLNamedDefinition
 import graphql.language.ScalarTypeExtensionDefinition
@@ -37,3 +39,7 @@ val AnyAstNode.isExtensionDef: Boolean
             || this is SchemaExtensionDefinition
             || this is UnionTypeExtensionDefinition
     }
+
+internal fun ObjectValue.getObjectField(name: String): ObjectField {
+    return objectFields.first { it.name == name }
+}
