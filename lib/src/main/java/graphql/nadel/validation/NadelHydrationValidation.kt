@@ -6,7 +6,7 @@ import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.getHydrationDefinitions
 import graphql.nadel.definition.renamed.isRenamed
-import graphql.nadel.engine.blueprint.directives.isVirtualType
+import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.isList

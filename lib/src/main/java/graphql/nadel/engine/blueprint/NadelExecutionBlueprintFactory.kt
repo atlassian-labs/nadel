@@ -14,7 +14,7 @@ import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.getHydrationDefinitions
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.definition.renamed.getRenamedOrNull
-import graphql.nadel.engine.blueprint.directives.isVirtualType
+import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
