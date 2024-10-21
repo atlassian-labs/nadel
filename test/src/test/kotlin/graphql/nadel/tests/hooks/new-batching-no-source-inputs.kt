@@ -28,7 +28,7 @@ class `new-batching-no-source-inputs` : EngineTestHook {
 
                         return instructions
                             .first {
-                                it.actorService.name.startsWith(type, ignoreCase = true)
+                                it.backingService.name.startsWith(type, ignoreCase = true)
                             }
                     }
                 },

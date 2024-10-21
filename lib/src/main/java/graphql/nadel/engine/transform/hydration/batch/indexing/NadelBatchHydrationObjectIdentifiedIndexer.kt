@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.hydration.batch.indexing
 
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -28,10 +28,10 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
 
     override fun getIndexKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey {
         // todo: bake this into the instruction
-        val sourceInputPath = instruction.actorInputValueDefs
+        val sourceInputPath = instruction.backingFieldArguments
             .asSequence()
             .map { it.valueSource }
-            .singleOfType<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
+            .singleOfType<NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue>()
             .queryPathToField
 
         return NadelBatchHydrationIndexKey(
@@ -67,7 +67,7 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
         return batches
             .asSequence()
             .flatMap { batch ->
-                JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToActorField, flatten = true)
+                JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToBackingField, flatten = true)
                     // Ignore nulls in result
                     .filter {
                         it.value != null

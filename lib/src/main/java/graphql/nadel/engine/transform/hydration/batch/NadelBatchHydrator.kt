@@ -122,7 +122,7 @@ internal class NadelBatchHydrator(
         parentNodes: List<JsonNode>,
     ): List<ServiceExecutionResult> {
         val executionBlueprint = state.executionBlueprint
-        val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
+        val backingQueries = NadelHydrationFieldsBuilder.makeBatchBackingQueries(
             executionBlueprint = executionBlueprint,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
@@ -133,24 +133,24 @@ internal class NadelBatchHydrator(
         )
 
         return coroutineScope {
-            actorQueries
-                .map { actorQuery ->
+            backingQueries
+                .map { bakckingQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                        val hydrationActorField =
-                            FieldCoordinates.coordinates(instruction.actorFieldContainer, instruction.actorFieldDef)
+                        val hydrationBackingField =
+                            FieldCoordinates.coordinates(instruction.backingFieldContainer, instruction.backingFieldDef)
 
                         val serviceHydrationDetails = ServiceExecutionHydrationDetails(
                             timeout = instruction.timeout,
                             batchSize = instruction.batchSize,
                             hydrationSourceService = hydrationSourceService,
-                            hydrationSourceField = instruction.location,
-                            hydrationActorField = hydrationActorField,
+                            hydrationVirtualField = instruction.location,
+                            hydrationBackingField = hydrationBackingField,
                             fieldPath = state.hydratedField.listOfResultKeys,
                         )
                         engine.executeHydration(
-                            service = instruction.actorService,
-                            topLevelField = actorQuery,
+                            service = instruction.backingService,
+                            topLevelField = bakckingQuery,
                             executionContext = state.executionContext,
                             hydrationDetails = serviceHydrationDetails,
                         )

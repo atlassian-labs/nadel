@@ -78,7 +78,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "Int")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "Int")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
             val remoteArgumentSource = error.remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField
@@ -368,7 +368,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "ID!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "ID!")
             // supplied hydration for arg:
             val remoteArgumentSource = error.remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.FieldArgument
             assert(remoteArgumentSource.argumentName == "creatorId")
@@ -548,7 +548,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "ids")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[[String!]!]!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "[[String!]!]!")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
             val remoteArgumentSource = error.remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField
@@ -1104,7 +1104,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creators")
             assert(error.remoteArg.name == "names")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[FullNameInput]!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "[FullNameInput]!")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
             val remoteArgumentSource = error.remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField
@@ -1175,7 +1175,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "someArg")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "Int!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "Int!")
             // supplied hydration for arg:
             assert(GraphQLTypeUtil.simplePrint(error.hydrationType) == "ID!")
 
@@ -1259,7 +1259,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creators")
             assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[UserInput]")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "[UserInput]")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
             val remoteArgumentSource = error.remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField
@@ -1568,7 +1568,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "providerType")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "SomeOtherEnumType")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "SomeOtherEnumType")
             // supplied hydration for arg:
             assert(error.parentType.underlying.name == "Issue")
             val remoteArgumentSource = error.remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField
@@ -1640,7 +1640,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "id")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "Int")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "Int")
         }
 
         it("allows a source field of type String to be assigned to actor field argument of type ID") {
@@ -1927,7 +1927,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "ids")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[[String!]!]!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "[[String!]!]!")
         }
 
         it("input object - validation allows compatible input objects") {
@@ -2076,7 +2076,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "name")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "FullNameInput!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "FullNameInput!")
         }
 
         it("validation allows a valid array nested inside object") {
@@ -2347,7 +2347,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "userInfo")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "UserBasicInfo!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "UserBasicInfo!")
 
         }
 
@@ -2529,7 +2529,7 @@ class NadelHydrationArgumentValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "JiraIssue")
             assert(error.overallField.name == "creator")
             assert(error.remoteArg.name == "names")
-            assert(GraphQLTypeUtil.simplePrint(error.actorArgInputType) == "[FullNameInput]!")
+            assert(GraphQLTypeUtil.simplePrint(error.backingArgInputType) == "[FullNameInput]!")
         }
     }
 })

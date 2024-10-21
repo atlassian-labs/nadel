@@ -20,28 +20,28 @@ import graphql.schema.GraphQLType
 internal class NadelHydrationArgumentValidation {
     fun validateHydrationInputArg(
         hydrationSourceType: GraphQLType,
-        actorFieldArgType: GraphQLInputType,
+        backingFieldArgType: GraphQLInputType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
         isBatchHydration: Boolean,
-        actorFieldName: String,
+        backingFieldName: String,
     ): NadelSchemaValidationError? {
         val unwrappedHydrationSourceType = hydrationSourceType.unwrapNonNull()
-        val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull()
+        val unwrappedBackingFieldArgType = backingFieldArgType.unwrapNonNull()
 
         //could have ID feed into [ID] (as a possible batch hydration case).
         // in this case we need to unwrap the list and check types
-        return if (isBatchHydration && (!unwrappedHydrationSourceType.isList && unwrappedActorFieldArgType.isList)) {
+        return if (isBatchHydration && (!unwrappedHydrationSourceType.isList && unwrappedBackingFieldArgType.isList)) {
             val error = getHydrationInputErrors(
                 unwrappedHydrationSourceType,
-                unwrappedActorFieldArgType.unwrapOne(),
+                unwrappedBackingFieldArgType.unwrapOne(),
                 parent,
                 overallField,
                 remoteArg,
                 hydration,
-                actorFieldName
+                backingFieldName
             )
 
             if (error != null) {
@@ -50,8 +50,8 @@ internal class NadelHydrationArgumentValidation {
                     overallField,
                     remoteArg,
                     hydrationSourceType,
-                    actorFieldArgType,
-                    actorFieldName
+                    backingFieldArgType,
+                    backingFieldName
                 )
             } else {
                 null
@@ -59,15 +59,15 @@ internal class NadelHydrationArgumentValidation {
         }
         //could have [ID] feed into ID (non-batch, ManyToOne case explained in NadelHydrationStrategy.kt)
         // in this case we need to unwrap the list and check types
-        else if (!isBatchHydration && (unwrappedHydrationSourceType.isList && !unwrappedActorFieldArgType.isList)) {
+        else if (!isBatchHydration && (unwrappedHydrationSourceType.isList && !unwrappedBackingFieldArgType.isList)) {
             val error = getHydrationInputErrors(
                 unwrappedHydrationSourceType.unwrapOne(),
-                unwrappedActorFieldArgType,
+                unwrappedBackingFieldArgType,
                 parent,
                 overallField,
                 remoteArg,
                 hydration,
-                actorFieldName
+                backingFieldName
             )
             if (error != null) {
                 NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -75,8 +75,8 @@ internal class NadelHydrationArgumentValidation {
                     overallField,
                     remoteArg,
                     hydrationSourceType,
-                    actorFieldArgType,
-                    actorFieldName
+                    backingFieldArgType,
+                    backingFieldName
                 )
             } else {
                 null
@@ -86,100 +86,100 @@ internal class NadelHydrationArgumentValidation {
         else {
             return getHydrationInputErrors(
                 hydrationSourceType,
-                actorFieldArgType,
+                backingFieldArgType,
                 parent,
                 overallField,
                 remoteArg,
                 hydration,
-                actorFieldName
+                backingFieldName
             )
         }
     }
 
     private fun getHydrationInputErrors(
         hydrationSourceType: GraphQLType,
-        actorFieldArgType: GraphQLType,
+        backingFieldArgType: GraphQLType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
-        actorFieldName: String,
+        backingFieldName: String,
     ): NadelSchemaValidationError? {
         // need to check null compatibility
         val remoteArgumentSource = remoteArg.value
-        if (remoteArgumentSource !is NadelHydrationArgumentDefinition.ValueSource.ObjectField && actorFieldArgType.isNonNull && !hydrationSourceType.isNonNull) {
+        if (remoteArgumentSource !is NadelHydrationArgumentDefinition.ValueSource.ObjectField && backingFieldArgType.isNonNull && !hydrationSourceType.isNonNull) {
             // source must be at least as strict as field argument
             return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                 parent,
                 overallField,
                 remoteArg,
                 hydrationSourceType,
-                actorFieldArgType,
-                actorFieldName
+                backingFieldArgType,
+                backingFieldName
             )
         }
         val unwrappedHydrationSourceType = hydrationSourceType.unwrapNonNull()
-        val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull()
+        val unwrappedBackingFieldArgType = backingFieldArgType.unwrapNonNull()
         // scalar feed into scalar
-        return if (unwrappedHydrationSourceType is GraphQLScalarType && unwrappedActorFieldArgType is GraphQLScalarType) {
+        return if (unwrappedHydrationSourceType is GraphQLScalarType && unwrappedBackingFieldArgType is GraphQLScalarType) {
             validateScalarArg(
                 hydrationSourceType,
-                actorFieldArgType,
+                backingFieldArgType,
                 parent,
                 overallField,
                 remoteArg,
-                actorFieldName
+                backingFieldName
             )
         }
         // list feed into list
-        else if (unwrappedHydrationSourceType.isList && unwrappedActorFieldArgType.isList) {
+        else if (unwrappedHydrationSourceType.isList && unwrappedBackingFieldArgType.isList) {
             validateListArg(
                 hydrationSourceType,
-                actorFieldArgType,
+                backingFieldArgType,
                 parent,
                 overallField,
                 remoteArg,
                 hydration,
-                actorFieldName
+                backingFieldName
             )
         }
         // object feed into inputObject (i.e. hydrating with a $source object)
-        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.ObjectField && unwrappedHydrationSourceType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
+        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.ObjectField && unwrappedHydrationSourceType is GraphQLObjectType && unwrappedBackingFieldArgType is GraphQLInputObjectType) {
             validateInputObjectArg(
                 unwrappedHydrationSourceType,
-                unwrappedActorFieldArgType,
+                unwrappedBackingFieldArgType,
                 parent,
                 overallField,
                 remoteArg,
                 hydration,
-                actorFieldName
+                backingFieldName
             )
         }
         // inputObject feed into inputObject (i.e. hydrating with an $argument object)
-        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.FieldArgument && unwrappedHydrationSourceType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
-            if (unwrappedHydrationSourceType.name != unwrappedActorFieldArgType.name) {
+        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.FieldArgument && unwrappedHydrationSourceType is GraphQLInputObjectType && unwrappedBackingFieldArgType is GraphQLInputObjectType) {
+            if (unwrappedHydrationSourceType.name != unwrappedBackingFieldArgType.name) {
                 NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                     parent,
                     overallField,
                     remoteArg,
                     hydrationSourceType,
-                    actorFieldArgType,
-                    actorFieldName
+                    backingFieldArgType,
+                    backingFieldName
                 )
             } else {
                 null
             }
         }
         // if enums they must be the same
-        else if (unwrappedHydrationSourceType is GraphQLEnumType && unwrappedActorFieldArgType is GraphQLEnumType) {
-            if (unwrappedHydrationSourceType.name != unwrappedActorFieldArgType.name) {
+        else if (unwrappedHydrationSourceType is GraphQLEnumType && unwrappedBackingFieldArgType is GraphQLEnumType) {
+            if (unwrappedHydrationSourceType.name != unwrappedBackingFieldArgType.name) {
                 NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                     parent,
                     overallField,
                     remoteArg,
                     hydrationSourceType,
-                    actorFieldArgType,
-                    actorFieldName
+                    backingFieldArgType,
+                    backingFieldName
                 )
             } else {
                 null
@@ -192,25 +192,25 @@ internal class NadelHydrationArgumentValidation {
                 overallField,
                 remoteArg,
                 hydrationSourceType,
-                actorFieldArgType,
-                actorFieldName
+                backingFieldArgType,
+                backingFieldName
             )
         }
     }
 
     private fun validateScalarArg(
         hydrationSourceType: GraphQLType,
-        actorFieldArgType: GraphQLType,
+        backingFieldArgType: GraphQLType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: NadelHydrationArgumentDefinition,
-        actorFieldName: String,
+        backingFieldName: String,
     ): NadelSchemaValidationError? {
         val unwrappedHydrationSourceType = hydrationSourceType.unwrapNonNull()
-        val unwrappedActorFieldArgType = actorFieldArgType.unwrapNonNull()
+        val unwrappedBackingFieldArgType = backingFieldArgType.unwrapNonNull()
 
-        return if (unwrappedHydrationSourceType is GraphQLScalarType && unwrappedActorFieldArgType is GraphQLScalarType) {
-            if (isScalarAssignable(unwrappedHydrationSourceType, unwrappedActorFieldArgType)) {
+        return if (unwrappedHydrationSourceType is GraphQLScalarType && unwrappedBackingFieldArgType is GraphQLScalarType) {
+            if (isScalarAssignable(unwrappedHydrationSourceType, unwrappedBackingFieldArgType)) {
                 null
             } else {
                 NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -218,8 +218,8 @@ internal class NadelHydrationArgumentValidation {
                     overallField,
                     remoteArg,
                     hydrationSourceType,
-                    actorFieldArgType,
-                    actorFieldName
+                    backingFieldArgType,
+                    backingFieldName
                 )
             }
         } else {
@@ -245,23 +245,23 @@ internal class NadelHydrationArgumentValidation {
 
     private fun validateListArg(
         hydrationSourceType: GraphQLType,
-        actorFieldArgType: GraphQLType,
+        backingFieldArgType: GraphQLType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
-        actorFieldName: String,
+        backingFieldName: String,
     ): NadelSchemaValidationError? {
         val hydrationSourceFieldInnerType: GraphQLType = hydrationSourceType.unwrapNonNull().unwrapOne()
-        val actorFieldArgInnerType: GraphQLType = actorFieldArgType.unwrapNonNull().unwrapOne()
+        val backingFieldArgInnerType: GraphQLType = backingFieldArgType.unwrapNonNull().unwrapOne()
         val errorExists = getHydrationInputErrors(
             hydrationSourceFieldInnerType,
-            actorFieldArgInnerType,
+            backingFieldArgInnerType,
             parent,
             overallField,
             remoteArg,
             hydration,
-            actorFieldName
+            backingFieldName
         ) != null
         if (errorExists) {
             return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
@@ -269,8 +269,8 @@ internal class NadelHydrationArgumentValidation {
                 overallField,
                 remoteArg,
                 hydrationSourceType,
-                actorFieldArgType,
-                actorFieldName
+                backingFieldArgType,
+                backingFieldName
             )
         }
         return null
@@ -278,43 +278,43 @@ internal class NadelHydrationArgumentValidation {
 
     private fun validateInputObjectArg(
         hydrationSourceType: GraphQLObjectType,
-        actorFieldArgType: GraphQLInputObjectType,
+        backingFieldArgType: GraphQLInputObjectType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
-        actorFieldName: String,
+        backingFieldName: String,
     ): NadelSchemaValidationError? {
-        for (actorInnerField in actorFieldArgType.fields) {
-            val actorInnerFieldName = actorInnerField.name
-            val actorInnerFieldType = actorInnerField.type
-            val hydrationType = hydrationSourceType.getField(actorInnerField.name)?.type
+        for (backingInnerField in backingFieldArgType.fields) {
+            val backingInnerFieldName = backingInnerField.name
+            val backingInnerFieldType = backingInnerField.type
+            val hydrationType = hydrationSourceType.getField(backingInnerField.name)?.type
             if (hydrationType == null) {
-                if (actorInnerFieldType.isNonNull) {
+                if (backingInnerFieldType.isNonNull) {
                     return NadelSchemaValidationError.MissingFieldInHydratedInputObject(
                         parent,
                         overallField,
                         remoteArg,
-                        actorInnerFieldName,
-                        actorFieldName
+                        backingInnerFieldName,
+                        backingFieldName
                     )
                 }
             } else {
                 val thisFieldHasError = getHydrationInputErrors(
                     hydrationType,
-                    actorInnerFieldType,
+                    backingInnerFieldType,
                     parent,
                     overallField,
                     remoteArg,
                     hydration,
-                    actorFieldName
+                    backingFieldName
                 ) != null
                 if (thisFieldHasError) {
                     return NadelSchemaValidationError.IncompatibleFieldInHydratedInputObject(
                         parent,
                         overallField,
                         remoteArg,
-                        actorInnerFieldName,
+                        backingInnerFieldName,
                     )
                 }
             }

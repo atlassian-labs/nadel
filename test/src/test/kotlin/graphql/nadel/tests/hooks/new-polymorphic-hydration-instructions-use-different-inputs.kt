@@ -23,9 +23,9 @@ class `new-polymorphic-hydration-instructions-use-different-inputs` : EngineTest
                         val toString = parentNode.value.toString()
 
                         return when {
-                            toString.contains("tall") -> instructions.single { it.actorFieldDef.name.contains("giraffe") }
-                            toString.contains("good") -> instructions.single { it.actorFieldDef.name.contains("dog") }
-                            toString.contains("cute") -> instructions.single { it.actorFieldDef.name.contains("cat") }
+                            toString.contains("tall") -> instructions.single { it.backingFieldDef.name.contains("giraffe") }
+                            toString.contains("good") -> instructions.single { it.backingFieldDef.name.contains("dog") }
+                            toString.contains("cute") -> instructions.single { it.backingFieldDef.name.contains("cat") }
                             else -> throw UnsupportedOperationException("unknown boye")
                         }
                     }

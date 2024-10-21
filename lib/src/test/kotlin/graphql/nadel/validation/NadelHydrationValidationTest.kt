@@ -5,11 +5,11 @@ import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedF
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatibleOutputType
-import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
+import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationBackingField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
-import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
-import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationBackingFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationBackingFieldArgument
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
 import io.kotest.core.spec.style.DescribeSpec
@@ -296,7 +296,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             assert(errors.map { it.message }.isNotEmpty())
-            errors.assertSingleOfType<MissingHydrationActorField>()
+            errors.assertSingleOfType<MissingHydrationBackingField>()
         }
 
         it("fails if hydration actor field exists only in the underlying and not in the overall") {
@@ -349,7 +349,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             assert(errors.size == 1)
-            val error = errors.assertSingleOfType<MissingHydrationActorField>()
+            val error = errors.assertSingleOfType<MissingHydrationBackingField>()
             assert(error.service.name == "issues")
             assert(error.overallField.name == "creator")
             assert(error.parentType.overall.name == "Issue")
@@ -576,7 +576,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<MissingHydrationActorField>()
+            val error = errors.assertSingleOfType<MissingHydrationBackingField>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
@@ -761,7 +761,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<NonExistentHydrationActorFieldArgument>()
+            val error = errors.assertSingleOfType<NonExistentHydrationBackingFieldArgument>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
@@ -887,7 +887,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<MissingRequiredHydrationActorFieldArgument>()
+            val error = errors.assertSingleOfType<MissingRequiredHydrationBackingFieldArgument>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
@@ -1092,8 +1092,8 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.isNotEmpty())
             val error = errors.singleOfType<HydrationIncompatibleOutputType>()
             assert(error.parentType.overall.name == "Issue")
-            assert(error.actorField.name == "externalUser")
-            assert((error.actorField.type as GraphQLNamedType).name == "ExternalUser")
+            assert(error.backingField.name == "externalUser")
+            assert((error.backingField.type as GraphQLNamedType).name == "ExternalUser")
             assert(error.incompatibleOutputType.name == "ExternalUser")
         }
 
@@ -1168,7 +1168,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.isNotEmpty())
             val error = errors.singleOfType<HydrationIncompatibleOutputType>()
             assert(error.parentType.overall.name == "Issue")
-            assert(error.actorField.name == "externalUser")
+            assert(error.backingField.name == "externalUser")
             assert(error.incompatibleOutputType.name == "ExternalUser")
         }
 

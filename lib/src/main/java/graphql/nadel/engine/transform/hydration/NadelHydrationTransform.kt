@@ -325,7 +325,7 @@ internal class NadelHydrationTransform(
                 )
             }
 
-        val actorQueries = NadelHydrationFieldsBuilder.makeActorQueries(
+        val backingQueries = NadelHydrationFieldsBuilder.makeBackingQueries(
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             fieldToHydrate = fieldToHydrate,
@@ -334,27 +334,27 @@ internal class NadelHydrationTransform(
         )
 
         return NadelPreparedHydration {
-            val actorQueryResults = coroutineScope {
-                actorQueries
-                    .map { actorQuery ->
+            val backingQueryResults = coroutineScope {
+                backingQueries
+                    .map { backingQuery ->
                         async {
                             val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                            val hydrationActorField =
+                            val hydrationBackingField =
                                 FieldCoordinates.coordinates(
-                                    instruction.actorFieldContainer,
-                                    instruction.actorFieldDef
+                                    instruction.backingFieldContainer,
+                                    instruction.backingFieldDef
                                 )
                             val serviceHydrationDetails = ServiceExecutionHydrationDetails(
                                 timeout = instruction.timeout,
                                 batchSize = 1,
                                 hydrationSourceService = hydrationSourceService,
-                                hydrationSourceField = instruction.location,
-                                hydrationActorField = hydrationActorField,
+                                hydrationVirtualField = instruction.location,
+                                hydrationBackingField = hydrationBackingField,
                                 fieldPath = fieldToHydrate.listOfResultKeys
                             )
                             engine.executeHydration(
-                                service = instruction.actorService,
-                                topLevelField = actorQuery,
+                                service = instruction.backingService,
+                                topLevelField = backingQuery,
                                 executionContext = executionContext,
                                 hydrationDetails = serviceHydrationDetails,
                             )
@@ -365,12 +365,12 @@ internal class NadelHydrationTransform(
             when (instruction.hydrationStrategy) {
                 is NadelHydrationStrategy.OneToOne -> {
                     // Should not have more than one query for one to one
-                    val result = actorQueryResults.emptyOrSingle()
+                    val result = backingQueryResults.emptyOrSingle()
 
                     val data = result?.data?.let { data ->
                         JsonNodeExtractor.getNodesAt(
                             data = data,
-                            queryPath = instruction.queryPathToActorField,
+                            queryPath = instruction.queryPathToBackingField,
                         ).emptyOrSingle()
                     }
 
@@ -381,18 +381,18 @@ internal class NadelHydrationTransform(
                     )
                 }
                 is NadelHydrationStrategy.ManyToOne -> {
-                    val data = actorQueryResults
+                    val data = backingQueryResults
                         .map { result ->
                             JsonNodeExtractor.getNodesAt(
                                 data = result.data,
-                                queryPath = instruction.queryPathToActorField,
+                                queryPath = instruction.queryPathToBackingField,
                             ).emptyOrSingle()?.value
                         }
 
                     NadelHydrationResult(
                         parentNode = parentNode,
                         newValue = JsonNode(data),
-                        errors = actorQueryResults.flatMap { it.errors },
+                        errors = backingQueryResults.flatMap { it.errors },
                     )
                 }
             }

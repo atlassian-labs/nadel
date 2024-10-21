@@ -134,7 +134,7 @@ internal object NadelBatchHydrationByObjectId {
         sourceIds: List<List<Any?>>,
         resultNodesByObjectId: Map<List<Any?>, JsonMap>,
     ): NadelResultInstruction {
-        val hydratedFieldDef = instruction.hydratedFieldDef
+        val hydratedFieldDef = instruction.virtualFieldDef
 
         // val hydratedFieldDef = NadelTransformUtil.getOverallFieldDef(
         //     overallField = state.hydratedField,
