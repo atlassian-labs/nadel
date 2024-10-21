@@ -28,7 +28,7 @@ class `new-batching-multiple-source-ids-going-to-different-services` : EngineTes
 
                         return instructions
                             .first {
-                                it.actorService.name.startsWith(type, ignoreCase = true)
+                                it.backingService.name.startsWith(type, ignoreCase = true)
                             }
                     }
                 },

@@ -134,7 +134,7 @@ internal object NadelBatchHydrationByObjectId {
         sourceIds: List<List<Any?>>,
         resultNodesByObjectId: Map<List<Any?>, JsonMap>,
     ): NadelResultInstruction {
-        val hydratedFieldDef = instruction.hydratedFieldDef
+        val hydratedFieldDef = instruction.virtualFieldDef
 
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
             // Set to null if there were no identifier nodes

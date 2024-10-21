@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
@@ -30,7 +30,7 @@ internal object NadelBatchHydrationInputBuilder {
         parentNodes: List<JsonNode>,
         hooks: NadelExecutionHooks,
         userContext: Any?,
-    ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
+    ): List<Map<NadelHydrationBackingFieldArgument, NormalizedInputValue>> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
         val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper, hooks, userContext)
 
@@ -40,28 +40,28 @@ internal object NadelBatchHydrationInputBuilder {
     internal fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
-    ): Map<NadelHydrationActorInputDef, NormalizedInputValue> {
+    ): Map<NadelHydrationBackingFieldArgument, NormalizedInputValue> {
         return mapFrom(
-            instruction.actorInputValueDefs.mapNotNull { actorFieldArg ->
-                when (val valueSource = actorFieldArg.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> {
+            instruction.backingFieldArguments.mapNotNull { backingFieldArg ->
+                when (val valueSource = backingFieldArg.valueSource) {
+                    is NadelHydrationBackingFieldArgument.ValueSource.ArgumentValue -> {
                         val argValue: NormalizedInputValue? =
                             hydrationField.normalizedArguments[valueSource.argumentName]
                                 ?: valueSource.defaultValue
                         if (argValue != null) {
-                            actorFieldArg to argValue
+                            backingFieldArg to argValue
                         } else {
                             null
                         }
                     }
                     // These are batch values, ignore them
-                    is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> null
-                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> {
+                    is NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue -> null
+                    is NadelHydrationBackingFieldArgument.ValueSource.StaticValue -> {
                         val staticValue: NormalizedInputValue = makeNormalizedInputValue(
-                            type = actorFieldArg.actorArgumentDef.type,
+                            type = backingFieldArg.backingArgumentDef.type,
                             value = valueSource.value,
                         )
-                        actorFieldArg to staticValue
+                        backingFieldArg to staticValue
                     }
                 }
             },
@@ -74,11 +74,11 @@ internal object NadelBatchHydrationInputBuilder {
         aliasHelper: NadelAliasHelper,
         hooks: NadelExecutionHooks,
         userContext: Any?,
-    ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
+    ): List<Pair<NadelHydrationBackingFieldArgument, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
         val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
-        val actorBatchArgDef = instruction.actorFieldDef.getArgument(batchInputDef.name)
+        val actorBatchArgDef = instruction.backingFieldDef.getArgument(batchInputDef.name)
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
 
@@ -117,12 +117,12 @@ internal object NadelBatchHydrationInputBuilder {
      */
     internal fun getBatchInputDef(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): Pair<NadelHydrationActorInputDef, NadelHydrationActorInputDef.ValueSource.FieldResultValue>? {
-        return instruction.actorInputValueDefs
+    ): Pair<NadelHydrationBackingFieldArgument, NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue>? {
+        return instruction.backingFieldArguments
             .asSequence()
             .mapNotNull {
                 when (val valueSource = it.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> it to valueSource
+                    is NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue -> it to valueSource
                     else -> null
                 }
             }
@@ -130,7 +130,7 @@ internal object NadelBatchHydrationInputBuilder {
     }
 
     private fun getFieldResultValues(
-        valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
+        valueSource: NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue,
         parentNodes: List<JsonNode>,
         aliasHelper: NadelAliasHelper,
     ): List<Any?> {
@@ -145,7 +145,7 @@ internal object NadelBatchHydrationInputBuilder {
     }
 
     internal fun getFieldResultValues(
-        valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
+        valueSource: NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
         filterNull: Boolean,

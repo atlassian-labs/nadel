@@ -5,7 +5,7 @@ import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder
@@ -21,7 +21,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 internal object NadelHydrationFieldsBuilder {
-    fun makeActorQueries(
+    fun makeBackingQueries(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         fieldToHydrate: ExecutableNormalizedField,
@@ -36,7 +36,7 @@ internal object NadelHydrationFieldsBuilder {
                 parentNode = parentNode,
             )
             .map { args ->
-                makeActorQueries(
+                makeBackingQueries(
                     instruction = instruction,
                     fieldArguments = args,
                     fieldChildren = deepClone(fieldToHydrate.children),
@@ -52,7 +52,7 @@ internal object NadelHydrationFieldsBuilder {
             }
     }
 
-    fun makeBatchActorQueries(
+    fun makeBatchBackingQueries(
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
@@ -70,7 +70,7 @@ internal object NadelHydrationFieldsBuilder {
             userContext = userContext,
         )
 
-        return makeBatchActorQueries(
+        return makeBatchBackingQueries(
             executionBlueprint = executionBlueprint,
             instruction = instruction,
             aliasHelper = aliasHelper,
@@ -79,25 +79,25 @@ internal object NadelHydrationFieldsBuilder {
         )
     }
 
-    fun makeBatchActorQueries(
+    fun makeBatchBackingQueries(
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
-        argBatches: List<Map<NadelHydrationActorInputDef, NormalizedInputValue>>,
+        argBatches: List<Map<NadelHydrationBackingFieldArgument, NormalizedInputValue>>,
     ): List<ExecutableNormalizedField> {
-        val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction, executionBlueprint)
+        val backingFieldOverallObjectTypeNames = getBackingFieldOverallObjectTypenames(instruction, executionBlueprint)
         val fieldChildren = deepClone(fields = hydratedField.children)
             .mapNotNull { childField ->
-                val objectTypesAreNotReturnedByActorField =
-                    actorFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
+                val objectTypesAreNotReturnedByBackingField =
+                    backingFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
 
-                if (objectTypesAreNotReturnedByActorField) {
+                if (objectTypesAreNotReturnedByBackingField) {
                     null
                 } else {
                     childField.toBuilder()
                         .clearObjectTypesNames()
-                        .objectTypeNames(childField.objectTypeNames.filter { it in actorFieldOverallObjectTypeNames })
+                        .objectTypeNames(childField.objectTypeNames.filter { it in backingFieldOverallObjectTypeNames })
                         .build()
                 }
             }
@@ -106,29 +106,29 @@ internal object NadelHydrationFieldsBuilder {
             }
 
         return argBatches.map { argBatch ->
-            makeActorQueries(
+            makeBackingQueries(
                 instruction = instruction,
-                fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationActorInputDef) -> inputDef.name },
+                fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationBackingFieldArgument) -> inputDef.name },
                 fieldChildren = fieldChildren,
                 executionBlueprint = executionBlueprint,
             )
         }
     }
 
-    private fun getActorFieldOverallObjectTypenames(
+    private fun getBackingFieldOverallObjectTypenames(
         instruction: NadelBatchHydrationFieldInstruction,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): Set<String> {
-        val overallTypeName = instruction.actorFieldDef.type.unwrapAll().name
+        val overallTypeName = instruction.backingFieldDef.type.unwrapAll().name
 
         val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
             ?: error("Unable to find overall type $overallTypeName")
 
-        val actorFieldOverallObjectTypes = resolveObjectTypes(executionBlueprint.engineSchema, overallType) { type ->
+        val backingFieldOverallObjectTypes = resolveObjectTypes(executionBlueprint.engineSchema, overallType) { type ->
             error("Unable to resolve to object type: $type")
         }
 
-        return actorFieldOverallObjectTypes
+        return backingFieldOverallObjectTypes
             .asSequence()
             .map { it.name }
             .toSet()
@@ -162,7 +162,7 @@ internal object NadelHydrationFieldsBuilder {
             .toList()
     }
 
-    private fun makeActorQueries(
+    private fun makeBackingQueries(
         instruction: NadelGenericHydrationInstruction,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
@@ -171,7 +171,7 @@ internal object NadelHydrationFieldsBuilder {
         return NFUtil.createField(
             schema = executionBlueprint.engineSchema,
             parentType = executionBlueprint.engineSchema.queryType,
-            queryPathToField = instruction.queryPathToActorField,
+            queryPathToField = instruction.queryPathToBackingField,
             fieldArguments = fieldArguments,
             fieldChildren = fieldChildren,
         )

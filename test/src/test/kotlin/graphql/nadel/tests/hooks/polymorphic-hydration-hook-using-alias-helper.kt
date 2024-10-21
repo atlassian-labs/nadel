@@ -6,7 +6,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
@@ -31,12 +31,12 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
         userContext: Any?,
     ): T? {
         return instructions.firstOrNull {
-            val (_, _, valueSource) = it.actorInputValueDefs.single()
-            if (valueSource !is NadelHydrationActorInputDef.ValueSource.FieldResultValue) {
+            val (_, _, valueSource) = it.backingFieldArguments.single()
+            if (valueSource !is NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue) {
                 return@firstOrNull false
             }
-            val actorFieldName = valueSource.fieldDefinition.name
-            val targetFieldName = aliasHelper.getResultKey(actorFieldName)
+            val backingFieldName = valueSource.fieldDefinition.name
+            val targetFieldName = aliasHelper.getResultKey(backingFieldName)
             val hydrationArgumentValue = (parentNode.value as JsonMap)[targetFieldName]
             hydrationInstructionMatchesArgumentValue(it, hydrationArgumentValue as String)
         }
@@ -46,9 +46,9 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
         instruction: T,
         hydrationArgumentValue: String,
     ): Boolean {
-        return (instruction.actorFieldDef.name.contains("pet")
+        return (instruction.backingFieldDef.name.contains("pet")
             && hydrationArgumentValue.startsWith("pet", ignoreCase = true))
-            || (instruction.actorFieldDef.name.contains("human")
+            || (instruction.backingFieldDef.name.contains("human")
             && hydrationArgumentValue.startsWith("human", ignoreCase = true))
     }
 }

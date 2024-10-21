@@ -3,7 +3,7 @@ package graphql.nadel.tests.hooks
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument.ValueSource
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
@@ -31,7 +31,7 @@ class `new-batching-single-source-id` : EngineTestHook {
                     ): T? {
                         return instructions
                             .single { instruction ->
-                                val fieldSource = instruction.actorInputValueDefs
+                                val fieldSource = instruction.backingFieldArguments
                                     .asSequence()
                                     .map {
                                         it.valueSource
@@ -44,7 +44,7 @@ class `new-batching-single-source-id` : EngineTestHook {
                                 )
                                 val sourceIdType = (sourceNodes.single().value as String).substringBefore("/")
 
-                                instruction.actorService.name.startsWith(sourceIdType)
+                                instruction.backingService.name.startsWith(sourceIdType)
                             }
                     }
                 },

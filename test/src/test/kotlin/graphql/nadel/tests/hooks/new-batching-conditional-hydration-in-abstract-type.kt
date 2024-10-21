@@ -28,7 +28,7 @@ class `new-batching-conditional-hydration-in-abstract-type` : EngineTestHook {
 
                         return instructions
                             .first {
-                                it.actorFieldDef.name.startsWith(type, ignoreCase = true)
+                                it.backingFieldDef.name.startsWith(type, ignoreCase = true)
                             }
                     }
                 },

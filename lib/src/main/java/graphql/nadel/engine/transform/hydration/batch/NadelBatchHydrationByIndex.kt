@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchInputDef
@@ -107,7 +107,7 @@ internal class NadelBatchHydrationByIndex private constructor(
 
     private fun getBatchInputValueSource(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): NadelHydrationActorInputDef.ValueSource.FieldResultValue {
+    ): NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue {
         val (_, batchInputValueSource) = getBatchInputDef(instruction)
             ?: error("Batch hydration is missing batch input arg") // TODO: we should bake this into the instruction
 
