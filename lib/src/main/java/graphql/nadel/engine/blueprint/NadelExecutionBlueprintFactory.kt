@@ -481,7 +481,7 @@ private class Factory(
         return listOf(
             NadelPartitionInstruction(
                 location = makeFieldCoordinates(parentType, field),
-                pathToPartitionArg = partitionDefinition.pathToSplitPoint,
+                pathToPartitionArg = partitionDefinition.pathToPartitionArg,
             )
         )
     }

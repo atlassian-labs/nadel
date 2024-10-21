@@ -25,7 +25,7 @@ open class PartitionWithConflictingRoutingValuesTest : NadelIntegrationTest(
             name = "things_service",
             overallSchema = """
 type Query {
-  things(filter: ThingsFilter): [Thing] @partition(pathToSplitPoint: ["filter", "thingsIds"])
+  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
 }
 
 input ThingsFilter {
