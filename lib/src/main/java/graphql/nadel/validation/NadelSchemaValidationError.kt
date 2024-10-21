@@ -5,10 +5,10 @@ import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.language.InputValueDefinition
 import graphql.nadel.Service
-import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.engine.blueprint.directives.NadelBatchObjectIdentifiedByDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
-import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLArgument
@@ -532,13 +532,13 @@ sealed interface NadelSchemaValidationError {
     data class MissingRename(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val rename: FieldMappingDefinition,
+        val rename: NadelRenamedDefinition,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val uf = "${parentType.underlying.name}.${rename.inputPath.joinToString(separator = ".")}"
+            val uf = "${parentType.underlying.name}.${rename.from.joinToString(separator = ".")}"
             val s = service.name
             "Overall field $of defines rename but underlying field $uf on service $s doesn't exist"
         }

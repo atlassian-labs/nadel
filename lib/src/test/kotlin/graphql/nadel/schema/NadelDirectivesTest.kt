@@ -1,8 +1,8 @@
 package graphql.nadel.schema
 
 import graphql.language.AstPrinter
-import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
-import graphql.nadel.engine.blueprint.directives.getHydrationDefinitions
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.getHydrationDefinitions
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
@@ -16,8 +16,6 @@ import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertTrue
 
 private const val source = "$" + "source"
