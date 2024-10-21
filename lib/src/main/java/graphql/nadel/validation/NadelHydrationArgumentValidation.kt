@@ -1,8 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.Scalars
-import graphql.nadel.dsl.RemoteArgumentDefinition
-import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
 import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
@@ -24,7 +23,7 @@ internal class NadelHydrationArgumentValidation {
         actorFieldArgType: GraphQLInputType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArg: RemoteArgumentDefinition,
+        remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
         isBatchHydration: Boolean,
         actorFieldName: String,
@@ -102,13 +101,13 @@ internal class NadelHydrationArgumentValidation {
         actorFieldArgType: GraphQLType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArg: RemoteArgumentDefinition,
+        remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
         actorFieldName: String,
     ): NadelSchemaValidationError? {
         // need to check null compatibility
-        val remoteArgumentSource = remoteArg.remoteArgumentSource
-        if (remoteArgumentSource !is RemoteArgumentSource.ObjectField && actorFieldArgType.isNonNull && !hydrationSourceType.isNonNull) {
+        val remoteArgumentSource = remoteArg.value
+        if (remoteArgumentSource !is NadelHydrationArgumentDefinition.ValueSource.ObjectField && actorFieldArgType.isNonNull && !hydrationSourceType.isNonNull) {
             // source must be at least as strict as field argument
             return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                 parent,
@@ -145,7 +144,7 @@ internal class NadelHydrationArgumentValidation {
             )
         }
         // object feed into inputObject (i.e. hydrating with a $source object)
-        else if (remoteArgumentSource is RemoteArgumentSource.ObjectField && unwrappedHydrationSourceType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
+        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.ObjectField && unwrappedHydrationSourceType is GraphQLObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
             validateInputObjectArg(
                 unwrappedHydrationSourceType,
                 unwrappedActorFieldArgType,
@@ -157,7 +156,7 @@ internal class NadelHydrationArgumentValidation {
             )
         }
         // inputObject feed into inputObject (i.e. hydrating with an $argument object)
-        else if (remoteArgumentSource is RemoteArgumentSource.FieldArgument && unwrappedHydrationSourceType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
+        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.FieldArgument && unwrappedHydrationSourceType is GraphQLInputObjectType && unwrappedActorFieldArgType is GraphQLInputObjectType) {
             if (unwrappedHydrationSourceType.name != unwrappedActorFieldArgType.name) {
                 NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                     parent,
@@ -204,7 +203,7 @@ internal class NadelHydrationArgumentValidation {
         actorFieldArgType: GraphQLType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArg: RemoteArgumentDefinition,
+        remoteArg: NadelHydrationArgumentDefinition,
         actorFieldName: String,
     ): NadelSchemaValidationError? {
         val unwrappedHydrationSourceType = hydrationSourceType.unwrapNonNull()
@@ -249,7 +248,7 @@ internal class NadelHydrationArgumentValidation {
         actorFieldArgType: GraphQLType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArg: RemoteArgumentDefinition,
+        remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
         actorFieldName: String,
     ): NadelSchemaValidationError? {
@@ -282,7 +281,7 @@ internal class NadelHydrationArgumentValidation {
         actorFieldArgType: GraphQLInputObjectType,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArg: RemoteArgumentDefinition,
+        remoteArg: NadelHydrationArgumentDefinition,
         hydration: NadelHydrationDefinition,
         actorFieldName: String,
     ): NadelSchemaValidationError? {

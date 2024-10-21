@@ -185,7 +185,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             assert(error.service.name == "issues")
             assert(error.parentType.overall.name == "Issue")
             assert(error.overallField.name == "creator")
-            assert(error.hydration.pathToActorField == listOf("internalUser"))
+            assert(error.hydration.backingField == listOf("internalUser"))
         }
 
         it("fails if a mix of batched and non-batched hydrations is used") {

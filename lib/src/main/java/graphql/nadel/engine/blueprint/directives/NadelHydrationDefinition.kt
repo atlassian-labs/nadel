@@ -1,6 +1,7 @@
 package graphql.nadel.engine.blueprint.directives
 
 import graphql.language.ArrayValue
+import graphql.language.FieldDefinition
 import graphql.language.ObjectField
 import graphql.language.ObjectValue
 import graphql.language.StringValue
@@ -11,11 +12,15 @@ import graphql.nadel.util.AnyAstValue
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLFieldDefinition
 
-internal fun GraphQLFieldDefinition.hasHydration(): Boolean {
+fun FieldDefinition.hasHydration(): Boolean {
+    return hasDirective(Keyword.hydrated)
+}
+
+fun GraphQLFieldDefinition.hasHydration(): Boolean {
     return hasAppliedDirective(Keyword.hydrated)
 }
 
-internal fun GraphQLFieldDefinition.getHydrationDefinitions(): List<NadelHydrationDefinition> {
+fun GraphQLFieldDefinition.getHydrationDefinitions(): List<NadelHydrationDefinition> {
     return getAppliedDirectives(Keyword.hydrated)
         .map(::NadelHydrationDefinition)
 }
@@ -47,7 +52,7 @@ internal fun GraphQLFieldDefinition.getHydrationDefinitions(): List<NadelHydrati
  * ) repeatable on FIELD_DEFINITION
  * ```
  */
-internal class NadelHydrationDefinition(
+class NadelHydrationDefinition(
     private val appliedDirective: GraphQLAppliedDirective,
 ) {
     val backingField: List<String>
@@ -66,7 +71,7 @@ internal class NadelHydrationDefinition(
         get() = appliedDirective.getArgument(Keyword.batchSize).getValue()
 
     val arguments: List<NadelHydrationArgumentDefinition>
-        get() = appliedDirective.getArgument(Keyword.arguments).getValue<ArrayValue>()
+        get() = (appliedDirective.getArgument(Keyword.arguments).argumentValue.value as ArrayValue)
             .values
             .map {
                 NadelHydrationArgumentDefinition(it as ObjectValue)
@@ -82,9 +87,9 @@ internal class NadelHydrationDefinition(
         get() = appliedDirective.getArgument(Keyword.timeout).getValue()
 
     val inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>?
-        get() = appliedDirective.getArgument(Keyword.inputIdentifiedBy).getValue<ArrayValue>()
-            .values
-            .map {
+        get() = (appliedDirective.getArgument(Keyword.inputIdentifiedBy).argumentValue.value as ArrayValue?)
+            ?.values
+            ?.map {
                 NadelBatchObjectIdentifiedByDefinition(it as ObjectValue)
             }
 
@@ -102,7 +107,7 @@ internal class NadelHydrationDefinition(
     }
 }
 
-internal class NadelBatchObjectIdentifiedByDefinition(
+class NadelBatchObjectIdentifiedByDefinition(
     private val objectValue: ObjectValue,
 ) {
     val sourceId: String
@@ -119,7 +124,7 @@ internal class NadelBatchObjectIdentifiedByDefinition(
 /**
  * Argument belonging to [NadelHydrationDefinition.arguments]
  */
-internal class NadelHydrationArgumentDefinition(
+class NadelHydrationArgumentDefinition(
     private val argumentObject: ObjectValue,
 ) {
     /**
@@ -139,7 +144,7 @@ internal class NadelHydrationArgumentDefinition(
         const val value = "value"
     }
 
-    internal sealed class ValueSource {
+    sealed class ValueSource {
         data class ObjectField(
             val pathToField: List<String>,
         ) : ValueSource()
