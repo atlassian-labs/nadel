@@ -34,7 +34,7 @@ internal class NadelBatchHydrator(
             .mapNotNull { parentNode ->
                 val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
                     executionBlueprint = executionBlueprint,
-                    service = state.hydratedFieldService,
+                    service = state.virtualFieldService,
                     aliasHelper = state.aliasHelper,
                     parentNode = parentNode,
                 )
@@ -62,12 +62,12 @@ internal class NadelBatchHydrator(
                         null -> parentNodes.map {
                             NadelResultInstruction.Set(
                                 subject = it,
-                                key = NadelResultKey(state.hydratedField.resultKey),
+                                key = NadelResultKey(state.virtualField.resultKey),
                                 newValue = null,
                             )
                         }
 
-                        else -> hydrate(executionBlueprint, state, instruction, parentNodes)
+                        else -> hydrate(state, instruction, parentNodes)
                     }
                 }
             }
@@ -77,7 +77,6 @@ internal class NadelBatchHydrator(
     }
 
     private suspend fun hydrate(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -97,7 +96,6 @@ internal class NadelBatchHydrator(
             )
 
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> getHydrateInstructionsMatchingObjectId(
-                executionBlueprint = executionBlueprint,
                 state = state,
                 instruction = instruction,
                 parentNodes = parentNodes,
@@ -106,7 +104,6 @@ internal class NadelBatchHydrator(
             )
 
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> getHydrateInstructionsMatchingObjectIds(
-                executionBlueprint = executionBlueprint,
                 state = state,
                 instruction = instruction,
                 parentNodes = parentNodes,
@@ -126,7 +123,7 @@ internal class NadelBatchHydrator(
             executionBlueprint = executionBlueprint,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
-            hydratedField = state.hydratedField,
+            virtualField = state.virtualField,
             parentNodes = parentNodes,
             hooks = state.executionContext.hooks,
             userContext = state.executionContext.userContext,
@@ -146,7 +143,7 @@ internal class NadelBatchHydrator(
                             hydrationSourceService = hydrationSourceService,
                             hydrationVirtualField = instruction.location,
                             hydrationBackingField = hydrationBackingField,
-                            fieldPath = state.hydratedField.listOfResultKeys,
+                            fieldPath = state.virtualField.listOfResultKeys,
                         )
                         engine.executeHydration(
                             service = instruction.backingService,

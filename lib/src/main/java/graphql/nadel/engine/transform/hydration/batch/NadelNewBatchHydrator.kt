@@ -190,8 +190,8 @@ internal class NadelNewBatchHydrator(
         val context = NadelBatchHydratorContext(
             instructionsByObjectTypeNames = state.instructionsByObjectTypeNames,
             executionContext = state.executionContext,
-            sourceField = state.hydratedField,
-            sourceFieldService = state.hydratedFieldService,
+            sourceField = state.virtualField,
+            sourceFieldService = state.virtualFieldService,
             aliasHelper = state.aliasHelper,
             executionBlueprint = executionBlueprint,
         )
@@ -370,7 +370,7 @@ internal class NadelNewBatchHydrator(
                 executionBlueprint = executionBlueprint,
                 instruction = instruction,
                 aliasHelper = aliasHelper,
-                hydratedField = sourceField,
+                virtualField = sourceField,
                 argBatches = argBatches.map { it.arguments },
             )
 

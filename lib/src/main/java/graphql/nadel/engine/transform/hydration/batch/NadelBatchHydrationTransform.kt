@@ -34,8 +34,8 @@ internal class NadelBatchHydrationTransform(
         val executionBlueprint: NadelOverallExecutionBlueprint,
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
         val executionContext: NadelExecutionContext,
-        val hydratedField: ExecutableNormalizedField,
-        val hydratedFieldService: Service,
+        val virtualField: ExecutableNormalizedField,
+        val virtualFieldService: Service,
         val aliasHelper: NadelAliasHelper,
     )
 
@@ -61,8 +61,8 @@ internal class NadelBatchHydrationTransform(
                 executionBlueprint = executionBlueprint,
                 instructionsByObjectTypeNames = instructionsByObjectTypeName,
                 executionContext = executionContext,
-                hydratedField = overallField,
-                hydratedFieldService = service,
+                virtualField = overallField,
+                virtualFieldService = service,
                 aliasHelper = NadelAliasHelper.forField(tag = "batch_hydration", overallField),
             )
         } else {

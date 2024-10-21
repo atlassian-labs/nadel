@@ -24,7 +24,7 @@ internal object NadelHydrationFieldsBuilder {
     fun makeBackingQueries(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
-        fieldToHydrate: ExecutableNormalizedField,
+        virtualField: ExecutableNormalizedField,
         parentNode: JsonNode,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
@@ -32,14 +32,14 @@ internal object NadelHydrationFieldsBuilder {
             .getInputValues(
                 instruction = instruction,
                 aliasHelper = aliasHelper,
-                fieldToHydrate = fieldToHydrate,
+                virtualField = virtualField,
                 parentNode = parentNode,
             )
             .map { args ->
                 makeBackingQueries(
                     instruction = instruction,
                     fieldArguments = args,
-                    fieldChildren = deepClone(fieldToHydrate.children),
+                    fieldChildren = deepClone(virtualField.children),
                     executionBlueprint = executionBlueprint,
                 )
             }
@@ -56,7 +56,7 @@ internal object NadelHydrationFieldsBuilder {
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
-        hydratedField: ExecutableNormalizedField,
+        virtualField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
         hooks: NadelExecutionHooks,
         userContext: Any?,
@@ -64,7 +64,7 @@ internal object NadelHydrationFieldsBuilder {
         val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
             aliasHelper = aliasHelper,
-            hydrationField = hydratedField,
+            virtualField = virtualField,
             parentNodes = parentNodes,
             hooks = hooks,
             userContext = userContext,
@@ -74,7 +74,7 @@ internal object NadelHydrationFieldsBuilder {
             executionBlueprint = executionBlueprint,
             instruction = instruction,
             aliasHelper = aliasHelper,
-            hydratedField = hydratedField,
+            virtualField = virtualField,
             argBatches = argBatches,
         )
     }
@@ -83,11 +83,11 @@ internal object NadelHydrationFieldsBuilder {
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
-        hydratedField: ExecutableNormalizedField,
+        virtualField: ExecutableNormalizedField,
         argBatches: List<Map<NadelHydrationBackingFieldArgument, NormalizedInputValue>>,
     ): List<ExecutableNormalizedField> {
         val backingFieldOverallObjectTypeNames = getBackingFieldOverallObjectTypenames(instruction, executionBlueprint)
-        val fieldChildren = deepClone(fields = hydratedField.children)
+        val fieldChildren = deepClone(fields = virtualField.children)
             .mapNotNull { childField ->
                 val objectTypesAreNotReturnedByBackingField =
                     backingFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
