@@ -13,7 +13,6 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLList
-import graphql.schema.GraphQLNamedInputType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLType
@@ -28,7 +27,6 @@ internal class NadelHydrationArgumentValidation {
         val backingFieldName: String,
     )
 
-    context(ValidationContext)
     fun validateHydrationInputArg(
         hydrationSourceType: GraphQLType,
         backingFieldArgType: GraphQLInputType,
@@ -64,7 +62,7 @@ internal class NadelHydrationArgumentValidation {
         //could have ID feed into [ID] (as a possible batch hydration case).
         // in this case we need to unwrap the list and check types
         return if (isBatchHydration && (!unwrappedHydrationSourceType.isList && unwrappedBackingFieldArgType.isList)) {
-            val error = getHydrationInputErrors(
+            val error = getHydrationInputError(
                 unwrappedHydrationSourceType,
                 unwrappedBackingFieldArgType.unwrapOne()
             )
@@ -85,7 +83,7 @@ internal class NadelHydrationArgumentValidation {
         //could have [ID] feed into ID (non-batch, ManyToOne case explained in NadelHydrationStrategy.kt)
         // in this case we need to unwrap the list and check types
         else if (!isBatchHydration && (unwrappedHydrationSourceType.isList && !unwrappedBackingFieldArgType.isList)) {
-            val error = getHydrationInputErrors(
+            val error = getHydrationInputError(
                 unwrappedHydrationSourceType.unwrapOne(),
                 unwrappedBackingFieldArgType
             )
@@ -104,7 +102,7 @@ internal class NadelHydrationArgumentValidation {
         }
         // Otherwise we can just check the types normally
         else {
-            return getHydrationInputErrors(
+            return getHydrationInputError(
                 hydrationSourceType,
                 backingFieldArgType
             )
@@ -112,7 +110,7 @@ internal class NadelHydrationArgumentValidation {
     }
 
     context(ValidationContext)
-    private fun getHydrationInputErrors(
+    private fun getHydrationInputError(
         hydrationSourceType: GraphQLType,
         backingFieldArgType: GraphQLType,
     ): NadelSchemaValidationError? {
@@ -239,7 +237,7 @@ internal class NadelHydrationArgumentValidation {
         val hydrationSourceFieldInnerType: GraphQLType = hydrationSourceType.unwrapOne()
         val backingFieldArgInnerType: GraphQLType = backingFieldArgType.unwrapOne()
 
-        val errorExists = getHydrationInputErrors(
+        val errorExists = getHydrationInputError(
             hydrationSourceFieldInnerType,
             backingFieldArgInnerType
         ) != null
@@ -278,7 +276,7 @@ internal class NadelHydrationArgumentValidation {
                     )
                 }
             } else {
-                val thisFieldHasError = getHydrationInputErrors(
+                val thisFieldHasError = getHydrationInputError(
                     hydrationType,
                     backingFieldType
                 ) != null
