@@ -17,7 +17,7 @@ import graphql.nadel.engine.util.unwrapNonNull
 import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelBatchHydrationByIndex private constructor(
-    private val fieldToHydrate: ExecutableNormalizedField,
+    private val virtualField: ExecutableNormalizedField,
     private val aliasHelper: NadelAliasHelper,
     private val instruction: NadelBatchHydrationFieldInstruction,
     private val parentNodes: List<JsonNode>,
@@ -31,7 +31,7 @@ internal class NadelBatchHydrationByIndex private constructor(
             batches: List<ServiceExecutionResult>,
         ): List<NadelResultInstruction> {
             return NadelBatchHydrationByIndex(
-                fieldToHydrate = state.hydratedField,
+                virtualField = state.virtualField,
                 aliasHelper = state.aliasHelper,
                 instruction = instruction,
                 parentNodes = parentNodes,
@@ -50,7 +50,7 @@ internal class NadelBatchHydrationByIndex private constructor(
 
                 NadelResultInstruction.Set(
                     subject = parentNode,
-                    key = NadelResultKey(fieldToHydrate.resultKey),
+                    key = NadelResultKey(virtualField.resultKey),
                     newValue = JsonNode(
                         if (isManyInputNodesToParentNodes) {
                             chunker.take(inputValues)

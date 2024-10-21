@@ -20,17 +20,17 @@ import graphql.normalized.NormalizedInputValue
 internal class NadelHydrationInputBuilder private constructor(
     private val instruction: NadelHydrationFieldInstruction,
     private val aliasHelper: NadelAliasHelper,
-    private val fieldToHydrate: ExecutableNormalizedField,
+    private val virtualField: ExecutableNormalizedField,
     private val parentNode: JsonNode,
 ) {
     companion object {
         fun getInputValues(
             instruction: NadelHydrationFieldInstruction,
             aliasHelper: NadelAliasHelper,
-            fieldToHydrate: ExecutableNormalizedField,
+            virtualField: ExecutableNormalizedField,
             parentNode: JsonNode,
         ): List<Map<String, NormalizedInputValue>> {
-            return NadelHydrationInputBuilder(instruction, aliasHelper, fieldToHydrate, parentNode)
+            return NadelHydrationInputBuilder(instruction, aliasHelper, virtualField, parentNode)
                 .build()
         }
     }
@@ -155,7 +155,7 @@ internal class NadelHydrationInputBuilder private constructor(
     private fun getArgumentValue(
         valueSource: ValueSource.ArgumentValue,
     ): NormalizedInputValue? {
-        return fieldToHydrate.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
+        return virtualField.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
     }
 
     private fun getResultValue(
