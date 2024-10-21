@@ -4,6 +4,7 @@ import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLString
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
+import graphql.nadel.engine.blueprint.directives.isVirtualType
 import graphql.nadel.engine.util.AnyNamedNode
 import graphql.nadel.engine.util.all
 import graphql.nadel.engine.util.isExtensionDef
@@ -208,7 +209,7 @@ internal class NadelTypeValidation(
                 val underlyingType = getUnderlyingType(overallType, service)
 
                 if (underlyingType == null) {
-                    if ((overallType as? GraphQLDirectiveContainer)?.hasAppliedDirective("virtualType") == true) {
+                    if ((overallType as? GraphQLDirectiveContainer)?.isVirtualType() == true) {
                         // Do nothing
                     } else {
                         addMissingUnderlyingTypeError(overallType)

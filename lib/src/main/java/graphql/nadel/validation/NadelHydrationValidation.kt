@@ -5,6 +5,7 @@ import graphql.nadel.Service
 import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.engine.blueprint.directives.isVirtualType
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.isList
@@ -228,7 +229,7 @@ internal class NadelHydrationValidation(
         // Ensures that the underlying type of the actor field matches with the expected overall output type
         val overallType = overallField.type.unwrapAll()
 
-        if ((overallType as? GraphQLDirectiveContainer)?.hasAppliedDirective("virtualType") == true) {
+        if ((overallType as? GraphQLDirectiveContainer)?.isVirtualType() == true) {
             return emptyList() // Bypass validation for now
         }
 
