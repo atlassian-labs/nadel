@@ -9,6 +9,9 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.blueprint.NadelPartitionInstruction
+import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
+import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.partition.NadelPartitionMutationPayloadMerger.isMutationPayloadLike
@@ -57,7 +60,17 @@ internal class NadelPartitionTransform(
             return null
         }
 
-        // TODO: This could be in the blueprint
+        val partitionInstructions = executionBlueprint.fieldInstructions
+            .getTypeNameToInstructionMap<NadelPartitionInstruction>(overallField)
+
+        // We can't partition a field that has multiple partition instructions in different types
+        if (partitionInstructions.size != 1) {
+            // TODO add validation to ensure @partition is not used in a way that would result in a ENF to have multiple partition instructions
+            return null
+        }
+
+        val pathToPartitionArg = partitionInstructions.values.single().pathToPartitionArg
+
         val fieldPartitionContext = partitionTransformHook.getFieldPartitionContext(
                 executionContext,
                 serviceExecutionContext,
@@ -67,14 +80,11 @@ internal class NadelPartitionTransform(
                 overallField,
                 hydrationDetails,
             )
-
-        if (fieldPartitionContext == null) {
-            // A field without a partition context can't be partitioned
+            ?: // A field without a partition context can't be partitioned
             return null
-        }
 
         val fieldPartition = NadelFieldPartition(
-            pathToPartitionArg = getPathToPartitionArg(overallField, executionBlueprint.engineSchema) ?: return null,
+            pathToPartitionArg = pathToPartitionArg,
             fieldPartitionContext = fieldPartitionContext,
             graphQLSchema = executionBlueprint.engineSchema,
             partitionKeyExtractor = partitionTransformHook.getPartitionKeyExtractor()
@@ -102,16 +112,6 @@ internal class NadelPartitionTransform(
             fieldPartitionContext = fieldPartitionContext,
             fieldPartitions = fieldPartitions
         )
-    }
-
-    private fun getPathToPartitionArg(overallField: ExecutableNormalizedField, schema: GraphQLSchema): List<String>?  {
-        val fieldDef = overallField.getFieldDefinitions(schema).first()
-        val routingDirective = fieldDef.getAppliedDirective(NadelDirectives.partitionDirectiveDefinition.name) ?: return null
-        val pathToSplitPoint = routingDirective.getArgument("pathToSplitPoint")
-            ?.argumentValue
-            ?.value as ArrayValue?
-
-        return pathToSplitPoint?.values?.map { it as StringValue }?.map { it.value }
     }
 
     override suspend fun transformField(
@@ -258,8 +258,6 @@ internal class NadelPartitionTransform(
                 )
             }
 
-        // TODO: Add "extensions" to the result?
-        // {"partitionedCall": true, "partitionsCalled": ["cloudId-1", "cloudId-2"]}
         return mergedData + errorInstructions
     }
 
