@@ -2,7 +2,6 @@ package graphql.nadel.validation
 
 import graphql.GraphQLContext
 import graphql.nadel.Service
-import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.engine.blueprint.directives.isVirtualType
