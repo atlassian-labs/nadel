@@ -57,8 +57,7 @@ internal class NadelPartitionTransform(
             return null
         }
 
-        val pathToPartitionArg = getPathToPartitionArg(overallField, executionBlueprint.engineSchema) ?: return null
-
+        // TODO: This could be in the blueprint
         val fieldPartitionContext = partitionTransformHook.getFieldPartitionContext(
                 executionContext,
                 serviceExecutionContext,
@@ -75,7 +74,7 @@ internal class NadelPartitionTransform(
         }
 
         val fieldPartition = NadelFieldPartition(
-            pathToPartitionArg =  pathToPartitionArg,
+            pathToPartitionArg = getPathToPartitionArg(overallField, executionBlueprint.engineSchema) ?: return null,
             fieldPartitionContext = fieldPartitionContext,
             engineSchema = executionBlueprint.engineSchema,
             partitionKeyExtractor = partitionTransformHook.getPartitionKeyExtractor()
