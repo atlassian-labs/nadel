@@ -374,7 +374,7 @@ fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates 
     return FieldCoordinates.coordinates(typeName, fieldName)
 }
 
-fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefinition): FieldCoordinates {
+fun makeFieldCoordinates(parentType: GraphQLFieldsContainer, field: GraphQLFieldDefinition): FieldCoordinates {
     return makeFieldCoordinates(typeName = parentType.name, fieldName = field.name)
 }
 

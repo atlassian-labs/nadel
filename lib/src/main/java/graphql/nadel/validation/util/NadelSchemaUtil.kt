@@ -3,7 +3,6 @@ package graphql.nadel.validation.util
 import graphql.language.FieldDefinition
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition

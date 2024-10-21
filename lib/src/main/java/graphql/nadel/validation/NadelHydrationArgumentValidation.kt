@@ -1,9 +1,9 @@
 package graphql.nadel.validation
 
 import graphql.Scalars
-import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.unwrapNonNull
