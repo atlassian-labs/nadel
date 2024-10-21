@@ -1,7 +1,6 @@
 package graphql.nadel.validation
 
 import graphql.GraphQLContext
-import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.getHydrationDefinitions
@@ -38,7 +37,6 @@ import graphql.validation.ValidationUtil
 import java.util.Locale
 
 internal class NadelHydrationValidation(
-    private val services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
     private val overallSchema: GraphQLSchema,
 ) {
@@ -60,8 +58,9 @@ internal class NadelHydrationValidation(
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }
-        val whenConditionValidationError =
-            nadelHydrationConditionValidation.validateConditionsOnAllHydrations(hydrations, parent, overallField)
+
+        val whenConditionValidationError = nadelHydrationConditionValidation
+            .validateConditionsOnAllHydrations(hydrations, parent, overallField)
         if (whenConditionValidationError != null) {
             return listOf(whenConditionValidationError)
         }
