@@ -136,14 +136,6 @@ internal object NadelBatchHydrationByObjectId {
     ): NadelResultInstruction {
         val hydratedFieldDef = instruction.hydratedFieldDef
 
-        // val hydratedFieldDef = NadelTransformUtil.getOverallFieldDef(
-        //     overallField = state.hydratedField,
-        //     parentNode = sourceNode,
-        //     service = state.hydratedFieldService,
-        //     executionBlueprint = executionBlueprint,
-        //     aliasHelper = state.aliasHelper,
-        // ) ?: error("Unable to find field definition for ${state.hydratedField.queryPath}")
-
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
             // Set to null if there were no identifier nodes
             if (isAllNull(sourceIds)) {
