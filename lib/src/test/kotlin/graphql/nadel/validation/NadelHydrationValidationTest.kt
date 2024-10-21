@@ -6,7 +6,6 @@ import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationAr
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatibleOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
-import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
@@ -134,8 +133,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails when batch hydration with no \$source args") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: JiraIssue
                         }
@@ -151,7 +150,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             users(id: ID!, siteId: ID!): [User]
                         }
@@ -160,9 +159,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -171,7 +170,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             users(id: ID!, siteId: ID!): [User]
                         }
@@ -180,7 +179,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -352,7 +351,6 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.size == 1)
             val error = errors.assertSingleOfType<MissingHydrationActorField>()
             assert(error.service.name == "issues")
-            assert(error.hydration.serviceName == "users")
             assert(error.overallField.name == "creator")
             assert(error.parentType.overall.name == "Issue")
         }
@@ -473,66 +471,6 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
-        it("fails if hydration actor service does not exist") {
-            val fixture = NadelValidationTestFixture(
-                overallSchema = mapOf(
-                    "issues" to """
-                        type Query {
-                            issue: JiraIssue
-                        }
-                        type JiraIssue @renamed(from: "Issue") {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                    "users" to """
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                        extend type JiraIssue {
-                            creator: User @hydrated(
-                                service: "userService"
-                                field: "user"
-                                arguments: [
-                                    {name: "id", value: "$source.creator"}
-                                ]
-                            )
-                        }
-                    """.trimIndent(),
-                ),
-                underlyingSchema = mapOf(
-                    "issues" to """
-                        type Query {
-                            issue: Issue
-                        }
-                        type Issue {
-                            id: ID!
-                            creator: ID!
-                        }
-                    """.trimIndent(),
-                    "users" to """
-                        type Query {
-                            user(id: ID!): User
-                        }
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                    """.trimIndent(),
-                ),
-            )
-
-            val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
-
-            val error = errors.assertSingleOfType<MissingHydrationActorService>()
-            assert(error.parentType.overall.name == "JiraIssue")
-            assert(error.parentType.underlying.name == "Issue")
-            assert(error.overallField.name == "creator")
-            assert(error.subject == error.overallField)
-            assert(error.hydration.serviceName == "userService")
-        }
-
         it("fails if hydrated field is not nullable") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
@@ -642,7 +580,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
-            assert(error.hydration.pathToActorField == listOf("userById"))
+            assert(error.hydration.backingField == listOf("userById"))
             assert(error.overallField == error.subject)
         }
 

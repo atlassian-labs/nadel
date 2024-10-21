@@ -2,9 +2,11 @@ package graphql.nadel.validation
 
 import graphql.GraphQLContext
 import graphql.nadel.Service
-import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.engine.blueprint.directives.isVirtualType
+import graphql.nadel.engine.blueprint.directives.NadelHydrationArgumentDefinition
+import graphql.nadel.engine.blueprint.directives.NadelHydrationDefinition
+import graphql.nadel.engine.blueprint.directives.getHydrationDefinitions
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.isList
@@ -19,14 +21,12 @@ import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationAr
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
-import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.MultipleSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NoSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
-import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -57,7 +57,7 @@ internal class NadelHydrationValidation(
             )
         }
 
-        val hydrations = getHydrations(overallField, overallSchema)
+        val hydrations = overallField.getHydrationDefinitions()
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }
@@ -86,13 +86,7 @@ internal class NadelHydrationValidation(
         hydration: NadelHydrationDefinition,
         hasMoreThanOneHydration: Boolean,
     ): List<NadelSchemaValidationError> {
-        if (hydration.serviceName !in services) {
-            return listOf(
-                MissingHydrationActorService(parent, overallField, hydration),
-            )
-        }
-
-        val actorField = overallSchema.queryType.getFieldAt(hydration.pathToActorField)
+        val actorField = overallSchema.queryType.getFieldAt(hydration.backingField)
             ?: return listOf(
                 MissingHydrationActorField(parent, overallField, hydration),
             )
@@ -109,18 +103,13 @@ internal class NadelHydrationValidation(
     ): List<NadelSchemaValidationError> {
         // e.g. context.jiraComment
         val pathToSourceInputField = hydration.arguments
-            .map { arg -> arg.remoteArgumentSource }
+            .map { arg -> arg.value }
             .singleOfTypeOrNull<RemoteArgumentSource.ObjectField>()
             ?.pathToField
             ?: return emptyList() // Ignore this, checked elsewhere
 
-        // Nothing to check
-        if (hydration.objectIdentifiers == null) {
-            return emptyList()
-        }
-
         // Find offending object identifiers and generate errors
-        return hydration.objectIdentifiers
+        return (hydration.inputIdentifiedBy ?: return emptyList())
             .asSequence()
             .filterNot { identifier ->
                 // e.g. context.jiraComment.id
@@ -167,8 +156,8 @@ internal class NadelHydrationValidation(
                     hydration
                         .arguments
                         .asSequence()
-                        .map { it.remoteArgumentSource }
-                        .filterIsInstance<RemoteArgumentSource.ObjectField>()
+                        .map { it.value }
+                        .filterIsInstance<NadelHydrationArgumentDefinition.ValueSource.ObjectField>()
                         .map { it.pathToField }
                 }
                 .toList()
@@ -204,7 +193,7 @@ internal class NadelHydrationValidation(
         hydrations: List<NadelHydrationDefinition>,
     ): List<NadelSchemaValidationError> {
         // todo: or maybe just don't allow polymorphic index hydration
-        val (indexCount, nonIndexCount) = hydrations.partitionCount { it.isObjectMatchByIndex }
+        val (indexCount, nonIndexCount) = hydrations.partitionCount { it.isIndexed }
         if (indexCount > 0 && nonIndexCount > 0) {
             return listOf(
                 NadelSchemaValidationError.MixedIndexHydration(parent, overallField),
@@ -215,7 +204,7 @@ internal class NadelHydrationValidation(
     }
 
     private fun isBatched(hydration: NadelHydrationDefinition): Boolean {
-        val actorFieldDef = overallSchema.queryType.getFieldAt(hydration.pathToActorField)
+        val actorFieldDef = overallSchema.queryType.getFieldAt(hydration.backingField)
         return hydration.isBatched || /*deprecated*/ actorFieldDef?.type?.unwrapNonNull()?.isList == true
     }
 
@@ -328,7 +317,7 @@ internal class NadelHydrationValidation(
         val batchHydrationArgumentErrors: List<NadelSchemaValidationError> = when {
             isBatchHydration -> {
                 val numberOfSourceArgs =
-                    hydration.arguments.count { it.remoteArgumentSource is RemoteArgumentSource.ObjectField }
+                    hydration.arguments.count { it.value is NadelHydrationArgumentDefinition.ValueSource.ObjectField }
                 when {
                     numberOfSourceArgs > 1 ->
                         listOf(MultipleSourceArgsInBatchHydration(parent, overallField))
@@ -348,15 +337,15 @@ internal class NadelHydrationValidation(
     private fun getRemoteArgErrors(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        remoteArgDef: RemoteArgumentDefinition,
+        remoteArgDef: NadelHydrationArgumentDefinition,
         actorField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
     ): List<NadelSchemaValidationError> {
-        val remoteArgSource = remoteArgDef.remoteArgumentSource
+        val remoteArgSource = remoteArgDef.value
         val actorFieldArg = actorField.getArgument(remoteArgDef.name)
         val isBatchHydration = actorField.type.unwrapNonNull().isList
         return when (remoteArgSource) {
-            is RemoteArgumentSource.ObjectField -> {
+            is NadelHydrationArgumentDefinition.ValueSource.ObjectField -> {
                 val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField)
                 if (field == null) {
                     listOf(
@@ -382,7 +371,7 @@ internal class NadelHydrationValidation(
                     )
                 }
             }
-            is RemoteArgumentSource.FieldArgument -> {
+            is NadelHydrationArgumentDefinition.ValueSource.FieldArgument -> {
                 val argument = overallField.getArgument(remoteArgSource.argumentName)
                 if (argument == null) {
                     listOf(MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource))
@@ -403,7 +392,7 @@ internal class NadelHydrationValidation(
                     )
                 }
             }
-            is RemoteArgumentSource.StaticArgument -> {
+            is NadelHydrationArgumentDefinition.ValueSource.StaticArgument -> {
                 val staticArg = remoteArgSource.staticValue
                 if (
                     !validationUtil.isValidLiteralValue(
