@@ -2,9 +2,14 @@ package graphql.nadel.schema
 
 import graphql.language.DirectiveDefinition
 import graphql.language.InputObjectTypeDefinition
-import graphql.language.SDLDefinition
-import graphql.nadel.engine.util.singleOfType
-import graphql.parser.Parser
+import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinition
+import graphql.nadel.definition.hydration.NadelHydrationResultFieldPredicateDefinition
+import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.engine.util.parseDefinition
 
 /**
  * If you update this file please add to NadelBuiltInTypes
@@ -17,99 +22,19 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val renamedDirectiveDefinition = parseDefinition<DirectiveDefinition>(
-        // language=GraphQL
-        """
-            "This allows you to rename a type or field in the overall schema"
-            directive @renamed(
-                "The type to be renamed"
-                from: String!
-            ) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION | INPUT_OBJECT | SCALAR | ENUM
-        """.trimIndent(),
-    )
+    val renamedDirectiveDefinition = NadelRenamedDefinition.directiveDefinition
 
-    val nadelBatchObjectIdentifiedByDefinition = parseDefinition<InputObjectTypeDefinition>(
-        // language=GraphQL
-        """
-            "This is required by batch hydration to understand how to pull out objects from the batched result"
-            input NadelBatchObjectIdentifiedBy {
-                sourceId: String!
-                resultId: String!
-            }
-        """.trimIndent(),
-    )
+    val nadelBatchObjectIdentifiedByDefinition = NadelBatchObjectIdentifiedByDefinition.inputValueDefinition
 
-    val nadelHydrationArgumentDefinition = parseDefinition<InputObjectTypeDefinition>(
-        // language=GraphQL
-        """
-            "This allows you to hydrate new values into fields"
-            input NadelHydrationArgument {
-                name: String!
-                value: JSON!
-            }
-        """.trimIndent(),
-    )
+    val nadelHydrationArgumentDefinition = NadelHydrationArgumentDefinition.inputValueDefinition
 
-    val nadelHydrationResultFieldPredicateDefinition = parseDefinition<InputObjectTypeDefinition>(
-        // language=GraphQL
-        """
-            input NadelHydrationResultFieldPredicate @oneOf {
-                startsWith: String
-                equals: JSON
-                matches: String
-            }
-        """.trimIndent(),
-    )
+    val nadelHydrationResultFieldPredicateDefinition = NadelHydrationResultFieldPredicateDefinition.inputValueDefinition
 
-    val nadelHydrationResultConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
-        // language=GraphQL
-        """
-            "Specify a condition for the hydration to activate based on the result"
-            input NadelHydrationResultCondition {
-                sourceField: String!
-                predicate: NadelHydrationResultFieldPredicate!
-            }
-        """.trimIndent(),
-    )
+    val nadelHydrationResultConditionDefinition = NadelHydrationResultConditionDefinition.inputObjectDefinition
 
-    val nadelHydrationConditionDefinition = parseDefinition<InputObjectTypeDefinition>(
-        // language=GraphQL
-        """
-            "Specify a condition for the hydration to activate"
-            input NadelHydrationCondition {
-                result: NadelHydrationResultCondition!
-            }
-        """.trimIndent(),
-    )
+    val nadelHydrationConditionDefinition = NadelHydrationConditionDefinition.inputObjectDefinition
 
-    val hydratedDirectiveDefinition = parseDefinition<DirectiveDefinition>(
-        // language=GraphQL
-        """
-            "This allows you to hydrate new values into fields"
-            directive @hydrated(
-                "The target service"
-                service: String!
-                "The target top level field"
-                field: String!
-                "How to identify matching results"
-                identifiedBy: String! = "id"
-                "How to identify matching results"
-                inputIdentifiedBy: [NadelBatchObjectIdentifiedBy!]! = []
-                "Are results indexed"
-                indexed: Boolean! = false
-                "Is querying batched"
-                batched: Boolean! = false
-                "The batch size"
-                batchSize: Int! = 200
-                "The timeout to use when completing hydration"
-                timeout: Int! = -1
-                "The arguments to the hydrated field"
-                arguments: [NadelHydrationArgument!]!
-                "Specify a condition for the hydration to activate"
-                when: NadelHydrationCondition
-            ) repeatable on FIELD_DEFINITION
-        """.trimIndent(),
-    )
+    val hydratedDirectiveDefinition = NadelHydrationDefinition.directiveDefinition
 
     val dynamicServiceDirectiveDefinition = parseDefinition<DirectiveDefinition>(
         // language=GraphQL
@@ -135,18 +60,6 @@ object NadelDirectives {
         """.trimIndent(),
     )
 
-    val nadelHydrationFromArgumentDefinition = parseDefinition<InputObjectTypeDefinition>(
-        // language=GraphQL
-        """
-            "This allows you to hydrate new values into fields with the @hydratedFrom directive"
-            input NadelHydrationFromArgument {
-                name: String!
-                valueFromField: String
-                valueFromArg: String
-            }
-        """.trimIndent(),
-    )
-
     val partitionDirectiveDefinition = parseDefinition<DirectiveDefinition>(
         // language=GraphQL
         """
@@ -157,8 +70,4 @@ object NadelDirectives {
             ) on FIELD_DEFINITION
         """.trimIndent()
     )
-
-    private inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {
-        return Parser.parse(sdl).definitions.singleOfType()
-    }
 }

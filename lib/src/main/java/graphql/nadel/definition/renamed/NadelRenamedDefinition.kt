@@ -1,14 +1,28 @@
 package graphql.nadel.definition.renamed
 
+import graphql.language.DirectiveDefinition
 import graphql.language.DirectivesContainer
 import graphql.nadel.definition.renamed.NadelRenamedDefinition.Keyword
-import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
 
 sealed class NadelRenamedDefinition {
+    companion object{
+        val directiveDefinition = parseDefinition<DirectiveDefinition>(
+            // language=GraphQL
+            """
+                "This allows you to rename a type or field in the overall schema"
+                directive @renamed(
+                    "The type to be renamed"
+                    from: String!
+                ) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION | INPUT_OBJECT | SCALAR | ENUM
+            """.trimIndent(),
+        )
+    }
+
     class Type(
         private val appliedDirective: GraphQLAppliedDirective,
     ) : NadelRenamedDefinition() {
@@ -37,7 +51,7 @@ fun GraphQLDirectiveContainer.isRenamed(): Boolean {
 }
 
 fun DirectivesContainer<*>.isRenamed(): Boolean {
-    return hasDirective(NadelDirectives.renamedDirectiveDefinition.name)
+    return hasDirective(Keyword.renamed)
 }
 
 fun GraphQLFieldDefinition.getRenamedOrNull(): NadelRenamedDefinition.Field? {
