@@ -93,7 +93,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     ): List<ExecutableNormalizedField> {
         val objectTypeNames = getObjectTypeNamesForIdField(
             executionBlueprint = executionBlueprint,
-            overallParentTypeOfIdField = batchHydrationInstruction.actorFieldDef.type,
+            overallParentTypeOfIdField = batchHydrationInstruction.backingFieldDef.type,
         )
 
         return objectIds

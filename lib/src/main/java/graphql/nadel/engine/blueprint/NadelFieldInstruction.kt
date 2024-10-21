@@ -2,7 +2,7 @@ package graphql.nadel.engine.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -24,15 +24,15 @@ interface NadelGenericHydrationInstruction {
     /**
      * The field to be hydrated i.e. the field with the @hydrated directive on it.
      */
-    val hydratedFieldDef: GraphQLFieldDefinition
+    val virtualFieldDef: GraphQLFieldDefinition
 
     /**
      * The service that we will call to get the data for the hydration.
      */
-    val actorService: Service
+    val backingService: Service
 
     /**
-     * The query path to the field in the [actorService] to invoke for hydration e.g.
+     * The query path to the field in the [backingService] to invoke for hydration e.g.
      *
      * ```graphql
      * type Query {
@@ -45,10 +45,10 @@ interface NadelGenericHydrationInstruction {
      *
      * then the query path is `NadelQueryPath(segments = [jira, issueById])`.
      */
-    val queryPathToActorField: NadelQueryPath
+    val queryPathToBackingField: NadelQueryPath
 
     /**
-     * Arguments needed to invoke [actorFieldDef].
+     * Arguments needed to invoke [backingFieldDef].
      *
      * e.g. given
      *
@@ -58,9 +58,9 @@ interface NadelGenericHydrationInstruction {
      * }
      * ```
      *
-     * then the [NadelHydrationActorInputDef] would be for the `id` argument.
+     * then the [NadelHydrationArgument] would be for the `id` argument.
      */
-    val actorInputValueDefs: List<NadelHydrationActorInputDef>
+    val backingFieldArguments: List<NadelHydrationArgument>
 
     /**
      * Maximum time the client should wait for the hydration call before timing out.
@@ -69,20 +69,20 @@ interface NadelGenericHydrationInstruction {
 
     /**
      * The fields required to be queried on the source object in order to complete the hydration.
-     * This can be the fields described in [NadelHydrationActorInputDef.ValueSource.FieldResultValue.queryPathToField]
+     * This can be the fields described in [NadelHydrationArgument.ValueSource.FieldResultValue.queryPathToField]
      * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
      */
     val sourceFields: List<NadelQueryPath>
 
     /**
-     * The field definition in the overall schema referenced by [queryPathToActorField].
+     * The field definition in the overall schema referenced by [queryPathToBackingField].
      */
-    val actorFieldDef: GraphQLFieldDefinition
+    val backingFieldDef: GraphQLFieldDefinition
 
     /**
-     * The container of the actor field in the overall schema referenced by [queryPathToActorField].
+     * The container of the backing field in the overall schema referenced by [queryPathToBackingField].
      */
-    val actorFieldContainer: GraphQLFieldsContainer
+    val backingFieldContainer: GraphQLFieldsContainer
 
     /**
      * The optional definition for conditional hydrations
@@ -93,14 +93,14 @@ interface NadelGenericHydrationInstruction {
 data class NadelHydrationFieldInstruction(
     // For documentation of override props see the parent
     override val location: FieldCoordinates,
-    override val hydratedFieldDef: GraphQLFieldDefinition,
-    override val actorService: Service,
-    override val queryPathToActorField: NadelQueryPath,
-    override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
+    override val virtualFieldDef: GraphQLFieldDefinition,
+    override val backingService: Service,
+    override val queryPathToBackingField: NadelQueryPath,
+    override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
-    override val actorFieldDef: GraphQLFieldDefinition,
-    override val actorFieldContainer: GraphQLFieldsContainer,
+    override val backingFieldDef: GraphQLFieldDefinition,
+    override val backingFieldContainer: GraphQLFieldsContainer,
     override val condition: NadelHydrationCondition?,
     /**
      * Hydration can bring about virtual types.
@@ -116,14 +116,14 @@ data class NadelHydrationFieldInstruction(
 data class NadelBatchHydrationFieldInstruction(
     // For documentation of override props see the parent
     override val location: FieldCoordinates,
-    override val hydratedFieldDef: GraphQLFieldDefinition,
-    override val actorService: Service,
-    override val queryPathToActorField: NadelQueryPath,
-    override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
+    override val virtualFieldDef: GraphQLFieldDefinition,
+    override val backingService: Service,
+    override val queryPathToBackingField: NadelQueryPath,
+    override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
-    override val actorFieldDef: GraphQLFieldDefinition,
-    override val actorFieldContainer: GraphQLFieldsContainer,
+    override val backingFieldDef: GraphQLFieldDefinition,
+    override val backingFieldContainer: GraphQLFieldsContainer,
     override val condition: NadelHydrationCondition?,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,

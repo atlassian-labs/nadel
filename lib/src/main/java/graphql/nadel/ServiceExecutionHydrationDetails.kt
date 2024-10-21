@@ -9,7 +9,7 @@ data class ServiceExecutionHydrationDetails(
     val timeout: Int,
     val batchSize: Int,
     val hydrationSourceService: Service,
-    val hydrationSourceField: FieldCoordinates,
-    val hydrationActorField: FieldCoordinates,
+    val hydrationVirtualField: FieldCoordinates,
+    val hydrationBackingField: FieldCoordinates,
     val fieldPath: List<String>,
 )

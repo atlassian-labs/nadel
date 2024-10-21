@@ -6,9 +6,9 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 
-data class NadelHydrationActorInputDef(
+data class NadelHydrationArgument(
     val name: String,
-    val actorArgumentDef: GraphQLArgument,
+    val backingArgumentDef: GraphQLArgument,
     val valueSource: ValueSource,
 ) {
     sealed class ValueSource {
