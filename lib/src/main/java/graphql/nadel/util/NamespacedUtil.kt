@@ -4,6 +4,7 @@ import graphql.language.ObjectTypeDefinition
 import graphql.language.ObjectTypeExtensionDefinition
 import graphql.nadel.Service
 import graphql.nadel.engine.util.operationTypes
+import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLFieldDefinition
@@ -45,10 +46,10 @@ object NamespacedUtil {
         val namespaceFieldsWithThisType = schema.operationTypes
             .asSequence()
             .flatMap { it.fieldDefinitions }
-            .filter { NamespacedUtil.isNamespacedField(it) }
-            .map { it.type }
+            .filter { isNamespacedField(it) }
+            .map { it.type.unwrapAll() }
             .filterIsInstance<GraphQLNamedOutputType>()
-            .filter {it.name == type.name}
+            .filter { it.name == type.name }
             .toList()
 
         return namespaceFieldsWithThisType.size == 1
