@@ -113,7 +113,7 @@ internal class NadelPartitionValidation(
         return containsSuccessField && allExtraFieldsAreOfTypeList
     }
 
-    private fun conditionalError(
+    private inline fun conditionalError(
         error: NadelSchemaValidationError,
         conditionSupplier: () -> Boolean,
     ): List<NadelSchemaValidationError> {
