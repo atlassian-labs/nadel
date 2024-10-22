@@ -70,6 +70,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
+import kotlinx.coroutines.supervisorScope
 import java.util.concurrent.CompletableFuture
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
@@ -144,7 +145,7 @@ internal class NextgenEngine(
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
         executionHints: NadelExecutionHints,
-    ): ExecutionResult {
+    ): ExecutionResult = supervisorScope {
         try {
             val timer = NadelInstrumentationTimer(
                 instrumentation,
@@ -177,6 +178,7 @@ internal class NextgenEngine(
                 timer,
                 incrementalResultSupport,
                 resultTracker,
+                executionCoroutine = this
             )
 
             val beginExecuteContext = instrumentation.beginExecute(
@@ -226,7 +228,7 @@ internal class NextgenEngine(
             // todo: maybe pass in the incremental version that's built below into here
             resultTracker.complete(result)
 
-            return if (incrementalResultSupport.hasDeferredResults()) {
+            if (incrementalResultSupport.hasDeferredResults()) {
                 IncrementalExecutionResultImpl.Builder()
                     .from(result)
                     .incrementalItemPublisher(incrementalResultSupport.resultFlow().asPublisher())
@@ -236,7 +238,7 @@ internal class NextgenEngine(
             }
         } catch (e: Throwable) {
             when (e) {
-                is GraphQLError -> return newExecutionResult(error = e)
+                is GraphQLError -> newExecutionResult(error = e)
                 else -> throw e
             }
         }
