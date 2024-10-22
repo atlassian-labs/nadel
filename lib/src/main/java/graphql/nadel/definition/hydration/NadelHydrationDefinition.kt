@@ -67,7 +67,7 @@ class NadelHydrationDefinition(
         get() = appliedDirective.getArgument(Keyword.indexed).getValue()
 
     val isBatched: Boolean
-        get() = appliedDirective.getArgument(Keyword.batched).getValue()
+        get() = appliedDirective.getArgument(Keyword.batched)?.getValue<Boolean?>() == true
 
     val batchSize: Int
         get() = appliedDirective.getArgument(Keyword.batchSize).getValue()
