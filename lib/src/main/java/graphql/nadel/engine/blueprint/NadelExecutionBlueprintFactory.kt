@@ -189,7 +189,7 @@ private class Factory(
                         when (val mappingDefinition = getFieldMappingDefinition(field)) {
                             null -> {
                                 getUnderlyingServiceHydrations(field)
-                                    .map { makeHydrationFieldInstruction(type, field, it) }
+                                    .map { makeHydrationFieldInstruction(type, field, it) } + makePartitionInstruction(type, field)
                             }
                             else -> when (mappingDefinition.inputPath.size) {
                                 1 -> listOf(makeRenameInstruction(type, field, mappingDefinition))
@@ -468,6 +468,21 @@ private class Factory(
         return NadelRenameFieldInstruction(
             location = makeFieldCoordinates(parentType, field),
             underlyingName = mappingDefinition.inputPath.single(),
+        )
+    }
+
+    private fun makePartitionInstruction(
+        parentType: GraphQLObjectType,
+        field: GraphQLFieldDefinition,
+    ): List<NadelPartitionInstruction> {
+        val partitionDefinition = NadelDirectives.createPartitionDefinition(field)
+            ?: return emptyList()
+
+        return listOf(
+            NadelPartitionInstruction(
+                location = makeFieldCoordinates(parentType, field),
+                pathToPartitionArg = partitionDefinition.pathToSplitPoint,
+            )
         )
     }
 

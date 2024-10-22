@@ -15,6 +15,7 @@ import graphql.nadel.dsl.NadelHydrationConditionDefinition
 import graphql.nadel.dsl.NadelHydrationConditionPredicateDefinition
 import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
+import graphql.nadel.dsl.NadelPartitionDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.TypeMappingDefinition
@@ -408,6 +409,14 @@ object NadelDirectives {
         val from = getDirectiveValue<String>(directive, "from")
 
         return TypeMappingDefinition(underlyingName = from, overallName = directivesContainer.name)
+    }
+
+    internal fun createPartitionDefinition(fieldDefinition: GraphQLFieldDefinition): NadelPartitionDefinition? {
+        val directive = fieldDefinition.getAppliedDirective(partitionDirectiveDefinition.name)
+            ?: return null
+        val pathToSplitPoint = getDirectiveValue<List<String>>(directive, "pathToSplitPoint")
+
+        return NadelPartitionDefinition(pathToSplitPoint)
     }
 
     private inline fun <reified T : Any> getDirectiveValue(
