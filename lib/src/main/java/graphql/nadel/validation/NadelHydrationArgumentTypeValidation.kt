@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.Scalars
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.engine.util.isNullable
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_STRICTER_OR_SAME
@@ -32,6 +33,11 @@ internal sealed class NadelHydrationArgumentTypeValidationResult {
 
     sealed class Error : NadelHydrationArgumentTypeValidationResult()
 
+    /**
+     * Batch argument must be a 1D array e.g. `userIds: [ID]`
+     */
+    data object InvalidBatchIdArgument : Error()
+
     data class IncompatibleInputType(
         val suppliedType: GraphQLType,
         val requiredType: GraphQLType,
@@ -56,25 +62,52 @@ internal class NadelHydrationArgumentTypeValidation {
 
     fun isAssignable(
         isBatchHydration: Boolean,
+        hydrationArgumentDefinition: NadelHydrationArgumentDefinition,
         suppliedType: GraphQLType,
         requiredType: GraphQLInputType,
     ): NadelHydrationArgumentTypeValidationResult {
         if (isBatchHydration) {
+            // Object must be fed into 1D array
+            if (hydrationArgumentDefinition is NadelHydrationArgumentDefinition.ObjectField) {
+                validateBatchHydrationSourceFieldBackingArgument(
+                    requiredType = requiredType,
+                ).onError { return it }
+            }
+
+            // Batch hydration is the wild west
             validateArgumentType(
-                suppliedType.unwrapAll(),
-                requiredType.unwrapAll(),
+                suppliedType = suppliedType.unwrapAll(),
+                requiredType = requiredType.unwrapAll(),
             ).onError { return it }
         } else {
-            validateArgumentType(
-                suppliedType,
-                requiredType,
-            ).onError { return it }
+            if (hydrationArgumentDefinition is NadelHydrationArgumentDefinition.ObjectField) {
+                // todo: this should only unwrap not-null but we don't handle NadelHydrationStrategy.ManyToOne
+                validateArgumentType(
+                    suppliedType = suppliedType.unwrapAll(),
+                    requiredType = requiredType.unwrapAll(),
+                ).onError { return it }
+            } else {
+                validateArgumentType(
+                    suppliedType = suppliedType,
+                    requiredType = requiredType,
+                ).onError { return it }
+            }
         }
 
         validateArgumentTypeRecursively(
-            suppliedType.unwrapAll(),
-            requiredType.unwrapAll(),
+            suppliedType = suppliedType.unwrapAll(),
+            requiredType = requiredType.unwrapAll(),
         ).onError { return it }
+
+        return NadelHydrationArgumentTypeValidationResult.Success
+    }
+
+    private fun validateBatchHydrationSourceFieldBackingArgument(
+        requiredType: GraphQLInputType,
+    ): NadelHydrationArgumentTypeValidationResult {
+        if (requiredType.getListCardinality() != 1) {
+            return NadelHydrationArgumentTypeValidationResult.InvalidBatchIdArgument
+        }
 
         return NadelHydrationArgumentTypeValidationResult.Success
     }
@@ -103,7 +136,7 @@ internal class NadelHydrationArgumentTypeValidation {
     }
 
     /**
-     * We are only comparing object types that are not immediately obviously equal
+     * We are only comparing object types that are not obviously equal
      *
      * i.e. object type to input object type
      */
@@ -152,7 +185,10 @@ internal class NadelHydrationArgumentTypeValidation {
         )
     }
 
-    private fun isScalarCompatible(suppliedType: GraphQLNamedInputType, requiredType: GraphQLNamedInputType): Boolean {
+    private fun isScalarCompatible(
+        suppliedType: GraphQLNamedInputType,
+        requiredType: GraphQLNamedInputType,
+    ): Boolean {
         if (suppliedType.name == requiredType.name) {
             return true
         }

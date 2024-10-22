@@ -8,7 +8,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatible
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationBackingField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
-import graphql.nadel.validation.NadelSchemaValidationError.HydrationDoesNotSupplyRequiredBackingFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationMissingRequiredBackingFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationBackingFieldArgument
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
@@ -209,7 +209,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                     "users" to """
                         type Query {
-                            users(id: ID!, siteId: ID!): [User]
+                            users(id: [ID!]!, siteId: ID!): [User]
                         }
                         type User {
                             id: ID!
@@ -229,7 +229,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                     "users" to """
                         type Query {
-                            users(id: ID!, siteId: ID!): [User]
+                            users(id: [ID!]!, siteId: ID!): [User]
                         }
                         type User {
                             id: ID!
@@ -887,7 +887,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<HydrationDoesNotSupplyRequiredBackingFieldArgument>()
+            val error = errors.assertSingleOfType<HydrationMissingRequiredBackingFieldArgument>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")

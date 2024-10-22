@@ -18,7 +18,7 @@ overallSchema:
     }
   Issue: |
     type Query {
-      issues(issuesInput: IssueInput!): [Issue]
+      issues(issuesInput: [IssueInput!]): [Issue]
     }
 
     type Issue {
@@ -52,7 +52,7 @@ underlyingSchema:
     }
   Issue: |
     type Query {
-      issues(issuesInput: IssueInput!): [Issue]
+      issues(issuesInput: [IssueInput!]): [Issue]
     }
 
     type Issue {

@@ -21,6 +21,7 @@ class NadelHydrationArgumentTypeValidationTest {
             val sourceType: String,
             val requiredType: String,
         )
+
         return listOf(
             "ID",
             "Boolean",
@@ -82,8 +83,8 @@ class NadelHydrationArgumentTypeValidationTest {
 
                 val error = errors.singleOfType<NadelSchemaValidationError.IncompatibleHydrationArgumentType>()
                 assertTrue(error.hydrationArgument.name == "search")
-                assertTrue(GraphQLTypeUtil.simplePrint(error.suppliedType) == sourceType)
-                assertTrue(GraphQLTypeUtil.simplePrint(error.requiredType) == requiredType)
+                assertTrue(GraphQLTypeUtil.simplePrint(error.suppliedType) == sourceType.filter(Char::isLetter))
+                assertTrue(GraphQLTypeUtil.simplePrint(error.requiredType) == requiredType.filter(Char::isLetter))
             }
         }
     }
@@ -244,7 +245,7 @@ class NadelHydrationArgumentTypeValidationTest {
         assertTrue(errors.size == 1)
 
         val error = errors
-            .singleOfType<NadelSchemaValidationError.HydrationArgumentDoesNotSupplyRequiredInputObjectField>()
+            .singleOfType<NadelSchemaValidationError.HydrationArgumentMissingRequiredInputObjectField>()
         assertTrue(error.parentType.overall.name == "JiraIssue")
         assertTrue(error.overallField.name == "related")
         assertTrue(error.hydrationArgument.name == "search")
@@ -293,7 +294,7 @@ class NadelHydrationArgumentTypeValidationTest {
         assertTrue(errors.size == 1)
 
         val error = errors
-            .singleOfType<NadelSchemaValidationError.HydrationArgumentDoesNotSupplyRequiredInputObjectField>()
+            .singleOfType<NadelSchemaValidationError.HydrationArgumentMissingRequiredInputObjectField>()
         assertTrue(error.parentType.overall.name == "JiraIssue")
         assertTrue(error.overallField.name == "related")
         assertTrue(error.hydrationArgument.name == "search")
@@ -416,7 +417,7 @@ class NadelHydrationArgumentTypeValidationTest {
         // Then
         assertTrue(errors.size == 1)
 
-        val error = errors.singleOfType<NadelSchemaValidationError.HydrationDoesNotSupplyRequiredBackingFieldArgument>()
+        val error = errors.singleOfType<NadelSchemaValidationError.HydrationMissingRequiredBackingFieldArgument>()
         assertTrue(error.parentType.overall.name == "JiraIssue")
         assertTrue(error.overallField.name == "related")
         assertTrue(error.hydration.backingField == listOf("issueById"))

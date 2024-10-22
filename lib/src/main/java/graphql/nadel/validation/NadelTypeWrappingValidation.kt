@@ -5,8 +5,8 @@ import graphql.language.NonNullType
 import graphql.language.TypeName
 import graphql.nadel.engine.util.unwrapOne
 import graphql.nadel.util.splitBy
-import graphql.nadel.validation.NadelTypeWrappingValidation.NullabilityToken.NOT_NULLABLE
-import graphql.nadel.validation.NadelTypeWrappingValidation.NullabilityToken.NULLABLE
+import graphql.nadel.validation.NadelNullabilityToken.NOT_NULLABLE
+import graphql.nadel.validation.NadelNullabilityToken.NULLABLE
 import graphql.schema.GraphQLList
 import graphql.schema.GraphQLNonNull
 import graphql.schema.GraphQLType
@@ -48,9 +48,9 @@ internal class NadelTypeWrappingValidation {
     private fun isTypeWrappingValid(
         lhs: GraphQLType,
         rhs: GraphQLType,
-        nullableCheck: (lhsToken: NullabilityToken, rhsToken: NullabilityToken) -> Boolean,
+        nullableCheck: (lhsToken: NadelNullabilityToken, rhsToken: NadelNullabilityToken) -> Boolean,
     ): Boolean {
-        if (lhs.countCardinality() != rhs.countCardinality()) {
+        if (lhs.getListCardinality() != rhs.getListCardinality()) {
             return false
         }
 
@@ -68,94 +68,94 @@ internal class NadelTypeWrappingValidation {
 
         return areNullableChangesCompatible
     }
+}
 
-    private fun GraphQLType.countCardinality(): Int {
-        return getTypeSequence()
-            .count {
-                it is GraphQLList
+internal fun GraphQLType.getListCardinality(): Int {
+    return getTypeSequence()
+        .count {
+            it is GraphQLList
+        }
+}
+
+/**
+ * For each layer in a [GraphQLType] this will tell us whether it is nullable or not.
+ *
+ * Innermost layer is reported first, outermost layer is reported last.
+ *
+ * e.g.
+ * given `[Test!]!` will output `[`[NOT_NULLABLE], [NOT_NULLABLE]`]`
+ *
+ * given `[Test!]` will output `[`[NOT_NULLABLE], [NULLABLE]`]`
+ *
+ * given `Test!` will output `[`[NOT_NULLABLE]`]`
+ *
+ * given `Test` will output `[`[NULLABLE]`]`
+ *
+ * etc.
+ */
+private fun GraphQLType.getNullabilityTokens(): List<NadelNullabilityToken> {
+    return getTypeSequence()
+        .filterNot {
+            it is GraphQLUnmodifiedType
+        }
+        .onEach {
+            require(it is GraphQLList || it is GraphQLNonNull)
+        }
+        .splitBy {
+            it is GraphQLList
+        }
+        .map {
+            if (it.isEmpty()) {
+                NULLABLE
+            } else {
+                NOT_NULLABLE
+            }
+        }
+        .toList()
+        .asReversed()
+}
+
+/**
+ * Constructs a [Sequence] which unwraps the entire [GraphQLType].
+ *
+ * i.e. given `[[Test]!]` it construct a sequence of [ListType], [NonNullType], [ListType], [TypeName]
+ */
+private fun GraphQLType.getTypeSequence(): Sequence<GraphQLType> {
+    return generateSequence(seed = this) { type ->
+        type.unwrapOne()
+            .takeUnless {
+                it === type
             }
     }
+}
 
-    /**
-     * For each layer in a [GraphQLType] this will tell us whether it is nullable or not.
-     *
-     * Innermost layer is reported first, outermost layer is reported last.
-     *
-     * e.g.
-     * given `[Test!]!` will output `[`[NOT_NULLABLE], [NOT_NULLABLE]`]`
-     *
-     * given `[Test!]` will output `[`[NOT_NULLABLE], [NULLABLE]`]`
-     *
-     * given `Test!` will output `[`[NOT_NULLABLE]`]`
-     *
-     * given `Test` will output `[`[NULLABLE]`]`
-     *
-     * etc.
-     */
-    private fun GraphQLType.getNullabilityTokens(): List<NullabilityToken> {
-        return getTypeSequence()
-            .filterNot {
-                it is GraphQLUnmodifiedType
-            }
-            .onEach {
-                require(it is GraphQLList || it is GraphQLNonNull)
-            }
-            .splitBy {
-                it is GraphQLList
-            }
-            .map {
-                if (it.isEmpty()) {
-                    NULLABLE
-                } else {
-                    NOT_NULLABLE
-                }
-            }
-            .toList()
-            .asReversed()
-    }
+/**
+ * Whether something is nullable or not.
+ */
+private enum class NadelNullabilityToken {
+    NULLABLE,
+    NOT_NULLABLE,
+    ;
 
-    /**
-     * Constructs a [Sequence] which unwraps the entire [GraphQLType].
-     *
-     * i.e. given `[[Test]!]` it construct a sequence of [ListType], [NonNullType], [ListType], [TypeName]
-     */
-    private fun GraphQLType.getTypeSequence(): Sequence<GraphQLType> {
-        return generateSequence(seed = this) { type ->
-            type.unwrapOne()
-                .takeUnless {
-                    it === type
-                }
+    fun isStricterThan(other: NadelNullabilityToken): Boolean {
+        return when (this) {
+            NULLABLE -> false
+            NOT_NULLABLE -> other == NULLABLE
         }
     }
 
-    /**
-     * Whether something is nullable or not.
-     */
-    private enum class NullabilityToken {
-        NULLABLE,
-        NOT_NULLABLE,
-        ;
-
-        fun isStricterThan(other: NullabilityToken): Boolean {
-            return when (this) {
-                NULLABLE -> false
-                NOT_NULLABLE -> other == NULLABLE
-            }
+    fun isLooserThan(other: NadelNullabilityToken): Boolean {
+        return when (this) {
+            NULLABLE -> other == NOT_NULLABLE
+            NOT_NULLABLE -> false
         }
+    }
 
-        fun isLooserThan(other: NullabilityToken): Boolean {
-            return when (this) {
-                NULLABLE -> other == NOT_NULLABLE
-                NOT_NULLABLE -> false
-            }
-        }
+    fun isStricterThanOrSame(other: NadelNullabilityToken): Boolean {
+        return this == other || isStricterThan(other)
+    }
 
-        fun isStricterThanOrSame(other: NullabilityToken): Boolean {
-            return this == other || isStricterThan(other)
-        }
-
-        fun isLooserThanOrSame(other: NullabilityToken): Boolean {
-            return this == other || isLooserThan(other)
-        }
+    fun isLooserThanOrSame(other: NadelNullabilityToken): Boolean {
+        return this == other || isLooserThan(other)
     }
 }

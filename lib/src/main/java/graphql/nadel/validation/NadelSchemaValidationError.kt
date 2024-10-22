@@ -499,7 +499,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         override val subject = overallField
     }
 
-    data class HydrationArgumentDoesNotSupplyRequiredInputObjectField(
+    data class HydrationArgumentMissingRequiredInputObjectField(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: NadelHydrationDefinition,
@@ -527,7 +527,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         override val subject = overallField
     }
 
-    data class HydrationDoesNotSupplyRequiredBackingFieldArgument(
+    data class HydrationMissingRequiredBackingFieldArgument(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: NadelHydrationDefinition,
@@ -539,6 +539,27 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val af = hydration.backingField.joinToString(separator = ".")
             "Hydration on field $of is missing the required argument $argument on hydration backing Query.$af"
+        }
+
+        override val subject = overallField
+    }
+
+    data class BatchHydrationInvalidBatchingArgument(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val hydration: NadelHydrationDefinition,
+        val hydrationArgument: NadelHydrationArgumentDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val a = hydrationArgument.name
+            getHydrationErrorMessage(
+                parentType,
+                overallField,
+                hydration,
+                reason = "batch argument $a must be a 1D list",
+            )
         }
 
         override val subject = overallField

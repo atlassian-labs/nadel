@@ -19,10 +19,10 @@ import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedF
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationMissingRequiredBackingFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationBackingField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
-import graphql.nadel.validation.NadelSchemaValidationError.HydrationDoesNotSupplyRequiredBackingFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.MultipleSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NoSourceArgsInBatchHydration
 import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationBackingFieldArgument
@@ -314,13 +314,13 @@ internal class NadelHydrationValidation(
         hydration: NadelHydrationDefinition,
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-    ): List<HydrationDoesNotSupplyRequiredBackingFieldArgument> {
+    ): List<HydrationMissingRequiredBackingFieldArgument> {
         return backingField.arguments
             .filter { it.type.isNonNull }
             .mapNotNull { backingArg ->
                 val hydrationArg = hydration.arguments.find { it.name == backingArg.name }
                 if (hydrationArg == null) {
-                    HydrationDoesNotSupplyRequiredBackingFieldArgument(
+                    HydrationMissingRequiredBackingFieldArgument(
                         parent,
                         overallField,
                         hydration,
@@ -489,7 +489,8 @@ internal class NadelHydrationValidation(
 
         NadelHydrationArgumentTypeValidation()
             .isAssignable(
-                isBatchHydration,
+                isBatchHydration = isBatchHydration,
+                hydrationArgumentDefinition = hydrationArgumentDefinition,
                 suppliedType = suppliedType,
                 requiredType = backingFieldArg.type,
             )
@@ -518,7 +519,7 @@ internal class NadelHydrationValidation(
                         )
                     }
                     is NadelHydrationArgumentTypeValidationResult.MissingInputField -> {
-                        NadelSchemaValidationError.HydrationArgumentDoesNotSupplyRequiredInputObjectField(
+                        NadelSchemaValidationError.HydrationArgumentMissingRequiredInputObjectField(
                             parentType = parent,
                             overallField = overallField,
                             hydration = hydrationDefinition,
@@ -526,6 +527,14 @@ internal class NadelHydrationValidation(
                             suppliedFieldContainer = it.suppliedFieldContainer,
                             requiredFieldContainer = it.requiredFieldContainer,
                             requiredField = it.requiredField,
+                        )
+                    }
+                    NadelHydrationArgumentTypeValidationResult.InvalidBatchIdArgument -> {
+                        NadelSchemaValidationError.BatchHydrationInvalidBatchingArgument(
+                            parentType = parent,
+                            overallField = overallField,
+                            hydration = hydrationDefinition,
+                            hydrationArgument = hydrationArgumentDefinition,
                         )
                     }
                 }
