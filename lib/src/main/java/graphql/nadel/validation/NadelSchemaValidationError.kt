@@ -13,6 +13,8 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInputFieldsContainer
 import graphql.schema.GraphQLInputObjectField
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedSchemaElement
@@ -287,7 +289,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     data class MissingHydrationFieldValueSource(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArgSource: NadelHydrationArgumentDefinition.ValueSource.ObjectField,
+        val remoteArgSource: NadelHydrationArgumentDefinition.ObjectField,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -304,7 +306,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     data class MissingHydrationArgumentValueSource(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArgSource: NadelHydrationArgumentDefinition.ValueSource.FieldArgument,
+        val remoteArgSource: NadelHydrationArgumentDefinition.FieldArgument,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -337,17 +339,17 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     data class IncompatibleHydrationArgumentType(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArg: NadelHydrationArgumentDefinition,
-        val hydrationType: GraphQLType,
-        val backingArgInputType: GraphQLType,
-        val backingFieldName: String,
+        val hydration: NadelHydrationDefinition,
+        val hydrationArgument: NadelHydrationArgumentDefinition,
+        val suppliedType: GraphQLType,
+        val requiredType: GraphQLType,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
-            val ht = GraphQLTypeUtil.simplePrint(hydrationType)
-            val at = GraphQLTypeUtil.simplePrint(backingArgInputType)
-            "Hydration cannot assign type $ht to $at on argument ${remoteArg.name}"
+            val ht = GraphQLTypeUtil.simplePrint(suppliedType)
+            val at = GraphQLTypeUtil.simplePrint(requiredType)
+            "Hydration cannot assign type $ht to $at on argument ${hydrationArgument.name}"
         }
 
         override val subject = overallField
@@ -384,20 +386,17 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     data class StaticArgIsNotAssignable(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArg: NadelHydrationArgumentDefinition,
-        val backingArgInputType: GraphQLType,
-        val backingFieldName: String,
+        val hydration: NadelHydrationDefinition,
+        val hydrationArgument: NadelHydrationArgumentDefinition.StaticArgument,
+        val requiredArgumentType: GraphQLType,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
-            val hydrationArgName = remoteArg.name
-            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val at = GraphQLTypeUtil.simplePrint(backingArgInputType)
-
-            "Field $of tried to hydrate using backing field \"$backingFieldName\". " +
-                " However, the type of the static argument you are supplying backing field arg \"$hydrationArgName\" with " +
-                "is not assignable to the expected type $at"
+            val vf = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val bf = hydration.backingField.joinToString(separator = ".")
+            val an = hydrationArgument.name
+            "Field $vf tried to hydrate Query.$bf but gave invalid static value for argument $an"
         }
 
         override val subject = overallField
@@ -469,48 +468,66 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     data class IncompatibleFieldInHydratedInputObject(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArg: NadelHydrationArgumentDefinition,
-        val backingFieldName: String,
+        val hydration: NadelHydrationDefinition,
+        val hydrationArgument: NadelHydrationArgumentDefinition,
+        val suppliedFieldContainer: GraphQLFieldsContainer,
+        val suppliedField: GraphQLFieldDefinition,
+        val requiredFieldContainer: GraphQLInputFieldsContainer,
+        val requiredField: GraphQLInputObjectField,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
-            val hydrationArgName = remoteArg.name
-            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val pathToField = (remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField).pathToField
-            val remoteArgSource = "${parentType.underlying.name}.${pathToField.joinToString(separator = ".")}"
+            val a = hydrationArgument.name
 
-            "Field \"$of\" tried to hydrate using the backing field \"$backingFieldName\" and argument \"$hydrationArgName\"." +
-                " However, you are supplying backing field argument with the value from $remoteArgSource " +
-                "and the types are incompatible"
+            val sfc = suppliedFieldContainer.name
+            val sf = suppliedField.name
+            val sft = GraphQLTypeUtil.simplePrint(suppliedField.type)
+
+            val rfc = requiredFieldContainer.name
+            val rf = requiredField.name
+            val rft = GraphQLTypeUtil.simplePrint(requiredField.type)
+
+            getHydrationErrorMessage(
+                parentType,
+                overallField,
+                hydration,
+                reason = "argument $a has type mismatch from field $sfc.$sf to $rfc.$rf as $sft cannot be assigned to $rft",
+            )
         }
 
         override val subject = overallField
     }
 
-    data class MissingFieldInHydratedInputObject(
+    data class HydrationArgumentDoesNotSupplyRequiredInputObjectField(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArg: NadelHydrationArgumentDefinition,
-        val missingFieldName: String,
-        val backingFieldName: String,
+        val hydration: NadelHydrationDefinition,
+        val hydrationArgument: NadelHydrationArgumentDefinition,
+        val suppliedFieldContainer: GraphQLFieldsContainer,
+        val requiredFieldContainer: GraphQLInputFieldsContainer,
+        val requiredField: GraphQLInputObjectField,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
-            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val hydrationArgName = remoteArg.name
-            val pathToField = (remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField).pathToField
-            val remoteArgSource = "${parentType.underlying.name}.${pathToField.joinToString(separator = ".")}"
-            val s = service.name
-            "Field $of tried to hydrate using field \"$backingFieldName\" with argument \"$hydrationArgName\" using value from $remoteArgSource in service $s" +
-                " but it was missing the required field $missingFieldName"
+            val a = hydrationArgument.name
+            val sfc = suppliedFieldContainer.name
+            val rfc = requiredFieldContainer.name
+            val rf = requiredField.name
+
+            getHydrationErrorMessage(
+                parentType,
+                overallField,
+                hydration,
+                reason = "argument $a tries to assign $sfc to $rfc but $sfc is missing field $rf",
+            )
         }
 
         override val subject = overallField
     }
 
-    data class MissingRequiredHydrationBackingFieldArgument(
+    data class HydrationDoesNotSupplyRequiredBackingFieldArgument(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: NadelHydrationDefinition,
@@ -683,4 +700,16 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
 private fun toString(element: GraphQLNamedSchemaElement): String {
     return "${element.javaClass.simpleName}(name=${element.name})"
+}
+
+private fun getHydrationErrorMessage(
+    parentType: NadelServiceSchemaElement,
+    overallField: GraphQLFieldDefinition,
+    hydration: NadelHydrationDefinition,
+    reason: String,
+): String {
+    val p = parentType.overall.name
+    val f = overallField.name
+    val h = hydration.backingField.joinToString(separator = ".")
+    return "Overall field $p.$f tried to hydrate from Query.$h but $reason"
 }

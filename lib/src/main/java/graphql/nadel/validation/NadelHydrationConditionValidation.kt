@@ -1,9 +1,9 @@
 package graphql.nadel.validation
 
 import graphql.Scalars
-import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinition
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
@@ -32,8 +32,7 @@ internal class NadelHydrationConditionValidation {
 
         val sourceInputField = hydration.arguments
             .asSequence()
-            .map { it.value }
-            .filterIsInstance<NadelHydrationArgumentDefinition.ValueSource.ObjectField>()
+            .filterIsInstance<NadelHydrationArgumentDefinition.ObjectField>()
             .map { it.pathToField }
             .single()
 

@@ -118,7 +118,6 @@ suspend fun main() {
         .validate()
         .sortedBy { it.javaClass.name }
         .asSequence()
-        .filterIsInstance<NadelSchemaValidationError>()
         .map(NadelSchemaValidationError::toGraphQLError)
         .map(GraphQLError::toSpecification)
         .forEach(::println)

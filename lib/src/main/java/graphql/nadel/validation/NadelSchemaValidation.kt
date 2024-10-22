@@ -6,7 +6,12 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.schema.GraphQLNamedSchemaElement
 
 class NadelSchemaValidation(private val schemas: NadelSchemas) {
-    fun validate(): List<NadelSchemaValidationResult> {
+    fun validate(): Set<NadelSchemaValidationError> {
+        return validateAndGenerateBlueprint()
+            .filterIsInstanceTo(LinkedHashSet())
+    }
+
+    fun validateAndGenerateBlueprint(): List<NadelSchemaValidationResult> {
         val (engineSchema, services) = schemas
 
         val servicesByName = services.strictAssociateBy(Service::name)

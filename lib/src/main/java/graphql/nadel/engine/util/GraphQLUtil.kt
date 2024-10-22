@@ -309,6 +309,7 @@ fun GraphQLType.unwrapNonNull(): GraphQLType {
 
 val GraphQLType.isList: Boolean get() = GraphQLTypeUtil.isList(this)
 val GraphQLType.isNonNull: Boolean get() = GraphQLTypeUtil.isNonNull(this)
+val GraphQLType.isNullable: Boolean get() = !isNonNull
 val GraphQLType.isWrapped: Boolean get() = GraphQLTypeUtil.isWrapped(this)
 val GraphQLType.isNotWrapped: Boolean get() = GraphQLTypeUtil.isNotWrapped(this)
 

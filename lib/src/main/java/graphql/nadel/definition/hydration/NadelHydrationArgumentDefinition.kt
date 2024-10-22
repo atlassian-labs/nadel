@@ -10,9 +10,7 @@ import graphql.nadel.util.getObjectField
 /**
  * Argument belonging to [NadelHydrationDefinition.arguments]
  */
-class NadelHydrationArgumentDefinition(
-    private val argumentObject: ObjectValue,
-) {
+sealed class NadelHydrationArgumentDefinition {
     companion object {
         val inputValueDefinition = parseDefinition<InputObjectTypeDefinition>(
             // language=GraphQL
@@ -24,57 +22,60 @@ class NadelHydrationArgumentDefinition(
                 }
             """.trimIndent(),
         )
+
+        fun from(argumentObject: ObjectValue): NadelHydrationArgumentDefinition {
+            val name = (argumentObject.getObjectField(Keyword.name).value as StringValue).value
+            val astValue = argumentObject.getObjectField(Keyword.value).value
+
+            return if (astValue is StringValue && astValue.value.startsWith("$")) {
+                val command = astValue.value.substringBefore(".")
+                val values = astValue.value.substringAfter(".").split('.')
+
+                when (command) {
+                    "\$source" -> ObjectField(
+                        name = name,
+                        pathToField = values,
+                    )
+                    "\$argument" -> FieldArgument(
+                        name = name,
+                        argumentName = values.single(),
+                    )
+                    else -> StaticArgument(
+                        name = name,
+                        staticValue = astValue,
+                    )
+                }
+            } else {
+                StaticArgument(
+                    name = name,
+                    staticValue = astValue,
+                )
+            }
+        }
     }
 
     /**
      * Name of the backing field's argument.
      */
-    val name: String
-        get() = (argumentObject.getObjectField(Keyword.name).value as StringValue).value
+    abstract val name: String
 
-    /**
-     * Value to support to the backing field's argument at runtime.
-     */
-    val value: ValueSource
-        get() = ValueSource.from(argumentObject.getObjectField(Keyword.value).value)
+    data class ObjectField(
+        override val name: String,
+        val pathToField: List<String>,
+    ) : NadelHydrationArgumentDefinition()
+
+    data class FieldArgument(
+        override val name: String,
+        val argumentName: String,
+    ) : NadelHydrationArgumentDefinition()
+
+    data class StaticArgument(
+        override val name: String,
+        val staticValue: AnyAstValue,
+    ) : NadelHydrationArgumentDefinition()
 
     internal object Keyword {
         const val name = "name"
         const val value = "value"
-    }
-
-    sealed class ValueSource {
-        data class ObjectField(
-            val pathToField: List<String>,
-        ) : ValueSource()
-
-        data class FieldArgument(
-            val argumentName: String,
-        ) : ValueSource()
-
-        data class StaticArgument(
-            val staticValue: AnyAstValue,
-        ) : ValueSource()
-
-        companion object {
-            fun from(astValue: AnyAstValue): ValueSource {
-                return if (astValue is StringValue && astValue.value.startsWith("$")) {
-                    val command = astValue.value.substringBefore(".")
-                    val values = astValue.value.substringAfter(".").split('.')
-
-                    when (command) {
-                        "\$source" -> ObjectField(
-                            pathToField = values,
-                        )
-                        "\$argument" -> FieldArgument(
-                            argumentName = values.single(),
-                        )
-                        else -> StaticArgument(staticValue = astValue)
-                    }
-                } else {
-                    StaticArgument(staticValue = astValue)
-                }
-            }
-        }
     }
 }

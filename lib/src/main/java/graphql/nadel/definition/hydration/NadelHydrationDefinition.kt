@@ -76,7 +76,7 @@ class NadelHydrationDefinition(
         get() = (appliedDirective.getArgument(Keyword.arguments).argumentValue.value as ArrayValue)
             .values
             .map {
-                NadelHydrationArgumentDefinition(it as ObjectValue)
+                NadelHydrationArgumentDefinition.from(it as ObjectValue)
             }
 
     val condition: NadelHydrationConditionDefinition?

@@ -402,8 +402,6 @@ fun validate(
     )
 
     val errors = validation.validate()
-        .filterIsInstance<NadelSchemaValidationError>()
-        .toSet()
 
     if (errors.isEmpty()) {
         return
