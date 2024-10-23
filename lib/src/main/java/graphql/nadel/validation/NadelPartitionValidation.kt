@@ -67,7 +67,7 @@ internal class NadelPartitionValidation(
             )
         ) {
             val pathToPartitionArg = overallField.getAppliedDirective(NadelDirectives.partitionDirectiveDefinition.name)
-                ?.getArgument("pathToSplitPoint")
+                ?.getArgument("pathToPartitionArg")
                 ?.getValue<List<String>>()
                 ?: return@conditionalError true
 

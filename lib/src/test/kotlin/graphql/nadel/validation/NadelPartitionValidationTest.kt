@@ -21,7 +21,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                     overallSchema = mapOf(
                         "test" to """
                          $operationPrepText {
-                            users(ids: [ID!]!): [User!]! @partition(pathToSplitPoint: ["ids"])
+                            users(ids: [ID!]!): [User!]! @partition(pathToPartitionArg: ["ids"])
                          }
 
                          type User {
@@ -60,7 +60,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                          }
 
                          type UserApi {
-                             users(ids: [ID!]!): [User!]! @partition(pathToSplitPoint: ["ids"])
+                             users(ids: [ID!]!): [User!]! @partition(pathToPartitionArg: ["ids"])
                          }
                          
                          type User {
@@ -102,7 +102,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                          
                          type User {
                             id: ID!
-                            friends(ids: [ID!]!): [User!]! @partition(pathToSplitPoint: ["ids"])
+                            friends(ids: [ID!]!): [User!]! @partition(pathToPartitionArg: ["ids"])
                          }
                     """.trimIndent(),
                 ),
@@ -134,7 +134,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                          }
                          
                          type Subscription {
-                            users(ids: [ID!]!): [User!]! @partition(pathToSplitPoint: ["ids"])
+                            users(ids: [ID!]!): [User!]! @partition(pathToPartitionArg: ["ids"])
                          }
                          
                          type User {
@@ -169,7 +169,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                 overallSchema = mapOf(
                     "test" to """
                          type Query {
-                            users(filter: UserFilter!): [User!]! @partition(pathToSplitPoint: ["filter", "ids"])
+                            users(filter: UserFilter!): [User!]! @partition(pathToPartitionArg: ["filter", "ids"])
                          }
                          
                          input UserFilter {
@@ -235,7 +235,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                          
                          type Mutation {
                              createUserRelationships(input: UserRelationshipInput!): CreateUserRelationshipsPayload! 
-                             @partition(pathToSplitPoint: ["input", "ids"])
+                             @partition(pathToPartitionArg: ["input", "ids"])
                          }
                          
                          input UserRelationshipInput {
@@ -305,7 +305,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                          
                          type Mutation {
                              createUserRelationships(input: UserRelationshipInput!): CreateUserRelationshipsPayload! 
-                             @partition(pathToSplitPoint: ["input", "ids"])
+                             @partition(pathToPartitionArg: ["input", "ids"])
                          }
                          
                          input UserRelationshipInput {
@@ -351,7 +351,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                     overallSchema = mapOf(
                         "test" to """
                          type Query {
-                             users(ids: [ID!]!): $returnType @partition(pathToSplitPoint: ["ids"])
+                             users(ids: [ID!]!): $returnType @partition(pathToPartitionArg: ["ids"])
                          }
 
                          type User {
@@ -387,7 +387,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                     "test" to """
                          type Query {
                              usersRenamed(ids: [ID!]!): [User!]! 
-                             @partition(pathToSplitPoint: ["ids"])
+                             @partition(pathToPartitionArg: ["ids"])
                              @renamed(from: "users")
                          }
 
@@ -414,13 +414,13 @@ class NadelPartitionValidationTest : DescribeSpec({
             errors.assertSingleOfType<CannotRenamePartitionedField>()
         }
 
-        context("fails when pathToSplitPoint value is invalid") {
+        context("fails when pathToPartitionArg value is invalid") {
             withData("[]", """["extra", "ids"]""", """["ids", "extra"]""", """["ids_wrong"]""") { argValue ->
                 val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                         "test" to """
                          type Query {
-                             users(ids: [ID!]!): [User!]! @partition(pathToSplitPoint: $argValue)
+                             users(ids: [ID!]!): [User!]! @partition(pathToPartitionArg: $argValue)
                          }
                          
                          input UsersInput {
@@ -461,7 +461,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                     overallSchema = mapOf(
                         "test" to """
                          type Query {
-                             users(arg: $argumentDef): [User!]! @partition(pathToSplitPoint: ["arg"])
+                             users(arg: $argumentDef): [User!]! @partition(pathToPartitionArg: ["arg"])
                          }
                          
                          input UsersInput {
@@ -507,7 +507,7 @@ class NadelPartitionValidationTest : DescribeSpec({
                          type User {
                              id: ID!
                              name: String
-                             bestFriend(id: ID!): User! @partition(pathToSplitPoint: ["id"])
+                             bestFriend(id: ID!): User! @partition(pathToPartitionArg: ["id"])
                          }
                     """.trimIndent(),
                 ),
