@@ -45,7 +45,7 @@ type Mutation {
 
 type ThingsApi {
   linkThings(linkThingsInput: LinkThingsInput!): LinkThingsPayload 
-  @partition(pathToSplitPoint: ["linkThingsInput", "thingsLinked"])
+  @partition(pathToPartitionArg: ["linkThingsInput", "thingsLinked"])
 }
 
 input LinkThingsInput {

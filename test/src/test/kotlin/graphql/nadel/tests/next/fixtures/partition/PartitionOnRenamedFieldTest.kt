@@ -28,7 +28,7 @@ open class PartitionOnRenamedFieldTest : NadelIntegrationTest(
             overallSchema = """
 
 type Query {
-  renamedThings(ids: [ID!]! ): [Thing]  @partition(pathToSplitPoint: ["ids"]) @renamed(from: "things")
+  renamedThings(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"]) @renamed(from: "things")
   renamedEcho: String @renamed(from: "echo")
 }
 

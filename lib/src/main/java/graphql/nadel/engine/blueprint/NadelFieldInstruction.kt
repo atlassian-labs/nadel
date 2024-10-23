@@ -132,3 +132,8 @@ data class NadelRenameFieldInstruction(
 ) : NadelFieldInstruction() {
     val overallName: String get() = location.fieldName
 }
+
+data class NadelPartitionInstruction(
+    override val location: FieldCoordinates,
+    val pathToPartitionArg: List<String>,
+) : NadelFieldInstruction()

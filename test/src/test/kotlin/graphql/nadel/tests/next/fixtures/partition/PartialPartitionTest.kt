@@ -32,7 +32,7 @@ type Query {
 }
 
 type Api {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToSplitPoint: ["ids"])
+  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
   stuff(id: ID!): Stuff
 }
 
