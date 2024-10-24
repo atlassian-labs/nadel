@@ -1,7 +1,5 @@
 package graphql.nadel.engine.transform.partition
 
-import graphql.language.ArrayValue
-import graphql.language.StringValue
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -10,7 +8,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelPartitionInstruction
-import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
@@ -25,9 +22,7 @@ import graphql.nadel.engine.util.getType
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toGraphQLError
-import graphql.nadel.schema.NadelDirectives
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -42,7 +37,7 @@ internal class NadelPartitionTransform(
         val fieldPartitionContext: Any,
         val fieldPartitions: Map<String, ExecutableNormalizedField>? = null,
         val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf(),
-        val errors: List<Throwable>? = null,
+        val error: Throwable? = null,
     )
 
     override suspend fun isApplicable(
@@ -97,7 +92,7 @@ internal class NadelPartitionTransform(
             return State(
                 executionContext = executionContext,
                 fieldPartitionContext = fieldPartitionContext,
-                errors = mutableListOf(exception)
+                error = exception
             )
         }
 
@@ -125,12 +120,11 @@ internal class NadelPartitionTransform(
         state: State,
     ): NadelTransformFieldResult {
 
-        if (state.errors != null) {
-            // At this point we know we can't partition the field, but removing it could result
-            // in a query with no top-level fields, which would be invalid.
-            // Adding __typename as an artificial field also wouldn't work because that field
-            // belongs to all operation types, which causes issues further down the execution.
-            return NadelTransformFieldResult.unmodified(field)
+        if (state.error != null) {
+            throw NadelPartitionGraphQLErrorException(
+                "The call for field '${field.resultKey}' was not partitioned due to the following error: '${state.error.message}'",
+                path = field.queryPath.segments,
+            )
         }
 
         val fieldPartitions = checkNotNull(state.fieldPartitions) { "Expected fieldPartitions to be set" }
@@ -188,17 +182,6 @@ internal class NadelPartitionTransform(
             key = NadelResultKey(overallField.resultKey),
             newValue = null
         )
-
-        if (state.errors != null) {
-            return state.errors.map {
-                NadelResultInstruction.AddError(
-                    NadelPartitionGraphQLErrorException(
-                        "The call for field '${overallField.resultKey}' was not partitioned due to the following error: '${it.message}'",
-                        path = overallField.queryPath.segments,
-                    )
-                )
-            } + nullifyField
-        }
 
         // TODO: handle HTTP errors
         val resultFromPartitionCalls = state.partitionCalls.awaitAll()
