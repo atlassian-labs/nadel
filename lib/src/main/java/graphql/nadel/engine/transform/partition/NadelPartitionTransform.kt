@@ -1,7 +1,5 @@
 package graphql.nadel.engine.transform.partition
 
-import graphql.language.ArrayValue
-import graphql.language.StringValue
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -10,7 +8,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelPartitionInstruction
-import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
@@ -25,13 +22,10 @@ import graphql.nadel.engine.util.getType
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toGraphQLError
-import graphql.nadel.schema.NadelDirectives
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 
 internal class NadelPartitionTransform(
     private val engine: NextgenEngine,
@@ -144,9 +138,8 @@ internal class NadelPartitionTransform(
         // TODO: throw error if operation is Subscription?
         val rootType = executionContext.query.operation.getType(executionBlueprint.engineSchema)
 
-        val partitionCalls = coroutineScope {
-            otherPartitions.map {
-                async {
+        val partitionCalls = otherPartitions.map {
+            executionContext.executionCoroutine.async {
                     val topLevelField = NFUtil.createField(
                         executionBlueprint.engineSchema,
                         rootType,
@@ -159,7 +152,6 @@ internal class NadelPartitionTransform(
                     engine.executePartitionedCall(topLevelField, service, state.executionContext)
                 }
             }
-        }
 
         state.partitionCalls.addAll(partitionCalls)
 
