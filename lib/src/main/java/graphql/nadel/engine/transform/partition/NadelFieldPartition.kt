@@ -11,15 +11,28 @@ import graphql.schema.GraphQLInputValueDefinition
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 
-class NadelFieldPartition(
+/**
+ * Creates a map of partitioned fields based on the partitioning instructions and argument values for a given field.
+ *
+ * For example, when the "things" field in the query excerpt below is passed in:
+ * <pre>
+ *  {
+ *     things(ids: ["1-partitionA", "2-partitionB", "3-partitionA", "4-partitionB"]) {}
+ *  }
+ * </pre>
+ *
+ * The method will return a map with two entries:
+ * <pre>
+ *     "partitionA" -> things(ids: ["1-partitionA", "3-partitionA"]) {}
+ *     "partitionB" -> things(ids: ["2-partitionB", "4-partitionB"]) {}
+ * </pre>
+ *
+ */
+internal class NadelFieldPartition(
     private val pathToPartitionArg: List<String>,
-    private val fieldPartitionContext: Any,
-    private val graphQLSchema: GraphQLSchema,
-    private val partitionKeyExtractor: (
-        scalarValue: ScalarValue<*>,
-        inputValueDef: GraphQLInputValueDefinition,
-        context: Any,
-    ) -> String?,
+    private val fieldPartitionContext: NadelFieldPartitionContext,
+    private val engineSchema: GraphQLSchema,
+    private val partitionKeyExtractor: NadelPartitionKeyExtractor,
 ) {
     fun createFieldPartitions(
         field: ExecutableNormalizedField,
@@ -77,7 +90,8 @@ class NadelFieldPartition(
                 return collectPartitionKeysForValue(value.value, inputValueDefinition)
             }
             is ScalarValue<*> -> {
-                val partitionKey = partitionKeyExtractor(value, inputValueDefinition, fieldPartitionContext)
+                val partitionKey =
+                    partitionKeyExtractor.getPartitionKey(value, inputValueDefinition, fieldPartitionContext)
 
                 return if (partitionKey != null) {
                     listOf(partitionKey)
@@ -132,7 +146,7 @@ class NadelFieldPartition(
         val argumentRoot = field.getNormalizedArgument(pathToPartitionArg[0])
         var value = argumentRoot
 
-        var inputValueDefinitions: List<GraphQLInputValueDefinition> = field.getFieldDefinitions(graphQLSchema)
+        var inputValueDefinitions: List<GraphQLInputValueDefinition> = field.getFieldDefinitions(engineSchema)
             .flatMap { fd: GraphQLFieldDefinition -> fd.arguments }
             .filter { arg: GraphQLArgument -> arg.name == pathToPartitionArg[0] }
 
@@ -143,7 +157,7 @@ class NadelFieldPartition(
             val map = value!!.value as Map<*, *>
             val newValue = map[key] as NormalizedInputValue
 
-            val parent = graphQLSchema.getTypeAs<GraphQLInputObjectType>(value.unwrappedTypeName)
+            val parent = engineSchema.getTypeAs<GraphQLInputObjectType>(value.unwrappedTypeName)
             inputValueDefinitions = listOf(parent.getField(key))
             value = newValue
         }

@@ -26,7 +26,6 @@ import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 
 internal class NadelPartitionTransform(
     private val engine: NextgenEngine,
@@ -76,13 +75,16 @@ internal class NadelPartitionTransform(
                 overallField,
                 hydrationDetails,
             )
-            ?: // A field without a partition context can't be partitioned
+
+        if (fieldPartitionContext == NadelFieldPartitionContext.None) {
+            // A field without a partition context can't be partitioned
             return null
+        }
 
         val fieldPartition = NadelFieldPartition(
             pathToPartitionArg = pathToPartitionArg,
             fieldPartitionContext = fieldPartitionContext,
-            graphQLSchema = executionBlueprint.engineSchema,
+            engineSchema = executionBlueprint.engineSchema,
             partitionKeyExtractor = partitionTransformHook.getPartitionKeyExtractor()
         )
 
@@ -101,7 +103,7 @@ internal class NadelPartitionTransform(
             return null
         }
 
-        partitionTransformHook.willPartitionCallback(executionContext, fieldPartitions)
+        partitionTransformHook.onPartition(executionContext, fieldPartitions)
 
         return State(
             executionContext = executionContext,
@@ -130,13 +132,13 @@ internal class NadelPartitionTransform(
         val fieldPartitions = checkNotNull(state.fieldPartitions) { "Expected fieldPartitions to be set" }
 
         val primaryPartition = fieldPartitions.values.first()
+        val otherPartitions = fieldPartitions.values.drop(1)
 
         // TODO: throw error if operation is Subscription?
         val rootType = executionContext.query.operation.getType(executionBlueprint.engineSchema)
 
-        val partitionCalls = coroutineScope {
-            fieldPartitions.values.drop(1).map {
-                async {
+        val partitionCalls = otherPartitions.map {
+            executionContext.executionCoroutine.async {
                     val topLevelField = NFUtil.createField(
                         executionBlueprint.engineSchema,
                         rootType,
@@ -149,7 +151,6 @@ internal class NadelPartitionTransform(
                     engine.executePartitionedCall(topLevelField, service, state.executionContext)
                 }
             }
-        }
 
         state.partitionCalls.addAll(partitionCalls)
 
@@ -167,18 +168,13 @@ internal class NadelPartitionTransform(
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val parentNodes = nodes.getNodesAt(
+        val parentNode = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
-        )
-
-        if (parentNodes.size != 1) {
-            // TODO: Support multiple parent nodes (interfaces, unions)
-            return emptyList()
-        }
+        ).singleOrNull() ?: return emptyList()
 
         val nullifyField = NadelResultInstruction.Set(
-            subject = parentNodes.first(),
+            subject = parentNode,
             key = NadelResultKey(overallField.resultKey),
             newValue = null
         )
@@ -205,14 +201,14 @@ internal class NadelPartitionTransform(
             NadelPartitionListMerger.mergeDataFromList(
                 dataFromPartitionCalls = dataFromPartitionCalls,
                 thisNodesData = thisNodesData,
-                parentNodes = parentNodes,
+                parentNode = parentNode,
                 overallField = overallField,
             )
         } else if (overallFieldType.isMutationPayloadLike()) {
             NadelPartitionMutationPayloadMerger.mergeDataFromMutationPayloadLike(
                 dataFromPartitionCalls = dataFromPartitionCalls,
                 thisNodesData = thisNodesData,
-                parentNodes = parentNodes,
+                parentNode = parentNode,
                 overallField = overallField,
             )
         } else {
