@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.hydration.batch.indexing
 
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -31,7 +31,7 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
         val sourceInputPath = instruction.backingFieldArguments
             .asSequence()
             .map { it.valueSource }
-            .singleOfType<NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue>()
+            .singleOfType<NadelHydrationArgument.ValueSource.FieldResultValue>()
             .queryPathToField
 
         return NadelBatchHydrationIndexKey(

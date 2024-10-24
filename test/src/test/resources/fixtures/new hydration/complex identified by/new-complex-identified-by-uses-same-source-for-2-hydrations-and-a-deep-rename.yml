@@ -30,6 +30,7 @@ overallSchema:
       name: String
     }
     type Issue {
+      issueId: ID!
       fooId: ID
       field: String
     }
@@ -48,6 +49,7 @@ underlyingSchema:
     }
 
     type Issue {
+      issueId: ID!
       field: String
       fooId: ID
     }

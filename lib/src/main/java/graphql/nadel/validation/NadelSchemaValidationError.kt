@@ -52,6 +52,12 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
      */
     val subject: GraphQLNamedSchemaElement
 
+    /**
+     * Do not change. Just an indicator to [NadelSchemaValidationResult] that this is an error.
+     */
+    override val isError: Boolean
+        get() = true
+
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated("This is only here for backwards compatibility purposes")
     fun toGraphQLError(): GraphQLError {
@@ -413,8 +419,19 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     }
 
     data class HydrationConditionSourceFieldDoesNotExist(
-        val pathToSourceField: List<String>,
         val overallField: GraphQLFieldDefinition,
+        val pathToSourceField: List<String>,
+    ) : NadelSchemaValidationError {
+        override val message =
+            "Hydration condition field \"${pathToSourceField.joinToString(separator = ".")}\" does not exist "
+        override val subject = overallField
+    }
+
+    data class HydrationSourceFieldDoesNotExist(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val hydration: NadelHydrationDefinition,
+        val pathToSourceField: List<String>,
     ) : NadelSchemaValidationError {
         override val message =
             "Hydration condition field \"${pathToSourceField.joinToString(separator = ".")}\" does not exist "

@@ -26,8 +26,8 @@ internal class NadelHydrationConditionValidation {
         val conditionSourceField: GraphQLFieldDefinition =
             (parent.overall as GraphQLFieldsContainer).getFieldAt(pathToConditionSourceField)
                 ?: return NadelSchemaValidationError.HydrationConditionSourceFieldDoesNotExist(
-                    pathToConditionSourceField,
                     overallField,
+                    pathToConditionSourceField,
                 )
 
         val sourceInputField = hydration.arguments

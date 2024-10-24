@@ -11,16 +11,15 @@ import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
-import graphql.schema.GraphQLSchema
 
 internal class NadelFieldValidation(
-    private val overallSchema: GraphQLSchema,
     private val typeValidation: NadelTypeValidation,
 ) {
     private val renameValidation = NadelRenameValidation(this)
     private val inputValidation = NadelInputValidation()
-    private val hydrationValidation = NadelHydrationValidation(typeValidation, overallSchema)
+    private val hydrationValidation = NadelHydrationValidation(typeValidation)
 
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationResult> {
@@ -35,6 +34,7 @@ internal class NadelFieldValidation(
         }
     }
 
+    context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement,
         overallFields: List<GraphQLFieldDefinition>,
@@ -59,6 +59,7 @@ internal class NadelFieldValidation(
             .toList()
     }
 
+    context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
@@ -84,6 +85,7 @@ internal class NadelFieldValidation(
         }
     }
 
+    context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
@@ -115,7 +117,8 @@ internal class NadelFieldValidation(
         return argumentIssues + outputTypeIssues
     }
 
+    context(NadelValidationContext)
     private fun isCombinedType(type: GraphQLNamedSchemaElement): Boolean {
-        return isCombinedType(overallSchema, type)
+        return isCombinedType(engineSchema, type)
     }
 }

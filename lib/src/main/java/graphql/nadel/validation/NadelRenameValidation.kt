@@ -13,10 +13,12 @@ import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedF
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLObjectType
 
 internal class NadelRenameValidation(
     private val fieldValidation: NadelFieldValidation,
 ) {
+    context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
@@ -37,16 +39,18 @@ internal class NadelRenameValidation(
             )
 
         val result = fieldValidation.validate(parent, overallField, underlyingField)
-        if (result.any { it is NadelSchemaValidationError }) {
-            return result
-        }
 
-        return result + NadelFieldResult(
-            service = parent.service,
-            fieldInstruction = makeRenameFieldInstruction(parent, overallField, rename)
+        return result + listOfNotNull(
+            NadelValidatedFieldResult(
+                service = parent.service,
+                fieldInstruction = makeRenameFieldInstruction(parent, overallField, rename)
+            ).takeIf { // todo: improve this :/
+                parent.overall is GraphQLObjectType
+            }
         )
     }
 
+    context(NadelValidationContext)
     private fun makeRenameFieldInstruction(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,

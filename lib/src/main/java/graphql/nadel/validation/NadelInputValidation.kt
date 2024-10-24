@@ -20,6 +20,7 @@ import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnmodifiedType
 
 internal class NadelInputValidation {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationResult> {

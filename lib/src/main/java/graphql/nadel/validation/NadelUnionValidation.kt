@@ -8,6 +8,7 @@ import graphql.schema.GraphQLUnionType
 internal class NadelUnionValidation(
     private val typeValidation: NadelTypeValidation,
 ) {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationResult> {

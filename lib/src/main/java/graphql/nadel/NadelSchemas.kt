@@ -12,7 +12,7 @@ import graphql.schema.idl.WiringFactory
 import java.io.Reader
 import graphql.schema.idl.ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS as graphQLSpecScalars
 
-data class NadelSchemas constructor(
+data class NadelSchemas(
     val engineSchema: GraphQLSchema,
     val services: List<Service>,
 ) {

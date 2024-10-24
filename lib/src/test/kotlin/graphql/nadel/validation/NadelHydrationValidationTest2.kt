@@ -541,7 +541,7 @@ class NadelHydrationValidationTest2 {
                                 {name: "queries", value: "$source.jiraComment"}
                             ]
                             inputIdentifiedBy: [
-                                {sourceId: "jiraComment.id", resultId: "id"}
+                                {sourceId: "jiraComment.commentId", resultId: "id"}
                                 {sourceId: "jiraComment.issueId", resultId: "issueId"}
                             ]
                         )

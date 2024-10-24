@@ -4,6 +4,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingConcreteTypes
 import graphql.schema.GraphQLInterfaceType
 
 internal class NadelInterfaceValidation {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationResult> {
@@ -14,6 +15,7 @@ internal class NadelInterfaceValidation {
         }
     }
 
+    context(NadelValidationContext)
     private fun validateHasImplementations(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationResult> {

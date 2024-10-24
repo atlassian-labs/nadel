@@ -133,6 +133,7 @@ internal class NadelBatchHydrator(
             backingQueries
                 .map { bakckingQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
+                        // todo: why do this when you have state.virtualFieldService ??
                         val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
                         val hydrationBackingField =
                             FieldCoordinates.coordinates(instruction.backingFieldContainer, instruction.backingFieldDef)

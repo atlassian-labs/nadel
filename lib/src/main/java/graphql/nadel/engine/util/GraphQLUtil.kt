@@ -167,13 +167,13 @@ private fun GraphQLFieldsContainer.getFieldAt(
 /**
  * Can find field containers via a field path syntax
  */
-fun GraphQLFieldsContainer.getFieldContainerAt(
+fun GraphQLFieldsContainer.getFieldContainerFor(
     pathToField: List<String>,
 ): GraphQLFieldsContainer? {
-    return getFieldContainerAt(pathToField, pathIndex = 0)
+    return getFieldContainerFor(pathToField, pathIndex = 0)
 }
 
-private fun GraphQLFieldsContainer.getFieldContainerAt(
+private fun GraphQLFieldsContainer.getFieldContainerFor(
     pathToField: List<String>,
     pathIndex: Int,
 ): GraphQLFieldsContainer? {
@@ -183,7 +183,7 @@ private fun GraphQLFieldsContainer.getFieldContainerAt(
     } else {
         val possibleFieldContainer = field.type.unwrapAll()
         if (possibleFieldContainer is GraphQLFieldsContainer) {
-            possibleFieldContainer.getFieldContainerAt(pathToField, pathIndex + 1)
+            possibleFieldContainer.getFieldContainerFor(pathToField, pathIndex + 1)
         } else {
             null
         }

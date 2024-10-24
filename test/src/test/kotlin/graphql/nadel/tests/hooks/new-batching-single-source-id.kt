@@ -3,7 +3,7 @@ package graphql.nadel.tests.hooks
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument.ValueSource
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
