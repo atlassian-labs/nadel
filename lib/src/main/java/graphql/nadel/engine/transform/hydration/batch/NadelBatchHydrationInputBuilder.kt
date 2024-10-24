@@ -63,6 +63,16 @@ internal object NadelBatchHydrationInputBuilder {
                         )
                         backingFieldArg to staticValue
                     }
+                    is NadelHydrationArgument.ValueSource.RemainingArguments -> {
+                        backingFieldArg to NormalizedInputValue(
+                            /* typeName = */ GraphQLTypeUtil.simplePrint(backingFieldArg.backingArgumentDef.type),
+                            /* value = */
+                            valueSource.remainingArgumentNames
+                                .associateWith {
+                                    virtualField.normalizedArguments[it]?.value
+                                },
+                        )
+                    }
                 }
             },
         )
