@@ -30,17 +30,13 @@ interface NadelPartitionTransformHook {
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): NadelFieldPartitionContext {
-        return NadelFieldPartitionContext.None
-    }
+    ): NadelFieldPartitionContext?
 
     /**
      * This hook allows you to provide a partition key for a given scalar value.
      * Arguments with the same partition key will be sent on the same request.
      */
-    fun getPartitionKeyExtractor(): NadelPartitionKeyExtractor {
-        return NadelPartitionKeyExtractor.noop
-    }
+    fun getPartitionKeyExtractor(): NadelPartitionKeyExtractor
 
     /**
      * This hook allows you to perform some non-side effect action on the field partitions (like logging, etc.).
