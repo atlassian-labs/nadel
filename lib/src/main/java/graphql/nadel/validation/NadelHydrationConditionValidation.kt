@@ -32,8 +32,7 @@ internal class NadelHydrationConditionValidation {
 
         val sourceInputField = hydration.arguments
             .asSequence()
-            .map { it.value }
-            .filterIsInstance<NadelHydrationArgumentDefinition.ValueSource.ObjectField>()
+            .filterIsInstance<NadelHydrationArgumentDefinition.ObjectField>()
             .map { it.pathToField }
             .single()
 

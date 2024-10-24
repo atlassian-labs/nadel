@@ -289,7 +289,7 @@ sealed interface NadelSchemaValidationError {
     data class MissingHydrationFieldValueSource(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArgSource: NadelHydrationArgumentDefinition.ValueSource.ObjectField,
+        val remoteArgSource: NadelHydrationArgumentDefinition.ObjectField,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -306,7 +306,7 @@ sealed interface NadelSchemaValidationError {
     data class MissingHydrationArgumentValueSource(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
-        val remoteArgSource: NadelHydrationArgumentDefinition.ValueSource.FieldArgument,
+        val remoteArgSource: NadelHydrationArgumentDefinition.FieldArgument,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -479,7 +479,7 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val hydrationArgName = remoteArg.name
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val pathToField = (remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField).pathToField
+            val pathToField = (remoteArg as NadelHydrationArgumentDefinition.ObjectField).pathToField
             val remoteArgSource = "${parentType.underlying.name}.${pathToField.joinToString(separator = ".")}"
 
             "Field \"$of\" tried to hydrate using the backing field \"$backingFieldName\" and argument \"$hydrationArgName\"." +
@@ -502,7 +502,7 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val hydrationArgName = remoteArg.name
-            val pathToField = (remoteArg.value as NadelHydrationArgumentDefinition.ValueSource.ObjectField).pathToField
+            val pathToField = (remoteArg as NadelHydrationArgumentDefinition.ObjectField).pathToField
             val remoteArgSource = "${parentType.underlying.name}.${pathToField.joinToString(separator = ".")}"
             val s = service.name
             "Field $of tried to hydrate using field \"$backingFieldName\" with argument \"$hydrationArgName\" using value from $remoteArgSource in service $s" +

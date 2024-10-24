@@ -519,10 +519,10 @@ private class Factory(
         virtualFieldDef: GraphQLFieldDefinition,
         backingFieldDef: GraphQLFieldDefinition,
     ): List<NadelHydrationBackingFieldArgument> {
-        return hydration.arguments.map { remoteArgDef ->
-            val valueSource = when (val argSourceType = remoteArgDef.value) {
-                is NadelHydrationArgumentDefinition.ValueSource.FieldArgument -> {
-                    val argumentName = argSourceType.argumentName
+        return hydration.arguments.map { hydrationArgument ->
+            val valueSource = when (hydrationArgument) {
+                is NadelHydrationArgumentDefinition.FieldArgument -> {
+                    val argumentName = hydrationArgument.argumentName
                     val argumentDef = virtualFieldDef.getArgument(argumentName)
                         ?: error("No argument '$argumentName' on field ${virtualFieldParentType.name}.${virtualFieldDef.name}")
                     val defaultValue = if (argumentDef.argumentDefaultValue.isLiteral) {
@@ -535,12 +535,12 @@ private class Factory(
                     }
 
                     NadelHydrationBackingFieldArgument.ValueSource.ArgumentValue(
-                        argumentName = argSourceType.argumentName,
+                        argumentName = hydrationArgument.argumentName,
                         argumentDefinition = argumentDef,
                         defaultValue = defaultValue,
                     )
                 }
-                is NadelHydrationArgumentDefinition.ValueSource.ObjectField -> {
+                is NadelHydrationArgumentDefinition.ObjectField -> {
                     // Ugh code still uses underlying schema, we need to pull these up to the overall schema
                     val typeToLookAt = if (virtualFieldParentType.isVirtualType()) {
                         virtualFieldParentType
@@ -548,7 +548,7 @@ private class Factory(
                         getUnderlyingType(virtualFieldParentType, virtualFieldDef)
                     }
 
-                    val pathToField = argSourceType.pathToField
+                    val pathToField = hydrationArgument.pathToField
                     FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = typeToLookAt
@@ -556,16 +556,16 @@ private class Factory(
                             ?: error("No field defined at: ${virtualFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
-                is NadelHydrationArgumentDefinition.ValueSource.StaticArgument -> {
+                is NadelHydrationArgumentDefinition.StaticArgument -> {
                     NadelHydrationBackingFieldArgument.ValueSource.StaticValue(
-                        value = argSourceType.staticValue,
+                        value = hydrationArgument.staticValue,
                     )
                 }
             }
 
             NadelHydrationBackingFieldArgument(
-                name = remoteArgDef.name,
-                backingArgumentDef = backingFieldDef.getArgument(remoteArgDef.name),
+                name = hydrationArgument.name,
+                backingArgumentDef = backingFieldDef.getArgument(hydrationArgument.name),
                 valueSource = valueSource,
             )
         }

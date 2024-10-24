@@ -106,8 +106,7 @@ internal class NadelHydrationArgumentValidation {
         backingFieldName: String,
     ): NadelSchemaValidationError? {
         // need to check null compatibility
-        val remoteArgumentSource = remoteArg.value
-        if (remoteArgumentSource !is NadelHydrationArgumentDefinition.ValueSource.ObjectField && backingFieldArgType.isNonNull && !hydrationSourceType.isNonNull) {
+        if (remoteArg !is NadelHydrationArgumentDefinition.ObjectField && backingFieldArgType.isNonNull && !hydrationSourceType.isNonNull) {
             // source must be at least as strict as field argument
             return NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                 parent,
@@ -144,7 +143,7 @@ internal class NadelHydrationArgumentValidation {
             )
         }
         // object feed into inputObject (i.e. hydrating with a $source object)
-        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.ObjectField && unwrappedHydrationSourceType is GraphQLObjectType && unwrappedBackingFieldArgType is GraphQLInputObjectType) {
+        else if (remoteArg is NadelHydrationArgumentDefinition.ObjectField && unwrappedHydrationSourceType is GraphQLObjectType && unwrappedBackingFieldArgType is GraphQLInputObjectType) {
             validateInputObjectArg(
                 unwrappedHydrationSourceType,
                 unwrappedBackingFieldArgType,
@@ -156,7 +155,7 @@ internal class NadelHydrationArgumentValidation {
             )
         }
         // inputObject feed into inputObject (i.e. hydrating with an $argument object)
-        else if (remoteArgumentSource is NadelHydrationArgumentDefinition.ValueSource.FieldArgument && unwrappedHydrationSourceType is GraphQLInputObjectType && unwrappedBackingFieldArgType is GraphQLInputObjectType) {
+        else if (remoteArg is NadelHydrationArgumentDefinition.FieldArgument && unwrappedHydrationSourceType is GraphQLInputObjectType && unwrappedBackingFieldArgType is GraphQLInputObjectType) {
             if (unwrappedHydrationSourceType.name != unwrappedBackingFieldArgType.name) {
                 NadelSchemaValidationError.IncompatibleHydrationArgumentType(
                     parent,
