@@ -1,5 +1,9 @@
 package graphql.nadel
 
+import com.fasterxml.jackson.core.util.DefaultIndenter
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.fasterxml.jackson.core.util.Separators
+import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
@@ -8,6 +12,7 @@ import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.incremental.DeferPayload
 import graphql.incremental.IncrementalExecutionResultImpl
+import graphql.introspection.Introspection
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.language.Document
 import graphql.nadel.engine.NadelExecutionContext
@@ -16,7 +21,12 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
+import graphql.nadel.engine.blueprint.NadelFieldInstruction
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintImpl
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintSerializer
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintSwitchover
 import graphql.nadel.engine.document.DocumentPredicates
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
@@ -50,11 +60,14 @@ import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.util.OperationNameUtil
+import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
+import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
+import graphql.schema.idl.ScalarInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -70,6 +83,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
+import java.io.File
 import java.util.concurrent.CompletableFuture
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
@@ -88,10 +102,64 @@ internal class NextgenEngine(
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = services.strictAssociateBy { it.name }
     private val engineSchemaIntrospectionService = IntrospectionService(engineSchema, introspectionRunnerFactory)
-    private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
-        engineSchema = engineSchema,
-        services = services,
-    )
+    private val overallExecutionBlueprint = generateSchema(newBlueprint = false, services)
+
+    private fun generateSchema(newBlueprint: Boolean, services: List<Service>): NadelOverallExecutionBlueprint {
+        val old = NadelExecutionBlueprintFactory.create(
+            engineSchema = engineSchema,
+            services = services,
+        ) as NadelOverallExecutionBlueprintImpl
+
+        val new = NadelSchemaValidation(
+            NadelSchemas(engineSchema, services),
+        ).validateAndGenerateBlueprint() as NadelOverallExecutionBlueprintImpl
+
+        val switchoverBlueprint = NadelOverallExecutionBlueprintSwitchover(
+            isUsingNewBlueprint = {
+                newBlueprint
+            },
+            old = old,
+            new = new,
+        )
+
+        fun Set<String>.removeDumbTypes() = filterTo(HashSet()) {
+            !Introspection.isIntrospectionTypes(it) && !ScalarInfo.isGraphqlSpecifiedScalar(it)
+        }
+
+        fun Map<FieldCoordinates, List<NadelFieldInstruction>>.removeInterfaces(): Map<FieldCoordinates, List<NadelFieldInstruction>> {
+            return filterKeys {
+                engineSchema.typeMap[it.typeName] is GraphQLObjectType
+            }
+        }
+
+        val serializer = NadelOverallExecutionBlueprintSerializer()
+
+        val prettierPrinter = DefaultPrettyPrinter()
+            // Wtf is this half mutable, half immutable API?
+            .apply {
+                indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+            }
+            .withSeparators(
+                Separators()
+                    .withObjectFieldValueSpacing(Separators.Spacing.AFTER)
+                    .withArrayEmptySeparator("")
+                    .withObjectEmptySeparator("")
+            )
+
+        val prettierObjectMapper = ObjectMapper().writer(prettierPrinter)
+
+        val newJsonString = prettierObjectMapper.writeValueAsString(serializer.toJsonMap(new))
+        val oldJsonString = prettierObjectMapper.writeValueAsString(serializer.toJsonMap(old))
+
+
+        if (newJsonString != oldJsonString) {
+            File("new-blueprint.json").writeText(newJsonString)
+            File("old-blueprint.json").writeText(oldJsonString)
+        }
+
+        return switchoverBlueprint
+    }
+
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
