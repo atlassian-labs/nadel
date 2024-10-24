@@ -29,11 +29,11 @@ open class NamespacedPartitionTest : NadelIntegrationTest(
             overallSchema = """
 
 type Query {
-  thingsApi: ThingsApi
+  thingsApi: ThingsApi @namespaced
 }
 
 type ThingsApi {
-  things(filter: ThingsFilter): [Thing] @partition(pathToSplitPoint: ["filter", "thingsIds"])
+  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
 }
 
 input ThingsFilter {

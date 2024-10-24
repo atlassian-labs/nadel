@@ -8,6 +8,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingFiel
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
 import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
+import graphql.nadel.validation.util.NadelSchemaUtil.hasPartition
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -22,6 +23,7 @@ internal class NadelFieldValidation(
     private val renameValidation = NadelRenameValidation(this)
     private val inputValidation = NadelInputValidation()
     private val hydrationValidation = NadelHydrationValidation(services, typeValidation, overallSchema)
+    private val partitionValidation = NadelPartitionValidation(overallSchema)
 
     fun validate(
         schemaElement: NadelServiceSchemaElement,
@@ -113,8 +115,9 @@ internal class NadelFieldValidation(
         }
 
         val outputTypeIssues = typeValidation.validateOutputType(parent, overallField, underlyingField)
+        val partitionDirectiveIssues = partitionValidation.validate(parent, overallField)
 
-        return argumentIssues + outputTypeIssues
+        return argumentIssues + outputTypeIssues + partitionDirectiveIssues
     }
 
     private fun isCombinedType(type: GraphQLNamedSchemaElement): Boolean {

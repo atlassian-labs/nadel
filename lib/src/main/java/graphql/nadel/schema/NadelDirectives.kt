@@ -223,7 +223,7 @@ object NadelDirectives {
             "This allows you to partition a field"
             directive @partition(
                 "The path to the split point"
-                pathToSplitPoint: [String!]!
+                pathToPartitionArg: [String!]!
             ) on FIELD_DEFINITION
         """.trimIndent()
     )
@@ -414,9 +414,9 @@ object NadelDirectives {
     internal fun createPartitionDefinition(fieldDefinition: GraphQLFieldDefinition): NadelPartitionDefinition? {
         val directive = fieldDefinition.getAppliedDirective(partitionDirectiveDefinition.name)
             ?: return null
-        val pathToSplitPoint = getDirectiveValue<List<String>>(directive, "pathToSplitPoint")
+        val pathToPartitionArg = getDirectiveValue<List<String>>(directive, "pathToPartitionArg")
 
-        return NadelPartitionDefinition(pathToSplitPoint)
+        return NadelPartitionDefinition(pathToPartitionArg)
     }
 
     private inline fun <reified T : Any> getDirectiveValue(

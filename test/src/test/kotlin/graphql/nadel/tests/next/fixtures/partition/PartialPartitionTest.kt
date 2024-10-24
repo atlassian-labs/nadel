@@ -28,11 +28,11 @@ open class PartialPartitionTest : NadelIntegrationTest(
             overallSchema = """
 
 type Query {
-  api: Api
+  api: Api @namespaced
 }
 
 type Api {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToSplitPoint: ["ids"])
+  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
   stuff(id: ID!): Stuff
 }
 

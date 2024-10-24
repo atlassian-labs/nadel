@@ -40,12 +40,12 @@ type Query {
 }
 
 type Mutation {
-  thingsApi: ThingsApi
+  thingsApi: ThingsApi @namespaced
 }
 
 type ThingsApi {
   linkThings(linkThingsInput: LinkThingsInput!): LinkThingsPayload 
-  @partition(pathToSplitPoint: ["linkThingsInput", "thingsLinked"])
+  @partition(pathToPartitionArg: ["linkThingsInput", "thingsLinked"])
 }
 
 input LinkThingsInput {
