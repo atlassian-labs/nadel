@@ -6,7 +6,7 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 
-data class NadelHydrationBackingFieldArgument(
+data class NadelHydrationArgument(
     val name: String,
     val backingArgumentDef: GraphQLArgument,
     val valueSource: ValueSource,
@@ -60,6 +60,10 @@ data class NadelHydrationBackingFieldArgument(
          */
         data class StaticValue(
             val value: Value<*>,
+        ) : ValueSource()
+
+        data class RemainingArguments(
+            val remainingArgumentNames: List<String>,
         ) : ValueSource()
     }
 }

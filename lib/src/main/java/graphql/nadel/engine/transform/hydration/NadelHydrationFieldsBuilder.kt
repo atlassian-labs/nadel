@@ -5,7 +5,7 @@ import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder
@@ -84,7 +84,7 @@ internal object NadelHydrationFieldsBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         virtualField: ExecutableNormalizedField,
-        argBatches: List<Map<NadelHydrationBackingFieldArgument, NormalizedInputValue>>,
+        argBatches: List<Map<NadelHydrationArgument, NormalizedInputValue>>,
     ): List<ExecutableNormalizedField> {
         val backingFieldOverallObjectTypeNames = getBackingFieldOverallObjectTypenames(instruction, executionBlueprint)
         val fieldChildren = deepClone(fields = virtualField.children)
@@ -108,7 +108,7 @@ internal object NadelHydrationFieldsBuilder {
         return argBatches.map { argBatch ->
             makeBackingQueries(
                 instruction = instruction,
-                fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationBackingFieldArgument) -> inputDef.name },
+                fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationArgument) -> inputDef.name },
                 fieldChildren = fieldChildren,
                 executionBlueprint = executionBlueprint,
             )

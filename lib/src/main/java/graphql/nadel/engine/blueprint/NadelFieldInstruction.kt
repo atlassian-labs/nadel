@@ -2,7 +2,7 @@ package graphql.nadel.engine.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -58,9 +58,9 @@ interface NadelGenericHydrationInstruction {
      * }
      * ```
      *
-     * then the [NadelHydrationBackingFieldArgument] would be for the `id` argument.
+     * then the [NadelHydrationArgument] would be for the `id` argument.
      */
-    val backingFieldArguments: List<NadelHydrationBackingFieldArgument>
+    val backingFieldArguments: List<NadelHydrationArgument>
 
     /**
      * Maximum time the client should wait for the hydration call before timing out.
@@ -69,7 +69,7 @@ interface NadelGenericHydrationInstruction {
 
     /**
      * The fields required to be queried on the source object in order to complete the hydration.
-     * This can be the fields described in [NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue.queryPathToField]
+     * This can be the fields described in [NadelHydrationArgument.ValueSource.FieldResultValue.queryPathToField]
      * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
      */
     val sourceFields: List<NadelQueryPath>
@@ -98,7 +98,7 @@ data class NadelHydrationFieldInstruction(
     override val virtualFieldDef: GraphQLFieldDefinition,
     override val backingService: Service,
     override val queryPathToBackingField: NadelQueryPath,
-    override val backingFieldArguments: List<NadelHydrationBackingFieldArgument>,
+    override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
     override val backingFieldDef: GraphQLFieldDefinition,
@@ -114,7 +114,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val virtualFieldDef: GraphQLFieldDefinition,
     override val backingService: Service,
     override val queryPathToBackingField: NadelQueryPath,
-    override val backingFieldArguments: List<NadelHydrationBackingFieldArgument>,
+    override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
     override val backingFieldDef: GraphQLFieldDefinition,

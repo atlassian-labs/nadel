@@ -6,7 +6,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
@@ -32,7 +32,7 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
     ): T? {
         return instructions.firstOrNull {
             val (_, _, valueSource) = it.backingFieldArguments.single()
-            if (valueSource !is NadelHydrationBackingFieldArgument.ValueSource.FieldResultValue) {
+            if (valueSource !is NadelHydrationArgument.ValueSource.FieldResultValue) {
                 return@firstOrNull false
             }
             val backingFieldName = valueSource.fieldDefinition.name

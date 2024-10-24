@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchInputDef
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getNonBatchInputValues
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -20,7 +20,7 @@ import graphql.schema.GraphQLTypeUtil
  */
 internal data class NadelHydrationArgumentsBatch(
     val sourceInputs: List<JsonNode>,
-    val arguments: Map<NadelHydrationBackingFieldArgument, NormalizedInputValue>,
+    val arguments: Map<NadelHydrationArgument, NormalizedInputValue>,
 )
 
 /**
@@ -32,7 +32,7 @@ internal data class NadelHydrationArgumentsBatch(
  */
 private data class BatchedArgumentValue(
     val sourceInputs: List<JsonNode>,
-    val argumentDef: NadelHydrationBackingFieldArgument,
+    val argumentDef: NadelHydrationArgument,
     val argumentValue: NormalizedInputValue,
 )
 
