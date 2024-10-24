@@ -40,7 +40,7 @@ type Query {
 }
 
 type Mutation {
-  thingsApi: ThingsApi
+  thingsApi: ThingsApi @namespaced
 }
 
 type ThingsApi {

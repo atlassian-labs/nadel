@@ -11,6 +11,7 @@ import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.schema.NadelDirectives
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumValueDefinition
@@ -739,6 +740,94 @@ sealed interface NadelSchemaValidationError {
         }
 
         override val subject = field
+    }
+
+    data class CannotRenamePartitionedField(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Overall field $of tried to partition a renamed field"
+        }
+
+        override val subject = overallField
+    }
+
+    data class PartitionAppliedToUnsupportedField(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Directive '${NadelDirectives.partitionDirectiveDefinition.name}' is declared on a field " +
+                "'${of}' inside a type that is not an operation or namespace type"
+        }
+
+        override val subject = overallField
+    }
+
+    data class PartitionAppliedToSubscriptionField(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Directive '${NadelDirectives.partitionDirectiveDefinition.name}' is declared on a field " +
+                "'${of}' inside the Subscription type"
+        }
+
+        override val subject = overallField
+    }
+
+    data class CannotPartitionHydratedField(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Overall field $of tried to partition a hydrated field"
+        }
+
+        override val subject = overallField
+    }
+
+    data class PartitionAppliedToFieldWithUnsupportedOutputType(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Directive '${NadelDirectives.partitionDirectiveDefinition.name}' is declared on a field " +
+                "'${of}' with an unsupported output type. Only lists and mutation payloads are supported"
+        }
+
+        override val subject = overallField
+    }
+
+    data class InvalidPartitionArgument(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Directive '${NadelDirectives.partitionDirectiveDefinition.name}' applied to field " +
+                "'${of}' is using wrong type for the partition argument. Only lists are supported"
+        }
+
+        override val subject = overallField
     }
 }
 
