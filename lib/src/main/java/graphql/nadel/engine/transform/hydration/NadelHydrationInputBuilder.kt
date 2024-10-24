@@ -3,8 +3,8 @@ package graphql.nadel.engine.transform.hydration
 import graphql.language.NullValue
 import graphql.language.Value
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationBackingFieldArgument.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument.ValueSource
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -16,6 +16,7 @@ import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.toMapStrictly
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
+import graphql.schema.GraphQLTypeUtil
 
 internal class NadelHydrationInputBuilder private constructor(
     private val instruction: NadelHydrationFieldInstruction,
@@ -79,7 +80,7 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputMap(
-        excluding: NadelHydrationBackingFieldArgument? = null,
+        excluding: NadelHydrationArgument? = null,
     ): Map<String, NormalizedInputValue> {
         return instruction.backingFieldArguments
             .asSequence()
@@ -113,14 +114,14 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValuePair(
-        inputDef: NadelHydrationBackingFieldArgument,
+        inputDef: NadelHydrationArgument,
     ): Pair<String, NormalizedInputValue>? {
         val inputValue = makeInputValue(inputDef) ?: return null
         return inputDef.name to inputValue
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationBackingFieldArgument,
+        inputDef: NadelHydrationArgument,
     ): NormalizedInputValue? {
         return when (val valueSource = inputDef.valueSource) {
             is ValueSource.ArgumentValue -> getArgumentValue(valueSource)
@@ -129,11 +130,19 @@ internal class NadelHydrationInputBuilder private constructor(
                 value = getResultValue(valueSource),
             )
             is ValueSource.StaticValue -> makeInputValue(inputDef, valueSource.value)
+            is ValueSource.RemainingArguments -> NormalizedInputValue(
+                /* typeName = */ GraphQLTypeUtil.simplePrint(inputDef.backingArgumentDef.type),
+                /* value = */
+                valueSource.remainingArgumentNames
+                    .associateWith {
+                        virtualField.normalizedArguments[it]?.value
+                    },
+            )
         }
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationBackingFieldArgument,
+        inputDef: NadelHydrationArgument,
         value: Any?,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(
@@ -143,7 +152,7 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationBackingFieldArgument,
+        inputDef: NadelHydrationArgument,
         value: Value<*>,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(

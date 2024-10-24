@@ -1,7 +1,6 @@
 package graphql.nadel.schema
 
 import graphql.language.DirectiveDefinition
-import graphql.language.InputObjectTypeDefinition
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition
@@ -35,6 +34,13 @@ object NadelDirectives {
     val nadelHydrationConditionDefinition = NadelHydrationConditionDefinition.inputObjectDefinition
 
     val hydratedDirectiveDefinition = NadelHydrationDefinition.directiveDefinition
+
+    val nadelHydrationRemainingArguments = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+          directive @hydrationRemainingArguments on ARGUMENT_DEFINITION
+        """.trimIndent()
+    )
 
     val dynamicServiceDirectiveDefinition = parseDefinition<DirectiveDefinition>(
         // language=GraphQL
