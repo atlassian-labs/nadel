@@ -127,15 +127,7 @@ interface NadelExecutionHooks {
             }
 
             override fun getPartitionKeyExtractor(): NadelPartitionKeyExtractor {
-                return object : NadelPartitionKeyExtractor {
-                    override fun getPartitionKey(
-                        scalarValue: ScalarValue<*>,
-                        inputValueDef: GraphQLInputValueDefinition,
-                        context: NadelFieldPartitionContext,
-                    ): String? {
-                        return null
-                    }
-                }
+                return NadelPartitionKeyExtractor.noop
             }
         }
     }

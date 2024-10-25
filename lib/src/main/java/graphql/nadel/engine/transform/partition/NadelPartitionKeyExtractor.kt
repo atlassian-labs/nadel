@@ -17,4 +17,16 @@ interface NadelPartitionKeyExtractor {
         inputValueDef: GraphQLInputValueDefinition,
         context: NadelFieldPartitionContext,
     ): String?
+
+    companion object {
+        internal val noop = object : NadelPartitionKeyExtractor {
+            override fun getPartitionKey(
+                scalarValue: ScalarValue<*>,
+                inputValueDef: GraphQLInputValueDefinition,
+                context: NadelFieldPartitionContext,
+            ): String? {
+                return null
+            }
+        }
+    }
 }
