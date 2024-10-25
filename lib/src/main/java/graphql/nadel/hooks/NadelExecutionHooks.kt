@@ -1,14 +1,21 @@
 package graphql.nadel.hooks
 
+import graphql.language.ScalarValue
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
+import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
+import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.normalized.ExecutableNormalizedField
+import graphql.schema.GraphQLInputValueDefinition
 import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 
@@ -106,7 +113,31 @@ interface NadelExecutionHooks {
     }
 
     fun partitionTransformerHook(): NadelPartitionTransformHook {
-        return object: NadelPartitionTransformHook {}
+        return object: NadelPartitionTransformHook {
+            override fun getFieldPartitionContext(
+                executionContext: NadelExecutionContext,
+                serviceExecutionContext: NadelServiceExecutionContext,
+                executionBlueprint: NadelOverallExecutionBlueprint,
+                services: Map<String, Service>,
+                service: Service,
+                overallField: ExecutableNormalizedField,
+                hydrationDetails: ServiceExecutionHydrationDetails?,
+            ): NadelFieldPartitionContext? {
+                return null
+            }
+
+            override fun getPartitionKeyExtractor(): NadelPartitionKeyExtractor {
+                return object : NadelPartitionKeyExtractor {
+                    override fun getPartitionKey(
+                        scalarValue: ScalarValue<*>,
+                        inputValueDef: GraphQLInputValueDefinition,
+                        context: NadelFieldPartitionContext,
+                    ): String? {
+                        return null
+                    }
+                }
+            }
+        }
     }
 }
 
