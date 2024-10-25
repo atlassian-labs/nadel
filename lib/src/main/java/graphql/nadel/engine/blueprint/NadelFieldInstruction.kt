@@ -88,8 +88,6 @@ interface NadelGenericHydrationInstruction {
      * The optional definition for conditional hydrations
      */
     val condition: NadelHydrationCondition?
-
-    val virtualTypeContext: NadelVirtualTypeContext?
 }
 
 data class NadelHydrationFieldInstruction(
@@ -104,7 +102,14 @@ data class NadelHydrationFieldInstruction(
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorFieldContainer: GraphQLFieldsContainer,
     override val condition: NadelHydrationCondition?,
-    override val virtualTypeContext: NadelVirtualTypeContext?,
+    /**
+     * Hydration can bring about virtual types.
+     *
+     * These types mirror the backing type, but can have things like hydration etc.
+     *
+     * This context provides a mapping between the virtual and backing types.
+     */
+    val virtualTypeContext: NadelVirtualTypeContext?,
     val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
@@ -120,7 +125,6 @@ data class NadelBatchHydrationFieldInstruction(
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorFieldContainer: GraphQLFieldsContainer,
     override val condition: NadelHydrationCondition?,
-    override val virtualTypeContext: NadelVirtualTypeContext?,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction

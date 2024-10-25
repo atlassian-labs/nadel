@@ -1,9 +1,12 @@
-package graphql.nadel.tests.next.fixtures.hydration.virtual
+package graphql.nadel.tests.next.fixtures.hydration.copy
 
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-class HydrationMakesVirtualFieldTest : NadelIntegrationTest(
+/**
+ * Uses hydration to "copy" a field. Does not link two pieces of data together i.e. no $source fields used.
+ */
+class HydrationCopiesFieldTest : NadelIntegrationTest(
     query = """
         query {
           businessReport_findRecentWorkByTeam(teamId: "hello") {
