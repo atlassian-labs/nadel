@@ -152,7 +152,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                 .toList()
 
             if (objectTypeNames.isEmpty()) {
-                // All virtual types
                 error("Service does not own return type. Unable to insert __typename as schema is not configured properly.")
             }
 
