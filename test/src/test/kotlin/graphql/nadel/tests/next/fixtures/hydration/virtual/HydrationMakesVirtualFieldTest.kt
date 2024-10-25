@@ -13,6 +13,10 @@ class HydrationMakesVirtualFieldTest : NadelIntegrationTest(
                   key
                 }
               }
+              cursor
+            }
+            pageInfo {
+              hasNextPage
             }
           }
         }
@@ -31,18 +35,35 @@ class HydrationMakesVirtualFieldTest : NadelIntegrationTest(
                 }
                 type GraphStoreQueryConnection {
                   edges: [GraphStoreQueryEdge]
+                  pageInfo: PageInfo
                 }
                 type GraphStoreQueryEdge {
                   nodeId: ID
+                  cursor: String
+                }
+                type PageInfo {
+                    hasNextPage: Boolean!
+                    hasPreviousPage: Boolean!
+                    startCursor: String
+                    endCursor: String
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 data class GraphStoreQueryEdge(
                     val nodeId: String,
+                    val cursor: String?,
+                )
+
+                data class PageInfo(
+                    val hasNextPage: Boolean,
+                    val hasPreviousPage: Boolean,
+                    val startCursor: String?,
+                    val endCursor: String?,
                 )
 
                 data class GraphStoreQueryConnection(
                     val edges: List<GraphStoreQueryEdge>,
+                    val pageInfo: PageInfo,
                 )
 
                 wiring
@@ -53,7 +74,14 @@ class HydrationMakesVirtualFieldTest : NadelIntegrationTest(
                                     edges = listOf(
                                         GraphStoreQueryEdge(
                                             nodeId = "ari:cloud:jira::issue/1",
+                                            cursor = "1",
                                         ),
+                                    ),
+                                    pageInfo = PageInfo(
+                                        hasNextPage = true,
+                                        hasPreviousPage = false,
+                                        startCursor = null,
+                                        endCursor = "1",
                                     ),
                                 )
                             }
@@ -112,7 +140,6 @@ class HydrationMakesVirtualFieldTest : NadelIntegrationTest(
             name = "work",
             overallSchema = """
                 type Query {
-                  business_stub: String @hidden
                   businessReport_findRecentWorkByTeam(
                     teamId: ID!
                     first: Int
@@ -140,6 +167,7 @@ class HydrationMakesVirtualFieldTest : NadelIntegrationTest(
                 directive @virtualType on OBJECT
                 type WorkConnection @virtualType {
                   edges: [WorkEdge]
+                  pageInfo: PageInfo
                 }
                 type WorkEdge @virtualType {
                   nodeId: ID @hidden
@@ -149,6 +177,7 @@ class HydrationMakesVirtualFieldTest : NadelIntegrationTest(
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
+                  cursor: String
                 }
                 union WorkNode = JiraIssue
             """.trimIndent(),

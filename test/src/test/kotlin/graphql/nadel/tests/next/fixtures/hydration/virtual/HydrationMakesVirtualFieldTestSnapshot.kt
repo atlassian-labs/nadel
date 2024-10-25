@@ -29,6 +29,10 @@ public class HydrationMakesVirtualFieldTestSnapshot : TestSnapshot() {
                 |     edges {
                 |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
+                |       cursor
+                |     }
+                |     pageInfo {
+                |       hasNextPage
                 |     }
                 |   }
                 | }
@@ -41,9 +45,13 @@ public class HydrationMakesVirtualFieldTestSnapshot : TestSnapshot() {
                 |       "edges": [
                 |         {
                 |           "batch_hydration__node__nodeId": "ari:cloud:jira::issue/1",
-                |           "__typename__batch_hydration__node": "GraphStoreQueryEdge"
+                |           "__typename__batch_hydration__node": "GraphStoreQueryEdge",
+                |           "cursor": "1"
                 |         }
-                |       ]
+                |       ],
+                |       "pageInfo": {
+                |         "hasNextPage": true
+                |       }
                 |     }
                 |   }
                 | }
@@ -104,11 +112,15 @@ public class HydrationMakesVirtualFieldTestSnapshot : TestSnapshot() {
      *     "businessReport_findRecentWorkByTeam": {
      *       "edges": [
      *         {
+     *           "cursor": "1",
      *           "node": {
      *             "key": "GQLGW-1"
      *           }
      *         }
-     *       ]
+     *       ],
+     *       "pageInfo": {
+     *         "hasNextPage": true
+     *       }
      *     }
      *   }
      * }
@@ -121,11 +133,15 @@ public class HydrationMakesVirtualFieldTestSnapshot : TestSnapshot() {
             |     "businessReport_findRecentWorkByTeam": {
             |       "edges": [
             |         {
+            |           "cursor": "1",
             |           "node": {
             |             "key": "GQLGW-1"
             |           }
             |         }
-            |       ]
+            |       ],
+            |       "pageInfo": {
+            |         "hasNextPage": true
+            |       }
             |     }
             |   }
             | }
