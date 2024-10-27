@@ -232,7 +232,7 @@ internal class NadelNewBatchHydrator(
     }
 
     context(NadelBatchHydratorContext)
-    private suspend fun deferHydrations(
+    private fun deferHydrations(
         sourceInputsByInstruction: Map<NadelBatchHydrationFieldInstruction, List<SourceInput>>,
         sourceObjectsMetadata: List<SourceObjectMetadata>,
     ) {
@@ -266,11 +266,16 @@ internal class NadelNewBatchHydrator(
             sourceObject,
         )
 
+        // TODO: Extract to Utils somewhere
+        // This isn't really right… but we start with this
+        val label = sourceField.deferredExecutions.firstNotNullOfOrNull { it.label }
+
         return if (sourceObjectResultPath == null) {
             null
         } else {
             DeferPayload.Builder()
                 .path(sourceObjectResultPath.toRawPath())
+                // .label(label)
                 .data(
                     mapOf(
                         sourceField.resultKey to getHydrationValueForSourceObject(
