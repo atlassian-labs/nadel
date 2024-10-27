@@ -4,6 +4,7 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelDeepRenameTransform
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
@@ -13,8 +14,10 @@ import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
+import graphql.nadel.engine.transform.partition.NadelPartitionTransform
 import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform
 import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.Companion.isSkipIncludeSpecialField
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
 import graphql.normalized.ExecutableNormalizedField
@@ -35,6 +38,7 @@ internal class NadelExecutionPlanFactory(
      */
     suspend fun create(
         executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
         services: Map<String, Service>,
         service: Service,
         rootField: ExecutableNormalizedField,
@@ -55,6 +59,7 @@ internal class NadelExecutionPlanFactory(
                     val state = timer.time(step = timingStep) {
                         transform.isApplicable(
                             executionContext,
+                            serviceExecutionContext,
                             executionBlueprint,
                             services,
                             service,
@@ -97,12 +102,14 @@ internal class NadelExecutionPlanFactory(
             executionBlueprint: NadelOverallExecutionBlueprint,
             transforms: List<NadelTransform<out Any>>,
             engine: NextgenEngine,
+            executionHooks: NadelExecutionHooks,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
                 executionBlueprint,
                 transforms = listOfTransforms(
                     NadelSkipIncludeTransform(),
                     NadelServiceTypeFilterTransform(),
+                    NadelPartitionTransform(engine, executionHooks.partitionTransformerHook()),
                     *transforms.toTypedArray(),
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),

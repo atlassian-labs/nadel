@@ -20,6 +20,21 @@ class HydrationDeferInRenamedFieldTest : BaseHydrationDeferInRenamedFieldTest(
     """.trimIndent(),
 )
 
+class HydrationRenamedFieldInDeferTest : BaseHydrationDeferInRenamedFieldTest(
+    query = """
+      query {
+        ... @defer {
+          issueByKey(key: "GQLGW-1") { # Renamed
+            key
+              assignee {
+                name
+              }
+          }
+        }
+      }
+    """.trimIndent(),
+)
+
 class HydrationDeferInRenamedFieldUsingRenamedFieldTest : BaseHydrationDeferInRenamedFieldTest(
     query = """
       query {
@@ -50,6 +65,27 @@ class HydrationDeferInRenamedFieldAndNestedHydrationsTest : BaseHydrationDeferIn
                   assigneeV2 { # Renamed
                     name
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    """.trimIndent(),
+)
+
+class RenamedFieldInsideNestedHydrationsInsideDeferTest : BaseHydrationDeferInRenamedFieldTest(
+    query = """
+      query {
+        issueByKey(key: "GQLGW-1") { # Renamed
+          key
+          ... @defer {
+            self { # Hydrate
+              self { # Hydrate
+                self { # Hydrate
+                    assigneeV2 { # Renamed
+                      name
+                    }
                 }
               }
             }

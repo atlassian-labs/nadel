@@ -20,6 +20,7 @@ import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.partitionDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
 
 object NadelBuiltInTypes {
@@ -44,6 +45,7 @@ object NadelBuiltInTypes {
         namespacedDirectiveDefinition,
         hiddenDirectiveDefinition,
         deferDirectiveDefinition,
+        partitionDirectiveDefinition,
 
         nadelHydrationFromArgumentDefinition,
         nadelBatchObjectIdentifiedByDefinition,

@@ -11,6 +11,7 @@ import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.result.NadelResultTracker
 import graphql.normalized.ExecutableNormalizedOperation
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -24,6 +25,8 @@ data class NadelExecutionContext internal constructor(
     internal val incrementalResultSupport: NadelIncrementalResultSupport,
     internal val resultTracker: NadelResultTracker,
     internal val hydrationDetails: ServiceExecutionHydrationDetails? = null,
+    internal val isPartitionedCall: Boolean = false,
+    internal val executionCoroutine: CoroutineScope,
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
 
@@ -44,6 +47,7 @@ data class NadelExecutionContext internal constructor(
     /**
      * Get the service context for a given service
      */
+    @Deprecated("Replaced with NadelServiceExecutionContext")
     fun getContextForService(service: Service): CompletableFuture<Any?> {
         return serviceContexts.getOrPut(service.name) {
             hooks.createServiceContext(

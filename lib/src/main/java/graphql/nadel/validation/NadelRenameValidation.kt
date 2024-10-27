@@ -1,10 +1,12 @@
 package graphql.nadel.validation
 
 import graphql.nadel.engine.util.getFieldAt
+import graphql.nadel.validation.NadelSchemaValidationError.CannotRenamePartitionedField
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.nadel.validation.util.NadelSchemaUtil.getRename
 import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
+import graphql.nadel.validation.util.NadelSchemaUtil.hasPartition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 
@@ -18,6 +20,12 @@ internal class NadelRenameValidation(
         if (hasHydration(overallField)) {
             return listOf(
                 CannotRenameHydratedField(parent, overallField),
+            )
+        }
+
+        if (hasPartition(overallField)) {
+            return listOf(
+                CannotRenamePartitionedField(parent, overallField),
             )
         }
 

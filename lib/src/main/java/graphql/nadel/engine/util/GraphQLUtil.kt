@@ -31,6 +31,7 @@ import graphql.language.ObjectField
 import graphql.language.ObjectTypeExtensionDefinition
 import graphql.language.ObjectValue
 import graphql.language.OperationDefinition
+import graphql.language.OperationDefinition.Operation
 import graphql.language.SDLDefinition
 import graphql.language.SDLNamedDefinition
 import graphql.language.ScalarTypeExtensionDefinition
@@ -59,7 +60,10 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLList
 import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLOutputType
+import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
@@ -365,30 +369,12 @@ fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
     return provide(executionInput.query, executionInput.operationName, executionInput.context)
 }
 
-fun ServiceExecutionResult.copy(
-    data: MutableJsonMap = this.data,
-    errors: MutableList<MutableJsonMap> = this.errors,
-    extensions: MutableJsonMap = this.extensions,
-): ServiceExecutionResult {
-    return newServiceExecutionResult(data, errors, extensions)
-}
-
 fun newServiceExecutionResult(
     data: MutableJsonMap = mutableMapOf(),
     errors: MutableList<MutableJsonMap> = mutableListOf(),
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
     return NadelServiceExecutionResultImpl(data, errors, extensions)
-}
-
-fun newServiceExecutionResult(
-    error: GraphQLError,
-): ServiceExecutionResult {
-    return newServiceExecutionResult(
-        errors = mutableListOf(
-            error.toSpecification(),
-        ),
-    )
 }
 
 fun newExecutionResult(
@@ -429,14 +415,22 @@ fun newServiceExecutionErrorResult(
 
 fun ExecutableNormalizedField.getOperationKind(
     schema: GraphQLSchema,
-): OperationDefinition.Operation {
+): Operation {
     val objectTypeName = objectTypeNames.singleOrNull()
         ?: error("Top level field can only belong to one operation type")
     return when {
-        schema.queryType.name == objectTypeName -> OperationDefinition.Operation.QUERY
-        schema.mutationType?.name?.equals(objectTypeName) == true -> OperationDefinition.Operation.MUTATION
-        schema.subscriptionType?.name?.equals(objectTypeName) == true -> OperationDefinition.Operation.SUBSCRIPTION
+        schema.queryType.name == objectTypeName -> Operation.QUERY
+        schema.mutationType?.name?.equals(objectTypeName) == true -> Operation.MUTATION
+        schema.subscriptionType?.name?.equals(objectTypeName) == true -> Operation.SUBSCRIPTION
         else -> error("Type '$objectTypeName' is not one of the standard GraphQL operation types")
+    }
+}
+
+fun Operation.getType(schema: GraphQLSchema): GraphQLObjectType {
+    return when (this) {
+        Operation.QUERY -> schema.queryType
+        Operation.MUTATION -> schema.mutationType
+        Operation.SUBSCRIPTION -> schema.subscriptionType
     }
 }
 
@@ -593,7 +587,7 @@ val GraphQLSchema.operationTypes
 
 fun compileToDocument(
     schema: GraphQLSchema,
-    operationKind: OperationDefinition.Operation,
+    operationKind: Operation,
     operationName: String?,
     topLevelFields: List<ExecutableNormalizedField>,
     variablePredicate: VariablePredicate?,

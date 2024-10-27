@@ -4,13 +4,13 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.util.getField
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
@@ -22,6 +22,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
             object : NadelTransform<Any> {
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
@@ -37,6 +38,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
 
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
@@ -50,6 +52,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
 
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     overallField: ExecutableNormalizedField,
