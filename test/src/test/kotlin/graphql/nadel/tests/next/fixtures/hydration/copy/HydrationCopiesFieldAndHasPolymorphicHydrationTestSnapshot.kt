@@ -21,47 +21,177 @@ private suspend fun main() {
 @Suppress("unused")
 public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "bitbucket",
+                query = """
+                | {
+                |   pullRequestsByIds(ids: ["ari:cloud:bitbucket::pull-request/2"]) {
+                |     title
+                |     patch
+                |     batch_hydration__node__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = " {}",
+                result = """
+                | {
+                |   "data": {
+                |     "pullRequestsByIds": [
+                |       {
+                |         "title": "Initial Commit",
+                |         "patch": "+",
+                |         "batch_hydration__node__id": "ari:cloud:bitbucket::pull-request/2"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "graph_store",
+                query = """
+                | {
+                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
+                |     edges {
+                |       batch_hydration__node__nodeId: nodeId
+                |       batch_hydration__node__nodeId: nodeId
+                |       __typename__batch_hydration__node: __typename
+                |       cursor
+                |     }
+                |     pageInfo {
+                |       hasNextPage
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                variables = " {}",
+                result = """
+                | {
+                |   "data": {
+                |     "graphStore_query": {
+                |       "edges": [
+                |         {
+                |           "batch_hydration__node__nodeId": "ari:cloud:jira::issue/1",
+                |           "__typename__batch_hydration__node": "GraphStoreQueryEdge",
+                |           "cursor": "1"
+                |         },
+                |         {
+                |           "batch_hydration__node__nodeId": "ari:cloud:bitbucket::pull-request/2",
+                |           "__typename__batch_hydration__node": "GraphStoreQueryEdge",
+                |           "cursor": "2"
+                |         }
+                |       ],
+                |       "pageInfo": {
+                |         "hasNextPage": true
+                |       }
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "jira",
+                query = """
+                | {
+                |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
+                |     key
+                |     batch_hydration__node__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = " {}",
+                result = """
+                | {
+                |   "data": {
+                |     "issuesByIds": [
+                |       {
+                |         "key": "GQLGW-1",
+                |         "batch_hydration__node__id": "ari:cloud:jira::issue/1"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "work",
+                query = """
+                | {
+                |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
+                | }
+                """.trimMargin(),
+                variables = " {}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json
      * {
-     *   "errors": [
-     *     {
-     *       "message": "Validation error
-     * (InvalidFragmentType@[businessReport_findRecentWorkByTeam/edges/node]) : Fragment cannot be
-     * spread here as objects of type 'WorkNode' can never be of type 'BitbucketPullRequest'",
-     *       "locations": [
+     *   "data": {
+     *     "businessReport_findRecentWorkByTeam": {
+     *       "edges": [
      *         {
-     *           "line": 8,
-     *           "column": 9
+     *           "cursor": "1",
+     *           "node": {
+     *             "key": "GQLGW-1"
+     *           }
+     *         },
+     *         {
+     *           "cursor": "2",
+     *           "node": {
+     *             "title": "Initial Commit",
+     *             "patch": "+"
+     *           }
      *         }
      *       ],
-     *       "extensions": {
-     *         "classification": "ValidationError"
+     *       "pageInfo": {
+     *         "hasNextPage": true
      *       }
      *     }
-     *   ]
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "errors": [
-            |     {
-            |       "message": "Validation error (InvalidFragmentType@[businessReport_findRecentWorkByTeam/edges/node]) : Fragment cannot be spread here as objects of type 'WorkNode' can never be of type 'BitbucketPullRequest'",
-            |       "locations": [
+            |   "data": {
+            |     "businessReport_findRecentWorkByTeam": {
+            |       "edges": [
             |         {
-            |           "line": 8,
-            |           "column": 9
+            |           "cursor": "1",
+            |           "node": {
+            |             "key": "GQLGW-1"
+            |           }
+            |         },
+            |         {
+            |           "cursor": "2",
+            |           "node": {
+            |             "title": "Initial Commit",
+            |             "patch": "+"
+            |           }
             |         }
             |       ],
-            |       "extensions": {
-            |         "classification": "ValidationError"
+            |       "pageInfo": {
+            |         "hasNextPage": true
             |       }
             |     }
-            |   ]
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

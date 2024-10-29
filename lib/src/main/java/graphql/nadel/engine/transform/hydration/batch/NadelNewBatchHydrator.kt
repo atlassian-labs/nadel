@@ -445,10 +445,7 @@ internal class NadelNewBatchHydrator(
         sourceObject: JsonNode,
         instructions: List<NadelBatchHydrationFieldInstruction>,
     ): List<SourceInput>? {
-        val coords = makeFieldCoordinates(
-            typeName = sourceField.objectTypeNames.first(),
-            fieldName = sourceField.name,
-        )
+        val coords = instructions.first().location
 
         return if (executionBlueprint.engineSchema.getField(coords)!!.type.unwrapNonNull().isList) {
             val fieldSource = instructions
@@ -462,7 +459,8 @@ internal class NadelNewBatchHydrator(
 
             getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceInput ->
-                    val instruction = getHydrationInstructionForSourceInput(instructions, sourceObject, sourceInput, fieldSource)
+                    val instruction =
+                        getHydrationInstructionForSourceInput(instructions, sourceObject, sourceInput, fieldSource)
                     if (instruction == null) {
                         SourceInput.NotQueryable(sourceInput)
                     } else {
@@ -631,12 +629,9 @@ private class NadelBatchHydratorContext(
     val isSourceFieldListOutput: Boolean by lazy {
         executionBlueprint.engineSchema
             .getField(
-                makeFieldCoordinates(
-                    // In regard to the field output type, the abstract types must all define the same list wrapping
-                    // So here, it does not matter which object type we inspect
-                    typeName = sourceField.objectTypeNames.first(),
-                    fieldName = sourceField.name,
-                )
+                // In regard to the field output type, the abstract types must all define the same list wrapping
+                // So here, it does not matter which object type we inspect
+                instructionsByObjectTypeNames.values.first().first().location,
             )!!.type.unwrapNonNull().isList
     }
 

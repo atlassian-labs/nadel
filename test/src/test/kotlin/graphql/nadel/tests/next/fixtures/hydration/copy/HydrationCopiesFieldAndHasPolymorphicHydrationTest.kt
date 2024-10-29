@@ -3,7 +3,9 @@ package graphql.nadel.tests.next.fixtures.hydration.copy
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
+import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
@@ -87,6 +89,10 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                                         GraphStoreQueryEdge(
                                             nodeId = "ari:cloud:jira::issue/1",
                                             cursor = "1",
+                                        ),
+                                        GraphStoreQueryEdge(
+                                            nodeId = "ari:cloud:bitbucket::pull-request/2",
+                                            cursor = "2",
                                         ),
                                     ),
                                     pageInfo = PageInfo(
@@ -236,7 +242,7 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
                     @hydrated(
-                      service: "jira"
+                      service: "bitbucket"
                       field: "pullRequestsByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
@@ -266,16 +272,23 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
                         instructions: List<T>,
-                        sourceInput: JsonNode,
+                        parentNode: JsonNode,
+                        aliasHelper: NadelAliasHelper,
                         userContext: Any?,
-                    ): T {
+                    ): T? {
+                        if (instructions.size == 1) {
+                            return instructions.single()
+                        }
+
+                        @Suppress("UNCHECKED_CAST")
+                        val nodeId = (parentNode.value as JsonMap)[aliasHelper.getResultKey("nodeId")] as String
+
                         val prs = instructions.single { it.actorFieldDef.name == "pullRequestsByIds" }
                         val issues = instructions.single { it.actorFieldDef.name == "issuesByIds" }
-                        val id = sourceInput.value as String
 
                         return when {
-                            id.startsWith("ari:cloud:bitbucket::pull-request/") -> prs
-                            id.startsWith("ari:cloud:jira::issues/") -> issues
+                            nodeId.startsWith("ari:cloud:bitbucket::pull-request/") -> prs
+                            nodeId.startsWith("ari:cloud:jira::issue/") -> issues
                             else -> throw IllegalArgumentException()
                         }
                     }
