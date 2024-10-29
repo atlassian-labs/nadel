@@ -47,7 +47,7 @@ import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import java.math.BigInteger
 
-internal object NadelExecutionBlueprintFactory {
+object NadelExecutionBlueprintFactory {
     fun create(
         engineSchema: GraphQLSchema,
         services: List<Service>,

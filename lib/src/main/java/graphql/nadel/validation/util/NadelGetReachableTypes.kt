@@ -3,10 +3,10 @@ package graphql.nadel.validation.util
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.isHydrated
-import graphql.nadel.engine.util.AnySDLNamedDefinition
+import graphql.nadel.engine.blueprint.FastSchemaTraverser
+import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
-import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
+import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLArgument
@@ -14,6 +14,7 @@ import graphql.schema.GraphQLCompositeType
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
+import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputFieldsContainer
@@ -29,22 +30,14 @@ import graphql.schema.GraphQLNullableType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
-import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLSchemaElement
 import graphql.schema.GraphQLTypeReference
-import graphql.schema.GraphQLTypeVisitorStub
 import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
-import graphql.schema.SchemaTraverser
-import graphql.util.TraversalControl
-import graphql.util.TraversalControl.ABORT
-import graphql.util.TraversalControl.CONTINUE
-import graphql.util.TraverserContext
 
+context(NadelValidationContext)
 internal fun getReachableTypeNames(
-    overallSchema: GraphQLSchema,
     service: Service,
-    definitionNames: Set<String>,
+    definitionNames: List<String>,
 ): Set<String> {
     // We need a mutable Set so we can keep track of what types we've visited to avoid StackOverflows
     val reachableTypeNames = mutableSetOf<String>()
@@ -53,213 +46,211 @@ internal fun getReachableTypeNames(
     fun add(name: String) = reachableTypeNames.add(name)
     fun addAll(elements: Collection<String>) = reachableTypeNames.addAll(elements)
 
-    val serviceDefinitions = overallSchema.typeMap.values.filter { it.name in definitionNames }
-    val traverser = object : GraphQLTypeVisitorStub() {
+    val traverser = object : FastSchemaTraverser.Visitor {
         override fun visitGraphQLArgument(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLArgument,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.type.unwrapAll().name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLUnionType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLUnionType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLInterfaceType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLInterfaceType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLEnumType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLEnumType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
+        }
+
+        override fun visitGraphQLEnumValueDefinition(
+            parent: GraphQLNamedSchemaElement?,
+            node: GraphQLEnumValueDefinition,
+        ): Boolean {
+            return false
         }
 
         override fun visitGraphQLFieldDefinition(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLFieldDefinition,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
-            return if (node.isHydrated()) {
-                // Do not collect output type, hydrations do not require the type to be defined in the service
-                ABORT
-            } else {
-                // Will visit the output type
-                CONTINUE
+        ): Boolean {
+            val parentNode = parent as GraphQLFieldsContainer
+
+            // Don't look at fields contributed by other services
+            if (parentNode.name in combinedTypeNames) {
+                if (service.name != fieldContributor[makeFieldCoordinates(parentNode.name, node.name)]!!.name) {
+                    return false
+                }
             }
+
+            return !node.isHydrated()
         }
 
         override fun visitGraphQLInputObjectField(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLInputObjectField,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.type.unwrapAll().name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLInputObjectType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLInputObjectType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLList(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLList,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.unwrapAll().name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLNonNull(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLNonNull,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.unwrapAll().name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLObjectType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLObjectType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             // Don't look at union members defined by external services
-            val parentNode = context.parentNode
-            if (parentNode is GraphQLUnionType && isUnionMemberExempt(service, parentNode, node)) {
-                return ABORT
+            if (parent is GraphQLUnionType && isUnionMemberExempt(service, parent, node)) {
+                return false
             }
 
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLScalarType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLScalarType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLTypeReference(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLTypeReference,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLModifiedType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLModifiedType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.unwrapAll().name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLCompositeType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLCompositeType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLDirective(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLDirective,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             // We don't care about directives, not a Nadel runtime concern
             // GraphQL Java will do validation on them for us
-            return ABORT
+            return false
         }
 
         override fun visitGraphQLDirectiveContainer(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLDirectiveContainer,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLFieldsContainer(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLFieldsContainer,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLInputFieldsContainer(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLInputFieldsContainer,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLNullableType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLNullableType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.unwrapAll().name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLOutputType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLOutputType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.unwrapAll().name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLUnmodifiedType(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLUnmodifiedType,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             add(node.name)
-            return CONTINUE
+            return true
         }
 
         override fun visitGraphQLAppliedDirective(
+            parent: GraphQLNamedSchemaElement?,
             node: GraphQLAppliedDirective,
-            context: TraverserContext<GraphQLSchemaElement>,
-        ): TraversalControl {
+        ): Boolean {
             // Don't look into applied directives. Could be a shared directive.
             // As long as the schema compiled then we don't care.
-            return ABORT
+            return false
         }
     }
 
-    SchemaTraverser { element ->
-        // Handle combined types
-        if (element is GraphQLNamedSchemaElement && isCombinedType(overallSchema, element)) {
-            val fieldsThatServiceContributed = getFieldsThatServiceContributed(service, element)
-            // Don't visit fields that service did not contribute i.e. unreachable
-            element.children.filter { children ->
-                when (children) {
-                    is GraphQLFieldDefinition -> children.name in fieldsThatServiceContributed
-                    else -> false
-                }
-            }
-        } else {
-            element.children
-        }
-    }.depthFirst(traverser, serviceDefinitions)
+    FastSchemaTraverser().traverse(
+        schema = engineSchema,
+        roots = definitionNames,
+        visitor = traverser,
+    )
 
     return reachableTypeNames
 }
@@ -269,8 +260,8 @@ internal fun isUnionMemberExempt(
     unionType: GraphQLUnionType,
     memberInQuestion: GraphQLObjectType,
 ): Boolean {
-    return isUnionMemberExternal(service, unionType, memberInQuestion) &&
-        isMemberMissingFromUnderlyingSchema(service, memberInQuestion)
+    return isMemberMissingFromUnderlyingSchema(service, memberInQuestion)
+        && isUnionMemberExternal(service, unionType, memberInQuestion)
 }
 
 /**
@@ -283,11 +274,9 @@ internal fun isUnionMemberExternal(
     unionType: GraphQLUnionType,
     memberInQuestion: GraphQLObjectType,
 ): Boolean {
-
-    return service.definitionRegistry.definitions
+    return service.definitionRegistry
+        .getDefinitions(unionType.name)
         .asSequence()
-        .filterIsInstance<AnySDLNamedDefinition>()
-        .filter { it.name == unionType.name }
         .flatMap {
             (it as UnionTypeDefinition).memberTypes
         }

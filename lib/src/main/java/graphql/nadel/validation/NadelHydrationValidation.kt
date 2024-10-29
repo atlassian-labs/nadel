@@ -173,7 +173,7 @@ internal class NadelHydrationValidation(
         validateOutputType(parent, virtualField, backingFieldDef, hasMoreThanOneHydration)
             .onError { return it }
 
-        val arguments = validateArguments(parent, virtualField, hydration, backingFieldDef)
+        val arguments: List<NadelHydrationArgument> = validateArguments(parent, virtualField, hydration, backingFieldDef)
             .onError { return it }
 
         val isBatched = backingFieldDef.type.unwrapNonNull().isList

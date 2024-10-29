@@ -85,6 +85,7 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
 import java.io.File
 import java.util.concurrent.CompletableFuture
+import kotlin.time.measureTimedValue
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
 internal class NextgenEngine(
@@ -105,14 +106,21 @@ internal class NextgenEngine(
     private val overallExecutionBlueprint = generateSchema(newBlueprint = false, services)
 
     private fun generateSchema(newBlueprint: Boolean, services: List<Service>): NadelOverallExecutionBlueprint {
-        val old = NadelExecutionBlueprintFactory.create(
-            engineSchema = engineSchema,
-            services = services,
-        ) as NadelOverallExecutionBlueprintImpl
+        val (old, oldDuration) = measureTimedValue {
+            NadelExecutionBlueprintFactory.create(
+                engineSchema = engineSchema,
+                services = services,
+            ) as NadelOverallExecutionBlueprintImpl
+        }
 
-        val new = NadelSchemaValidation(
-            NadelSchemas(engineSchema, services),
-        ).validateAndGenerateBlueprint() as NadelOverallExecutionBlueprintImpl
+        val (new, newDuration) = measureTimedValue {
+            NadelSchemaValidation(
+                NadelSchemas(engineSchema, services),
+            ).validateAndGenerateBlueprint() as NadelOverallExecutionBlueprintImpl
+        }
+
+        println("old blueprint took " + oldDuration.inWholeMilliseconds + "ms")
+        println("new blueprint took " + newDuration.inWholeMilliseconds + "ms")
 
         val switchoverBlueprint = NadelOverallExecutionBlueprintSwitchover(
             isUsingNewBlueprint = {

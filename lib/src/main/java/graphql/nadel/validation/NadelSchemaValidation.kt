@@ -4,6 +4,7 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
+import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintImpl
 import graphql.nadel.engine.blueprint.NadelTypeRenameInstructions
@@ -11,8 +12,15 @@ import graphql.nadel.engine.blueprint.NadelUnderlyingExecutionBlueprint
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toMapStrictly
+import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.schema.NadelDirectives
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLUnionType
 
 class NadelSchemaValidation(
     // Why is this a constructor argument…
@@ -27,10 +35,17 @@ class NadelSchemaValidation(
         val (engineSchema, services) = schemas
 
         val servicesByName = services.strictAssociateBy(Service::name)
+
+        val operationTypes = getOperationTypeNames(engineSchema)
+        val namespaceTypes = getNamespaceOperationTypes(engineSchema)
+
         val context = NadelValidationContext(
             engineSchema,
             servicesByName,
             makeFieldContributorMap(services),
+            getHydrationUnions(engineSchema),
+            namespaceTypes,
+            namespaceTypes + operationTypes.map { it.name },
         )
         val typeValidation = NadelTypeValidation()
 
@@ -40,6 +55,33 @@ class NadelSchemaValidation(
                     typeValidation.validate(it)
                 }
         }
+    }
+
+    private fun getHydrationUnions(engineSchema: GraphQLSchema): Set<String> {
+        // For each union type, find all fields that use it as an output type
+        val fieldsByUnionOutputTypes = engineSchema.typeMap.values
+            .asSequence()
+            .filterIsInstance<GraphQLFieldsContainer>()
+            .flatMap {
+                it.fieldDefinitions
+            }
+            .filter {
+                it.type.unwrapAll() is GraphQLUnionType
+            }
+            .groupBy {
+                it.type.unwrapAll().name
+            }
+
+        return engineSchema.typeMap.values
+            .asSequence()
+            .filterIsInstance<GraphQLUnionType>()
+            .filter { union ->
+                fieldsByUnionOutputTypes[union.name]?.all(GraphQLFieldDefinition::isHydrated) == true
+            }
+            .map {
+                it.name
+            }
+            .toSet()
     }
 
     fun validateAndGenerateBlueprint(): NadelOverallExecutionBlueprint {
@@ -148,4 +190,29 @@ private fun makeFieldContributorMap(services: List<Service>): Map<FieldCoordinat
                 }
         }
         .toMapStrictly()
+}
+
+private fun getOperationTypeNames(engineSchema: GraphQLSchema): List<GraphQLObjectType> {
+    return listOfNotNull(
+        engineSchema.queryType,
+        engineSchema.mutationType,
+        engineSchema.subscriptionType,
+    )
+}
+
+private fun getNamespaceOperationTypes(overallSchema: GraphQLSchema): Set<String> {
+    val operationTypes = getOperationTypeNames(overallSchema)
+
+    return operationTypes
+        .asSequence()
+        .flatMap { type ->
+            type.fields
+        }
+        .filter { field ->
+            field.hasAppliedDirective(NadelDirectives.namespacedDirectiveDefinition.name)
+        }
+        .map { field ->
+            field.type.unwrapAll().name
+        }
+        .toSet()
 }

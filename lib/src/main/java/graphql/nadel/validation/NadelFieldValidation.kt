@@ -7,7 +7,6 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
-import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
@@ -91,34 +90,35 @@ internal class NadelFieldValidation(
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
     ): List<NadelSchemaValidationResult> {
-        val argumentIssues = overallField.arguments.flatMap { overallArg ->
-            val underlyingArg = underlyingField.getArgument(overallArg.name)
-            if (underlyingArg == null) {
-                listOf(
-                    MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg),
-                )
-            } else {
-                val unwrappedTypeIssues = typeValidation.validate(
-                    NadelServiceSchemaElement(
-                        service = parent.service,
-                        overall = overallArg.type.unwrapAll(),
-                        underlying = underlyingArg.type.unwrapAll(),
+        overallField.arguments
+            .forEach { overallArg ->
+                val underlyingArg = underlyingField.getArgument(overallArg.name)
+                if (underlyingArg == null) {
+                    return listOf(
+                        MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg),
                     )
-                )
+                } else {
+                    typeValidation.validate(
+                        NadelServiceSchemaElement(
+                            service = parent.service,
+                            overall = overallArg.type.unwrapAll(),
+                            underlying = underlyingArg.type.unwrapAll(),
+                        )
+                    ).onError { return it }
 
-                val inputTypeIssues = inputValidation.validate(parent, overallField, overallArg, underlyingArg)
-
-                unwrappedTypeIssues + inputTypeIssues
+                    inputValidation.validate(parent, overallField, overallArg, underlyingArg)
+                        .onError { return it }
+                }
             }
-        }
 
-        val outputTypeIssues = typeValidation.validateOutputType(parent, overallField, underlyingField)
+        typeValidation.validateOutputType(parent, overallField, underlyingField)
+            .onError { return it }
 
-        return argumentIssues + outputTypeIssues
+        return emptyList()
     }
 
     context(NadelValidationContext)
     private fun isCombinedType(type: GraphQLNamedSchemaElement): Boolean {
-        return isCombinedType(engineSchema, type)
+        return type.name in combinedTypeNames
     }
 }
