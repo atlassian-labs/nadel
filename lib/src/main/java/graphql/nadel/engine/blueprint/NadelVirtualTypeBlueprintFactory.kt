@@ -1,6 +1,5 @@
 package graphql.nadel.engine.blueprint
 
-import graphql.nadel.engine.blueprint.directives.getHydrated
 import graphql.nadel.engine.blueprint.directives.getHydratedOrNull
 import graphql.nadel.engine.blueprint.directives.isHydration
 import graphql.nadel.engine.util.getFieldAt
@@ -121,7 +120,9 @@ internal class NadelVirtualTypeBlueprintFactory {
         return virtualType
             .fields
             .flatMap { virtualFieldDef ->
-                val virtualOutputType = virtualFieldDef.type.unwrapAll() as GraphQLObjectType
+                val virtualOutputType = virtualFieldDef.type.unwrapAll() as? GraphQLObjectType
+                    ?: return@flatMap emptyList()
+
                 if (visitedVirtualTypes.visit(virtualOutputType.name)) {
                     val backingFieldDef = backingType.getField(virtualFieldDef.name)
                     val backingOutputType = backingFieldDef.type.unwrapAll() as GraphQLObjectType
@@ -129,8 +130,8 @@ internal class NadelVirtualTypeBlueprintFactory {
                     // Recursively create type mapping
                     val childTypeMappings = createTypeMappings(
                         visitedVirtualTypes = visitedVirtualTypes,
-                        virtualType = virtualType,
-                        backingType = backingType,
+                        virtualType = virtualOutputType,
+                        backingType = backingOutputType,
                     )
 
                     listOf(VirtualTypeMapping(virtualOutputType, backingOutputType)) + childTypeMappings
