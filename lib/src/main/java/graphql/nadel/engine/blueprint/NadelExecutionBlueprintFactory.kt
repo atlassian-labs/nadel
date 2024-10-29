@@ -414,11 +414,6 @@ private class Factory(
             actorFieldDef = actorFieldDef,
             actorFieldContainer = actorFieldContainer,
             sourceFields = getBatchHydrationSourceFields(matchStrategy, hydrationArgs, condition),
-            virtualTypeContext = virtualTypeBlueprintFactory.makeVirtualTypeContext(
-                engineSchema = engineSchema,
-                containerType = parentType,
-                virtualFieldDef = hydratedFieldDef
-            ),
             condition = condition,
         )
     }
