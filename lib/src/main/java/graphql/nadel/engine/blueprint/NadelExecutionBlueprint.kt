@@ -74,35 +74,34 @@ data class NadelOverallExecutionBlueprint(
     }
 
     inline fun <reified T : NadelFieldInstruction> getInstructionInsideVirtualType(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         hydrationDetails: ServiceExecutionHydrationDetails?,
         backingField: ExecutableNormalizedField,
-    ): Map<GraphQLObjectTypeName, List<T>>? {
-        hydrationDetails ?: return null // Need hydration to provide virtual hydration context
+    ): Map<GraphQLObjectTypeName, List<T>> {
+        hydrationDetails ?: return emptyMap() // Need hydration to provide virtual hydration context
 
         val backingFieldParentTypeName = backingField.objectTypeNames.singleOrNull()
-            ?: return null // Don't support abstract types for now
+            ?: return emptyMap() // Don't support abstract types for now
 
-        val nadelHydrationContext = executionBlueprint.fieldInstructions[hydrationDetails.hydrationSourceField]!!
+        val nadelHydrationContext = fieldInstructions[hydrationDetails.hydrationSourceField]!!
             .asSequence()
             .filterIsInstance<NadelGenericHydrationInstruction>()
             .first() as? NadelHydrationFieldInstruction
-            ?: return null // Virtual types only come about from standard hydrations, not batched
+            ?: return emptyMap() // Virtual types only come about from standard hydrations, not batched
 
         val virtualTypeContext = nadelHydrationContext.virtualTypeContext
-            ?: return null // Not all hydrations create virtual types
+            ?: return emptyMap() // Not all hydrations create virtual types
 
         val virtualType = virtualTypeContext.backingTypeToVirtualType[backingFieldParentTypeName]
-            ?: return null // Not a virtual type
+            ?: return emptyMap() // Not a virtual type
 
         val fieldCoordinatesInVirtualType = makeFieldCoordinates(virtualType, backingField.name)
 
-        val instructions = executionBlueprint.fieldInstructions[fieldCoordinatesInVirtualType]
+        val instructions = fieldInstructions[fieldCoordinatesInVirtualType]
             ?.filterIsInstance<T>()
             ?.takeIf {
                 it.isNotEmpty()
             }
-            ?: return null
+            ?: return emptyMap()
 
         return mapOf(
             backingField.objectTypeNames.single() to instructions,

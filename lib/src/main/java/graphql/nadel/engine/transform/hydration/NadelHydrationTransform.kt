@@ -90,6 +90,8 @@ internal class NadelHydrationTransform(
             ?: executionBlueprint.getInstructionInsideVirtualType<NadelHydrationFieldInstruction>(executionBlueprint, hydrationDetails, overallField)
             ?: emptyMap()
 
+        executionContext.hints.isVirtualTypeSupportOn()
+
         return if (instructionsByObjectTypeName.isEmpty()) {
             null
         } else {

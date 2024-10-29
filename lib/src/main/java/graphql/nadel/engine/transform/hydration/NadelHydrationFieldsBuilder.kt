@@ -177,6 +177,10 @@ internal object NadelHydrationFieldsBuilder {
         )
     }
 
+    /**
+     * This converts the [ExecutableNormalizedField.objectTypeNames] from the virtual types
+     * to the backing types.
+     */
     private fun setBackingObjectTypeNames(
         instruction: NadelHydrationFieldInstruction,
         field: ExecutableNormalizedField,

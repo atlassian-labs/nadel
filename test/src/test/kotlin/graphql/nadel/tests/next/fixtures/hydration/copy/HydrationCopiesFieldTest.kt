@@ -1,5 +1,6 @@
 package graphql.nadel.tests.next.fixtures.hydration.copy
 
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 
@@ -193,4 +194,9 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
             },
         ),
     ),
-)
+) {
+    override fun makeExecutionHints(): NadelExecutionHints.Builder {
+        return super.makeExecutionHints()
+            .virtualTypeSupport { true }
+    }
+}
