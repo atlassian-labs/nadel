@@ -13,36 +13,6 @@ internal class NadelVirtualTypeBlueprintFactory {
         val engineSchema: GraphQLSchema,
     )
 
-    fun createVirtualTypeContexts(
-        engineSchema: GraphQLSchema,
-    ): List<NadelVirtualTypeContext> {
-        val factoryContext = FactoryContext(
-            engineSchema,
-        )
-
-        return with(factoryContext) {
-            createVirtualTypeContexts()
-        }
-    }
-
-    context(FactoryContext)
-    private fun createVirtualTypeContexts(): List<NadelVirtualTypeContext> {
-        return engineSchema
-            .typeMap
-            .values
-            .asSequence()
-            .filterIsInstance<GraphQLObjectType>()
-            .flatMap { containerType ->
-                containerType.fields
-                    .asSequence()
-                    .filter(GraphQLFieldDefinition::isHydration)
-                    .mapNotNull { virtualFieldDef ->
-                        makeVirtualTypeContext(containerType, virtualFieldDef)
-                    }
-            }
-            .toList()
-    }
-
     fun makeVirtualTypeContext(
         engineSchema: GraphQLSchema,
         containerType: GraphQLObjectType,
