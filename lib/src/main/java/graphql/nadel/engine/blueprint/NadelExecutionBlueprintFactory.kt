@@ -335,14 +335,14 @@ private class Factory(
                     return@mapNotNull null
                 }
 
-                val underlyingParentType = if (hydratedFieldParentType.isVirtualType()) {
+                val typeToLookAt = if (hydratedFieldParentType.isVirtualType()) {
                     hydratedFieldParentType
                 } else {
                     getUnderlyingType(hydratedFieldParentType, hydratedFieldDef)
                         ?: error("No underlying type for: ${hydratedFieldParentType.name}")
                 }
 
-                val fieldDefs = underlyingParentType.getFieldsAlong(inputValueDef.valueSource.queryPathToField.segments)
+                val fieldDefs = typeToLookAt.getFieldsAlong(inputValueDef.valueSource.queryPathToField.segments)
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
