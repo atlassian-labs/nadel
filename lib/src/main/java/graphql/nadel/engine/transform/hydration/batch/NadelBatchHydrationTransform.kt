@@ -48,17 +48,16 @@ internal class NadelBatchHydrationTransform(
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val instructionsByObjectTypeName =
-            executionBlueprint.fieldInstructions
-                .getTypeNameToInstructionsMap<NadelBatchHydrationFieldInstruction>(overallField)
-                .ifEmpty {
-                    if (executionContext.hints.virtualTypeSupport(service)) {
-                        executionBlueprint
-                            .getInstructionInsideVirtualType(hydrationDetails, overallField)
-                    } else {
-                        emptyMap()
-                    }
+        val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
+            .getTypeNameToInstructionsMap<NadelBatchHydrationFieldInstruction>(overallField)
+            .ifEmpty {
+                if (executionContext.hints.virtualTypeSupport(service)) {
+                    executionBlueprint
+                        .getInstructionInsideVirtualType(hydrationDetails, overallField)
+                } else {
+                    emptyMap()
                 }
+            }
 
         return if (instructionsByObjectTypeName.isNotEmpty()) {
             return State(
