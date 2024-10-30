@@ -26,7 +26,6 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.isList
-import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.zipOrThrow
@@ -627,12 +626,10 @@ private class NadelBatchHydratorContext(
     val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     val isSourceFieldListOutput: Boolean by lazy {
-        executionBlueprint.engineSchema
-            .getField(
-                // In regard to the field output type, the abstract types must all define the same list wrapping
-                // So here, it does not matter which object type we inspect
-                instructionsByObjectTypeNames.values.first().first().location,
-            )!!.type.unwrapNonNull().isList
+        // In regard to the field output type, the abstract types must all define the same list wrapping
+        // So here, it does not matter which object type we inspect
+        val instruction = instructionsByObjectTypeNames.values.first().first()
+        executionBlueprint.engineSchema.getField(instruction.location)!!.type.unwrapNonNull().isList
     }
 
     val isSourceInputFieldListOutput: Boolean by lazy {
