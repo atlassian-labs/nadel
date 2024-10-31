@@ -19,10 +19,7 @@ interface NadelPartitionKeyExtractor {
     ): String?
 
     companion object {
-        /**
-         * A no-op partition key extractor that does not partition any scalar values.
-         */
-        val noop: NadelPartitionKeyExtractor = object : NadelPartitionKeyExtractor {
+        internal val noop = object : NadelPartitionKeyExtractor {
             override fun getPartitionKey(
                 scalarValue: ScalarValue<*>,
                 inputValueDef: GraphQLInputValueDefinition,

@@ -5,6 +5,4 @@ package graphql.nadel.engine.transform.partition
  *
  * An instance is created for each field that is subject to partitioning.
  */
-abstract class NadelFieldPartitionContext {
-    internal object None : NadelFieldPartitionContext()
-}
+abstract class NadelFieldPartitionContext
