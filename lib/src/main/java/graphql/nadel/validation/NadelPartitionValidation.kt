@@ -1,5 +1,7 @@
 package graphql.nadel.validation
 
+import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.partition.isPartitioned
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.schema.NadelDirectives
@@ -10,8 +12,6 @@ import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToFie
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToSubscriptionField
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToUnsupportedField
 import graphql.nadel.validation.util.NadelSchemaUtil
-import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
-import graphql.nadel.validation.util.NadelSchemaUtil.hasPartition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLObjectType
@@ -26,11 +26,11 @@ internal class NadelPartitionValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
     ): List<NadelSchemaValidationError> {
-        if (!hasPartition(overallField)) {
+        if (!overallField.isPartitioned()) {
             return emptyList()
         }
 
-        if (hasHydration(overallField)) {
+        if (overallField.isHydrated()) {
             return listOf(
                 CannotPartitionHydratedField(parent, overallField),
             )

@@ -12,6 +12,7 @@ import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.getHydrationDefinitions
+import graphql.nadel.definition.partition.getPartitionOrNull
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.nadel.definition.virtualType.isVirtualType
@@ -36,6 +37,7 @@ import graphql.nadel.engine.util.mapFrom
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.util.AnyAstValue
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
@@ -489,7 +491,7 @@ private class Factory(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
     ): List<NadelPartitionInstruction> {
-        val partitionDefinition = NadelDirectives.createPartitionDefinition(field)
+        val partitionDefinition = field.getPartitionOrNull()
             ?: return emptyList()
 
         return listOf(

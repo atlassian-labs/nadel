@@ -1,11 +1,8 @@
 package graphql.nadel.validation.util
 
-import graphql.language.FieldDefinition
 import graphql.language.OperationDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.renamed.getRenamedOrNull
-import graphql.nadel.schema.NadelDirectives
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
 
 internal object NadelSchemaUtil {
@@ -15,16 +12,6 @@ internal object NadelSchemaUtil {
 
     fun getUnderlyingName(type: GraphQLNamedType): String {
         return type.getRenamedOrNull()?.from ?: type.name
-    }
-
-    @Deprecated(message = "To be replaced with directive wrapper class and extensions")
-    fun hasPartition(field: GraphQLFieldDefinition): Boolean {
-        return hasPartition(field.definition!!)
-    }
-
-    @Deprecated(message = "To be replaced with directive wrapper class and extensions")
-    fun hasPartition(def: FieldDefinition): Boolean {
-        return def.hasDirective(NadelDirectives.partitionDirectiveDefinition.name)
     }
 
     fun isOperation(type: GraphQLNamedType): Boolean {

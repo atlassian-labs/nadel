@@ -10,7 +10,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
 
 sealed class NadelRenamedDefinition {
-    companion object{
+    companion object {
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL
             """
