@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform.hydration
 
 import graphql.nadel.Service
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -22,6 +23,8 @@ import graphql.normalized.NormalizedInputValue
 
 internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(
+        executionContext: NadelExecutionContext,
+        service: Service,
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         fieldToHydrate: ExecutableNormalizedField,
@@ -45,9 +48,11 @@ internal object NadelHydrationFieldsBuilder {
             }
             // Fix types for virtual fields
             .onEach { field ->
-                setBackingObjectTypeNames(instruction, field)
-                field.traverseSubTree { child ->
-                    setBackingObjectTypeNames(instruction, child)
+                if (executionContext.hints.virtualTypeSupport(service)) {
+                    setBackingObjectTypeNames(instruction, field)
+                    field.traverseSubTree { child ->
+                        setBackingObjectTypeNames(instruction, child)
+                    }
                 }
             }
     }

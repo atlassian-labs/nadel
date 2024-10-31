@@ -59,4 +59,61 @@ class NadelVirtualTypeBlueprintFactoryTest {
             ),
         )
     }
+
+    @Test
+    fun `does not get stuck in infinite loop due to recursive reference`() {
+        val schema = SchemaGenerator.createdMockedSchema(
+            // language=GraphQL
+            """
+                directive @hydrated(field: String!) on FIELD_DEFINITION
+
+                type Query {
+                    virtualEcho: VirtualEcho @hydrated(field: "echo")
+                    echo: BackingEcho
+                }
+                type VirtualEcho {
+                    echo: String
+                    info: VirtualEchoInfo
+                }
+                type VirtualEchoInfo {
+                    cursor: String
+                    echo: VirtualEcho
+                }
+                type BackingEcho {
+                    echo: String
+                    info: BackingEchoInfo
+                }
+                type BackingEchoInfo {
+                    cursor: String
+                    something: Boolean
+                    echo: BackingEcho
+                }
+            """.trimIndent()
+        )
+
+        val virtualTypeContext = NadelVirtualTypeBlueprintFactory()
+            .makeVirtualTypeContext(
+                schema,
+                containerType = schema.queryType,
+                virtualFieldDef = schema.queryType.getField("virtualEcho"),
+            )
+
+        assertTrue(virtualTypeContext != null)
+
+        assertTrue(virtualTypeContext.virtualFieldContainer.name == "Query")
+        assertTrue(virtualTypeContext.virtualField.name == "virtualEcho")
+
+        assertTrue(
+            virtualTypeContext.virtualTypeToBackingType == mapOf(
+                "VirtualEcho" to "BackingEcho",
+                "VirtualEchoInfo" to "BackingEchoInfo",
+            ),
+        )
+        assertTrue(
+            virtualTypeContext.backingTypeToVirtualType == mapOf(
+                "BackingEcho" to "VirtualEcho",
+                "BackingEchoInfo" to "VirtualEchoInfo",
+            ),
+        )
+    }
 }

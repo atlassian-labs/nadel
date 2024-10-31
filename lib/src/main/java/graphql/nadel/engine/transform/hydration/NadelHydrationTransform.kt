@@ -329,6 +329,8 @@ internal class NadelHydrationTransform(
             }
 
         val actorQueries = NadelHydrationFieldsBuilder.makeActorQueries(
+            executionContext = executionContext,
+            service = state.hydratedFieldService,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             fieldToHydrate = fieldToHydrate,
