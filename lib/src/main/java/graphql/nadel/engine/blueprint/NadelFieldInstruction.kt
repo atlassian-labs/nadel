@@ -3,8 +3,8 @@ package graphql.nadel.engine.blueprint
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
@@ -102,6 +102,14 @@ data class NadelHydrationFieldInstruction(
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorFieldContainer: GraphQLFieldsContainer,
     override val condition: NadelHydrationCondition?,
+    /**
+     * Hydration can bring about virtual types.
+     *
+     * These types mirror the backing type, but can have things like hydration etc.
+     *
+     * This context provides a mapping between the virtual and backing types.
+     */
+    val virtualTypeContext: NadelVirtualTypeContext?,
     val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 

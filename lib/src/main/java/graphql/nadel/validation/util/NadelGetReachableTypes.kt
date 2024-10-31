@@ -2,6 +2,7 @@ package graphql.nadel.validation.util
 
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
+import graphql.nadel.engine.blueprint.directives.isVirtualType
 import graphql.nadel.engine.util.AnySDLNamedDefinition
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
@@ -67,6 +68,7 @@ internal fun getReachableTypeNames(
             node: GraphQLUnionType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
+            visitTypeGuard(node) { return ABORT }
             add(node.name)
             return CONTINUE
         }
@@ -75,6 +77,7 @@ internal fun getReachableTypeNames(
             node: GraphQLInterfaceType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
+            visitTypeGuard(node) { return ABORT }
             add(node.name)
             return CONTINUE
         }
@@ -83,6 +86,7 @@ internal fun getReachableTypeNames(
             node: GraphQLEnumType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
+            visitTypeGuard(node) { return ABORT }
             add(node.name)
             return CONTINUE
         }
@@ -112,6 +116,7 @@ internal fun getReachableTypeNames(
             node: GraphQLInputObjectType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
+            visitTypeGuard(node) { return ABORT }
             add(node.name)
             return CONTINUE
         }
@@ -136,6 +141,8 @@ internal fun getReachableTypeNames(
             node: GraphQLObjectType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
+            visitTypeGuard(node) { return ABORT }
+
             // Don't look at union members defined by external services
             val parentNode = context.parentNode
             if (parentNode is GraphQLUnionType && isUnionMemberExempt(service, parentNode, node)) {
@@ -150,6 +157,7 @@ internal fun getReachableTypeNames(
             node: GraphQLScalarType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
+            visitTypeGuard(node) { return ABORT }
             add(node.name)
             return CONTINUE
         }
@@ -242,6 +250,20 @@ internal fun getReachableTypeNames(
             // Don't look into applied directives. Could be a shared directive.
             // As long as the schema compiled then we don't care.
             return ABORT
+        }
+
+        /**
+         * Call to ensure the given [type] is not traversed if it shouldn't be.
+         *
+         * The [onExit] lambda is not intended to return, so it is typed to [Nothing]
+         * i.e. use [onExit] to actually exit the outer function to escape the lambda
+         */
+        private inline fun visitTypeGuard(type: GraphQLNamedType, onExit: () -> Nothing) {
+            if (type is GraphQLDirectiveContainer) {
+                if (type.isVirtualType()) {
+                    onExit()
+                }
+            }
         }
     }
 

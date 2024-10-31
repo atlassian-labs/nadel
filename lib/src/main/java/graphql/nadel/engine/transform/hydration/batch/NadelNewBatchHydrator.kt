@@ -26,7 +26,6 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.isList
-import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.zipOrThrow
@@ -445,10 +444,7 @@ internal class NadelNewBatchHydrator(
         sourceObject: JsonNode,
         instructions: List<NadelBatchHydrationFieldInstruction>,
     ): List<SourceInput>? {
-        val coords = makeFieldCoordinates(
-            typeName = sourceField.objectTypeNames.first(),
-            fieldName = sourceField.name,
-        )
+        val coords = instructions.first().location
 
         return if (executionBlueprint.engineSchema.getField(coords)!!.type.unwrapNonNull().isList) {
             val fieldSource = instructions
@@ -462,7 +458,8 @@ internal class NadelNewBatchHydrator(
 
             getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceInput ->
-                    val instruction = getHydrationInstructionForSourceInput(instructions, sourceObject, sourceInput, fieldSource)
+                    val instruction =
+                        getHydrationInstructionForSourceInput(instructions, sourceObject, sourceInput, fieldSource)
                     if (instruction == null) {
                         SourceInput.NotQueryable(sourceInput)
                     } else {
@@ -629,15 +626,10 @@ private class NadelBatchHydratorContext(
     val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     val isSourceFieldListOutput: Boolean by lazy {
-        executionBlueprint.engineSchema
-            .getField(
-                makeFieldCoordinates(
-                    // In regard to the field output type, the abstract types must all define the same list wrapping
-                    // So here, it does not matter which object type we inspect
-                    typeName = sourceField.objectTypeNames.first(),
-                    fieldName = sourceField.name,
-                )
-            )!!.type.unwrapNonNull().isList
+        // In regard to the field output type, the abstract types must all define the same list wrapping
+        // So here, it does not matter which object type we inspect
+        val instruction = instructionsByObjectTypeNames.values.first().first()
+        executionBlueprint.engineSchema.getField(instruction.location)!!.type.unwrapNonNull().isList
     }
 
     val isSourceInputFieldListOutput: Boolean by lazy {

@@ -60,10 +60,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
-import graphql.schema.GraphQLList
 import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLOutputType
-import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
@@ -243,41 +240,57 @@ fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormaliz
 
 val ExecutableNormalizedField.queryPath: NadelQueryPath
     get() = NadelQueryPath(
-        run {
-            var count = 0
-            run {
-                var cursor: ExecutableNormalizedField = this
-                while (true) {
-                    count++
-                    cursor = cursor.parent ?: break
-                }
-            }
-
-            val array = arrayOfNulls<String>(count)
-            run {
-                var cursor: ExecutableNormalizedField = this
-                var index = count - 1
-                while (true) {
-                    array[index] = cursor.resultKey
-                    index--
-                    cursor = cursor.parent ?: break
-                }
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            array.asList() as List<String>
-        },
+        getPath(ExecutableNormalizedField::getResultKey)
     )
+
+val ExecutableNormalizedField.fieldPath: List<String>
+    get() = getPath(ExecutableNormalizedField::getFieldName)
+
+private inline fun ExecutableNormalizedField.getPath(
+    pathSegmentExtractor: (ExecutableNormalizedField) -> String,
+): List<String> {
+    var count = 0
+
+    run {
+        var cursor: ExecutableNormalizedField = this
+        while (true) {
+            count++
+            cursor = cursor.parent ?: break
+        }
+    }
+
+    val array = arrayOfNulls<String>(count)
+    run {
+        var cursor: ExecutableNormalizedField = this
+        var index = count - 1
+        while (true) {
+            array[index] = pathSegmentExtractor(cursor)
+            index--
+            cursor = cursor.parent ?: break
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    return array.asList() as List<String>
+}
 
 inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<T> {
     return getDefinitionsOfType(T::class.java)
 }
 
-fun deepClone(fields: List<ExecutableNormalizedField>): List<ExecutableNormalizedField> {
-    return fields.map {
-        it.toBuilder()
-            .children(deepClone(fields = it.children))
+fun deepClone(
+    fields: List<ExecutableNormalizedField>,
+): List<ExecutableNormalizedField> {
+    return fields.map { field ->
+        field.toBuilder()
+            .children(deepClone(fields = field.children))
             .build()
+            .also { newField ->
+                newField.children
+                    .forEach { child ->
+                        child.replaceParent(newField)
+                    }
+            }
     }
 }
 

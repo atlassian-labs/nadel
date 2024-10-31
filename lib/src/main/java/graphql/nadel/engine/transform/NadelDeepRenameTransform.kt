@@ -22,7 +22,8 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 
-typealias GraphQLObjectTypeName = String
+@Deprecated("Should be changed to a value class")
+internal typealias GraphQLObjectTypeName = String
 
 /**
  * A deep rename is a rename in where the field being "renamed" is not on the same level
@@ -213,7 +214,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
             .takeIf { it.isNotEmpty() }
             ?: return null
 
-        return NadelTransformUtil.makeTypeNameField(
+        return makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = objectTypeNames,
             deferredExecutions = field.deferredExecutions,

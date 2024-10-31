@@ -117,7 +117,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             .takeIf { it.isNotEmpty() }
             ?: return null
 
-        return NadelTransformUtil.makeTypeNameField(
+        return makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = objectTypeNames,
             deferredExecutions = field.deferredExecutions,
