@@ -9,7 +9,7 @@ class BatchHydrationDeferWithLabelTest : NadelIntegrationTest(
         query {
           issues {
             key
-            ... @defer(label: "assigneeDefer") {
+            ... @defer {
               assignee {
                 name
               }
