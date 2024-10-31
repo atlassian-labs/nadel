@@ -48,12 +48,10 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParame
 import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
-import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
@@ -455,29 +453,29 @@ internal class NextgenEngine(
         topLevelFields: List<ExecutableNormalizedField>,
         hints: NadelExecutionHints,
     ): ServiceExecution {
-        if (hints.shortCircuitEmptyQuery(service) && isOnlyTopLevelFieldTypename(topLevelFields)) {
+        if (hints.shortCircuitEmptyQuery(service) && isOnlyTopLevelFieldTypename(topLevelFields, service)) {
             return engineSchemaIntrospectionService.serviceExecution
         }
 
         return service.serviceExecution
     }
 
-    private fun isOnlyTopLevelFieldTypename(topLevelFields: List<ExecutableNormalizedField>): Boolean {
+    private fun isOnlyTopLevelFieldTypename(
+        topLevelFields: List<ExecutableNormalizedField>,
+        service: Service,
+    ): Boolean {
         val topLevelField = topLevelFields.singleOrNull() ?: return false
 
         if (topLevelField.fieldName == TypeNameMetaFieldDef.name) {
             return true
         }
-
-        val operationType = engineSchema.getTypeAs<GraphQLObjectType>(topLevelField.singleObjectTypeName)
-        val topLevelFieldDefinition: GraphQLFieldDefinition? = operationType.getField(topLevelField.name)
-
-        return if (topLevelFieldDefinition?.hasAppliedDirective(namespacedDirectiveDefinition.name) == true) {
-            topLevelField.hasChildren()
-                && topLevelField.children.all { it.name == TypeNameMetaFieldDef.name }
-        } else {
-            false
-        }
+        val operationType = service.underlyingSchema.getTypeAs<GraphQLObjectType>(topLevelField.singleObjectTypeName)
+        val topLevelFieldDefinition = operationType.getField(topLevelField.name)
+        val isNamespacedLike = topLevelFieldDefinition?.arguments?.isEmpty() == true
+            && topLevelFieldDefinition.type is GraphQLObjectType
+        return isNamespacedLike &&
+            topLevelField.hasChildren() &&
+            topLevelField.children.all { it.name == TypeNameMetaFieldDef.name }
     }
 
     private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
