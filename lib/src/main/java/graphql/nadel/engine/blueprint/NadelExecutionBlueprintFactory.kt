@@ -13,6 +13,7 @@ import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.NadelHydrationDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.TypeMappingDefinition
+import graphql.nadel.engine.blueprint.directives.isVirtualType
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
@@ -60,6 +61,7 @@ private class Factory(
 ) {
     private val definitionNamesToService: Map<String, Service> = makeDefinitionNamesToService()
     private val coordinatesToService: Map<FieldCoordinates, Service> = makeCoordinatesToService()
+    private val virtualTypeBlueprintFactory = NadelVirtualTypeBlueprintFactory()
 
     fun make(): NadelOverallExecutionBlueprint {
         val typeRenameInstructions = makeTypeRenameInstructions().strictAssociateBy {
@@ -259,6 +261,11 @@ private class Factory(
                 actorFieldDef = actorFieldDef,
                 actorInputValueDefs = hydrationArgs,
             ),
+            virtualTypeContext = virtualTypeBlueprintFactory.makeVirtualTypeContext(
+                engineSchema = engineSchema,
+                containerType = hydratedFieldParentType,
+                virtualFieldDef = hydratedFieldDef
+            ),
             sourceFields = getHydrationSourceFields(hydrationArgs, condition),
             condition = condition,
         )
@@ -328,9 +335,14 @@ private class Factory(
                     return@mapNotNull null
                 }
 
-                val underlyingParentType = getUnderlyingType(hydratedFieldParentType, hydratedFieldDef)
-                    ?: error("No underlying type for: ${hydratedFieldParentType.name}")
-                val fieldDefs = underlyingParentType.getFieldsAlong(inputValueDef.valueSource.queryPathToField.segments)
+                val typeToLookAt = if (hydratedFieldParentType.isVirtualType()) {
+                    hydratedFieldParentType
+                } else {
+                    getUnderlyingType(hydratedFieldParentType, hydratedFieldDef)
+                        ?: error("No underlying type for: ${hydratedFieldParentType.name}")
+                }
+
+                val fieldDefs = typeToLookAt.getFieldsAlong(inputValueDef.valueSource.queryPathToField.segments)
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
@@ -552,10 +564,17 @@ private class Factory(
                     )
                 }
                 is RemoteArgumentSource.ObjectField -> {
+                    // Ugh code still uses underlying schema, we need to pull these up to the overall schema
+                    val typeToLookAt = if (hydratedFieldParentType.isVirtualType()) {
+                        hydratedFieldParentType
+                    } else {
+                        getUnderlyingType(hydratedFieldParentType, hydratedFieldDef)
+                    }
+
                     val pathToField = argSourceType.pathToField
                     FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
-                        fieldDefinition = getUnderlyingType(hydratedFieldParentType, hydratedFieldDef)
+                        fieldDefinition = typeToLookAt
                             ?.getFieldAt(pathToField)
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )

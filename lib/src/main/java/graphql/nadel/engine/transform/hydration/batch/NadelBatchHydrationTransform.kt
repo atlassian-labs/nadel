@@ -12,10 +12,10 @@ import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
+import graphql.nadel.engine.transform.makeTypeNameField
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -50,6 +50,14 @@ internal class NadelBatchHydrationTransform(
     ): State? {
         val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionsMap<NadelBatchHydrationFieldInstruction>(overallField)
+            .ifEmpty {
+                if (executionContext.hints.virtualTypeSupport(service)) {
+                    executionBlueprint
+                        .getInstructionInsideVirtualType(hydrationDetails, overallField)
+                } else {
+                    emptyMap()
+                }
+            }
 
         return if (instructionsByObjectTypeName.isNotEmpty()) {
             return State(

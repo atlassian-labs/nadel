@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform.hydration
 
 import graphql.nadel.Service
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -22,25 +23,38 @@ import graphql.normalized.NormalizedInputValue
 
 internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(
+        executionContext: NadelExecutionContext,
+        service: Service,
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         fieldToHydrate: ExecutableNormalizedField,
         parentNode: JsonNode,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
-        return NadelHydrationInputBuilder.getInputValues(
-            instruction = instruction,
-            aliasHelper = aliasHelper,
-            fieldToHydrate = fieldToHydrate,
-            parentNode = parentNode,
-        ).map { args ->
-            makeActorQueries(
+        return NadelHydrationInputBuilder
+            .getInputValues(
                 instruction = instruction,
-                fieldArguments = args,
-                fieldChildren = deepClone(fields = fieldToHydrate.children),
-                executionBlueprint = executionBlueprint,
+                aliasHelper = aliasHelper,
+                fieldToHydrate = fieldToHydrate,
+                parentNode = parentNode,
             )
-        }
+            .map { args ->
+                makeActorQueries(
+                    instruction = instruction,
+                    fieldArguments = args,
+                    fieldChildren = deepClone(fieldToHydrate.children),
+                    executionBlueprint = executionBlueprint,
+                )
+            }
+            // Fix types for virtual fields
+            .onEach { field ->
+                if (executionContext.hints.virtualTypeSupport(service)) {
+                    setBackingObjectTypeNames(instruction, field)
+                    field.traverseSubTree { child ->
+                        setBackingObjectTypeNames(instruction, child)
+                    }
+                }
+            }
     }
 
     fun makeBatchActorQueries(
@@ -166,5 +180,23 @@ internal object NadelHydrationFieldsBuilder {
             fieldArguments = fieldArguments,
             fieldChildren = fieldChildren,
         )
+    }
+
+    /**
+     * This converts the [ExecutableNormalizedField.objectTypeNames] from the virtual types
+     * to the backing types.
+     */
+    private fun setBackingObjectTypeNames(
+        instruction: NadelHydrationFieldInstruction,
+        field: ExecutableNormalizedField,
+    ) {
+        val virtualTypeToBackingType = instruction.virtualTypeContext?.virtualTypeToBackingType
+            ?: return // Nothing to do
+
+        field.objectTypeNames.forEach { virtualType ->
+            val backingType = virtualTypeToBackingType[virtualType] ?: return@forEach
+            field.objectTypeNames.remove(virtualType)
+            field.objectTypeNames.add(backingType)
+        }
     }
 }

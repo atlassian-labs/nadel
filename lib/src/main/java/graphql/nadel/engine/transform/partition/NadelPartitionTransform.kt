@@ -76,7 +76,7 @@ internal class NadelPartitionTransform(
                 hydrationDetails,
             )
 
-        if (fieldPartitionContext == NadelFieldPartitionContext.None) {
+        if (fieldPartitionContext == null) {
             // A field without a partition context can't be partitioned
             return null
         }

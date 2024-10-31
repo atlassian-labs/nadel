@@ -453,6 +453,7 @@ abstract class NadelIntegrationTest(
     companion object {
         @JvmStatic
         protected val source = "\$source"
+        @JvmStatic
         protected val argument = "\$argument"
     }
 }
