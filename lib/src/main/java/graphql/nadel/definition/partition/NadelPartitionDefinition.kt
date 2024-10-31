@@ -2,6 +2,7 @@ package graphql.nadel.definition.partition
 
 import graphql.language.DirectiveDefinition
 import graphql.language.DirectivesContainer
+import graphql.language.FieldDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition.Keyword
 import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLAppliedDirective
@@ -36,7 +37,7 @@ fun GraphQLFieldDefinition.isPartitioned(): Boolean {
     return hasAppliedDirective(Keyword.partition)
 }
 
-fun DirectivesContainer<*>.isPartitioned(): Boolean {
+fun FieldDefinition.isPartitioned(): Boolean {
     return hasDirective(Keyword.partition)
 }
 
