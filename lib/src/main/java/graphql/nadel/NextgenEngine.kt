@@ -53,6 +53,7 @@ import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
+import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
@@ -469,9 +470,9 @@ internal class NextgenEngine(
         }
 
         val operationType = engineSchema.getTypeAs<GraphQLObjectType>(topLevelField.singleObjectTypeName)
-        val topLevelFieldDefinition = operationType.getField(topLevelField.name)
+        val topLevelFieldDefinition: GraphQLFieldDefinition? = operationType.getField(topLevelField.name)
 
-        return if (topLevelFieldDefinition.hasAppliedDirective(namespacedDirectiveDefinition.name)) {
+        return if (topLevelFieldDefinition?.hasAppliedDirective(namespacedDirectiveDefinition.name) == true) {
             topLevelField.hasChildren()
                 && topLevelField.children.all { it.name == TypeNameMetaFieldDef.name }
         } else {
