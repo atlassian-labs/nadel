@@ -62,7 +62,7 @@ underlyingSchema:
     type Query {
       issues: [Issue]
     }
-  # language=GraphQL
+# language=GraphQL
 query: |
   query {
     issues {

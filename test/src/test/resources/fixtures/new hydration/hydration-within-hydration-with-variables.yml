@@ -14,9 +14,7 @@ overallSchema:
       @hydrated(
         service: "issues"
         field: "issue"
-        arguments: [
-          {name: "id" value: "$source.issueId"}
-        ]
+        arguments: [{name: "id" value: "$source.issueId"}]
       )
     }
   issues: |
