@@ -263,7 +263,6 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .virtualTypeSupport { true }
-            .newBatchHydrationGrouping { true }
     }
 
     override fun makeNadel(): Nadel.Builder {

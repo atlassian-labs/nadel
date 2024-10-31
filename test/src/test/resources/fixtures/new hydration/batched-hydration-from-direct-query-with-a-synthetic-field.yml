@@ -1,0 +1,231 @@
+name: "batched hydration from direct query with a synthetic field"
+enabled: true
+# language=GraphQL
+overallSchema:
+  # language=GraphQL
+  service2: |
+    type Query {
+      users: UsersQuery
+    }
+    type UsersQuery {
+      usersByIds(id: [ID]): [User]
+    }
+    type User {
+      id: ID
+    }
+  # language=GraphQL
+  service1: |
+    type Query {
+      issues: [Issue]
+    }
+    extend enum NadelHydrationTemplate {
+      USER_TEMPLATE @hydratedTemplate(
+        service: "service2"
+        field: "users.usersByIds"
+        identifiedBy: "id"
+        batchSize: 3
+      )
+    }
+
+    type Issue {
+      id: ID
+      authors: [User] @hydratedFrom(
+        template: USER_TEMPLATE
+        arguments: [
+          {name: "id" valueFromField: "authorIds"}
+        ]
+      )
+    }
+# language=GraphQL
+underlyingSchema:
+  # language=GraphQL
+  service2: |
+    type Query {
+      users: UsersQuery
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+
+    type UsersQuery {
+      usersByIds(id: [ID]): [User]
+    }
+  # language=GraphQL
+  service1: |
+    type Issue {
+      authorIds: [ID]
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+# language=GraphQL
+query: |
+  query {
+    issues {
+      id
+      authors {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "service1"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            batch_hydration__authors__authorIds: authorIds
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "USER-1",
+                "USER-2"
+              ],
+              "id": "ISSUE-1"
+            },
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "USER-3"
+              ],
+              "id": "ISSUE-2"
+            },
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "USER-2",
+                "USER-4",
+                "USER-5"
+              ],
+              "id": "ISSUE-3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          users {
+            usersByIds(id: ["USER-4", "USER-5"]) {
+              id
+              batch_hydration__authors__id: id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "users": {
+            "usersByIds": [
+              {
+                "id": "USER-4",
+                "batch_hydration__authors__id": "USER-4"
+              },
+              {
+                "id": "USER-5",
+                "batch_hydration__authors__id": "USER-5"
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "service2"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          users {
+            usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+              id
+              batch_hydration__authors__id: id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "users": {
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "batch_hydration__authors__id": "USER-1"
+              },
+              {
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2"
+              },
+              {
+                "id": "USER-3",
+                "batch_hydration__authors__id": "USER-3"
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "id": "USER-1"
+            },
+            {
+              "id": "USER-2"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            {
+              "id": "USER-3"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-3",
+          "authors": [
+            {
+              "id": "USER-2"
+            },
+            {
+              "id": "USER-4"
+            },
+            {
+              "id": "USER-5"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }
