@@ -25,7 +25,8 @@ overallSchema:
         field: "barById"
         arguments: [
           { name: "id" value: "$source.id" }
-          { name: "friends"
+          { 
+            name: "friends"
             value: [
               {
                 firstName: "first"
