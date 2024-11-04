@@ -16,6 +16,7 @@ import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.toMapStrictly
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
+import graphql.schema.GraphQLTypeUtil
 
 internal class NadelHydrationInputBuilder private constructor(
     private val instruction: NadelHydrationFieldInstruction,
@@ -129,6 +130,14 @@ internal class NadelHydrationInputBuilder private constructor(
                 value = getResultValue(valueSource),
             )
             is ValueSource.StaticValue -> makeInputValue(inputDef, valueSource.value)
+            is ValueSource.RemainingArguments -> NormalizedInputValue(
+                /* typeName = */ GraphQLTypeUtil.simplePrint(inputDef.backingArgumentDef.type),
+                /* value = */
+                valueSource.remainingArgumentNames
+                    .associateWith {
+                        virtualField.normalizedArguments[it]?.value
+                    },
+            )
         }
     }
 
