@@ -282,8 +282,8 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                         @Suppress("UNCHECKED_CAST")
                         val nodeId = (parentNode.value as JsonMap)[aliasHelper.getResultKey("nodeId")] as String
 
-                        val prs = instructions.single { it.actorFieldDef.name == "pullRequestsByIds" }
-                        val issues = instructions.single { it.actorFieldDef.name == "issuesByIds" }
+                        val prs = instructions.single { it.backingFieldDef.name == "pullRequestsByIds" }
+                        val issues = instructions.single { it.backingFieldDef.name == "issuesByIds" }
 
                         return when {
                             nodeId.startsWith("ari:cloud:bitbucket::pull-request/") -> prs
