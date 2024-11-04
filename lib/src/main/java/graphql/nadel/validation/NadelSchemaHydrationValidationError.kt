@@ -3,8 +3,10 @@ package graphql.nadel.validation
 import graphql.Scalars
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
+import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.NadelIdHydrationDirectiveDefinition
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLArgument
@@ -563,6 +565,23 @@ data class NadelHydrationVirtualFieldMustBeNullableError(
     override val message = run {
         val vf = makeFieldCoordinates(parentType.overall.name, virtualField.name)
         "Field $vf declares a hydration so its output type MUST be nullable"
+    }
+
+    override val subject = virtualField
+}
+
+data class NadelMissingDefaultHydrationError(
+    val parentType: NadelServiceSchemaElement,
+    val virtualField: GraphQLFieldDefinition,
+) : NadelSchemaValidationError {
+    val service: Service get() = parentType.service
+
+    override val message = run {
+        val backingType = virtualField.type.unwrapAll().name
+        val virtualField = makeFieldCoordinates(parentType.overall.name, virtualField.name)
+        val defaultHydration = NadelDefaultHydrationDefinition.directiveDefinition.name
+        val idHydrated = NadelIdHydrationDirectiveDefinition.directiveDefinition.name
+        "Field $virtualField tried to use @$idHydrated but type $backingType does not specify @$defaultHydration"
     }
 
     override val subject = virtualField

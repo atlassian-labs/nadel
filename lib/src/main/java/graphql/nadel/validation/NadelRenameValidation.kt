@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.definition.partition.isPartitioned
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.definition.renamed.getRenamedOrNull
@@ -24,7 +25,7 @@ internal class NadelRenameValidation(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (overallField.isHydrated()) {
+        if (overallField.isHydrated() || overallField.isIdHydrated()) {
             return CannotRenameHydratedField(parent, overallField)
         }
 

@@ -80,33 +80,46 @@ internal class NadelHydrationValidation {
     context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement.FieldsContainer,
-        overallField: GraphQLFieldDefinition,
+        virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (overallField.isRenamed()) {
-            return CannotRenameHydratedField(parent, overallField)
+        if (virtualField.isRenamed()) {
+            return CannotRenameHydratedField(parent, virtualField)
         }
 
-        val hydrations = overallField.getHydrationDefinitions()
+        val hydrations = virtualField.getHydrationDefinitions()
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }
 
+        return validate(
+            parent = parent,
+            virtualField = virtualField,
+            hydrations = hydrations,
+        )
+    }
+
+    context(NadelValidationContext)
+    fun validate(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        virtualField: GraphQLFieldDefinition,
+        hydrations: List<NadelHydrationDefinition>,
+    ): NadelSchemaValidationResult {
         conditionValidation
-            .validateHydrations(hydrations, parent, overallField)
+            .validateHydrations(hydrations, parent, virtualField)
             .onError { return it }
 
         val hasMoreThanOneHydration = hydrations.size > 1
 
-        limitBatchHydrationMismatch(parent, overallField, hydrations)
+        limitBatchHydrationMismatch(parent, virtualField, hydrations)
             .onError { return it }
-        limitUseOfIndexHydration(parent, overallField, hydrations)
+        limitUseOfIndexHydration(parent, virtualField, hydrations)
             .onError { return it }
-        limitSourceField(parent, overallField, hydrations)
+        limitSourceField(parent, virtualField, hydrations)
             .onError { return it }
 
         return hydrations
             .map { hydration ->
-                validate(parent, overallField, hydration, hasMoreThanOneHydration)
+                validate(parent, virtualField, hydration, hasMoreThanOneHydration)
             }
             .toResult()
     }

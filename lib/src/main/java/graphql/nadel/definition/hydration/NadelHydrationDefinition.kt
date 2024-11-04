@@ -20,12 +20,10 @@ fun GraphQLFieldDefinition.isHydrated(): Boolean {
 
 fun GraphQLFieldDefinition.getHydrationDefinitions(): List<NadelHydrationDefinition> {
     return getAppliedDirectives(Keyword.hydrated)
-        .map(::NadelHydrationDefinition)
+        .map(::NadelHydrationDefinitionImpl)
 }
 
-class NadelHydrationDefinition(
-    private val appliedDirective: GraphQLAppliedDirective,
-) {
+interface NadelHydrationDefinition {
     companion object {
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL
@@ -42,8 +40,6 @@ class NadelHydrationDefinition(
                     inputIdentifiedBy: [NadelBatchObjectIdentifiedBy!]! = []
                     "Are results indexed"
                     indexed: Boolean! = false
-                    "Is querying batched"
-                    batched: Boolean! = false
                     "The batch size"
                     batchSize: Int! = 200
                     "The timeout to use when completing hydration"
@@ -58,45 +54,22 @@ class NadelHydrationDefinition(
     }
 
     val backingField: List<String>
-        get() = appliedDirective.getArgument(Keyword.field).getValue<String>().split(".")
 
     val identifiedBy: String?
-        get() = appliedDirective.getArgument(Keyword.identifiedBy).getValue()
 
     val isIndexed: Boolean
-        get() = appliedDirective.getArgument(Keyword.indexed).getValue()
-
-    @Deprecated(message = "Not used and should be deleted")
-    val isBatched: Boolean
-        get() = appliedDirective.getArgument(Keyword.batched)?.getValue<Boolean>() == true
 
     val batchSize: Int
-        get() = appliedDirective.getArgument(Keyword.batchSize).getValue()
 
     val arguments: List<NadelHydrationArgumentDefinition>
-        get() = (appliedDirective.getArgument(Keyword.arguments).argumentValue.value as ArrayValue)
-            .values
-            .map {
-                NadelHydrationArgumentDefinition.from(it as ObjectValue)
-            }
 
     val condition: NadelHydrationConditionDefinition?
-        get() = appliedDirective.getArgument(Keyword.`when`).getValue<JsonMap>()
-            ?.let {
-                NadelHydrationConditionDefinition.from(it)
-            }
 
     val timeout: Int
-        get() = appliedDirective.getArgument(Keyword.timeout).getValue()
 
     val inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>?
-        get() = (appliedDirective.getArgument(Keyword.inputIdentifiedBy).argumentValue.value as ArrayValue?)
-            ?.values
-            ?.map {
-                NadelBatchObjectIdentifiedByDefinition(it as ObjectValue)
-            }
 
-    internal object Keyword {
+    object Keyword {
         const val hydrated = "hydrated"
         const val field = "field"
         const val identifiedBy = "identifiedBy"
@@ -108,4 +81,43 @@ class NadelHydrationDefinition(
         const val `when` = "when"
         const val inputIdentifiedBy = "inputIdentifiedBy"
     }
+}
+
+private class NadelHydrationDefinitionImpl(
+    private val appliedDirective: GraphQLAppliedDirective,
+) : NadelHydrationDefinition {
+    override val backingField: List<String>
+        get() = appliedDirective.getArgument(Keyword.field).getValue<String>().split(".")
+
+    override val identifiedBy: String?
+        get() = appliedDirective.getArgument(Keyword.identifiedBy).getValue()
+
+    override val isIndexed: Boolean
+        get() = appliedDirective.getArgument(Keyword.indexed).getValue()
+
+    override val batchSize: Int
+        get() = appliedDirective.getArgument(Keyword.batchSize).getValue()
+
+    override val arguments: List<NadelHydrationArgumentDefinition>
+        get() = (appliedDirective.getArgument(Keyword.arguments).argumentValue.value as ArrayValue)
+            .values
+            .map {
+                NadelHydrationArgumentDefinition.from(it as ObjectValue)
+            }
+
+    override val condition: NadelHydrationConditionDefinition?
+        get() = appliedDirective.getArgument(Keyword.`when`).getValue<JsonMap>()
+            ?.let {
+                NadelHydrationConditionDefinition.from(it)
+            }
+
+    override val timeout: Int
+        get() = appliedDirective.getArgument(Keyword.timeout).getValue()
+
+    override val inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>?
+        get() = (appliedDirective.getArgument(Keyword.inputIdentifiedBy).argumentValue.value as ArrayValue?)
+            ?.values
+            ?.map {
+                NadelBatchObjectIdentifiedByDefinition(it as ObjectValue)
+            }
 }

@@ -2,12 +2,14 @@ package graphql.nadel.validation
 
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_LOOSER_OR_SAME
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_STRICTER_OR_SAME
 import graphql.nadel.validation.hydration.NadelHydrationValidation
+import graphql.nadel.validation.hydration.NadelIdHydrationValidation
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
@@ -25,6 +27,7 @@ private class NadelVirtualTypeValidationContext {
 
 internal class NadelVirtualTypeValidation(
     private val hydrationValidation: NadelHydrationValidation,
+    private val idHydrationValidation: NadelIdHydrationValidation,
 ) {
     private val typeWrappingValidation = NadelTypeWrappingValidation()
 
@@ -89,6 +92,15 @@ internal class NadelVirtualTypeValidation(
                     ),
                     virtualField = virtualField,
                 )
+            } else if (virtualField.isIdHydrated()) {
+                idHydrationValidation.validate(
+                    parent = NadelServiceSchemaElement.Object(
+                        service = service,
+                        overall = virtualType,
+                        backingType,
+                    ),
+                    virtualField = virtualField,
+                )
             } else if (virtualField.isHydrated()) {
                 hydrationValidation.validate(
                     parent = NadelServiceSchemaElement.Object(
@@ -96,7 +108,7 @@ internal class NadelVirtualTypeValidation(
                         overall = virtualType,
                         backingType,
                     ),
-                    overallField = virtualField,
+                    virtualField = virtualField,
                 )
             } else {
                 val backingField = backingType.getField(virtualField.name)

@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.strictAssociateBy
@@ -11,6 +12,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnde
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_LOOSER_OR_SAME
 import graphql.nadel.validation.hydration.NadelHydrationValidation
+import graphql.nadel.validation.hydration.NadelIdHydrationValidation
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.schema.GraphQLArgument
@@ -20,6 +22,7 @@ import graphql.schema.GraphQLOutputType
 
 internal class NadelFieldValidation(
     private val hydrationValidation: NadelHydrationValidation,
+    private val idHydrationValidation: NadelIdHydrationValidation,
 ) {
     private val renameValidation = NadelRenameValidation(this)
     private val inputValidation = NadelInputValidation()
@@ -70,20 +73,23 @@ internal class NadelFieldValidation(
     ): NadelSchemaValidationResult {
         return if (overallField.isRenamed()) {
             renameValidation.validate(parent, overallField)
-        } else if (overallField.isHydrated()) {
-            hydrationValidation.validate(parent, overallField)
-        } else {
-            val underlyingField = underlyingFieldsByName[overallField.name]
-            if (underlyingField == null) {
-                MissingUnderlyingField(parent, overallField = overallField)
+        } else if (overallField.isIdHydrated()) {
+            idHydrationValidation.validate(parent, overallField)
+        } else
+            if (overallField.isHydrated()) {
+                hydrationValidation.validate(parent, overallField)
             } else {
-                validate(
-                    parent,
-                    overallField = overallField,
-                    underlyingField = underlyingField,
-                )
+                val underlyingField = underlyingFieldsByName[overallField.name]
+                if (underlyingField == null) {
+                    MissingUnderlyingField(parent, overallField = overallField)
+                } else {
+                    validate(
+                        parent,
+                        overallField = overallField,
+                        underlyingField = underlyingField,
+                    )
+                }
             }
-        }
     }
 
     context(NadelValidationContext)

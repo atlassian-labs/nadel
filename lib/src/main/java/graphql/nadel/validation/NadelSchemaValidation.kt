@@ -5,6 +5,7 @@ import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintImpl
 import graphql.nadel.engine.blueprint.NadelTypeRenameInstructions
@@ -15,9 +16,7 @@ import graphql.nadel.engine.util.toMapStrictly
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
-import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLUnionType
@@ -80,7 +79,10 @@ class NadelSchemaValidation(
             .asSequence()
             .filterIsInstance<GraphQLUnionType>()
             .filter { union ->
-                fieldsByUnionOutputTypes[union.name]?.all(GraphQLFieldDefinition::isHydrated) == true
+                fieldsByUnionOutputTypes[union.name]
+                    ?.all {
+                        it.isHydrated() || it.isIdHydrated()
+                    } == true
             }
             .map {
                 it.name

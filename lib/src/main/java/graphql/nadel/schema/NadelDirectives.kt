@@ -3,11 +3,13 @@ package graphql.nadel.schema
 import graphql.language.DirectiveDefinition
 import graphql.language.SDLDefinition
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
+import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinition
 import graphql.nadel.definition.hydration.NadelHydrationResultFieldPredicateDefinition
+import graphql.nadel.definition.hydration.NadelIdHydrationDirectiveDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.definition.virtualType.NadelVirtualTypeDefinition
@@ -38,6 +40,10 @@ object NadelDirectives {
     val nadelHydrationConditionDefinition = NadelHydrationConditionDefinition.inputObjectDefinition
 
     val hydratedDirectiveDefinition = NadelHydrationDefinition.directiveDefinition
+
+    val defaultHydrationDirectiveDefinition = NadelDefaultHydrationDefinition.directiveDefinition
+
+    val idHydratedDirectiveDefinition = NadelIdHydrationDirectiveDefinition.directiveDefinition
 
     val nadelHydrationRemainingArguments = parseDefinition<DirectiveDefinition>(
         // language=GraphQL

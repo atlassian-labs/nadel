@@ -6,10 +6,12 @@ import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLInt
 import graphql.Scalars.GraphQLString
 import graphql.nadel.engine.util.AnyNamedNode
+import graphql.nadel.schema.NadelDirectives.defaultHydrationDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.deferDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hiddenDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.idHydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
@@ -53,6 +55,8 @@ object NadelBuiltInTypes {
         nadelHydrationRemainingArguments,
 
         virtualTypeDirectiveDefinition,
+        defaultHydrationDirectiveDefinition,
+        idHydratedDirectiveDefinition,
     ).mapTo(LinkedHashSet()) {
         it.name
     }

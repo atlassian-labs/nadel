@@ -24,6 +24,8 @@ import graphql.language.Type
 import graphql.language.TypeDefinition
 import graphql.language.UnionTypeDefinition
 import graphql.language.UnionTypeExtensionDefinition
+import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.unwrapAll
@@ -327,7 +329,7 @@ private fun transformFields(fieldDefinitions: List<FieldDefinition>): List<Field
     return fieldDefinitions
         .asSequence()
         .filterNot { field ->
-            field.hasDirective(NadelDirectives.hydratedDirectiveDefinition.name)
+            field.isHydrated() || field.isIdHydrated()
         }
         .map { field ->
             field.transform { fieldBuilder ->

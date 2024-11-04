@@ -4,6 +4,7 @@ import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.getHydrationDefinitions
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.blueprint.NadelFastSchemaTraverser
@@ -140,8 +141,7 @@ private class NadelReferencedTypeVisitor(
             }
         }
 
-
-        if (node.isHydrated()) {
+         if (node.isHydrated() || node.isIdHydrated()) {
             visitHydratedFieldDefinition(node)
             // Never continue traversing on a hydrated field, we have special handling for that in visitHydratedFieldDefinition
             return false

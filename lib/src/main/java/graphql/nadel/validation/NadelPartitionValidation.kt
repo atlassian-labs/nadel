@@ -3,6 +3,7 @@ package graphql.nadel.validation
 import graphql.Scalars
 import graphql.language.OperationDefinition.Operation
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.definition.partition.isPartitioned
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.unwrapNonNull
@@ -30,7 +31,7 @@ internal class NadelPartitionValidation {
             return ok()
         }
 
-        if (overallField.isHydrated()) {
+        if (overallField.isHydrated() || overallField.isIdHydrated()) {
             return CannotPartitionHydratedField(parent, overallField)
         }
 

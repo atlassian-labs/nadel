@@ -1,6 +1,7 @@
 package graphql.nadel.validation.hydration
 
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.isIdHydrated
 import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
 import graphql.nadel.engine.util.unwrapAll
@@ -98,7 +99,7 @@ internal class NadelHydrationVirtualTypeValidation {
         if (virtualObjectType is GraphQLFieldsContainer && backingObjectType is GraphQLFieldsContainer) {
             return virtualObjectType.fields
                 .flatMap { virtualField ->
-                    if (virtualField.isHydrated()) {
+                    if (virtualField.isHydrated() || virtualField.isIdHydrated()) {
                         emptyMapping
                     } else {
                         val backingField = backingObjectType.getField(virtualField.name)

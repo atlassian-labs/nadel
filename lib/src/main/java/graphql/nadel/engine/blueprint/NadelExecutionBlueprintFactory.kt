@@ -229,7 +229,7 @@ private class Factory(
         val backingFieldDef = engineSchema.queryType.getFieldAt(pathToBackingField)!!
         val hydrationBackingService = coordinatesToService[makeFieldCoordinates(backingFieldContainer, backingFieldDef)]!!
 
-        if (hydration.isBatched || /*deprecated*/ backingFieldDef.type.unwrapNonNull().isList) {
+        if (backingFieldDef.type.unwrapNonNull().isList) {
             require(backingFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$pathToBackingField' requires a list output type" }
             return makeBatchHydrationFieldInstruction(
                 parentType = virtualFieldParentType,
