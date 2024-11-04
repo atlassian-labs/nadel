@@ -62,18 +62,18 @@ internal object NadelHydrationFieldsBuilder {
         virtualField: ExecutableNormalizedField,
         argBatches: List<Map<NadelHydrationArgument, NormalizedInputValue>>,
     ): List<ExecutableNormalizedField> {
-        val actorFieldOverallObjectTypeNames = getBackingFieldOverallObjectTypenames(instruction, executionBlueprint)
+        val backingFieldOverallObjectTypeNames = getBackingFieldOverallObjectTypenames(instruction, executionBlueprint)
         val fieldChildren = deepClone(fields = virtualField.children)
             .mapNotNull { childField ->
                 val objectTypesAreNotReturnedByBackingField =
-                    actorFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
+                    backingFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
 
                 if (objectTypesAreNotReturnedByBackingField) {
                     null
                 } else {
                     childField.toBuilder()
                         .clearObjectTypesNames()
-                        .objectTypeNames(childField.objectTypeNames.filter { it in actorFieldOverallObjectTypeNames })
+                        .objectTypeNames(childField.objectTypeNames.filter { it in backingFieldOverallObjectTypeNames })
                         .build()
                 }
             }
@@ -100,11 +100,11 @@ internal object NadelHydrationFieldsBuilder {
         val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
             ?: error("Unable to find overall type $overallTypeName")
 
-        val actorFieldOverallObjectTypes = resolveObjectTypes(executionBlueprint.engineSchema, overallType) { type ->
+        val backingFieldOverallObjectTypes = resolveObjectTypes(executionBlueprint.engineSchema, overallType) { type ->
             error("Unable to resolve to object type: $type")
         }
 
-        return actorFieldOverallObjectTypes
+        return backingFieldOverallObjectTypes
             .asSequence()
             .map { it.name }
             .toSet()

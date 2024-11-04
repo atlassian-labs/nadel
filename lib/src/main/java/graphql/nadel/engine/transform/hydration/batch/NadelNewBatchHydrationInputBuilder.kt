@@ -73,7 +73,7 @@ internal object NadelNewBatchHydrationInputBuilder {
         val batchSize = instruction.batchSize
 
         val (batchInputDef) = getBatchInputDef(instruction) ?: return emptyList()
-        val actorBatchArgDef = instruction.backingFieldDef.getArgument(batchInputDef.name)
+        val batchArgDef = instruction.backingFieldDef.getArgument(batchInputDef.name)
 
         val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(
             argumentValues = sourceInputs.map { it.value },
@@ -87,7 +87,7 @@ internal object NadelNewBatchHydrationInputBuilder {
             }
             .map { chunk ->
                 val normalizedInputValue = NormalizedInputValue(
-                    GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
+                    GraphQLTypeUtil.simplePrint(batchArgDef.type),
                     javaValueToAstValue(chunk),
                 )
 
