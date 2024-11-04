@@ -2,13 +2,13 @@ package graphql.nadel.validation.util
 
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.engine.blueprint.directives.isVirtualType
+import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.util.AnySDLNamedDefinition
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
-import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLCompositeType
@@ -95,7 +95,7 @@ internal fun getReachableTypeNames(
             node: GraphQLFieldDefinition,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            return if (hasHydration(node)) {
+            return if (node.isHydrated()) {
                 // Do not collect output type, hydrations do not require the type to be defined in the service
                 ABORT
             } else {

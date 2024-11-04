@@ -54,6 +54,7 @@ import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult
 import graphql.normalized.NormalizedInputValue
 import graphql.normalized.VariablePredicate
+import graphql.parser.Parser
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLFieldDefinition
@@ -374,7 +375,7 @@ fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates 
     return FieldCoordinates.coordinates(typeName, fieldName)
 }
 
-fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefinition): FieldCoordinates {
+fun makeFieldCoordinates(parentType: GraphQLFieldsContainer, field: GraphQLFieldDefinition): FieldCoordinates {
     return makeFieldCoordinates(typeName = parentType.name, fieldName = field.name)
 }
 
@@ -647,3 +648,6 @@ internal fun ExecutableNormalizedField.getFieldDefinitionSequence(
         }
 }
 
+internal inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {
+    return Parser.parse(sdl).definitions.singleOfType()
+}

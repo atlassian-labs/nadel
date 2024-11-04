@@ -1,9 +1,9 @@
 package graphql.nadel.validation
 
 import graphql.Scalars
-import graphql.nadel.dsl.NadelHydrationDefinition
-import graphql.nadel.dsl.NadelHydrationResultConditionDefinition
-import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinition
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
@@ -19,11 +19,10 @@ internal class NadelHydrationConditionValidation {
         overallField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
     ): NadelSchemaValidationError? {
-        if (hydration.condition == null) {
-            return null
-        }
+        val resultCondition = hydration.condition?.result
+            ?: return null
 
-        val pathToConditionSourceField = hydration.condition.pathToSourceField
+        val pathToConditionSourceField = resultCondition.pathToSourceField
         val conditionSourceField: GraphQLFieldDefinition =
             (parent.overall as GraphQLFieldsContainer).getFieldAt(pathToConditionSourceField)
                 ?: return NadelSchemaValidationError.HydrationConditionSourceFieldDoesNotExist(
@@ -33,8 +32,8 @@ internal class NadelHydrationConditionValidation {
 
         val sourceInputField = hydration.arguments
             .asSequence()
-            .map { it.remoteArgumentSource }
-            .filterIsInstance<RemoteArgumentSource.ObjectField>()
+            .map { it.value }
+            .filterIsInstance<NadelHydrationArgumentDefinition.ValueSource.ObjectField>()
             .map { it.pathToField }
             .single()
 
@@ -56,7 +55,7 @@ internal class NadelHydrationConditionValidation {
             overallField = overallField,
             pathToConditionSourceField = pathToConditionSourceField,
             conditionSourceFieldType = conditionSourceFieldType,
-            condition = hydration.condition,
+            condition = resultCondition,
         )
     }
 

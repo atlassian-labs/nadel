@@ -9,11 +9,13 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.NadelHydrationDefinition
-import graphql.nadel.dsl.RemoteArgumentSource
-import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.engine.blueprint.directives.isVirtualType
+import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.getHydrationDefinitions
+import graphql.nadel.definition.partition.getPartitionOrNull
+import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.renamed.getRenamedOrNull
+import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
@@ -38,9 +40,9 @@ import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.util.AnyAstValue
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
@@ -188,14 +190,14 @@ private class Factory(
                     .asSequence()
                     // Get the field mapping def
                     .flatMap { field ->
-                        when (val mappingDefinition = getFieldMappingDefinition(field)) {
+                        when (val renamedDefinition = field.getRenamedOrNull()) {
                             null -> {
-                                getUnderlyingServiceHydrations(field)
+                                field.getHydrationDefinitions()
                                     .map { makeHydrationFieldInstruction(type, field, it) } + makePartitionInstruction(type, field)
                             }
-                            else -> when (mappingDefinition.inputPath.size) {
-                                1 -> listOf(makeRenameInstruction(type, field, mappingDefinition))
-                                else -> listOf(makeDeepRenameFieldInstruction(type, field, mappingDefinition))
+                            else -> when (renamedDefinition.from.size) {
+                                1 -> listOf(makeRenameInstruction(type, field, renamedDefinition))
+                                else -> listOf(makeDeepRenameFieldInstruction(type, field, renamedDefinition))
                             }
                         }
                     }
@@ -206,13 +208,13 @@ private class Factory(
     private fun makeDeepRenameFieldInstruction(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
-        mappingDefinition: FieldMappingDefinition,
+        renamedDefinition: NadelRenamedDefinition.Field,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, field)
 
         return NadelDeepRenameFieldInstruction(
             location,
-            NadelQueryPath(mappingDefinition.inputPath),
+            NadelQueryPath(renamedDefinition.from),
         )
     }
 
@@ -221,20 +223,20 @@ private class Factory(
         hydratedFieldDef: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
     ): NadelFieldInstruction {
-        val hydrationActorService = services.single { it.name == hydration.serviceName }
-        val queryPathToActorField = hydration.pathToActorField
-        val actorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)!!
-        val actorFieldContainer = engineSchema.queryType.getFieldContainerAt(queryPathToActorField)!!
+        val pathToBackingField = hydration.backingField
+        val backingFieldContainer = engineSchema.queryType.getFieldContainerAt(pathToBackingField)!!
+        val backingFieldDef = engineSchema.queryType.getFieldAt(pathToBackingField)!!
+        val hydrationActorService = coordinatesToService[makeFieldCoordinates(backingFieldContainer, backingFieldDef)]!!
 
-        if (hydration.isBatched || /*deprecated*/ actorFieldDef.type.unwrapNonNull().isList) {
-            require(actorFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
+        if (hydration.isBatched || /*deprecated*/ backingFieldDef.type.unwrapNonNull().isList) {
+            require(backingFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$pathToBackingField' requires a list output type" }
             return makeBatchHydrationFieldInstruction(
                 parentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
                 hydration = hydration,
                 actorService = hydrationActorService,
-                actorFieldDef = actorFieldDef,
-                actorFieldContainer = actorFieldContainer
+                actorFieldDef = backingFieldDef,
+                actorFieldContainer = backingFieldContainer
             )
         }
 
@@ -244,27 +246,28 @@ private class Factory(
             hydration = hydration,
             hydratedFieldParentType = hydratedFieldParentType,
             hydratedFieldDef = hydratedFieldDef,
-            actorFieldDef = actorFieldDef,
+            actorFieldDef = backingFieldDef,
         )
+
         return NadelHydrationFieldInstruction(
             location = makeFieldCoordinates(hydratedFieldParentType, hydratedFieldDef),
             hydratedFieldDef = hydratedFieldDef,
             actorService = hydrationActorService,
-            queryPathToActorField = NadelQueryPath(queryPathToActorField),
-            actorFieldDef = actorFieldDef,
-            actorFieldContainer = actorFieldContainer,
+            queryPathToActorField = NadelQueryPath(pathToBackingField),
+            actorFieldDef = backingFieldDef,
+            actorFieldContainer = backingFieldContainer,
             actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(
                 hydratedFieldParentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
-                actorFieldDef = actorFieldDef,
+                actorFieldDef = backingFieldDef,
                 actorInputValueDefs = hydrationArgs,
             ),
             virtualTypeContext = virtualTypeBlueprintFactory.makeVirtualTypeContext(
                 engineSchema = engineSchema,
                 containerType = hydratedFieldParentType,
-                virtualFieldDef = hydratedFieldDef
+                virtualFieldDef = hydratedFieldDef,
             ),
             sourceFields = getHydrationSourceFields(hydrationArgs, condition),
             condition = condition,
@@ -291,34 +294,35 @@ private class Factory(
     }
 
     private fun getHydrationCondition(hydration: NadelHydrationDefinition): NadelHydrationCondition? {
-        if (hydration.condition == null) {
-            return null
-        }
-        if (hydration.condition.predicate.equals != null) {
-            return when (val expectedValue = hydration.condition.predicate.equals) {
+        val resultCondition = hydration.condition?.result
+            ?: return null
+
+        if (resultCondition.predicate.equals != null) {
+            return when (val expectedValue = resultCondition.predicate.equals) {
                 is BigInteger -> NadelHydrationCondition.LongResultEquals(
-                    fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
+                    fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
                     value = expectedValue.longValueExact(),
                 )
                 is String -> NadelHydrationCondition.StringResultEquals(
-                    fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
+                    fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
                     value = expectedValue
                 )
                 else -> error("Unexpected type for equals predicate in conditional hydration")
             }
         }
-        if (hydration.condition.predicate.startsWith != null) {
+        if (resultCondition.predicate.startsWith != null) {
             return NadelHydrationCondition.StringResultStartsWith(
-                fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
-                prefix = hydration.condition.predicate.startsWith
+                fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
+                prefix = resultCondition.predicate.startsWith
             )
         }
-        if (hydration.condition.predicate.matches != null) {
+        if (resultCondition.predicate.matches != null) {
             return NadelHydrationCondition.StringResultMatches(
-                fieldPath = NadelQueryPath(hydration.condition.pathToSourceField),
-                regex = hydration.condition.predicate.matches.toRegex()
+                fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
+                regex = resultCondition.predicate.matches.toRegex()
             )
         }
+
         error("A conditional hydration is defined but doesnt have any predicate")
     }
 
@@ -372,14 +376,14 @@ private class Factory(
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
-        val batchSize = hydration.batchSize ?: 50
+        val batchSize = hydration.batchSize
         val hydrationArgs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef)
 
-        val matchStrategy = if (hydration.isObjectMatchByIndex) {
+        val matchStrategy = if (hydration.isIndexed) {
             NadelBatchHydrationMatchStrategy.MatchIndex
-        } else if (hydration.objectIdentifiers?.isNotEmpty() == true) {
+        } else if (hydration.inputIdentifiedBy?.isNotEmpty() == true) {
             NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers(
-                hydration.objectIdentifiers.map { objectIdentifier ->
+                hydration.inputIdentifiedBy!!.map { objectIdentifier ->
                     NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
                         sourceId = NadelQueryPath(
                             objectIdentifier.sourceId.split("."),
@@ -396,7 +400,7 @@ private class Factory(
                     .filterIsInstance<FieldResultValue>()
                     .single()
                     .queryPathToField,
-                resultId = hydration.objectIdentifier!!,
+                resultId = hydration.identifiedBy!!,
             )
         }
 
@@ -406,7 +410,7 @@ private class Factory(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
             actorService = actorService,
-            queryPathToActorField = NadelQueryPath(hydration.pathToActorField),
+            queryPathToActorField = NadelQueryPath(hydration.backingField),
             actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             batchSize = batchSize,
@@ -475,11 +479,11 @@ private class Factory(
     private fun makeRenameInstruction(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
-        mappingDefinition: FieldMappingDefinition,
+        renamedDefinition: NadelRenamedDefinition.Field,
     ): NadelRenameFieldInstruction {
         return NadelRenameFieldInstruction(
             location = makeFieldCoordinates(parentType, field),
-            underlyingName = mappingDefinition.inputPath.single(),
+            underlyingName = renamedDefinition.from.single(),
         )
     }
 
@@ -487,7 +491,7 @@ private class Factory(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
     ): List<NadelPartitionInstruction> {
-        val partitionDefinition = NadelDirectives.createPartitionDefinition(field)
+        val partitionDefinition = field.getPartitionOrNull()
             ?: return emptyList()
 
         return listOf(
@@ -501,38 +505,23 @@ private class Factory(
     private fun makeTypeRenameInstructions(): Sequence<NadelTypeRenameInstruction> {
         return engineSchema.typeMap.values
             .asSequence()
-            .filterIsInstance<GraphQLDirectiveContainer>()
             .mapNotNull(this::makeTypeRenameInstruction)
     }
 
-    private fun makeTypeRenameInstruction(type: GraphQLDirectiveContainer): NadelTypeRenameInstruction? {
-        return when (type.definition) {
-            else -> when (val typeMappingDef = createTypeMapping(type)) {
-                null -> null
-                else -> makeTypeRenameInstruction(typeMappingDef)
-            }
-        }
-    }
-
-    private fun createTypeMapping(type: GraphQLDirectiveContainer): TypeMappingDefinition? {
+    private fun makeTypeRenameInstruction(overallType: GraphQLNamedType): NadelTypeRenameInstruction? {
         // Fixes bug with jsw schema
         // These don't really mean anything anyway as these cannot be used as fragment type conditions
         // And we don't have variables in normalized queries so they can't be var types
-        if (type is GraphQLScalarType) {
+        if (overallType is GraphQLScalarType) {
             return null
         }
 
-        return NadelDirectives.createTypeMapping(type)
-    }
-
-    private fun makeTypeRenameInstruction(typeMappingDefinition: TypeMappingDefinition): NadelTypeRenameInstruction {
-        val overallName = typeMappingDefinition.overallName
+        val renamed = overallType.getRenamedOrNull() ?: return null
 
         return NadelTypeRenameInstruction(
-            service = definitionNamesToService[overallName]
-                ?: error("Unable to determine what service owns type: $overallName"),
-            overallName = overallName,
-            underlyingName = typeMappingDefinition.underlyingName,
+            service = definitionNamesToService[overallType.name]!!,
+            overallName = overallType.name,
+            underlyingName = renamed.from,
         )
     }
 
@@ -543,8 +532,8 @@ private class Factory(
         actorFieldDef: GraphQLFieldDefinition,
     ): List<NadelHydrationActorInputDef> {
         return hydration.arguments.map { remoteArgDef ->
-            val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource) {
-                is RemoteArgumentSource.FieldArgument -> {
+            val valueSource = when (val argSourceType = remoteArgDef.value) {
+                is NadelHydrationArgumentDefinition.ValueSource.FieldArgument -> {
                     val argumentName = argSourceType.argumentName
                     val argumentDef = hydratedFieldDef.getArgument(argumentName)
                         ?: error("No argument '$argumentName' on field ${hydratedFieldParentType.name}.${hydratedFieldDef.name}")
@@ -563,7 +552,7 @@ private class Factory(
                         defaultValue = defaultValue,
                     )
                 }
-                is RemoteArgumentSource.ObjectField -> {
+                is NadelHydrationArgumentDefinition.ValueSource.ObjectField -> {
                     // Ugh code still uses underlying schema, we need to pull these up to the overall schema
                     val typeToLookAt = if (hydratedFieldParentType.isVirtualType()) {
                         hydratedFieldParentType
@@ -579,7 +568,7 @@ private class Factory(
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
-                is RemoteArgumentSource.StaticArgument -> {
+                is NadelHydrationArgumentDefinition.ValueSource.StaticArgument -> {
                     NadelHydrationActorInputDef.ValueSource.StaticValue(
                         value = argSourceType.staticValue,
                     )
@@ -604,8 +593,7 @@ private class Factory(
         overallType: GraphQLObjectType,
         childField: GraphQLFieldDefinition,
     ): GraphQLObjectType? {
-        val renameInstruction = makeTypeRenameInstruction(overallType as? GraphQLDirectiveContainer ?: return null)
-        val underlyingName = renameInstruction?.underlyingName ?: overallType.name
+        val underlyingName = overallType.getRenamedOrNull()?.from ?: overallType.name
 
         val fieldCoordinates = makeFieldCoordinates(overallType, childField)
 
@@ -614,14 +602,6 @@ private class Factory(
             ?: error("Unable to determine service for $fieldCoordinates")
 
         return service.underlyingSchema.getTypeAs(underlyingName)
-    }
-
-    private fun getFieldMappingDefinition(field: GraphQLFieldDefinition): FieldMappingDefinition? {
-        return NadelDirectives.createFieldMapping(field)
-    }
-
-    private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<NadelHydrationDefinition> {
-        return NadelDirectives.createUnderlyingServiceHydration(field, engineSchema)
     }
 
     private fun deriveUnderlyingBlueprints(

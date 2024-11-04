@@ -4,7 +4,7 @@ import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLString
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.engine.blueprint.directives.isVirtualType
+import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.util.AnyNamedNode
 import graphql.nadel.engine.util.all
 import graphql.nadel.engine.util.isExtensionDef
