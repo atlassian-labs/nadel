@@ -25,7 +25,7 @@ internal object NadelHydrationFieldsBuilder {
         service: Service,
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
-        fieldToHydrate: ExecutableNormalizedField,
+        virtualField: ExecutableNormalizedField,
         parentNode: JsonNode,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
@@ -33,14 +33,14 @@ internal object NadelHydrationFieldsBuilder {
             .getInputValues(
                 instruction = instruction,
                 aliasHelper = aliasHelper,
-                fieldToHydrate = fieldToHydrate,
+                virtualField = virtualField,
                 parentNode = parentNode,
             )
             .map { args ->
                 makeBackingQueries(
                     instruction = instruction,
                     fieldArguments = args,
-                    fieldChildren = deepClone(fieldToHydrate.children),
+                    fieldChildren = deepClone(virtualField.children),
                     executionBlueprint = executionBlueprint,
                 )
             }

@@ -196,7 +196,7 @@ internal class NadelHydrationTransform(
                         parentNode = it,
                         state = state,
                         executionBlueprint = executionBlueprint,
-                        fieldToHydrate = overallField,
+                        virtualField = overallField,
                         executionContext = executionContext,
                     )
                 }
@@ -243,7 +243,7 @@ internal class NadelHydrationTransform(
                     parentNode = it,
                     state = state,
                     executionBlueprint = executionBlueprint,
-                    fieldToHydrate = overallField,
+                    virtualField = overallField,
                     executionContext = executionContext,
                 )
             }
@@ -304,7 +304,7 @@ internal class NadelHydrationTransform(
         parentNode: JsonNode,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
+        virtualField: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): NadelPreparedHydration? {
         val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
@@ -333,7 +333,7 @@ internal class NadelHydrationTransform(
             service = state.virtualFieldService,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
-            fieldToHydrate = fieldToHydrate,
+            virtualField = virtualField,
             parentNode = parentNode,
             executionBlueprint = executionBlueprint,
         )
@@ -355,7 +355,7 @@ internal class NadelHydrationTransform(
                                 hydrationSourceService = hydrationSourceService,
                                 hydrationVirtualField = instruction.location,
                                 hydrationBackingField = hydrationBackingField,
-                                fieldPath = fieldToHydrate.listOfResultKeys
+                                fieldPath = virtualField.listOfResultKeys
                             )
                             engine.executeHydration(
                                 service = instruction.backingService,
