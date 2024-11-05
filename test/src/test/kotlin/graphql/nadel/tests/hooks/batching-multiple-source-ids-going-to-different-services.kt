@@ -22,7 +22,7 @@ class `batching-multiple-source-ids-going-to-different-services` : EngineTestHoo
 
                         return instructions
                             .first {
-                                it.actorService.name.startsWith(type, ignoreCase = true)
+                                it.backingService.name.startsWith(type, ignoreCase = true)
                             }
                     }
                 },

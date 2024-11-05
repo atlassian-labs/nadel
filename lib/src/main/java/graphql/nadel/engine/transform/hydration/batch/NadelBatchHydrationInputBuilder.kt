@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.mapFrom
@@ -18,29 +18,29 @@ import graphql.normalized.NormalizedInputValue
 internal object NadelBatchHydrationInputBuilder {
     internal fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
-        hydrationField: ExecutableNormalizedField,
-    ): Map<NadelHydrationActorInputDef, NormalizedInputValue> {
+        virtualField: ExecutableNormalizedField,
+    ): Map<NadelHydrationArgument, NormalizedInputValue> {
         return mapFrom(
-            instruction.actorInputValueDefs.mapNotNull { actorFieldArg ->
-                when (val valueSource = actorFieldArg.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> {
+            instruction.backingFieldArguments.mapNotNull { argument ->
+                when (val valueSource = argument.valueSource) {
+                    is NadelHydrationArgument.ValueSource.ArgumentValue -> {
                         val argValue: NormalizedInputValue? =
-                            hydrationField.normalizedArguments[valueSource.argumentName]
+                            virtualField.normalizedArguments[valueSource.argumentName]
                                 ?: valueSource.defaultValue
                         if (argValue != null) {
-                            actorFieldArg to argValue
+                            argument to argValue
                         } else {
                             null
                         }
                     }
                     // These are batch values, ignore them
-                    is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> null
-                    is NadelHydrationActorInputDef.ValueSource.StaticValue -> {
+                    is NadelHydrationArgument.ValueSource.FieldResultValue -> null
+                    is NadelHydrationArgument.ValueSource.StaticValue -> {
                         val staticValue: NormalizedInputValue = makeNormalizedInputValue(
-                            type = actorFieldArg.actorArgumentDef.type,
+                            type = argument.backingArgumentDef.type,
                             value = valueSource.value,
                         )
-                        actorFieldArg to staticValue
+                        argument to staticValue
                     }
                 }
             },
@@ -71,12 +71,12 @@ internal object NadelBatchHydrationInputBuilder {
      */
     internal fun getBatchInputDef(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): Pair<NadelHydrationActorInputDef, NadelHydrationActorInputDef.ValueSource.FieldResultValue>? {
-        return instruction.actorInputValueDefs
+    ): Pair<NadelHydrationArgument, NadelHydrationArgument.ValueSource.FieldResultValue>? {
+        return instruction.backingFieldArguments
             .asSequence()
             .mapNotNull {
                 when (val valueSource = it.valueSource) {
-                    is NadelHydrationActorInputDef.ValueSource.FieldResultValue -> it to valueSource
+                    is NadelHydrationArgument.ValueSource.FieldResultValue -> it to valueSource
                     else -> null
                 }
             }

@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchInputDef
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getNonBatchInputValues
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -20,7 +20,7 @@ import graphql.schema.GraphQLTypeUtil
  */
 internal data class NadelHydrationArgumentsBatch(
     val sourceInputs: List<JsonNode>,
-    val arguments: Map<NadelHydrationActorInputDef, NormalizedInputValue>,
+    val arguments: Map<NadelHydrationArgument, NormalizedInputValue>,
 )
 
 /**
@@ -32,7 +32,7 @@ internal data class NadelHydrationArgumentsBatch(
  */
 private data class BatchedArgumentValue(
     val sourceInputs: List<JsonNode>,
-    val argumentDef: NadelHydrationActorInputDef,
+    val argumentDef: NadelHydrationArgument,
     val argumentValue: NormalizedInputValue,
 )
 
@@ -73,7 +73,7 @@ internal object NadelNewBatchHydrationInputBuilder {
         val batchSize = instruction.batchSize
 
         val (batchInputDef) = getBatchInputDef(instruction) ?: return emptyList()
-        val actorBatchArgDef = instruction.actorFieldDef.getArgument(batchInputDef.name)
+        val batchArgDef = instruction.backingFieldDef.getArgument(batchInputDef.name)
 
         val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(
             argumentValues = sourceInputs.map { it.value },
@@ -87,7 +87,7 @@ internal object NadelNewBatchHydrationInputBuilder {
             }
             .map { chunk ->
                 val normalizedInputValue = NormalizedInputValue(
-                    GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
+                    GraphQLTypeUtil.simplePrint(batchArgDef.type),
                     javaValueToAstValue(chunk),
                 )
 

@@ -23,7 +23,7 @@ class `batching-absent-source-input` : EngineTestHook {
 
                         return instructions
                             .first {
-                                it.actorService.name.startsWith(type, ignoreCase = true)
+                                it.backingService.name.startsWith(type, ignoreCase = true)
                             }
                     }
 
@@ -37,10 +37,10 @@ class `batching-absent-source-input` : EngineTestHook {
 
                         return when  {
                             nodeString.contains("comment/") -> instructions.single {
-                                it.actorFieldDef.name.contains("comment")
+                                it.backingFieldDef.name.contains("comment")
                             }
                             nodeString.contains("issue/") -> instructions.single {
-                                it.actorFieldDef.name.contains("issue")
+                                it.backingFieldDef.name.contains("issue")
                             }
                             else -> null
                         }

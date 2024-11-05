@@ -82,7 +82,7 @@ data class NadelOverallExecutionBlueprint(
         val backingFieldParentTypeName = backingField.objectTypeNames.singleOrNull()
             ?: return emptyMap() // Don't support abstract types for now
 
-        val nadelHydrationContext = fieldInstructions[hydrationDetails.hydrationSourceField]!!
+        val nadelHydrationContext = fieldInstructions[hydrationDetails.hydrationVirtualField]!!
             .asSequence()
             .filterIsInstance<NadelGenericHydrationInstruction>()
             .first() as? NadelHydrationFieldInstruction

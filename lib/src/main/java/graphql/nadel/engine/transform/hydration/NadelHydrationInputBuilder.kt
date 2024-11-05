@@ -3,8 +3,8 @@ package graphql.nadel.engine.transform.hydration
 import graphql.language.NullValue
 import graphql.language.Value
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument.ValueSource
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -20,17 +20,17 @@ import graphql.normalized.NormalizedInputValue
 internal class NadelHydrationInputBuilder private constructor(
     private val instruction: NadelHydrationFieldInstruction,
     private val aliasHelper: NadelAliasHelper,
-    private val fieldToHydrate: ExecutableNormalizedField,
+    private val virtualField: ExecutableNormalizedField,
     private val parentNode: JsonNode,
 ) {
     companion object {
         fun getInputValues(
             instruction: NadelHydrationFieldInstruction,
             aliasHelper: NadelAliasHelper,
-            fieldToHydrate: ExecutableNormalizedField,
+            virtualField: ExecutableNormalizedField,
             parentNode: JsonNode,
         ): List<Map<String, NormalizedInputValue>> {
-            return NadelHydrationInputBuilder(instruction, aliasHelper, fieldToHydrate, parentNode)
+            return NadelHydrationInputBuilder(instruction, aliasHelper, virtualField, parentNode)
                 .build()
         }
     }
@@ -79,9 +79,9 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputMap(
-        excluding: NadelHydrationActorInputDef? = null,
+        excluding: NadelHydrationArgument? = null,
     ): Map<String, NormalizedInputValue> {
-        return instruction.actorInputValueDefs
+        return instruction.backingFieldArguments
             .asSequence()
             .filter {
                 it != excluding
@@ -98,7 +98,7 @@ internal class NadelHydrationInputBuilder private constructor(
      * If all field values are null, then it doesn't makes sense to actually send the query.
      */
     private fun isInputMapValid(inputMap: Map<String, NormalizedInputValue>): Boolean {
-        val fieldInputsNames = instruction.actorInputValueDefs
+        val fieldInputsNames = instruction.backingFieldArguments
             .asSequence()
             .filter {
                 it.valueSource is ValueSource.FieldResultValue
@@ -113,14 +113,14 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValuePair(
-        inputDef: NadelHydrationActorInputDef,
+        inputDef: NadelHydrationArgument,
     ): Pair<String, NormalizedInputValue>? {
         val inputValue = makeInputValue(inputDef) ?: return null
         return inputDef.name to inputValue
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationActorInputDef,
+        inputDef: NadelHydrationArgument,
     ): NormalizedInputValue? {
         return when (val valueSource = inputDef.valueSource) {
             is ValueSource.ArgumentValue -> getArgumentValue(valueSource)
@@ -133,21 +133,21 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationActorInputDef,
+        inputDef: NadelHydrationArgument,
         value: Any?,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(
-            type = inputDef.actorArgumentDef.type,
+            type = inputDef.backingArgumentDef.type,
             value = javaValueToAstValue(value),
         )
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationActorInputDef,
+        inputDef: NadelHydrationArgument,
         value: Value<*>,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(
-            type = inputDef.actorArgumentDef.type,
+            type = inputDef.backingArgumentDef.type,
             value = value,
         )
     }
@@ -155,7 +155,7 @@ internal class NadelHydrationInputBuilder private constructor(
     private fun getArgumentValue(
         valueSource: ValueSource.ArgumentValue,
     ): NormalizedInputValue? {
-        return fieldToHydrate.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
+        return virtualField.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
     }
 
     private fun getResultValue(
