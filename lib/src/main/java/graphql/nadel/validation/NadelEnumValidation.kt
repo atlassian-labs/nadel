@@ -2,28 +2,23 @@ package graphql.nadel.validation
 
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingEnumValue
-import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLEnumValueDefinition
 
 internal class NadelEnumValidation {
     context(NadelValidationContext)
     fun validate(
-        schemaElement: NadelServiceSchemaElement,
+        schemaElement: NadelServiceSchemaElement.Enum,
     ): NadelSchemaValidationResult {
-        return if (schemaElement.overall is GraphQLEnumType && schemaElement.underlying is GraphQLEnumType) {
-            validate(
-                parent = schemaElement,
-                overallValues = schemaElement.overall.values,
-                underlyingValues = schemaElement.underlying.values,
-            )
-        } else {
-            ok()
-        }
+        return validate(
+            parent = schemaElement,
+            overallValues = schemaElement.overall.values,
+            underlyingValues = schemaElement.underlying.values,
+        )
     }
 
     context(NadelValidationContext)
     private fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.Enum,
         overallValues: List<GraphQLEnumValueDefinition>,
         underlyingValues: List<GraphQLEnumValueDefinition>,
     ): NadelSchemaValidationResult {

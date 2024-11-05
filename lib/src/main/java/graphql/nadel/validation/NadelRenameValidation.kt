@@ -14,7 +14,6 @@ import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedF
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenamePartitionedField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 
 internal class NadelRenameValidation(
@@ -22,7 +21,7 @@ internal class NadelRenameValidation(
 ) {
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
         if (overallField.isHydrated()) {
@@ -36,8 +35,7 @@ internal class NadelRenameValidation(
         val rename = overallField.getRenamedOrNull()
             ?: return ok()
 
-        val underlyingFieldContainer = parent.underlying as GraphQLFieldsContainer
-        val underlyingField = underlyingFieldContainer.getFieldAt(rename.from)
+        val underlyingField = parent.underlying.getFieldAt(rename.from)
             ?: return MissingRename(parent, overallField, rename)
 
         val result = fieldValidation.validate(parent, overallField, underlyingField)
@@ -57,12 +55,12 @@ internal class NadelRenameValidation(
 
     context(NadelValidationContext)
     private fun makeRenameFieldInstruction(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
         rename: NadelRenamedDefinition.Field,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(
-            parentType = parent.overall as GraphQLFieldsContainer,
+            parentType = parent.overall,
             field = overallField,
         )
 

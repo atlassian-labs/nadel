@@ -153,32 +153,6 @@ private fun NadelSchemaValidationResult.asSequence(): Sequence<NadelSchemaValida
     }
 }
 
-data class NadelServiceSchemaElement(
-    val service: Service,
-    val overall: GraphQLNamedSchemaElement,
-    val underlying: GraphQLNamedSchemaElement,
-) {
-    internal fun toRef() = NadelServiceSchemaElementRef(service, overall, underlying)
-}
-
-/**
- * This is used to create a version of [NadelServiceSchemaElement] that has a proper
- * [hashCode] definition instead of relying on identity hashCodes.
- */
-internal data class NadelServiceSchemaElementRef(
-    val service: String,
-    val overall: String,
-    val underlying: String,
-) {
-    companion object {
-        operator fun invoke(
-            service: Service,
-            overall: GraphQLNamedSchemaElement,
-            underlying: GraphQLNamedSchemaElement,
-        ) = NadelServiceSchemaElementRef(service.name, overall.name, underlying.name)
-    }
-}
-
 private fun makeFieldContributorMap(services: List<Service>): Map<FieldCoordinates, Service> {
     return services
         .asSequence()

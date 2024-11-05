@@ -23,7 +23,7 @@ import graphql.schema.GraphQLScalarType
 internal class NadelPartitionValidation {
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
         if (!overallField.isPartitioned()) {
@@ -34,14 +34,14 @@ internal class NadelPartitionValidation {
             return CannotPartitionHydratedField(parent, overallField)
         }
 
-        val parentObject = parent.overall as? GraphQLObjectType
+        val parentObject = parent as? NadelServiceSchemaElement.Object
             ?: return ok()
 
-        if (!isOperation(parentObject) && !isNamespaceType(parentObject, engineSchema)) {
+        if (!isOperation(parentObject.overall) && !isNamespaceType(parentObject.overall, engineSchema)) {
             return PartitionAppliedToUnsupportedField(parent, overallField)
         }
 
-        if (parentObject.name.equals(Operation.SUBSCRIPTION.name, ignoreCase = true)) {
+        if (parentObject.overall.name.equals(Operation.SUBSCRIPTION.name, ignoreCase = true)) {
             return PartitionAppliedToSubscriptionField(parent, overallField)
         }
 

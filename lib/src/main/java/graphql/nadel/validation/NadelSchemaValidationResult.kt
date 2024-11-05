@@ -25,19 +25,25 @@ internal interface NadelSchemaValidationResults : NadelSchemaValidationResult {
         operator fun invoke(
             results: List<NadelSchemaValidationResult>,
         ): NadelSchemaValidationResult {
-            return object : NadelSchemaValidationResults {
-                override val results: List<NadelSchemaValidationResult> = results
-                    // In theory this should mean there's nothing nested
-                    .flatMap {
-                        if (it is NadelSchemaValidationResults) {
-                            it.results
-                        } else {
-                            listOf(it)
-                        }
-                    }
+            return Impl(flatten(results))
+        }
+
+        internal fun flatten(result: List<NadelSchemaValidationResult>): List<NadelSchemaValidationResult> {
+            return result.flatMap(::flatten)
+        }
+
+        internal fun flatten(result: NadelSchemaValidationResult): List<NadelSchemaValidationResult> {
+            return if (result is NadelSchemaValidationResults) {
+                result.results
+            } else {
+                listOf(result)
             }
         }
     }
+
+    private data class Impl(
+        override val results: List<NadelSchemaValidationResult>,
+    ) : NadelSchemaValidationResults
 }
 
 internal object NadelSchemaValidationEmptyResult : NadelSchemaValidationResults {

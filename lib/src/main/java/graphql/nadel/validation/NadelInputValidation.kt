@@ -14,7 +14,6 @@ import graphql.nadel.validation.util.NadelSchemaUtil
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectField
-import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnmodifiedType
@@ -22,22 +21,18 @@ import graphql.schema.GraphQLUnmodifiedType
 internal class NadelInputValidation {
     context(NadelValidationContext)
     fun validate(
-        schemaElement: NadelServiceSchemaElement,
+        schemaElement: NadelServiceSchemaElement.InputObject,
     ): NadelSchemaValidationResult {
-        return if (schemaElement.overall is GraphQLInputObjectType && schemaElement.underlying is GraphQLInputObjectType) {
-            validate(
-                parent = schemaElement,
-                overallFields = schemaElement.overall.fields,
-                underlyingFields = schemaElement.underlying.fields,
-            )
-        } else {
-            ok()
-        }
+        return validate(
+            parent = schemaElement,
+            overallFields = schemaElement.overall.fields,
+            underlyingFields = schemaElement.underlying.fields,
+        )
     }
 
     context(NadelValidationContext)
     private fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.InputObject,
         overallFields: List<GraphQLInputObjectField>,
         underlyingFields: List<GraphQLInputObjectField>,
     ): NadelSchemaValidationResult {
@@ -52,7 +47,7 @@ internal class NadelInputValidation {
 
     context(NadelValidationContext)
     private fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.InputObject,
         overallInputField: GraphQLInputObjectField,
         underlyingFieldsByName: Map<String, GraphQLInputObjectField>,
     ): NadelSchemaValidationResult {
@@ -67,7 +62,7 @@ internal class NadelInputValidation {
 
     context(NadelValidationContext)
     private fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.InputObject,
         overallInputField: GraphQLInputObjectField,
         underlyingInputField: GraphQLInputObjectField,
     ): NadelSchemaValidationResult {
@@ -80,7 +75,7 @@ internal class NadelInputValidation {
 
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
         overallInputArgument: GraphQLArgument,
         underlyingInputArgument: GraphQLArgument,
@@ -93,9 +88,7 @@ internal class NadelInputValidation {
     }
 
     /**
-     * It checks whether the type name and type wrappings e.g. [graphql.schema.GraphQLNonNull] make sense.
-     * Same as [NadelTypeValidation.isOutputTypeValid] but with the logic for acceptable nullability logic flipped
-     * i.e. we allow the overall input type to be non-nullable and the underlying input type to be nullable
+     * todo: use [NadelTypeWrappingValidation]
      */
     private fun isInputTypeValid(
         overallType: GraphQLInputType,

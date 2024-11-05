@@ -12,7 +12,6 @@ import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLOutputType
 
@@ -27,22 +26,18 @@ internal class NadelFieldValidation(
 
     context(NadelValidationContext)
     fun validate(
-        schemaElement: NadelServiceSchemaElement,
+        schemaElement: NadelServiceSchemaElement.FieldsContainer,
     ): NadelSchemaValidationResult {
-        return if (schemaElement.overall is GraphQLFieldsContainer && schemaElement.underlying is GraphQLFieldsContainer) {
-            validate(
-                schemaElement,
-                overallFields = schemaElement.overall.fields,
-                underlyingFields = schemaElement.underlying.fields,
-            )
-        } else {
-            ok()
-        }
+        return validate(
+            schemaElement,
+            overallFields = schemaElement.overall.fields,
+            underlyingFields = schemaElement.underlying.fields,
+        )
     }
 
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallFields: List<GraphQLFieldDefinition>,
         underlyingFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
@@ -67,7 +62,7 @@ internal class NadelFieldValidation(
 
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
         underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
@@ -91,7 +86,7 @@ internal class NadelFieldValidation(
 
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
@@ -103,7 +98,7 @@ internal class NadelFieldValidation(
                 } else {
                     val unwrappedTypeIssues = typeValidation
                         .validate(
-                            NadelServiceSchemaElement(
+                            NadelServiceSchemaElement.from(
                                 service = parent.service,
                                 overall = overallArg.type.unwrapAll(),
                                 underlying = underlyingArg.type.unwrapAll(),
@@ -131,14 +126,14 @@ internal class NadelFieldValidation(
 
     context(NadelValidationContext)
     private fun validateOutputType(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
         val overallType = overallField.type.unwrapAll()
         val underlyingType = underlyingField.type.unwrapAll()
 
-        val typeServiceSchemaElement = NadelServiceSchemaElement(
+        val typeServiceSchemaElement = NadelServiceSchemaElement.from(
             service = parent.service,
             overall = overallType,
             underlying = underlyingType,

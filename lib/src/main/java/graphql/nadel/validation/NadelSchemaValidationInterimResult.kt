@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.validation.NadelSchemaValidationResults.Companion.flatten
 import graphql.nadel.validation.NadelValidationInterimResult.Error
 import graphql.nadel.validation.NadelValidationInterimResult.Success
 
@@ -34,18 +35,6 @@ internal sealed interface NadelValidationInterimResult<T> {
             context(NadelValidationContext)
             internal fun <T : Any> List<NadelSchemaValidationError>.asInterimError(): Error<T> {
                 return Error(flatten(this))
-            }
-
-            private fun flatten(result: List<NadelSchemaValidationResult>): List<NadelSchemaValidationResult> {
-                return result.flatMap(::flatten)
-            }
-
-            private fun flatten(result: NadelSchemaValidationResult): List<NadelSchemaValidationResult> {
-                return if (result is NadelSchemaValidationResults) {
-                    result.results
-                } else {
-                    listOf(result)
-                }
             }
         }
     }

@@ -21,7 +21,6 @@ import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLUnionType
 
 internal class NadelTypeValidation {
@@ -79,31 +78,62 @@ internal class NadelTypeValidation {
             return ok()
         }
 
-        if (schemaElement.overall.javaClass != schemaElement.underlying.javaClass) {
-            return IncompatibleType(schemaElement)
+        val fieldsContainerResult = if (schemaElement is NadelServiceSchemaElement.FieldsContainer) {
+            fieldValidation.validate(schemaElement)
+        } else {
+            ok()
+        }
+
+        val renameResult = if (schemaElement is NadelServiceSchemaElement.Type) {
+            results(
+                validateTypeRename(schemaElement),
+                namespaceValidation.validate(schemaElement),
+            )
+        } else {
+            ok()
+        }
+
+        val typeSpecificResult = when (schemaElement) {
+            is NadelServiceSchemaElement.Enum -> {
+                enumValidation.validate(schemaElement)
+            }
+            is NadelServiceSchemaElement.Interface -> {
+                interfaceValidation.validate(schemaElement)
+            }
+            is NadelServiceSchemaElement.Object -> {
+                ok()
+            }
+            is NadelServiceSchemaElement.InputObject -> {
+                inputValidation.validate(schemaElement)
+            }
+            is NadelServiceSchemaElement.Scalar -> {
+                ok()
+            }
+            is NadelServiceSchemaElement.Union -> {
+                unionValidation.validate(schemaElement)
+            }
+            is NadelServiceSchemaElement.Incompatible -> {
+                IncompatibleType(schemaElement)
+            }
         }
 
         return results(
-            validateTypeRename(schemaElement),
-            fieldValidation.validate(schemaElement),
-            inputValidation.validate(schemaElement),
-            unionValidation.validate(schemaElement),
-            interfaceValidation.validate(schemaElement),
-            namespaceValidation.validate(schemaElement),
-            enumValidation.validate(schemaElement),
+            fieldsContainerResult,
+            renameResult,
+            typeSpecificResult,
         )
     }
 
     context(NadelValidationContext)
     private fun validateTypeRename(
-        type: NadelServiceSchemaElement,
+        type: NadelServiceSchemaElement.Type,
     ): NadelSchemaValidationResult {
         if (type.overall.name == type.underlying.name) {
             return ok()
         }
 
         // Ignore scalar renames, refer to test "let jsw do jsw things"
-        if (type.overall is GraphQLScalarType) {
+        if (type is NadelServiceSchemaElement.Scalar) {
             return ok()
         }
 
@@ -172,7 +202,7 @@ internal class NadelTypeValidation {
                     }
                     null
                 } else {
-                    NadelServiceSchemaElement(
+                    NadelServiceSchemaElement.from(
                         service = service,
                         overall = overallType,
                         underlying = underlyingType,
