@@ -317,6 +317,7 @@ private fun transformInputValueDefinitions(inputValueDefinitions: List<InputValu
             inputValue.transform { inputValueBuilder ->
                 inputValueBuilder
                     .type(inputValue.type.getUnderlyingType())
+                    .directives(inputValue.directives.filterNotNadelDirectives())
             }
         }
 }
