@@ -1,5 +1,7 @@
 package graphql.nadel.definition.virtualType
 
+import graphql.language.DirectiveDefinition
+import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLDirectiveContainer
 
 internal fun GraphQLDirectiveContainer.isVirtualType(): Boolean {
@@ -7,6 +9,14 @@ internal fun GraphQLDirectiveContainer.isVirtualType(): Boolean {
 }
 
 internal class NadelVirtualTypeDirective {
+    companion object {
+        val directiveDefinition = parseDefinition<DirectiveDefinition>(
+            """
+                directive @virtualType on OBJECT
+            """.trimIndent(),
+        )
+    }
+
     object Keyword {
         const val virtualType = "virtualType"
     }

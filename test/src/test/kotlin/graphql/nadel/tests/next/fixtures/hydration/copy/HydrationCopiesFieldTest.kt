@@ -168,7 +168,6 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
                       ]
                     )
                 }
-                directive @virtualType on OBJECT
                 type WorkConnection @virtualType {
                   edges: [WorkEdge]
                   pageInfo: PageInfo

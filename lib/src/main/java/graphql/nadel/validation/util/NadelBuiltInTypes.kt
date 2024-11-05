@@ -18,6 +18,7 @@ import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDe
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.partitionDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.virtualTypeDirectiveDefinition
 
 object NadelBuiltInTypes {
     val builtInScalars = setOf(
@@ -34,6 +35,7 @@ object NadelBuiltInTypes {
         }
 
     val builtInDirectiveSyntaxTypeNames = sequenceOf<AnyNamedNode>(
+        virtualTypeDirectiveDefinition,
         renamedDirectiveDefinition,
         hydratedDirectiveDefinition,
         nadelHydrationArgumentDefinition,

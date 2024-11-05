@@ -10,6 +10,7 @@ import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinitio
 import graphql.nadel.definition.hydration.NadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.virtualType.NadelVirtualTypeDirective
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
 
@@ -23,6 +24,8 @@ object NadelDirectives {
           directive @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
         """.trimIndent(),
     )
+
+    val virtualTypeDirectiveDefinition = NadelVirtualTypeDirective.directiveDefinition
 
     val renamedDirectiveDefinition = NadelRenamedDefinition.directiveDefinition
 
