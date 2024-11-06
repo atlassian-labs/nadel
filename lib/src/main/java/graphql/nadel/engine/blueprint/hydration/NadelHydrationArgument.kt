@@ -61,6 +61,10 @@ data class NadelHydrationArgument(
         data class StaticValue(
             val value: Value<*>,
         ) : ValueSource()
+
+        data class RemainingArguments(
+            val remainingArgumentNames: List<String>
+        ) : ValueSource()
     }
 }
 
