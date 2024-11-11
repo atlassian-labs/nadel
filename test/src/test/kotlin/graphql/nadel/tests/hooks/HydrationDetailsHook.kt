@@ -23,8 +23,8 @@ abstract class HydrationDetailsHook : EngineTestHook {
 @UseHook
 class `basic-hydration` : HydrationDetailsHook() {
     override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {
-        assert(actualHydrationDetails.hydrationActorField.toString() == "Query.barById")
-        assert(actualHydrationDetails.hydrationSourceField.toString() == "Foo.bar")
+        assert(actualHydrationDetails.hydrationBackingField.toString() == "Query.barById")
+        assert(actualHydrationDetails.hydrationVirtualField.toString() == "Foo.bar")
         assert(actualHydrationDetails.hydrationSourceService.name == "service1")
         assert(actualHydrationDetails.fieldPath.toString() == "[foo, bar]")
     }
@@ -33,8 +33,8 @@ class `basic-hydration` : HydrationDetailsHook() {
 @UseHook
 class `batch-hydration-with-renamed-actor-field` : HydrationDetailsHook() {
     override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {
-        assert(actualHydrationDetails.hydrationActorField.toString() == "Query.barsByIdOverall")
-        assert(actualHydrationDetails.hydrationSourceField.toString() == "Foo.bar")
+        assert(actualHydrationDetails.hydrationBackingField.toString() == "Query.barsByIdOverall")
+        assert(actualHydrationDetails.hydrationVirtualField.toString() == "Foo.bar")
         assert(actualHydrationDetails.hydrationSourceService.name == "service1")
         assert(actualHydrationDetails.fieldPath.toString() == "[foo, bar]")
     }

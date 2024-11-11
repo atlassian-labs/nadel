@@ -248,11 +248,11 @@ Is transformed to:
 ```kotlin
 data class NadelHydrationFieldInstruction(
     override val location: FieldCoordinates, // User.friend
-    val hydratedFieldDef: GraphQLFieldDefinition, // Schema definition for User.friend
-    val actorService: Service, // Users service i.e. service owning users.friendById
-    val queryPathToActorField: NadelQueryPath, // users.friendById
-    val actorFieldDef: GraphQLFieldDefinition, // Schema definition for users.friendById
-    val actorInputValueDefs: List<NadelHydrationActorInputDef>, // [{ name: "ids" value: "$source.friendId" }]
+    val virtualFieldDef: GraphQLFieldDefinition, // Schema definition for User.friend
+    val backingService: Service, // Users service i.e. service owning users.friendById
+    val queryPathToBackingField: NadelQueryPath, // users.friendById
+    val backingFieldDef: GraphQLFieldDefinition, // Schema definition for users.friendById
+    val backingFieldArguments: List<NadelHydrationArgument>, // [{ name: "ids" value: "$source.friendId" }]
     val timeout: Int, // 1000ms
     val sourceFields: List<NadelQueryPath>, // friendId
     val hydrationStrategy: NadelHydrationStrategy,

@@ -1,0 +1,60 @@
+name: "renamed top level field is not removed short circuit hint is on"
+enabled: true
+# language=GraphQL
+overallSchema:
+  CommentService: |
+    directive @toBeDeleted on FIELD_DEFINITION
+    type Query {
+      commentById(id: ID): Comment @renamed(from: "commentByIdUnderlying")
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+underlyingSchema:
+  CommentService: |
+    type Query {
+      commentByIdUnderlying(id: ID): Comment
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+query: |
+  query {
+    commentById(id: "C1") {
+      id
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "CommentService"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          rename__commentById__commentByIdUnderlying: commentByIdUnderlying(id: "C1") {
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__commentById__commentByIdUnderlying": {
+            "id": "C1"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "commentById": {
+        "id": "C1"
+      }
+    },
+    "extensions": {}
+  }

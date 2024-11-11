@@ -16,10 +16,10 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform.State
+import graphql.nadel.engine.transform.makeTypeNameField
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -37,6 +37,7 @@ import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -49,21 +50,22 @@ internal class NadelHydrationTransform(
 ) : NadelTransform<State> {
     data class State(
         /**
-         * The hydration instructions for the [hydratedField]. There can be multiple instructions
+         * The hydration instructions for the [virtualField]. There can be multiple instructions
          * as a [ExecutableNormalizedField] can have multiple [ExecutableNormalizedField.objectTypeNames].
          *
          * The [Map.Entry.key] of [FieldCoordinates] denotes a specific object type and
          * its associated instruction.
          */
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelHydrationFieldInstruction>>,
-        val hydratedFieldService: Service,
+        val virtualFieldService: Service,
         /**
          * The field in question for the transform, stored for quick access when
          * the [State] is passed around.
          */
-        val hydratedField: ExecutableNormalizedField,
+        val virtualField: ExecutableNormalizedField,
         val aliasHelper: NadelAliasHelper,
         val executionContext: NadelExecutionContext,
+        val engineSchema: GraphQLSchema,
     )
 
     override suspend fun isApplicable(
@@ -75,18 +77,27 @@ internal class NadelHydrationTransform(
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val hydrationInstructionsByTypeNames = executionBlueprint.fieldInstructions
+        val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)
+            .ifEmpty {
+                if (executionContext.hints.virtualTypeSupport(service)) {
+                    executionBlueprint
+                        .getInstructionInsideVirtualType(hydrationDetails, overallField)
+                } else {
+                    emptyMap()
+                }
+            }
 
-        return if (hydrationInstructionsByTypeNames.isEmpty()) {
+        return if (instructionsByObjectTypeName.isEmpty()) {
             null
         } else {
             State(
-                instructionsByObjectTypeNames = hydrationInstructionsByTypeNames,
-                hydratedFieldService = service,
-                hydratedField = overallField,
+                instructionsByObjectTypeNames = instructionsByObjectTypeName,
+                virtualFieldService = service,
+                virtualField = overallField,
                 aliasHelper = NadelAliasHelper.forField(tag = "hydration", overallField),
-                executionContext = executionContext
+                executionContext = executionContext,
+                engineSchema = executionBlueprint.engineSchema,
             )
         }
     }
@@ -185,7 +196,7 @@ internal class NadelHydrationTransform(
                         parentNode = it,
                         state = state,
                         executionBlueprint = executionBlueprint,
-                        fieldToHydrate = overallField,
+                        virtualField = overallField,
                         executionContext = executionContext,
                     )
                 }
@@ -232,12 +243,12 @@ internal class NadelHydrationTransform(
                     parentNode = it,
                     state = state,
                     executionBlueprint = executionBlueprint,
-                    fieldToHydrate = overallField,
+                    virtualField = overallField,
                     executionContext = executionContext,
                 )
             }
 
-        if(preparedHydrations.isEmpty()) {
+        if (preparedHydrations.isEmpty()) {
             return
         }
 
@@ -294,12 +305,12 @@ internal class NadelHydrationTransform(
         parentNode: JsonNode,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
+        virtualField: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): NadelPreparedHydration? {
         val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
             executionBlueprint = executionBlueprint,
-            service = state.hydratedFieldService,
+            service = state.virtualFieldService,
             aliasHelper = state.aliasHelper,
             parentNode = parentNode,
         )
@@ -318,36 +329,38 @@ internal class NadelHydrationTransform(
                 )
             }
 
-        val actorQueries = NadelHydrationFieldsBuilder.makeActorQueries(
+        val backingQueries = NadelHydrationFieldsBuilder.makeBackingQueries(
+            executionContext = executionContext,
+            service = state.virtualFieldService,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
-            fieldToHydrate = fieldToHydrate,
+            virtualField = virtualField,
             parentNode = parentNode,
             executionBlueprint = executionBlueprint,
         )
 
         return NadelPreparedHydration {
-            val actorQueryResults = coroutineScope {
-                actorQueries
-                    .map { actorQuery ->
+            val backingQueryResults = coroutineScope {
+                backingQueries
+                    .map { backingQuery ->
                         async {
                             val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                            val hydrationActorField =
+                            val hydrationBackingField =
                                 FieldCoordinates.coordinates(
-                                    instruction.actorFieldContainer,
-                                    instruction.actorFieldDef
+                                    instruction.backingFieldContainer,
+                                    instruction.backingFieldDef
                                 )
                             val serviceHydrationDetails = ServiceExecutionHydrationDetails(
                                 timeout = instruction.timeout,
                                 batchSize = 1,
                                 hydrationSourceService = hydrationSourceService,
-                                hydrationSourceField = instruction.location,
-                                hydrationActorField = hydrationActorField,
-                                fieldPath = fieldToHydrate.listOfResultKeys
+                                hydrationVirtualField = instruction.location,
+                                hydrationBackingField = hydrationBackingField,
+                                fieldPath = virtualField.listOfResultKeys
                             )
                             engine.executeHydration(
-                                service = instruction.actorService,
-                                topLevelField = actorQuery,
+                                service = instruction.backingService,
+                                topLevelField = backingQuery,
                                 executionContext = executionContext,
                                 hydrationDetails = serviceHydrationDetails,
                             )
@@ -358,12 +371,12 @@ internal class NadelHydrationTransform(
             when (instruction.hydrationStrategy) {
                 is NadelHydrationStrategy.OneToOne -> {
                     // Should not have more than one query for one to one
-                    val result = actorQueryResults.emptyOrSingle()
+                    val result = backingQueryResults.emptyOrSingle()
 
                     val data = result?.data?.let { data ->
                         JsonNodeExtractor.getNodesAt(
                             data = data,
-                            queryPath = instruction.queryPathToActorField,
+                            queryPath = instruction.queryPathToBackingField,
                         ).emptyOrSingle()
                     }
 
@@ -374,18 +387,18 @@ internal class NadelHydrationTransform(
                     )
                 }
                 is NadelHydrationStrategy.ManyToOne -> {
-                    val data = actorQueryResults
+                    val data = backingQueryResults
                         .map { result ->
                             JsonNodeExtractor.getNodesAt(
                                 data = result.data,
-                                queryPath = instruction.queryPathToActorField,
+                                queryPath = instruction.queryPathToBackingField,
                             ).emptyOrSingle()?.value
                         }
 
                     NadelHydrationResult(
                         parentNode = parentNode,
                         newValue = JsonNode(data),
-                        errors = actorQueryResults.flatMap { it.errors },
+                        errors = backingQueryResults.flatMap { it.errors },
                     )
                 }
             }

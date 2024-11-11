@@ -4,7 +4,7 @@ import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatibleOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationsMismatch
-import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
+import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationBackingField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
@@ -181,11 +181,11 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingHydrationActorField>()
+            val error = errors.singleOfType<MissingHydrationBackingField>()
             assert(error.service.name == "issues")
             assert(error.parentType.overall.name == "Issue")
             assert(error.overallField.name == "creator")
-            assert(error.hydration.pathToActorField == listOf("internalUser"))
+            assert(error.hydration.backingField == listOf("internalUser"))
         }
 
         it("fails if a mix of batched and non-batched hydrations is used") {
@@ -629,8 +629,8 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             assert(errors.isNotEmpty())
             val error = errors.singleOfType<HydrationIncompatibleOutputType>()
             assert(error.parentType.overall.name == "Issue")
-            assert(error.actorField.name == "externalUser")
-            assert((error.actorField.type as GraphQLNamedType).name == "ExternalUser")
+            assert(error.backingField.name == "externalUser")
+            assert((error.backingField.type as GraphQLNamedType).name == "ExternalUser")
             assert(error.incompatibleOutputType.name == "ExternalUser")
         }
     }

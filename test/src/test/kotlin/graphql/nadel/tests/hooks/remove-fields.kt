@@ -137,6 +137,12 @@ class `namespaced-field-is-removed-with-renames` : EngineTestHook {
     override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
+@UseHook
+class `renamed-top-level-field-is-not-removed-short-circuit-hint-is-on` : EngineTestHook {
+    override val customTransforms = listOf(RemoveFieldTestTransform())
+    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
+}
+
 // @UseHook
 class `top-level-field-in-batched-query-is-removed` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {

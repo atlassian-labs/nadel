@@ -11,9 +11,6 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Use [NadelCachingJsonNodes] for the most part because that is faster.
  * It is the default implementation.
- *
- * @param data The JSON map data.
- * @param pathPrefix For incremental (defer) payloads, this is the prefix that needs to be removed from the path.
  */
 interface JsonNodes {
     /**
@@ -25,7 +22,11 @@ interface JsonNodes {
         internal var nodesFactory: (JsonMap, NadelQueryPath?) -> JsonNodes = { data, pathPrefix ->
             NadelCachingJsonNodes(data, pathPrefix)
         }
-
+        
+        /**
+         * @param data The JSON map data.
+         * @param pathPrefix For incremental (defer) payloads, this is the prefix that needs to be removed from the path.
+         */
         operator fun invoke(data: JsonMap, pathPrefix: NadelQueryPath? = null): JsonNodes {
             return nodesFactory(data, pathPrefix)
         }

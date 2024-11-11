@@ -1,12 +1,12 @@
 package graphql.nadel.validation
 
+import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.partition.isPartitioned
+import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.nadel.engine.util.getFieldAt
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenamePartitionedField
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
+import graphql.nadel.validation.NadelSchemaValidationError.CannotRenamePartitionedField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
-import graphql.nadel.validation.util.NadelSchemaUtil.getRename
-import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
-import graphql.nadel.validation.util.NadelSchemaUtil.hasPartition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 
@@ -17,25 +17,25 @@ internal class NadelRenameValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
     ): List<NadelSchemaValidationError> {
-        if (hasHydration(overallField)) {
+        if (overallField.isHydrated()) {
             return listOf(
                 CannotRenameHydratedField(parent, overallField),
             )
         }
 
-        if (hasPartition(overallField)) {
+        if (overallField.isPartitioned()) {
             return listOf(
                 CannotRenamePartitionedField(parent, overallField),
             )
         }
 
-        val rename = getRename(overallField)
+        val rename = overallField.getRenamedOrNull()
 
         return if (rename == null) {
             listOf()
         } else {
             val underlyingFieldContainer = parent.underlying as GraphQLFieldsContainer
-            val underlyingField = underlyingFieldContainer.getFieldAt(rename.inputPath)
+            val underlyingField = underlyingFieldContainer.getFieldAt(rename.from)
             if (underlyingField == null) {
                 listOf(
                     MissingRename(parent, overallField, rename),

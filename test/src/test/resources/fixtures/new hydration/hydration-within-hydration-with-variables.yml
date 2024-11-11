@@ -1,0 +1,167 @@
+name: "hydration within hydration with variables"
+enabled: true
+# language=GraphQL
+overallSchema:
+  boards: |
+    type Query {
+      board: Board
+    }
+
+    type Board {
+      id: ID
+      title: String
+      issue: Issue
+      @hydrated(
+        service: "issues"
+        field: "issue"
+        arguments: [{name: "id" value: "$source.issueId"}]
+      )
+    }
+  issues: |
+    type Query {
+      issue(id: ID!): Issue
+    }
+
+    type Issue {
+      id: ID!
+      cloudId: ID!
+
+      comments(first: Int = 20): CommentConnection
+      @hydrated(
+        service: "comments"
+        field: "comments"
+        arguments: [
+          {name: "cloudId" value: "$source.cloudId"}
+          {name: "first" value: "$argument.first"}
+        ]
+      )
+    }
+  comments: |
+    type Query {
+      comments(cloudId: ID!, first: Int): CommentConnection
+    }
+
+    type CommentConnection {
+      totalCount: Int
+    }
+# language=GraphQL
+underlyingSchema:
+  boards: |
+    type Query {
+      board: Board
+    }
+
+    type Board {
+      id: ID
+      title: String
+      issueId: ID!
+    }
+  issues: |
+    type Query {
+      issue(id: ID!): Issue
+    }
+
+    type Issue {
+      id: ID!
+      cloudId: ID!
+    }
+  comments: |
+    type Query {
+      comments(cloudId: ID!, first: Int): CommentConnection
+    }
+
+    type CommentConnection {
+      totalCount: Int
+    }
+# language=GraphQL
+query: |
+  query($first: Int) {
+    board {
+      issue {
+        comments(first: $first) {
+          totalCount
+        }
+      }
+    }
+  }
+variables:
+  first: 10
+serviceCalls:
+  - serviceName: "boards"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          board {
+            __typename__hydration__issue: __typename
+            hydration__issue__issueId: issueId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "board": {
+            "hydration__issue__issueId": "ISSUE-1",
+            "__typename__hydration__issue": "Board"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "issues"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          issue(id: "ISSUE-1") {
+            __typename__hydration__comments: __typename
+            hydration__comments__cloudId: cloudId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "hydration__comments__cloudId": "CLOUD_ID-1",
+            "__typename__hydration__comments": "Issue"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: "comments"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          comments(cloudId: "CLOUD_ID-1", first: 10) {
+            totalCount
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "comments": {
+            "totalCount": 10
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "board": {
+        "issue": {
+          "comments": {
+            "totalCount": 10
+          }
+        }
+      }
+    },
+    "extensions": {}
+  }

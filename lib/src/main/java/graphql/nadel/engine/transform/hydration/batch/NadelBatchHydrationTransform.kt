@@ -12,10 +12,10 @@ import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
+import graphql.nadel.engine.transform.makeTypeNameField
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -27,15 +27,14 @@ import graphql.normalized.ExecutableNormalizedField
 internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
 ) : NadelTransform<State> {
-    private val hydrator = NadelBatchHydrator(engine)
     private val newHydrator = NadelNewBatchHydrator(engine)
 
     data class State(
         val executionBlueprint: NadelOverallExecutionBlueprint,
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
         val executionContext: NadelExecutionContext,
-        val hydratedField: ExecutableNormalizedField,
-        val hydratedFieldService: Service,
+        val virtualField: ExecutableNormalizedField,
+        val virtualFieldService: Service,
         val aliasHelper: NadelAliasHelper,
     )
 
@@ -50,14 +49,22 @@ internal class NadelBatchHydrationTransform(
     ): State? {
         val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionsMap<NadelBatchHydrationFieldInstruction>(overallField)
+            .ifEmpty {
+                if (executionContext.hints.virtualTypeSupport(service)) {
+                    executionBlueprint
+                        .getInstructionInsideVirtualType(hydrationDetails, overallField)
+                } else {
+                    emptyMap()
+                }
+            }
 
         return if (instructionsByObjectTypeName.isNotEmpty()) {
             return State(
                 executionBlueprint = executionBlueprint,
                 instructionsByObjectTypeNames = instructionsByObjectTypeName,
                 executionContext = executionContext,
-                hydratedField = overallField,
-                hydratedFieldService = service,
+                virtualField = overallField,
+                virtualFieldService = service,
                 aliasHelper = NadelAliasHelper.forField(tag = "batch_hydration", overallField),
             )
         } else {
@@ -120,11 +127,7 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        if (executionContext.hints.newBatchHydrationGrouping()) {
-            return newHydrator.hydrate(state, executionBlueprint, parentNodes)
-        } else {
-            return hydrator.hydrate(state, executionBlueprint, parentNodes)
-        }
+        return newHydrator.hydrate(state, executionBlueprint, parentNodes)
     }
 
     private fun makeTypeNameField(

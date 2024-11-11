@@ -20,12 +20,12 @@ internal class NadelBatchHydrationIndexBasedIndexer(
         return batches
             .flatMap { batch ->
                 val data =
-                    JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToActorField, flatten = false)
+                    JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToBackingField, flatten = false)
 
                 if (data.emptyOrSingle()?.value == null) {
                     emptyList()
                 } else {
-                    JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToActorField)
+                    JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToBackingField)
                         .asSequence()
                         .flatMap {
                             when (val value = it.value) {

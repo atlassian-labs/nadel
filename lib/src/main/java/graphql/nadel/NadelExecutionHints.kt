@@ -5,17 +5,17 @@ import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
-import graphql.nadel.hints.NewBatchHydrationGroupingHint
+import graphql.nadel.hints.NadelVirtualTypeSupportHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
-    val newBatchHydrationGrouping: NewBatchHydrationGroupingHint,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
+    val virtualTypeSupport: NadelVirtualTypeSupportHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -31,10 +31,10 @@ data class NadelExecutionHints(
         private var legacyOperationNames = LegacyOperationNamesHint { false }
         private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
-        private var newBatchHydrationGrouping = NewBatchHydrationGroupingHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
         private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
+        private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
 
         constructor()
 
@@ -60,11 +60,6 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun newBatchHydrationGrouping(flag: NewBatchHydrationGroupingHint): Builder {
-            newBatchHydrationGrouping = flag
-            return this
-        }
-
         fun deferSupport(flag: NadelDeferSupportHint): Builder {
             deferSupport = flag
             return this
@@ -80,15 +75,20 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun virtualTypeSupport(flag: NadelVirtualTypeSupportHint): Builder {
+            virtualTypeSupport = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
                 allDocumentVariablesHint,
                 newResultMergerAndNamespacedTypename,
-                newBatchHydrationGrouping,
                 deferSupport,
                 sharedTypeRenames,
                 shortCircuitEmptyQuery,
+                virtualTypeSupport,
             )
         }
     }

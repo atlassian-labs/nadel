@@ -24,12 +24,12 @@ private class PolymorphicHydrationHooks : NadelExecutionHooks {
         }
 
         val dataIdValue = (parentNode.value as JsonMap)[dataIdFieldName] as String
-        val actorFieldName = when {
+        val backingFieldName = when {
             dataIdValue.startsWith("human", ignoreCase = true) -> "humanById"
             dataIdValue.startsWith("null", ignoreCase = true) -> null
             else -> "petById"
         }
-        return instructions.singleOrNull { it.actorFieldDef.name == actorFieldName }
+        return instructions.singleOrNull { it.backingFieldDef.name == backingFieldName }
     }
 }
 

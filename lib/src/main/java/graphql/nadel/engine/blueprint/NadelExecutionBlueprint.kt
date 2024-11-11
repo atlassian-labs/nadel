@@ -1,6 +1,7 @@
 package graphql.nadel.engine.blueprint
 
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -72,6 +73,41 @@ data class NadelOverallExecutionBlueprint(
         return coordinatesToService[fieldCoordinates]
     }
 
+    inline fun <reified T : NadelFieldInstruction> getInstructionInsideVirtualType(
+        hydrationDetails: ServiceExecutionHydrationDetails?,
+        backingField: ExecutableNormalizedField,
+    ): Map<GraphQLObjectTypeName, List<T>> {
+        hydrationDetails ?: return emptyMap() // Need hydration to provide virtual hydration context
+
+        val backingFieldParentTypeName = backingField.objectTypeNames.singleOrNull()
+            ?: return emptyMap() // Don't support abstract types for now
+
+        val nadelHydrationContext = fieldInstructions[hydrationDetails.hydrationVirtualField]!!
+            .asSequence()
+            .filterIsInstance<NadelGenericHydrationInstruction>()
+            .first() as? NadelHydrationFieldInstruction
+            ?: return emptyMap() // Virtual types only come about from standard hydrations, not batched
+
+        val virtualTypeContext = nadelHydrationContext.virtualTypeContext
+            ?: return emptyMap() // Not all hydrations create virtual types
+
+        val virtualType = virtualTypeContext.backingTypeToVirtualType[backingFieldParentTypeName]
+            ?: return emptyMap() // Not a virtual type
+
+        val fieldCoordinatesInVirtualType = makeFieldCoordinates(virtualType, backingField.name)
+
+        val instructions = fieldInstructions[fieldCoordinatesInVirtualType]
+            ?.filterIsInstance<T>()
+            ?.takeIf {
+                it.isNotEmpty()
+            }
+            ?: return emptyMap()
+
+        return mapOf(
+            backingField.objectTypeNames.single() to instructions,
+        )
+    }
+
     private fun getUnderlyingBlueprint(service: Service): NadelUnderlyingExecutionBlueprint {
         val name = service.name
         return underlyingBlueprints[name] ?: error("Could not find service: $name")
@@ -124,6 +160,9 @@ data class NadelTypeRenameInstructions internal constructor(
     }
 }
 
+/**
+ * todo: why doesn't this belong inside [NadelOverallExecutionBlueprint]
+ */
 inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionMap(
     field: ExecutableNormalizedField,
 ): Map<GraphQLObjectTypeName, T> {
@@ -139,6 +178,9 @@ inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelF
     )
 }
 
+/**
+ * todo: why doesn't this belong inside [NadelOverallExecutionBlueprint]
+ */
 inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionsMap(
     field: ExecutableNormalizedField,
 ): Map<GraphQLObjectTypeName, List<T>> {

@@ -1,12 +1,8 @@
 package graphql.nadel.engine.transform.hydration
 
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
-import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.toGraphQLError
 
 internal object NadelHydrationUtil {
@@ -46,27 +42,5 @@ internal object NadelHydrationUtil {
             .asSequence()
             .map(::toGraphQLError)
             .map(NadelResultInstruction::AddError)
-    }
-
-    fun getHydrationActorNodes(
-        instruction: NadelGenericHydrationInstruction,
-        batches: List<ServiceExecutionResult>,
-    ): List<JsonNode> {
-        return batches
-            .asSequence()
-            .mapNotNull { batch ->
-                getHydrationActorNode(instruction, batch)
-            }
-            .toList()
-    }
-
-    fun getHydrationActorNode(
-        instruction: NadelGenericHydrationInstruction,
-        batch: ServiceExecutionResult,
-    ): JsonNode? {
-        return JsonNodeExtractor.getNodesAt(
-            data = batch.data ?: return null,
-            queryPath = instruction.queryPathToActorField,
-        ).emptyOrSingle()
     }
 }

@@ -9,7 +9,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument.ValueSource
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
@@ -28,7 +28,6 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.isList
-import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.unwrapNonNull
@@ -193,8 +192,8 @@ internal class NadelNewBatchHydrator(
         val context = NadelBatchHydratorContext(
             instructionsByObjectTypeNames = state.instructionsByObjectTypeNames,
             executionContext = state.executionContext,
-            sourceField = state.hydratedField,
-            sourceFieldService = state.hydratedFieldService,
+            sourceField = state.virtualField,
+            sourceFieldService = state.virtualFieldService,
             aliasHelper = state.aliasHelper,
             executionBlueprint = executionBlueprint,
         )
@@ -444,11 +443,11 @@ internal class NadelNewBatchHydrator(
         )
 
         val queries = NadelHydrationFieldsBuilder
-            .makeBatchActorQueries(
+            .makeBatchBackingQueries(
                 executionBlueprint = executionBlueprint,
                 instruction = instruction,
                 aliasHelper = aliasHelper,
-                hydratedField = sourceField,
+                virtualField = sourceField,
                 argBatches = argBatches.map { it.arguments },
             )
 
@@ -457,19 +456,19 @@ internal class NadelNewBatchHydrator(
                 .map { query ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
-                        val hydrationActorField =
-                            FieldCoordinates.coordinates(instruction.actorFieldContainer, instruction.actorFieldDef)
+                        val hydrationBackingField =
+                            FieldCoordinates.coordinates(instruction.backingFieldContainer, instruction.backingFieldDef)
 
                         val serviceHydrationDetails = ServiceExecutionHydrationDetails(
                             timeout = instruction.timeout,
                             batchSize = instruction.batchSize,
                             hydrationSourceService = hydrationSourceService,
-                            hydrationSourceField = instruction.location,
-                            hydrationActorField = hydrationActorField,
+                            hydrationVirtualField = instruction.location,
+                            hydrationBackingField = hydrationBackingField,
                             fieldPath = sourceField.listOfResultKeys,
                         )
                         engine.executeHydration(
-                            service = instruction.actorService,
+                            service = instruction.backingService,
                             topLevelField = query,
                             executionContext = executionContext,
                             hydrationDetails = serviceHydrationDetails,
@@ -523,15 +522,12 @@ internal class NadelNewBatchHydrator(
         sourceObject: JsonNode,
         instructions: List<NadelBatchHydrationFieldInstruction>,
     ): List<SourceInput>? {
-        val coords = makeFieldCoordinates(
-            typeName = sourceField.objectTypeNames.first(),
-            fieldName = sourceField.name,
-        )
+        val coords = instructions.first().location
 
         return if (executionBlueprint.engineSchema.getField(coords)!!.type.unwrapNonNull().isList) {
             val fieldSource = instructions
                 .first()
-                .actorInputValueDefs
+                .backingFieldArguments
                 .asSequence()
                 .map {
                     it.valueSource
@@ -560,7 +556,7 @@ internal class NadelNewBatchHydrator(
                 null
             } else {
                 val fieldSource = instruction
-                    .actorInputValueDefs
+                    .backingFieldArguments
                     .asSequence()
                     .map {
                         it.valueSource
@@ -708,22 +704,17 @@ private class NadelBatchHydratorContext(
     val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     val isSourceFieldListOutput: Boolean by lazy {
-        executionBlueprint.engineSchema
-            .getField(
-                makeFieldCoordinates(
-                    // In regard to the field output type, the abstract types must all define the same list wrapping
-                    // So here, it does not matter which object type we inspect
-                    typeName = sourceField.objectTypeNames.first(),
-                    fieldName = sourceField.name,
-                )
-            )!!.type.unwrapNonNull().isList
+        // In regard to the field output type, the abstract types must all define the same list wrapping
+        // So here, it does not matter which object type we inspect
+        val instruction = instructionsByObjectTypeNames.values.first().first()
+        executionBlueprint.engineSchema.getField(instruction.location)!!.type.unwrapNonNull().isList
     }
 
     val isSourceInputFieldListOutput: Boolean by lazy {
         // todo: this assumption feels wrong and instructions aren't likely to be the same
         instructionsByObjectTypeNames.values.first()
             .any { instruction ->
-                instruction.actorInputValueDefs
+                instruction.backingFieldArguments
                     .asSequence()
                     .map { it.valueSource }
                     .filterIsInstance<ValueSource.FieldResultValue>()

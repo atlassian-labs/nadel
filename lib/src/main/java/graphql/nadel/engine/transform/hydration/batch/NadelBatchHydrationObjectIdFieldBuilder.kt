@@ -93,7 +93,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     ): List<ExecutableNormalizedField> {
         val objectTypeNames = getObjectTypeNamesForIdField(
             executionBlueprint = executionBlueprint,
-            overallParentTypeOfIdField = batchHydrationInstruction.actorFieldDef.type,
+            overallParentTypeOfIdField = batchHydrationInstruction.backingFieldDef.type,
         )
 
         return objectIds
@@ -116,7 +116,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     ): List<String> {
         val overallTypeName = overallParentTypeOfIdField.unwrapAll().name
         val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
-            ?: error("Could not find the overall output type for the actor field")
+            ?: error("Could not find the overall output type for the backing field")
 
         return resolveObjectTypes(
             schema = executionBlueprint.engineSchema,
@@ -128,6 +128,6 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     }
 
     private fun errorForUnsupportedObjectIdParentType(): Nothing {
-        error("When matching by object identifier, the output type of actor field must be an object")
+        error("When matching by object identifier, the output type of backing field must be an object")
     }
 }

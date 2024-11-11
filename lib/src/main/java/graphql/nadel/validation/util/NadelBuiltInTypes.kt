@@ -10,15 +10,12 @@ import graphql.nadel.schema.NadelDirectives.deferDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hiddenDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
-import graphql.nadel.schema.NadelDirectives.hydratedFromDirectiveDefinition
-import graphql.nadel.schema.NadelDirectives.hydratedTemplateDirectiveDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationRemainingArguments
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.partitionDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
@@ -33,9 +30,9 @@ object NadelBuiltInTypes {
     )
 
     val builtInScalarNames = builtInScalars
-        .asSequence()
-        .map { it.name }
-        .toSet()
+        .mapTo(LinkedHashSet()) {
+            it.name
+        }
 
     val builtInDirectiveSyntaxTypeNames = sequenceOf<AnyNamedNode>(
         renamedDirectiveDefinition,
@@ -47,18 +44,15 @@ object NadelBuiltInTypes {
         deferDirectiveDefinition,
         partitionDirectiveDefinition,
 
-        nadelHydrationFromArgumentDefinition,
         nadelBatchObjectIdentifiedByDefinition,
-        nadelHydrationTemplateEnumDefinition,
-        hydratedFromDirectiveDefinition,
-        hydratedTemplateDirectiveDefinition,
 
         nadelHydrationResultFieldPredicateDefinition,
         nadelHydrationResultConditionDefinition,
         nadelHydrationConditionDefinition,
-    ).map {
+        nadelHydrationRemainingArguments,
+    ).mapTo(LinkedHashSet()) {
         it.name
-    }.toSet()
+    }
 
     val allNadelBuiltInTypeNames = builtInScalarNames + builtInDirectiveSyntaxTypeNames
 }
