@@ -9,7 +9,7 @@ class BatchHydrationDeferWithLabelTest : NadelIntegrationTest(
         query {
           issues {
             key
-            ... @defer {
+            ... @defer(label: "deferredAssignee") {
               assignee {
                 name
               }
@@ -112,6 +112,5 @@ class BatchHydrationDeferWithLabelTest : NadelIntegrationTest(
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .deferSupport { true }
-            .newBatchHydrationGrouping { true }
     }
 }

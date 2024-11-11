@@ -274,7 +274,7 @@ internal class NadelNewBatchHydrator(
         } else {
             DeferPayload.Builder()
                 .path(sourceObjectResultPath.toRawPath())
-                // .label(label)
+                .label(label)
                 .data(
                     mapOf(
                         sourceField.resultKey to getHydrationValueForSourceObject(

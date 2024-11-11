@@ -112,6 +112,5 @@ class BatchHydrationDeferTest : NadelIntegrationTest(
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .deferSupport { true }
-            .newBatchHydrationGrouping { true }
     }
 }

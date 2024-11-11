@@ -152,6 +152,7 @@ public class BatchHydrationDeferWithLabelTestSnapshot : TestSnapshot() {
                 |         "issues",
                 |         0
                 |       ],
+                |       "label": "deferredAssignee",
                 |       "data": {
                 |         "assignee": {
                 |           "name": "Franklin"
@@ -163,6 +164,7 @@ public class BatchHydrationDeferWithLabelTestSnapshot : TestSnapshot() {
                 |         "issues",
                 |         1
                 |       ],
+                |       "label": "deferredAssignee",
                 |       "data": {
                 |         "assignee": {
                 |           "name": "Steven"
@@ -174,6 +176,7 @@ public class BatchHydrationDeferWithLabelTestSnapshot : TestSnapshot() {
                 |         "issues",
                 |         2
                 |       ],
+                |       "label": "deferredAssignee",
                 |       "data": {
                 |         "assignee": {
                 |           "name": "Felipe"
