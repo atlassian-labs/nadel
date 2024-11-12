@@ -13,7 +13,6 @@ import io.kotest.matchers.collections.shouldExist
 import io.kotest.matchers.collections.shouldHaveSize
 
 class NadelPartitionValidationTest : DescribeSpec({
-
     describe("validate") {
         context("passes if partition directive is applied in top-level field") {
             withData("type Query", "type Query { echo: String }  type Mutation") { operationPrepText ->
@@ -496,7 +495,7 @@ class NadelPartitionValidationTest : DescribeSpec({
             }
         }
 
-        it("fails with multiple error scenarios") {
+        it("only returns first error if there are multiple") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "test" to """
@@ -529,10 +528,8 @@ class NadelPartitionValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
 
-            errors.shouldHaveSize(3)
+            errors.shouldHaveSize(1)
             errors.shouldExist { it is PartitionAppliedToUnsupportedField }
-            errors.shouldExist { it is InvalidPartitionArgument }
-            errors.shouldExist { it is PartitionAppliedToFieldWithUnsupportedOutputType }
         }
     }
 })

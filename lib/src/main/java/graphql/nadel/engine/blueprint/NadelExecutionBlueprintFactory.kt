@@ -26,7 +26,7 @@ import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.AnyNamedNode
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.getFieldAt
-import graphql.nadel.engine.util.getFieldContainerAt
+import graphql.nadel.engine.util.getFieldContainerFor
 import graphql.nadel.engine.util.getFieldsAlong
 import graphql.nadel.engine.util.getOperationType
 import graphql.nadel.engine.util.isExtensionDef
@@ -192,7 +192,9 @@ private class Factory(
                         when (val renamedDefinition = field.getRenamedOrNull()) {
                             null -> {
                                 field.getHydrationDefinitions()
-                                    .map { makeHydrationFieldInstruction(type, field, it) } + makePartitionInstruction(type, field)
+                                    .map {
+                                        makeHydrationFieldInstruction(type, field, it)
+                                    } + makePartitionInstruction(type, field)
                             }
                             else -> when (renamedDefinition.from.size) {
                                 1 -> listOf(makeRenameInstruction(type, field, renamedDefinition))
@@ -223,7 +225,7 @@ private class Factory(
         hydration: NadelHydrationDefinition,
     ): NadelFieldInstruction {
         val pathToBackingField = hydration.backingField
-        val backingFieldContainer = engineSchema.queryType.getFieldContainerAt(pathToBackingField)!!
+        val backingFieldContainer = engineSchema.queryType.getFieldContainerFor(pathToBackingField)!!
         val backingFieldDef = engineSchema.queryType.getFieldAt(pathToBackingField)!!
         val hydrationBackingService = coordinatesToService[makeFieldCoordinates(backingFieldContainer, backingFieldDef)]!!
 
@@ -280,7 +282,7 @@ private class Factory(
         val sourceFieldsFromArgs = hydrationArgs.mapNotNull {
             when (it.valueSource) {
                 is NadelHydrationArgument.ValueSource.ArgumentValue -> null
-                is FieldResultValue -> it.valueSource.queryPathToField
+                is NadelHydrationArgument.ValueSource.FieldResultValue -> it.valueSource.queryPathToField
                 is NadelHydrationArgument.ValueSource.StaticValue -> null
             }
         }
@@ -334,7 +336,7 @@ private class Factory(
         val manyToOneInputDef = backingInputValueDefs
             .asSequence()
             .mapNotNull { inputValueDef ->
-                if (inputValueDef.valueSource !is FieldResultValue) {
+                if (inputValueDef.valueSource !is NadelHydrationArgument.ValueSource.FieldResultValue) {
                     return@mapNotNull null
                 }
 
@@ -396,7 +398,7 @@ private class Factory(
                 sourceId = hydrationArgs
                     .asSequence()
                     .map(NadelHydrationArgument::valueSource)
-                    .filterIsInstance<FieldResultValue>()
+                    .filterIsInstance<NadelHydrationArgument.ValueSource.FieldResultValue>()
                     .single()
                     .queryPathToField,
                 resultId = hydration.identifiedBy!!,
@@ -433,7 +435,9 @@ private class Factory(
         } + hydrationArgs.flatMap {
             when (val hydrationValueSource: NadelHydrationArgument.ValueSource = it.valueSource) {
                 is NadelHydrationArgument.ValueSource.ArgumentValue -> emptyList()
-                is FieldResultValue -> selectSourceFieldQueryPaths(hydrationValueSource)
+                is NadelHydrationArgument.ValueSource.FieldResultValue -> selectSourceFieldQueryPaths(
+                    hydrationValueSource
+                )
                 is NadelHydrationArgument.ValueSource.StaticValue -> emptyList()
             }
         } + listOfNotNull(condition?.fieldPath)).toSet()
@@ -463,7 +467,9 @@ private class Factory(
         return sourceFieldsFromArgs
     }
 
-    private fun selectSourceFieldQueryPaths(hydrationValueSource: FieldResultValue): List<NadelQueryPath> {
+    private fun selectSourceFieldQueryPaths(
+        hydrationValueSource: NadelHydrationArgument.ValueSource.FieldResultValue,
+    ): List<NadelQueryPath> {
         val hydrationSourceType = hydrationValueSource.fieldDefinition.type.unwrapAll()
         if (hydrationSourceType is GraphQLObjectType) {
             // When the argument of the hydration backing field is an input type and not a primitive
@@ -530,10 +536,10 @@ private class Factory(
         virtualFieldDef: GraphQLFieldDefinition,
         backingFieldDef: GraphQLFieldDefinition,
     ): List<NadelHydrationArgument> {
-        return hydration.arguments.map { remoteArgDef ->
-            val valueSource = when (val argSourceType = remoteArgDef.value) {
-                is NadelHydrationArgumentDefinition.ValueSource.FieldArgument -> {
-                    val argumentName = argSourceType.argumentName
+        return hydration.arguments.map { hydrationArgument ->
+            val valueSource = when (hydrationArgument) {
+                is NadelHydrationArgumentDefinition.FieldArgument -> {
+                    val argumentName = hydrationArgument.argumentName
                     val argumentDef = virtualFieldDef.getArgument(argumentName)
                         ?: error("No argument '$argumentName' on field ${virtualFieldParentType.name}.${virtualFieldDef.name}")
                     val defaultValue = if (argumentDef.argumentDefaultValue.isLiteral) {
@@ -546,12 +552,12 @@ private class Factory(
                     }
 
                     NadelHydrationArgument.ValueSource.ArgumentValue(
-                        argumentName = argSourceType.argumentName,
+                        argumentName = hydrationArgument.argumentName,
                         argumentDefinition = argumentDef,
                         defaultValue = defaultValue,
                     )
                 }
-                is NadelHydrationArgumentDefinition.ValueSource.ObjectField -> {
+                is NadelHydrationArgumentDefinition.ObjectField -> {
                     // Ugh code still uses underlying schema, we need to pull these up to the overall schema
                     val typeToLookAt = if (virtualFieldParentType.isVirtualType()) {
                         virtualFieldParentType
@@ -559,7 +565,7 @@ private class Factory(
                         getUnderlyingType(virtualFieldParentType, virtualFieldDef)
                     }
 
-                    val pathToField = argSourceType.pathToField
+                    val pathToField = hydrationArgument.pathToField
                     FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = typeToLookAt
@@ -567,16 +573,16 @@ private class Factory(
                             ?: error("No field defined at: ${virtualFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
-                is NadelHydrationArgumentDefinition.ValueSource.StaticArgument -> {
+                is NadelHydrationArgumentDefinition.StaticArgument -> {
                     NadelHydrationArgument.ValueSource.StaticValue(
-                        value = argSourceType.staticValue,
+                        value = hydrationArgument.staticValue,
                     )
                 }
             }
 
             NadelHydrationArgument(
-                name = remoteArgDef.name,
-                backingArgumentDef = backingFieldDef.getArgument(remoteArgDef.name),
+                name = hydrationArgument.name,
+                backingArgumentDef = backingFieldDef.getArgument(hydrationArgument.name),
                 valueSource = valueSource,
             )
         }

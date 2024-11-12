@@ -5,108 +5,120 @@ import graphql.Scalars.GraphQLString
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.engine.blueprint.NadelTypeRenameInstruction
 import graphql.nadel.engine.util.AnyNamedNode
 import graphql.nadel.engine.util.all
 import graphql.nadel.engine.util.isExtensionDef
-import graphql.nadel.engine.util.isList
-import graphql.nadel.engine.util.isNonNull
-import graphql.nadel.engine.util.isNotWrapped
-import graphql.nadel.engine.util.isWrapped
 import graphql.nadel.engine.util.operationTypes
 import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.engine.util.unwrapNonNull
-import graphql.nadel.engine.util.unwrapOne
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
-import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.getReachableTypeNames
 import graphql.schema.GraphQLDirectiveContainer
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedType
-import graphql.schema.GraphQLOutputType
-import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLType
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLUnionType
-import graphql.schema.GraphQLUnmodifiedType
 
-internal class NadelTypeValidation(
-    private val context: NadelValidationContext,
-    private val overallSchema: GraphQLSchema,
-    services: Map<String, Service>,
-) {
-    private val fieldValidation = NadelFieldValidation(overallSchema, services, this)
+internal class NadelTypeValidation {
+    private val fieldValidation = NadelFieldValidation(this)
     private val inputValidation = NadelInputValidation()
     private val unionValidation = NadelUnionValidation(this)
     private val enumValidation = NadelEnumValidation()
     private val interfaceValidation = NadelInterfaceValidation()
-    private val namespaceValidation = NadelNamespaceValidation(overallSchema)
+    private val namespaceValidation = NadelNamespaceValidation()
 
+    context(NadelValidationContext)
     fun validate(
         service: Service,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         val (serviceTypes, serviceTypeErrors) = getServiceTypes(service)
 
-        val fieldIssues = serviceTypes.asSequence()
-            .flatMap(::validate)
-            .toList()
+        val serviceTypeMetadata = getReachableTypeMetadata(serviceTypes, service)
 
-        return serviceTypeErrors + fieldIssues
+        val typeValidationResult = serviceTypes
+            .map {
+                validate(it)
+            }
+            .toResult()
+
+        return results(
+            serviceTypeErrors,
+            typeValidationResult,
+            serviceTypeMetadata,
+        )
     }
 
+    private fun getReachableTypeMetadata(
+        serviceTypes: List<NadelServiceSchemaElement>,
+        service: Service,
+    ): NadelReachableServiceTypesResult {
+        val reachableOverallTypeNames = serviceTypes
+            .mapTo(mutableSetOf()) { it.overall.name }
+
+        val reachableUnderlyingTypeNames = serviceTypes
+            .map { it.underlying.name }
+
+        val definedUnderlyingTypeNames = service.underlyingSchema.typeMap.keys
+
+        return NadelReachableServiceTypesResult(
+            service = service,
+            overallTypeNames = reachableOverallTypeNames,
+            underlyingTypeNames = (reachableUnderlyingTypeNames + definedUnderlyingTypeNames).toSet(),
+        )
+    }
+
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         if (!visitElement(schemaElement)) {
-            return emptyList()
+            return ok()
         }
 
         if (schemaElement.overall.javaClass != schemaElement.underlying.javaClass) {
-            return listOf(
-                IncompatibleType(schemaElement),
-            )
+            return IncompatibleType(schemaElement)
         }
 
-        return fieldValidation.validate(schemaElement) +
-            inputValidation.validate(schemaElement) +
-            unionValidation.validate(schemaElement) +
-            interfaceValidation.validate(schemaElement) +
-            namespaceValidation.validate(schemaElement) +
-            enumValidation.validate(schemaElement)
+        return results(
+            validateTypeRename(schemaElement),
+            fieldValidation.validate(schemaElement),
+            inputValidation.validate(schemaElement),
+            unionValidation.validate(schemaElement),
+            interfaceValidation.validate(schemaElement),
+            namespaceValidation.validate(schemaElement),
+            enumValidation.validate(schemaElement),
+        )
     }
 
-    fun validateOutputType(
-        parent: NadelServiceSchemaElement,
-        overallField: GraphQLFieldDefinition,
-        underlyingField: GraphQLFieldDefinition,
-    ): List<NadelSchemaValidationError> {
-        val overallType = overallField.type.unwrapAll()
-        val underlyingType = underlyingField.type.unwrapAll()
-
-        val typeServiceSchemaElement = NadelServiceSchemaElement(
-            service = parent.service,
-            overall = overallType,
-            underlying = underlyingType,
-        )
-
-        // This checks whether the type is actually valid content wise
-        val typeErrors = validate(typeServiceSchemaElement)
-
-        // This checks whether the output type e.g. name or List or NonNull wrappings are valid
-        val outputTypeError = when {
-            isOutputTypeValid(overallType = overallField.type, underlyingType = underlyingField.type) -> null
-            else -> IncompatibleFieldOutputType(parent, overallField, underlyingField)
+    context(NadelValidationContext)
+    private fun validateTypeRename(
+        type: NadelServiceSchemaElement,
+    ): NadelSchemaValidationResult {
+        if (type.overall.name == type.underlying.name) {
+            return ok()
         }
 
-        return typeErrors + listOfNotNull(outputTypeError)
+        // Ignore scalar renames, refer to test "let jsw do jsw things"
+        if (type.overall is GraphQLScalarType) {
+            return ok()
+        }
+
+        return NadelValidatedTypeResult(
+            typeRenameInstruction = NadelTypeRenameInstruction(
+                service = type.service,
+                overallName = type.overall.name,
+                underlyingName = type.underlying.name,
+            ),
+        )
     }
 
     /**
@@ -121,6 +133,7 @@ internal class NadelTypeValidation(
      * Note: this assumes both types are from the same schema. This does NOT
      * deal with differences between overall and underlying schema.
      */
+    context(NadelValidationContext)
     fun isAssignableTo(lhs: GraphQLNamedOutputType, rhs: GraphQLNamedOutputType): Boolean {
         if (lhs.name == rhs.name) {
             return true
@@ -134,60 +147,10 @@ internal class NadelTypeValidation(
         return false
     }
 
-    /**
-     * It checks whether the type name and type wrappings e.g. [graphql.schema.GraphQLNonNull] make sense.
-     */
-    private fun isOutputTypeValid(
-        overallType: GraphQLOutputType,
-        underlyingType: GraphQLOutputType,
-    ): Boolean {
-        var overall: GraphQLType = overallType
-        var underlying: GraphQLType = underlyingType
-
-        while (overall.isWrapped && underlying.isWrapped) {
-            if (underlying.isNonNull && !overall.isNonNull) {
-                // Overall type is allowed to have looser restrictions
-                underlying = underlying.unwrapOne()
-            } else if ((overall.isList && underlying.isList) || (overall.isNonNull && underlying.isNonNull)) {
-                overall = overall.unwrapOne()
-                underlying = underlying.unwrapOne()
-            } else {
-                return false
-            }
-        }
-
-        if (overall.isNotWrapped && underlying.isNotWrapped) {
-            return isOutputTypeNameValid(
-                overallType = overall as GraphQLUnmodifiedType,
-                underlyingType = underlying as GraphQLUnmodifiedType,
-            )
-        } else if (overall.isNotWrapped && underlying.isWrapped) {
-            if (underlying.isNonNull && underlying.unwrapNonNull().isNotWrapped) {
-                return isOutputTypeNameValid(
-                    overallType = overall as GraphQLUnmodifiedType,
-                    underlyingType = underlying.unwrapNonNull() as GraphQLUnmodifiedType,
-                )
-            }
-            return false
-        } else {
-            return false
-        }
-    }
-
-    private fun isOutputTypeNameValid(
-        overallType: GraphQLUnmodifiedType,
-        underlyingType: GraphQLUnmodifiedType,
-    ): Boolean {
-        if (getUnderlyingName(overallType) == underlyingType.name) {
-            return true
-        }
-
-        return false
-    }
-
+    context(NadelValidationContext)
     private fun getServiceTypes(
         service: Service,
-    ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationError>> {
+    ): Pair<List<NadelServiceSchemaElement>, NadelSchemaValidationResult> {
         val errors = mutableListOf<NadelSchemaValidationError>()
         val hydrationUnions = getHydrationUnions(service)
         val namesUsed = getTypeNamesUsed(service, externalTypes = hydrationUnions)
@@ -196,7 +159,7 @@ internal class NadelTypeValidation(
             errors.add(MissingUnderlyingType(service, overallType))
         }
 
-        return overallSchema
+        return engineSchema
             .typeMap
             .asSequence()
             .filter { (key) ->
@@ -235,9 +198,10 @@ internal class NadelTypeValidation(
                             DuplicatedUnderlyingType(duplicatedTypes)
                         },
                 )
-            } to errors
+            } to errors.toResult()
     }
 
+    context(NadelValidationContext)
     private fun getHydrationUnions(service: Service): Set<GraphQLUnionType> {
         return service.definitionRegistry
             .definitions
@@ -245,7 +209,7 @@ internal class NadelTypeValidation(
             .filterIsInstance<UnionTypeDefinition>()
             .filter { union ->
                 // Check that ALL fields that output the union are annotated with @hydrated
-                overallSchema.typeMap
+                engineSchema.typeMap
                     .values
                     .asSequence()
                     .filterIsInstance<GraphQLFieldsContainer>()
@@ -260,11 +224,12 @@ internal class NadelTypeValidation(
                     }
             }
             .map {
-                overallSchema.typeMap[it.name] as GraphQLUnionType
+                engineSchema.typeMap[it.name] as GraphQLUnionType
             }
             .toSet()
     }
 
+    context(NadelValidationContext)
     private fun getTypeNamesUsed(service: Service, externalTypes: Set<GraphQLNamedType>): Set<String> {
         // There is no shared service to validate.
         // These shared types are USED in other services. When they are used, the validation
@@ -290,27 +255,44 @@ internal class NadelTypeValidation(
             }
             .toSet() - namesToIgnore
 
+        val matchingImplementsNames = service.underlyingSchema.typeMap
+            .values
+            .asSequence()
+            .filterIsInstance<GraphQLInterfaceType>()
+            .flatMap {
+                service.underlyingSchema.getImplementations(it)
+            }
+            .map {
+                it.name
+            }
+            .filter {
+                engineSchema.typeMap[it] is GraphQLObjectType
+            }
+
         // If it can be reached by using your service, you must own it to return it!
-        val referencedTypes = getReachableTypeNames(overallSchema, service, definitionNames)
+        val referencedTypes = getReachableTypeNames(engineSchema, service, definitionNames + matchingImplementsNames)
 
         return (definitionNames + referencedTypes).toSet()
     }
 
+    context(NadelValidationContext)
     private fun isNamespacedOperationType(typeName: String): Boolean {
         return namespaceValidation.isNamespacedOperationType(typeName)
     }
 
+    context(NadelValidationContext)
     private fun isOperationType(typeName: String): Boolean {
-        return overallSchema.operationTypes.map { it.name }.contains(typeName)
+        return engineSchema.operationTypes.map { it.name }.contains(typeName)
     }
 
+    context(NadelValidationContext)
     private fun visitElement(schemaElement: NadelServiceSchemaElement): Boolean {
         val schemaElementRef = schemaElement.toRef()
 
-        return if (schemaElementRef in context.visitedTypes) {
+        return if (schemaElementRef in visitedTypes) {
             false // Already visited
         } else {
-            context.visitedTypes.add(schemaElementRef)
+            visitedTypes.add(schemaElementRef)
             true
         }
     }

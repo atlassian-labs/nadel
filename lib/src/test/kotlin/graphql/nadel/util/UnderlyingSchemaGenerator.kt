@@ -1,4 +1,4 @@
-package graphql.nadel.tests.next
+package graphql.nadel.util
 
 import graphql.language.AstPrinter
 import graphql.language.Directive
@@ -37,9 +37,9 @@ private data class UnderlyingSchemaGeneratorContext(
 )
 
 /**
- * Does a best effort at generating an equivalent underlying schema for tests.
+ * todo: this file is copied from the test/ lib and should be stored in somewhere common
  *
- * This will not be helpful for ALL tests. Some tests may require you to do more modifications.
+ * Or perhaps we should just merge the lib/ and test/ modules back together
  */
 fun makeUnderlyingSchema(overallSchema: String): String {
     val document = Parser.parse(overallSchema)
@@ -317,7 +317,6 @@ private fun transformInputValueDefinitions(inputValueDefinitions: List<InputValu
             inputValue.transform { inputValueBuilder ->
                 inputValueBuilder
                     .type(inputValue.type.getUnderlyingType())
-                    .directives(inputValue.directives.filterNotNadelDirectives())
             }
         }
 }

@@ -66,6 +66,7 @@ class NadelHydrationDefinition(
     val isIndexed: Boolean
         get() = appliedDirective.getArgument(Keyword.indexed).getValue()
 
+    @Deprecated(message = "Not used and should be deleted")
     val isBatched: Boolean
         get() = appliedDirective.getArgument(Keyword.batched)?.getValue<Boolean>() == true
 
@@ -76,7 +77,7 @@ class NadelHydrationDefinition(
         get() = (appliedDirective.getArgument(Keyword.arguments).argumentValue.value as ArrayValue)
             .values
             .map {
-                NadelHydrationArgumentDefinition(it as ObjectValue)
+                NadelHydrationArgumentDefinition.from(it as ObjectValue)
             }
 
     val condition: NadelHydrationConditionDefinition?

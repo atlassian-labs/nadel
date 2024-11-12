@@ -1,126 +1,106 @@
 package graphql.nadel.validation
 
+import graphql.Scalars
+import graphql.language.OperationDefinition.Operation
 import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.definition.partition.isPartitioned
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.util.NamespacedUtil
+import graphql.nadel.util.NamespacedUtil.isNamespaceType
 import graphql.nadel.validation.NadelSchemaValidationError.CannotPartitionHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.InvalidPartitionArgument
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToFieldWithUnsupportedOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToSubscriptionField
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToUnsupportedField
-import graphql.nadel.validation.util.NadelSchemaUtil
+import graphql.nadel.validation.util.NadelSchemaUtil.isOperation
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
-import graphql.schema.GraphQLSchema
 
-internal class NadelPartitionValidation(
-    private val overallSchema: GraphQLSchema,
-) {
+internal class NadelPartitionValidation {
+    context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         if (!overallField.isPartitioned()) {
-            return emptyList()
+            return ok()
         }
 
         if (overallField.isHydrated()) {
-            return listOf(
-                CannotPartitionHydratedField(parent, overallField),
-            )
+            return CannotPartitionHydratedField(parent, overallField)
         }
 
-        val parentObject = parent.overall as? GraphQLObjectType ?: return emptyList()
+        val parentObject = parent.overall as? GraphQLObjectType
+            ?: return ok()
 
-        val partitionAppliedOnUnsupportedField =
-            conditionalError(PartitionAppliedToUnsupportedField(parent, overallField)) {
-                !NadelSchemaUtil.isOperation(parentObject) && !NamespacedUtil.isNamespaceType(
-                    parentObject,
-                    overallSchema
-                )
-            }
-
-        val partitionAppliedToSubscriptionField =
-            conditionalError(PartitionAppliedToSubscriptionField(parent, overallField)) {
-                parentObject.name == "Subscription"
-            }
-
-        val unsupportedOutputType = conditionalError(
-            PartitionAppliedToFieldWithUnsupportedOutputType(
-                parent,
-                overallField
-            )
-        ) {
-            !overallField.type.unwrapNonNull().isList && !isMutationPayloadType(overallField.type)
+        if (!isOperation(parentObject) && !isNamespaceType(parentObject, engineSchema)) {
+            return PartitionAppliedToUnsupportedField(parent, overallField)
         }
 
-        val invalidPartitionArgument = conditionalError(
-            InvalidPartitionArgument(
-                parent,
-                overallField
-            )
-        ) {
-            val pathToPartitionArg = overallField.getAppliedDirective(NadelDirectives.partitionDirectiveDefinition.name)
-                ?.getArgument("pathToPartitionArg")
-                ?.getValue<List<String>>()
-                ?: return@conditionalError true
-
-            if (pathToPartitionArg.isEmpty()) {
-                return@conditionalError true
-            }
-
-            val argumentRoot = overallField.getArgument(pathToPartitionArg[0])
-                ?: return@conditionalError true
-
-            var currentType = argumentRoot.type.unwrapNonNull()
-
-            // start at 1 because we've already checked the first item
-            for (i in 1 until pathToPartitionArg.size) {
-                val key = pathToPartitionArg[i]
-
-                val inputType = currentType as? GraphQLInputObjectType
-                    ?: return@conditionalError true
-
-                currentType = inputType.getField(key).type.unwrapNonNull()
-            }
-
-            !currentType.isList
+        if (parentObject.name.equals(Operation.SUBSCRIPTION.name, ignoreCase = true)) {
+            return PartitionAppliedToSubscriptionField(parent, overallField)
         }
 
-        return partitionAppliedOnUnsupportedField + partitionAppliedToSubscriptionField + unsupportedOutputType + invalidPartitionArgument
+        if (!overallField.type.unwrapNonNull().isList && !isMutationPayloadType(overallField.type)) {
+            return PartitionAppliedToFieldWithUnsupportedOutputType(parent, overallField)
+        }
+
+        if (isPartitionArgumentInvalid(overallField)) {
+            return InvalidPartitionArgument(parent, overallField)
+        }
+
+        return ok()
+    }
+
+    private fun isPartitionArgumentInvalid(overallField: GraphQLFieldDefinition): Boolean {
+        val pathToPartitionArg = overallField.getAppliedDirective(NadelDirectives.partitionDirectiveDefinition.name)
+            ?.getArgument("pathToPartitionArg")
+            ?.getValue<List<String>>()
+            ?: return true
+
+        if (pathToPartitionArg.isEmpty()) {
+            return true
+        }
+
+        val argumentRoot = overallField.getArgument(pathToPartitionArg[0])
+            ?: return true
+
+        var currentType = argumentRoot.type.unwrapNonNull()
+
+        // start at 1 because we've already checked the first item
+        for (i in 1 until pathToPartitionArg.size) {
+            val key = pathToPartitionArg[i]
+
+            val inputType = currentType as? GraphQLInputObjectType
+                ?: return true
+
+            currentType = inputType.getField(key).type.unwrapNonNull()
+        }
+
+        return !currentType.isList
     }
 
     private fun isMutationPayloadType(type: GraphQLOutputType): Boolean {
-        val objectType = type.unwrapNonNull() as? GraphQLObjectType ?: return false
+        val objectType = type.unwrapNonNull() as? GraphQLObjectType
+            ?: return false
 
         val containsSuccessField = objectType.fieldDefinitions
+            .asSequence()
             .filter { it.name == "success" }
             .map { it.type.unwrapNonNull() }
             .filterIsInstance<GraphQLScalarType>()
-            .filter { it.name == "Boolean" }
-            .size == 1
+            .filter { it.name == Scalars.GraphQLBoolean.name }
+            .count() == 1
 
         val allExtraFieldsAreOfTypeList = objectType.fieldDefinitions
+            .asSequence()
             .filter { it.name != "success" }
             .all { it.type.unwrapNonNull().isList }
 
         return containsSuccessField && allExtraFieldsAreOfTypeList
-    }
-
-    private inline fun conditionalError(
-        error: NadelSchemaValidationError,
-        conditionSupplier: () -> Boolean,
-    ): List<NadelSchemaValidationError> {
-        return if (conditionSupplier()) {
-            listOf(error)
-        } else {
-            emptyList()
-        }
     }
 }

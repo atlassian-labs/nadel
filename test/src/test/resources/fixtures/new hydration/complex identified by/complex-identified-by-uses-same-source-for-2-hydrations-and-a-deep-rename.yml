@@ -48,6 +48,7 @@ underlyingSchema:
     }
 
     type Issue {
+      issueId: ID
       field: String
       fooId: ID
     }

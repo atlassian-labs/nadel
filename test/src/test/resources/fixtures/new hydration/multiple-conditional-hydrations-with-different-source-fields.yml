@@ -18,6 +18,7 @@ overallSchema:
     type Foo {
       id: ID
       type: Int
+      class: String @hidden
       bar: Bars
       @hydrated(
         service: "service2"

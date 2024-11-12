@@ -179,7 +179,7 @@ abstract class NadelIntegrationTest(
     open fun makeNadel(): Nadel.Builder {
         val schemas = makeNadelSchemas().build()
         val schemaErrors = NadelSchemaValidation(schemas).validate()
-        assertTrue(schemaErrors.isEmpty())
+        assertTrue(schemaErrors.map { it.message }.isEmpty())
 
         return Nadel.newNadel()
             .schemas(schemas)
@@ -453,6 +453,7 @@ abstract class NadelIntegrationTest(
     companion object {
         @JvmStatic
         protected val source = "\$source"
+
         @JvmStatic
         protected val argument = "\$argument"
     }
