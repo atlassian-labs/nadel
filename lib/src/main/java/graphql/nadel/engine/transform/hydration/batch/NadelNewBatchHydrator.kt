@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.incremental.DeferPayload
+import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
@@ -26,6 +28,7 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.getField
 import graphql.nadel.engine.util.isList
+import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.zipOrThrow
@@ -206,40 +209,89 @@ internal class NadelNewBatchHydrator(
         val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects)
         val sourceInputsByInstruction = groupSourceInputsByInstruction(sourceObjectsMetadata)
 
-        val resultsByInstruction = coroutineScope {
-            // It's important to understand that this is a List, not a Sequence.
-            // We want to kick off ALL the hydrations at the same time, _then_ wait for them after.
-            val deferredResults = sourceInputsByInstruction
-                .entries
-                .map { (instruction, sourceInputs) ->
-                    instruction to async {
-                        executeQueries(
-                            executionBlueprint = executionBlueprint,
-                            instruction = instruction,
-                            sourceInputs = sourceInputs,
-                        )
-                    }
+        return if (isDeferred()) {
+            deferHydrations(sourceInputsByInstruction, sourceObjectsMetadata)
+            emptyList()
+        } else {
+            val resultsByInstruction = executeHydrations(sourceInputsByInstruction)
+            val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
+
+            val setData = getSetDataInstructions(
+                sourceObjectsMetadata = sourceObjectsMetadata,
+                indexedResultsByInstruction = indexedResultsByInstruction,
+            )
+
+            val addErrors = resultsByInstruction
+                .flatMap { (_, results) ->
+                    getInstructionsToAddErrors(results)
                 }
 
-            deferredResults
-                .associate { (instruction, deferred) ->
-                    instruction to deferred.await()
-                }
+            setData + addErrors
         }
+    }
 
-        val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
+    context(NadelBatchHydratorContext)
+    private fun deferHydrations(
+        sourceInputsByInstruction: Map<NadelBatchHydrationFieldInstruction, List<SourceInput>>,
+        sourceObjectsMetadata: List<SourceObjectMetadata>,
+    ) {
+        executionContext.incrementalResultSupport.defer {
+            val resultsByInstruction = executeHydrations(sourceInputsByInstruction)
+            val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
 
-        val setData = getSetDataInstructions(
-            sourceObjectsMetadata = sourceObjectsMetadata,
-            indexedResultsByInstruction = indexedResultsByInstruction,
+            val incremental = sourceObjectsMetadata
+                .mapNotNull { (sourceObject, sourceInputsPairedWithInstruction) ->
+                    makeDeferPayload(
+                        sourceObject,
+                        indexedResultsByInstruction,
+                        sourceInputsPairedWithInstruction
+                    )
+                }
+
+            DelayedIncrementalPartialResultImpl.Builder()
+                .incrementalItems(incremental)
+                .build()
+        }
+    }
+
+    context(NadelBatchHydratorContext)
+    private suspend fun makeDeferPayload(
+        sourceObject: JsonNode,
+        indexedResultsByInstruction: Map<NadelBatchHydrationFieldInstruction, Map<NadelBatchHydrationIndexKey, JsonNode>>,
+        sourceInputsPairedWithInstruction: List<SourceInput>?,
+    ): DeferPayload? {
+        val sourceObjectResultPath = executionContext.resultTracker.getResultPath(
+            sourceField.queryPath.dropLast(n = 1),
+            sourceObject,
         )
 
-        val addErrors = resultsByInstruction
-            .flatMap { (_, results) ->
-                getInstructionsToAddErrors(results)
-            }
+        // TODO: Extract to Utils somewhere
+        // This isn't really right… but we start with this
+        val label = sourceField.deferredExecutions.firstNotNullOfOrNull { it.label }
 
-        return setData + addErrors
+        return if (sourceObjectResultPath == null) {
+            null
+        } else {
+            DeferPayload.Builder()
+                .path(sourceObjectResultPath.toRawPath())
+                .label(label)
+                .data(
+                    mapOf(
+                        sourceField.resultKey to getHydrationValueForSourceObject(
+                            indexedResultsByInstruction,
+                            sourceInputsPairedWithInstruction,
+                        ).value,
+                    ),
+                )
+                .build()
+        }
+    }
+
+    context(NadelBatchHydratorContext)
+    private fun isDeferred(): Boolean {
+        return executionContext.hints.deferSupport()
+            && executionContext.hydrationDetails == null // No nested hydrations
+            && sourceField.deferredExecutions.isNotEmpty()
     }
 
     context(NadelBatchHydratorContext)
@@ -336,6 +388,32 @@ internal class NadelNewBatchHydrator(
                 strategy = matchStrategy,
             )
         }
+    }
+
+    context(NadelBatchHydratorContext)
+    private suspend fun executeHydrations(
+        sourceInputsByInstruction: Map<NadelBatchHydrationFieldInstruction, List<SourceInput>>,
+    ): Map<NadelBatchHydrationFieldInstruction, List<NadelResolvedObjectBatch>> {
+        // It's important to ensure deferredResults is a List not a Sequence
+        // We want to kick off ALL the hydrations at the same time, _then_ wait for them after.
+        val deferredResults = coroutineScope {
+            sourceInputsByInstruction
+                .entries
+                .map { (instruction, sourceInputs) ->
+                    instruction to async {
+                        executeQueries(
+                            executionBlueprint = executionBlueprint,
+                            instruction = instruction,
+                            sourceInputs = sourceInputs,
+                        )
+                    }
+                }
+        }
+
+        return deferredResults
+            .associate { (instruction, deferred) ->
+                instruction to deferred.await()
+            }
     }
 
     context(NadelBatchHydratorContext)
