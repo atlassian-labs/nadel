@@ -26,25 +26,21 @@ open class PartialPartitionTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-  api: Api @namespaced
-}
-
-type Api {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
-  stuff(id: ID!): Stuff
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
-
-type Stuff {
-  id: ID!
-  name: String
-}
+                type Query {
+                  api: Api @namespaced
+                }
+                type Api {
+                  things(ids: [ID!]! ): [Thing] @partition(pathToPartitionArg: ["ids"])
+                  stuff(id: ID!): Stuff
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
+                type Stuff {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

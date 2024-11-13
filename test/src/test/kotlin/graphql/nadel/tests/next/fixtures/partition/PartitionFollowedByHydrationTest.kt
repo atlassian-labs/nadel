@@ -26,33 +26,30 @@ open class PartitionFollowedByHydrationTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
-}
-
-type Thing {
-  id: ID!
-  name: String
-  owner: User 
-  @hydrated(
-    service: "users_service"
-    field: "users"
-    arguments: [{name: "ids", value: "$source.ownerId"}]
-  )
-}
+                type Query {
+                  things(ids: [ID!]! ): [Thing] @partition(pathToPartitionArg: ["ids"])
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                  owner: User
+                  @hydrated(
+                    service: "users_service"
+                    field: "users"
+                    arguments: [{name: "ids", value: "$source.ownerId"}]
+                  )
+                }
             """.trimIndent(),
             underlyingSchema = """
-type Query {
-  things(ids: [ID!]! ): [Thing]
-}
-
-type Thing {
-  id: ID!
-  name: String
-  ownerId: ID
-}
-            """,
+                type Query {
+                  things(ids: [ID!]! ): [Thing]
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                  ownerId: ID
+                }
+            """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
@@ -75,14 +72,13 @@ type Thing {
         Service(
             name = "users_service",
             overallSchema = """
-type Query {
-  users(ids: [ID!]! ): [User]
-}
-
-type User {
-  id: ID!
-  name: String
-}
+                type Query {
+                  users(ids: [ID!]! ): [User]
+                }
+                type User {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

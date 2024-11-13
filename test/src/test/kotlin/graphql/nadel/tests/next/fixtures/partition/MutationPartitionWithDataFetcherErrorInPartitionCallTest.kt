@@ -34,43 +34,35 @@ open class MutationPartitionWithDataFetcherErrorInPartitionCallTest : NadelInteg
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-    echo: String
-}
-
-type Mutation {
-  thingsApi: ThingsApi @namespaced
-}
-
-type ThingsApi {
-  linkThings(linkThingsInput: LinkThingsInput!): LinkThingsPayload 
-  @partition(pathToPartitionArg: ["linkThingsInput", "thingsLinked"])
-}
-
-input LinkThingsInput {
-  thingsLinked: [ThingsLinked!]!
-}
-
-input ThingsLinked {
-    from: ID!
-    to: ID!
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
-
-type MutationError {
-    message: String
-}
-
-type LinkThingsPayload {
-    success: Boolean!
-    errors: [MutationError!]
-    linkedThings: [Thing]
-}
+                type Query {
+                  echo: String
+                }
+                type Mutation {
+                  thingsApi: ThingsApi @namespaced
+                }
+                type ThingsApi {
+                  linkThings(linkThingsInput: LinkThingsInput!): LinkThingsPayload
+                  @partition(pathToPartitionArg: ["linkThingsInput", "thingsLinked"])
+                }
+                input LinkThingsInput {
+                  thingsLinked: [ThingsLinked!]!
+                }
+                input ThingsLinked {
+                  from: ID!
+                  to: ID!
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
+                type MutationError {
+                  message: String
+                }
+                type LinkThingsPayload {
+                  success: Boolean!
+                  errors: [MutationError!]
+                  linkedThings: [Thing]
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
@@ -84,7 +76,7 @@ type LinkThingsPayload {
                                     env.getArgument<Map<String, List<Map<String, String>>>>("linkThingsInput")!!
                                 val thingsLinked = filter["thingsLinked"]!!
 
-                                if(thingsLinked.any { it["from"]?.contains("partition-C") == true }) {
+                                if (thingsLinked.any { it["from"]?.contains("partition-C") == true }) {
                                     throw RuntimeException("Could not link things in partition-C")
                                 }
 

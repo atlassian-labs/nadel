@@ -27,27 +27,22 @@ open class NamespacedPartitionTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-  thingsApi: ThingsApi @namespaced
-}
-
-type ThingsApi {
-  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
-}
-
-input ThingsFilter {
-  thingsIds: [ThingId!]!
-}
-
-input ThingId {
-    id: ID!
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
+                type Query {
+                  thingsApi: ThingsApi @namespaced
+                }
+                type ThingsApi {
+                  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
+                }
+                input ThingsFilter {
+                  thingsIds: [ThingId!]!
+                }
+                input ThingId {
+                  id: ID!
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

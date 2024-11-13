@@ -26,27 +26,24 @@ open class PartitionOnRenamedFieldTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-  renamedThings(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"]) @renamed(from: "things")
-  renamedEcho: String @renamed(from: "echo")
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
+                type Query {
+                  renamedThings(ids: [ID!]!): [Thing] @partition(pathToPartitionArg: ["ids"]) @renamed(from: "things")
+                  renamedEcho: String @renamed(from: "echo")
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             underlyingSchema = """
-type Query {
-  things(ids: [ID!]! ): [Thing]
-  echo: String
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
+                type Query {
+                  things(ids: [ID!]! ): [Thing]
+                  echo: String
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

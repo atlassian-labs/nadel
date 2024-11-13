@@ -24,23 +24,20 @@ open class PartitionWithConflictingRoutingValuesTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-type Query {
-  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
-}
-
-input ThingsFilter {
-  thingsIds: [ThingId!]!
-}
-
-input ThingId {
-    primaryId: ID!
-    secondaryId: ID!
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
+                type Query {
+                  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
+                }
+                input ThingsFilter {
+                  thingsIds: [ThingId!]!
+                }
+                input ThingId {
+                  primaryId: ID!
+                  secondaryId: ID!
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

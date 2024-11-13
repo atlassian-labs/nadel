@@ -40,28 +40,24 @@ open class PartitionWithConflictingRoutingValuesThatAreFilteredTest : NadelInteg
         Service(
             name = "things_service",
             overallSchema = """
-type Query {
-  things(filter: ThingsFilter): [Connection] @partition(pathToPartitionArg: ["filter", "thingsIds"])
-}
-
-input ThingsFilter {
-  thingsIds: [ThingId!]!
-}
-
-input ThingId {
-    to: ID!
-    from: ID!
-}
-
-type Connection {
-    to: Thing
-    from: Thing
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
+                type Query {
+                  things(filter: ThingsFilter): [Connection] @partition(pathToPartitionArg: ["filter", "thingsIds"])
+                }
+                input ThingsFilter {
+                  thingsIds: [ThingId!]!
+                }
+                input ThingId {
+                  to: ID!
+                  from: ID!
+                }
+                type Connection {
+                  to: Thing
+                  from: Thing
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
@@ -115,7 +111,7 @@ type Thing {
                                     override fun getPartitionKey(
                                         scalarValue: ScalarValue<*>,
                                         inputValueDef: GraphQLInputValueDefinition,
-                                        context: NadelFieldPartitionContext
+                                        context: NadelFieldPartitionContext,
                                     ): String? {
                                         return if (scalarValue !is StringValue) {
                                             null
@@ -140,7 +136,7 @@ type Thing {
     }
 }
 
-object TestPartitionContext: NadelFieldPartitionContext() {
+object TestPartitionContext : NadelFieldPartitionContext() {
     fun getPredicate(): Predicate<String> {
         return Predicate { partitionValue ->
             partitionValue.contains("primary")

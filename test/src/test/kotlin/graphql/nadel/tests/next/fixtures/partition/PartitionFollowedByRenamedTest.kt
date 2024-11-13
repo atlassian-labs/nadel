@@ -22,25 +22,22 @@ open class PartitionFollowedByRenamedTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
-}
-
-type Thing {
-  id: ID!
-  name: String @renamed(from: "underlyingName")
-}
+                type Query {
+                  things(ids: [ID!]!): [Thing] @partition(pathToPartitionArg: ["ids"])
+                }
+                type Thing {
+                  id: ID!
+                  name: String @renamed(from: "underlyingName")
+                }
             """.trimIndent(),
             underlyingSchema = """
-type Query {
-  things(ids: [ID!]! ): [Thing]
-}
-
-type Thing {
-  id: ID!
-  underlyingName: String
-}
+                type Query {
+                  things(ids: [ID!]!): [Thing]
+                }
+                type Thing {
+                  id: ID!
+                  underlyingName: String
+                }
             """,
             runtimeWiring = { wiring ->
                 wiring

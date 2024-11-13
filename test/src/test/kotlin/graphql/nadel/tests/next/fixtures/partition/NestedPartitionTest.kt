@@ -25,23 +25,19 @@ open class NestedPartitionTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
-}
-
-input ThingsFilter {
-  thingsIds: [ThingId!]!
-}
-
-input ThingId {
-    id: ID!
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
+                type Query {
+                  things(filter: ThingsFilter): [Thing] @partition(pathToPartitionArg: ["filter", "thingsIds"])
+                }
+                input ThingsFilter {
+                  thingsIds: [ThingId!]!
+                }
+                input ThingId {
+                  id: ID!
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

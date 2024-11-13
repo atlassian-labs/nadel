@@ -24,16 +24,14 @@ open class PartitionWithSkipIncludeTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-
-type Query {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
-}
-
-type Thing {
-  id: ID!
-  name: String
-  age: Int
-}
+                type Query {
+                  things(ids: [ID!]!): [Thing] @partition(pathToPartitionArg: ["ids"])
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                  age: Int
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

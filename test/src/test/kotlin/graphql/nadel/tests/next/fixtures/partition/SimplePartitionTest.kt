@@ -23,14 +23,13 @@ open class SimplePartitionTest : NadelIntegrationTest(
         Service(
             name = "things_service",
             overallSchema = """
-type Query {
-  things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
-}
-
-type Thing {
-  id: ID!
-  name: String
-}
+                type Query {
+                  things(ids: [ID!]!): [Thing] @partition(pathToPartitionArg: ["ids"])
+                }
+                type Thing {
+                  id: ID!
+                  name: String
+                }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring

@@ -26,7 +26,7 @@ class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
     }
 
     override fun getPartitionKeyExtractor(): NadelPartitionKeyExtractor {
-        return object: NadelPartitionKeyExtractor {
+        return object : NadelPartitionKeyExtractor {
             override fun getPartitionKey(
                 scalarValue: ScalarValue<*>,
                 inputValueDef: GraphQLInputValueDefinition,
