@@ -1,36 +1,20 @@
 package graphql.nadel.tests.next.fixtures.hydration.copy
 
-import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
-import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.transform.artificial.NadelAliasHelper
-import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
+import graphql.scalars.ExtendedScalars
 
-/**
- * Uses hydration to "copy" a field. Does not link two pieces of data together i.e. no $source fields used.
- */
-class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
+class HydrationRemainingArgumentsTest : NadelIntegrationTest(
     query = """
         query {
-          businessReport_findRecentWorkByTeam(teamId: "hello") {
+          businessReport_findRecentWorkByTeam(orgId: "turtles", teamId: "hello") {
             edges {
               node {
                 ... on JiraIssue {
                   key
                 }
-                ... on BitbucketPullRequest {
-                  title
-                  patch
-                }
               }
-              cursor
-            }
-            pageInfo {
-              hasNextPage
             }
           }
         }
@@ -40,47 +24,33 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
         Service(
             name = "graph_store",
             overallSchema = """
+                scalar JSON
                 type Query {
                   graphStore_query(
                     query: String!
                     first: Int
                     after: String
+                    remainingArgs: JSON @hydrationRemainingArguments
                   ): GraphStoreQueryConnection
                 }
                 type GraphStoreQueryConnection {
                   edges: [GraphStoreQueryEdge]
-                  pageInfo: PageInfo
                 }
                 type GraphStoreQueryEdge {
                   nodeId: ID
-                  cursor: String
-                }
-                type PageInfo {
-                    hasNextPage: Boolean!
-                    hasPreviousPage: Boolean!
-                    startCursor: String
-                    endCursor: String
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 data class GraphStoreQueryEdge(
                     val nodeId: String,
-                    val cursor: String?,
-                )
-
-                data class PageInfo(
-                    val hasNextPage: Boolean,
-                    val hasPreviousPage: Boolean,
-                    val startCursor: String?,
-                    val endCursor: String?,
                 )
 
                 data class GraphStoreQueryConnection(
                     val edges: List<GraphStoreQueryEdge>,
-                    val pageInfo: PageInfo,
                 )
 
                 wiring
+                    .scalar(ExtendedScalars.Json)
                     .type("Query") { type ->
                         type
                             .dataFetcher("graphStore_query") { env ->
@@ -88,18 +58,7 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                                     edges = listOf(
                                         GraphStoreQueryEdge(
                                             nodeId = "ari:cloud:jira::issue/1",
-                                            cursor = "1",
                                         ),
-                                        GraphStoreQueryEdge(
-                                            nodeId = "ari:cloud:bitbucket::pull-request/2",
-                                            cursor = "2",
-                                        ),
-                                    ),
-                                    pageInfo = PageInfo(
-                                        hasNextPage = true,
-                                        hasPreviousPage = false,
-                                        startCursor = null,
-                                        endCursor = "1",
                                     ),
                                 )
                             }
@@ -153,58 +112,14 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                     }
             },
         ),
-        Service(
-            name = "bitbucket",
-            overallSchema = """
-                type Query {
-                  pullRequestsByIds(ids: [ID!]!): [BitbucketPullRequest]
-                }
-                type BitbucketPullRequest {
-                  id: ID!
-                  title: String
-                  patch: String
-                }
-            """.trimIndent(),
-            runtimeWiring = { runtime ->
-                data class BitbucketPullRequest(
-                    val id: String,
-                    val title: String,
-                    val patch: String,
-                )
-
-                val issuesByIds = listOf(
-                    BitbucketPullRequest(
-                        id = "ari:cloud:bitbucket::pull-request/1",
-                        title = "Delete everything",
-                        patch = "-",
-                    ),
-                    BitbucketPullRequest(
-                        id = "ari:cloud:bitbucket::pull-request/2",
-                        title = "Initial Commit",
-                        patch = "+",
-                    ),
-                ).strictAssociateBy { it.id }
-
-                runtime
-                    .type("Query") { type ->
-                        type
-                            .dataFetcher("pullRequestsByIds") { env ->
-                                val ids = env.getArgument<List<String>>("ids")
-
-                                ids!!
-                                    .map {
-                                        issuesByIds[it]
-                                    }
-                            }
-                    }
-            },
-        ),
         // Service that introduces virtual type
         Service(
             name = "work",
             overallSchema = """
                 type Query {
+                  business_stub: String @hidden
                   businessReport_findRecentWorkByTeam(
+                    orgId: ID!
                     teamId: ID!
                     first: Int
                     after: String
@@ -231,7 +146,6 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                 directive @virtualType on OBJECT
                 type WorkConnection @virtualType {
                   edges: [WorkEdge]
-                  pageInfo: PageInfo
                 }
                 type WorkEdge @virtualType {
                   nodeId: ID @hidden
@@ -241,14 +155,8 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
-                    @hydrated(
-                      service: "bitbucket"
-                      field: "pullRequestsByIds"
-                      arguments: [{name: "ids", value: "$source.nodeId"}]
-                    )
-                  cursor: String
                 }
-                union WorkNode = JiraIssue | BitbucketPullRequest
+                union WorkNode = JiraIssue
             """.trimIndent(),
             underlyingSchema = """
                 type Query {
@@ -264,35 +172,5 @@ class HydrationCopiesFieldAndHasPolymorphicHydrationTest : NadelIntegrationTest(
         return super.makeExecutionHints()
             .virtualTypeSupport { true }
             .shortCircuitEmptyQuery { true }
-    }
-
-    override fun makeNadel(): Nadel.Builder {
-        return super.makeNadel()
-            .executionHooks(
-                object : NadelExecutionHooks {
-                    override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-                        instructions: List<T>,
-                        parentNode: JsonNode,
-                        aliasHelper: NadelAliasHelper,
-                        userContext: Any?,
-                    ): T? {
-                        if (instructions.size == 1) {
-                            return instructions.single()
-                        }
-
-                        @Suppress("UNCHECKED_CAST")
-                        val nodeId = (parentNode.value as JsonMap)[aliasHelper.getResultKey("nodeId")] as String
-
-                        val prs = instructions.single { it.backingFieldDef.name == "pullRequestsByIds" }
-                        val issues = instructions.single { it.backingFieldDef.name == "issuesByIds" }
-
-                        return when {
-                            nodeId.startsWith("ari:cloud:bitbucket::pull-request/") -> prs
-                            nodeId.startsWith("ari:cloud:jira::issue/") -> issues
-                            else -> throw IllegalArgumentException()
-                        }
-                    }
-                }
-            )
     }
 }

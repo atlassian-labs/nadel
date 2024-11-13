@@ -198,5 +198,6 @@ class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .virtualTypeSupport { false }
+            .shortCircuitEmptyQuery { true }
     }
 }

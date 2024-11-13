@@ -119,24 +119,6 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "work",
-                query = """
-                | {
-                |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
-                | }
-                """.trimMargin(),
-                variables = " {}",
-                result = """
-                | {
-                |   "data": {
-                |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**

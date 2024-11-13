@@ -38,6 +38,13 @@ object NadelDirectives {
 
     val hydratedDirectiveDefinition = NadelHydrationDefinition.directiveDefinition
 
+    val nadelHydrationRemainingArguments = parseDefinition<DirectiveDefinition>(
+        // language=GraphQL
+        """
+          directive @hydrationRemainingArguments on ARGUMENT_DEFINITION
+        """.trimIndent()
+    )
+
     val dynamicServiceDirectiveDefinition = parseDefinition<DirectiveDefinition>(
         // language=GraphQL
         """
