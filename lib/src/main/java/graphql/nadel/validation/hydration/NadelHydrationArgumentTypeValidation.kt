@@ -70,7 +70,7 @@ internal class NadelHydrationArgumentTypeValidation {
     ): NadelHydrationArgumentTypeValidationResult {
         if (isBatchHydration) {
             // Object must be fed into 1D array
-            if (hydrationArgumentDefinition is NadelHydrationArgumentDefinition.ObjectField) {
+            if (hydrationArgumentDefinition is NadelHydrationArgumentDefinition.SourceField) {
                 validateBatchHydrationSourceFieldBackingArgument(
                     requiredType = requiredType,
                 ).onError { return it }
@@ -82,7 +82,7 @@ internal class NadelHydrationArgumentTypeValidation {
                 requiredType = requiredType.unwrapAll(),
             ).onError { return it }
         } else {
-            if (hydrationArgumentDefinition is NadelHydrationArgumentDefinition.ObjectField) {
+            if (hydrationArgumentDefinition is NadelHydrationArgumentDefinition.SourceField) {
                 // todo: this should only unwrap not-null but we don't handle NadelHydrationStrategy.ManyToOne
                 validateArgumentType(
                     suppliedType = suppliedType.unwrapAll(),

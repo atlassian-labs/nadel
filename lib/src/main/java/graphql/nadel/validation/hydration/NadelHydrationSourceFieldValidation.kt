@@ -66,33 +66,32 @@ internal class NadelHydrationSourceFieldValidation {
     context(NadelValidationContext)
     private fun List<NadelHydrationArgument>.getSourceFields(): NadelValidationInterimResult<List<NadelQueryPath>> {
         return flatMap { argument ->
-            when (argument.valueSource) {
-                is NadelHydrationArgument.ValueSource.ArgumentValue -> emptyList()
-                is NadelHydrationArgument.ValueSource.FieldResultValue -> getSourceFieldQueryPaths(argument.valueSource)
-                    .onError { return it }
-                is NadelHydrationArgument.ValueSource.StaticValue -> emptyList()
-                is NadelHydrationArgument.ValueSource.RemainingArguments -> emptyList()
+            when (argument) {
+                is NadelHydrationArgument.VirtualFieldArgument -> emptyList()
+                is NadelHydrationArgument.SourceField -> getSourceFieldQueryPaths(argument).onError { return it }
+                is NadelHydrationArgument.StaticValue -> emptyList()
+                is NadelHydrationArgument.RemainingVirtualFieldArguments -> emptyList()
             }
         }.asInterimSuccess()
     }
 
     context(NadelValidationContext)
     private fun getSourceFieldQueryPaths(
-        hydrationValueSource: NadelHydrationArgument.ValueSource.FieldResultValue,
+        hydrationArgument: NadelHydrationArgument.SourceField,
     ): NadelValidationInterimResult<List<NadelQueryPath>> {
-        val hydrationSourceType = hydrationValueSource.fieldDefinition.type.unwrapAll()
+        val hydrationSourceType = hydrationArgument.sourceFieldDef.type.unwrapAll()
 
         if (hydrationSourceType is GraphQLObjectType) {
             // When the argument of the hydration backing field is an input type and not a primitive
             // we need to add all the input fields to the source fields
             return hydrationSourceType.fields
                 .map { field ->
-                    hydrationValueSource.queryPathToField.plus(field.name)
+                    hydrationArgument.pathToSourceField.plus(field.name)
                 }
                 .asInterimSuccess()
         }
 
-        return listOf(hydrationValueSource.queryPathToField)
+        return listOf(hydrationArgument.pathToSourceField)
             .asInterimSuccess()
     }
 

@@ -3,7 +3,7 @@ package graphql.nadel.engine.transform.hydration.batch
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchInputDef
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getBatchArgument
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBuilder.getNonBatchInputValues
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.javaValueToAstValue
@@ -72,8 +72,7 @@ internal object NadelNewBatchHydrationInputBuilder {
     ): List<BatchedArgumentValue> {
         val batchSize = instruction.batchSize
 
-        val (batchInputDef) = getBatchInputDef(instruction) ?: return emptyList()
-        val batchArgDef = instruction.backingFieldDef.getArgument(batchInputDef.name)
+        val batchArgument = getBatchArgument(instruction) ?: return emptyList()
 
         val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(
             argumentValues = sourceInputs.map { it.value },
@@ -87,7 +86,7 @@ internal object NadelNewBatchHydrationInputBuilder {
             }
             .map { chunk ->
                 val normalizedInputValue = NormalizedInputValue(
-                    GraphQLTypeUtil.simplePrint(batchArgDef.type),
+                    GraphQLTypeUtil.simplePrint(batchArgument.backingArgumentDef.type),
                     javaValueToAstValue(chunk),
                 )
 
@@ -96,7 +95,7 @@ internal object NadelNewBatchHydrationInputBuilder {
                         .map {
                             JsonNode(it)
                         },
-                    argumentDef = batchInputDef,
+                    argumentDef = batchArgument,
                     argumentValue = normalizedInputValue,
                 )
             }

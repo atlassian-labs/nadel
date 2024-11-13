@@ -85,7 +85,7 @@ class NadelHydrationArgumentTypeValidationTest {
                 assertTrue(error.parentType.overall.name == "JiraIssue")
                 assertTrue(error.virtualField.name == "related")
                 assertTrue(error.hydration.backingField == listOf("issueById"))
-                assertTrue(error.hydrationArgument.name == "search")
+                assertTrue(error.hydrationArgument.backingFieldArgumentName == "search")
                 assertTrue(GraphQLTypeUtil.simplePrint(error.suppliedType) == sourceType.filter(Char::isLetter))
                 assertTrue(GraphQLTypeUtil.simplePrint(error.requiredType) == requiredType.filter(Char::isLetter))
             }
@@ -250,7 +250,7 @@ class NadelHydrationArgumentTypeValidationTest {
         val error = errors.singleOfType<NadelHydrationArgumentMissingRequiredInputObjectFieldError>()
         assertTrue(error.parentType.overall.name == "JiraIssue")
         assertTrue(error.virtualField.name == "related")
-        assertTrue(error.hydrationArgument.name == "search")
+        assertTrue(error.hydrationArgument.backingFieldArgumentName == "search")
         assertTrue(error.suppliedFieldContainer.name == "SearchInfo")
         assertTrue(error.requiredFieldContainer.name == "SearchInput")
         assertTrue(error.requiredField.name == "location")
@@ -298,7 +298,7 @@ class NadelHydrationArgumentTypeValidationTest {
         val error = errors.singleOfType<NadelHydrationArgumentMissingRequiredInputObjectFieldError>()
         assertTrue(error.parentType.overall.name == "JiraIssue")
         assertTrue(error.virtualField.name == "related")
-        assertTrue(error.hydrationArgument.name == "search")
+        assertTrue(error.hydrationArgument.backingFieldArgumentName == "search")
         assertTrue(error.suppliedFieldContainer.name == "LocationSearchInfo")
         assertTrue(error.requiredFieldContainer.name == "LocationSearchInput")
         assertTrue(error.requiredField.name == "city")
@@ -347,9 +347,9 @@ class NadelHydrationArgumentTypeValidationTest {
         assertTrue(error.parentType.overall.name == "JiraIssue")
         assertTrue(error.virtualField.name == "related")
         val hydrationArgument = error.hydrationArgument
-        assertTrue(hydrationArgument is NadelHydrationArgumentDefinition.ObjectField)
-        assertTrue(hydrationArgument.name == "search")
-        assertTrue(hydrationArgument.pathToField == listOf("info"))
+        assertTrue(hydrationArgument is NadelHydrationArgumentDefinition.SourceField)
+        assertTrue(hydrationArgument.backingFieldArgumentName == "search")
+        assertTrue(hydrationArgument.pathToSourceField == listOf("info"))
         assertTrue(error.suppliedFieldContainer.name == "LocationSearchInfo")
         assertTrue(error.requiredFieldContainer.name == "LocationSearchInput")
         assertTrue(error.requiredField.name == "city")
@@ -532,9 +532,9 @@ class NadelHydrationArgumentTypeValidationTest {
 
                 val error = errors.singleOfType<NadelHydrationArgumentIncompatibleTypeError>()
                 val hydrationArgument = error.hydrationArgument
-                assertTrue(hydrationArgument.name == "search")
-                assertTrue(hydrationArgument is NadelHydrationArgumentDefinition.FieldArgument)
-                assertTrue(hydrationArgument.argumentName == "myArg")
+                assertTrue(hydrationArgument.backingFieldArgumentName == "search")
+                assertTrue(hydrationArgument is NadelHydrationArgumentDefinition.VirtualFieldArgument)
+                assertTrue(hydrationArgument.virtualFieldArgumentName == "myArg")
                 assertTrue(GraphQLTypeUtil.simplePrint(error.suppliedType) == sourceType)
                 assertTrue(GraphQLTypeUtil.simplePrint(error.requiredType) == requiredType)
             }
@@ -636,7 +636,7 @@ class NadelHydrationArgumentTypeValidationTest {
                 assertTrue(error.parentType.overall.name == "JiraIssue")
                 assertTrue(error.virtualField.name == "related")
                 assertTrue(error.hydration.backingField == listOf("issueById"))
-                assertTrue(error.hydrationArgument.name == "ids")
+                assertTrue(error.hydrationArgument.backingFieldArgumentName == "ids")
                 assertTrue(GraphQLTypeUtil.simplePrint(error.suppliedType) == sourceType.filter(Char::isLetter))
                 assertTrue(GraphQLTypeUtil.simplePrint(error.requiredType) == requiredType.filter(Char::isLetter))
             }

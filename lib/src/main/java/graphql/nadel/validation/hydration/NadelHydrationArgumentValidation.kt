@@ -86,20 +86,20 @@ internal class NadelHydrationArgumentValidation {
     private fun validateArgument(
         hydrationArgumentDefinition: NadelHydrationArgumentDefinition,
     ): NadelValidationInterimResult<NadelHydrationArgument> {
-        val backingArgumentDefinition = backingField.getArgument(hydrationArgumentDefinition.name)
+        val backingArgumentDefinition = backingField.getArgument(hydrationArgumentDefinition.backingFieldArgumentName)
             ?: return NadelHydrationReferencesNonExistentBackingArgumentError(
                 parentType = parent,
                 virtualField = virtualField,
                 hydration = hydrationDefinition,
-                argument = hydrationArgumentDefinition.name,
+                argument = hydrationArgumentDefinition.backingFieldArgumentName,
             ).asInterimError()
 
         return when (hydrationArgumentDefinition) {
-            is NadelHydrationArgumentDefinition.ObjectField -> getObjectFieldArgument(
+            is NadelHydrationArgumentDefinition.SourceField -> getObjectFieldArgument(
                 hydrationArgumentDefinition = hydrationArgumentDefinition,
                 backingArgumentDefinition = backingArgumentDefinition,
             )
-            is NadelHydrationArgumentDefinition.FieldArgument -> getFieldArgument(
+            is NadelHydrationArgumentDefinition.VirtualFieldArgument -> getFieldArgument(
                 hydrationArgumentDefinition = hydrationArgumentDefinition,
                 backingArgumentDefinition = backingArgumentDefinition,
             )
@@ -115,7 +115,7 @@ internal class NadelHydrationArgumentValidation {
         return backingField.arguments
             .asSequence()
             .filter { backingArg ->
-                backingArg.type.isNonNull && hydrationDefinition.arguments.none { it.name == backingArg.name }
+                backingArg.type.isNonNull && hydrationDefinition.arguments.none { it.backingFieldArgumentName == backingArg.name }
             }
             .map { backingArg ->
                 NadelHydrationMissingRequiredBackingFieldArgumentError(
@@ -131,7 +131,7 @@ internal class NadelHydrationArgumentValidation {
     context(NadelValidationContext, NadelHydrationArgumentValidationContext)
     private fun validateBatchHydrationArguments(): NadelSchemaValidationResult {
         val numberOfSourceArgs = hydrationDefinition.arguments
-            .count { it is NadelHydrationArgumentDefinition.ObjectField }
+            .count { it is NadelHydrationArgumentDefinition.SourceField }
 
         return if (numberOfSourceArgs == 0) {
             NadelBatchHydrationArgumentMissingSourceFieldError(parent, virtualField, hydrationDefinition)
@@ -145,7 +145,7 @@ internal class NadelHydrationArgumentValidation {
     context(NadelValidationContext, NadelHydrationArgumentValidationContext)
     private fun validateDuplicateArguments(): NadelSchemaValidationResult {
         return hydrationDefinition.arguments
-            .groupBy { it.name }
+            .groupBy { it.backingFieldArgumentName }
             .asSequence()
             .filter { (_, arguments) ->
                 arguments.size > 1
@@ -158,11 +158,11 @@ internal class NadelHydrationArgumentValidation {
 
     context(NadelValidationContext, NadelHydrationArgumentValidationContext)
     private fun getObjectFieldArgument(
-        hydrationArgumentDefinition: NadelHydrationArgumentDefinition.ObjectField,
+        hydrationArgumentDefinition: NadelHydrationArgumentDefinition.SourceField,
         backingArgumentDefinition: GraphQLArgument,
     ): NadelValidationInterimResult<NadelHydrationArgument> {
         val sourceField = (parent.underlying as GraphQLFieldsContainer)
-            .getFieldAt(hydrationArgumentDefinition.pathToField)
+            .getFieldAt(hydrationArgumentDefinition.pathToSourceField)
 
         if (sourceField == null) {
             return NadelHydrationArgumentReferencesNonExistentFieldError(
@@ -173,27 +173,24 @@ internal class NadelHydrationArgumentValidation {
             ).asInterimError()
         }
 
-        validateSuppliedArgumentType(
+        validateSuppliedArgumentValueType(
             hydrationArgumentDefinition = hydrationArgumentDefinition,
             suppliedType = sourceField.type,
         ).onErrorReturnInterim { return it }
 
-        return NadelHydrationArgument(
-            name = hydrationArgumentDefinition.name,
+        return NadelHydrationArgument.SourceField(
             backingArgumentDef = backingArgumentDefinition,
-            valueSource = NadelHydrationArgument.ValueSource.FieldResultValue(
-                fieldDefinition = sourceField,
-                queryPathToField = NadelQueryPath(hydrationArgumentDefinition.pathToField),
-            )
+            sourceFieldDef = sourceField,
+            pathToSourceField = NadelQueryPath(hydrationArgumentDefinition.pathToSourceField),
         ).asInterimSuccess()
     }
 
     context(NadelValidationContext, NadelHydrationArgumentValidationContext)
     private fun getFieldArgument(
-        hydrationArgumentDefinition: NadelHydrationArgumentDefinition.FieldArgument,
+        hydrationArgumentDefinition: NadelHydrationArgumentDefinition.VirtualFieldArgument,
         backingArgumentDefinition: GraphQLArgument,
     ): NadelValidationInterimResult<NadelHydrationArgument> {
-        val virtualArgumentDefinition = virtualField.getArgument(hydrationArgumentDefinition.argumentName)
+        val virtualArgumentDefinition = virtualField.getArgument(hydrationArgumentDefinition.virtualFieldArgumentName)
             ?: return NadelHydrationArgumentReferencesNonExistentArgumentError(
                 parentType = parent,
                 virtualField = virtualField,
@@ -201,7 +198,7 @@ internal class NadelHydrationArgumentValidation {
                 argument = hydrationArgumentDefinition,
             ).asInterimError()
 
-        validateSuppliedArgumentType(
+        validateSuppliedArgumentValueType(
             hydrationArgumentDefinition = hydrationArgumentDefinition,
             suppliedType = virtualArgumentDefinition.type,
         ).onErrorReturnInterim { return it }
@@ -215,14 +212,10 @@ internal class NadelHydrationArgumentValidation {
             null
         }
 
-        return NadelHydrationArgument(
-            name = hydrationArgumentDefinition.name,
+        return NadelHydrationArgument.VirtualFieldArgument(
             backingArgumentDef = backingArgumentDefinition,
-            valueSource = NadelHydrationArgument.ValueSource.ArgumentValue(
-                argumentName = hydrationArgumentDefinition.argumentName,
-                argumentDefinition = virtualArgumentDefinition,
-                defaultValue = defaultValue,
-            )
+            virtualFieldArgumentDef = virtualArgumentDefinition,
+            defaultValue = defaultValue,
         ).asInterimSuccess()
     }
 
@@ -232,7 +225,7 @@ internal class NadelHydrationArgumentValidation {
         backingArgumentDefinition: GraphQLArgument,
     ): NadelValidationInterimResult<NadelHydrationArgument> {
         val staticArgValue = hydrationArgumentDefinition.staticValue
-        val backingFieldArgument = backingField.getArgument(hydrationArgumentDefinition.name)
+        val backingFieldArgument = backingField.getArgument(hydrationArgumentDefinition.backingFieldArgumentName)
 
         val isAssignable = validationUtil.isValidLiteralValue(
             staticArgValue,
@@ -243,12 +236,12 @@ internal class NadelHydrationArgumentValidation {
         )
 
         return if (isAssignable) {
-            NadelHydrationArgument(
-                name = hydrationArgumentDefinition.name,
+            NadelHydrationArgument.StaticValue(
                 backingArgumentDef = backingArgumentDefinition,
-                valueSource = NadelHydrationArgument.ValueSource.StaticValue(
+                normalizedInputValue = makeNormalizedInputValue(
+                    type = backingFieldArgument.type,
                     value = hydrationArgumentDefinition.staticValue,
-                )
+                ),
             ).asInterimSuccess()
         } else {
             NadelSchemaValidationError.StaticArgIsNotAssignable(
@@ -262,11 +255,11 @@ internal class NadelHydrationArgumentValidation {
     }
 
     context(NadelValidationContext, NadelHydrationArgumentValidationContext)
-    private fun validateSuppliedArgumentType(
+    private fun validateSuppliedArgumentValueType(
         hydrationArgumentDefinition: NadelHydrationArgumentDefinition,
         suppliedType: GraphQLType,
     ): NadelSchemaValidationResult {
-        val backingFieldArg = backingField.getArgument(hydrationArgumentDefinition.name)
+        val backingFieldArg = backingField.getArgument(hydrationArgumentDefinition.backingFieldArgumentName)
 
         NadelHydrationArgumentTypeValidation()
             .isAssignable(

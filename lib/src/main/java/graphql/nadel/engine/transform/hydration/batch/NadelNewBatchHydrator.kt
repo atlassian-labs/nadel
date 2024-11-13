@@ -9,7 +9,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
@@ -528,11 +528,7 @@ internal class NadelNewBatchHydrator(
             val fieldSource = instructions
                 .first()
                 .backingFieldArguments
-                .asSequence()
-                .map {
-                    it.valueSource
-                }
-                .singleOfType<ValueSource.FieldResultValue>()
+                .singleOfType<NadelHydrationArgument.SourceField>()
 
             getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                 ?.map { sourceInput ->
@@ -557,11 +553,7 @@ internal class NadelNewBatchHydrator(
             } else {
                 val fieldSource = instruction
                     .backingFieldArguments
-                    .asSequence()
-                    .map {
-                        it.valueSource
-                    }
-                    .singleOfType<ValueSource.FieldResultValue>()
+                    .singleOfType<NadelHydrationArgument.SourceField>()
 
                 getSourceInputNodes(sourceObject, fieldSource, aliasHelper, includeNulls = isIndexHydration)
                     ?.map { sourceInput ->
@@ -580,7 +572,7 @@ internal class NadelNewBatchHydrator(
         instructions: List<NadelBatchHydrationFieldInstruction>,
         sourceObject: JsonNode,
         sourceInput: JsonNode,
-        fieldSource: ValueSource.FieldResultValue,
+        batchArgument: NadelHydrationArgument.SourceField,
     ): NadelBatchHydrationFieldInstruction? {
         if (instructions.any { it.condition == null }) {
             return executionContext.hooks.getHydrationInstruction(
@@ -593,7 +585,7 @@ internal class NadelNewBatchHydrator(
         return instructions.firstOrNull {
             // Note: due to the validation, all instructions in here have a condition, so can call explicitly
             val condition = it.condition!!
-            if (condition.fieldPath == fieldSource.queryPathToField) {
+            if (condition.fieldPath == batchArgument.pathToSourceField) {
                 it.condition.evaluate(sourceInput.value)
             } else {
                 val resultQueryPath = aliasHelper.getQueryPath(condition.fieldPath)
@@ -650,11 +642,11 @@ internal class NadelNewBatchHydrator(
      */
     private fun getSourceInputNodes(
         sourceObject: JsonNode,
-        valueSource: ValueSource.FieldResultValue,
+        hydrationArgument: NadelHydrationArgument.SourceField,
         aliasHelper: NadelAliasHelper,
         includeNulls: Boolean,
     ): List<JsonNode>? {
-        val resultPath = aliasHelper.getQueryPath(valueSource.queryPathToField)
+        val resultPath = aliasHelper.getQueryPath(hydrationArgument.pathToSourceField)
         @Suppress("DEPRECATION") // todo: maybe un-deprecate this or move to new JsonNodes
         return JsonNodeExtractor.getNodesAt(sourceObject, resultPath, flatten = true)
             .also {
@@ -716,10 +708,9 @@ private class NadelBatchHydratorContext(
             .any { instruction ->
                 instruction.backingFieldArguments
                     .asSequence()
-                    .map { it.valueSource }
-                    .filterIsInstance<ValueSource.FieldResultValue>()
-                    .any { fromSourceInputField ->
-                        fromSourceInputField.fieldDefinition.type.unwrapNonNull().isList
+                    .filterIsInstance<NadelHydrationArgument.SourceField>()
+                    .any { argument ->
+                        argument.sourceFieldDef.type.unwrapNonNull().isList
                     }
             }
     }

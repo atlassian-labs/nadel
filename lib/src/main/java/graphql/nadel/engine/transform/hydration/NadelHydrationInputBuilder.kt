@@ -4,7 +4,6 @@ import graphql.language.NullValue
 import graphql.language.Value
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument.ValueSource
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -52,23 +51,22 @@ internal class NadelHydrationInputBuilder private constructor(
     private fun makeManyToOneArgs(
         hydrationStrategy: NadelHydrationStrategy.ManyToOne,
     ): List<Map<String, NormalizedInputValue>> {
-        val inputDefToSplit = hydrationStrategy.inputDefToSplit
-        val valueSourceToSplit = inputDefToSplit.valueSource as ValueSource.FieldResultValue
-        val sharedArgs = makeInputMap(inputDefToSplit)
+        val argumentToSplit = hydrationStrategy.argumentToSplit
+        val sharedArgs = makeInputMap(excluding = argumentToSplit)
 
-        return getResultNodes(valueSourceToSplit)
+        return getResultNodes(argumentToSplit)
             .asSequence()
             .flatMap { node ->
                 // This code belongs together for cohesiveness, do NOT merge it back into the outer sequence
                 sequenceOf(node.value)
                     .flatten(recursively = true)
                     .map {
-                        makeInputValue(inputDef = inputDefToSplit, value = it)
+                        makeInputValue(hydrationArgument = argumentToSplit, value = it)
                     }
             }
             .map {
                 // Make the pair to go along with every input map
-                inputDefToSplit.name to it
+                argumentToSplit.name to it
             }
             .map {
                 sharedArgs + it
@@ -101,9 +99,7 @@ internal class NadelHydrationInputBuilder private constructor(
     private fun isInputMapValid(inputMap: Map<String, NormalizedInputValue>): Boolean {
         val fieldInputsNames = instruction.backingFieldArguments
             .asSequence()
-            .filter {
-                it.valueSource is ValueSource.FieldResultValue
-            }
+            .filterIsInstance<NadelHydrationArgument.SourceField>()
             .map { it.name }
             .toList()
 
@@ -121,19 +117,19 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationArgument,
+        hydrationArgument: NadelHydrationArgument,
     ): NormalizedInputValue? {
-        return when (val valueSource = inputDef.valueSource) {
-            is ValueSource.ArgumentValue -> getArgumentValue(valueSource)
-            is ValueSource.FieldResultValue -> makeInputValue(
-                inputDef,
-                value = getResultValue(valueSource),
+        return when (hydrationArgument) {
+            is NadelHydrationArgument.VirtualFieldArgument -> getArgumentValue(hydrationArgument)
+            is NadelHydrationArgument.SourceField -> makeInputValue(
+                hydrationArgument,
+                value = getResultValue(hydrationArgument),
             )
-            is ValueSource.StaticValue -> makeInputValue(inputDef, valueSource.value)
-            is ValueSource.RemainingArguments -> NormalizedInputValue(
-                /* typeName = */ GraphQLTypeUtil.simplePrint(inputDef.backingArgumentDef.type),
+            is NadelHydrationArgument.StaticValue -> hydrationArgument.normalizedInputValue
+            is NadelHydrationArgument.RemainingVirtualFieldArguments -> NormalizedInputValue(
+                /* typeName = */ GraphQLTypeUtil.simplePrint(hydrationArgument.backingArgumentDef.type),
                 /* value = */
-                valueSource.remainingArgumentNames
+                hydrationArgument.remainingArgumentNames
                     .associateWith {
                         virtualField.normalizedArguments[it]?.value
                     },
@@ -142,33 +138,23 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun makeInputValue(
-        inputDef: NadelHydrationArgument,
+        hydrationArgument: NadelHydrationArgument,
         value: Any?,
     ): NormalizedInputValue {
         return makeNormalizedInputValue(
-            type = inputDef.backingArgumentDef.type,
+            type = hydrationArgument.backingArgumentDef.type,
             value = javaValueToAstValue(value),
         )
     }
 
-    private fun makeInputValue(
-        inputDef: NadelHydrationArgument,
-        value: Value<*>,
-    ): NormalizedInputValue {
-        return makeNormalizedInputValue(
-            type = inputDef.backingArgumentDef.type,
-            value = value,
-        )
-    }
-
     private fun getArgumentValue(
-        valueSource: ValueSource.ArgumentValue,
+        valueSource: NadelHydrationArgument.VirtualFieldArgument,
     ): NormalizedInputValue? {
-        return virtualField.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
+        return virtualField.getNormalizedArgument(valueSource.virtualFieldArgumentName) ?: valueSource.defaultValue
     }
 
     private fun getResultValue(
-        valueSource: ValueSource.FieldResultValue,
+        valueSource: NadelHydrationArgument.SourceField,
     ): Any? {
         return getResultNodes(valueSource)
             .emptyOrSingle()
@@ -176,11 +162,11 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun getResultNodes(
-        valueSource: ValueSource.FieldResultValue,
+        valueSource: NadelHydrationArgument.SourceField,
     ): List<JsonNode> {
         return JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryPath = aliasHelper.getQueryPath(valueSource.queryPathToField),
+            queryPath = aliasHelper.getQueryPath(valueSource.pathToSourceField),
         )
     }
 }

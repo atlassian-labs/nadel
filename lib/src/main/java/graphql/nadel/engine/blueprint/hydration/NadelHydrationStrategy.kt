@@ -50,5 +50,5 @@ sealed class NadelHydrationStrategy {
      *
      * This is the same situation, for N cards we must make N calls to the `user` top level field.
      */
-    class ManyToOne(val inputDefToSplit: NadelHydrationArgument) : NadelHydrationStrategy()
+    class ManyToOne(val argumentToSplit: NadelHydrationArgument.SourceField) : NadelHydrationStrategy()
 }

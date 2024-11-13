@@ -69,7 +69,7 @@ interface NadelGenericHydrationInstruction {
 
     /**
      * The fields required to be queried on the source object in order to complete the hydration.
-     * This can be the fields described in [NadelHydrationArgument.ValueSource.FieldResultValue.queryPathToField]
+     * This can be the fields described in [NadelHydrationArgument.SourceField.pathToSourceField]
      * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
      */
     val sourceFields: List<NadelQueryPath>

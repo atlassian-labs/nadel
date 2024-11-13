@@ -29,10 +29,8 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
     override fun getIndexKey(sourceInput: JsonNode): NadelBatchHydrationIndexKey {
         // todo: bake this into the instruction
         val sourceInputPath = instruction.backingFieldArguments
-            .asSequence()
-            .map { it.valueSource }
-            .singleOfType<NadelHydrationArgument.ValueSource.FieldResultValue>()
-            .queryPathToField
+            .singleOfType<NadelHydrationArgument.SourceField>()
+            .pathToSourceField
 
         return NadelBatchHydrationIndexKey(
             strategy.objectIds

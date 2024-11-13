@@ -238,7 +238,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         override val message = run {
             val vf = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val bf = hydration.backingField.joinToString(separator = ".")
-            val an = hydrationArgument.name
+            val an = hydrationArgument.backingFieldArgumentName
             "Field $vf tried to hydrate Query.$bf but gave invalid static value for argument $an"
         }
 

@@ -32,45 +32,42 @@ sealed class NadelHydrationArgumentDefinition {
                 val values = astValue.value.substringAfter(".").split('.')
 
                 when (command) {
-                    "\$source" -> ObjectField(
-                        name = name,
-                        pathToField = values,
+                    "\$source" -> SourceField(
+                        backingFieldArgumentName = name,
+                        pathToSourceField = values,
                     )
-                    "\$argument" -> FieldArgument(
-                        name = name,
-                        argumentName = values.single(),
+                    "\$argument" -> VirtualFieldArgument(
+                        backingFieldArgumentName = name,
+                        virtualFieldArgumentName = values.single(),
                     )
                     else -> StaticArgument(
-                        name = name,
+                        backingFieldArgumentName = name,
                         staticValue = astValue,
                     )
                 }
             } else {
                 StaticArgument(
-                    name = name,
+                    backingFieldArgumentName = name,
                     staticValue = astValue,
                 )
             }
         }
     }
 
-    /**
-     * Name of the backing field's argument.
-     */
-    abstract val name: String
+    abstract val backingFieldArgumentName: String
 
-    data class ObjectField(
-        override val name: String,
-        val pathToField: List<String>,
+    data class SourceField(
+        override val backingFieldArgumentName: String,
+        val pathToSourceField: List<String>,
     ) : NadelHydrationArgumentDefinition()
 
-    data class FieldArgument(
-        override val name: String,
-        val argumentName: String,
+    data class VirtualFieldArgument(
+        override val backingFieldArgumentName: String,
+        val virtualFieldArgumentName: String,
     ) : NadelHydrationArgumentDefinition()
 
     data class StaticArgument(
-        override val name: String,
+        override val backingFieldArgumentName: String,
         val staticValue: AnyAstValue,
     ) : NadelHydrationArgumentDefinition()
 

@@ -4,7 +4,6 @@ import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.util.emptyOrSingle
-import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.mapFrom
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -23,11 +22,11 @@ internal object NadelBatchHydrationInputBuilder {
     ): Map<NadelHydrationArgument, NormalizedInputValue> {
         return mapFrom(
             instruction.backingFieldArguments.mapNotNull { argument ->
-                when (val valueSource = argument.valueSource) {
-                    is NadelHydrationArgument.ValueSource.ArgumentValue -> {
+                when (argument) {
+                    is NadelHydrationArgument.VirtualFieldArgument -> {
                         val argValue: NormalizedInputValue? =
-                            virtualField.normalizedArguments[valueSource.argumentName]
-                                ?: valueSource.defaultValue
+                            virtualField.normalizedArguments[argument.virtualFieldArgumentName]
+                                ?: argument.defaultValue
                         if (argValue != null) {
                             argument to argValue
                         } else {
@@ -35,19 +34,15 @@ internal object NadelBatchHydrationInputBuilder {
                         }
                     }
                     // These are batch values, ignore them
-                    is NadelHydrationArgument.ValueSource.FieldResultValue -> null
-                    is NadelHydrationArgument.ValueSource.StaticValue -> {
-                        val staticValue: NormalizedInputValue = makeNormalizedInputValue(
-                            type = argument.backingArgumentDef.type,
-                            value = valueSource.value,
-                        )
-                        argument to staticValue
+                    is NadelHydrationArgument.SourceField -> null
+                    is NadelHydrationArgument.StaticValue -> {
+                        argument to argument.normalizedInputValue
                     }
-                    is NadelHydrationArgument.ValueSource.RemainingArguments -> {
+                    is NadelHydrationArgument.RemainingVirtualFieldArguments -> {
                         argument to NormalizedInputValue(
                             /* typeName = */ GraphQLTypeUtil.simplePrint(argument.backingArgumentDef.type),
                             /* value = */
-                            valueSource.remainingArgumentNames
+                            argument.remainingArgumentNames
                                 .associateWith {
                                     virtualField.normalizedArguments[it]?.value
                                 },
@@ -80,17 +75,12 @@ internal object NadelBatchHydrationInputBuilder {
      *
      * then the input def would be the `userIds`.
      */
-    internal fun getBatchInputDef(
+    internal fun getBatchArgument(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): Pair<NadelHydrationArgument, NadelHydrationArgument.ValueSource.FieldResultValue>? {
+    ): NadelHydrationArgument.SourceField? {
         return instruction.backingFieldArguments
             .asSequence()
-            .mapNotNull {
-                when (val valueSource = it.valueSource) {
-                    is NadelHydrationArgument.ValueSource.FieldResultValue -> it to valueSource
-                    else -> null
-                }
-            }
+            .filterIsInstance<NadelHydrationArgument.SourceField>()
             .emptyOrSingle()
     }
 }

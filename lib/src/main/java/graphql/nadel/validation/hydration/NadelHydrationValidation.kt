@@ -215,43 +215,45 @@ internal class NadelHydrationValidation(
     private fun validateNonBatchHydrationStrategy(
         arguments: List<NadelHydrationArgument>,
     ): NadelValidationInterimResult<NadelHydrationStrategy> {
-        val manyToOneInputDef = hydrationDefinition.arguments
+        val sourceFieldsTypeContainer = if ((parent.overall as GraphQLDirectiveContainer).isVirtualType()) {
+            parent.overall
+        } else {
+            parent.underlying
+        } as GraphQLObjectType
+
+        val argumentDefToSplit = hydrationDefinition.arguments
             .asSequence()
-            .mapNotNull { inputValueDef ->
-                if (inputValueDef !is NadelHydrationArgumentDefinition.ObjectField) {
-                    return@mapNotNull null
-                }
-
-                val underlyingParentType =
-                    if ((parent.overall as GraphQLDirectiveContainer).isVirtualType()) {
-                        parent.overall
-                    } else {
-                        parent.underlying
-                    } as GraphQLObjectType
-
-                val fieldDefs = underlyingParentType.getFieldsAlong(inputValueDef.pathToField)
-                inputValueDef.takeIf {
-                    fieldDefs.any { fieldDef ->
+            .filterIsInstance<NadelHydrationArgumentDefinition.SourceField>()
+            .filter { hydrationArgument ->
+                !backingField.getArgument(hydrationArgument.backingFieldArgumentName).type.unwrapNonNull().isList
+                    && sourceFieldsTypeContainer
+                    .getFieldsAlong(hydrationArgument.pathToSourceField)
+                    .any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                            && !backingField.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
-                }
             }
             .emptyOrSingle()
 
-        return if (manyToOneInputDef == null) {
+        return if (argumentDefToSplit == null) {
             NadelHydrationStrategy.OneToOne
         } else {
+            // I mean, in theory this could just be one to one?
             if (!virtualField.type.unwrapNonNull().isList) {
                 NadelHydrationCannotSqueezeSourceListError(
                     parentType = parent,
                     virtualField = virtualField,
                     hydration = hydrationDefinition,
-                    sourceField = manyToOneInputDef,
+                    sourceField = argumentDefToSplit,
                 )
             }
 
-            NadelHydrationStrategy.ManyToOne(arguments.first { it.name == manyToOneInputDef.name })
+            NadelHydrationStrategy.ManyToOne(
+                // Get the built argument, for the given argument definition…
+                arguments
+                    .asSequence()
+                    .filterIsInstance<NadelHydrationArgument.SourceField>()
+                    .single { it.name == argumentDefToSplit.backingFieldArgumentName },
+            )
         }.asInterimSuccess()
     }
 
@@ -338,9 +340,9 @@ internal class NadelHydrationValidation(
                     hydrationDefinition
                         .arguments
                         .asSequence()
-                        .filterIsInstance<NadelHydrationArgumentDefinition.ObjectField>()
+                        .filterIsInstance<NadelHydrationArgumentDefinition.SourceField>()
                         .single()
-                        .pathToField,
+                        .pathToSourceField,
                 ),
                 resultId = identifiedBy,
             ).asInterimSuccess()
@@ -395,8 +397,8 @@ internal class NadelHydrationValidation(
         inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>,
     ): NadelValidationInterimResult<NadelBatchHydrationMatchStrategy> {
         val pathToSourceInputField = hydration.arguments
-            .singleOfTypeOrNull<NadelHydrationArgumentDefinition.ObjectField>()
-            ?.pathToField
+            .singleOfTypeOrNull<NadelHydrationArgumentDefinition.SourceField>()
+            ?.pathToSourceField
             ?: return NadelBatchHydrationArgumentMissingSourceFieldError(
                 parentType = parent,
                 virtualField = virtualField,
@@ -481,8 +483,8 @@ internal class NadelHydrationValidation(
                     hydration
                         .arguments
                         .asSequence()
-                        .filterIsInstance<NadelHydrationArgumentDefinition.ObjectField>()
-                        .map { it.pathToField }
+                        .filterIsInstance<NadelHydrationArgumentDefinition.SourceField>()
+                        .map { it.pathToSourceField }
                 }
                 .toList()
 
@@ -531,9 +533,9 @@ internal class NadelHydrationValidation(
 
         val hasBatchedArgument = hydrationDefinition.arguments
             .asSequence()
-            .filterIsInstance<NadelHydrationArgumentDefinition.ObjectField>()
+            .filterIsInstance<NadelHydrationArgumentDefinition.SourceField>()
             .any {
-                val argument = backingFieldDef.getArgument(it.name)
+                val argument = backingFieldDef.getArgument(it.backingFieldArgumentName)
                 argument?.type?.unwrapNonNull()?.isList == true
             }
 
@@ -579,6 +581,7 @@ internal class NadelHydrationValidation(
                     parentType = parent,
                     virtualField = virtualField,
                     backingField = backingField,
+                    hydration = hydrationDefinition,
                     incompatibleOutputType = backingOutputType,
                 )
             }

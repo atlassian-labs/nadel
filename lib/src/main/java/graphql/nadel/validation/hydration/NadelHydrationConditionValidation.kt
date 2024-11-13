@@ -147,8 +147,8 @@ internal class NadelHydrationConditionValidation {
         }
 
         val batchIdFieldPath = hydration.arguments.asSequence()
-            .filterIsInstance<NadelHydrationArgumentDefinition.ObjectField>()
-            .map { it.pathToField }
+            .filterIsInstance<NadelHydrationArgumentDefinition.SourceField>()
+            .map { it.pathToSourceField }
             .single()
 
         return pathToConditionField == batchIdFieldPath

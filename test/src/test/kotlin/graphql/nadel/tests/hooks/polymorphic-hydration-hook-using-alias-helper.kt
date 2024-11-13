@@ -31,14 +31,15 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
         userContext: Any?,
     ): T? {
         return instructions.firstOrNull {
-            val (_, _, valueSource) = it.backingFieldArguments.single()
-            if (valueSource !is NadelHydrationArgument.ValueSource.FieldResultValue) {
-                return@firstOrNull false
+            val argument = it.backingFieldArguments.single()
+            if (argument is NadelHydrationArgument.SourceField) {
+                val backingFieldName = argument.sourceFieldDef.name
+                val targetFieldName = aliasHelper.getResultKey(backingFieldName)
+                val hydrationArgumentValue = (parentNode.value as JsonMap)[targetFieldName]
+                hydrationInstructionMatchesArgumentValue(it, hydrationArgumentValue as String)
+            } else {
+                false
             }
-            val backingFieldName = valueSource.fieldDefinition.name
-            val targetFieldName = aliasHelper.getResultKey(backingFieldName)
-            val hydrationArgumentValue = (parentNode.value as JsonMap)[targetFieldName]
-            hydrationInstructionMatchesArgumentValue(it, hydrationArgumentValue as String)
         }
     }
 

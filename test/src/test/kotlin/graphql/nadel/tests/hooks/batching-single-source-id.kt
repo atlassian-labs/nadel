@@ -2,7 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument.ValueSource
+import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
@@ -27,14 +27,11 @@ class `batching-single-source-id` : EngineTestHook {
                             .single { instruction ->
                                 val fieldSource = instruction.backingFieldArguments
                                     .asSequence()
-                                    .map {
-                                        it.valueSource
-                                    }
-                                    .singleOfType<ValueSource.FieldResultValue>()
+                                    .singleOfType<NadelHydrationArgument.SourceField>()
 
                                 val sourceNodes = JsonNodeExtractor.getNodesAt(
                                     parentNode,
-                                    aliasHelper.getQueryPath(fieldSource.queryPathToField)
+                                    aliasHelper.getQueryPath(fieldSource.pathToSourceField)
                                 )
                                 val sourceIdType = (sourceNodes.single().value as String).substringBefore("/")
 

@@ -583,7 +583,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
         assert(error.hydration.backingField == listOf("user"))
-        assert(error.argument.pathToField == listOf("creatorId"))
+        assert(error.argument.pathToSourceField == listOf("creatorId"))
     }
 
     @Test
@@ -648,7 +648,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
         assert(error.hydration.backingField == listOf("user"))
-        assert(error.argument.argumentName == "secrets")
+        assert(error.argument.virtualFieldArgumentName == "secrets")
     }
 
     @Test
@@ -779,7 +779,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
         assert(error.hydration.backingField == listOf("user"))
-        assert(error.duplicates.map { it.name }.toSet() == setOf("id"))
+        assert(error.duplicates.map { it.backingFieldArgumentName }.toSet() == setOf("id"))
     }
 
     @Test
