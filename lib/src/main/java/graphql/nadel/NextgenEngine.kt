@@ -17,6 +17,7 @@ import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintMigrator
 import graphql.nadel.engine.document.DocumentPredicates
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
@@ -37,6 +38,7 @@ import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.hints.NadelValidationBlueprintHint
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.createServiceExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -49,6 +51,7 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.util.OperationNameUtil
+import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
@@ -84,13 +87,20 @@ internal class NextgenEngine(
     services: List<Service>,
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
+    blueprintHint: NadelValidationBlueprintHint,
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = services.strictAssociateBy { it.name }
     private val engineSchemaIntrospectionService = IntrospectionService(engineSchema, introspectionRunnerFactory)
-    private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
-        engineSchema = engineSchema,
-        services = services,
+    private val overallExecutionBlueprint = NadelOverallExecutionBlueprintMigrator(
+        hint = blueprintHint,
+        old = NadelExecutionBlueprintFactory.create(
+            engineSchema = engineSchema,
+            services = services,
+        ),
+        new = NadelSchemaValidation(
+            NadelSchemas(engineSchema, services)
+        ).validateAndGenerateBlueprint(),
     )
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
