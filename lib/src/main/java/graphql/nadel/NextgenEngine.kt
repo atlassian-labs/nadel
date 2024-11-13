@@ -14,7 +14,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelIncrementalResultSupport
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
-import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintMigrator
@@ -85,8 +84,8 @@ internal class NextgenEngine(
     maxQueryDepth: Int,
     maxFieldCount: Int,
     services: List<Service>,
-    transforms: List<NadelTransform<out Any>> = emptyList(),
-    introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
+    transforms: List<NadelTransform<out Any>>,
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     blueprintHint: NadelValidationBlueprintHint,
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
