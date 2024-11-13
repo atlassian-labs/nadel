@@ -1,6 +1,5 @@
 package graphql.nadel.validation
 
-import graphql.nadel.validation.NadelSchemaValidationError.ObjectIdentifierMustFollowSourceInputField
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -79,7 +78,7 @@ class NadelHydrationValidationTest2 {
 
         val errors = validate(fixture)
         assertTrue(errors.map { it.message }.isNotEmpty())
-        assertTrue(errors.single() is NadelSchemaValidationError.MixedIndexHydration)
+        assertTrue(errors.single() is NadelHydrationMustUseIndexExclusivelyError)
         assertTrue(errors.single().subject.name == "creator")
     }
 
@@ -167,7 +166,7 @@ class NadelHydrationValidationTest2 {
 
         val errors = validate(fixture)
         assertTrue(errors.map { it.message }.isNotEmpty())
-        assertTrue(errors.single() is NadelSchemaValidationError.MultipleHydrationSourceInputFields)
+        assertTrue(errors.single() is NadelPolymorphicHydrationIncompatibleSourceFieldsError)
         assertTrue(errors.single().subject.name == "data")
     }
 
@@ -258,7 +257,7 @@ class NadelHydrationValidationTest2 {
 
         val errors = validate(fixture)
         assertTrue(errors.map { it.message }.isNotEmpty())
-        assertTrue(errors.single() is NadelSchemaValidationError.MultipleHydrationSourceInputFields)
+        assertTrue(errors.single() is NadelPolymorphicHydrationIncompatibleSourceFieldsError)
         assertTrue(errors.single().subject.name == "data")
     }
 
@@ -346,7 +345,7 @@ class NadelHydrationValidationTest2 {
 
         val errors = validate(fixture)
         assertTrue(errors.map { it.message }.isNotEmpty())
-        assertTrue(errors.single() is NadelSchemaValidationError.MultipleHydrationSourceInputFields)
+        assertTrue(errors.single() is NadelPolymorphicHydrationIncompatibleSourceFieldsError)
         assertTrue(errors.single().subject.name == "data")
     }
 
@@ -541,7 +540,7 @@ class NadelHydrationValidationTest2 {
                                 {name: "queries", value: "$source.jiraComment"}
                             ]
                             inputIdentifiedBy: [
-                                {sourceId: "jiraComment.id", resultId: "id"}
+                                {sourceId: "jiraComment.commentId", resultId: "id"}
                                 {sourceId: "jiraComment.issueId", resultId: "issueId"}
                             ]
                         )
@@ -774,10 +773,9 @@ class NadelHydrationValidationTest2 {
 
         val errors = validate(fixture)
         assertTrue(errors.map { it.message }.isNotEmpty())
-        assertTrue(errors.single() is ObjectIdentifierMustFollowSourceInputField)
-        val error = errors.single() as ObjectIdentifierMustFollowSourceInputField
+        assertTrue(errors.single() is NadelBatchHydrationMatchingStrategyInvalidSourceIdError)
+        val error = errors.single() as NadelBatchHydrationMatchingStrategyInvalidSourceIdError
         assertTrue(error.subject.name == "data")
-        assertTrue(error.pathToSourceInputField == listOf("jiraComment"))
         assertTrue(error.offendingObjectIdentifier.sourceId == "id")
         assertTrue(error.offendingObjectIdentifier.resultId == "id")
     }

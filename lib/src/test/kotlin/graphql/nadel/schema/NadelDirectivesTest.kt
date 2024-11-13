@@ -85,13 +85,13 @@ class NadelDirectivesTest : DescribeSpec({
             assert(hydration.arguments.size == 2)
 
             assertTrue(hydration.arguments[0].name == "fieldVal")
-            val firstArgumentSource = hydration.arguments[0].value
-            assertTrue(firstArgumentSource is NadelHydrationArgumentDefinition.ValueSource.ObjectField)
+            val firstArgumentSource = hydration.arguments[0]
+            assertTrue(firstArgumentSource is NadelHydrationArgumentDefinition.ObjectField)
             assertTrue(firstArgumentSource.pathToField == listOf("namespace", "issueId"))
 
             assertTrue(hydration.arguments[1].name == "argVal")
-            val secondArgumentSource = hydration.arguments[1].value
-            assertTrue(secondArgumentSource is NadelHydrationArgumentDefinition.ValueSource.FieldArgument)
+            val secondArgumentSource = hydration.arguments[1]
+            assertTrue(secondArgumentSource is NadelHydrationArgumentDefinition.FieldArgument)
             assertTrue(secondArgumentSource.argumentName == "cloudId")
         }
     }

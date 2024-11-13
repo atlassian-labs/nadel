@@ -44,25 +44,25 @@ class GraphQLUtilKtTest : DescribeSpec({
 
     describe("getFieldContainerAt tests") {
         it("can find container at single path") {
-            val fieldContainer = aType.getFieldContainerAt(listOf("f1"))
+            val fieldContainer = aType.getFieldContainerFor(listOf("f1"))
 
             assert(fieldContainer?.name == "A")
         }
 
         it("can find field containers at multi path") {
-            val fieldContainer = aType.getFieldContainerAt(listOf("f1", "f2"))
+            val fieldContainer = aType.getFieldContainerFor(listOf("f1", "f2"))
 
             assert(fieldContainer?.name == "B")
         }
 
         it("will return null with bogus paths") {
-            val fieldContainer = aType.getFieldContainerAt(listOf("f1", "fX"))
+            val fieldContainer = aType.getFieldContainerFor(listOf("f1", "fX"))
 
             assert(fieldContainer == null)
         }
 
         it("will return null with bogus paths that go over non containers") {
-            val fieldContainer = aType.getFieldContainerAt(listOf("f1", "f2", "fX"))
+            val fieldContainer = aType.getFieldContainerFor(listOf("f1", "f2", "fX"))
 
             assert(fieldContainer == null)
         }

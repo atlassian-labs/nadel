@@ -4,29 +4,29 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingConcreteTypes
 import graphql.schema.GraphQLInterfaceType
 
 internal class NadelInterfaceValidation {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         return if (schemaElement.overall is GraphQLInterfaceType) {
             validateHasImplementations(schemaElement)
         } else {
-            emptyList()
+            ok()
         }
     }
 
+    context(NadelValidationContext)
     private fun validateHasImplementations(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         val underlyingSchema = schemaElement.service.underlyingSchema
         val underlyingInterfaceType = schemaElement.underlying as GraphQLInterfaceType
         val underlyingImplementations = underlyingSchema.getImplementations(underlyingInterfaceType)
 
         return if (underlyingImplementations.isEmpty()) {
-            listOf(
-                MissingConcreteTypes(schemaElement)
-            )
+            MissingConcreteTypes(schemaElement)
         } else {
-            emptyList()
+            ok()
         }
     }
 }

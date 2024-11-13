@@ -6,9 +6,10 @@ import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLEnumValueDefinition
 
 internal class NadelEnumValidation {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         return if (schemaElement.overall is GraphQLEnumType && schemaElement.underlying is GraphQLEnumType) {
             validate(
                 parent = schemaElement,
@@ -16,25 +17,23 @@ internal class NadelEnumValidation {
                 underlyingValues = schemaElement.underlying.values,
             )
         } else {
-            emptyList()
+            ok()
         }
     }
 
+    context(NadelValidationContext)
     private fun validate(
         parent: NadelServiceSchemaElement,
         overallValues: List<GraphQLEnumValueDefinition>,
         underlyingValues: List<GraphQLEnumValueDefinition>,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         val underlyingValuesByName = underlyingValues.strictAssociateBy { it.name }
 
-        return overallValues.mapNotNull { overallValue ->
-            val underlyingValue = underlyingValuesByName[overallValue.name]
-
-            if (underlyingValue == null) {
-                MissingUnderlyingEnumValue(parent, overallValue)
-            } else {
-                null
-            }
+        overallValues.forEach { overallValue ->
+            underlyingValuesByName[overallValue.name]
+                ?: return MissingUnderlyingEnumValue(parent, overallValue)
         }
+
+        return ok()
     }
 }

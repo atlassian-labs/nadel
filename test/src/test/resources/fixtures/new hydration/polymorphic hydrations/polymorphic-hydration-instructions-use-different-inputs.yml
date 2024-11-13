@@ -70,6 +70,7 @@ overallSchema:
     type Giraffe {
       id: ID!
       name: String
+      nickname: String
       birthday: Int
       height: Int
     }
@@ -123,6 +124,7 @@ underlyingSchema:
     type Giraffe {
       id: ID!
       name: String
+      nickname: String
       birthday: Int
       height: Int
     }

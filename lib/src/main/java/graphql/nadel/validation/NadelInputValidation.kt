@@ -20,9 +20,10 @@ import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnmodifiedType
 
 internal class NadelInputValidation {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         return if (schemaElement.overall is GraphQLInputObjectType && schemaElement.underlying is GraphQLInputObjectType) {
             validate(
                 parent = schemaElement,
@@ -30,59 +31,64 @@ internal class NadelInputValidation {
                 underlyingFields = schemaElement.underlying.fields,
             )
         } else {
-            emptyList()
+            ok()
         }
     }
 
+    context(NadelValidationContext)
     private fun validate(
         parent: NadelServiceSchemaElement,
         overallFields: List<GraphQLInputObjectField>,
         underlyingFields: List<GraphQLInputObjectField>,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
-        return overallFields.flatMap { overallField ->
-            validate(parent, overallField, underlyingFieldsByName)
-        }
+        return overallFields
+            .map { overallField ->
+                validate(parent, overallField, underlyingFieldsByName)
+            }
+            .toResult()
     }
 
+    context(NadelValidationContext)
     private fun validate(
         parent: NadelServiceSchemaElement,
         overallInputField: GraphQLInputObjectField,
         underlyingFieldsByName: Map<String, GraphQLInputObjectField>,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         val underlyingInputField = underlyingFieldsByName[overallInputField.name]
+
         return if (underlyingInputField == null) {
-            listOf(
-                MissingUnderlyingInputField(parent, overallInputField),
-            )
+            MissingUnderlyingInputField(parent, overallInputField)
         } else {
             validate(parent, overallInputField, underlyingInputField)
         }
     }
 
+    context(NadelValidationContext)
     private fun validate(
         parent: NadelServiceSchemaElement,
         overallInputField: GraphQLInputObjectField,
         underlyingInputField: GraphQLInputObjectField,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         return if (!isInputTypeValid(overallInputField.type, underlyingInputField.type)) {
-            listOf(IncompatibleFieldInputType(parent, overallInputField, underlyingInputField))
+            IncompatibleFieldInputType(parent, overallInputField, underlyingInputField)
         } else {
-            listOf()
+            ok()
         }
     }
 
+    context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         overallInputArgument: GraphQLArgument,
         underlyingInputArgument: GraphQLArgument,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         return if (!isInputTypeValid(overallInputArgument.type, underlyingInputArgument.type)) {
-            listOf(IncompatibleArgumentInputType(parent, overallField, overallInputArgument, underlyingInputArgument))
+            IncompatibleArgumentInputType(parent, overallField, overallInputArgument, underlyingInputArgument)
         } else {
-            listOf()
+            ok()
         }
     }
 

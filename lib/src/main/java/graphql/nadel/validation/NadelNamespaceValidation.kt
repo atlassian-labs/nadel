@@ -5,27 +5,27 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.nadel.validation.NadelSchemaValidationError.NamespacedTypeMustBeObject
 import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLSchema
 
 class NadelNamespaceValidation(
-    private val overallSchema: GraphQLSchema,
 ) {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
+    ): NadelSchemaValidationResult {
         if (!isNamespacedOperationType(typeName = schemaElement.overall.name)) {
-            return emptyList()
+            return ok()
         }
 
         if (schemaElement.overall !is GraphQLObjectType) {
-            return listOf(NamespacedTypeMustBeObject(schemaElement))
+            return NamespacedTypeMustBeObject(schemaElement)
         }
 
-        return emptyList()
+        return ok()
     }
 
+    context(NadelValidationContext)
     fun isNamespacedOperationType(typeName: String): Boolean {
-        return overallSchema.operationTypes
+        return engineSchema.operationTypes
             .any { operationType ->
                 operationType.fields
                     .any { field ->

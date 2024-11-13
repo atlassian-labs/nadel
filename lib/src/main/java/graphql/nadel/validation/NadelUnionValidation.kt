@@ -1,49 +1,65 @@
 package graphql.nadel.validation
 
+import graphql.nadel.Service
 import graphql.nadel.validation.NadelSchemaValidationError.UnionHasExtraType
 import graphql.nadel.validation.util.NadelSchemaUtil
+import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLUnionType
 
 internal class NadelUnionValidation(
     private val typeValidation: NadelTypeValidation,
 ) {
+    context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement,
-    ): List<NadelSchemaValidationError> {
-        return if (schemaElement.overall is GraphQLUnionType && schemaElement.underlying is GraphQLUnionType) {
-            schemaElement.overall.types
-                .flatMap { memberOverallType ->
-                    val memberUnderlyingType =
-                        NadelSchemaUtil.getUnderlyingType(memberOverallType, schemaElement.service)
-
-                    if (memberUnderlyingType == null) {
-                        listOf(
-                            NadelSchemaValidationError.MissingUnderlyingType(
-                                service = schemaElement.service,
-                                overallType = memberOverallType,
-                            ),
-                        )
-                    } else if (!schemaElement.underlying.types.contains(memberUnderlyingType)) {
-                        listOf(
-                            UnionHasExtraType(
-                                service = schemaElement.service,
-                                unionType = schemaElement.overall,
-                                extraType = memberOverallType as GraphQLObjectType,
-                            ),
-                        )
-                    } else {
-                        typeValidation.validate(
-                            NadelServiceSchemaElement(
-                                service = schemaElement.service,
-                                overall = memberOverallType,
-                                underlying = memberUnderlyingType,
-                            ),
-                        )
-                    }
+    ): NadelSchemaValidationResult {
+        val overallUnion = schemaElement.overall
+        val underlyingUnion = schemaElement.underlying
+        return if (overallUnion is GraphQLUnionType && underlyingUnion is GraphQLUnionType) {
+            overallUnion.types
+                .map { memberOverallType ->
+                    validateUnionMember(
+                        service = schemaElement.service,
+                        overallUnion = overallUnion,
+                        underlying = underlyingUnion,
+                        memberOverallType = memberOverallType
+                    )
                 }
+                .toResult()
         } else {
-            emptyList()
+            ok()
+        }
+    }
+
+    context(NadelValidationContext)
+    private fun validateUnionMember(
+        service: Service,
+        overallUnion: GraphQLUnionType,
+        underlying: GraphQLUnionType,
+        memberOverallType: GraphQLNamedOutputType,
+    ): NadelSchemaValidationResult {
+        val memberUnderlyingType = NadelSchemaUtil.getUnderlyingType(memberOverallType, service)
+
+        return if (memberUnderlyingType == null) {
+            NadelSchemaValidationError.MissingUnderlyingType(
+                service = service,
+                overallType = memberOverallType,
+            )
+        } else if (!underlying.types.contains(memberUnderlyingType)) {
+            UnionHasExtraType(
+                service = service,
+                unionType = overallUnion,
+                extraType = memberOverallType as GraphQLObjectType,
+            )
+        } else {
+            typeValidation.validate(
+                NadelServiceSchemaElement(
+                    service = service,
+                    overall = memberOverallType,
+                    underlying = memberUnderlyingType,
+                ),
+            )
         }
     }
 }
