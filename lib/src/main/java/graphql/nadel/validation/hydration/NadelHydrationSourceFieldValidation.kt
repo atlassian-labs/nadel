@@ -71,6 +71,7 @@ internal class NadelHydrationSourceFieldValidation {
                 is NadelHydrationArgument.ValueSource.FieldResultValue -> getSourceFieldQueryPaths(argument.valueSource)
                     .onError { return it }
                 is NadelHydrationArgument.ValueSource.StaticValue -> emptyList()
+                is NadelHydrationArgument.ValueSource.RemainingArguments -> emptyList()
             }
         }.asInterimSuccess()
     }
