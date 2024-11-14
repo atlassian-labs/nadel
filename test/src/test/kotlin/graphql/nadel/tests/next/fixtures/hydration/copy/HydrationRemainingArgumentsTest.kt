@@ -8,7 +8,7 @@ import graphql.scalars.ExtendedScalars
 class HydrationRemainingArgumentsTest : NadelIntegrationTest(
     query = """
         query {
-          businessReport_findRecentWorkByTeam(orgId: "turtles", teamId: "hello") {
+          businessReport_findRecentWorkByTeam(orgId: "turtles") {
             edges {
               node {
                 ... on JiraIssue {
@@ -120,7 +120,7 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
                   business_stub: String @hidden
                   businessReport_findRecentWorkByTeam(
                     orgId: ID!
-                    teamId: ID!
+                    teamId: ID
                     first: Int
                     after: String
                   ): WorkConnection

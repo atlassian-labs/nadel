@@ -135,7 +135,7 @@ internal class NadelHydrationInputBuilder private constructor(
                 /* value = */
                 valueSource.remainingArgumentNames
                     .associateWith {
-                        virtualField.normalizedArguments[it]?.value
+                        virtualField.normalizedArguments[it]?.value ?: NullValue.of()
                     },
             )
         }
