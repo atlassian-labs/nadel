@@ -17,6 +17,7 @@ import graphql.nadel.validation.NadelSchemaValidationError
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
+import kotlin.system.measureTimeMillis
 
 val File.parents: Sequence<File>
     get() = sequence {
@@ -80,6 +81,36 @@ suspend fun main() {
                 underlyingSchemas.append(file.readText())
             }
         }
+
+    val schemasObject = NadelSchemas.Builder()
+        .overallSchemas(overallSchemas)
+        .underlyingSchemas(underlyingSchemas)
+        .stubServiceExecution()
+        .build()
+
+    // Warm up
+    println("Warming up")
+    repeat(50) {
+        // NadelExecutionBlueprintFactory.create(schemasObject.engineSchema, schemasObject.services)
+        val time = measureTimeMillis {
+            NadelSchemaValidation(schemasObject).validateAndGenerateBlueprint()
+        }
+        println("Execution took ${time}ms")
+    }
+    println("Running benchmark")
+    val repeats = 100
+    val time = measureTimeMillis {
+        repeat(repeats) {
+            // NadelExecutionBlueprintFactory.create(schemasObject.engineSchema, schemasObject.services)
+            NadelSchemaValidation(schemasObject).validateAndGenerateBlueprint()
+        }
+    }
+
+    println("Takes on average ${time / repeats}ms to generate validated blueprint")
+
+    if (true) {
+        return
+    }
 
     val nadel = Nadel.newNadel()
         .overallSchemas(overallSchemas)
