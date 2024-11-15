@@ -10,7 +10,6 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingFiel
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_LOOSER_OR_SAME
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
-import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -181,6 +180,6 @@ internal class NadelFieldValidation(
 
     context(NadelValidationContext)
     private fun isCombinedType(type: GraphQLNamedSchemaElement): Boolean {
-        return isCombinedType(engineSchema, type)
+        return type.name in combinedTypeNames
     }
 }
