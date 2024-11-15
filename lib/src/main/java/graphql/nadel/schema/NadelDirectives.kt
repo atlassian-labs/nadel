@@ -10,6 +10,7 @@ import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinitio
 import graphql.nadel.definition.hydration.NadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.virtualType.NadelVirtualTypeDefinition
 import graphql.nadel.engine.util.singleOfType
 import graphql.parser.Parser
 
@@ -70,6 +71,8 @@ object NadelDirectives {
     )
 
     val partitionDirectiveDefinition = NadelPartitionDefinition.directiveDefinition
+
+    val virtualTypeDirectiveDefinition = NadelVirtualTypeDefinition.directiveDefinition
 
     private inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {
         return Parser.parse(sdl).definitions.singleOfType()

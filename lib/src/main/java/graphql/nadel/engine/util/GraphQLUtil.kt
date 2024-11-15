@@ -69,6 +69,7 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
+import org.intellij.lang.annotations.Language
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
@@ -649,6 +650,9 @@ internal fun ExecutableNormalizedField.getFieldDefinitionSequence(
         }
 }
 
-internal inline fun <reified T : SDLDefinition<*>> parseDefinition(sdl: String): T {
+internal inline fun <reified T : SDLDefinition<*>> parseDefinition(
+    @Language("GraphQL")
+    sdl: String,
+): T {
     return Parser.parse(sdl).definitions.singleOfType()
 }
