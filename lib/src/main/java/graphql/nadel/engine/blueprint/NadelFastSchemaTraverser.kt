@@ -33,8 +33,12 @@ import graphql.schema.GraphQLUnmodifiedType
 
 /**
  * Significantly faster than normal [graphql.schema.SchemaTraverser] as it's simpler.
+ *
+ * Validating central schema with old [graphql.schema.SchemaTraverser] takes 306ms and this impl takes 74ms.
+ *
+ * That's 4x faster.
  */
-class NadelFastSchemaTraverser {
+internal class NadelFastSchemaTraverser {
     fun traverse(
         schema: GraphQLSchema,
         roots: List<String>,
