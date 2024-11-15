@@ -42,10 +42,9 @@ object NadelCombinedTypeUtil {
      * type `Query` then the result is `[time]`.
      */
     fun getFieldsThatServiceContributed(service: Service, overallType: GraphQLNamedSchemaElement): Set<String> {
-        return service.definitionRegistry.definitions
+        return service.definitionRegistry.getDefinitions(overallType.name)
             .asSequence()
             .filterIsInstance<AnyImplementingTypeDefinition>()
-            .filter { it.name == overallType.name }
             .flatMap { it.fieldDefinitions }
             .map { it.name }
             .toSet()
@@ -66,6 +65,7 @@ object NadelCombinedTypeUtil {
      * That is, validation for these types must only occur for the fields on
      * the type must be done against multiple underlying types.
      */
+    @Deprecated("Much more efficient to compute an upfront Set")
     fun isCombinedType(overallSchema: GraphQLSchema, type: GraphQLNamedSchemaElement): Boolean {
         val usesTypeAsNamespaced = { field: GraphQLFieldDefinition ->
             field.hasDirective(NadelDirectives.namespacedDirectiveDefinition.name)
