@@ -45,8 +45,15 @@ internal class NadelFastSchemaTraverser {
         visitor: Visitor,
     ) {
         val queue = roots
-            .mapTo(mutableListOf()) {
-                (null as GraphQLNamedSchemaElement?) to (schema.typeMap[it] ?: schema.getDirective(it))!!
+            .mapNotNullTo(mutableListOf()) { typeName ->
+                val type = schema.typeMap[typeName] ?: schema.getDirective(typeName)
+                // Types can be deleted by transformer, so they may not exist in end schema
+                if (type == null) {
+                    null
+                } else {
+                    // Null parent to type
+                    (null as GraphQLNamedSchemaElement?) to type
+                }
             }
         val visited = roots.toMutableSet()
 
