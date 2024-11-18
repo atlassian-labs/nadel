@@ -10,15 +10,16 @@ import graphql.nadel.schema.NadelDirectives.deferDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hiddenDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
-import graphql.nadel.schema.NadelDirectives.nadelHydrationRemainingArguments
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationRemainingArguments
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultConditionDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.partitionDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.virtualTypeDirectiveDefinition
 
 object NadelBuiltInTypes {
     val builtInScalars = setOf(
@@ -50,6 +51,8 @@ object NadelBuiltInTypes {
         nadelHydrationResultConditionDefinition,
         nadelHydrationConditionDefinition,
         nadelHydrationRemainingArguments,
+
+        virtualTypeDirectiveDefinition,
     ).mapTo(LinkedHashSet()) {
         it.name
     }

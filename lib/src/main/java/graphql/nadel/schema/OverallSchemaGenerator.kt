@@ -63,6 +63,7 @@ internal class OverallSchemaGenerator {
         // add our custom directives if they are not present
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationArgumentDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.virtualTypeDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.renamedDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hiddenDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelBatchObjectIdentifiedByDefinition)
