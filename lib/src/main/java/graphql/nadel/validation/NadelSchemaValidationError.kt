@@ -4,7 +4,6 @@ import graphql.ErrorClassification
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.nadel.Service
-import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
@@ -237,7 +236,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
         override val message = run {
             val vf = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val bf = hydration.backingField.joinToString(separator = ".")
+            val bf = hydration.pathToBackingField.joinToString(separator = ".")
             val an = hydrationArgument.name
             "Field $vf tried to hydrate Query.$bf but gave invalid static value for argument $an"
         }
