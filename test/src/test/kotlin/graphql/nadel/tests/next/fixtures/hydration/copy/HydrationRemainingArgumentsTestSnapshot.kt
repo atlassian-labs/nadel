@@ -37,7 +37,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 | {
                 |   "v0": {
                 |     "orgId": "turtles",
-                |     "teamId": "hello"
+                |     "teamId": null
                 |   }
                 | }
                 """.trimMargin(),

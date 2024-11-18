@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.hydration.batch
 
+import graphql.language.NullValue
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
@@ -49,7 +50,7 @@ internal object NadelBatchHydrationInputBuilder {
                             /* value = */
                             valueSource.remainingArgumentNames
                                 .associateWith {
-                                    virtualField.normalizedArguments[it]?.value
+                                    virtualField.normalizedArguments[it]?.value ?: NullValue.of()
                                 },
                         )
                     }
