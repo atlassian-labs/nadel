@@ -98,7 +98,7 @@ private class Factory(
                 mapOfTypes.keys.toSet()
             }
 
-        return NadelOverallExecutionBlueprint(
+        return NadelOverallExecutionBlueprintImpl(
             engineSchema = engineSchema,
             fieldInstructions = fieldInstructions,
             underlyingTypeNamesByService = underlyingTypeNamesByService,

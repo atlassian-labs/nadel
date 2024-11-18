@@ -16,6 +16,7 @@ import graphql.language.Document
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.hints.NadelValidationBlueprintHint
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -240,6 +241,8 @@ class Nadel private constructor(
         private var maxQueryDepth = Integer.MAX_VALUE
         private var maxFieldCount = Integer.MAX_VALUE
 
+        private var blueprintHint = NadelValidationBlueprintHint { false }
+
         fun schemas(schemas: NadelSchemas): Builder {
             this.schemas = schemas
             return this
@@ -360,6 +363,11 @@ class Nadel private constructor(
             return this
         }
 
+        fun blueprintHint(hint: NadelValidationBlueprintHint): Builder {
+            this.blueprintHint = hint
+            return this
+        }
+
         fun build(): Nadel {
             val (engineSchema, services) = schemas ?: schemaBuilder.build()
 
@@ -372,11 +380,12 @@ class Nadel private constructor(
                     instrumentation = instrumentation,
                     executionHooks = executionHooks,
                     executionIdProvider = executionIdProvider,
+                    maxQueryDepth = maxQueryDepth,
+                    maxFieldCount = maxFieldCount,
                     services = services,
                     transforms = transforms,
                     introspectionRunnerFactory = introspectionRunnerFactory,
-                    maxQueryDepth = maxQueryDepth,
-                    maxFieldCount = maxFieldCount,
+                    blueprintHint = blueprintHint,
                 ),
                 services = services,
                 engineSchema = engineSchema,

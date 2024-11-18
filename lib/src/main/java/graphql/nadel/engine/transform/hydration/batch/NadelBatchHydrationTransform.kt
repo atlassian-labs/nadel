@@ -8,6 +8,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.blueprint.getInstructionInsideVirtualType
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
