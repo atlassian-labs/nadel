@@ -33,7 +33,6 @@ import graphql.nadel.validation.onErrorReturnInterim
 import graphql.nadel.validation.toResult
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLType
 import graphql.validation.ValidationUtil
 import java.util.Locale
@@ -41,7 +40,7 @@ import java.util.Locale
 private val validationUtil = ValidationUtil()
 
 private data class NadelHydrationArgumentValidationContext(
-    val parent: NadelServiceSchemaElement,
+    val parent: NadelServiceSchemaElement.FieldsContainer,
     val virtualField: GraphQLFieldDefinition,
     val hydrationDefinition: NadelHydrationDefinition,
     val backingField: GraphQLFieldDefinition,
@@ -161,7 +160,7 @@ internal class NadelHydrationArgumentValidation {
         hydrationArgumentDefinition: NadelHydrationArgumentDefinition.ObjectField,
         backingArgumentDefinition: GraphQLArgument,
     ): NadelValidationInterimResult<NadelHydrationArgument> {
-        val sourceField = (parent.underlying as GraphQLFieldsContainer)
+        val sourceField = parent.underlying
             .getFieldAt(hydrationArgumentDefinition.pathToField)
 
         if (sourceField == null) {

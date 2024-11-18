@@ -61,7 +61,7 @@ import graphql.schema.GraphQLUnionType
 
 internal data class NadelHydrationValidationContext(
     val hasMoreThanOneHydration: Boolean,
-    val parent: NadelServiceSchemaElement,
+    val parent: NadelServiceSchemaElement.FieldsContainer,
     val virtualField: GraphQLFieldDefinition,
     val hydrationDefinition: NadelHydrationDefinition,
     val isBatchHydration: Boolean,
@@ -77,7 +77,7 @@ internal class NadelHydrationValidation(
 ) {
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
         if (overallField.isRenamed()) {
@@ -111,7 +111,7 @@ internal class NadelHydrationValidation(
 
     context(NadelValidationContext)
     private fun validate(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
         hydrationDefinition: NadelHydrationDefinition,
         hasMoreThanOneHydration: Boolean,
@@ -347,8 +347,8 @@ internal class NadelHydrationValidation(
         }
     }
 
-    context(NadelValidationContext)
-    private fun NadelHydrationValidationContext.getBatchIdentifiedBy(): NadelValidationInterimResult<String> {
+    context(NadelValidationContext, NadelHydrationValidationContext)
+    private fun getBatchIdentifiedBy(): NadelValidationInterimResult<String> {
         val identifiedBy = hydrationDefinition.identifiedBy
             ?: return NadelBatchHydrationMissingIdentifiedByError(
                 parent,

@@ -30,12 +30,11 @@ import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.a
 import graphql.nadel.validation.ok
 import graphql.nadel.validation.onErrorCast
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLScalarType
 import java.math.BigInteger
 
 private data class NadelHydrationConditionValidationContext(
-    val parent: NadelServiceSchemaElement,
+    val parent: NadelServiceSchemaElement.FieldsContainer,
     val virtualField: GraphQLFieldDefinition,
     val hydration: NadelHydrationDefinition,
     val condition: NadelHydrationConditionDefinition,
@@ -57,7 +56,7 @@ internal class NadelHydrationConditionValidation {
 
     context(NadelValidationContext)
     fun validateCondition(
-        parent: NadelServiceSchemaElement,
+        parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
         condition: NadelHydrationConditionDefinition,
@@ -158,7 +157,7 @@ internal class NadelHydrationConditionValidation {
     private fun getConditionSourceField(
         pathToConditionSourceField: List<String>,
     ): NadelValidationInterimResult<GraphQLFieldDefinition> {
-        val field = (parent.overall as GraphQLFieldsContainer).getFieldAt(pathToConditionSourceField)
+        val field = parent.overall.getFieldAt(pathToConditionSourceField)
             ?: return NadelHydrationResultConditionReferencesNonExistentFieldError(
                 parentType = parent,
                 virtualField = virtualField,
