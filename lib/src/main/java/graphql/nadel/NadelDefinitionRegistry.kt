@@ -78,6 +78,10 @@ class NadelDefinitionRegistry {
         return sdlDefinitions.filterIsInstance<T>()
     }
 
+    fun getDefinitions(name: String): List<AnySDLDefinition> {
+        return definitionsByName[name] ?: return emptyList()
+    }
+
     inline fun <reified T : AnySDLDefinition> getDefinitionsOfType(): List<T> {
         return getDefinitionsOfType(T::class.java)
     }

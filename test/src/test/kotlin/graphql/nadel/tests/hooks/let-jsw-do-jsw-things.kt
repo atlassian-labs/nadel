@@ -5,6 +5,10 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.GatewaySchemaWiringFactory
 import graphql.nadel.tests.UseHook
 import graphql.nadel.validation.NadelSchemaValidationError
+import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
+import graphql.schema.GraphQLEnumType
+import graphql.schema.GraphQLScalarType
 
 @UseHook
 class `let-jsw-do-jsw-things` : EngineTestHook {
@@ -15,11 +19,56 @@ class `let-jsw-do-jsw-things` : EngineTestHook {
     }
 
     override fun isSchemaValid(errors: Set<NadelSchemaValidationError>): Boolean {
-        return errors.mapTo(LinkedHashSet()) { it.message } == setOf(
-            "Underlying type X was duplicated by types [A, B] in the service service",
-            "Underlying type Y was duplicated by types [C, D] in the service service",
-            "Overall type kind of GraphQLScalarType(name=C) in service service does not match underlying type kind GraphQLEnumType(name=Y)",
-            "Overall type kind of GraphQLScalarType(name=D) in service service does not match underlying type kind GraphQLEnumType(name=Y)",
-        )
+        if (errors.size == 4) {
+            return errors.hasTypeMismatch {
+                val schemaElement = it.schemaElement
+                schemaElement.overall is GraphQLScalarType
+                    && schemaElement.underlying is GraphQLEnumType
+                    && schemaElement.overall.name == "C"
+                    && schemaElement.underlying.name == "Y"
+            } && errors.hasTypeMismatch {
+                val schemaElement = it.schemaElement
+                schemaElement.overall is GraphQLScalarType
+                    && schemaElement.underlying is GraphQLEnumType
+                    && schemaElement.overall.name == "D"
+                    && schemaElement.underlying.name == "Y"
+            } && errors.wasTypeDuplicated { error ->
+                error.duplicates
+                    .mapTo(mutableSetOf()) {
+                        it.overall.name to it.underlying.name
+                    } == setOf("B" to "X", "A" to "X")
+            } && errors.wasTypeDuplicated { error ->
+                error.duplicates
+                    .mapTo(mutableSetOf()) {
+                        it.overall.name to it.underlying.name
+                    } == setOf("D" to "Y", "C" to "Y")
+            }
+        }
+
+        return false
+    }
+
+    private fun Iterable<NadelSchemaValidationError>.wasTypeDuplicated(
+        predicate: (DuplicatedUnderlyingType) -> Boolean,
+    ): Boolean {
+        return any {
+            if (it is DuplicatedUnderlyingType) {
+                predicate(it)
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun Iterable<NadelSchemaValidationError>.hasTypeMismatch(
+        predicate: (IncompatibleType) -> Boolean,
+    ): Boolean {
+        return any {
+            if (it is IncompatibleType) {
+                predicate(it)
+            } else {
+                false
+            }
+        }
     }
 }
