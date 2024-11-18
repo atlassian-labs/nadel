@@ -4,7 +4,6 @@ import graphql.ErrorClassification
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.nadel.Service
-import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition

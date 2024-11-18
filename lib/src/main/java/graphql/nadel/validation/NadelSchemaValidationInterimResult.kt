@@ -10,7 +10,7 @@ internal sealed interface NadelValidationInterimResult<T> {
     ) : NadelValidationInterimResult<T> {
         companion object {
             context(NadelValidationContext)
-            internal fun <T : Any> T.asInterimSuccess(): Success<T> {
+            internal fun <T : Any?> T.asInterimSuccess(): Success<T> {
                 return Success(this)
             }
         }
