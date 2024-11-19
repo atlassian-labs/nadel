@@ -22,7 +22,7 @@ internal class NadelTypeValidation {
     private val hydrationValidation = NadelHydrationValidation()
     private val fieldValidation = NadelFieldValidation(hydrationValidation)
     private val inputValidation = NadelInputValidation()
-    private val unionValidation = NadelUnionValidation(this)
+    private val unionValidation = NadelUnionValidation()
     private val enumValidation = NadelEnumValidation()
     private val interfaceValidation = NadelInterfaceValidation()
     private val namespaceValidation = NadelNamespaceValidation()
