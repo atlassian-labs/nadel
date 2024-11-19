@@ -13,4 +13,5 @@ internal data class NadelValidationContext(
     val combinedTypeNames: Set<String>,
 ) {
     val visitedTypes: MutableSet<NadelServiceSchemaElementRef> = hashSetOf()
+    val wouldHaveVisited: MutableSet<NadelServiceSchemaElementRef> = hashSetOf()
 }

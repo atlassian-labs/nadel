@@ -17,10 +17,10 @@ import graphql.nadel.schema.NadelDirectives
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
-import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLUnionType
+import graphql.schema.idl.ScalarInfo
 
 class NadelSchemaValidation(
     // Why is this a constructor argument…
@@ -58,6 +58,14 @@ class NadelSchemaValidation(
                     typeValidation.validate(it)
                 }
                 .toResult()
+        }.also {
+            context.wouldHaveVisited
+                .removeIf {
+                    ScalarInfo.isGraphqlSpecifiedScalar(it.overall)
+                }
+            require(context.visitedTypes.containsAll(context.wouldHaveVisited)) {
+                "wat"
+            }
         }
     }
 

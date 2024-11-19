@@ -46,6 +46,21 @@ internal class NadelUnionValidation {
                 extraType = memberOverallType as GraphQLObjectType,
             )
         } else {
+            // typeValidation.validate(
+            //     NadelServiceSchemaElement.from(
+            //         service = parent.service,
+            //         overall = memberOverallType,
+            //         underlying = memberUnderlyingType,
+            //     ),
+            // )
+            wouldHaveVisited
+                .add(
+                    NadelServiceSchemaElement.from(
+                        service = parent.service,
+                        overall = memberOverallType,
+                        underlying = memberUnderlyingType,
+                    ).toRef(),
+                )
             ok()
         }
     }

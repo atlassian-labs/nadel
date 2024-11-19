@@ -98,6 +98,15 @@ internal class NadelFieldValidation(
                 if (underlyingArg == null) {
                     MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg)
                 } else {
+                    wouldHaveVisited
+                        .add(
+                            NadelServiceSchemaElement.from(
+                                service = parent.service,
+                                overall = overallArg.type.unwrapAll(),
+                                underlying = underlyingArg.type.unwrapAll(),
+                            ).toRef(),
+                        )
+
                     if (isUnwrappedArgTypeSame(overallArg, underlyingArg)) {
                         inputValidation
                             .validate(
@@ -142,6 +151,15 @@ internal class NadelFieldValidation(
     ): NadelSchemaValidationResult {
         val overallType = overallField.type.unwrapAll()
         val underlyingType = underlyingField.type.unwrapAll()
+
+        wouldHaveVisited
+            .add(
+                NadelServiceSchemaElement.from(
+                    service = parent.service,
+                    overall = overallType,
+                    underlying = underlyingType,
+                ).toRef(),
+            )
 
         if ((overallType.getRenamedOrNull()?.from ?: overallType.name) != underlyingType.name) {
             return IncompatibleFieldOutputType(parent, overallField, underlyingField)
