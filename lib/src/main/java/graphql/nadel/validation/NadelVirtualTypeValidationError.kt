@@ -5,7 +5,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedSchemaElement
 
-data class NadelInvalidVirtualTypeError(
+data class NadelVirtualTypeIllegalTypeError(
     val type: NadelServiceSchemaElement.VirtualType,
 ) : NadelSchemaValidationError {
     override val message: String = "Virtual type must be an object type"
@@ -14,7 +14,7 @@ data class NadelInvalidVirtualTypeError(
         get() = type.overall
 }
 
-data class NadelVirtualTypeUnexpectedFieldError(
+data class NadelVirtualTypeMissingBackingFieldError(
     val type: NadelServiceSchemaElement.VirtualType,
     val virtualField: GraphQLFieldDefinition,
 ) : NadelSchemaValidationError {
@@ -24,7 +24,7 @@ data class NadelVirtualTypeUnexpectedFieldError(
         get() = type.overall
 }
 
-data class NadelVirtualTypeUnexpectedFieldArgumentError(
+data class NadelVirtualTypeMissingBackingFieldArgumentError(
     val type: NadelServiceSchemaElement.VirtualType,
     val virtualField: GraphQLFieldDefinition,
     val backingField: GraphQLFieldDefinition,
@@ -59,7 +59,7 @@ data class NadelVirtualTypeRenameFieldError(
         get() = type.overall
 }
 
-data class NadelVirtualTypeUnexpectedInterfaceError(
+data class NadelVirtualTypeMissingInterfaceError(
     val type: NadelServiceSchemaElement.VirtualType,
     val virtualFieldInterface: GraphQLNamedOutputType,
 ) : NadelSchemaValidationError {

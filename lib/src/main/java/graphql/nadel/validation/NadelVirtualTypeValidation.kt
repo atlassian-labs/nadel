@@ -5,6 +5,7 @@ import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_LOOSER_OR_SAME
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_STRICTER_OR_SAME
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.schema.GraphQLArgument
@@ -37,7 +38,7 @@ internal class NadelVirtualTypeValidation(
     }
 
     context(NadelValidationContext, NadelVirtualTypeValidationContext)
-    fun validate(
+    private fun validate(
         schemaElement: NadelServiceSchemaElement.VirtualType,
     ): NadelSchemaValidationResult {
         if (!visit(schemaElement)) {
@@ -52,7 +53,7 @@ internal class NadelVirtualTypeValidation(
             )
         }
 
-        return NadelInvalidVirtualTypeError(schemaElement)
+        return NadelVirtualTypeIllegalTypeError(schemaElement)
     }
 
     context(NadelValidationContext, NadelVirtualTypeValidationContext)
@@ -99,8 +100,8 @@ internal class NadelVirtualTypeValidation(
                 )
             } else {
                 val backingField = backingType.getField(virtualField.name)
-                return if (backingField == null) {
-                    NadelVirtualTypeUnexpectedFieldError(
+                if (backingField == null) {
+                    NadelVirtualTypeMissingBackingFieldError(
                         type = NadelServiceSchemaElement.VirtualType(
                             service = service,
                             overall = virtualType,
@@ -146,40 +147,48 @@ internal class NadelVirtualTypeValidation(
     /**
      * Output type must be another valid virtual type, otherwise exactly the same.
      */
-    context(NadelValidationContext)
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
     private fun validateFieldOutputType(
         parent: NadelServiceSchemaElement.VirtualType,
         virtualField: GraphQLFieldDefinition,
         backingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        val virtualFieldOutputType = virtualField.type.unwrapAll()
-        val backingFieldOutputType = backingField.type.unwrapAll()
+        val virtualFieldUnwrappedOutputType = virtualField.type.unwrapAll()
+        val backingFieldUnwrappedOutputType = backingField.type.unwrapAll()
 
-        if (virtualFieldOutputType.isVirtualType()) {
+        if (virtualFieldUnwrappedOutputType.isVirtualType()) {
             return validate(
                 NadelServiceSchemaElement.VirtualType(
                     service = parent.service,
-                    overall = virtualFieldOutputType,
-                    underlying = backingFieldOutputType,
+                    overall = virtualFieldUnwrappedOutputType,
+                    underlying = backingFieldUnwrappedOutputType,
                 ),
             )
         }
 
-        return if (virtualFieldOutputType.name == backingFieldOutputType.name) {
-            ok()
-        } else {
-            NadelVirtualTypeIncompatibleFieldOutputTypeError(
-                parent = parent,
-                virtualField = virtualField,
-                backingField = backingField,
+        if (virtualFieldUnwrappedOutputType.name == backingFieldUnwrappedOutputType.name) {
+            val isTypeWrappingValid = typeWrappingValidation.isTypeWrappingValid(
+                lhs = virtualField.type,
+                rhs = backingField.type,
+                rule = LHS_MUST_BE_LOOSER_OR_SAME,
             )
+
+            if (isTypeWrappingValid) {
+                return ok()
+            }
         }
+
+        return NadelVirtualTypeIncompatibleFieldOutputTypeError(
+            parent = parent,
+            virtualField = virtualField,
+            backingField = backingField,
+        )
     }
 
     /**
      * Arguments can be omitted, but otherwise exactly the same.
      */
-    context(NadelValidationContext)
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
     private fun validateFieldArguments(
         parent: NadelServiceSchemaElement.VirtualType,
         virtualField: GraphQLFieldDefinition,
@@ -190,7 +199,7 @@ internal class NadelVirtualTypeValidation(
             .map { virtualFieldArgument ->
                 val backingFieldArgument = backingField.getArgument(virtualFieldArgument.name)
                 if (backingFieldArgument == null) {
-                    NadelVirtualTypeUnexpectedFieldArgumentError(
+                    NadelVirtualTypeMissingBackingFieldArgumentError(
                         type = parent,
                         virtualField = virtualField,
                         backingField = backingField,
@@ -212,7 +221,7 @@ internal class NadelVirtualTypeValidation(
     /**
      * Argument must be exactly the same.
      */
-    context(NadelValidationContext)
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
     private fun validateVirtualFieldArgument(
         parent: NadelServiceSchemaElement.VirtualType,
         virtualField: GraphQLFieldDefinition,
@@ -244,7 +253,7 @@ internal class NadelVirtualTypeValidation(
     /**
      * Interfaces can be omitted, but otherwise exactly the same.
      */
-    context(NadelValidationContext)
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
     private fun validateInterfaces(
         service: Service,
         virtualType: GraphQLObjectType,
@@ -254,7 +263,7 @@ internal class NadelVirtualTypeValidation(
             if (backingType.interfaces.contains(virtualTypeInterface)) {
                 ok()
             } else {
-                NadelVirtualTypeUnexpectedInterfaceError(
+                NadelVirtualTypeMissingInterfaceError(
                     type = NadelServiceSchemaElement.VirtualType(
                         service = service,
                         overall = virtualType,
