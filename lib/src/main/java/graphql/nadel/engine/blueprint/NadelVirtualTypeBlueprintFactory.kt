@@ -50,7 +50,7 @@ internal class NadelVirtualTypeBlueprintFactory {
         virtualFieldDef: GraphQLFieldDefinition,
     ): List<VirtualTypeMapping> {
         val hydration = virtualFieldDef.getHydrationDefinitions().first()
-        val backingFieldDef = engineSchema.queryType.getFieldAt(hydration.pathToBackingField)!!
+        val backingFieldDef = engineSchema.queryType.getFieldAt(hydration.backingField)!!
         val backingType = backingFieldDef.type.unwrapAll() as? GraphQLObjectType
             ?: return emptyList()
         val virtualType = virtualFieldDef.type.unwrapAll() as? GraphQLObjectType

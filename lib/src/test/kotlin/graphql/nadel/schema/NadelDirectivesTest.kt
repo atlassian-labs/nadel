@@ -79,7 +79,7 @@ class NadelDirectivesTest : DescribeSpec({
             val hydration = field.getHydrationDefinitions().single()
 
             // then
-            assert(hydration.pathToBackingField == listOf("jira", "issueById"))
+            assert(hydration.backingField == listOf("jira", "issueById"))
             assert(hydration.batchSize == 50)
             assert(hydration.timeout == 100)
             assert(hydration.arguments.size == 2)

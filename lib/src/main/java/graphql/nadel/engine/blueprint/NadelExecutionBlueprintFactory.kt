@@ -224,7 +224,7 @@ private class Factory(
         virtualFieldDef: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
     ): NadelFieldInstruction {
-        val pathToBackingField = hydration.pathToBackingField
+        val pathToBackingField = hydration.backingField
         val backingFieldContainer = engineSchema.queryType.getFieldContainerFor(pathToBackingField)!!
         val backingFieldDef = engineSchema.queryType.getFieldAt(pathToBackingField)!!
         val hydrationBackingService = coordinatesToService[makeFieldCoordinates(backingFieldContainer, backingFieldDef)]!!
@@ -412,7 +412,7 @@ private class Factory(
             location = location,
             virtualFieldDef = virtualFieldDef,
             backingService = backingService,
-            queryPathToBackingField = NadelQueryPath(hydration.pathToBackingField),
+            queryPathToBackingField = NadelQueryPath(hydration.backingField),
             backingFieldArguments = hydrationArgs,
             timeout = hydration.timeout,
             batchSize = batchSize,

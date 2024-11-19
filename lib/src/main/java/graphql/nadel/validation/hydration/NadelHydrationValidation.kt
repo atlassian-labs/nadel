@@ -201,7 +201,7 @@ internal class NadelHydrationValidation {
                 location = makeFieldCoordinates(parent.overall.name, virtualField.name),
                 virtualFieldDef = virtualField,
                 backingService = backingService,
-                queryPathToBackingField = NadelQueryPath(hydrationDefinition.pathToBackingField),
+                queryPathToBackingField = NadelQueryPath(hydrationDefinition.backingField),
                 backingFieldArguments = arguments,
                 timeout = hydrationDefinition.timeout,
                 sourceFields = sourceFields,
@@ -277,7 +277,7 @@ internal class NadelHydrationValidation {
                 location = makeFieldCoordinates(parent.overall.name, virtualField.name),
                 virtualFieldDef = virtualField,
                 backingService = backingService,
-                queryPathToBackingField = NadelQueryPath(hydrationDefinition.pathToBackingField),
+                queryPathToBackingField = NadelQueryPath(hydrationDefinition.backingField),
                 backingFieldArguments = arguments,
                 timeout = hydrationDefinition.timeout,
                 sourceFields = sourceFields,
@@ -296,7 +296,7 @@ internal class NadelHydrationValidation {
         virtualField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
     ): NadelValidationInterimResult<GraphQLFieldsContainer> {
-        return engineSchema.queryType.getFieldContainerFor(hydration.pathToBackingField)?.asInterimSuccess()
+        return engineSchema.queryType.getFieldContainerFor(hydration.backingField)?.asInterimSuccess()
             ?: return NadelHydrationReferencesNonExistentBackingFieldError(
                 parentType = parent,
                 virtualField = virtualField,
@@ -310,7 +310,7 @@ internal class NadelHydrationValidation {
         virtualField: GraphQLFieldDefinition,
         hydration: NadelHydrationDefinition,
     ): NadelValidationInterimResult<GraphQLFieldDefinition> {
-        return engineSchema.queryType.getFieldAt(hydration.pathToBackingField)?.asInterimSuccess()
+        return engineSchema.queryType.getFieldAt(hydration.backingField)?.asInterimSuccess()
             ?: return NadelHydrationReferencesNonExistentBackingFieldError(
                 parentType = parent,
                 virtualField = virtualField,
@@ -529,7 +529,7 @@ internal class NadelHydrationValidation {
 
     context(NadelValidationContext)
     private fun isBatchHydration(hydrationDefinition: NadelHydrationDefinition): Boolean {
-        val backingFieldDef = engineSchema.queryType.getFieldAt(hydrationDefinition.pathToBackingField)
+        val backingFieldDef = engineSchema.queryType.getFieldAt(hydrationDefinition.backingField)
             ?: return false // Error handled elsewhere
 
         val hasBatchedArgument = hydrationDefinition.arguments
