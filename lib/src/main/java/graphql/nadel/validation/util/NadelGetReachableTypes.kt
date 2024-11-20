@@ -3,6 +3,7 @@ package graphql.nadel.validation.util
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.nadel.definition.virtualType.isVirtualType
 import graphql.nadel.engine.blueprint.NadelFastSchemaTraverser
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -103,7 +104,36 @@ internal fun getReachableTypeNames(
                 }
             }
 
-            return !node.isHydrated()
+            if (node.isHydrated()) {
+                return false
+            }
+
+            val unwrappedOutputType = node.type.unwrapAll()
+            if (unwrappedOutputType is GraphQLInterfaceType) {
+                getObjectTypes(unwrappedOutputType)
+                    .forEach {
+                        add(it.name)
+                    }
+            }
+
+            return true
+        }
+
+        /**
+         * For every interface referenced, we need to try match the object types the service implements.
+         */
+        private fun getObjectTypes(interfaceType: GraphQLInterfaceType): Sequence<GraphQLObjectType> {
+            val impls = engineSchema.getImplementations(interfaceType)
+
+            return impls
+                .asSequence()
+                .filter { impl ->
+                    val underlyingTypeName = impl.getRenamedOrNull()?.from ?: impl.name
+                    service.underlyingSchema.typeMap[underlyingTypeName] is GraphQLObjectType
+                }
+                .filterNot {
+                    it.isVirtualType() // Not sure if this is needed…
+                }
         }
 
         override fun visitGraphQLInputObjectField(

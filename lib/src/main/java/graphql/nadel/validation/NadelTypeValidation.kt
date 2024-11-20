@@ -20,7 +20,6 @@ import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedType
-import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLUnionType
 
 internal class NadelTypeValidation {
@@ -267,21 +266,8 @@ internal class NadelTypeValidation {
             }
             .toList()
 
-        val matchingImplementsNames = service.underlyingSchema.typeMap.values
-            .asSequence()
-            .filterIsInstance<GraphQLObjectType>()
-            .filter {
-                it.interfaces.isNotEmpty()
-            }
-            .map {
-                it.name
-            }
-            .filter {
-                engineSchema.typeMap[it] is GraphQLObjectType
-            }
-
         // If it can be reached by using your service, you must own it to return it!
-        return getReachableTypeNames(service, definitionNames + matchingImplementsNames)
+        return getReachableTypeNames(service, definitionNames)
     }
 
     context(NadelValidationContext)
