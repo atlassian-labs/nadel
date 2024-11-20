@@ -138,7 +138,7 @@ internal class NadelHydrationConditionValidation {
     private fun isConditionFieldSameAsBatchId(
         pathToConditionField: List<String>,
     ): Boolean {
-        val backingField = engineSchema.queryType.getFieldAt(hydration.backingField)!!
+        val backingField = engineSchema.queryType.getFieldAt(hydration.pathToBackingField)!!
 
         // Not batch hydration
         if (!backingField.type.unwrapNonNull().isList) {

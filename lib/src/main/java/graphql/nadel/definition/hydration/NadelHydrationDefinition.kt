@@ -57,7 +57,7 @@ class NadelHydrationDefinition(
         )
     }
 
-    val backingField: List<String>
+    val pathToBackingField: List<String>
         get() = appliedDirective.getArgument(Keyword.field).getValue<String>().split(".")
 
     val identifiedBy: String?

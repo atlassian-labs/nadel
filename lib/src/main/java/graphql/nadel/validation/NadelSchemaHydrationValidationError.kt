@@ -24,7 +24,7 @@ private fun getHydrationErrorMessage(
 ): String {
     val parentTypeName = parentType.overall.name
     val fieldName = virtualField.name
-    val backingField = hydration.backingField.joinToString(separator = ".")
+    val backingField = hydration.pathToBackingField.joinToString(separator = ".")
     return "Field $parentTypeName.$fieldName tried to hydrate from Query.$backingField but $reason"
 }
 

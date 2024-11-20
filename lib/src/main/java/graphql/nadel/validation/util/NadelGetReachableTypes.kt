@@ -152,7 +152,7 @@ private class NadelReferencedTypeVisitor(
         val outputType = field.type.unwrapAll()
         if (outputType.isVirtualType()) {
             for (hydration in field.getHydrationDefinitions()) {
-                val backingField = engineSchema.queryType.getFieldAt(hydration.backingField)
+                val backingField = engineSchema.queryType.getFieldAt(hydration.pathToBackingField)
                     ?: continue // Error will be handled elsewhere down the line
                 onVirtualTypeReferenced(
                     virtualType = outputType.name,

@@ -522,7 +522,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.overall.name == "Issue")
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
-        assert(error.hydration.backingField == listOf("userById"))
+        assert(error.hydration.pathToBackingField == listOf("userById"))
         assert(error.virtualField == error.subject)
     }
 
@@ -582,7 +582,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.overall.name == "Issue")
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
-        assert(error.hydration.backingField == listOf("user"))
+        assert(error.hydration.pathToBackingField == listOf("user"))
         assert(error.argument.pathToField == listOf("creatorId"))
     }
 
@@ -647,7 +647,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.overall.name == "Issue")
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
-        assert(error.hydration.backingField == listOf("user"))
+        assert(error.hydration.pathToBackingField == listOf("user"))
         assert(error.argument.argumentName == "secrets")
     }
 
@@ -712,7 +712,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.overall.name == "Issue")
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
-        assert(error.hydration.backingField == listOf("user"))
+        assert(error.hydration.pathToBackingField == listOf("user"))
         assert(error.argument == "someArg")
     }
 
@@ -778,7 +778,7 @@ class NadelHydrationValidationTest {
         assert(error.parentType.overall.name == "Issue")
         assert(error.parentType.underlying.name == "Issue")
         assert(error.virtualField.name == "creator")
-        assert(error.hydration.backingField == listOf("user"))
+        assert(error.hydration.pathToBackingField == listOf("user"))
         assert(error.duplicates.map { it.name }.toSet() == setOf("id"))
     }
 

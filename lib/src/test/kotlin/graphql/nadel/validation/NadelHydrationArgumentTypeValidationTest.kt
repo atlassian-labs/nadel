@@ -84,7 +84,7 @@ class NadelHydrationArgumentTypeValidationTest {
                 val error = errors.singleOfType<NadelHydrationArgumentIncompatibleTypeError>()
                 assertTrue(error.parentType.overall.name == "JiraIssue")
                 assertTrue(error.virtualField.name == "related")
-                assertTrue(error.hydration.backingField == listOf("issueById"))
+                assertTrue(error.hydration.pathToBackingField == listOf("issueById"))
                 assertTrue(error.hydrationArgument.name == "search")
                 assertTrue(GraphQLTypeUtil.simplePrint(error.suppliedType) == sourceType.filter(Char::isLetter))
                 assertTrue(GraphQLTypeUtil.simplePrint(error.requiredType) == requiredType.filter(Char::isLetter))
@@ -422,7 +422,7 @@ class NadelHydrationArgumentTypeValidationTest {
         val error = errors.singleOfType<NadelHydrationMissingRequiredBackingFieldArgumentError>()
         assertTrue(error.parentType.overall.name == "JiraIssue")
         assertTrue(error.virtualField.name == "related")
-        assertTrue(error.hydration.backingField == listOf("issueById"))
+        assertTrue(error.hydration.pathToBackingField == listOf("issueById"))
         assertTrue(error.missingBackingArgument.name == "id")
     }
 
@@ -635,7 +635,7 @@ class NadelHydrationArgumentTypeValidationTest {
                 val error = errors.singleOfType<NadelHydrationArgumentIncompatibleTypeError>()
                 assertTrue(error.parentType.overall.name == "JiraIssue")
                 assertTrue(error.virtualField.name == "related")
-                assertTrue(error.hydration.backingField == listOf("issueById"))
+                assertTrue(error.hydration.pathToBackingField == listOf("issueById"))
                 assertTrue(error.hydrationArgument.name == "ids")
                 assertTrue(GraphQLTypeUtil.simplePrint(error.suppliedType) == sourceType.filter(Char::isLetter))
                 assertTrue(GraphQLTypeUtil.simplePrint(error.requiredType) == requiredType.filter(Char::isLetter))
