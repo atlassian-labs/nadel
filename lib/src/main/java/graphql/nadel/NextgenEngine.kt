@@ -50,6 +50,7 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.util.OperationNameUtil
+import graphql.nadel.util.getLogger
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
@@ -72,6 +73,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
 import kotlinx.coroutines.supervisorScope
+import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 import graphql.normalized.ExecutableNormalizedOperationFactory.Options.defaultOptions as executableNormalizedOperationFactoryOptions
 
@@ -97,9 +99,14 @@ internal class NextgenEngine(
             engineSchema = engineSchema,
             services = services,
         ),
-        new = NadelSchemaValidation(
-            NadelSchemas(engineSchema, services)
-        ).validateAndGenerateBlueprint(),
+        new = try {
+            NadelSchemaValidation(
+                NadelSchemas(engineSchema, services)
+            ).validateAndGenerateBlueprint()
+        } catch (e: Exception) {
+            getLogger<NextgenEngine>().error("Unable to create validated blueprint", e)
+            null
+        },
     )
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
