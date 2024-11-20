@@ -48,7 +48,6 @@ internal class NadelPartitionTransform(
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-
         if (executionContext.isPartitionedCall) {
             // We don't want to partition a call that is already partitioned
             return null
@@ -58,7 +57,7 @@ internal class NadelPartitionTransform(
             .getTypeNameToInstructionMap<NadelPartitionInstruction>(overallField)
 
         // We can't partition a field that has multiple partition instructions in different types. But, since
-        // @partition can only be applied to fields in operation and namespaced types, we don't have to worry abou
+        // @partition can only be applied to fields in operation and namespaced types, we don't have to worry about
         // this case.
         if (partitionInstructions.size != 1) {
             return null
@@ -67,14 +66,14 @@ internal class NadelPartitionTransform(
         val pathToPartitionArg = partitionInstructions.values.single().pathToPartitionArg
 
         val fieldPartitionContext = partitionTransformHook.getFieldPartitionContext(
-                executionContext,
-                serviceExecutionContext,
-                executionBlueprint,
-                services,
-                service,
-                overallField,
-                hydrationDetails,
-            )
+            executionContext,
+            serviceExecutionContext,
+            executionBlueprint,
+            services,
+            service,
+            overallField,
+            hydrationDetails,
+        )
 
         if (fieldPartitionContext == null) {
             // A field without a partition context can't be partitioned
@@ -139,18 +138,18 @@ internal class NadelPartitionTransform(
 
         val partitionCalls = otherPartitions.map {
             executionContext.executionCoroutine.async {
-                    val topLevelField = NFUtil.createField(
-                        executionBlueprint.engineSchema,
-                        rootType,
-                        // TODO: queryPath contains field aliases, not field names, which results in an error.
-                        field.queryPath,
-                        it.normalizedArguments,
-                        it.children
-                    )
+                val topLevelField = NFUtil.createField(
+                    executionBlueprint.engineSchema,
+                    rootType,
+                    // TODO: queryPath contains field aliases, not field names, which results in an error.
+                    field.queryPath,
+                    it.normalizedArguments,
+                    it.children
+                )
 
-                    engine.executePartitionedCall(topLevelField, service, state.executionContext)
-                }
+                engine.executePartitionedCall(topLevelField, service, state.executionContext)
             }
+        }
 
         state.partitionCalls.addAll(partitionCalls)
 
@@ -240,5 +239,4 @@ internal class NadelPartitionTransform(
 
         return mergedData + errorInstructions
     }
-
 }
