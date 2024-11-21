@@ -17,6 +17,7 @@ object NFUtil {
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
         pathToField: NadelQueryPath,
+        aliasedPath: NadelQueryPath? = null,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution> = LinkedHashSet(),
@@ -25,6 +26,7 @@ object NFUtil {
             schema,
             parentType,
             pathToField,
+            aliasedPath,
             fieldArguments,
             fieldChildren,
             pathToFieldIndex = 0,
@@ -36,6 +38,7 @@ object NFUtil {
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
         queryPathToField: NadelQueryPath,
+        aliasedPath: NadelQueryPath? = null,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution> = LinkedHashSet(),
@@ -44,6 +47,7 @@ object NFUtil {
             schema,
             parentType,
             queryPathToField,
+            aliasedPath,
             fieldArguments,
             fieldChildren,
             pathToFieldIndex = 0,
@@ -55,6 +59,7 @@ object NFUtil {
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
         queryPathToField: NadelQueryPath,
+        aliasedPath: NadelQueryPath?,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,
@@ -68,6 +73,7 @@ object NFUtil {
                     schema,
                     parentType = objectType,
                     queryPathToField,
+                    aliasedPath,
                     fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
@@ -79,6 +85,7 @@ object NFUtil {
                     schema,
                     parentType,
                     queryPathToField,
+                    aliasedPath,
                     fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
@@ -93,12 +100,16 @@ object NFUtil {
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
         queryPathToField: NadelQueryPath,
+        aliasedPath: NadelQueryPath?,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
     ): ExecutableNormalizedField {
         val fieldName = queryPathToField.segments[pathToFieldIndex]
+
+        val fieldAlias = aliasedPath?.segments?.get(pathToFieldIndex).takeIf { it != fieldName }
+
         val fieldDef = parentType.getFieldDefinition(fieldName)
             ?: error("No definition for ${parentType.name}.$fieldName")
 
@@ -106,6 +117,7 @@ object NFUtil {
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
             .deferredExecutions(deferredExecutions)
+            .alias(fieldAlias)
             .also { builder ->
                 if (pathToFieldIndex == queryPathToField.segments.lastIndex) {
                     builder.normalizedArguments(fieldArguments)
@@ -119,6 +131,7 @@ object NFUtil {
                         schema,
                         parentType = GraphQLTypeUtil.unwrapAllAs(fieldDef.type),
                         queryPathToField,
+                        aliasedPath,
                         fieldArguments,
                         fieldChildren,
                         pathToFieldIndex = pathToFieldIndex + 1,
