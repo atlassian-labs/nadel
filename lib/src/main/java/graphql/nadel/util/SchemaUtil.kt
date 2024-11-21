@@ -31,7 +31,8 @@ internal object SchemaUtil {
                     )
                     .build(),
             )
-            .getDefinitionsOfType(SDLDefinition::class.java)
+            .definitions
+            .filterIsInstance<SDLDefinition<*>>()
     }
 
     fun parseTypeDefinitionRegistry(

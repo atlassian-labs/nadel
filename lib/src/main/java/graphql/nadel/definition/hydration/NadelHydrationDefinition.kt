@@ -96,7 +96,7 @@ class NadelHydrationDefinition(
                 NadelBatchObjectIdentifiedByDefinition(it as ObjectValue)
             }
 
-    internal object Keyword {
+    object Keyword {
         const val hydrated = "hydrated"
         const val field = "field"
         const val identifiedBy = "identifiedBy"

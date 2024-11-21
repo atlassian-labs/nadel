@@ -7,7 +7,7 @@ import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.schema.NeverWiringFactory
-import graphql.nadel.schema.SchemaTransformationHook
+import graphql.nadel.schema.NadelSchemaTransformationHook
 import graphql.nadel.tests.util.join
 import graphql.nadel.tests.util.toSlug
 import graphql.nadel.validation.NadelSchemaValidationError
@@ -30,8 +30,8 @@ interface EngineTestHook {
     val customTransforms: List<NadelTransform<out Any>>
         get() = emptyList()
 
-    val schemaTransformationHook: SchemaTransformationHook
-        get() = SchemaTransformationHook.Identity
+    val schemaTransformationHook: NadelSchemaTransformationHook
+        get() = NadelSchemaTransformationHook { schema, _ -> schema }
 
     val wiringFactory: WiringFactory
         get() = NeverWiringFactory()
@@ -99,7 +99,7 @@ internal fun getTestHook(fixture: TestFixture): EngineTestHook? {
         "new batch polymorphic hydration when hook returns null 1",
         "new batch polymorphic hydration actor fields are in the same service return types implement same interface",
         "new complex identified by with rename",
-        ->
+            ->
             name.removePrefix("new ")
         else -> name
     }.toSlug()

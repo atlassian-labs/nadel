@@ -23,7 +23,8 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateP
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.schema.QuerySchemaGenerator
-import graphql.nadel.schema.SchemaTransformationHook
+import graphql.nadel.schema.NadelServicesTransformationHook
+import graphql.nadel.schema.NadelSchemaTransformationHook
 import graphql.nadel.util.getLogger
 import graphql.nadel.util.getNotPrivacySafeLogger
 import graphql.parser.InvalidSyntaxException
@@ -313,8 +314,13 @@ class Nadel private constructor(
             return this
         }
 
-        fun schemaTransformationHook(hook: SchemaTransformationHook): Builder {
+        fun schemaTransformationHook(hook: NadelSchemaTransformationHook): Builder {
             schemaBuilder.schemaTransformationHook(hook)
+            return this
+        }
+
+        fun servicesTransformationHook(hook: NadelServicesTransformationHook): Builder {
+            schemaBuilder.servicesTransformationHook(hook)
             return this
         }
 

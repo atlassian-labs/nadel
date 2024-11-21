@@ -45,12 +45,12 @@ class NadelDefinitionRegistry {
 
     val operationMap: Map<NadelOperationKind, List<ObjectTypeDefinition>>
         get() {
-            return NadelOperationKind.values().associateWith(::getOpsDefinitions)
+            return NadelOperationKind.entries.associateWith(::getOpsDefinitions)
         }
 
     private fun getOpsDefinitions(operationKind: NadelOperationKind): List<ObjectTypeDefinition> {
         val type = getOperationTypeName(operationKind)
-        return getDefinitionsOfType(type)
+        return getDefinitionsOfType(name = type)
     }
 
     fun getOperationTypeName(operationKind: NadelOperationKind): String {
@@ -100,7 +100,6 @@ class NadelDefinitionRegistry {
     }
 
     companion object {
-        @JvmStatic
         fun from(definitions: List<AnySDLDefinition>): NadelDefinitionRegistry {
             val registry = NadelDefinitionRegistry()
             definitions.forEach(registry::add)
