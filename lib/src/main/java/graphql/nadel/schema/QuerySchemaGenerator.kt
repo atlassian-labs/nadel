@@ -9,7 +9,7 @@ internal object QuerySchemaGenerator {
     private val visibleFieldPredicate = VisibleFieldPredicate { environment ->
         if (environment.schemaElement is GraphQLDirectiveContainer) {
             val container = environment.schemaElement as GraphQLDirectiveContainer
-            !container.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)
+            container.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name) == false
         } else {
             true
         }
