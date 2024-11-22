@@ -8,8 +8,6 @@ import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTr
 import graphql.nadel.tests.next.fixtures.partition.hooks.ThingsDataFetcherFactory
 import kotlin.test.Ignore
 
-// @Ignore("The partitioning code is calling NFUtil.createField() passing field.queryPath to create the top level fields" +
-//     " for partition calls. This results in and error because field.queryPath segments contain field aliases and not the actual field names.")
 open class PartitionWithFieldAliasTest : NadelIntegrationTest(
     query = """
       query getPartitionedThings{
