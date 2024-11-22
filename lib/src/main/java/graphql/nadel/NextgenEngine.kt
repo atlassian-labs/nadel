@@ -98,13 +98,15 @@ internal class NextgenEngine(
             engineSchema = engineSchema,
             services = services,
         ),
-        new = try {
-            NadelSchemaValidation(
-                NadelSchemas(engineSchema, services)
-            ).validateAndGenerateBlueprint()
-        } catch (e: Exception) {
-            getLogger<NextgenEngine>().error("Unable to create validated blueprint", e)
-            null
+        new = lazy {
+            try {
+                NadelSchemaValidation(
+                    NadelSchemas(engineSchema, services)
+                ).validateAndGenerateBlueprint()
+            } catch (e: Exception) {
+                getLogger<NextgenEngine>().error("Unable to create validated blueprint", e)
+                null
+            }
         },
     )
     private val executionPlanner = NadelExecutionPlanFactory.create(
