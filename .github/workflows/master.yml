@@ -5,14 +5,12 @@ on:
     branches:
       - master
 
-permissions: # For test summary bot
-  checks: write
-
 jobs:
   buildAndPublish:
     runs-on: ubuntu-latest
 
     permissions:
+      checks: write
       contents: read
       id-token: write
     env:
