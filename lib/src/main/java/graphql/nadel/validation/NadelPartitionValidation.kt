@@ -9,7 +9,6 @@ import graphql.nadel.engine.blueprint.NadelPartitionInstruction
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.nadel.util.NamespacedUtil.isNamespaceType
 import graphql.nadel.validation.NadelSchemaValidationError.CannotPartitionHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.InvalidPartitionArgument
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToFieldWithUnsupportedOutputType
@@ -38,7 +37,7 @@ internal class NadelPartitionValidation {
         val parentObject = parent as? NadelServiceSchemaElement.Object
             ?: return ok()
 
-        if (!isOperation(parentObject.overall) && !isNamespaceType(parentObject.overall, engineSchema)) {
+        if (!isOperation(parentObject.overall) && !namespaceTypeNames.contains(parentObject.overall.name)) {
             return PartitionAppliedToUnsupportedField(parent, overallField)
         }
 
