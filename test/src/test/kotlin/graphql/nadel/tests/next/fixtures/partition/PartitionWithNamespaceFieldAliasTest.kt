@@ -6,17 +6,18 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
 import graphql.nadel.tests.next.fixtures.partition.hooks.ThingsDataFetcherFactory
-import kotlin.test.Ignore
 
-open class PartitionWithFieldAliasTest : NadelIntegrationTest(
+open class PartitionWithNamespaceFieldAliasTest : NadelIntegrationTest(
     query = """
       query getPartitionedThings{
-        aliasedThings: things(ids: [
-            "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B",
-            "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-8:partition-D"
-        ]) {
-          id
-          name
+        aliasedNamespace: namespace {
+            things(ids: [
+                "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A", "thing-4:partition-B",
+                "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C", "thing-8:partition-D"
+            ]) {
+              id
+              name
+            }
         }
       }
     """.trimIndent(),
@@ -26,6 +27,10 @@ open class PartitionWithFieldAliasTest : NadelIntegrationTest(
             overallSchema = """
 
 type Query {
+  namespace: Namespace @namespaced
+}
+
+type Namespace {
   things(ids: [ID!]! ): [Thing]  @partition(pathToPartitionArg: ["ids"])
 }
 
@@ -37,6 +42,9 @@ type Thing {
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
+                        type.dataFetcher("namespace") { _ -> Any() }
+                    }
+                    .type("Namespace") { type ->
                         type.dataFetcher("things", ThingsDataFetcherFactory.makeIdsDataFetcher())
                     }
             },
