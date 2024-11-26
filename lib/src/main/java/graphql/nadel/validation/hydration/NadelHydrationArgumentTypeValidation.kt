@@ -59,9 +59,9 @@ internal sealed class NadelHydrationArgumentTypeValidationResult {
     ) : Error()
 }
 
-internal class NadelHydrationArgumentTypeValidation {
-    private val typeWrappingValidation = NadelTypeWrappingValidation()
-
+internal class NadelHydrationArgumentTypeValidation(
+    private val typeWrappingValidation: NadelTypeWrappingValidation,
+) {
     fun isAssignable(
         isBatchHydration: Boolean,
         hydrationArgumentDefinition: NadelHydrationArgumentDefinition,

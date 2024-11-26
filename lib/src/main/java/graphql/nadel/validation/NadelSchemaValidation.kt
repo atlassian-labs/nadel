@@ -23,7 +23,7 @@ import graphql.schema.GraphQLUnionType
 
 class NadelSchemaValidation internal constructor(
     private val fieldValidation: NadelFieldValidation,
-    private val inputValidation: NadelInputValidation,
+    private val inputValidation: NadelInputObjectValidation,
     private val unionValidation: NadelUnionValidation,
     private val enumValidation: NadelEnumValidation,
     private val interfaceValidation: NadelInterfaceValidation,
