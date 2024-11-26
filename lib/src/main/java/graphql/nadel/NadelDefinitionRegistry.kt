@@ -45,7 +45,7 @@ class NadelDefinitionRegistry {
 
     val operationMap: Map<NadelOperationKind, List<ObjectTypeDefinition>>
         get() {
-            return NadelOperationKind.values().associateWith(::getOpsDefinitions)
+            return NadelOperationKind.entries.associateWith(::getOpsDefinitions)
         }
 
     private fun getOpsDefinitions(operationKind: NadelOperationKind): List<ObjectTypeDefinition> {

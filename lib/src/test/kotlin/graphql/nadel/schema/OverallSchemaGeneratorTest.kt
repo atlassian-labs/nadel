@@ -2,34 +2,38 @@ package graphql.nadel.schema
 
 import graphql.GraphQLException
 import graphql.nadel.NadelOperationKind
-import graphql.nadel.NadelOperationKind.*
+import graphql.nadel.NadelOperationKind.Mutation
+import graphql.nadel.NadelOperationKind.Query
+import graphql.nadel.NadelOperationKind.Subscription
 import graphql.nadel.NadelSchemas
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLObjectType
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
-class OverallSchemaGeneratorTest : DescribeSpec({
-    val fooType = """
+class OverallSchemaGeneratorTest {
+    private val fooType = """
         type Foo {
             name: String
         }
     """.trimIndent()
 
-    val barType = """
+    private val barType = """
         type Bar {
             id: String
         }
     """.trimIndent()
 
-    val fooServiceDefaultQuery = """
+    private val fooServiceDefaultQuery = """
         type Query {
             foo: Foo
         }
     """.trimIndent()
 
-    val fooServiceQueryInSchema = """
+    private val fooServiceQueryInSchema = """
         schema {
             query: fooQuery
         }
@@ -38,13 +42,13 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val fooQueryExtension = """
+    private val fooQueryExtension = """
         extend type Query {
             foo2: Foo
         }
     """.trimIndent()
 
-    val fooServiceDefaultMutation = """
+    private val fooServiceDefaultMutation = """
         type Mutation {
             setFoo(name: String): Foo
         }
@@ -53,7 +57,7 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val fooServiceMutationInSchema = """
+    private val fooServiceMutationInSchema = """
         schema {
             mutation: fooMutation
             query: Query
@@ -66,13 +70,13 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val fooMutationExtension = """
+    private val fooMutationExtension = """
         extend type Mutation {
             setFoo2(name: String): Foo
         }
     """.trimIndent()
 
-    val fooServiceDefaultSubscription = """
+    private val fooServiceDefaultSubscription = """
         type Subscription {
             subFoo: Foo
         }
@@ -81,7 +85,7 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val fooServiceSubscriptionInSchema = """
+    private val fooServiceSubscriptionInSchema = """
         schema {
             subscription: fooSubscription
             query: MyQuery
@@ -94,26 +98,26 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val fooSubscriptionExtension = """
+    private val fooSubscriptionExtension = """
         extend type Subscription {
             subFoo2: Foo
         }
     """.trimIndent()
 
-    val barServiceDefaultQuery = """
+    private val barServiceDefaultQuery = """
         type Query {
             bar: Bar
         }
     """.trimIndent()
 
-    val barServiceWithDirectives = """
+    private val barServiceWithDirectives = """
         directive @cloudId2(type: String) on ARGUMENT_DEFINITION
         type Query {
             bar(id: ID! @cloudId2(type: "ari")): Bar
         }
     """.trimIndent()
 
-    val barServiceQueryInSchema = """
+    private val barServiceQueryInSchema = """
         schema {
             query: barQuery
         }
@@ -122,19 +126,19 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val barQueryExtension = """
+    private val barQueryExtension = """
         extend type Query {
             bar2: Bar
         }
     """.trimIndent()
 
-    val barServiceDefaultMutation = """
+    private val barServiceDefaultMutation = """
         type Mutation {
             setBar(id: String): Bar
         }
     """.trimIndent()
 
-    val barServiceMutationInSchema = """
+    private val barServiceMutationInSchema = """
         schema {
             mutation: barMutation
         }
@@ -143,19 +147,19 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val barMutationExtension = """
+    private val barMutationExtension = """
         extend type Mutation {
             setBar2(id: String): Bar
         }
     """.trimIndent()
 
-    val barServiceDefaultSubscription = """
+    private val barServiceDefaultSubscription = """
         type Subscription {
             subBar: Bar
         }
     """.trimIndent()
 
-    val barServiceSubscriptionInSchema = """
+    private val barServiceSubscriptionInSchema = """
         schema {
             subscription: barSubscription
         }
@@ -164,13 +168,14 @@ class OverallSchemaGeneratorTest : DescribeSpec({
         }
     """.trimIndent()
 
-    val barSubscriptionExtension = """
+    private val barSubscriptionExtension = """
         extend type Subscription {
             subBar2: Bar
         }
-    """
+    """.trimIndent()
 
-    context("can merge operation types") {
+    @TestFactory
+    fun `can merge operation types`(): List<DynamicTest> {
         data class TestCase(
             val operationKind: NadelOperationKind,
             val display: String,
@@ -179,8 +184,7 @@ class OverallSchemaGeneratorTest : DescribeSpec({
             val expectedOperationFields: Set<String>,
         )
 
-        withData(
-            nameFn = TestCase::display,
+        return listOf(
             TestCase(
                 Query,
                 display = "both services with default definition",
@@ -286,69 +290,71 @@ class OverallSchemaGeneratorTest : DescribeSpec({
                 barService = "$barServiceSubscriptionInSchema $barType $barSubscriptionExtension",
                 expectedOperationFields = setOf("subFoo", "subFoo2", "subBar", "subBar2"),
             ),
-        ) { testCase ->
-            // when
-            val schemas = NadelSchemas.newNadelSchemas()
-                .overallSchema("Foo", testCase.fooService)
-                .overallSchema("Bar", testCase.barService)
-                .underlyingSchema("Foo", "type Query {echo: String}")
-                .underlyingSchema("Bar", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-            val operationKind = testCase.operationKind.getType(schemas.engineSchema)
+        ).map { testCase ->
+            DynamicTest.dynamicTest(testCase.display) {
+                // when
+                val schemas = NadelSchemas.newNadelSchemas()
+                    .overallSchema("Foo", testCase.fooService)
+                    .overallSchema("Bar", testCase.barService)
+                    .underlyingSchema("Foo", "type Query {echo: String}")
+                    .underlyingSchema("Bar", "type Query {echo: String}")
+                    .stubServiceExecution()
+                    .build()
+                val operationKind = testCase.operationKind.getType(schemas.engineSchema)
 
-            // then
-            assert(operationKind != null)
+                // then
+                assert(operationKind != null)
 
-            val operationTypeFields = operationKind!!
-                .children
-                .asSequence()
-                .map { it as GraphQLNamedSchemaElement }
-                .map { it.name }
-                .toSet()
-            val expectedFields = testCase.expectedOperationFields
+                val operationTypeFields = operationKind!!
+                    .children
+                    .asSequence()
+                    .map { it as GraphQLNamedSchemaElement }
+                    .map { it.name }
+                    .toSet()
+                val expectedFields = testCase.expectedOperationFields
 
-            assert(operationTypeFields == expectedFields)
+                assertTrue(operationTypeFields == expectedFields)
+            }
         }
     }
 
-    describe("absent Subscription type") {
-        it("does not generate empty operation types") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("Foo", "type Query {hello: String} type Mutation {hello: String}")
-                .underlyingSchema("Foo", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-                .engineSchema
+    @Test
+    fun `does not generate absent subscription operation type`() {
+        // when
+        val schema = NadelSchemas.newNadelSchemas()
+            .overallSchema("Foo", "type Query {hello: String} type Mutation {hello: String}")
+            .underlyingSchema("Foo", "type Query {echo: String}")
+            .stubServiceExecution()
+            .build()
+            .engineSchema
 
-            // then
-            assert(schema.mutationType != null)
-            assert(schema.subscriptionType == null)
-        }
+        // then
+        assert(schema.mutationType != null)
+        assert(schema.subscriptionType == null)
     }
 
-    describe("absent Mutation and Subscription types") {
-        it("does not generate empty operation types") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("Foo", "type Query {hello: String}")
-                .underlyingSchema("Foo", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-                .engineSchema
+    @Test
+    fun `does not generate absent mutation and subscription operation types`() {
+        // when
+        val schema = NadelSchemas.newNadelSchemas()
+            .overallSchema("Foo", "type Query {hello: String}")
+            .underlyingSchema("Foo", "type Query {echo: String}")
+            .stubServiceExecution()
+            .build()
+            .engineSchema
 
-            // then
-            assert(schema.mutationType == null)
-            assert(schema.subscriptionType == null)
-        }
+        // then
+        assert(schema.mutationType == null)
+        assert(schema.subscriptionType == null)
     }
 
-    describe("extending types") {
-        it("generates type with fields combined corresponding type definitions") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("S1", """
+    @Test
+    fun `extending types created merged type with all fields`() {
+        // when
+        val schema = NadelSchemas.newNadelSchemas()
+            .overallSchema(
+                "S1",
+                """
                     type Query {
                         a: String
                     }
@@ -361,8 +367,11 @@ class OverallSchemaGeneratorTest : DescribeSpec({
                     extend type A {
                         y: String
                     }
-                """.trimIndent())
-                .overallSchema("S2", """
+                """.trimIndent(),
+            )
+            .overallSchema(
+                "S2",
+                """
                     type Query {
                         c: String
                     }
@@ -370,88 +379,99 @@ class OverallSchemaGeneratorTest : DescribeSpec({
                         d: String
                     }
                     extend type A {
-                        z: String 
+                        z: String
                     }
-                """.trimIndent())
-                .underlyingSchema("S1", "type Query {echo: String}")
-                .underlyingSchema("S2", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-                .engineSchema
+                """.trimIndent(),
+            )
+            .underlyingSchema("S1", "type Query {echo: String}")
+            .underlyingSchema("S2", "type Query {echo: String}")
+            .stubServiceExecution()
+            .build()
+            .engineSchema
 
-            // then
-            assert(schema.queryType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("a", "b", "c", "d"))
-            val aType = schema.getType("A") as GraphQLObjectType
-            assert(aType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("x", "y", "z"))
+        // then
+        assert(schema.queryType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("a", "b", "c", "d"))
+        val aType = schema.getType("A") as GraphQLObjectType
+        assert(aType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("x", "y", "z"))
+    }
 
-            // Source location is generated
-            assert(schema.queryType.definition != null)
-            assert(schema.queryType.definition?.sourceLocation != null)
-        }
-
-        it("generates combined type for query only") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("S1", """
+    @Test
+    fun `can extend Query type without explicit Query definition`() {
+        // when
+        val schema = NadelSchemas.newNadelSchemas()
+            .overallSchema(
+                "S1",
+                """
                     extend type Query {
                         a: String
                     }
                     extend type Query {
                         b: String
                     }
-                """.trimIndent())
-                .overallSchema("S2", """
+                """.trimIndent(),
+            )
+            .overallSchema(
+                "S2",
+                """
                     extend type Query {
                         c: String
                     }
-                """.trimIndent())
+                """.trimIndent(),
+            )
+            .underlyingSchema("S1", "type Query {echo: String}")
+            .underlyingSchema("S2", "type Query {echo: String}")
+            .stubServiceExecution()
+            .build()
+            .engineSchema
+
+        // then
+        assert(schema.queryType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("a", "b", "c"))
+    }
+
+    @Test
+    fun `forbids type redefinition`() {
+        // when
+        val ex = assertThrows<GraphQLException> {
+            NadelSchemas.newNadelSchemas()
+                .overallSchema(
+                    "S1",
+                    """
+                        type Query {
+                            a: String
+                        }
+                        type A {
+                        }
+                    """.trimIndent()
+                )
+                .overallSchema(
+                    "S2",
+                    """
+                        type Query {
+                            c: String
+                        }
+                        type A {
+                            x: String
+                        }
+                    """.trimIndent()
+                )
                 .underlyingSchema("S1", "type Query {echo: String}")
                 .underlyingSchema("S2", "type Query {echo: String}")
                 .stubServiceExecution()
                 .build()
                 .engineSchema
-
-            // then
-            assert(schema.queryType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("a", "b", "c"))
         }
+
+        // then
+        assert(ex.message?.contains("tried to redefine existing 'A' type") == true)
     }
 
-    describe("multiple types with same name") {
-        it("forbids type redefinition") {
-            // when
-            val ex = assertThrows<GraphQLException> {
-                NadelSchemas.newNadelSchemas()
-                    .overallSchema("S1", """
-                    type Query {
-                        a: String
-                    }
-                    type A {
-                        
-                    }
-                """.trimIndent())
-                    .overallSchema("S2", """
-                    type Query {
-                        c: String
-                    }
-                    type A {
-                        x: String 
-                    }
-                """.trimIndent())
-                    .underlyingSchema("S1", "type Query {echo: String}")
-                    .underlyingSchema("S2", "type Query {echo: String}")
-                    .stubServiceExecution()
-                    .build()
-                    .engineSchema
-            }
-
-            // then
-            assert(ex.message?.contains("tried to redefine existing 'A' type") == true)
-        }
-
-        it("allows services to declare operation types with same name") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("S1", """
+    @Test
+    fun `allows services to declare operation types with same name`() {
+        // when
+        val schema = NadelSchemas.newNadelSchemas()
+            .overallSchema(
+                "S1",
+                """
                     schema {
                         query: MyQuery
                     }
@@ -461,95 +481,76 @@ class OverallSchemaGeneratorTest : DescribeSpec({
                     type A {
                         x: String
                     }
-                """.trimIndent())
-                .overallSchema("S2", """
+                """.trimIndent(),
+            )
+            .overallSchema(
+                "S2",
+                """
                     schema {
                         query: MyQuery
                     }
                     type MyQuery {
                         c: String
                     }
-                """.trimIndent())
-                .underlyingSchema("S1", "type Query {echo: String}")
-                .underlyingSchema("S2", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-                .engineSchema
+                """.trimIndent(),
+            )
+            .underlyingSchema("S1", "type Query {echo: String}")
+            .underlyingSchema("S2", "type Query {echo: String}")
+            .stubServiceExecution()
+            .build()
+            .engineSchema
 
-            // then
-            assert(schema.queryType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("a", "c"))
-            val aType = schema.typeMap["A"] as GraphQLObjectType
-            assert(aType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("x"))
-        }
-
-        it("allows services to extend types") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("S1", """
-                    type Query {
-                        a: String
-                    }
-                    type A {
-                        x: String
-                    }
-                """.trimIndent())
-                .overallSchema("S2", """
-                    type Query {
-                        c: String
-                    }
-                    extend type A {
-                        y: String 
-                    }
-                """.trimIndent())
-                .underlyingSchema("S1", "type Query {echo: String}")
-                .underlyingSchema("S2", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-                .engineSchema
-
-            // then
-            assert(schema.queryType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("a", "c"))
-            val aType = schema.typeMap["A"] as GraphQLObjectType
-            assert(aType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("x", "y"))
-        }
+        // then
+        assert(schema.queryType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("a", "c"))
+        val aType = schema.typeMap["A"] as GraphQLObjectType
+        assert(aType.fields.mapTo(LinkedHashSet()) { it.name } == setOf("x"))
     }
 
-    describe("custom directives") {
-        it("adds directives to schema if absent") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("S1", """
+    @Test
+    fun `adds built-in directives to schema if absent`() {
+        // when
+        val schema = NadelSchemas.newNadelSchemas()
+            .overallSchema(
+                "S1",
+                """
                     type Query {
                         a: String
                     }
                     type A {
                         x: String
                     }
-                """.trimIndent())
-                .overallSchema("S2", """
+                """.trimIndent(),
+            )
+            .overallSchema(
+                "S2",
+                """
                     type Query {
                         c: String
                     }
                     extend type A {
-                        y: String 
+                        y: String
                     }
-                """.trimIndent())
-                .underlyingSchema("S1", "type Query {echo: String}")
-                .underlyingSchema("S2", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-                .engineSchema
+                """.trimIndent(),
+            )
+            .underlyingSchema("S1", "type Query {echo: String}")
+            .underlyingSchema("S2", "type Query {echo: String}")
+            .stubServiceExecution()
+            .build()
+            .engineSchema
 
-            // then
-            assert(schema.getDirective(NadelDirectives.hydratedDirectiveDefinition.name) != null)
-            assert(schema.getDirective(NadelDirectives.renamedDirectiveDefinition.name) != null)
-            assert(schema.getType(NadelDirectives.nadelHydrationArgumentDefinition.name) != null)
-        }
+        // then
+        assert(schema.getDirective(NadelDirectives.hydratedDirectiveDefinition.name) != null)
+        assert(schema.getDirective(NadelDirectives.renamedDirectiveDefinition.name) != null)
+        assert(schema.getType(NadelDirectives.nadelHydrationArgumentDefinition.name) != null)
+    }
 
-        it("permits explicit definitions of directives") {
-            // when
-            val schema = NadelSchemas.newNadelSchemas()
-                .overallSchema("S1", """
+    @Test
+    fun `permits explicit definitions of built-in directives`() {
+        // when
+        val schema = NadelSchemas.newNadelSchemas()
+            .overallSchema(
+                "S1",
+                """
                     type Query {
                         a: String
                     }
@@ -560,7 +561,7 @@ class OverallSchemaGeneratorTest : DescribeSpec({
                         name: String!
                         value: String!
                     }
-                   
+
                     directive @hydrated(
                         arguments: [NadelHydrationArgument!]
                         batchSize: Int = 200
@@ -569,29 +570,32 @@ class OverallSchemaGeneratorTest : DescribeSpec({
                         indexed: Boolean = false
                         service: String!
                     ) repeatable on FIELD_DEFINITION
-                   
+
                     directive @renamed(
                         from: String!
                     ) on SCALAR | OBJECT | FIELD_DEFINITION | INTERFACE | UNION | ENUM | INPUT_OBJECT
-                """.trimIndent())
-                .overallSchema("S2", """
+                """.trimIndent(),
+            )
+            .overallSchema(
+                "S2",
+                """
                     type Query {
                         c: String
                     }
                     extend type A {
-                        y: String 
+                        y: String
                     }
-                """.trimIndent())
-                .underlyingSchema("S1", "type Query {echo: String}")
-                .underlyingSchema("S2", "type Query {echo: String}")
-                .stubServiceExecution()
-                .build()
-                .engineSchema
+                """.trimIndent(),
+            )
+            .underlyingSchema("S1", "type Query {echo: String}")
+            .underlyingSchema("S2", "type Query {echo: String}")
+            .stubServiceExecution()
+            .build()
+            .engineSchema
 
-            // then
-            assert(schema.getDirective(NadelDirectives.hydratedDirectiveDefinition.name) != null)
-            assert(schema.getDirective(NadelDirectives.renamedDirectiveDefinition.name) != null)
-            assert(schema.getType(NadelDirectives.nadelHydrationArgumentDefinition.name) != null)
-        }
+        // then
+        assert(schema.getDirective(NadelDirectives.hydratedDirectiveDefinition.name) != null)
+        assert(schema.getDirective(NadelDirectives.renamedDirectiveDefinition.name) != null)
+        assert(schema.getType(NadelDirectives.nadelHydrationArgumentDefinition.name) != null)
     }
-})
+}

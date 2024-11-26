@@ -37,9 +37,14 @@ data class NadelSchemas(
         internal var underlyingTypeDefs = mutableMapOf<String, TypeDefinitionRegistry>()
 
         private var captureSourceLocation = false
+        private var captureAstDefinitions = false
 
         fun captureSourceLocation(value: Boolean): Builder = also {
             captureSourceLocation = value
+        }
+
+        fun captureAstDefinitions(value: Boolean): Builder = also {
+            captureAstDefinitions = value
         }
 
         fun schemaTransformationHook(value: SchemaTransformationHook): Builder = also {
@@ -179,6 +184,7 @@ data class NadelSchemas(
                 serviceExecutionFactory = serviceExecutionFactory,
                 underlyingTypeDefs = resolvedUnderlyingTypeDefs,
                 captureSourceLocation = captureSourceLocation,
+                captureAstDefinitions = captureAstDefinitions,
             ).create()
         }
     }
@@ -188,6 +194,7 @@ data class NadelSchemas(
         private val serviceExecutionFactory: ServiceExecutionFactory,
         private val underlyingTypeDefs: Map<String, TypeDefinitionRegistry>,
         private val captureSourceLocation: Boolean,
+        private val captureAstDefinitions: Boolean,
     ) {
         fun create(): NadelSchemas {
             val services = createServices()
@@ -210,9 +217,11 @@ data class NadelSchemas(
 
                 // Builder should enforce non-null entry
                 val underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(
-                    serviceName,
-                    requireNotNull(underlyingTypeDefs[serviceName]),
-                    builder.underlyingWiringFactory,
+                    serviceName = serviceName,
+                    underlyingTypeDefinitions = underlyingTypeDefs[serviceName]!!,
+                    wiringFactory = builder.underlyingWiringFactory,
+                    captureAstDefinitions = captureAstDefinitions,
+                    captureSourceLocation = captureSourceLocation,
                 )
 
                 val serviceExecution = serviceExecutionFactory.getServiceExecution(serviceName)
@@ -224,7 +233,11 @@ data class NadelSchemas(
         private fun createEngineSchema(services: List<Service>): GraphQLSchema {
             val overallSchemaGenerator = OverallSchemaGenerator()
             val serviceRegistries = services.map(Service::definitionRegistry)
-            val schema = overallSchemaGenerator.buildOverallSchema(serviceRegistries, builder.overallWiringFactory)
+            val schema = overallSchemaGenerator.buildOverallSchema(
+                serviceRegistries = serviceRegistries,
+                wiringFactory = builder.overallWiringFactory,
+                captureAstDefinitions = captureAstDefinitions,
+            )
             val newSchema = builder.schemaTransformationHook.apply(schema, services)
 
             // make sure that the overall schema has the standard scalars in

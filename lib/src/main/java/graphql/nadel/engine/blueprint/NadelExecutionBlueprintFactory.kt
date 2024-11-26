@@ -6,8 +6,8 @@ import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLInt
 import graphql.Scalars.GraphQLString
 import graphql.language.EnumTypeDefinition
-import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
+import graphql.nadel.NadelOperationKind
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
@@ -21,7 +21,6 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
-import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.engine.util.AnyNamedNode
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.getFieldAt
@@ -227,7 +226,8 @@ private class Factory(
         val pathToBackingField = hydration.backingField
         val backingFieldContainer = engineSchema.queryType.getFieldContainerFor(pathToBackingField)!!
         val backingFieldDef = engineSchema.queryType.getFieldAt(pathToBackingField)!!
-        val hydrationBackingService = coordinatesToService[makeFieldCoordinates(backingFieldContainer, backingFieldDef)]!!
+        val hydrationBackingService =
+            coordinatesToService[makeFieldCoordinates(backingFieldContainer, backingFieldDef)]!!
 
         if (hydration.isBatched || /*deprecated*/ backingFieldDef.type.unwrapNonNull().isList) {
             require(backingFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$pathToBackingField' requires a list output type" }
@@ -768,22 +768,21 @@ private class SharedTypesAnalysis(
 
                 service.definitionRegistry.operationMap
                     .asSequence()
-                    .flatMap forOperation@{ (operationKind, overallOperationTypes) ->
+                    .flatMap { (operationKind, _) ->
                         val underlyingOperationType = service.underlyingSchema.getOperationType(operationKind)
-                            ?: return@forOperation emptySequence()
-
-                        overallOperationTypes
-                            .asSequence()
-                            .flatMap { overallOperationType ->
-                                investigateTypeRenames(
-                                    visitedTypes,
-                                    service,
-                                    serviceDefinedTypes,
-                                    overallType = overallOperationType,
-                                    underlyingType = underlyingOperationType,
-                                    isOperationType = true,
-                                )
-                            }
+                        val overallOperationType = engineSchema.getOperationType(operationKind)
+                        if (overallOperationType == null || underlyingOperationType == null) {
+                            emptyList()
+                        } else {
+                            investigateTypeRenames(
+                                visitedTypes,
+                                service,
+                                serviceDefinedTypes,
+                                overallType = overallOperationType,
+                                underlyingType = underlyingOperationType,
+                                isOperationType = true,
+                            )
+                        }
                     }
             }
             .toSet()
@@ -793,7 +792,7 @@ private class SharedTypesAnalysis(
         visitedTypes: MutableSet<String>,
         service: Service,
         serviceDefinedTypes: Set<String>,
-        overallType: AnyImplementingTypeDefinition,
+        overallType: GraphQLFieldsContainer,
         underlyingType: GraphQLFieldsContainer,
         isOperationType: Boolean = false,
     ): List<NadelTypeRenameInstruction> {
@@ -803,25 +802,47 @@ private class SharedTypesAnalysis(
         }
         visitedTypes.add(overallType.name)
 
-        return overallType.fieldDefinitions.flatMap { overallField ->
-            investigateTypeRenames(
-                visitedTypes,
-                service,
-                serviceDefinedTypes,
-                overallField = overallField,
-                overallParentType = overallType,
-                underlyingParentType = underlyingType,
-            )
+        val serviceFieldNames = if (isOperationType) {
+            val operationKind = NadelOperationKind.valueOf(overallType.name)
+            service.definitionRegistry.operationMap[operationKind]!!
+                .asSequence()
+                .flatMap {
+                    it.fieldDefinitions
+                }
+                .map {
+                    it.name
+                }
+        } else {
+            // service.definitionRegistry.getDefinitions(overallType.name)
+            overallType.fields
+                .asSequence()
+                .map { it.name }
         }
+
+        return serviceFieldNames
+            .mapNotNull {
+                overallType.getField(it)
+            }
+            .flatMap { overallField ->
+                investigateTypeRenames(
+                    visitedTypes,
+                    service,
+                    serviceDefinedTypes,
+                    overallParentType = overallType,
+                    underlyingParentType = underlyingType,
+                    overallField = overallField,
+                )
+            }
+            .toList()
     }
 
     private fun investigateTypeRenames(
         visitedTypes: MutableSet<String>,
         service: Service,
         serviceDefinedTypes: Set<String>,
-        overallField: FieldDefinition,
-        overallParentType: AnyImplementingTypeDefinition,
+        overallParentType: GraphQLFieldsContainer,
         underlyingParentType: GraphQLFieldsContainer,
+        overallField: GraphQLFieldDefinition,
     ): List<NadelTypeRenameInstruction> {
         val underlyingField = getUnderlyingField(overallField, overallParentType, underlyingParentType)
             ?: return emptyList()
@@ -835,7 +856,7 @@ private class SharedTypesAnalysis(
             service = service,
         )
 
-        val argumentTypeRenameInstructions = overallField.inputValueDefinitions
+        val argumentTypeRenameInstructions = overallField.arguments
             .mapNotNull { overallArgument ->
                 val underlyingArgument = underlyingField.getArgument(overallArgument.name)
                 getTypeRenameInstructionOrNull(
@@ -846,8 +867,7 @@ private class SharedTypesAnalysis(
                 )
             }
 
-        val overallOutputTypeDefinition = (engineSchema.getType(overallOutputTypeName) as? GraphQLFieldsContainer?)
-            ?.definition as AnyImplementingTypeDefinition?
+        val overallOutputTypeDefinition = engineSchema.getType(overallOutputTypeName) as? GraphQLFieldsContainer?
 
         return listOfNotNull(outputTypeRenameInstruction) + argumentTypeRenameInstructions + (overallOutputTypeDefinition
             ?.let {
@@ -888,8 +908,8 @@ private class SharedTypesAnalysis(
     }
 
     private fun getUnderlyingField(
-        overallField: FieldDefinition,
-        overallParentType: AnyImplementingTypeDefinition,
+        overallField: GraphQLFieldDefinition,
+        overallParentType: GraphQLFieldsContainer,
         underlyingParentType: GraphQLFieldsContainer,
     ): GraphQLFieldDefinition? {
         // Access instruction via overall schema coordinates
@@ -905,6 +925,7 @@ private class SharedTypesAnalysis(
                 return underlyingParentType.getFieldAt(instruction.queryPathToField.segments)
             }
         }
+
         return null
     }
 }

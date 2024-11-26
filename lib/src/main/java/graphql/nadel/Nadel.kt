@@ -22,6 +22,7 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
+import graphql.nadel.schema.NadelSchemaOptimizer
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.util.getLogger
@@ -372,6 +373,9 @@ class Nadel private constructor(
             val (engineSchema, services) = schemas ?: schemaBuilder.build()
 
             val querySchema = QuerySchemaGenerator.generateQuerySchema(engineSchema)
+
+            NadelSchemaOptimizer.cleanCodeRegistry(engineSchema.codeRegistry)
+            NadelSchemaOptimizer.cleanCodeRegistry(querySchema.codeRegistry)
 
             return Nadel(
                 engine = NextgenEngine(

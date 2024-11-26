@@ -24,13 +24,19 @@ internal class OverallSchemaGenerator {
     fun buildOverallSchema(
         serviceRegistries: List<NadelDefinitionRegistry>,
         wiringFactory: WiringFactory,
+        captureAstDefinitions: Boolean,
     ): GraphQLSchema {
         val schemaGenerator = SchemaGenerator()
         val runtimeWiring = RuntimeWiring.newRuntimeWiring()
             .wiringFactory(wiringFactory)
             .build()
 
-        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring)
+        return schemaGenerator.makeExecutableSchema(
+            SchemaGenerator.Options.defaultOptions()
+                .captureAstDefinitions(captureAstDefinitions),
+            createTypeRegistry(serviceRegistries),
+            runtimeWiring,
+        )
     }
 
     private fun createTypeRegistry(serviceRegistries: List<NadelDefinitionRegistry>): TypeDefinitionRegistry {

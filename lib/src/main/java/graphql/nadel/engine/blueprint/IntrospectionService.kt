@@ -24,7 +24,12 @@ import java.util.concurrent.CompletableFuture
 internal class IntrospectionService(
     schema: GraphQLSchema,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
-) : Service(name, schema, introspectionRunnerFactory.make(schema), NadelDefinitionRegistry()) {
+) : Service(
+    name = name,
+    underlyingSchema = schema,
+    serviceExecution = introspectionRunnerFactory.make(schema),
+    definitionRegistry = NadelDefinitionRegistry()
+) {
     companion object {
         const val name = "__introspection"
     }

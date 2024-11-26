@@ -12,13 +12,24 @@ internal class UnderlyingSchemaGenerator {
         serviceName: String,
         underlyingTypeDefinitions: TypeDefinitionRegistry,
         wiringFactory: WiringFactory,
+        captureAstDefinitions: Boolean,
+        captureSourceLocation: Boolean,
     ): GraphQLSchema {
         val schemaGenerator = SchemaGenerator()
         val runtimeWiring = RuntimeWiring.newRuntimeWiring()
             .wiringFactory(wiringFactory)
             .build()
+
         return try {
-            schemaGenerator.makeExecutableSchema(underlyingTypeDefinitions, runtimeWiring)
+            schemaGenerator.makeExecutableSchema(
+                SchemaGenerator.Options.defaultOptions()
+                    .captureAstDefinitions(captureAstDefinitions),
+                NadelSchemaOptimizer.deleteUselessUnderlyingSchemaElements(
+                    underlyingTypeDefinitions,
+                    captureSourceLocation,
+                ),
+                runtimeWiring,
+            )
         } catch (schemaProblem: SchemaProblem) {
             throw ServiceSchemaProblem(
                 message = "There was a problem building the schema for '${serviceName}': ${schemaProblem.message}",
