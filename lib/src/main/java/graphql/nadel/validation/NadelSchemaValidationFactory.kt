@@ -1,58 +1,75 @@
 package graphql.nadel.validation
 
+import graphql.nadel.validation.hydration.NadelHydrationArgumentTypeValidation
+import graphql.nadel.validation.hydration.NadelHydrationArgumentValidation
+import graphql.nadel.validation.hydration.NadelHydrationConditionValidation
+import graphql.nadel.validation.hydration.NadelHydrationSourceFieldValidation
 import graphql.nadel.validation.hydration.NadelHydrationValidation
+import graphql.nadel.validation.hydration.NadelHydrationVirtualTypeValidation
 
 abstract class NadelSchemaValidationFactory {
     fun create(): NadelSchemaValidation {
+        val definitionParser = NadelDefinitionParser(
+            hook = hook,
+            idHydrationDefinitionParser = idHydrationDefinitionParser,
+        )
+
         return NadelSchemaValidation(
             fieldValidation = fieldValidation,
-            inputValidation = inputValidation,
+            inputValidation = inputObjectValidation,
             unionValidation = unionValidation,
             enumValidation = enumValidation,
             interfaceValidation = interfaceValidation,
             namespaceValidation = namespaceValidation,
             virtualTypeValidation = virtualTypeValidation,
-            definitionParser = NadelDefinitionParser(
-                hook = hook,
-                idHydrationDefinitionParser = NadelIdHydrationDefinitionParser(),
-            ),
+            definitionParser = definitionParser,
             hook = hook,
         )
     }
 
-    protected val hydrationValidation: NadelHydrationValidation by lazy {
-        NadelHydrationValidation()
-    }
+    private val idHydrationDefinitionParser = NadelIdHydrationDefinitionParser()
 
-    protected val fieldValidation: NadelFieldValidation by lazy {
-        NadelFieldValidation(hydrationValidation)
-    }
+    private val partitionValidation = NadelPartitionValidation()
 
-    protected val virtualTypeValidation: NadelVirtualTypeValidation by lazy {
-        NadelVirtualTypeValidation(hydrationValidation)
-    }
+    private val typeWrappingValidation = NadelTypeWrappingValidation()
 
-    protected val inputValidation: NadelInputValidation by lazy {
-        NadelInputValidation()
-    }
+    private val assignableTypeValidation = NadelAssignableTypeValidation(typeWrappingValidation)
 
-    protected val unionValidation: NadelUnionValidation by lazy {
-        NadelUnionValidation()
-    }
+    private val inputObjectValidation = NadelInputObjectValidation(assignableTypeValidation)
 
-    protected val enumValidation: NadelEnumValidation by lazy {
-        NadelEnumValidation()
-    }
+    private val hydrationArgumentTypeValidation = NadelHydrationArgumentTypeValidation(typeWrappingValidation)
+    private val hydrationArgumentValidation = NadelHydrationArgumentValidation(hydrationArgumentTypeValidation)
+    private val hydrationConditionValidation = NadelHydrationConditionValidation()
+    private val hydrationSourceFieldValidation = NadelHydrationSourceFieldValidation()
+    private val hydrationVirtualTypeValidation = NadelHydrationVirtualTypeValidation()
 
-    protected val interfaceValidation: NadelInterfaceValidation by lazy {
-        NadelInterfaceValidation()
-    }
+    private val hydrationValidation = NadelHydrationValidation(
+        argumentValidation = hydrationArgumentValidation,
+        conditionValidation = hydrationConditionValidation,
+        sourceFieldValidation = hydrationSourceFieldValidation,
+        virtualTypeValidation = hydrationVirtualTypeValidation,
+    )
 
-    protected val namespaceValidation: NadelNamespaceValidation by lazy {
-        NadelNamespaceValidation()
-    }
+    private val fieldValidation = NadelFieldValidation(
+        hydrationValidation = hydrationValidation,
+        partitionValidation = partitionValidation,
+        assignableTypeValidation = assignableTypeValidation,
+    )
 
-    protected open val hook: NadelSchemaValidationHook
+    private val virtualTypeValidation = NadelVirtualTypeValidation(
+        hydrationValidation = hydrationValidation,
+        assignableTypeValidation = assignableTypeValidation,
+    )
+
+    private val unionValidation = NadelUnionValidation()
+
+    private val enumValidation = NadelEnumValidation()
+
+    private val interfaceValidation = NadelInterfaceValidation()
+
+    private val namespaceValidation = NadelNamespaceValidation()
+
+    open val hook: NadelSchemaValidationHook
         get() = object : NadelSchemaValidationHook() {
         }
 
