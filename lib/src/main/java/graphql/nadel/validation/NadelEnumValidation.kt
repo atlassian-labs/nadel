@@ -4,7 +4,7 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingEnumValue
 import graphql.schema.GraphQLEnumValueDefinition
 
-internal class NadelEnumValidation {
+class NadelEnumValidation internal constructor() {
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.Enum,

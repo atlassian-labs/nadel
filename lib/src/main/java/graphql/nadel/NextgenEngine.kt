@@ -88,6 +88,7 @@ internal class NextgenEngine(
     transforms: List<NadelTransform<out Any>>,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     blueprintHint: NadelValidationBlueprintHint,
+    nadelValidation: NadelSchemaValidation,
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = services.strictAssociateBy { it.name }
@@ -100,9 +101,7 @@ internal class NextgenEngine(
         ),
         new = lazy {
             try {
-                NadelSchemaValidation(
-                    NadelSchemas(engineSchema, services)
-                ).validateAndGenerateBlueprint()
+                nadelValidation.validateAndGenerateBlueprint(NadelSchemas(engineSchema, services))
             } catch (e: Exception) {
                 getLogger<NextgenEngine>().error("Unable to create validated blueprint", e)
                 null
