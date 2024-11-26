@@ -48,12 +48,6 @@ sealed class NadelRenamedDefinition : NadelDefinition {
     }
 }
 
-context(NadelValidationContext)
-@Deprecated("Mistake to use this inside validation", level = DeprecationLevel.ERROR)
-fun GraphQLDirectiveContainer.hasRenameDefinition(): Nothing {
-    throw UnsupportedOperationException()
-}
-
 fun GraphQLDirectiveContainer.hasRenameDefinition(): Boolean {
     return hasAppliedDirective(Keyword.renamed)
 }
@@ -62,23 +56,11 @@ fun DirectivesContainer<*>.hasRenameDefinition(): Boolean {
     return hasDirective(Keyword.renamed)
 }
 
-context(NadelValidationContext)
-@Deprecated("Mistake to use this inside validation", level = DeprecationLevel.ERROR)
-fun GraphQLFieldDefinition.parseRenamedOrNull(): Nothing {
-    throw UnsupportedOperationException()
-}
-
 fun GraphQLFieldDefinition.parseRenamedOrNull(): NadelRenamedDefinition.Field? {
     val directive = getAppliedDirective(Keyword.renamed)
         ?: return null
 
     return NadelRenamedDefinition.Field(directive)
-}
-
-context(NadelValidationContext)
-@Deprecated("Mistake to use this inside validation", level = DeprecationLevel.ERROR)
-fun GraphQLNamedType.parseRenamedOrNull(): Nothing {
-    throw UnsupportedOperationException()
 }
 
 fun GraphQLNamedType.parseRenamedOrNull(): NadelRenamedDefinition.Type? {
