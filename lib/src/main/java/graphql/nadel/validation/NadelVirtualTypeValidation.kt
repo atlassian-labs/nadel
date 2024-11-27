@@ -40,6 +40,10 @@ class NadelVirtualTypeValidation internal constructor(
             return ok()
         }
 
+        if (isRenamed(schemaElement)) {
+            return NadelVirtualTypeIllegalRenameError(schemaElement)
+        }
+
         if (schemaElement.overall is GraphQLObjectType && schemaElement.underlying is GraphQLObjectType) {
             return validateType(
                 service = schemaElement.service,
@@ -162,19 +166,19 @@ class NadelVirtualTypeValidation internal constructor(
         }
 
         // Note: the value comes from the backing field, and that value needs to fit the virtual field
-        val isOutputTypeAssignable = assignableTypeValidation.isTypeAssignable(
-            suppliedType = backingField.type,
-            requiredType = virtualField.type,
+        val isOutputTypeAssignable = isOutputTypeAssignable(
+            backingField = backingField,
+            virtualField = virtualField,
         )
 
         return if (isOutputTypeAssignable) {
+            ok()
+        } else {
             NadelVirtualTypeIncompatibleFieldOutputTypeError(
                 parent = parent,
                 virtualField = virtualField,
                 backingField = backingField,
             )
-        } else {
-            ok()
         }
     }
 
@@ -222,11 +226,7 @@ class NadelVirtualTypeValidation internal constructor(
         virtualFieldArgument: GraphQLArgument,
         backingFieldArgument: GraphQLArgument,
     ): NadelSchemaValidationResult {
-        // Note: the value comes from the virtual field's arg and needs to be assigned to the backing arg
-        val isInputTypeAssignable = assignableTypeValidation.isTypeAssignable(
-            suppliedType = virtualFieldArgument.type,
-            requiredType = backingFieldArgument.type,
-        )
+        val isInputTypeAssignable = isInputTypeAssignable(virtualFieldArgument, backingFieldArgument)
 
         return if (isInputTypeAssignable) {
             ok()
@@ -264,5 +264,39 @@ class NadelVirtualTypeValidation internal constructor(
                 )
             }
         }.toResult()
+    }
+
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
+    private fun isInputTypeAssignable(
+        virtualFieldArgument: GraphQLArgument,
+        backingFieldArgument: GraphQLArgument,
+    ): Boolean {
+        val suppliedType = virtualFieldArgument.type
+        val requiredType = backingFieldArgument.type
+
+        return assignableTypeValidation.isTypeAssignable(
+            suppliedType = suppliedType,
+            requiredType = requiredType,
+            // Note: we do not check for renames here, types must be used 1-1
+            suppliedTypeName = suppliedType.unwrapAll().name,
+            requiredTypeName = requiredType.unwrapAll().name,
+        )
+    }
+
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
+    private fun isOutputTypeAssignable(
+        backingField: GraphQLFieldDefinition,
+        virtualField: GraphQLFieldDefinition,
+    ): Boolean {
+        val suppliedType = backingField.type
+        val requiredType = virtualField.type
+
+        return assignableTypeValidation.isTypeAssignable(
+            suppliedType = suppliedType,
+            requiredType = requiredType,
+            // Note: we do not check for renames here, types must be used 1-1
+            suppliedTypeName = suppliedType.unwrapAll().name,
+            requiredTypeName = requiredType.unwrapAll().name,
+        )
     }
 }

@@ -55,10 +55,15 @@ class NadelInputObjectValidation internal constructor(
         overallInputField: GraphQLInputObjectField,
         underlyingInputField: GraphQLInputObjectField,
     ): NadelSchemaValidationResult {
-        return if (!assignableTypeValidation.isTypeAssignable(overallInputField.type, underlyingInputField.type)) {
-            IncompatibleFieldInputType(parent, overallInputField, underlyingInputField)
-        } else {
+        val isTypeAssignable = assignableTypeValidation.isInputTypeAssignable(
+            overallType = overallInputField.type,
+            underlyingType = underlyingInputField.type
+        )
+
+        return if (isTypeAssignable) {
             ok()
+        } else {
+            IncompatibleFieldInputType(parent, overallInputField, underlyingInputField)
         }
     }
 }
