@@ -4,15 +4,19 @@ import com.tngtech.archunit.core.domain.JavaClass
 import com.tngtech.archunit.lang.ArchCondition
 import com.tngtech.archunit.lang.ConditionEvents
 import com.tngtech.archunit.lang.SimpleConditionEvent
+import com.tngtech.archunit.lang.syntax.elements.ClassesShouldConjunction
+import com.tngtech.archunit.lang.syntax.elements.GivenClassesConjunction
 import kotlin.reflect.KClass
+
+fun <T : Any> GivenClassesConjunction.equalsExactly(
+    vararg requiredClasses: KClass<out T>,
+): ClassesShouldConjunction {
+    return should(ArchUnitEqualsClassesExactly(requiredClasses.map { it.java }))
+}
 
 class ArchUnitEqualsClassesExactly<T : Any>(
     private val requiredClasses: List<Class<out T>>,
 ) : ArchCondition<JavaClass>("equal exactly the given classes") {
-    constructor(vararg requiredClasses: Class<out T>) : this(requiredClasses.toList())
-
-    constructor(vararg requiredClasses: KClass<out T>) : this(requiredClasses.map { it.java })
-
     private val actualClasses: MutableList<JavaClass> = mutableListOf()
 
     override fun check(item: JavaClass, events: ConditionEvents) {

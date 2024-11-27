@@ -32,11 +32,9 @@ class NadelPseudoSealedTypeKtTest {
             .areAssignableTo(GraphQLFieldsContainer::class.java)
             .and()
             .areNotInterfaces()
-            .should(
-                ArchUnitEqualsClassesExactly(
-                    GraphQLInterfaceType::class,
-                    GraphQLObjectType::class,
-                ),
+            .equalsExactly(
+                GraphQLInterfaceType::class,
+                GraphQLObjectType::class,
             )
             .check(schemaClasses)
     }
@@ -48,17 +46,15 @@ class NadelPseudoSealedTypeKtTest {
             .areAssignableTo(GraphQLNamedType::class.java)
             .and()
             .areNotInterfaces()
-            .should(
-                ArchUnitEqualsClassesExactly(
-                    GraphQLEnumType::class,
-                    GraphQLInputObjectType::class,
-                    GraphQLInterfaceType::class,
-                    GraphQLObjectType::class,
-                    GraphQLScalarType::class,
-                    GraphQLUnionType::class,
-                    // Should almost never be used though
-                    GraphQLTypeReference::class,
-                ),
+            .equalsExactly(
+                GraphQLEnumType::class,
+                GraphQLInputObjectType::class,
+                GraphQLInterfaceType::class,
+                GraphQLObjectType::class,
+                GraphQLScalarType::class,
+                GraphQLUnionType::class,
+                // Should almost never be used though
+                GraphQLTypeReference::class,
             )
             .check(schemaClasses)
     }
@@ -72,14 +68,12 @@ class NadelPseudoSealedTypeKtTest {
             .areAssignableTo(GraphQLUnmodifiedType::class.java)
             .and()
             .areNotInterfaces()
-            .should(
-                ArchUnitEqualsClassesExactly(
-                    GraphQLEnumType::class,
-                    GraphQLInterfaceType::class,
-                    GraphQLObjectType::class,
-                    GraphQLScalarType::class,
-                    GraphQLUnionType::class,
-                ),
+            .equalsExactly(
+                GraphQLEnumType::class,
+                GraphQLInterfaceType::class,
+                GraphQLObjectType::class,
+                GraphQLScalarType::class,
+                GraphQLUnionType::class,
             )
             .check(schemaClasses)
     }
@@ -93,12 +87,10 @@ class NadelPseudoSealedTypeKtTest {
             .areAssignableTo(GraphQLUnmodifiedType::class.java)
             .and()
             .areNotInterfaces()
-            .should(
-                ArchUnitEqualsClassesExactly(
-                    GraphQLEnumType::class,
-                    GraphQLInputObjectType::class,
-                    GraphQLScalarType::class,
-                ),
+            .equalsExactly(
+                GraphQLEnumType::class,
+                GraphQLInputObjectType::class,
+                GraphQLScalarType::class,
             )
             .check(schemaClasses)
     }
