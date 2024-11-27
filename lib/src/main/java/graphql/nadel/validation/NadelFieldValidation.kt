@@ -101,9 +101,9 @@ class NadelFieldValidation internal constructor(
                 } else {
                     // Note: the value comes from the user (overall schema)
                     // So we are supplying the overall argument to the underlying argument
-                    val isArgumentTypeAssignable = assignableTypeValidation.isTypeAssignable(
-                        suppliedType = overallArg.type,
-                        requiredType = underlyingArg.type
+                    val isArgumentTypeAssignable = assignableTypeValidation.isInputTypeAssignable(
+                        overallType = overallArg.type,
+                        underlyingType = underlyingArg.type
                     )
                     if (isArgumentTypeAssignable) {
                         ok()
@@ -190,9 +190,9 @@ class NadelFieldValidation internal constructor(
         underlyingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
         // Note: the value comes from the underlying schema, so we are supplying the underlying field to the overall field
-        val isUnderlyingTypeAssignable = assignableTypeValidation.isTypeAssignable(
-            suppliedType = underlyingField.type,
-            requiredType = overallField.type,
+        val isUnderlyingTypeAssignable = assignableTypeValidation.isOutputTypeAssignable(
+            overallType = overallField.type,
+            underlyingType = underlyingField.type,
         )
 
         return if (isUnderlyingTypeAssignable) {

@@ -23,6 +23,15 @@ data class NadelVirtualTypeDuplicationError(
         get() = type.overall
 }
 
+data class NadelVirtualTypeIllegalRenameError(
+    val type: NadelServiceSchemaElement.VirtualType,
+) : NadelSchemaValidationError {
+    override val message: String = "Virtual types cannot be renamed"
+
+    override val subject: GraphQLNamedSchemaElement
+        get() = type.overall
+}
+
 data class NadelVirtualTypeMissingBackingFieldError(
     val type: NadelServiceSchemaElement.VirtualType,
     val virtualField: GraphQLFieldDefinition,
