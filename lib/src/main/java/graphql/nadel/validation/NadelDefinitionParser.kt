@@ -161,7 +161,7 @@ internal class NadelDefinitionParser(
                         return false
                     }
 
-                    private fun visitType(element: NadelSchemaTraverserElement.NamedType) {
+                    private fun visitType(element: NadelSchemaTraverserElement.Type) {
                         val coordinates = when (element) {
                             is NadelSchemaTraverserElement.EnumType -> element.node.coordinates()
                             is NadelSchemaTraverserElement.InputObjectType -> element.node.coordinates()
