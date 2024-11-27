@@ -83,8 +83,8 @@ inline fun <reified T : NadelFieldInstruction> NadelOverallExecutionBlueprint.ge
 
 internal class NadelOverallExecutionBlueprintMigrator(
     private val hint: NadelValidationBlueprintHint,
-    private val old: NadelOverallExecutionBlueprint,
-    private val new: Lazy<NadelOverallExecutionBlueprint?>,
+    val old: NadelOverallExecutionBlueprint,
+    val new: Lazy<NadelOverallExecutionBlueprint?>,
 ) : NadelOverallExecutionBlueprint {
     private val impl: NadelOverallExecutionBlueprint
         get() {
