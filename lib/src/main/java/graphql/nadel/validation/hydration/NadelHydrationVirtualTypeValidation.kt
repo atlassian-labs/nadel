@@ -73,6 +73,10 @@ internal class NadelHydrationVirtualTypeValidation {
         val virtualFieldOutputType = virtualField.type.unwrapAll()
         val backingFieldOutputType = backingField.type.unwrapAll()
 
+        if (virtualFieldOutputType.name == backingFieldOutputType.name) {
+            return emptyMapping.asInterimSuccess()
+        }
+
         val mapping = NadelVirtualTypeMapping(
             virtualType = virtualFieldOutputType,
             backingType = backingFieldOutputType,
