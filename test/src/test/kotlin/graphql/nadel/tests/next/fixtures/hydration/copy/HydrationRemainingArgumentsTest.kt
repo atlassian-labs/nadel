@@ -9,8 +9,10 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
     query = """
         query {
           businessReport_findRecentWorkByTeam(orgId: "turtles") {
+            __typename
             edges {
               node {
+                __typename
                 ... on JiraIssue {
                   key
                 }
