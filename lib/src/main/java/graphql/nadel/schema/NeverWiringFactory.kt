@@ -7,6 +7,8 @@ import graphql.language.Value
 import graphql.scalars.ExtendedScalars
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
+import graphql.schema.DataFetcherFactory
+import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLScalarType
 import graphql.schema.TypeResolver
 import graphql.schema.idl.FieldWiringEnvironment
@@ -114,9 +116,15 @@ open class NeverWiringFactory : WiringFactory {
         val NEVER_DF = DataFetcher {
             assertShouldNeverHappen<Any?>("This data fetcher should NEVER be called from Nadel")
         }
-
         val NEVER_TR =  TypeResolver {
             assertShouldNeverHappen("This interface type resolver should NEVER be called from Nadel")
         }
+        val NEVER_DFF = DataFetcherFactory {
+            NEVER_DF
+        }
+
+        val NEVER_CODE_REGISTRY: GraphQLCodeRegistry = GraphQLCodeRegistry.newCodeRegistry()
+            .defaultDataFetcher(NEVER_DFF).build()
+
     }
 }
