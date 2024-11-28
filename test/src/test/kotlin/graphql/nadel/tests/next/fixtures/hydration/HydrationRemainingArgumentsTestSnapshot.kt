@@ -1,13 +1,9 @@
-// @formatter:off
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
-import kotlin.Suppress
-import kotlin.collections.List
-import kotlin.collections.listOf
 
 private suspend fun main() {
     graphql.nadel.tests.next.update<HydrationRemainingArgumentsTest>()
@@ -21,9 +17,9 @@ private suspend fun main() {
 @Suppress("unused")
 public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "graph_store",
-                query = """
+        ExpectedServiceCall(
+            service = "graph_store",
+            query = """
                 | query (${'$'}v0: JSON) {
                 |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?", remainingArgs: ${'$'}v0) {
                 |     __typename
@@ -34,7 +30,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = """
+            variables = """
                 | {
                 |   "v0": {
                 |     "orgId": "turtles",
@@ -42,7 +38,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                result = """
+            result = """
                 | {
                 |   "data": {
                 |     "graphStore_query": {
@@ -57,12 +53,12 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
+            delayedResults = listOfJsonStrings(
             ),
-            ExpectedServiceCall(
-                service = "jira",
-                query = """
+        ),
+        ExpectedServiceCall(
+            service = "jira",
+            query = """
                 | {
                 |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
                 |     __typename
@@ -71,8 +67,8 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
-                result = """
+            variables = " {}",
+            result = """
                 | {
                 |   "data": {
                 |     "issuesByIds": [
@@ -85,10 +81,10 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
+            delayedResults = listOfJsonStrings(
             ),
-        )
+        ),
+    )
 
     /**
      * ```json
@@ -110,7 +106,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-            result = """
+        result = """
             | {
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
@@ -127,7 +123,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
             |   }
             | }
             """.trimMargin(),
-            delayedResults = listOfJsonStrings(
-            ),
-        )
+        delayedResults = listOfJsonStrings(
+        ),
+    )
 }
