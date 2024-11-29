@@ -26,6 +26,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 query = """
                 | query (${'$'}v0: JSON) {
                 |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?", remainingArgs: ${'$'}v0) {
+                |     __typename
                 |     edges {
                 |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
@@ -45,6 +46,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "graphStore_query": {
+                |       "__typename": "GraphStoreQueryConnection",
                 |       "edges": [
                 |         {
                 |           "batch_hydration__node__nodeId": "ari:cloud:jira::issue/1",
@@ -63,6 +65,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
+                |     __typename
                 |     key
                 |     batch_hydration__node__id: id
                 |   }
@@ -74,6 +77,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "issuesByIds": [
                 |       {
+                |         "__typename": "JiraIssue",
                 |         "key": "GQLGW-1",
                 |         "batch_hydration__node__id": "ari:cloud:jira::issue/1"
                 |       }
@@ -91,9 +95,11 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "businessReport_findRecentWorkByTeam": {
+     *       "__typename": "WorkConnection",
      *       "edges": [
      *         {
      *           "node": {
+     *             "__typename": "JiraIssue",
      *             "key": "GQLGW-1"
      *           }
      *         }
@@ -108,9 +114,11 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
+            |       "__typename": "WorkConnection",
             |       "edges": [
             |         {
             |           "node": {
+            |             "__typename": "JiraIssue",
             |             "key": "GQLGW-1"
             |           }
             |         }
