@@ -107,19 +107,19 @@ open class NeverWiringFactory : WiringFactory {
         return assertShouldNeverHappen("getDataFetcher should NEVER be called from Nadel - we returned false")
     }
 
-    override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
-        return NEVER_DF
+    override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*>? {
+        return null
     }
 
 
     companion object {
-        val NEVER_DF = DataFetcher {
-            assertShouldNeverHappen<Any?>("This data fetcher should NEVER be called from Nadel")
-        }
         val NEVER_TR =  TypeResolver {
             assertShouldNeverHappen("This interface type resolver should NEVER be called from Nadel")
         }
-        val NEVER_DFF = DataFetcherFactory {
+        private val NEVER_DF = DataFetcher {
+            assertShouldNeverHappen<Any?>("This data fetcher should NEVER be called from Nadel")
+        }
+        private val NEVER_DFF = DataFetcherFactory {
             NEVER_DF
         }
 
