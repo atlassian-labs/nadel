@@ -4,7 +4,7 @@ import graphql.ExecutionInput
 import graphql.GraphQL
 import graphql.GraphqlErrorHelper.toSpecification
 import graphql.language.AstPrinter
-import graphql.nadel.NadelDefinitionRegistry
+import graphql.nadel.NadelTypeDefinitionRegistry
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture
 internal class IntrospectionService(
     schema: GraphQLSchema,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
-) : Service(name, schema, introspectionRunnerFactory.make(schema), NadelDefinitionRegistry()) {
+) : Service(name, schema, introspectionRunnerFactory.make(schema), NadelTypeDefinitionRegistry()) {
     companion object {
         const val name = "__introspection"
     }

@@ -2,7 +2,7 @@ package graphql.nadel.definition.virtualType
 
 import graphql.language.DirectiveDefinition
 import graphql.language.DirectivesContainer
-import graphql.nadel.definition.NadelDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLSchemaElement
@@ -16,7 +16,7 @@ internal fun DirectivesContainer<*>.hasVirtualTypeDefinition(): Boolean {
     return hasDirective(NadelVirtualTypeDefinition.directiveDefinition.name)
 }
 
-internal class NadelVirtualTypeDefinition : NadelDefinition {
+internal class NadelVirtualTypeDefinition : NadelInstructionDefinition {
     companion object {
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL

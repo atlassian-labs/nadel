@@ -61,7 +61,7 @@ class NadelSchemaValidation internal constructor(
             hydrationUnions = getHydrationUnions(engineSchema),
             namespaceTypeNames = namespaceTypes,
             combinedTypeNames = namespaceTypes + operationTypes.map { it.name },
-            definitions = definitions,
+            instructionDefinitions = definitions,
             hook = hook,
         )
 

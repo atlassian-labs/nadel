@@ -11,7 +11,6 @@ import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationContext
-import graphql.nadel.validation.getHydrationDefinitions
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -126,7 +125,7 @@ private class NadelReferencedTypeVisitor(
             }
         }
 
-        val hydrations = getHydrationDefinitions(parent, node)
+        val hydrations = instructionDefinitions.getHydrationDefinitions(parent, node)
         if (hydrations.any()) {
             visitHydratedFieldDefinition(node, hydrations)
             // Never continue traversing on a hydrated field, we have special handling for that in visitHydratedFieldDefinition
