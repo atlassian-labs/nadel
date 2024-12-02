@@ -1,5 +1,6 @@
 package graphql.nadel.definition
 
+import graphql.nadel.engine.util.whenType
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldsContainer
@@ -150,21 +151,19 @@ fun GraphQLDirective.coordinates(): NadelSchemaMemberCoordinates.Directive {
 }
 
 fun GraphQLFieldsContainer.coordinates(): NadelSchemaMemberCoordinates.FieldContainer {
-    return when (this) {
-        is GraphQLObjectType -> coordinates()
-        is GraphQLInterfaceType -> coordinates()
-        else -> throw IllegalArgumentException(javaClass.name)
-    }
+    return whenType(
+        interfaceType = GraphQLInterfaceType::coordinates,
+        objectType = GraphQLObjectType::coordinates,
+    )
 }
 
 fun GraphQLNamedType.coordinates(): NadelSchemaMemberCoordinates.Type {
-    return when (this) {
-        is GraphQLUnionType -> coordinates()
-        is GraphQLInterfaceType -> coordinates()
-        is GraphQLEnumType -> coordinates()
-        is GraphQLInputObjectType -> coordinates()
-        is GraphQLObjectType -> coordinates()
-        is GraphQLScalarType -> coordinates()
-        else -> throw IllegalArgumentException(javaClass.name)
-    }
+    return whenType(
+        enumType = GraphQLEnumType::coordinates,
+        inputObjectType = GraphQLInputObjectType::coordinates,
+        interfaceType = GraphQLInterfaceType::coordinates,
+        objectType = GraphQLObjectType::coordinates,
+        scalarType = GraphQLScalarType::coordinates,
+        unionType = GraphQLUnionType::coordinates,
+    )
 }

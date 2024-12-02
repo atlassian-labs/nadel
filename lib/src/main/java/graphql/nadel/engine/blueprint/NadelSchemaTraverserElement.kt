@@ -1,6 +1,7 @@
 package graphql.nadel.engine.blueprint
 
-import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.engine.util.whenType
+import graphql.nadel.engine.util.whenUnmodifiedType
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLArgument
@@ -42,14 +43,13 @@ internal sealed interface NadelSchemaTraverserElement {
     sealed interface OutputType : NadelSchemaTraverserElement, Type {
         companion object {
             fun from(type: GraphQLOutputType): OutputType {
-                return when (val node = type.unwrapAll()) {
-                    is GraphQLEnumType -> EnumType(node)
-                    is GraphQLInterfaceType -> InterfaceType(node)
-                    is GraphQLObjectType -> ObjectType(node)
-                    is GraphQLScalarType -> ScalarType(node)
-                    is GraphQLUnionType -> UnionType(node)
-                    else -> throw UnsupportedOperationException(type.javaClass.name)
-                }
+                return type.whenUnmodifiedType(
+                    enumType = ::EnumType,
+                    interfaceType = ::InterfaceType,
+                    objectType = ::ObjectType,
+                    scalarType = ::ScalarType,
+                    unionType = ::UnionType,
+                )
             }
         }
     }
@@ -57,12 +57,11 @@ internal sealed interface NadelSchemaTraverserElement {
     sealed interface InputType : NadelSchemaTraverserElement, Type {
         companion object {
             fun from(type: GraphQLInputType): InputType {
-                return when (val node = type.unwrapAll()) {
-                    is GraphQLEnumType -> EnumType(node)
-                    is GraphQLInputObjectType -> InputObjectType(node)
-                    is GraphQLScalarType -> ScalarType(node)
-                    else -> throw UnsupportedOperationException(type.javaClass.name)
-                }
+                return type.whenUnmodifiedType(
+                    enumType = ::EnumType,
+                    inputObjectType = ::InputObjectType,
+                    scalarType = ::ScalarType,
+                )
             }
         }
     }
@@ -215,33 +214,19 @@ internal sealed interface NadelSchemaTraverserElement {
     }
 
     companion object {
-        fun from(type: GraphQLNamedSchemaElement): NadelSchemaTraverserElement {
-            return when (type) {
-                is GraphQLEnumType -> {
-                    EnumType(type)
-                }
-                is GraphQLInputObjectType -> {
-                    InputObjectType(type)
-                }
-                is GraphQLInterfaceType -> {
-                    InterfaceType(type)
-                }
-                is GraphQLObjectType -> {
-                    ObjectType(type)
-                }
-                is GraphQLScalarType -> {
-                    ScalarType(type)
-                }
-                is GraphQLUnionType -> {
-                    UnionType(type)
-                }
-                is GraphQLDirective -> {
-                    Directive(type)
-                }
-                else -> {
-                    throw UnsupportedOperationException(type.javaClass.name)
-                }
-            }
+        fun from(type: GraphQLNamedType): NadelSchemaTraverserElement {
+            return type.whenType(
+                enumType = ::EnumType,
+                inputObjectType = ::InputObjectType,
+                interfaceType = ::InterfaceType,
+                objectType = ::ObjectType,
+                scalarType = ::ScalarType,
+                unionType = ::UnionType,
+            )
+        }
+
+        fun from(type: GraphQLDirective): NadelSchemaTraverserElement {
+            return Directive(type)
         }
     }
 }
