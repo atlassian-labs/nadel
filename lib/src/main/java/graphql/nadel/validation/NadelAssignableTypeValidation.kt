@@ -11,6 +11,7 @@ class NadelAssignableTypeValidation internal constructor(
         overallType: GraphQLType,
         underlyingType: GraphQLType,
     ): Boolean {
+        // Note: the (supplied) value comes from the underlying service, and that value needs to fit the (required) overall field's type
         return isTypeAssignable(
             suppliedType = underlyingType,
             requiredType = overallType,
@@ -25,6 +26,7 @@ class NadelAssignableTypeValidation internal constructor(
         overallType: GraphQLType,
         underlyingType: GraphQLType,
     ): Boolean {
+        // Note: the (supplied) value comes from the user (overall schema) and needs to be assigned to the (required) underlying type
         return isTypeAssignable(
             suppliedType = overallType,
             requiredType = underlyingType,
