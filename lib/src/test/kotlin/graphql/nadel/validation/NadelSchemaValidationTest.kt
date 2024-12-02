@@ -30,11 +30,11 @@ class NadelSchemaValidationTest : DescribeSpec({
 })
 
 fun validate(fixture: NadelValidationTestFixture): Set<NadelSchemaValidationError> {
-    val schemas = newNadelSchemas()
-        .overallSchemas(fixture.overallSchema)
-        .underlyingSchemas(fixture.underlyingSchema)
-        .stubServiceExecution()
-        .build()
-
-    return NadelSchemaValidationFactory.create().validate(schemas)
+    return NadelSchemaValidation(
+        newNadelSchemas()
+            .overallSchemas(fixture.overallSchema)
+            .underlyingSchemas(fixture.underlyingSchema)
+            .stubServiceExecution()
+            .build()
+    ).validate()
 }

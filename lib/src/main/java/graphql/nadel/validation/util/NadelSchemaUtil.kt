@@ -2,14 +2,16 @@ package graphql.nadel.validation.util
 
 import graphql.language.OperationDefinition
 import graphql.nadel.Service
-import graphql.nadel.validation.NadelValidationContext
-import graphql.nadel.validation.getUnderlyingTypeName
+import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.schema.GraphQLNamedType
 
 internal object NadelSchemaUtil {
-    context(NadelValidationContext)
     fun getUnderlyingType(overallType: GraphQLNamedType, service: Service): GraphQLNamedType? {
-        return service.underlyingSchema.getType(getUnderlyingTypeName(overallType)) as GraphQLNamedType?
+        return service.underlyingSchema.getType(getUnderlyingName(overallType)) as GraphQLNamedType?
+    }
+
+    fun getUnderlyingName(type: GraphQLNamedType): String {
+        return type.getRenamedOrNull()?.from ?: type.name
     }
 
     fun isOperation(type: GraphQLNamedType): Boolean {

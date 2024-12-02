@@ -24,9 +24,7 @@ import graphql.language.Type
 import graphql.language.TypeDefinition
 import graphql.language.UnionTypeDefinition
 import graphql.language.UnionTypeExtensionDefinition
-import graphql.nadel.definition.hydration.hasHydratedDefinition
-import graphql.nadel.definition.hydration.hasIdHydratedDefinition
-import graphql.nadel.definition.renamed.hasRenameDefinition
+import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
@@ -50,7 +48,7 @@ fun makeUnderlyingSchema(overallSchema: String): String {
             .children
             .filterIsInstance<TypeDefinition<*>>()
             .filter {
-                it.hasRenameDefinition()
+                it.isRenamed()
             }
             .associate {
                 it.name to it.getRenamedFrom()
@@ -329,7 +327,7 @@ private fun transformFields(fieldDefinitions: List<FieldDefinition>): List<Field
     return fieldDefinitions
         .asSequence()
         .filterNot { field ->
-            field.hasHydratedDefinition() || field.hasIdHydratedDefinition()
+            field.hasDirective(NadelDirectives.hydratedDirectiveDefinition.name)
         }
         .map { field ->
             field.transform { fieldBuilder ->

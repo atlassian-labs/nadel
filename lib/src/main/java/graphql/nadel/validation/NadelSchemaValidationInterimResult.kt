@@ -10,12 +10,8 @@ internal sealed interface NadelValidationInterimResult<T> {
     ) : NadelValidationInterimResult<T> {
         companion object {
             context(NadelValidationContext)
-            internal fun <T : Any?> T.asInterimSuccess(): Success<T> {
-                return of(value = this)
-            }
-
-            internal fun <T : Any?> of(value: T): Success<T> {
-                return Success(value)
+            internal fun <T : Any> T.asInterimSuccess(): Success<T> {
+                return Success(this)
             }
         }
     }
@@ -28,25 +24,17 @@ internal sealed interface NadelValidationInterimResult<T> {
         companion object {
             context(NadelSchemaValidationOnErrorContext)
             internal fun <T : Any> NadelSchemaValidationResult.asInterimError(): Error<T> {
-                return of(this)
+                return Error(flatten(this))
             }
 
             context(NadelValidationContext)
             internal fun <T : Any> NadelSchemaValidationResult.asInterimError(): Error<T> {
-                return of(this)
+                return Error(flatten(this))
             }
 
             context(NadelValidationContext)
             internal fun <T : Any> List<NadelSchemaValidationError>.asInterimError(): Error<T> {
-                return of(value = this)
-            }
-
-            internal fun <T : Any> of(value: NadelSchemaValidationResult): Error<T> {
-                return Error(flatten(value))
-            }
-
-            internal fun <T : Any> of(value: List<NadelSchemaValidationError>): Error<T> {
-                return Error(flatten(value))
+                return Error(flatten(this))
             }
         }
     }

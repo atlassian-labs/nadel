@@ -195,11 +195,6 @@ internal class NadelHydrationArgumentTypeValidation {
             return true
         }
 
-        // I hate to bake this into here… but ugh. They're not assignable. Will remove at some point
-        if (suppliedType.name == "DevOpsProviderType" && requiredType.name == "ToolchainProviderType") {
-            return true
-        }
-
         // All values from supplied enum can be used as values in the required type
         return requiredType.values.map { it.name }
             .containsAll(suppliedType.values.map { it.name })

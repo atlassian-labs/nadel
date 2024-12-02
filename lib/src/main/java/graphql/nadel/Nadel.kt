@@ -26,8 +26,6 @@ import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.util.getLogger
 import graphql.nadel.util.getNotPrivacySafeLogger
-import graphql.nadel.validation.NadelSchemaValidationFactory
-import graphql.nadel.validation.NadelSchemaValidation
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
@@ -245,8 +243,6 @@ class Nadel private constructor(
 
         private var blueprintHint = NadelValidationBlueprintHint { false }
 
-        private var nadelValidation: NadelSchemaValidation? = null
-
         fun schemas(schemas: NadelSchemas): Builder {
             this.schemas = schemas
             return this
@@ -372,11 +368,6 @@ class Nadel private constructor(
             return this
         }
 
-        fun schemaValidation(nadelValidation: NadelSchemaValidation): Builder {
-            this.nadelValidation = nadelValidation
-            return this
-        }
-
         fun build(): Nadel {
             val (engineSchema, services) = schemas ?: schemaBuilder.build()
 
@@ -395,7 +386,6 @@ class Nadel private constructor(
                     transforms = transforms,
                     introspectionRunnerFactory = introspectionRunnerFactory,
                     blueprintHint = blueprintHint,
-                    nadelValidation = nadelValidation ?: NadelSchemaValidationFactory.create(),
                 ),
                 services = services,
                 engineSchema = engineSchema,

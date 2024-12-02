@@ -25,7 +25,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   aliasedThings: things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
+                |   things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
                 |     id
                 |     name
                 |   }
@@ -35,7 +35,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "aliasedThings": [
+                |     "things": [
                 |       {
                 |         "id": "thing-1",
                 |         "name": "THING-1"
@@ -55,7 +55,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   aliasedThings: things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
+                |   things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
                 |     id
                 |     name
                 |   }
@@ -65,7 +65,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "aliasedThings": [
+                |     "things": [
                 |       {
                 |         "id": "thing-2",
                 |         "name": "THING-2"
@@ -85,7 +85,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   aliasedThings: things(ids: ["thing-5:partition-C", "thing-7:partition-C"]) {
+                |   things(ids: ["thing-5:partition-C", "thing-7:partition-C"]) {
                 |     id
                 |     name
                 |   }
@@ -95,7 +95,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "aliasedThings": [
+                |     "things": [
                 |       {
                 |         "id": "thing-5",
                 |         "name": "THING-5"
@@ -115,7 +115,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 service = "things_service",
                 query = """
                 | query getPartitionedThings {
-                |   aliasedThings: things(ids: ["thing-6:partition-D", "thing-8:partition-D"]) {
+                |   things(ids: ["thing-6:partition-D", "thing-8:partition-D"]) {
                 |     id
                 |     name
                 |   }
@@ -125,7 +125,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "aliasedThings": [
+                |     "things": [
                 |       {
                 |         "id": "thing-6",
                 |         "name": "THING-6"
@@ -147,7 +147,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "aliasedThings": [
+     *     "things": [
      *       {
      *         "id": "thing-1",
      *         "name": "THING-1"
@@ -189,7 +189,7 @@ public class PartitionWithFieldAliasTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "aliasedThings": [
+            |     "things": [
             |       {
             |         "id": "thing-1",
             |         "name": "THING-1"
