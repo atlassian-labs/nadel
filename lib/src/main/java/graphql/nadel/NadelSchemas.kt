@@ -207,7 +207,7 @@ data class NadelSchemas(
                     reader,
                     captureSourceLocation = captureSourceLocation,
                 )
-                val nadelDefinitionRegistry = NadelDefinitionRegistry.from(nadelDefinitions)
+                val nadelDefinitionRegistry = NadelTypeDefinitionRegistry.from(nadelDefinitions)
 
                 // Builder should enforce non-null entry
                 val underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(

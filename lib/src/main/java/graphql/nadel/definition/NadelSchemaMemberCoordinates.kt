@@ -1,5 +1,6 @@
 package graphql.nadel.definition
 
+import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
 import graphql.nadel.engine.util.whenType
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumType
@@ -166,4 +167,15 @@ fun GraphQLNamedType.coordinates(): NadelSchemaMemberCoordinates.Type {
         scalarType = GraphQLScalarType::coordinates,
         unionType = GraphQLUnionType::coordinates,
     )
+}
+
+internal fun NadelSchemaTraverserElement.Type.coordinates(): NadelSchemaMemberCoordinates.Type {
+    return when (this) {
+        is NadelSchemaTraverserElement.EnumType -> NadelSchemaMemberCoordinates.Enum(node.name)
+        is NadelSchemaTraverserElement.InputObjectType -> NadelSchemaMemberCoordinates.InputObject(node.name)
+        is NadelSchemaTraverserElement.ScalarType -> NadelSchemaMemberCoordinates.Scalar(node.name)
+        is NadelSchemaTraverserElement.InterfaceType -> NadelSchemaMemberCoordinates.Interface(node.name)
+        is NadelSchemaTraverserElement.ObjectType -> NadelSchemaMemberCoordinates.Object(node.name)
+        is NadelSchemaTraverserElement.UnionType -> NadelSchemaMemberCoordinates.Union(node.name)
+    }
 }

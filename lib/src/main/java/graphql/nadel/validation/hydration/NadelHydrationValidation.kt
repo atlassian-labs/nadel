@@ -48,8 +48,6 @@ import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.NadelValidationInterimResult
 import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asInterimError
 import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.asInterimSuccess
-import graphql.nadel.validation.getHydrationDefinitions
-import graphql.nadel.validation.isRenamed
 import graphql.nadel.validation.ok
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
@@ -86,11 +84,11 @@ class NadelHydrationValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (isRenamed(parent, virtualField)) {
+        if (instructionDefinitions.isRenamed(parent, virtualField)) {
             return CannotRenameHydratedField(parent, virtualField)
         }
 
-        val hydrations = getHydrationDefinitions(parent, virtualField).toList()
+        val hydrations = instructionDefinitions.getHydrationDefinitions(parent, virtualField).toList()
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }

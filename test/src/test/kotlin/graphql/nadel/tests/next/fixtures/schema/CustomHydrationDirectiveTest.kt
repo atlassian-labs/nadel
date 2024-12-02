@@ -3,7 +3,7 @@ package graphql.nadel.tests.next.fixtures.schema
 import graphql.language.Value
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
-import graphql.nadel.definition.NadelDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition
@@ -305,7 +305,7 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
                     engineSchema: GraphQLSchema,
                     parent: GraphQLFieldsContainer,
                     field: GraphQLFieldDefinition,
-                ): List<NadelDefinition> {
+                ): List<NadelInstructionDefinition> {
                     return field
                         .appliedDirectives
                         .mapNotNull {

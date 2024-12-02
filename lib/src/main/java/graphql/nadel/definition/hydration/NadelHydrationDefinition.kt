@@ -4,7 +4,7 @@ import graphql.language.ArrayValue
 import graphql.language.DirectiveDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ObjectValue
-import graphql.nadel.definition.NadelDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition.Keyword
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.parseDefinition
@@ -24,7 +24,7 @@ fun GraphQLFieldDefinition.parseHydrationDefinitions(): List<NadelHydrationDefin
         .map(::NadelHydrationDefinitionImpl)
 }
 
-interface NadelHydrationDefinition : NadelDefinition {
+interface NadelHydrationDefinition : NadelInstructionDefinition {
     companion object {
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL

@@ -63,7 +63,7 @@ class NadelSchemaValidation internal constructor(
             namespaceTypeNames = namespaceTypes,
             combinedTypeNames = namespaceTypes + operationTypes.map { it.name },
             hiddenTypeNames = hiddenTypeNames,
-            definitions = definitions,
+            instructionDefinitions = definitions,
             hook = hook,
         )
 

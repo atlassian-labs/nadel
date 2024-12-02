@@ -81,9 +81,9 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        return if (isRenamed(parent, overallField)) {
+        return if (instructionDefinitions.isRenamed(parent, overallField)) {
             validateRename(parent, overallField)
-        } else if (isHydrated(parent, overallField)) {
+        } else if (instructionDefinitions.isHydrated(parent, overallField)) {
             hydrationValidation.validate(parent, overallField)
         } else {
             val underlyingField = parent.underlying.getField(overallField.name)
@@ -140,15 +140,15 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (isHydrated(parent, overallField)) {
+        if (instructionDefinitions.isHydrated(parent, overallField)) {
             return CannotRenameHydratedField(parent, overallField)
         }
 
-        if (isPartitioned(parent, overallField)) {
+        if (instructionDefinitions.isPartitioned(parent, overallField)) {
             return CannotRenamePartitionedField(parent, overallField)
         }
 
-        val rename = getRenamedOrNull(parent, overallField)
+        val rename = instructionDefinitions.getRenamedOrNull(parent, overallField)
             ?: return ok()
 
         val underlyingField = parent.underlying.getFieldAt(rename.from)
