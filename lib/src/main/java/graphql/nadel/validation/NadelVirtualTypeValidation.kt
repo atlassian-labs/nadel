@@ -165,7 +165,6 @@ class NadelVirtualTypeValidation internal constructor(
             )
         }
 
-        // Note: the value comes from the backing field, and that value needs to fit the virtual field
         val isOutputTypeAssignable = isOutputTypeAssignable(
             backingField = backingField,
             virtualField = virtualField,
@@ -288,6 +287,7 @@ class NadelVirtualTypeValidation internal constructor(
         backingField: GraphQLFieldDefinition,
         virtualField: GraphQLFieldDefinition,
     ): Boolean {
+        // Note: the (supplied) value comes from the backing service, and that value needs to fit the (required) virtual field's type
         val suppliedType = backingField.type
         val requiredType = virtualField.type
 

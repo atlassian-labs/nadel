@@ -91,8 +91,6 @@ class NadelFieldValidation internal constructor(
                 if (underlyingArg == null) {
                     MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg)
                 } else {
-                    // Note: the value comes from the user (overall schema)
-                    // So we are supplying the overall argument to the underlying argument
                     val isArgumentTypeAssignable = assignableTypeValidation.isInputTypeAssignable(
                         overallType = overallArg.type,
                         underlyingType = underlyingArg.type
@@ -181,7 +179,6 @@ class NadelFieldValidation internal constructor(
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        // Note: the value comes from the underlying schema, so we are supplying the underlying field to the overall field
         val isUnderlyingTypeAssignable = assignableTypeValidation.isOutputTypeAssignable(
             overallType = overallField.type,
             underlyingType = underlyingField.type,
