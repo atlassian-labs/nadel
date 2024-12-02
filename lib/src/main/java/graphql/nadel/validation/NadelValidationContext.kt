@@ -15,5 +15,13 @@ data class NadelValidationContext internal constructor(
     val instructionDefinitions: NadelInstructionDefinitionRegistry,
     val hook: NadelSchemaValidationHook,
 ) {
-    internal val visitedTypes: MutableSet<NadelServiceSchemaElementRef> = hashSetOf()
+    private val visitedTypes: MutableSet<NadelServiceSchemaElementRef> = hashSetOf()
+
+    /**
+     * @return true to visit
+     */
+    fun visitElement(schemaElement: NadelServiceSchemaElement): Boolean {
+        // Returns true if the element was added i.e. haven't visited before
+        return visitedTypes.add(schemaElement.toRef())
+    }
 }
