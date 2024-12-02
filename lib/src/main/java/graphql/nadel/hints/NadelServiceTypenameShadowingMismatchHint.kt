@@ -7,6 +7,7 @@ interface NadelServiceTypenameShadowingHint {
     fun isShadowingEnabled(): Boolean
 
     fun onMismatch(
+        userContext: Any?,
         oldDecision: Boolean,
         newDecision: Boolean,
         service: Service,
@@ -21,6 +22,7 @@ interface NadelServiceTypenameShadowingHint {
             }
 
             override fun onMismatch(
+                userContext: Any?,
                 oldDecision: Boolean,
                 newDecision: Boolean,
                 service: Service,
