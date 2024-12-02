@@ -203,11 +203,11 @@ data class NadelSchemas(
             val underlyingSchemaGenerator = UnderlyingSchemaGenerator()
 
             return builder.overallSchemaReaders.map { (serviceName, reader) ->
-                val nadelDefinitions = SchemaUtil.parseSchemaDefinitions(
+                val schemaDefinitions = SchemaUtil.parseSchemaDefinitions(
                     reader,
                     captureSourceLocation = captureSourceLocation,
                 )
-                val nadelDefinitionRegistry = NadelTypeDefinitionRegistry.from(nadelDefinitions)
+                val typeDefinitionRegistry = NadelTypeDefinitionRegistry.from(schemaDefinitions)
 
                 // Builder should enforce non-null entry
                 val underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(
@@ -218,7 +218,7 @@ data class NadelSchemas(
 
                 val serviceExecution = serviceExecutionFactory.getServiceExecution(serviceName)
 
-                Service(serviceName, underlyingSchema, serviceExecution, nadelDefinitionRegistry)
+                Service(serviceName, underlyingSchema, serviceExecution, typeDefinitionRegistry)
             }
         }
 
