@@ -261,13 +261,4 @@ internal class NadelTypeValidation(
     private fun isOperationType(typeName: String): Boolean {
         return engineSchema.operationTypes.any { it.name == typeName }
     }
-
-    /**
-     * @return true to visit
-     */
-    context(NadelValidationContext)
-    private fun visitElement(schemaElement: NadelServiceSchemaElement): Boolean {
-        // Returns true if the element was added i.e. haven't visited before
-        return visitedTypes.add(schemaElement.toRef())
-    }
 }

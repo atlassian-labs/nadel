@@ -40,7 +40,7 @@ class NadelVirtualTypeValidation internal constructor(
             return ok()
         }
 
-        if (isRenamed(schemaElement)) {
+        if (instructionDefinitions.isRenamed(schemaElement)) {
             return NadelVirtualTypeIllegalRenameError(schemaElement)
         }
 
@@ -79,7 +79,7 @@ class NadelVirtualTypeValidation internal constructor(
         backingType: GraphQLObjectType,
     ): NadelSchemaValidationResult {
         return virtualType.fields.map { virtualField ->
-            if (isRenamed(virtualType, virtualField)) {
+            if (instructionDefinitions.isRenamed(virtualType, virtualField)) {
                 NadelVirtualTypeRenameFieldError(
                     type = NadelServiceSchemaElement.VirtualType(
                         service = service,
@@ -88,7 +88,7 @@ class NadelVirtualTypeValidation internal constructor(
                     ),
                     virtualField = virtualField,
                 )
-            } else if (isHydrated(virtualType, virtualField)) {
+            } else if (instructionDefinitions.isHydrated(virtualType, virtualField)) {
                 hydrationValidation.validate(
                     parent = NadelServiceSchemaElement.Object(
                         service = service,

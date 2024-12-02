@@ -1,6 +1,6 @@
 package graphql.nadel.validation
 
-import graphql.nadel.definition.NadelDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLSchema
@@ -10,7 +10,7 @@ abstract class NadelSchemaValidationHook {
         engineSchema: GraphQLSchema,
         parent: GraphQLFieldsContainer,
         field: GraphQLFieldDefinition,
-    ): List<NadelDefinition> {
+    ): List<NadelInstructionDefinition> {
         return emptyList()
     }
 }

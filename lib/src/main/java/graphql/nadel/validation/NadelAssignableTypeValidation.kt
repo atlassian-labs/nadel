@@ -17,7 +17,7 @@ class NadelAssignableTypeValidation internal constructor(
             requiredType = overallType,
             // Compare underlying type names
             suppliedTypeName = underlyingType.unwrapAll().name,
-            requiredTypeName = getUnderlyingTypeName(overallType.unwrapAll()),
+            requiredTypeName = instructionDefinitions.getUnderlyingTypeName(overallType.unwrapAll()),
         )
     }
 
@@ -31,7 +31,7 @@ class NadelAssignableTypeValidation internal constructor(
             suppliedType = overallType,
             requiredType = underlyingType,
             // Compare underlying type names
-            suppliedTypeName = getUnderlyingTypeName(overallType.unwrapAll()),
+            suppliedTypeName = instructionDefinitions.getUnderlyingTypeName(overallType.unwrapAll()),
             requiredTypeName = underlyingType.unwrapAll().name,
         )
     }

@@ -7,7 +7,7 @@ import graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
 import graphql.language.ScalarTypeDefinition.newScalarTypeDefinition
 import graphql.language.SchemaDefinition
 import graphql.language.SourceLocation
-import graphql.nadel.NadelDefinitionRegistry
+import graphql.nadel.NadelTypeDefinitionRegistry
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.util.AnyNamedNode
 import graphql.nadel.util.AnySDLDefinition
@@ -22,7 +22,7 @@ import graphql.schema.idl.WiringFactory
 
 internal class OverallSchemaGenerator {
     fun buildOverallSchema(
-        serviceRegistries: List<NadelDefinitionRegistry>,
+        serviceRegistries: List<NadelTypeDefinitionRegistry>,
         wiringFactory: WiringFactory,
     ): GraphQLSchema {
         val schemaGenerator = SchemaGenerator()
@@ -33,7 +33,7 @@ internal class OverallSchemaGenerator {
         return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring)
     }
 
-    private fun createTypeRegistry(serviceRegistries: List<NadelDefinitionRegistry>): TypeDefinitionRegistry {
+    private fun createTypeRegistry(serviceRegistries: List<NadelTypeDefinitionRegistry>): TypeDefinitionRegistry {
         val topLevelFields = NadelOperationKind.entries
             .associateWith {
                 mutableListOf<FieldDefinition>()
@@ -128,7 +128,7 @@ internal class OverallSchemaGenerator {
     private fun collectTypes(
         topLevelFields: Map<NadelOperationKind, MutableList<FieldDefinition>>,
         allDefinitions: MutableList<AnySDLDefinition>,
-        definitionRegistry: NadelDefinitionRegistry,
+        definitionRegistry: NadelTypeDefinitionRegistry,
     ) {
         val opDefinitions = definitionRegistry.operationMap
         val opTypeNames: MutableSet<String> = HashSet(3)
