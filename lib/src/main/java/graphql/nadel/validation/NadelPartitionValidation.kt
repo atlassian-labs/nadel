@@ -2,9 +2,7 @@ package graphql.nadel.validation
 
 import graphql.Scalars
 import graphql.language.OperationDefinition.Operation
-import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.definition.partition.NadelPartitionDefinition
-import graphql.nadel.definition.partition.getPartitionOrNull
 import graphql.nadel.engine.blueprint.NadelPartitionInstruction
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -27,10 +25,10 @@ internal class NadelPartitionValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        val partition = overallField.getPartitionOrNull()
+        val partition = getPartitionedOrNull(parent, overallField)
             ?: return ok()
 
-        if (overallField.isHydrated()) {
+        if (isHydrated(parent, overallField)) {
             return CannotPartitionHydratedField(parent, overallField)
         }
 

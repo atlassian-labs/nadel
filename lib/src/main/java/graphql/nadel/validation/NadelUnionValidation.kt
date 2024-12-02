@@ -5,7 +5,7 @@ import graphql.nadel.validation.util.NadelSchemaUtil
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLObjectType
 
-internal class NadelUnionValidation {
+class NadelUnionValidation internal constructor() {
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.Union,

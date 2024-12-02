@@ -9,7 +9,6 @@ import graphql.nadel.engine.util.operationTypes
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
-import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
 import graphql.nadel.validation.util.NadelReferencedType
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
@@ -17,16 +16,15 @@ import graphql.nadel.validation.util.getReferencedTypeNames
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLUnionType
 
-internal class NadelTypeValidation {
-    private val hydrationValidation = NadelHydrationValidation()
-    private val fieldValidation = NadelFieldValidation(hydrationValidation)
-    private val inputValidation = NadelInputValidation()
-    private val unionValidation = NadelUnionValidation()
-    private val enumValidation = NadelEnumValidation()
-    private val interfaceValidation = NadelInterfaceValidation()
-    private val namespaceValidation = NadelNamespaceValidation()
-    private val virtualTypeValidation = NadelVirtualTypeValidation(hydrationValidation)
-
+internal class NadelTypeValidation(
+    private val fieldValidation: NadelFieldValidation,
+    private val inputValidation: NadelInputValidation,
+    private val unionValidation: NadelUnionValidation,
+    private val enumValidation: NadelEnumValidation,
+    private val interfaceValidation: NadelInterfaceValidation,
+    private val namespaceValidation: NadelNamespaceValidation,
+    private val virtualTypeValidation: NadelVirtualTypeValidation,
+) {
     context(NadelValidationContext)
     fun validate(
         service: Service,

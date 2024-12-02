@@ -2,9 +2,8 @@ package graphql.nadel.validation.util
 
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.definition.hydration.getHydrationDefinitions
-import graphql.nadel.definition.hydration.isHydrated
-import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelSchemaTraverser
 import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
 import graphql.nadel.engine.blueprint.NadelSchemaTraverserVisitor
@@ -12,6 +11,7 @@ import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationContext
+import graphql.nadel.validation.getHydrationDefinitions
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -81,9 +81,7 @@ private class NadelReferencedTypeVisitor(
         return true
     }
 
-    override fun visitGraphQLUnionMemberType(
-        element: NadelSchemaTraverserElement.UnionMemberType,
-    ): Boolean {
+    override fun visitGraphQLUnionMemberType(element: NadelSchemaTraverserElement.UnionMemberType): Boolean {
         val union = element.parent
         val memberType = element.node
         // Don't look at union members defined by external services
@@ -128,8 +126,9 @@ private class NadelReferencedTypeVisitor(
             }
         }
 
-        if (node.isHydrated()) {
-            visitHydratedFieldDefinition(node)
+        val hydrations = getHydrationDefinitions(parent, node)
+        if (hydrations.any()) {
+            visitHydratedFieldDefinition(node, hydrations)
             // Never continue traversing on a hydrated field, we have special handling for that in visitHydratedFieldDefinition
             return false
         }
@@ -157,21 +156,26 @@ private class NadelReferencedTypeVisitor(
                 getUnderlyingType(impl, service) is GraphQLObjectType
             }
             .filterNot {
-                it.isVirtualType() // Not sure if this is needed…
+                it.hasVirtualTypeDefinition() // Not sure if this is needed…
             }
     }
 
-    private fun visitHydratedFieldDefinition(field: GraphQLFieldDefinition) {
+    private fun visitHydratedFieldDefinition(
+        field: GraphQLFieldDefinition,
+        definitions: Sequence<NadelHydrationDefinition>,
+    ) {
         val outputType = field.type.unwrapAll()
-        if (outputType.isVirtualType()) {
-            for (hydration in field.getHydrationDefinitions()) {
-                val backingField = engineSchema.queryType.getFieldAt(hydration.backingField)
-                    ?: continue // Error will be handled elsewhere down the line
-                onVirtualTypeReferenced(
-                    virtualType = outputType.name,
-                    backingType = backingField.type.unwrapAll().name,
-                )
-            }
+        if (outputType.hasVirtualTypeDefinition()) {
+            definitions
+                .forEach { hydration ->
+                    val backingField = engineSchema.queryType.getFieldAt(hydration.backingField)
+                    if (backingField != null) {
+                        onVirtualTypeReferenced(
+                            virtualType = outputType.name,
+                            backingType = backingField.type.unwrapAll().name,
+                        )
+                    }
+                }
         }
     }
 
@@ -239,13 +243,14 @@ private class NadelReferencedTypeVisitor(
     private inline fun visitTypeGuard(element: NadelSchemaTraverserElement.Type, onExit: () -> Nothing) {
         val type = element.node
         if (type is GraphQLDirectiveContainer) {
-            if (type.isVirtualType()) {
+            if (type.hasVirtualTypeDefinition()) {
                 onExit()
             }
         }
     }
 }
 
+context(NadelValidationContext)
 internal fun isUnionMemberExempt(
     service: Service,
     unionType: GraphQLUnionType,
@@ -260,6 +265,7 @@ internal fun isUnionMemberExempt(
  *
  * @return true if the [memberInQuestion] was NOT declared inside [service]
  */
+context(NadelValidationContext)
 internal fun isUnionMemberExternal(
     service: Service,
     unionType: GraphQLUnionType,
@@ -276,6 +282,7 @@ internal fun isUnionMemberExternal(
         }
 }
 
+context(NadelValidationContext)
 internal fun isMemberMissingFromUnderlyingSchema(
     service: Service,
     overallType: GraphQLNamedType,

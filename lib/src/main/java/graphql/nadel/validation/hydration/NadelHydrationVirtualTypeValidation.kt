@@ -1,12 +1,12 @@
 package graphql.nadel.validation.hydration
 
-import graphql.nadel.definition.hydration.isHydrated
-import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.NadelValidationInterimResult
 import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.asInterimSuccess
+import graphql.nadel.validation.isHydrated
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
 import graphql.schema.GraphQLFieldDefinition
@@ -41,7 +41,7 @@ internal class NadelHydrationVirtualTypeValidation {
     context(NadelValidationContext, NadelHydrationValidationContext)
     fun getVirtualTypeContext(): NadelValidationInterimResult<NadelVirtualTypeContext?> {
         // Do nothing if it's not a virtual type
-        if (!virtualField.type.unwrapAll().isVirtualType()) {
+        if (!virtualField.type.unwrapAll().hasVirtualTypeDefinition()) {
             return null.asInterimSuccess()
         }
 
@@ -98,7 +98,7 @@ internal class NadelHydrationVirtualTypeValidation {
         if (virtualObjectType is GraphQLFieldsContainer && backingObjectType is GraphQLFieldsContainer) {
             return virtualObjectType.fields
                 .flatMap { virtualField ->
-                    if (virtualField.isHydrated()) {
+                    if (isHydrated(virtualObjectType, virtualField)) {
                         emptyMapping
                     } else {
                         val backingField = backingObjectType.getField(virtualField.name)

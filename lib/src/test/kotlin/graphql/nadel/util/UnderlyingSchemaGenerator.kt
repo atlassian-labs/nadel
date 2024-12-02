@@ -24,8 +24,8 @@ import graphql.language.Type
 import graphql.language.TypeDefinition
 import graphql.language.UnionTypeDefinition
 import graphql.language.UnionTypeExtensionDefinition
-import graphql.nadel.definition.renamed.isRenamed
-import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.definition.renamed.hasRenameDefinition
+import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
@@ -49,7 +49,7 @@ fun makeUnderlyingSchema(overallSchema: String): String {
         .asSequence()
         .filterIsInstance<TypeDefinition<*>>()
         .filter {
-            it.isRenamed()
+            it.hasRenameDefinition()
         }
         .associate {
             it.name to it.getRenamedFrom()
@@ -59,7 +59,7 @@ fun makeUnderlyingSchema(overallSchema: String): String {
             .asSequence()
             .filterIsInstance<DirectivesContainer<*>>()
             .filter {
-                it.isVirtualType()
+                it.hasVirtualTypeDefinition()
             }
             .filterIsInstance<NamedNode<*>>()
             .map {

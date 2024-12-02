@@ -6,9 +6,7 @@ import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
-import graphql.nadel.definition.hydration.getHydrationDefinitions
-import graphql.nadel.definition.renamed.isRenamed
-import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -48,6 +46,8 @@ import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.NadelValidationInterimResult
 import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asInterimError
 import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.asInterimSuccess
+import graphql.nadel.validation.getHydrationDefinitions
+import graphql.nadel.validation.isRenamed
 import graphql.nadel.validation.ok
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
@@ -71,7 +71,7 @@ internal data class NadelHydrationValidationContext(
     val backingField: GraphQLFieldDefinition,
 )
 
-internal class NadelHydrationValidation {
+class NadelHydrationValidation internal constructor() {
     private val argumentValidation = NadelHydrationArgumentValidation()
     private val conditionValidation = NadelHydrationConditionValidation()
     private val sourceFieldValidation = NadelHydrationSourceFieldValidation()
@@ -80,33 +80,46 @@ internal class NadelHydrationValidation {
     context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement.FieldsContainer,
-        overallField: GraphQLFieldDefinition,
+        virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (overallField.isRenamed()) {
-            return CannotRenameHydratedField(parent, overallField)
+        if (isRenamed(parent, virtualField)) {
+            return CannotRenameHydratedField(parent, virtualField)
         }
 
-        val hydrations = overallField.getHydrationDefinitions()
+        val hydrations = getHydrationDefinitions(parent, virtualField).toList()
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }
 
+        return validate(
+            parent = parent,
+            virtualField = virtualField,
+            hydrations = hydrations,
+        )
+    }
+
+    context(NadelValidationContext)
+    private fun validate(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        virtualField: GraphQLFieldDefinition,
+        hydrations: List<NadelHydrationDefinition>,
+    ): NadelSchemaValidationResult {
         conditionValidation
-            .validateHydrations(hydrations, parent, overallField)
+            .validateHydrations(hydrations, parent, virtualField)
             .onError { return it }
 
         val hasMoreThanOneHydration = hydrations.size > 1
 
-        limitBatchHydrationMismatch(parent, overallField, hydrations)
+        limitBatchHydrationMismatch(parent, virtualField, hydrations)
             .onError { return it }
-        limitUseOfIndexHydration(parent, overallField, hydrations)
+        limitUseOfIndexHydration(parent, virtualField, hydrations)
             .onError { return it }
-        limitSourceField(parent, overallField, hydrations)
+        limitSourceField(parent, virtualField, hydrations)
             .onError { return it }
 
         return hydrations
             .map { hydration ->
-                validate(parent, overallField, hydration, hasMoreThanOneHydration)
+                validate(parent, virtualField, hydration, hasMoreThanOneHydration)
             }
             .toResult()
     }
@@ -146,9 +159,8 @@ internal class NadelHydrationValidation {
         validateOutputType()
             .onError { return it }
 
-        val arguments =
-            argumentValidation.validateArguments(isBatchHydration)
-                .onError { return it }
+        val arguments = argumentValidation.validateArguments(isBatchHydration)
+            .onError { return it }
 
         val backingService =
             fieldContributor[makeFieldCoordinates(backingFieldContainer.name, backingField.name)]!!
@@ -226,7 +238,7 @@ internal class NadelHydrationValidation {
                 }
 
                 val underlyingParentType =
-                    if ((parent.overall as GraphQLDirectiveContainer).isVirtualType()) {
+                    if ((parent.overall as GraphQLDirectiveContainer).hasVirtualTypeDefinition()) {
                         parent.overall
                     } else {
                         parent.underlying
@@ -548,7 +560,7 @@ internal class NadelHydrationValidation {
         // Ensures that the underlying type of the backing field matches with the expected overall output type
         val overallType = virtualField.type.unwrapAll()
 
-        if ((overallType as? GraphQLDirectiveContainer)?.isVirtualType() == true) {
+        if ((overallType as? GraphQLDirectiveContainer)?.hasVirtualTypeDefinition() == true) {
             return ok() // Bypass validation for now
         }
 
