@@ -13,7 +13,7 @@ import kotlin.test.Test
 
 class NadelValidationDefinitionsTest {
     @Test
-    fun `do not use parse definitions functions in validation`() {
+    fun `does not use slow methods`() {
         val importedClasses = ClassFileImporter()
             .withImportOption(ImportOption.DoNotIncludeTests())
             .importPackages("graphql.nadel.validation")
@@ -31,8 +31,14 @@ class NadelValidationDefinitionsTest {
                     callMethodWhere(
                         object : DescribedPredicate<JavaMethodCall>("definition parse methods") {
                             override fun test(invocation: JavaMethodCall): Boolean {
-                                return invocation.targetOwner.getPackage().name.startsWith("graphql.nadel.definition")
-                                    && invocation.target.name.startsWith("parse")
+                                if (!invocation.targetOwner.getPackage().name.startsWith("graphql.nadel.definition")) {
+                                    return false
+                                }
+
+                                val targetName = invocation.target.name
+                                return targetName.startsWith("parse")
+                                    || (targetName.startsWith("has") && targetName != "hashCode")
+                                    || targetName.startsWith("from")
                             }
                         }
                     ),

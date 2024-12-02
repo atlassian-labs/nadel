@@ -155,7 +155,7 @@ private class NadelReferencedTypeVisitor(
                 getUnderlyingType(impl, service) is GraphQLObjectType
             }
             .filterNot {
-                it.hasVirtualTypeDefinition() // Not sure if this is needed…
+                instructionDefinitions.isVirtualType(it) // Not sure if this is needed…
             }
     }
 

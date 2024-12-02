@@ -1,6 +1,5 @@
 package graphql.nadel.validation.hydration
 
-import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationContext
@@ -40,7 +39,7 @@ internal class NadelHydrationVirtualTypeValidation {
     context(NadelValidationContext, NadelHydrationValidationContext)
     fun getVirtualTypeContext(): NadelValidationInterimResult<NadelVirtualTypeContext?> {
         // Do nothing if it's not a virtual type
-        if (!virtualField.type.unwrapAll().hasVirtualTypeDefinition()) {
+        if (!instructionDefinitions.isVirtualType(virtualField.type)) {
             return null.asInterimSuccess()
         }
 

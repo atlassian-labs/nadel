@@ -6,7 +6,6 @@ import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
-import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -50,7 +49,6 @@ import graphql.nadel.validation.ok
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
 import graphql.nadel.validation.toResult
-import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLImplementingType
@@ -236,12 +234,11 @@ class NadelHydrationValidation internal constructor(
                     return@mapNotNull null
                 }
 
-                val underlyingParentType =
-                    if ((parent.overall as GraphQLDirectiveContainer).hasVirtualTypeDefinition()) {
-                        parent.overall
-                    } else {
-                        parent.underlying
-                    } as GraphQLObjectType
+                val underlyingParentType = if (instructionDefinitions.isVirtualType(parent)) {
+                    parent.overall
+                } else {
+                    parent.underlying
+                } as GraphQLObjectType
 
                 val fieldDefs = underlyingParentType.getFieldsAlong(inputValueDef.pathToField)
                 inputValueDef.takeIf {
@@ -556,12 +553,12 @@ class NadelHydrationValidation internal constructor(
 
     context(NadelValidationContext, NadelHydrationValidationContext)
     private fun validateOutputType(): NadelSchemaValidationResult {
+        if (instructionDefinitions.isVirtualType(virtualField.type)) {
+            return ok() // Validated in NadelVirtualTypeValidation
+        }
+
         // Ensures that the underlying type of the backing field matches with the expected overall output type
         val overallType = virtualField.type.unwrapAll()
-
-        if ((overallType as? GraphQLDirectiveContainer)?.hasVirtualTypeDefinition() == true) {
-            return ok() // Bypass validation for now
-        }
 
         // Polymorphic hydration must have union output
         if (hasMoreThanOneHydration && overallType !is GraphQLUnionType) {

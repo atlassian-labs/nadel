@@ -6,9 +6,13 @@ import graphql.nadel.definition.coordinates
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.virtualType.NadelVirtualTypeDefinition
+import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLOutputType
+import graphql.schema.GraphQLUnmodifiedType
 
 data class NadelInstructionDefinitionRegistry(
     private val definitions: Map<NadelSchemaMemberCoordinates, List<NadelInstructionDefinition>>,
@@ -164,5 +168,22 @@ data class NadelInstructionDefinitionRegistry(
         }
 
         return containerCoords.field(field.name)
+    }
+
+    fun isVirtualType(element: GraphQLOutputType): Boolean {
+        return isVirtualType(element.unwrapAll().coordinates())
+    }
+
+    fun isVirtualType(element: NadelServiceSchemaElement.Type): Boolean {
+        return isVirtualType(element.overall.coordinates())
+    }
+
+    fun isVirtualType(coords: NadelSchemaMemberCoordinates.Type): Boolean {
+        val definitions = definitions[coords]
+            ?: return false
+
+        return definitions
+            .filterIsInstance<NadelVirtualTypeDefinition>()
+            .any()
     }
 }
