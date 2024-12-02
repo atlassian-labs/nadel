@@ -29,7 +29,7 @@ class NadelSchemaValidation internal constructor(
     private val interfaceValidation: NadelInterfaceValidation,
     private val namespaceValidation: NadelNamespaceValidation,
     private val virtualTypeValidation: NadelVirtualTypeValidation,
-    private val definitionParser: NadelDefinitionParser,
+    private val instructionDefinitionParser: NadelInstructionDefinitionParser,
     private val hook: NadelSchemaValidationHook,
 ) {
     fun validate(
@@ -52,7 +52,7 @@ class NadelSchemaValidation internal constructor(
         val namespaceTypes = getNamespaceOperationTypes(engineSchema)
         val hiddenTypeNames = getHiddenTypeNames(engineSchema)
 
-        val definitions = definitionParser.parse(engineSchema)
+        val instructionDefinitions = instructionDefinitionParser.parse(engineSchema)
             .onError { return it }
 
         val context = NadelValidationContext(
@@ -63,7 +63,7 @@ class NadelSchemaValidation internal constructor(
             namespaceTypeNames = namespaceTypes,
             combinedTypeNames = namespaceTypes + operationTypes.map { it.name },
             hiddenTypeNames = hiddenTypeNames,
-            instructionDefinitions = definitions,
+            instructionDefinitions = instructionDefinitions,
             hook = hook,
         )
 

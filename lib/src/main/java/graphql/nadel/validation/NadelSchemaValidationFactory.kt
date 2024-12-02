@@ -9,7 +9,7 @@ import graphql.nadel.validation.hydration.NadelHydrationVirtualTypeValidation
 
 abstract class NadelSchemaValidationFactory {
     fun create(): NadelSchemaValidation {
-        val definitionParser = NadelDefinitionParser(
+        val definitionParser = NadelInstructionDefinitionParser(
             hook = hook,
             idHydrationDefinitionParser = idHydrationDefinitionParser,
         )
@@ -22,7 +22,7 @@ abstract class NadelSchemaValidationFactory {
             interfaceValidation = interfaceValidation,
             namespaceValidation = namespaceValidation,
             virtualTypeValidation = virtualTypeValidation,
-            definitionParser = definitionParser,
+            instructionDefinitionParser = definitionParser,
             hook = hook,
         )
     }

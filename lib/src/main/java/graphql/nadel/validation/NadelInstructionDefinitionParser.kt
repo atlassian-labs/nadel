@@ -13,7 +13,7 @@ import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
 import graphql.nadel.engine.blueprint.NadelSchemaTraverserVisitor
 import graphql.schema.GraphQLSchema
 
-internal class NadelDefinitionParser(
+internal class NadelInstructionDefinitionParser(
     private val hook: NadelSchemaValidationHook,
     private val idHydrationDefinitionParser: NadelIdHydrationDefinitionParser,
 ) {
