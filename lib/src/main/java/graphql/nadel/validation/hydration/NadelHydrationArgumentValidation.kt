@@ -9,7 +9,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.makeNormalizedInputValue
-import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.validation.NadelBatchHydrationArgumentInvalidSourceInputError
 import graphql.nadel.validation.NadelBatchHydrationArgumentMissingSourceFieldError
 import graphql.nadel.validation.NadelBatchHydrationArgumentMultipleSourceFieldsError
@@ -68,46 +67,18 @@ internal class NadelHydrationArgumentValidation {
 
     context(NadelValidationContext, NadelHydrationArgumentValidationContext)
     private fun validateArguments(): NadelValidationInterimResult<List<NadelHydrationArgument>> {
-        validateDuplicateArguments()
-            .onErrorReturnInterim { return it }
-        validateRequiredBackingArguments()
-            .onErrorReturnInterim { return it }
+        validateDuplicateArguments().onErrorReturnInterim { return it }
+        validateRequiredBackingArguments().onErrorReturnInterim { return it }
 
         if (isBatchHydration) {
-            validateBatchHydrationArguments()
-                .onErrorReturnInterim { return it }
+            validateBatchHydrationArguments().onErrorReturnInterim { return it }
         }
 
-        val arguments = hydrationDefinition.arguments
+        return hydrationDefinition.arguments
             .map { hydrationArgument ->
-                validateArgument(hydrationArgument)
-                    .onErrorCast { return it }
+                validateArgument(hydrationArgument).onErrorCast { return it }
             }
-
-        val remainingArguments = validateRemainingArguments(arguments)
-            .onErrorCast { return it }
-
-        return (arguments + listOfNotNull(remainingArguments)).asInterimSuccess()
-    }
-
-    context(NadelValidationContext, NadelHydrationArgumentValidationContext)
-    private fun validateRemainingArguments(
-        arguments: List<NadelHydrationArgument>,
-    ): NadelValidationInterimResult<NadelHydrationArgument?> {
-        val remainingArgument = backingField.arguments
-            .firstOrNull {
-                it.hasAppliedDirective(NadelDirectives.nadelHydrationRemainingArguments.name)
-            }
-            ?: return null.asInterimSuccess()
-
-        return NadelHydrationArgument(
-            name = remainingArgument.name,
-            backingArgumentDef = remainingArgument,
-            valueSource = NadelHydrationArgument.ValueSource.RemainingArguments(
-                remainingArgumentNames = @Suppress("ConvertArgumentToSet") // Useless
-                (virtualField.arguments.map { it.name } - arguments.map { it.name })
-            ),
-        ).asInterimSuccess()
+            .asInterimSuccess()
     }
 
     context(NadelValidationContext, NadelHydrationArgumentValidationContext)

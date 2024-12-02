@@ -1,23 +1,29 @@
 package graphql.nadel.validation
 
+import graphql.language.DirectivesContainer
+import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.renamed.isRenamed
+import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
+import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_LOOSER_OR_SAME
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
-import graphql.schema.GraphQLArgument
+import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLOutputType
+import kotlin.streams.asStream
 
-class NadelFieldValidation internal constructor(
-    private val hydrationValidation: NadelHydrationValidation,
+internal class NadelFieldValidation(
+    private val typeValidation: NadelTypeValidation,
 ) {
     private val renameValidation = NadelRenameValidation(this)
     private val inputValidation = NadelInputValidation()
+    private val hydrationValidation = NadelHydrationValidation(typeValidation)
     private val partitionValidation = NadelPartitionValidation()
     private val typeWrappingValidation = NadelTypeWrappingValidation()
 
@@ -28,18 +34,28 @@ class NadelFieldValidation internal constructor(
         return validate(
             schemaElement,
             overallFields = schemaElement.overall.fields,
+            underlyingFields = schemaElement.underlying.fields,
         )
+    }
+
+    fun DirectivesContainer<*>.isHidden(): Boolean {
+        return hasDirective(NadelDirectives.hiddenDirectiveDefinition.name)
     }
 
     context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallFields: List<GraphQLFieldDefinition>,
+        underlyingFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
+        val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
+        //TODO : Validation
+        var areAllFieldsHidden : Boolean
+
         return overallFields
             .asSequence()
             .let { fieldSequence ->
-                // Apply filter if necessary
+                areAllFieldsHidden = fieldSequence.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)}
                 if (isCombinedType(type = parent.overall)) {
                     val fieldsThatServiceContributed = getFieldsThatServiceContributed(parent)
                     fieldSequence.filter { it.name in fieldsThatServiceContributed }
@@ -48,7 +64,7 @@ class NadelFieldValidation internal constructor(
                 }
             }
             .map { overallField ->
-                validate(parent, overallField)
+                validate(parent, overallField, underlyingFieldsByName, areAllFieldsHidden)
             }
             .toResult()
     }
@@ -57,13 +73,18 @@ class NadelFieldValidation internal constructor(
     fun validate(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
+        underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
+        areAllFieldsHidden : Boolean
     ): NadelSchemaValidationResult {
-        return if (isRenamed(parent, overallField)) {
+        return if(!areAllFieldsHidden) {
+            NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent, overallField)
+        }
+        else if (overallField.isRenamed()) {
             renameValidation.validate(parent, overallField)
-        } else if (isHydrated(parent, overallField)) {
+        } else if (overallField.isHydrated()) {
             hydrationValidation.validate(parent, overallField)
         } else {
-            val underlyingField = parent.underlying.getField(overallField.name)
+            val underlyingField = underlyingFieldsByName[overallField.name]
             if (underlyingField == null) {
                 MissingUnderlyingField(parent, overallField = overallField)
             } else {
@@ -88,22 +109,24 @@ class NadelFieldValidation internal constructor(
                 if (underlyingArg == null) {
                     MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg)
                 } else {
-                    if (isUnwrappedArgTypeSame(overallArg, underlyingArg)) {
-                        inputValidation
-                            .validate(
-                                parent = parent,
-                                overallField = overallField,
-                                overallInputArgument = overallArg,
-                                underlyingInputArgument = underlyingArg
+                    val unwrappedTypeIssues = typeValidation
+                        .validate(
+                            NadelServiceSchemaElement.from(
+                                service = parent.service,
+                                overall = overallArg.type.unwrapAll(),
+                                underlying = underlyingArg.type.unwrapAll(),
                             )
-                    } else {
-                        IncompatibleArgumentInputType(
-                            parentType = parent,
-                            overallField = overallField,
-                            overallInputArg = overallArg,
-                            underlyingInputArg = underlyingArg,
                         )
-                    }
+
+                    val inputTypeIssues = inputValidation
+                        .validate(
+                            parent = parent,
+                            overallField = overallField,
+                            overallInputArgument = overallArg,
+                            underlyingInputArgument = underlyingArg
+                        )
+
+                    results(unwrappedTypeIssues, inputTypeIssues)
                 }
             }
             .toResult()
@@ -115,26 +138,30 @@ class NadelFieldValidation internal constructor(
     }
 
     context(NadelValidationContext)
-    private fun isUnwrappedArgTypeSame(
-        overallArg: GraphQLArgument,
-        underlyingArg: GraphQLArgument,
-    ): Boolean {
-        val overallArgTypeUnwrapped = overallArg.type.unwrapAll()
-        val underlyingArgTypeUnwrapped = underlyingArg.type.unwrapAll()
-        return getUnderlyingTypeName(overallArgTypeUnwrapped) == underlyingArgTypeUnwrapped.name
-    }
-
-    context(NadelValidationContext)
     private fun validateOutputType(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
+        val overallType = overallField.type.unwrapAll()
+        val underlyingType = underlyingField.type.unwrapAll()
+
+        val typeServiceSchemaElement = NadelServiceSchemaElement.from(
+            service = parent.service,
+            overall = overallType,
+            underlying = underlyingType,
+        )
+
+        // This checks whether the type is actually valid content wise
+        val outputTypeResult = typeValidation.validate(typeServiceSchemaElement)
+            .onError { return it }
+
         // This checks whether the output type e.g. name or List or NonNull wrappings are valid
         return if (isOutputTypeValid(overallType = overallField.type, underlyingType = underlyingField.type)) {
-            ok()
+            outputTypeResult
         } else {
             results(
+                outputTypeResult,
                 IncompatibleFieldOutputType(parent, overallField, underlyingField),
             )
         }
@@ -156,7 +183,7 @@ class NadelFieldValidation internal constructor(
             )
 
         return isTypeWrappingValid
-            && getUnderlyingTypeName(overallType.unwrapAll()) == underlyingType.unwrapAll().name
+            && getUnderlyingName(overallType.unwrapAll()) == underlyingType.unwrapAll().name
     }
 
     context(NadelValidationContext)

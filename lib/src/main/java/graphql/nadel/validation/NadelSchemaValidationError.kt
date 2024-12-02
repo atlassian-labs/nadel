@@ -4,6 +4,7 @@ import graphql.ErrorClassification
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.nadel.Service
+import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
@@ -405,6 +406,21 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Directive '${NadelDirectives.partitionDirectiveDefinition.name}' applied to field " +
                 "'${of}' is using wrong type for the partition argument. Only lists are supported"
+        }
+
+        override val subject = overallField
+    }
+
+    data class AllFieldsUsingHiddenDirective(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val s = service.name
+            val ut = parentType.underlying.name
+            "Could not find any visible field on the underlying type $ut on service $s"
         }
 
         override val subject = overallField

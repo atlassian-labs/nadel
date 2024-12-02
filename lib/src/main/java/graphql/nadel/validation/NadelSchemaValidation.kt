@@ -4,8 +4,7 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
-import graphql.nadel.definition.hydration.hasHydratedDefinition
-import graphql.nadel.definition.hydration.hasIdHydratedDefinition
+import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintImpl
 import graphql.nadel.engine.blueprint.NadelTypeRenameInstructions
@@ -16,43 +15,32 @@ import graphql.nadel.engine.util.toMapStrictly
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLUnionType
 
-class NadelSchemaValidation internal constructor(
-    private val fieldValidation: NadelFieldValidation,
-    private val inputValidation: NadelInputValidation,
-    private val unionValidation: NadelUnionValidation,
-    private val enumValidation: NadelEnumValidation,
-    private val interfaceValidation: NadelInterfaceValidation,
-    private val namespaceValidation: NadelNamespaceValidation,
-    private val virtualTypeValidation: NadelVirtualTypeValidation,
-    private val definitionParser: NadelDefinitionParser,
-    private val hook: NadelSchemaValidationHook,
+class NadelSchemaValidation(
+    // Why is this a constructor argument…
+    private val schemas: NadelSchemas,
 ) {
-    fun validate(
-        schemas: NadelSchemas,
-    ): Set<NadelSchemaValidationError> {
-        return validateAll(schemas)
+    private val fieldContributorMap = makeFieldContributorMap(schemas.services)
+
+    fun validate(): Set<NadelSchemaValidationError> {
+        return validateAll()
             .asSequence()
             .filterIsInstanceTo(LinkedHashSet())
     }
 
-    fun validateAll(
-        schemas: NadelSchemas,
-        fieldContributorMap: Map<FieldCoordinates, Service> = makeFieldContributorMap(schemas.services),
-    ): NadelSchemaValidationResult {
+    fun validateAll(): NadelSchemaValidationResult {
         val (engineSchema, services) = schemas
 
         val servicesByName = services.strictAssociateBy(Service::name)
 
         val operationTypes = getOperationTypeNames(engineSchema)
         val namespaceTypes = getNamespaceOperationTypes(engineSchema)
-
-        val definitions = definitionParser.parse(engineSchema)
-            .onError { return it }
 
         val context = NadelValidationContext(
             engineSchema = engineSchema,
@@ -61,19 +49,8 @@ class NadelSchemaValidation internal constructor(
             hydrationUnions = getHydrationUnions(engineSchema),
             namespaceTypeNames = namespaceTypes,
             combinedTypeNames = namespaceTypes + operationTypes.map { it.name },
-            definitions = definitions,
-            hook = hook,
         )
-
-        val typeValidation = NadelTypeValidation(
-            fieldValidation = fieldValidation,
-            inputValidation = inputValidation,
-            unionValidation = unionValidation,
-            enumValidation = enumValidation,
-            interfaceValidation = interfaceValidation,
-            namespaceValidation = namespaceValidation,
-            virtualTypeValidation = virtualTypeValidation,
-        )
+        val typeValidation = NadelTypeValidation()
 
         return with(context) {
             services
@@ -103,10 +80,7 @@ class NadelSchemaValidation internal constructor(
             .asSequence()
             .filterIsInstance<GraphQLUnionType>()
             .filter { union ->
-                fieldsByUnionOutputTypes[union.name]
-                    ?.all { field ->
-                        field.hasHydratedDefinition() || field.hasIdHydratedDefinition()
-                    } == true
+                fieldsByUnionOutputTypes[union.name]?.all(GraphQLFieldDefinition::isHydrated) == true
             }
             .map {
                 it.name
@@ -114,15 +88,8 @@ class NadelSchemaValidation internal constructor(
             .toSet()
     }
 
-    fun validateAndGenerateBlueprint(
-        schemas: NadelSchemas,
-    ): NadelOverallExecutionBlueprint {
-        val fieldContributorMap = makeFieldContributorMap(schemas.services)
-        val all = validateAll(
-            schemas = schemas,
-            fieldContributorMap = fieldContributorMap,
-        ).asSequence().toList()
-
+    fun validateAndGenerateBlueprint(): NadelOverallExecutionBlueprint {
+        val all = validateAll().asSequence().toList()
         val fieldInstructions = all
             .filterIsInstance<NadelValidatedFieldResult>()
             .groupBy {

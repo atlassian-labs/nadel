@@ -23,8 +23,8 @@ import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
+import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.nadel.validation.NadelSchemaValidationFactory
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.flow.flowOf
@@ -384,16 +384,17 @@ fun validate(
     fixture: TestFixture,
     hook: EngineTestHook,
 ) {
-    val nadelSchemas = NadelSchemas.Builder()
-        .overallSchemas(fixture.overallSchema)
-        .underlyingSchemas(fixture.underlyingSchema)
-        .overallWiringFactory(GatewaySchemaWiringFactory())
-        .underlyingWiringFactory(GatewaySchemaWiringFactory())
-        .stubServiceExecution()
-        .build()
+    val validation = NadelSchemaValidation(
+        NadelSchemas.Builder()
+            .overallSchemas(fixture.overallSchema)
+            .underlyingSchemas(fixture.underlyingSchema)
+            .overallWiringFactory(GatewaySchemaWiringFactory())
+            .underlyingWiringFactory(GatewaySchemaWiringFactory())
+            .stubServiceExecution()
+            .build()
+    )
 
-    val errors = NadelSchemaValidationFactory.create()
-        .validate(nadelSchemas)
+    val errors = validation.validate()
 
     if (errors.isEmpty()) {
         return

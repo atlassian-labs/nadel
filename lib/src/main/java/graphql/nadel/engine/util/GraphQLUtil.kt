@@ -245,10 +245,8 @@ val ExecutableNormalizedField.queryPath: NadelQueryPath
         getPath(ExecutableNormalizedField::getResultKey)
     )
 
-val ExecutableNormalizedField.fieldPath: NadelQueryPath
-    get() = NadelQueryPath(
-        getPath(ExecutableNormalizedField::getFieldName)
-    )
+val ExecutableNormalizedField.fieldPath: List<String>
+    get() = getPath(ExecutableNormalizedField::getFieldName)
 
 private inline fun ExecutableNormalizedField.getPath(
     pathSegmentExtractor: (ExecutableNormalizedField) -> String,

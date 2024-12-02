@@ -304,7 +304,7 @@ class NadelUnionValidationTest {
                     type Query {
                         entity(id: ID!): Entity
                     }
-                    union Entity = Human | Dog | Issue
+                    union Entity = Human | Dog
                     type Human {
                         id: ID!
                     }

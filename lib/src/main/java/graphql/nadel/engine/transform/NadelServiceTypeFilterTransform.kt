@@ -8,7 +8,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintMigrator
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform.State
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -16,7 +15,6 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
-import graphql.nadel.util.getLogger
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 
@@ -65,8 +63,6 @@ import graphql.normalized.ExecutableNormalizedField.newNormalizedField
  * - service-types-are-completely-filtered.yml
  */
 class NadelServiceTypeFilterTransform : NadelTransform<State> {
-    private val logger = getLogger<NadelServiceTypeFilterTransform>()
-
     data class State(
         val aliasHelper: NadelAliasHelper,
         val typeNamesOwnedByService: Set<String>,
@@ -93,50 +89,17 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         }
 
         val typeNamesOwnedByService = executionBlueprint.getOverAllTypeNamesForService(service)
-
+        // Add underlying type names as well to handle combination of hydration and renames.
+        // Transforms are applied to hydration fields as well, and those fields always reference
+        // elements from the underlying schema
+        val underlyingTypeNamesOwnedByService = executionBlueprint.getUnderlyingTypeNamesForService(service)
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
-            .filter { objectTypeName ->
-                if (executionBlueprint is NadelOverallExecutionBlueprintMigrator && executionContext.hints.serviceTypenameShadowing.isShadowingEnabled()) {
-                    val oldDecision = isTypeOwnedByService(
-                        objectTypeName,
-                        executionContext,
-                        service,
-                        executionBlueprint.old,
-                    )
-
-                    try {
-                        val newDecision = executionBlueprint.new.value?.let { newBlueprint ->
-                            isTypeOwnedByService(
-                                objectTypeName,
-                                executionContext,
-                                service,
-                                newBlueprint,
-                            )
-                        }
-
-                        if (newDecision != null && oldDecision != newDecision) {
-                            executionContext.hints.serviceTypenameShadowing.onMismatch(
-                                executionContext.userContext,
-                                oldDecision,
-                                newDecision,
-                                service,
-                                objectTypeName,
-                                overallField,
-                            )
-                        }
-                    } catch (e: Exception) {
-                        logger.error("Error shadowing service typename filter transform", e)
-                    }
-
-                    oldDecision
-                } else {
-                    isTypeOwnedByService(
-                        objectTypeName,
-                        executionContext,
-                        service,
-                        executionBlueprint,
-                    )
-                }
+            .filter {
+                // it is MUCH quicker to compare membership in 2 sets rather than
+                // concat 1 giant set and then check
+                it in typeNamesOwnedByService
+                    || it in underlyingTypeNamesOwnedByService
+                    || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(it) in underlyingTypeNamesOwnedByService)
             }
 
         // All types are owned by service
@@ -144,6 +107,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         if (fieldObjectTypeNamesOwnedByService.size == overallField.objectTypeNames.size) {
             return null
         }
+
 
         return State(
             aliasHelper = NadelAliasHelper.forField(
@@ -154,25 +118,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             fieldObjectTypeNamesOwnedByService = fieldObjectTypeNamesOwnedByService,
             overallField = overallField,
         )
-    }
-
-    private fun isTypeOwnedByService(
-        objectTypeName: String,
-        executionContext: NadelExecutionContext,
-        service: Service,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-    ): Boolean {
-        val typeNamesOwnedByService = executionBlueprint.getOverAllTypeNamesForService(service)
-        // Add underlying type names as well to handle combination of hydration and renames.
-        // Transforms are applied to hydration fields as well, and those fields always reference
-        // elements from the underlying schema
-        val underlyingTypeNamesOwnedByService = executionBlueprint.getUnderlyingTypeNamesForService(service)
-
-        // it is MUCH quicker to compare membership in 2 sets rather than
-        // concat 1 giant set and then check
-        return objectTypeName in typeNamesOwnedByService
-            || objectTypeName in underlyingTypeNamesOwnedByService
-            || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService)
     }
 
     override suspend fun transformField(

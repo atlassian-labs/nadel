@@ -24,8 +24,7 @@ import graphql.language.Type
 import graphql.language.TypeDefinition
 import graphql.language.UnionTypeDefinition
 import graphql.language.UnionTypeExtensionDefinition
-import graphql.nadel.definition.renamed.hasRenameDefinition
-import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
+import graphql.nadel.definition.renamed.isRenamed
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
@@ -35,7 +34,6 @@ import graphql.schema.idl.TypeUtil
 
 private data class UnderlyingSchemaGeneratorContext(
     val typeRenames: Map<String, String>,
-    val typesToDelete: Set<String>,
 )
 
 /**
@@ -45,32 +43,18 @@ private data class UnderlyingSchemaGeneratorContext(
  */
 fun makeUnderlyingSchema(overallSchema: String): String {
     val document = Parser.parse(overallSchema)
-    val typeRenames = document.children
-        .asSequence()
-        .filterIsInstance<TypeDefinition<*>>()
-        .filter {
-            it.hasRenameDefinition()
-        }
-        .associate {
-            it.name to it.getRenamedFrom()
-        }
-    val typesToDelete =
-        document.children
-            .asSequence()
-            .filterIsInstance<DirectivesContainer<*>>()
+    val typeRenames =
+        document
+            .children
+            .filterIsInstance<TypeDefinition<*>>()
             .filter {
-                it.hasVirtualTypeDefinition()
+                it.isRenamed()
             }
-            .filterIsInstance<NamedNode<*>>()
-            .map {
-                it.name
+            .associate {
+                it.name to it.getRenamedFrom()
             }
-            .toSet()
 
-    val context = UnderlyingSchemaGeneratorContext(
-        typeRenames = typeRenames,
-        typesToDelete = typesToDelete,
-    )
+    val context = UnderlyingSchemaGeneratorContext(typeRenames)
 
     return with(context) {
         make(document)
@@ -115,10 +99,7 @@ private fun make(overallSchema: Document): String {
                 }
         }
         .asSequence()
-        .filterNot {
-            typesToDelete.contains((it as? NamedNode)?.name)
-        }
-        .mapNotNull {
+        .map {
             // In theory the overall schema can extend types not in this schema… Let's leave that for another day
             when (val type = it) {
                 is ObjectTypeExtensionDefinition -> transformObjectTypeExtensionDefinition(type)

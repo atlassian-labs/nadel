@@ -1,6 +1,6 @@
 package graphql.nadel.engine.blueprint
 
-import graphql.nadel.definition.hydration.parseHydrationDefinitions
+import graphql.nadel.definition.hydration.getHydrationDefinitions
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLFieldDefinition
@@ -49,7 +49,7 @@ internal class NadelVirtualTypeBlueprintFactory {
     private fun createTypeMappings(
         virtualFieldDef: GraphQLFieldDefinition,
     ): List<VirtualTypeMapping> {
-        val hydration = virtualFieldDef.parseHydrationDefinitions().first()
+        val hydration = virtualFieldDef.getHydrationDefinitions().first()
         val backingFieldDef = engineSchema.queryType.getFieldAt(hydration.backingField)!!
         val backingType = backingFieldDef.type.unwrapAll() as? GraphQLObjectType
             ?: return emptyList()
