@@ -116,6 +116,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
 
                         if (newDecision != null && oldDecision != newDecision) {
                             executionContext.hints.serviceTypenameShadowing.onMismatch(
+                                executionContext.userContext,
                                 oldDecision,
                                 newDecision,
                                 service,
