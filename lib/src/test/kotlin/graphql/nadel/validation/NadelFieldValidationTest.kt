@@ -679,11 +679,6 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(error.message == "The overall field Query.fieldA defines argument id which does not exist in service test field Query.fieldA")
         }
 
-        // it("fails if schema contains all fields as hidden") {
-        //     //Write a test to check if all fields are hidden. Take reference from multiple test files that uses
-        //     //hidden directive. Need to test code : graphql.nadel.validation.NadelFieldValidation.validate(graphql.nadel.validation.NadelServiceSchemaElement.FieldsContainer, java.util.List<? extends graphql.schema.GraphQLFieldDefinition>)
-        // }
-
         it("fails if schema contains all fields as hidden") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
@@ -708,27 +703,5 @@ class NadelFieldValidationTest : DescribeSpec({
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
             assert(error.message == "No fields found without @hidden directive on the underlying type Query on service test")
         }
-
-        // it("fails if schema contains all fields as hidden") {
-        //     val fixture = NadelValidationTestFixture(
-        //         overallSchema = mapOf(
-        //             "test" to """
-        //                 type Query {
-        //                     echo: String
-        //                 }
-        //             """.trimIndent(),
-        //         ),
-        //         underlyingSchema = mapOf(
-        //             "test" to """
-        //                 type Query {
-        //                     echo: String
-        //                 }
-        //             """.trimIndent(),
-        //         ),
-        //     )
-        //
-        //     val errors = validate(fixture)
-        //     assert(errors.map { it.message }.isEmpty())
-        // }
     }
 })
