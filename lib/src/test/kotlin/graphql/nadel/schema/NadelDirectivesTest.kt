@@ -2,7 +2,7 @@ package graphql.nadel.schema
 
 import graphql.language.AstPrinter
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
-import graphql.nadel.definition.hydration.getHydrationDefinitions
+import graphql.nadel.definition.hydration.parseHydrationDefinitions
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
@@ -76,7 +76,7 @@ class NadelDirectivesTest : DescribeSpec({
             val field = schema.queryType.getField("field")
 
             // when
-            val hydration = field.getHydrationDefinitions().single()
+            val hydration = field.parseHydrationDefinitions().single()
 
             // then
             assert(hydration.backingField == listOf("jira", "issueById"))

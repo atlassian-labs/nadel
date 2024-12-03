@@ -5,9 +5,7 @@ import graphql.nadel.validation.util.NadelSchemaUtil
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLObjectType
 
-internal class NadelUnionValidation(
-    private val typeValidation: NadelTypeValidation,
-) {
+class NadelUnionValidation internal constructor() {
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.Union,
@@ -48,13 +46,7 @@ internal class NadelUnionValidation(
                 extraType = memberOverallType as GraphQLObjectType,
             )
         } else {
-            typeValidation.validate(
-                NadelServiceSchemaElement.from(
-                    service = parent.service,
-                    overall = memberOverallType,
-                    underlying = memberUnderlyingType,
-                ),
-            )
+            ok()
         }
     }
 }

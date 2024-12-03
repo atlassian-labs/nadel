@@ -11,11 +11,11 @@ import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
-import graphql.nadel.definition.hydration.getHydrationDefinitions
-import graphql.nadel.definition.partition.getPartitionOrNull
+import graphql.nadel.definition.hydration.parseHydrationDefinitions
+import graphql.nadel.definition.partition.parsePartitionOrNull
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
-import graphql.nadel.definition.renamed.getRenamedOrNull
-import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.definition.renamed.parseRenamedOrNull
+import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
@@ -189,9 +189,9 @@ private class Factory(
                     .asSequence()
                     // Get the field mapping def
                     .flatMap { field ->
-                        when (val renamedDefinition = field.getRenamedOrNull()) {
+                        when (val renamedDefinition = field.parseRenamedOrNull()) {
                             null -> {
-                                field.getHydrationDefinitions()
+                                field.parseHydrationDefinitions()
                                     .map {
                                         makeHydrationFieldInstruction(type, field, it)
                                     } + makePartitionInstruction(type, field)
@@ -229,7 +229,7 @@ private class Factory(
         val backingFieldDef = engineSchema.queryType.getFieldAt(pathToBackingField)!!
         val hydrationBackingService = coordinatesToService[makeFieldCoordinates(backingFieldContainer, backingFieldDef)]!!
 
-        if (hydration.isBatched || /*deprecated*/ backingFieldDef.type.unwrapNonNull().isList) {
+        if (backingFieldDef.type.unwrapNonNull().isList) {
             require(backingFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$pathToBackingField' requires a list output type" }
             return makeBatchHydrationFieldInstruction(
                 parentType = virtualFieldParentType,
@@ -341,7 +341,7 @@ private class Factory(
                     return@mapNotNull null
                 }
 
-                val typeToLookAt = if (virtualFieldParentType.isVirtualType()) {
+                val typeToLookAt = if (virtualFieldParentType.hasVirtualTypeDefinition()) {
                     virtualFieldParentType
                 } else {
                     getUnderlyingType(virtualFieldParentType, virtualFieldDef)
@@ -498,7 +498,7 @@ private class Factory(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
     ): List<NadelPartitionInstruction> {
-        val partitionDefinition = field.getPartitionOrNull()
+        val partitionDefinition = field.parsePartitionOrNull()
             ?: return emptyList()
 
         return listOf(
@@ -523,7 +523,7 @@ private class Factory(
             return null
         }
 
-        val renamed = overallType.getRenamedOrNull() ?: return null
+        val renamed = overallType.parseRenamedOrNull() ?: return null
 
         return NadelTypeRenameInstruction(
             service = definitionNamesToService[overallType.name]!!,
@@ -561,7 +561,7 @@ private class Factory(
                 }
                 is NadelHydrationArgumentDefinition.ObjectField -> {
                     // Ugh code still uses underlying schema, we need to pull these up to the overall schema
-                    val typeToLookAt = if (virtualFieldParentType.isVirtualType()) {
+                    val typeToLookAt = if (virtualFieldParentType.hasVirtualTypeDefinition()) {
                         virtualFieldParentType
                     } else {
                         getUnderlyingType(virtualFieldParentType, virtualFieldDef)
@@ -618,7 +618,7 @@ private class Factory(
         overallType: GraphQLObjectType,
         childField: GraphQLFieldDefinition,
     ): GraphQLObjectType? {
-        val underlyingName = overallType.getRenamedOrNull()?.from ?: overallType.name
+        val underlyingName = overallType.parseRenamedOrNull()?.from ?: overallType.name
 
         val fieldCoordinates = makeFieldCoordinates(overallType, childField)
 

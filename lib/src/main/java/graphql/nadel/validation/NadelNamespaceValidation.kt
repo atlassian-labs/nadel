@@ -2,7 +2,7 @@ package graphql.nadel.validation
 
 import graphql.nadel.validation.NadelSchemaValidationError.NamespacedTypeMustBeObject
 
-class NadelNamespaceValidation {
+class NadelNamespaceValidation internal constructor() {
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.Type,

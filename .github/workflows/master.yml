@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - master
+
 jobs:
   buildAndPublish:
     runs-on: ubuntu-latest
 
     permissions:
+      checks: write
       contents: read
       id-token: write
     env:
@@ -17,6 +19,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+
       - name: Set up Java 11
         uses: actions/setup-java@v1
         with:
@@ -28,6 +31,7 @@ jobs:
         uses: atlassian-labs/artifact-publish-token@v1.0.1
         with:
           output-modes: environment
+
       - name: build test and publish
         run: ./gradlew assemble && ./gradlew check --info && ./gradlew artifactoryPublish -x check --info
       - uses: actions/upload-artifact@v3
@@ -35,5 +39,12 @@ jobs:
           name: my-artifact
           path: lib/build
           retention-days: 1
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2.18.0
+        if: always()
+        with:
+          files: '**/build/test-results/test/TEST-*.xml'
+
       - name: debug files
         run: find ./ -type f -name "*.jar" -ls

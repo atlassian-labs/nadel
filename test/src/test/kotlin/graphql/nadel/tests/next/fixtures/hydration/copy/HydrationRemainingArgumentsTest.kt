@@ -1,5 +1,6 @@
 package graphql.nadel.tests.next.fixtures.hydration.copy
 
+import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
@@ -9,8 +10,10 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
     query = """
         query {
           businessReport_findRecentWorkByTeam(orgId: "turtles") {
+            __typename
             edges {
               node {
+                __typename
                 ... on JiraIssue {
                   key
                 }
@@ -168,6 +171,11 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
         ),
     ),
 ) {
+    override fun makeNadel(): Nadel.Builder {
+        return super.makeNadel()
+            .blueprintHint { true }
+    }
+
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .virtualTypeSupport { true }
