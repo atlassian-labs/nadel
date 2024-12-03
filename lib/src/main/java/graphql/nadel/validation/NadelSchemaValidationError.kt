@@ -413,17 +413,16 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
     data class AllFieldsUsingHiddenDirective(
         val parentType: NadelServiceSchemaElement,
-        val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
             val s = service.name
             val ut = parentType.underlying.name
-            "Could not find any visible field on the underlying type $ut on service $s"
+            "Could not find any fields without @hidden directive on the underlying type $ut on service $s"
         }
 
-        override val subject = overallField
+        override val subject = parentType.overall
     }
 }
 

@@ -16,7 +16,6 @@ import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLOutputType
-import kotlin.streams.asStream
 
 internal class NadelFieldValidation(
     private val typeValidation: NadelTypeValidation,
@@ -49,13 +48,16 @@ internal class NadelFieldValidation(
         underlyingFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
-        //TODO : Validation
         var areAllFieldsHidden : Boolean
 
         return overallFields
             .asSequence()
             .let { fieldSequence ->
+                // Apply filter if necessary
                 areAllFieldsHidden = fieldSequence.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)}
+                if(areAllFieldsHidden) {
+                    return NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent)
+                }
                 if (isCombinedType(type = parent.overall)) {
                     val fieldsThatServiceContributed = getFieldsThatServiceContributed(parent)
                     fieldSequence.filter { it.name in fieldsThatServiceContributed }
@@ -64,7 +66,7 @@ internal class NadelFieldValidation(
                 }
             }
             .map { overallField ->
-                validate(parent, overallField, underlyingFieldsByName, areAllFieldsHidden)
+                validate(parent, overallField, underlyingFieldsByName)
             }
             .toResult()
     }
@@ -74,12 +76,8 @@ internal class NadelFieldValidation(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
         underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
-        areAllFieldsHidden : Boolean
     ): NadelSchemaValidationResult {
-        return if(!areAllFieldsHidden) {
-            NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent, overallField)
-        }
-        else if (overallField.isRenamed()) {
+        return if (overallField.isRenamed()) {
             renameValidation.validate(parent, overallField)
         } else if (overallField.isHydrated()) {
             hydrationValidation.validate(parent, overallField)
