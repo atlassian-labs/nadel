@@ -127,16 +127,14 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                     } catch (e: Exception) {
                         logger.error("Error shadowing service typename filter transform", e)
                     }
-
-                    oldDecision
-                } else {
-                    isTypeOwnedByService(
-                        objectTypeName,
-                        executionContext,
-                        service,
-                        executionBlueprint,
-                    )
                 }
+
+                isTypeOwnedByService(
+                    objectTypeName,
+                    executionContext,
+                    service,
+                    executionBlueprint,
+                )
             }
 
         // All types are owned by service
