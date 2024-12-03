@@ -1,6 +1,9 @@
 package graphql.nadel.validation
 
+import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.partition.isPartitioned
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.renamed.getRenamedOrNull
 import graphql.nadel.engine.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.engine.blueprint.NadelFieldInstruction
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
@@ -21,15 +24,15 @@ internal class NadelRenameValidation(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (isHydrated(parent, overallField)) {
+        if (overallField.isHydrated()) {
             return CannotRenameHydratedField(parent, overallField)
         }
 
-        if (isPartitioned(parent, overallField)) {
+        if (overallField.isPartitioned()) {
             return CannotRenamePartitionedField(parent, overallField)
         }
 
-        val rename = getRenamedOrNull(parent, overallField)
+        val rename = overallField.getRenamedOrNull()
             ?: return ok()
 
         val underlyingField = parent.underlying.getFieldAt(rename.from)

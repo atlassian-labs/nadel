@@ -12,8 +12,8 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
+import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.nadel.validation.NadelSchemaValidationFactory
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
@@ -106,16 +106,16 @@ suspend fun main() {
         .underlyingWiringFactory(GatewaySchemaWiringFactory())
         .build()
 
-    val nadelSchemas = NadelSchemas.Builder()
-        .overallSchemas(overallSchemas)
-        .underlyingSchemas(underlyingSchemas)
-        .overallWiringFactory(GatewaySchemaWiringFactory())
-        .underlyingWiringFactory(GatewaySchemaWiringFactory())
-        .stubServiceExecution()
-        .build()
-
-    NadelSchemaValidationFactory.create()
-        .validate(nadelSchemas)
+    NadelSchemaValidation(
+        NadelSchemas.Builder()
+            .overallSchemas(overallSchemas)
+            .underlyingSchemas(underlyingSchemas)
+            .overallWiringFactory(GatewaySchemaWiringFactory())
+            .underlyingWiringFactory(GatewaySchemaWiringFactory())
+            .stubServiceExecution()
+            .build()
+    )
+        .validate()
         .sortedBy { it.javaClass.name }
         .asSequence()
         .map(NadelSchemaValidationError::toGraphQLError)

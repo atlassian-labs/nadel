@@ -70,15 +70,6 @@ sealed class NadelServiceSchemaElement {
         override val underlying: GraphQLNamedSchemaElement,
     ) : NadelServiceSchemaElement()
 
-    data class VirtualType(
-        override val service: Service,
-        override val overall: GraphQLNamedType,
-        /**
-         * In the case of virtual types, this is the backing type.
-         */
-        override val underlying: GraphQLNamedType,
-    ) : Type()
-
     companion object {
         fun from(
             service: Service,

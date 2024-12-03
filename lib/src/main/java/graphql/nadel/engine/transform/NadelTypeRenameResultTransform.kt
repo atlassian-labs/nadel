@@ -6,9 +6,7 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.State
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -23,7 +21,6 @@ import graphql.normalized.ExecutableNormalizedField
 internal class NadelTypeRenameResultTransform : NadelTransform<State> {
     data class State(
         val typeRenamePath: NadelQueryPath,
-        val virtualTypeContext: NadelVirtualTypeContext?,
     )
 
     override suspend fun isApplicable(
@@ -36,12 +33,8 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
-            val virtualTypeContext =
-                (hydrationDetails?.instruction as? NadelHydrationFieldInstruction)?.virtualTypeContext
-
             State(
                 typeRenamePath = overallField.queryPath,
-                virtualTypeContext,
             )
         } else {
             null
@@ -86,11 +79,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
             val overallTypeName = executionBlueprint.getOverallTypeName(
                 service = service,
                 underlyingTypeName = underlyingTypeName,
-            ).let { overallTypeName ->
-                // Try to map it to a virtual typename
-                state.virtualTypeContext?.backingTypeToVirtualType?.get(overallTypeName)
-                    ?: overallTypeName
-            }
+            )
 
             val typeName: String = if (executionContext.hints.sharedTypeRenames(service)) {
                 if (overallField.objectTypeNames.contains(overallTypeName)) {
@@ -103,7 +92,6 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
             } else {
                 overallTypeName
             }
-
             NadelResultInstruction.Set(
                 subject = parentNode,
                 key = NadelResultKey(overallField.resultKey),

@@ -1,19 +1,24 @@
 package graphql.nadel.validation
 
+import graphql.nadel.engine.util.isList
+import graphql.nadel.engine.util.isNonNull
+import graphql.nadel.engine.util.isNotWrapped
+import graphql.nadel.engine.util.isWrapped
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.engine.util.unwrapOne
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
+import graphql.nadel.validation.util.NadelSchemaUtil
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectField
 import graphql.schema.GraphQLInputType
+import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnmodifiedType
 
-class NadelInputValidation internal constructor() {
-    private val typeWrappingValidation = NadelTypeWrappingValidation()
-
+internal class NadelInputValidation {
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.InputObject,
@@ -82,25 +87,50 @@ class NadelInputValidation internal constructor() {
         }
     }
 
-    context(NadelValidationContext)
+    /**
+     * todo: use [NadelTypeWrappingValidation]
+     */
     private fun isInputTypeValid(
         overallType: GraphQLInputType,
         underlyingType: GraphQLInputType,
     ): Boolean {
-        val typeWrappingValid = typeWrappingValidation.isTypeWrappingValid(
-            lhs = overallType,
-            rhs = underlyingType,
-            rule = NadelTypeWrappingValidation.Rule.LHS_MUST_BE_STRICTER_OR_SAME,
-        )
+        var overall: GraphQLType = overallType
+        var underlying: GraphQLType = underlyingType
 
-        return typeWrappingValid && isInputTypeNameValid(overallType.unwrapAll(), underlyingType.unwrapAll())
+        while (overall.isWrapped && underlying.isWrapped) {
+            if (!underlying.isNonNull && overall.isNonNull) {
+                // Overall type is allowed to have stricter restrictions
+                overall = overall.unwrapOne()
+            } else if ((overall.isList && underlying.isList) || (overall.isNonNull && underlying.isNonNull)) {
+                overall = overall.unwrapOne()
+                underlying = underlying.unwrapOne()
+            } else {
+                return false
+            }
+        }
+
+        if (overall.isNotWrapped && underlying.isNotWrapped) {
+            return isInputTypeNameValid(
+                overallType = overall as GraphQLUnmodifiedType,
+                underlyingType = underlying as GraphQLUnmodifiedType,
+            )
+        } else if (overall.isWrapped && underlying.isNotWrapped) {
+            if (overall.isNonNull && overall.unwrapNonNull().isNotWrapped) {
+                return isInputTypeNameValid(
+                    overallType = overall.unwrapNonNull() as GraphQLUnmodifiedType,
+                    underlyingType = underlying as GraphQLUnmodifiedType,
+                )
+            }
+            return false
+        } else {
+            return false
+        }
     }
 
-    context(NadelValidationContext)
     private fun isInputTypeNameValid(
         overallType: GraphQLUnmodifiedType,
         underlyingType: GraphQLUnmodifiedType,
     ): Boolean {
-        return getUnderlyingTypeName(overallType) == underlyingType.name
+        return NadelSchemaUtil.getUnderlyingName(overallType) == underlyingType.name
     }
 }

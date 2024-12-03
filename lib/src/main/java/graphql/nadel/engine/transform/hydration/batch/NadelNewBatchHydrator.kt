@@ -460,7 +460,6 @@ internal class NadelNewBatchHydrator(
                             FieldCoordinates.coordinates(instruction.backingFieldContainer, instruction.backingFieldDef)
 
                         val serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                            instruction = instruction,
                             timeout = instruction.timeout,
                             batchSize = instruction.batchSize,
                             hydrationSourceService = hydrationSourceService,

@@ -83,50 +83,77 @@ inline fun <reified T : NadelFieldInstruction> NadelOverallExecutionBlueprint.ge
 
 internal class NadelOverallExecutionBlueprintMigrator(
     private val hint: NadelValidationBlueprintHint,
-    val old: NadelOverallExecutionBlueprint,
-    val new: Lazy<NadelOverallExecutionBlueprint?>,
+    private val old: NadelOverallExecutionBlueprint,
+    private val new: NadelOverallExecutionBlueprint,
 ) : NadelOverallExecutionBlueprint {
-    private val impl: NadelOverallExecutionBlueprint
-        get() {
-            return if (hint.isNewBlueprintEnabled()) {
-                new.value ?: old
-            } else {
-                old
-            }
+    override val engineSchema: GraphQLSchema
+        get() = if (hint.isNewBlueprintEnabled()) {
+            new.engineSchema
+        } else {
+            old.engineSchema
         }
 
-    override val engineSchema: GraphQLSchema
-        get() = impl.engineSchema
-
     override val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>
-        get() = impl.fieldInstructions
+        get() = if (hint.isNewBlueprintEnabled()) {
+            new.fieldInstructions
+        } else {
+            old.fieldInstructions
+        }
 
     override fun getUnderlyingTypeNamesForService(service: Service): Set<String> {
-        return impl.getUnderlyingTypeNamesForService(service)
+        return if (hint.isNewBlueprintEnabled()) {
+            new.getUnderlyingTypeNamesForService(service)
+        } else {
+            old.getUnderlyingTypeNamesForService(service)
+        }
     }
 
     override fun getOverAllTypeNamesForService(service: Service): Set<String> {
-        return impl.getOverAllTypeNamesForService(service)
+        return if (hint.isNewBlueprintEnabled()) {
+            new.getOverAllTypeNamesForService(service)
+        } else {
+            old.getOverAllTypeNamesForService(service)
+        }
     }
 
     override fun getUnderlyingTypeName(service: Service, overallTypeName: String): String {
-        return impl.getUnderlyingTypeName(service, overallTypeName)
+        return if (hint.isNewBlueprintEnabled()) {
+            new.getUnderlyingTypeName(service, overallTypeName)
+        } else {
+            old.getUnderlyingTypeName(service, overallTypeName)
+        }
     }
 
     override fun getUnderlyingTypeName(overallTypeName: String): String {
-        return impl.getUnderlyingTypeName(overallTypeName)
+        return if (hint.isNewBlueprintEnabled()) {
+            new.getUnderlyingTypeName(overallTypeName)
+        } else {
+            old.getUnderlyingTypeName(overallTypeName)
+        }
     }
 
     override fun getRename(overallTypeName: String): NadelTypeRenameInstruction? {
-        return impl.getRename(overallTypeName)
+        return if (hint.isNewBlueprintEnabled()) {
+            new.getRename(overallTypeName)
+        } else {
+            old.getRename(overallTypeName)
+        }
     }
 
     override fun getOverallTypeName(service: Service, underlyingTypeName: String): String {
-        return impl.getOverallTypeName(service, underlyingTypeName)
+        return if (hint.isNewBlueprintEnabled()) {
+            new.getOverallTypeName(service, underlyingTypeName)
+        } else {
+            old.getOverallTypeName(service, underlyingTypeName)
+        }
     }
 
     override fun getServiceOwning(fieldCoordinates: FieldCoordinates): Service? {
-        return impl.getServiceOwning(fieldCoordinates)
+        return if (hint.isNewBlueprintEnabled()) {
+            new.getServiceOwning(fieldCoordinates)
+        } else {
+            old.getServiceOwning(fieldCoordinates)
+        }
     }
 }
 

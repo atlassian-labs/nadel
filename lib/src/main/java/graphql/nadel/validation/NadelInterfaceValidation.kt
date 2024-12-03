@@ -2,7 +2,7 @@ package graphql.nadel.validation
 
 import graphql.nadel.validation.NadelSchemaValidationError.MissingConcreteTypes
 
-class NadelInterfaceValidation internal constructor() {
+internal class NadelInterfaceValidation {
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.Interface,

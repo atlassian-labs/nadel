@@ -352,13 +352,12 @@ internal class NadelHydrationTransform(
                                     instruction.backingFieldDef
                                 )
                             val serviceHydrationDetails = ServiceExecutionHydrationDetails(
-                                instruction = instruction,
                                 timeout = instruction.timeout,
                                 batchSize = 1,
                                 hydrationSourceService = hydrationSourceService,
                                 hydrationVirtualField = instruction.location,
                                 hydrationBackingField = hydrationBackingField,
-                                fieldPath = virtualField.listOfResultKeys,
+                                fieldPath = virtualField.listOfResultKeys
                             )
                             engine.executeHydration(
                                 service = instruction.backingService,

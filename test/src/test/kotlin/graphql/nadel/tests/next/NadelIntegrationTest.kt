@@ -25,7 +25,6 @@ import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
-import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -177,20 +176,14 @@ abstract class NadelIntegrationTest(
         return NadelExecutionHints.Builder()
     }
 
-    open fun makeNadelSchemaValidation(): NadelSchemaValidation {
-        return NadelSchemaValidationFactory.create()
-    }
-
     open fun makeNadel(): Nadel.Builder {
         val schemas = makeNadelSchemas().build()
-        val nadelSchemaValidation = makeNadelSchemaValidation()
-        val schemaErrors = nadelSchemaValidation.validate(schemas)
+        val schemaErrors = NadelSchemaValidation(schemas).validate()
         assertTrue(schemaErrors.map { it.message }.isEmpty())
 
         return Nadel.newNadel()
             .schemas(schemas)
             .instrumentation(makeInstrumentation())
-            .schemaValidation(nadelSchemaValidation)
     }
 
     open fun makeNadelSchemas(): NadelSchemas.Builder {
