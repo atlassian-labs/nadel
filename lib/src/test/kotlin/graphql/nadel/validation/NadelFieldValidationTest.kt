@@ -13,7 +13,6 @@ val namespaceDirectiveDef = """
     directive @namespaced on FIELD_DEFINITION
 """.trimIndent()
 
-@Test
 class NadelFieldValidationTest : DescribeSpec({
     describe("validate") {
         it("passes if schema is valid") {
