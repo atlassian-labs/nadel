@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
@@ -36,10 +37,16 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
+        var areAllFieldsHidden : Boolean
+
         return overallFields
             .asSequence()
             .let { fieldSequence ->
                 // Apply filter if necessary
+                areAllFieldsHidden = fieldSequence.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)}
+                if(areAllFieldsHidden) {
+                    return NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent)
+                }
                 if (isCombinedType(type = parent.overall)) {
                     val fieldsThatServiceContributed = getFieldsThatServiceContributed(parent)
                     fieldSequence.filter { it.name in fieldsThatServiceContributed }

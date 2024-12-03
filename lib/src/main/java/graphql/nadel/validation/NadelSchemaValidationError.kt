@@ -409,6 +409,20 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
         override val subject = overallField
     }
+
+    data class AllFieldsUsingHiddenDirective(
+        val parentType: NadelServiceSchemaElement,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val s = service.name
+            val ut = parentType.underlying.name
+            "Could not find any fields without @hidden directive on the underlying type $ut on service $s"
+        }
+
+        override val subject = parentType.overall
+    }
 }
 
 private fun toString(element: GraphQLNamedSchemaElement): String {
