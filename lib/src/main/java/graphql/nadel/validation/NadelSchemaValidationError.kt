@@ -418,7 +418,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         override val message = run {
             val s = service.name
             val ut = parentType.underlying.name
-            "Could not find any fields without @hidden directive on the underlying type $ut on service $s"
+            "No fields found without @hidden directive on the underlying type $ut on service $s"
         }
 
         override val subject = parentType.overall
