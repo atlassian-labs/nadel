@@ -37,13 +37,11 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
-        var areAllFieldsHidden : Boolean
-
         return overallFields
             .asSequence()
             .let { fieldSequence ->
                 // Apply filter if necessary
-                areAllFieldsHidden = fieldSequence.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)}
+                val areAllFieldsHidden = fieldSequence.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)}
                 if(areAllFieldsHidden) {
                     return NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent)
                 }
