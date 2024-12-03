@@ -71,11 +71,12 @@ internal data class NadelHydrationValidationContext(
     val backingField: GraphQLFieldDefinition,
 )
 
-class NadelHydrationValidation internal constructor() {
-    private val argumentValidation = NadelHydrationArgumentValidation()
-    private val conditionValidation = NadelHydrationConditionValidation()
-    private val sourceFieldValidation = NadelHydrationSourceFieldValidation()
-    private val virtualTypeValidation = NadelHydrationVirtualTypeValidation()
+class NadelHydrationValidation internal constructor(
+    private val argumentValidation: NadelHydrationArgumentValidation,
+    private val conditionValidation: NadelHydrationConditionValidation,
+    private val sourceFieldValidation: NadelHydrationSourceFieldValidation,
+    private val virtualTypeValidation: NadelHydrationVirtualTypeValidation,
+) {
 
     context(NadelValidationContext)
     fun validate(

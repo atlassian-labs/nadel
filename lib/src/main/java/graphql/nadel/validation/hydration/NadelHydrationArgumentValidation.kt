@@ -48,7 +48,9 @@ private data class NadelHydrationArgumentValidationContext(
     val isBatchHydration: Boolean,
 )
 
-internal class NadelHydrationArgumentValidation {
+internal class NadelHydrationArgumentValidation(
+    private val hydrationArgumentTypeValidation: NadelHydrationArgumentTypeValidation,
+) {
     context(NadelValidationContext, NadelHydrationValidationContext)
     fun validateArguments(
         isBatchHydration: Boolean,
@@ -296,7 +298,7 @@ internal class NadelHydrationArgumentValidation {
     ): NadelSchemaValidationResult {
         val backingFieldArg = backingField.getArgument(hydrationArgumentDefinition.name)
 
-        NadelHydrationArgumentTypeValidation()
+        hydrationArgumentTypeValidation
             .isAssignable(
                 isBatchHydration = isBatchHydration,
                 hydrationArgumentDefinition = hydrationArgumentDefinition,
