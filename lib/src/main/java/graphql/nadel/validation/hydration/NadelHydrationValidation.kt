@@ -1,12 +1,12 @@
 package graphql.nadel.validation.hydration
 
+import graphql.Scalars.GraphQLID
+import graphql.Scalars.GraphQLString
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
-import graphql.nadel.definition.hydration.getHydrationDefinitions
-import graphql.nadel.definition.renamed.isRenamed
-import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -41,12 +41,13 @@ import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationResult
 import graphql.nadel.validation.NadelServiceSchemaElement
-import graphql.nadel.validation.NadelTypeValidation
 import graphql.nadel.validation.NadelValidatedFieldResult
 import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.NadelValidationInterimResult
 import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asInterimError
 import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.asInterimSuccess
+import graphql.nadel.validation.getHydrationDefinitions
+import graphql.nadel.validation.isRenamed
 import graphql.nadel.validation.ok
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
@@ -54,6 +55,7 @@ import graphql.nadel.validation.toResult
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLObjectType
@@ -69,42 +71,55 @@ internal data class NadelHydrationValidationContext(
     val backingField: GraphQLFieldDefinition,
 )
 
-internal class NadelHydrationValidation(
-    private val typeValidation: NadelTypeValidation,
-    private val argumentValidation: NadelHydrationArgumentValidation = NadelHydrationArgumentValidation(),
-    private val conditionValidation: NadelHydrationConditionValidation = NadelHydrationConditionValidation(),
-    private val sourceFieldValidation: NadelHydrationSourceFieldValidation = NadelHydrationSourceFieldValidation(),
-) {
+class NadelHydrationValidation internal constructor() {
+    private val argumentValidation = NadelHydrationArgumentValidation()
+    private val conditionValidation = NadelHydrationConditionValidation()
+    private val sourceFieldValidation = NadelHydrationSourceFieldValidation()
+    private val virtualTypeValidation = NadelHydrationVirtualTypeValidation()
+
     context(NadelValidationContext)
     fun validate(
         parent: NadelServiceSchemaElement.FieldsContainer,
-        overallField: GraphQLFieldDefinition,
+        virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (overallField.isRenamed()) {
-            return CannotRenameHydratedField(parent, overallField)
+        if (isRenamed(parent, virtualField)) {
+            return CannotRenameHydratedField(parent, virtualField)
         }
 
-        val hydrations = overallField.getHydrationDefinitions()
+        val hydrations = getHydrationDefinitions(parent, virtualField).toList()
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }
 
+        return validate(
+            parent = parent,
+            virtualField = virtualField,
+            hydrations = hydrations,
+        )
+    }
+
+    context(NadelValidationContext)
+    private fun validate(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        virtualField: GraphQLFieldDefinition,
+        hydrations: List<NadelHydrationDefinition>,
+    ): NadelSchemaValidationResult {
         conditionValidation
-            .validateHydrations(hydrations, parent, overallField)
+            .validateHydrations(hydrations, parent, virtualField)
             .onError { return it }
 
         val hasMoreThanOneHydration = hydrations.size > 1
 
-        limitBatchHydrationMismatch(parent, overallField, hydrations)
+        limitBatchHydrationMismatch(parent, virtualField, hydrations)
             .onError { return it }
-        limitUseOfIndexHydration(parent, overallField, hydrations)
+        limitUseOfIndexHydration(parent, virtualField, hydrations)
             .onError { return it }
-        limitSourceField(parent, overallField, hydrations)
+        limitSourceField(parent, virtualField, hydrations)
             .onError { return it }
 
         return hydrations
             .map { hydration ->
-                validate(parent, overallField, hydration, hasMoreThanOneHydration)
+                validate(parent, virtualField, hydration, hasMoreThanOneHydration)
             }
             .toResult()
     }
@@ -144,9 +159,8 @@ internal class NadelHydrationValidation(
         validateOutputType()
             .onError { return it }
 
-        val arguments =
-            argumentValidation.validateArguments(isBatchHydration)
-                .onError { return it }
+        val arguments = argumentValidation.validateArguments(isBatchHydration)
+            .onError { return it }
 
         val backingService =
             fieldContributor[makeFieldCoordinates(backingFieldContainer.name, backingField.name)]!!
@@ -190,6 +204,8 @@ internal class NadelHydrationValidation(
             .onError { return it }
         val sourceFields = sourceFieldValidation.getSourceFields(arguments, hydrationCondition)
             .onError { return it }
+        val virtualTypeContext = virtualTypeValidation.getVirtualTypeContext()
+            .onError { return it }
 
         return NadelValidatedFieldResult(
             service = parent.service,
@@ -204,8 +220,7 @@ internal class NadelHydrationValidation(
                 backingFieldDef = backingField,
                 backingFieldContainer = backingFieldContainer,
                 condition = hydrationCondition,
-                virtualTypeContext = null,
-                // todo: code properly
+                virtualTypeContext = virtualTypeContext,
                 hydrationStrategy = hydrationStrategy,
             ),
         )
@@ -223,7 +238,7 @@ internal class NadelHydrationValidation(
                 }
 
                 val underlyingParentType =
-                    if ((parent.overall as GraphQLDirectiveContainer).isVirtualType()) {
+                    if ((parent.overall as GraphQLDirectiveContainer).hasVirtualTypeDefinition()) {
                         parent.overall
                     } else {
                         parent.underlying
@@ -545,7 +560,7 @@ internal class NadelHydrationValidation(
         // Ensures that the underlying type of the backing field matches with the expected overall output type
         val overallType = virtualField.type.unwrapAll()
 
-        if ((overallType as? GraphQLDirectiveContainer)?.isVirtualType() == true) {
+        if ((overallType as? GraphQLDirectiveContainer)?.hasVirtualTypeDefinition() == true) {
             return ok() // Bypass validation for now
         }
 
@@ -571,7 +586,7 @@ internal class NadelHydrationValidation(
             // Find incompatible output types
             .filter { backingOutputType ->
                 acceptableOutputTypes.none { acceptableOutputType ->
-                    typeValidation.isAssignableTo(lhs = acceptableOutputType, rhs = backingOutputType)
+                    isAssignableTo(lhs = acceptableOutputType, rhs = backingOutputType)
                 }
             }
             .map { backingOutputType ->
@@ -590,5 +605,31 @@ internal class NadelHydrationValidation(
         }
 
         return ok()
+    }
+
+    /**
+     * Answers whether `rhs` assignable to `lhs`?
+     *
+     * i.e. does the following compile
+     *
+     * ```
+     * vol output: lhs = rhs
+     * ```
+     *
+     * Note: this assumes both types are from the same schema. This does NOT
+     * deal with differences between overall and underlying schema.
+     */
+    context(NadelValidationContext)
+    private fun isAssignableTo(lhs: GraphQLNamedOutputType, rhs: GraphQLNamedOutputType): Boolean {
+        if (lhs.name == rhs.name) {
+            return true
+        }
+        if (lhs.name == GraphQLID.name && rhs.name == GraphQLString.name) {
+            return true
+        }
+        if (lhs is GraphQLInterfaceType && rhs is GraphQLImplementingType) {
+            return rhs.interfaces.contains(lhs)
+        }
+        return false
     }
 }

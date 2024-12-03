@@ -11,7 +11,9 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
     query = """
         query {
           businessReport_findRecentWorkByTeam(teamId: "hello") {
+            __typename
             edges {
+              __typename
               node {
                 ... on JiraIssue {
                   key
@@ -20,6 +22,7 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
               cursor
             }
             pageInfo {
+              __typename
               hasNextPage
             }
           }

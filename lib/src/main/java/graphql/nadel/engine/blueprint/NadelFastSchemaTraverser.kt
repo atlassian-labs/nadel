@@ -1,35 +1,6 @@
 package graphql.nadel.engine.blueprint
 
-import graphql.nadel.engine.util.unwrapAll
-import graphql.schema.GraphQLAppliedDirective
-import graphql.schema.GraphQLAppliedDirectiveArgument
-import graphql.schema.GraphQLArgument
-import graphql.schema.GraphQLCompositeType
-import graphql.schema.GraphQLDirective
-import graphql.schema.GraphQLDirectiveContainer
-import graphql.schema.GraphQLEnumType
-import graphql.schema.GraphQLEnumValueDefinition
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
-import graphql.schema.GraphQLInputFieldsContainer
-import graphql.schema.GraphQLInputObjectField
-import graphql.schema.GraphQLInputObjectType
-import graphql.schema.GraphQLInterfaceType
-import graphql.schema.GraphQLList
-import graphql.schema.GraphQLModifiedType
-import graphql.schema.GraphQLNamedSchemaElement
-import graphql.schema.GraphQLNamedType
-import graphql.schema.GraphQLNonNull
-import graphql.schema.GraphQLNullableType
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLOutputType
-import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLSchemaElement
-import graphql.schema.GraphQLType
-import graphql.schema.GraphQLTypeReference
-import graphql.schema.GraphQLUnionType
-import graphql.schema.GraphQLUnmodifiedType
 
 /**
  * Significantly faster than normal [graphql.schema.SchemaTraverser] as it's simpler.
@@ -38,52 +9,81 @@ import graphql.schema.GraphQLUnmodifiedType
  *
  * That's 4x faster.
  */
-internal class NadelFastSchemaTraverser {
+internal class NadelSchemaTraverser {
     fun traverse(
         schema: GraphQLSchema,
-        roots: List<String>,
-        visitor: Visitor,
+        roots: Iterable<String>,
+        visitor: NadelSchemaTraverserVisitor,
     ) {
-        val queue = roots
+        val queue: MutableList<NadelSchemaTraverserElement> = roots
             .mapNotNullTo(mutableListOf()) { typeName ->
                 val type = schema.typeMap[typeName] ?: schema.getDirective(typeName)
                 // Types can be deleted by transformer, so they may not exist in end schema
                 if (type == null) {
                     null
                 } else {
-                    // Null parent to type
-                    (null as GraphQLNamedSchemaElement?) to type
+                    NadelSchemaTraverserElement.from(type)
                 }
             }
-        val visited = roots.toMutableSet()
 
-        fun queueType(parent: GraphQLNamedSchemaElement, type: GraphQLNamedType) {
-            if (!visited.contains(type.name)) {
-                visited.add(type.name)
-                queue.add(parent to type)
+        val visitedTypes: MutableSet<String> = roots.toMutableSet()
+
+        val addToQueue = fun(element: NadelSchemaTraverserElement) {
+            if (element is NadelSchemaTraverserElement.Type) {
+                if (visitedTypes.add(element.node.name)) {
+                    queue.add(element)
+                }
+            } else {
+                queue.add(element)
             }
-        }
-
-        fun queueElement(parent: GraphQLNamedSchemaElement, element: GraphQLNamedSchemaElement) {
-            queue.add(parent to element)
         }
 
         while (queue.isNotEmpty()) {
-            val (parent, element) = queue.removeLast()
+            val element = queue.removeLast()
+
             val result = when (element) {
-                is GraphQLObjectType -> visitor.visitGraphQLObjectType(parent, element)
-                is GraphQLFieldDefinition -> visitor.visitGraphQLFieldDefinition(parent, element)
-                is GraphQLScalarType -> visitor.visitGraphQLScalarType(parent, element)
-                is GraphQLInputObjectType -> visitor.visitGraphQLInputObjectType(parent, element)
-                is GraphQLInputObjectField -> visitor.visitGraphQLInputObjectField(parent, element)
-                is GraphQLAppliedDirective -> visitor.visitGraphQLAppliedDirective(parent, element)
-                is GraphQLDirective -> visitor.visitGraphQLDirective(parent, element)
-                is GraphQLArgument -> visitor.visitGraphQLArgument(parent, element)
-                is GraphQLEnumType -> visitor.visitGraphQLEnumType(parent, element)
-                is GraphQLEnumValueDefinition -> visitor.visitGraphQLEnumValueDefinition(parent, element)
-                is GraphQLInterfaceType -> visitor.visitGraphQLInterfaceType(parent, element)
-                is GraphQLUnionType -> visitor.visitGraphQLUnionType(parent, element)
-                else -> false
+                is NadelSchemaTraverserElement.AppliedDirective -> {
+                    visitor.visitGraphQLAppliedDirective(element)
+                }
+                is NadelSchemaTraverserElement.AppliedDirectiveArgument -> {
+                    visitor.visitGraphQLAppliedDirectiveArgument(element)
+                }
+                is NadelSchemaTraverserElement.Argument -> {
+                    visitor.visitGraphQLArgument(element)
+                }
+                is NadelSchemaTraverserElement.Directive -> {
+                    visitor.visitGraphQLDirective(element)
+                }
+                is NadelSchemaTraverserElement.EnumType -> {
+                    visitor.visitGraphQLEnumType(element)
+                }
+                is NadelSchemaTraverserElement.EnumValueDefinition -> {
+                    visitor.visitGraphQLEnumValueDefinition(element)
+                }
+                is NadelSchemaTraverserElement.FieldDefinition -> {
+                    visitor.visitGraphQLFieldDefinition(element)
+                }
+                is NadelSchemaTraverserElement.InputObjectField -> {
+                    visitor.visitGraphQLInputObjectField(element)
+                }
+                is NadelSchemaTraverserElement.InputObjectType -> {
+                    visitor.visitGraphQLInputObjectType(element)
+                }
+                is NadelSchemaTraverserElement.ScalarType -> {
+                    visitor.visitGraphQLScalarType(element)
+                }
+                is NadelSchemaTraverserElement.InterfaceType -> {
+                    visitor.visitGraphQLInterfaceType(element)
+                }
+                is NadelSchemaTraverserElement.ObjectType -> {
+                    visitor.visitGraphQLObjectType(element)
+                }
+                is NadelSchemaTraverserElement.UnionType -> {
+                    visitor.visitGraphQLUnionType(element)
+                }
+                is NadelSchemaTraverserElement.UnionMemberType -> {
+                    visitor.visitGraphQLUnionMemberType(element)
+                }
             }
 
             if (!result) {
@@ -91,189 +91,7 @@ internal class NadelFastSchemaTraverser {
             }
 
             // Handle next
-            element.forEachChild { child ->
-                when (child) {
-                    is GraphQLType -> {
-                        queueType(parent = element, child.unwrapAll())
-                    }
-                    is GraphQLNamedSchemaElement -> {
-                        queueElement(parent = element, child)
-                    }
-                }
-            }
-        }
-    }
-
-    interface Visitor {
-        fun visitGraphQLArgument(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLArgument,
-        ): Boolean
-
-        fun visitGraphQLUnionType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLUnionType,
-        ): Boolean
-
-        fun visitGraphQLInterfaceType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLInterfaceType,
-        ): Boolean
-
-        fun visitGraphQLEnumType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLEnumType,
-        ): Boolean
-
-        fun visitGraphQLEnumValueDefinition(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLEnumValueDefinition,
-        ): Boolean
-
-        fun visitGraphQLFieldDefinition(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLFieldDefinition,
-        ): Boolean
-
-        fun visitGraphQLInputObjectField(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLInputObjectField,
-        ): Boolean
-
-        fun visitGraphQLInputObjectType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLInputObjectType,
-        ): Boolean
-
-        fun visitGraphQLList(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLList,
-        ): Boolean
-
-        fun visitGraphQLNonNull(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLNonNull,
-        ): Boolean
-
-        fun visitGraphQLObjectType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLObjectType,
-        ): Boolean
-
-        fun visitGraphQLScalarType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLScalarType,
-        ): Boolean
-
-        fun visitGraphQLTypeReference(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLTypeReference,
-        ): Boolean
-
-        fun visitGraphQLModifiedType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLModifiedType,
-        ): Boolean
-
-        fun visitGraphQLCompositeType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLCompositeType,
-        ): Boolean
-
-        fun visitGraphQLDirective(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLDirective,
-        ): Boolean
-
-        fun visitGraphQLDirectiveContainer(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLDirectiveContainer,
-        ): Boolean
-
-        fun visitGraphQLFieldsContainer(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLFieldsContainer,
-        ): Boolean
-
-        fun visitGraphQLInputFieldsContainer(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLInputFieldsContainer,
-        ): Boolean
-
-        fun visitGraphQLNullableType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLNullableType,
-        ): Boolean
-
-        fun visitGraphQLOutputType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLOutputType,
-        ): Boolean
-
-        fun visitGraphQLUnmodifiedType(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLUnmodifiedType,
-        ): Boolean
-
-        fun visitGraphQLAppliedDirective(
-            parent: GraphQLNamedSchemaElement?,
-            node: GraphQLAppliedDirective,
-        ): Boolean
-    }
-}
-
-private inline fun GraphQLSchemaElement.forEachChild(
-    onElement: (GraphQLSchemaElement) -> Unit,
-) {
-    when (this) {
-        is GraphQLAppliedDirective -> {
-            arguments.forEach(onElement)
-        }
-        is GraphQLAppliedDirectiveArgument -> {
-            onElement(type)
-        }
-        is GraphQLArgument -> {
-            onElement(type)
-        }
-        is GraphQLDirective -> {
-            arguments.forEach(onElement)
-        }
-        is GraphQLEnumType -> {
-            values.forEach(onElement)
-        }
-        is GraphQLEnumValueDefinition -> {
-        }
-        is GraphQLFieldDefinition -> {
-            onElement(type)
-            arguments.forEach(onElement)
-        }
-        is GraphQLInputObjectField -> {
-            onElement(type)
-        }
-        is GraphQLInputObjectType -> {
-            fields.forEach(onElement)
-        }
-        is GraphQLInterfaceType -> {
-            fields.forEach(onElement)
-            interfaces.forEach(onElement)
-        }
-        is GraphQLList -> {
-            onElement(unwrapAll())
-        }
-        is GraphQLNonNull -> {
-            onElement(unwrapAll())
-        }
-        is GraphQLObjectType -> {
-            fields.forEach(onElement)
-            interfaces.forEach(onElement)
-        }
-        is GraphQLScalarType -> {
-        }
-        is GraphQLUnionType -> {
-            types.forEach(onElement)
-        }
-        else -> {
-            throw UnsupportedOperationException()
+            element.forEachChild(addToQueue)
         }
     }
 }

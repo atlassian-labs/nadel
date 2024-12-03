@@ -2,12 +2,11 @@ package graphql.nadel.validation
 
 import graphql.Scalars
 import graphql.language.OperationDefinition.Operation
-import graphql.nadel.definition.hydration.isHydrated
-import graphql.nadel.definition.partition.isPartitioned
+import graphql.nadel.definition.partition.NadelPartitionDefinition
+import graphql.nadel.engine.blueprint.NadelPartitionInstruction
 import graphql.nadel.engine.util.isList
+import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.util.NamespacedUtil.isNamespaceType
 import graphql.nadel.validation.NadelSchemaValidationError.CannotPartitionHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.InvalidPartitionArgument
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToFieldWithUnsupportedOutputType
@@ -26,18 +25,17 @@ internal class NadelPartitionValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (!overallField.isPartitioned()) {
-            return ok()
-        }
+        val partition = getPartitionedOrNull(parent, overallField)
+            ?: return ok()
 
-        if (overallField.isHydrated()) {
+        if (isHydrated(parent, overallField)) {
             return CannotPartitionHydratedField(parent, overallField)
         }
 
         val parentObject = parent as? NadelServiceSchemaElement.Object
             ?: return ok()
 
-        if (!isOperation(parentObject.overall) && !isNamespaceType(parentObject.overall, engineSchema)) {
+        if (!isOperation(parentObject.overall) && !namespaceTypeNames.contains(parentObject.overall.name)) {
             return PartitionAppliedToUnsupportedField(parent, overallField)
         }
 
@@ -49,18 +47,24 @@ internal class NadelPartitionValidation {
             return PartitionAppliedToFieldWithUnsupportedOutputType(parent, overallField)
         }
 
-        if (isPartitionArgumentInvalid(overallField)) {
+        if (isPartitionArgumentInvalid(overallField, partition)) {
             return InvalidPartitionArgument(parent, overallField)
         }
 
-        return ok()
+        return NadelValidatedFieldResult(
+            service = parent.service,
+            fieldInstruction = NadelPartitionInstruction(
+                location = makeFieldCoordinates(parent.overall, overallField),
+                pathToPartitionArg = partition.pathToPartitionArg,
+            ),
+        )
     }
 
-    private fun isPartitionArgumentInvalid(overallField: GraphQLFieldDefinition): Boolean {
-        val pathToPartitionArg = overallField.getAppliedDirective(NadelDirectives.partitionDirectiveDefinition.name)
-            ?.getArgument("pathToPartitionArg")
-            ?.getValue<List<String>>()
-            ?: return true
+    private fun isPartitionArgumentInvalid(
+        overallField: GraphQLFieldDefinition,
+        partition: NadelPartitionDefinition,
+    ): Boolean {
+        val pathToPartitionArg = partition.pathToPartitionArg
 
         if (pathToPartitionArg.isEmpty()) {
             return true
