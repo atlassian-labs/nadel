@@ -6,7 +6,6 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnde
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.core.spec.style.Test
 import io.kotest.datatest.withData
 
 val namespaceDirectiveDef = """
