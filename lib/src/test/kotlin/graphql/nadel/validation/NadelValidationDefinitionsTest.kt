@@ -9,11 +9,26 @@ import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.conditions.ArchConditions.callMethodWhere
 import com.tngtech.archunit.lang.conditions.ArchConditions.not
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
+import graphql.nadel.definition.hydration.hasHydratedDefinition
+import graphql.nadel.definition.renamed.hasRenameDefinition
+import graphql.nadel.definition.renamed.parseRenamedOrNull
+import graphql.schema.GraphQLDirectiveContainer
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLNamedType
 import kotlin.test.Test
 
 class NadelValidationDefinitionsTest {
+    /**
+     * Validation should use [NadelInstructionDefinitionRegistry] instead.
+     *
+     * e.g. avoid [GraphQLFieldDefinition.hasHydratedDefinition] and use [NadelInstructionDefinitionRegistry.isHydrated]
+     *
+     * e.g. avoid [GraphQLDirectiveContainer.hasRenameDefinition] and use [NadelInstructionDefinitionRegistry.isRenamed]
+     *
+     * e.g. avoid [GraphQLNamedType.parseRenamedOrNull] and use [NadelInstructionDefinitionRegistry.getRenamedOrNull]
+     */
     @Test
-    fun `does not use slow methods`() {
+    fun `do not use raw instruction definition parse methods in validation`() {
         val importedClasses = ClassFileImporter()
             .withImportOption(ImportOption.DoNotIncludeTests())
             .importPackages("graphql.nadel.validation")

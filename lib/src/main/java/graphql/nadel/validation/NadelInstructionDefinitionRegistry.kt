@@ -12,7 +12,6 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLOutputType
-import graphql.schema.GraphQLUnmodifiedType
 
 data class NadelInstructionDefinitionRegistry(
     private val definitions: Map<NadelSchemaMemberCoordinates, List<NadelInstructionDefinition>>,
