@@ -389,7 +389,7 @@ fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
 
 fun newServiceExecutionResult(
     data: MutableJsonMap = mutableMapOf(),
-    errors: MutableList<MutableJsonMap> = mutableListOf(),
+    errors: MutableList<MutableJsonMap?> = mutableListOf(),
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
     return NadelServiceExecutionResultImpl(data, errors, extensions)

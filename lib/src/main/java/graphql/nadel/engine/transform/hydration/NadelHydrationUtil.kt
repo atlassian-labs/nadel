@@ -40,6 +40,7 @@ internal object NadelHydrationUtil {
     ): Sequence<NadelResultInstruction.AddError> {
         return result.errors
             .asSequence()
+            .filterNotNull()
             .map(::toGraphQLError)
             .map(NadelResultInstruction::AddError)
     }

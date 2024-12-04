@@ -217,6 +217,7 @@ internal class NadelHydrationTransform(
                     )
                     val addErrors = hydration.errors
                         .asSequence()
+                        .filterNotNull()
                         .map { error ->
                             toGraphQLError(error)
                         }
@@ -288,12 +289,15 @@ internal class NadelHydrationTransform(
                                 .path(parentPath.toRawPath())
                                 .errors(
                                     hydration.errors
+                                        .asSequence()
+                                        .filterNotNull()
                                         .map {
                                             toGraphQLError(
                                                 raw = it,
                                                 path = path.toRawPath(),
                                             )
-                                        },
+                                        }
+                                        .toList(),
                                 )
                                 .build()
                         }
@@ -499,5 +503,5 @@ private fun interface NadelPreparedHydration {
 private data class NadelHydrationResult(
     val parentNode: JsonNode,
     val newValue: JsonNode?,
-    val errors: List<JsonMap>,
+    val errors: List<JsonMap?>,
 )
