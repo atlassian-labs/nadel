@@ -14,6 +14,15 @@ data class NadelVirtualTypeIllegalTypeError(
         get() = type.overall
 }
 
+data class NadelVirtualTypeDuplicationError(
+    val type: NadelServiceSchemaElement.VirtualType,
+) : NadelSchemaValidationError {
+    override val message: String = "Backing types cannot map to multiple virtual types"
+
+    override val subject: GraphQLNamedSchemaElement
+        get() = type.overall
+}
+
 data class NadelVirtualTypeMissingBackingFieldError(
     val type: NadelServiceSchemaElement.VirtualType,
     val virtualField: GraphQLFieldDefinition,

@@ -472,6 +472,70 @@ class NadelVirtualTypeValidationTest {
         assertTrue(errors.isEmpty())
     }
 
+    @Test
+    fun `forbids duplicating backing type`() {
+        // Given
+        val fixture = makeFixture(
+            overallSchema = mapOf(
+                "serviceA" to /*language=GraphQL*/ """
+                    type Query {
+                        echo: String
+                        virtualField: DataView
+                            @hydrated(
+                                field: "data"
+                                arguments: [{name: "id", value: "1"}]
+                            )
+                    }
+                    type DataView @virtualType {
+                        id: ID
+                        string: String
+                        int: Int
+                        other: OtherDataView
+                        else: Else
+                    }
+                    type OtherDataView @virtualType {
+                        boolean: Boolean
+                        data: DataView
+                    }
+                    type Else @virtualType {
+                        boolean: Boolean
+                        data: DataView
+                    }
+                """.trimIndent(),
+                "serviceB" to /*language=GraphQL*/ """
+                    type Query {
+                      data(id: ID!): Data
+                    }
+                    type Data {
+                      id: ID
+                      string: String
+                      bool: Boolean
+                      int: Int!
+                      other: OtherData
+                      else: OtherData
+                    }
+                    type OtherData {
+                      boolean: Boolean!
+                      data: Data
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isNotEmpty())
+
+        val duplicationError = errors
+            .asSequence()
+            .filterIsInstance<NadelVirtualTypeDuplicationError>()
+            .single()
+
+        assertTrue(duplicationError.type.underlying.name == "OtherData")
+    }
+
     private fun makeFixture(
         overallSchema: Map<String, String>,
         underlyingSchema: Map<String, String> = emptyMap(),
