@@ -4,12 +4,13 @@ import graphql.ExecutionInput
 import graphql.GraphQL
 import graphql.GraphqlErrorHelper.toSpecification
 import graphql.language.AstPrinter
+import graphql.language.OperationDefinition
 import graphql.nadel.NadelDefinitionRegistry
+import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toBuilderWithoutTypes
@@ -40,6 +41,9 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
         .build()
 
     override fun execute(serviceExecutionParameters: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> {
+        if (serviceExecutionParameters.operationDefinition.operation == OperationDefinition.Operation.SUBSCRIPTION) {
+            return CompletableFuture.completedFuture(NadelServiceExecutionResultImpl())
+        }
         return graphQL
             .executeAsync(
                 ExecutionInput.newExecutionInput()
