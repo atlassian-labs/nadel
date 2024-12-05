@@ -265,13 +265,23 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         hydrationDetails: ServiceExecutionHydrationDetails,
     ): ServiceExecutionResult {
-        return executeTopLevelField(
-            topLevelField = topLevelField,
-            service = service,
-            executionContext = executionContext.copy(
-                hydrationDetails = hydrationDetails,
-            ),
-        )
+        return try {
+            executeTopLevelField(
+                topLevelField = topLevelField,
+                service = service,
+                executionContext = executionContext.copy(
+                    hydrationDetails = hydrationDetails,
+                ),
+            )
+        } catch (e: Exception) {
+            when (e) {
+                is GraphQLError -> newServiceExecutionErrorResult(
+                    field = topLevelField,
+                    error = e,
+                )
+                else -> throw e
+            }
+        }
     }
 
     internal suspend fun executePartitionedCall(
