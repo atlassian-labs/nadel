@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration.statics
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationCopiesFieldHintOffTest>()
+    graphql.nadel.tests.next.update<StaticHydrationScalarFieldTest>()
 }
 
 /**
@@ -19,26 +19,20 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationCopiesFieldHintOffTestSnapshot : TestSnapshot() {
+public class StaticHydrationScalarFieldTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
                 | {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
-                |     __typename__type_filter__edges: __typename
-                |     __typename__type_filter__pageInfo: __typename
-                |   }
+                |   backingField(id: "wow", secret: "cowabunga")
                 | }
                 """.trimMargin(),
                 variables = " {}",
                 result = """
                 | {
                 |   "data": {
-                |     "graphStore_query": {
-                |       "__typename__type_filter__edges": "GraphStoreQueryConnection",
-                |       "__typename__type_filter__pageInfo": "GraphStoreQueryConnection"
-                |     }
+                |     "backingField": "wow"
                 |   }
                 | }
                 """.trimMargin(),
@@ -51,7 +45,7 @@ public class HydrationCopiesFieldHintOffTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "businessReport_findRecentWorkByTeam": {}
+     *     "copyField": "wow"
      *   }
      * }
      * ```
@@ -60,7 +54,7 @@ public class HydrationCopiesFieldHintOffTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "businessReport_findRecentWorkByTeam": {}
+            |     "copyField": "wow"
             |   }
             | }
             """.trimMargin(),

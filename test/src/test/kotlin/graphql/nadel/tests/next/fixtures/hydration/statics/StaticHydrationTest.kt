@@ -1,23 +1,29 @@
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration.statics
 
-import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
-import graphql.scalars.ExtendedScalars
 
-class HydrationRemainingArgumentsTest : NadelIntegrationTest(
+/**
+ * Uses hydration to "copy" a field. Does not link two pieces of data together i.e. no $source fields used.
+ */
+class StaticHydrationTest : NadelIntegrationTest(
     query = """
         query {
-          businessReport_findRecentWorkByTeam(orgId: "turtles") {
+          businessReport_findRecentWorkByTeam(teamId: "hello") {
             __typename
             edges {
+              __typename
               node {
-                __typename
                 ... on JiraIssue {
                   key
                 }
               }
+              cursor
+            }
+            pageInfo {
+              __typename
+              hasNextPage
             }
           }
         }
@@ -27,33 +33,47 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
         Service(
             name = "graph_store",
             overallSchema = """
-                scalar JSON
                 type Query {
                   graphStore_query(
                     query: String!
                     first: Int
                     after: String
-                    remainingArgs: JSON @hydrationRemainingArguments
                   ): GraphStoreQueryConnection
                 }
                 type GraphStoreQueryConnection {
                   edges: [GraphStoreQueryEdge]
+                  pageInfo: PageInfo
                 }
                 type GraphStoreQueryEdge {
                   nodeId: ID
+                  cursor: String
+                }
+                type PageInfo {
+                    hasNextPage: Boolean!
+                    hasPreviousPage: Boolean!
+                    startCursor: String
+                    endCursor: String
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 data class GraphStoreQueryEdge(
                     val nodeId: String,
+                    val cursor: String?,
+                )
+
+                data class PageInfo(
+                    val hasNextPage: Boolean,
+                    val hasPreviousPage: Boolean,
+                    val startCursor: String?,
+                    val endCursor: String?,
                 )
 
                 data class GraphStoreQueryConnection(
                     val edges: List<GraphStoreQueryEdge>,
+                    val pageInfo: PageInfo,
                 )
 
                 wiring
-                    .scalar(ExtendedScalars.Json)
                     .type("Query") { type ->
                         type
                             .dataFetcher("graphStore_query") { env ->
@@ -61,7 +81,14 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
                                     edges = listOf(
                                         GraphStoreQueryEdge(
                                             nodeId = "ari:cloud:jira::issue/1",
+                                            cursor = "1",
                                         ),
+                                    ),
+                                    pageInfo = PageInfo(
+                                        hasNextPage = true,
+                                        hasPreviousPage = false,
+                                        startCursor = null,
+                                        endCursor = "1",
                                     ),
                                 )
                             }
@@ -120,10 +147,8 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
             name = "work",
             overallSchema = """
                 type Query {
-                  business_stub: String @hidden
                   businessReport_findRecentWorkByTeam(
-                    orgId: ID!
-                    teamId: ID
+                    teamId: ID!
                     first: Int
                     after: String
                   ): WorkConnection
@@ -146,9 +171,9 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
                       ]
                     )
                 }
-                directive @virtualType on OBJECT
                 type WorkConnection @virtualType {
                   edges: [WorkEdge]
+                  pageInfo: PageInfo
                 }
                 type WorkEdge @virtualType {
                   nodeId: ID @hidden
@@ -158,6 +183,7 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
+                  cursor: String
                 }
                 union WorkNode = JiraIssue
             """.trimIndent(),
@@ -171,11 +197,6 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
         ),
     ),
 ) {
-    override fun makeNadel(): Nadel.Builder {
-        return super.makeNadel()
-            .blueprintHint { true }
-    }
-
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .virtualTypeSupport { true }

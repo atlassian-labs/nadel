@@ -1,28 +1,35 @@
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration.statics
 
+import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
+import graphql.nadel.engine.transform.artificial.NadelAliasHelper
+import graphql.nadel.engine.transform.result.json.JsonNode
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
  * Uses hydration to "copy" a field. Does not link two pieces of data together i.e. no $source fields used.
  */
-class HydrationCopiesFieldTest : NadelIntegrationTest(
+class StaticHydrationAndPolymorphicHydrationTest : NadelIntegrationTest(
     query = """
         query {
           businessReport_findRecentWorkByTeam(teamId: "hello") {
-            __typename
             edges {
-              __typename
               node {
                 ... on JiraIssue {
                   key
+                }
+                ... on BitbucketPullRequest {
+                  title
+                  patch
                 }
               }
               cursor
             }
             pageInfo {
-              __typename
               hasNextPage
             }
           }
@@ -83,6 +90,10 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
                                             nodeId = "ari:cloud:jira::issue/1",
                                             cursor = "1",
                                         ),
+                                        GraphStoreQueryEdge(
+                                            nodeId = "ari:cloud:bitbucket::pull-request/2",
+                                            cursor = "2",
+                                        ),
                                     ),
                                     pageInfo = PageInfo(
                                         hasNextPage = true,
@@ -142,6 +153,52 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
                     }
             },
         ),
+        Service(
+            name = "bitbucket",
+            overallSchema = """
+                type Query {
+                  pullRequestsByIds(ids: [ID!]!): [BitbucketPullRequest]
+                }
+                type BitbucketPullRequest {
+                  id: ID!
+                  title: String
+                  patch: String
+                }
+            """.trimIndent(),
+            runtimeWiring = { runtime ->
+                data class BitbucketPullRequest(
+                    val id: String,
+                    val title: String,
+                    val patch: String,
+                )
+
+                val issuesByIds = listOf(
+                    BitbucketPullRequest(
+                        id = "ari:cloud:bitbucket::pull-request/1",
+                        title = "Delete everything",
+                        patch = "-",
+                    ),
+                    BitbucketPullRequest(
+                        id = "ari:cloud:bitbucket::pull-request/2",
+                        title = "Initial Commit",
+                        patch = "+",
+                    ),
+                ).strictAssociateBy { it.id }
+
+                runtime
+                    .type("Query") { type ->
+                        type
+                            .dataFetcher("pullRequestsByIds") { env ->
+                                val ids = env.getArgument<List<String>>("ids")
+
+                                ids!!
+                                    .map {
+                                        issuesByIds[it]
+                                    }
+                            }
+                    }
+            },
+        ),
         // Service that introduces virtual type
         Service(
             name = "work",
@@ -183,9 +240,14 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
+                    @hydrated(
+                      service: "bitbucket"
+                      field: "pullRequestsByIds"
+                      arguments: [{name: "ids", value: "$source.nodeId"}]
+                    )
                   cursor: String
                 }
-                union WorkNode = JiraIssue
+                union WorkNode = JiraIssue | BitbucketPullRequest
             """.trimIndent(),
             underlyingSchema = """
                 type Query {
@@ -201,5 +263,35 @@ class HydrationCopiesFieldTest : NadelIntegrationTest(
         return super.makeExecutionHints()
             .virtualTypeSupport { true }
             .shortCircuitEmptyQuery { true }
+    }
+
+    override fun makeNadel(): Nadel.Builder {
+        return super.makeNadel()
+            .executionHooks(
+                object : NadelExecutionHooks {
+                    override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+                        instructions: List<T>,
+                        parentNode: JsonNode,
+                        aliasHelper: NadelAliasHelper,
+                        userContext: Any?,
+                    ): T? {
+                        if (instructions.size == 1) {
+                            return instructions.single()
+                        }
+
+                        @Suppress("UNCHECKED_CAST")
+                        val nodeId = (parentNode.value as JsonMap)[aliasHelper.getResultKey("nodeId")] as String
+
+                        val prs = instructions.single { it.backingFieldDef.name == "pullRequestsByIds" }
+                        val issues = instructions.single { it.backingFieldDef.name == "issuesByIds" }
+
+                        return when {
+                            nodeId.startsWith("ari:cloud:bitbucket::pull-request/") -> prs
+                            nodeId.startsWith("ari:cloud:jira::issue/") -> issues
+                            else -> throw IllegalArgumentException()
+                        }
+                    }
+                }
+            )
     }
 }
