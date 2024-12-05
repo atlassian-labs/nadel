@@ -159,7 +159,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
     private fun process(
         instruction: NadelResultInstruction.AddError,
-        errors: List<JsonMap>,
+        errors: List<JsonMap?>,
     ) {
         val newError = instruction.error.toSpecification()
 
