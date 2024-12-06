@@ -3,6 +3,7 @@ package graphql.nadel
 import graphql.GraphQLContext
 import graphql.execution.ExecutionId
 import graphql.nadel.time.NadelInternalLatencyTracker
+import graphql.nadel.time.NadelInternalLatencyTrackerImpl
 import graphql.nadel.time.NadelStopwatch
 import java.util.function.Consumer
 
@@ -95,7 +96,7 @@ data class NadelExecutionInput private constructor(
                 extensions = extensions,
                 executionId = executionId,
                 executionHints = executionHints,
-                latencyTracker = latencyTracker ?: NadelInternalLatencyTracker.Default(NadelStopwatch()),
+                latencyTracker = latencyTracker ?: NadelInternalLatencyTrackerImpl(NadelStopwatch()),
             )
         }
     }

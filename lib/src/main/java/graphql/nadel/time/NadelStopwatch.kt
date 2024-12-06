@@ -53,7 +53,7 @@ class NadelStopwatch(
         val ns = if (time.startedNs == null) {
             time.elapsedNs
         } else {
-            ticker() - time.startedNs + time.elapsedNs
+            time.elapsedNs + (ticker() - time.startedNs)
         }
         return Duration.ofNanos(ns)
     }

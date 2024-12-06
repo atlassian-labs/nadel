@@ -27,6 +27,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.NadelTransformAdapter
 import graphql.nadel.time.NadelInternalLatencyTracker
+import graphql.nadel.time.NadelInternalLatencyTrackerImpl
 import graphql.nadel.time.NadelStopwatch
 import graphql.normalized.ExecutableNormalizedField
 import java.time.Duration
@@ -121,7 +122,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
 class `monitor-emits-timings` : EngineTestHook {
     private var timeNs = 101812381L // Value doesn't matter, it's just the start value
     private val stopwatch = NadelStopwatch { timeNs }
-    private val latencyTracker = NadelInternalLatencyTracker.Default(stopwatch)
+    private val latencyTracker = NadelInternalLatencyTrackerImpl(stopwatch)
 
     private val stepsWitnessed = mutableSetOf<Step>()
 
