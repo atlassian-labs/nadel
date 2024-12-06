@@ -1,3 +1,8 @@
 package graphql.nadel
 
-class NadelExecutionParams internal constructor(val nadelExecutionHints: NadelExecutionHints)
+import graphql.nadel.time.NadelInternalLatencyTracker
+
+class NadelExecutionParams internal constructor(
+    val executionHints: NadelExecutionHints,
+    val latencyTracker: NadelInternalLatencyTracker,
+)
