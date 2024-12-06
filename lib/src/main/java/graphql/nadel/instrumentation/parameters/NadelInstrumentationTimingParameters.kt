@@ -5,15 +5,13 @@ import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
 import java.time.Duration
-import java.time.Instant
 
 data class NadelInstrumentationTimingParameters(
     val step: Step,
     /**
      * Can be null for batched timings which don't really have a start time.
      */
-    val startedAt: Instant?,
-    val duration: Duration,
+    val internalLatency: Duration,
     /**
      * If an exception occurred during the timing of the step, then it is passed in here.
      */

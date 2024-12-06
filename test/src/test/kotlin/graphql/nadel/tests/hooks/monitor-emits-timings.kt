@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.ExecutionResult
 import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionInput
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -25,11 +26,16 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParame
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.NadelTransformAdapter
+import graphql.nadel.time.NadelInternalLatencyTracker
+import graphql.nadel.time.NadelInternalLatencyTrackerImpl
+import graphql.nadel.time.NadelStopwatch
 import graphql.normalized.ExecutableNormalizedField
-import kotlinx.coroutines.delay
+import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
-private class MonitorEmitsTimingsTransform : NadelTransform<Unit> {
+private class MonitorEmitsTimingsTransform(
+    private val delay: (Long) -> Unit,
+) : NadelTransform<Unit> {
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
@@ -114,11 +120,15 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
 
 @UseHook
 class `monitor-emits-timings` : EngineTestHook {
+    private var timeNs = 101812381L // Value doesn't matter, it's just the start value
+    private val stopwatch = NadelStopwatch { timeNs }
+    private val latencyTracker = NadelInternalLatencyTrackerImpl(stopwatch)
+
     private val stepsWitnessed = mutableSetOf<Step>()
 
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
-            MonitorEmitsTimingsTransform(),
+            MonitorEmitsTimingsTransform(::passTime),
             NadelTransformJavaCompat.create(JavaTimingTransform()),
         )
 
@@ -129,14 +139,14 @@ class `monitor-emits-timings` : EngineTestHook {
                     println(parameters)
 
                     stepsWitnessed.add(parameters.step)
-                    val duration = parameters.duration
+                    val duration = parameters.internalLatency
 
                     val step = parameters.step
                     if (step.name == MonitorEmitsTimingsTransform::class.simpleName) {
                         when (step.parent) {
-                            ExecutionPlanning -> assert(duration.toMillis() in 128..256)
-                            QueryTransforming -> assert(duration.toMillis() in 256..512)
-                            ResultTransforming -> assert(duration.toMillis() in 32..128)
+                            ExecutionPlanning -> assert(duration.toMillis() == 128L)
+                            QueryTransforming -> assert(duration.toMillis() == 256L)
+                            ResultTransforming -> assert(duration.toMillis() == 32L)
                             else -> {
                             }
                         }
@@ -144,6 +154,12 @@ class `monitor-emits-timings` : EngineTestHook {
                 }
             },
         )
+    }
+
+    override fun makeExecutionInput(builder: NadelExecutionInput.Builder): NadelExecutionInput.Builder {
+        stopwatch.start()
+        return super.makeExecutionInput(builder)
+            .latencyTracker(latencyTracker)
     }
 
     override fun assertResult(result: ExecutionResult) {
@@ -164,6 +180,10 @@ class `monitor-emits-timings` : EngineTestHook {
             }
 
         assert(stepsWitnessed.containsAll(expected))
+    }
+
+    private fun passTime(ms: Long) {
+        timeNs += Duration.ofMillis(ms).toNanos()
     }
 }
 

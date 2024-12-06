@@ -24,10 +24,11 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
+import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.util.getLogger
 import graphql.nadel.util.getNotPrivacySafeLogger
-import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
@@ -68,7 +69,10 @@ class Nadel private constructor(
             .executionId(nadelExecutionInput.executionId)
             .build()
 
-        val nadelExecutionParams = NadelExecutionParams(nadelExecutionInput.nadelExecutionHints)
+        val nadelExecutionParams = NadelExecutionParams(
+            nadelExecutionInput.executionHints,
+            nadelExecutionInput.latencyTracker,
+        )
         val instrumentationState = instrumentation.createState(
             NadelInstrumentationCreateStateParameters(querySchema, executionInput),
         )
@@ -246,6 +250,8 @@ class Nadel private constructor(
         private var blueprintHint = NadelValidationBlueprintHint { false }
 
         private var nadelValidation: NadelSchemaValidation? = null
+
+        private var latencyTracker: NadelInternalLatencyTracker? = null
 
         fun schemas(schemas: NadelSchemas): Builder {
             this.schemas = schemas
