@@ -37,14 +37,13 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
+        if(areAllFieldsHidden(overallFields)) {
+            return NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent)
+        }
         return overallFields
             .asSequence()
             .let { fieldSequence ->
                 // Apply filter if necessary
-                val areAllFieldsHidden = fieldSequence.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)}
-                if(areAllFieldsHidden) {
-                    return NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent)
-                }
                 if (isCombinedType(type = parent.overall)) {
                     val fieldsThatServiceContributed = getFieldsThatServiceContributed(parent)
                     fieldSequence.filter { it.name in fieldsThatServiceContributed }
@@ -56,6 +55,10 @@ class NadelFieldValidation internal constructor(
                 validate(parent, overallField)
             }
             .toResult()
+    }
+
+    private fun areAllFieldsHidden(overallFields: List<GraphQLFieldDefinition>): Boolean {
+        return overallFields.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name) };
     }
 
     context(NadelValidationContext)

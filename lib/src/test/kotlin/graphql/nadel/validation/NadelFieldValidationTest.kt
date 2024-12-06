@@ -699,7 +699,7 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
-            assert(error.message == "No fields found without @hidden directive on the underlying type Query on service test")
+            assert(error.message == "Must have at least one field without @hidden on type Query")
         }
     }
 })
