@@ -9,19 +9,22 @@ import java.util.concurrent.atomic.AtomicReference
 class NadelStopwatch(
     private val ticker: () -> Long = defaultTicker,
 ) {
-    private data class Time(
+    /**
+     * When the stopwatch was last started, and before that how much time was elapsed.
+     */
+    private data class Accumulator(
         val startedNs: Long? = null,
         val elapsedNs: Long,
     ) {
         companion object {
-            val Zero = Time(null, 0)
+            val Zero = Accumulator(null, 0)
         }
     }
 
-    private val time = AtomicReference(Time.Zero)
+    private val accumulator = AtomicReference(Accumulator.Zero)
 
     fun start() {
-        time.getAndUpdate {
+        accumulator.getAndUpdate {
             if (it.startedNs == null) {
                 it.copy(startedNs = ticker())
             } else {
@@ -31,7 +34,7 @@ class NadelStopwatch(
     }
 
     fun stop() {
-        time.getAndUpdate {
+        accumulator.getAndUpdate {
             if (it.startedNs == null) {
                 it
             } else {
@@ -44,7 +47,7 @@ class NadelStopwatch(
     }
 
     fun elapsed(): Duration {
-        val time = time.get()
+        val time = accumulator.get()
         val ns = if (time.startedNs == null) {
             time.elapsedNs
         } else {
