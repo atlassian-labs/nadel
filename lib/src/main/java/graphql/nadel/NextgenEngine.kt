@@ -49,6 +49,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParame
 import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
+import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.util.OperationNameUtil
 import graphql.nadel.util.getLogger
 import graphql.nadel.validation.NadelSchemaValidation
@@ -142,7 +143,8 @@ internal class NextgenEngine(
                 executionInput,
                 queryDocument,
                 instrumentationState,
-                nadelExecutionParams.nadelExecutionHints,
+                nadelExecutionParams.executionHints,
+                nadelExecutionParams.latencyTracker,
             )
         }.asCompletableFuture()
     }
@@ -160,12 +162,14 @@ internal class NextgenEngine(
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
         executionHints: NadelExecutionHints,
+        latencyTracker: NadelInternalLatencyTracker,
     ): ExecutionResult = supervisorScope {
         try {
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                ticker = latencyTracker::getInternalLatency,
+                instrumentation = instrumentation,
                 userContext = executionInput.context,
-                instrumentationState,
+                instrumentationState = instrumentationState,
             )
 
             val operationParseOptions = baseParseOptions
