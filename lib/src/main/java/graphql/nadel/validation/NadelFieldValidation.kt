@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
@@ -36,6 +37,9 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
+        if(areAllFieldsHidden(overallFields)) {
+            return NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent)
+        }
         return overallFields
             .asSequence()
             .let { fieldSequence ->
@@ -51,6 +55,10 @@ class NadelFieldValidation internal constructor(
                 validate(parent, overallField)
             }
             .toResult()
+    }
+
+    private fun areAllFieldsHidden(overallFields: List<GraphQLFieldDefinition>): Boolean {
+        return overallFields.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name) };
     }
 
     context(NadelValidationContext)
