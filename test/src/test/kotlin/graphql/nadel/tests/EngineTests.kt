@@ -235,7 +235,7 @@ private suspend fun execute(
                     return CompletableFuture.completedFuture(
                         NadelIncrementalServiceExecutionResult(
                             data = initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                            errors = initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                            errors = initialResponse["errors"] as MutableList<MutableJsonMap?>? ?: ArrayList(),
                             extensions = initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
                             incremental = emptyList(), // todo: support this if we need it
                             incrementalItemPublisher = incrementalItemPublisher,
@@ -248,7 +248,7 @@ private suspend fun execute(
                     return CompletableFuture.completedFuture(
                         NadelServiceExecutionResultImpl(
                             serviceCallResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                            serviceCallResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                            serviceCallResponse["errors"] as MutableList<MutableJsonMap?>? ?: ArrayList(),
                             serviceCallResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
                         ),
                     )

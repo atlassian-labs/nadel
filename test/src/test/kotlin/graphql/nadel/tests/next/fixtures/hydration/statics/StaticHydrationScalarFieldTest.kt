@@ -1,9 +1,9 @@
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration.statics
 
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-class HydrationCopiesScalarFieldTest : NadelIntegrationTest(
+class StaticHydrationScalarFieldTest : NadelIntegrationTest(
     query = """
         query {
           copyField(id: "wow")

@@ -1,26 +1,23 @@
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration
 
+import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
+import graphql.scalars.ExtendedScalars
 
-/**
- * Tests what happens if the virtual types hint is off.
- */
-class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
+class HydrationRemainingArgumentsTest : NadelIntegrationTest(
     query = """
         query {
-          businessReport_findRecentWorkByTeam(teamId: "hello") {
+          businessReport_findRecentWorkByTeam(orgId: "turtles") {
+            __typename
             edges {
               node {
+                __typename
                 ... on JiraIssue {
                   key
                 }
               }
-              cursor
-            }
-            pageInfo {
-              hasNextPage
             }
           }
         }
@@ -30,47 +27,33 @@ class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
         Service(
             name = "graph_store",
             overallSchema = """
+                scalar JSON
                 type Query {
                   graphStore_query(
                     query: String!
                     first: Int
                     after: String
+                    remainingArgs: JSON @hydrationRemainingArguments
                   ): GraphStoreQueryConnection
                 }
                 type GraphStoreQueryConnection {
                   edges: [GraphStoreQueryEdge]
-                  pageInfo: PageInfo
                 }
                 type GraphStoreQueryEdge {
                   nodeId: ID
-                  cursor: String
-                }
-                type PageInfo {
-                    hasNextPage: Boolean!
-                    hasPreviousPage: Boolean!
-                    startCursor: String
-                    endCursor: String
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 data class GraphStoreQueryEdge(
                     val nodeId: String,
-                    val cursor: String?,
-                )
-
-                data class PageInfo(
-                    val hasNextPage: Boolean,
-                    val hasPreviousPage: Boolean,
-                    val startCursor: String?,
-                    val endCursor: String?,
                 )
 
                 data class GraphStoreQueryConnection(
                     val edges: List<GraphStoreQueryEdge>,
-                    val pageInfo: PageInfo,
                 )
 
                 wiring
+                    .scalar(ExtendedScalars.Json)
                     .type("Query") { type ->
                         type
                             .dataFetcher("graphStore_query") { env ->
@@ -78,14 +61,7 @@ class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
                                     edges = listOf(
                                         GraphStoreQueryEdge(
                                             nodeId = "ari:cloud:jira::issue/1",
-                                            cursor = "1",
                                         ),
-                                    ),
-                                    pageInfo = PageInfo(
-                                        hasNextPage = true,
-                                        hasPreviousPage = false,
-                                        startCursor = null,
-                                        endCursor = "1",
                                     ),
                                 )
                             }
@@ -144,8 +120,10 @@ class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
             name = "work",
             overallSchema = """
                 type Query {
+                  business_stub: String @hidden
                   businessReport_findRecentWorkByTeam(
-                    teamId: ID!
+                    orgId: ID!
+                    teamId: ID
                     first: Int
                     after: String
                   ): WorkConnection
@@ -168,9 +146,9 @@ class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
                       ]
                     )
                 }
+                directive @virtualType on OBJECT
                 type WorkConnection @virtualType {
                   edges: [WorkEdge]
-                  pageInfo: PageInfo
                 }
                 type WorkEdge @virtualType {
                   nodeId: ID @hidden
@@ -180,7 +158,6 @@ class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
-                  cursor: String
                 }
                 union WorkNode = JiraIssue
             """.trimIndent(),
@@ -194,9 +171,14 @@ class HydrationCopiesFieldHintOffTest : NadelIntegrationTest(
         ),
     ),
 ) {
+    override fun makeNadel(): Nadel.Builder {
+        return super.makeNadel()
+            .blueprintHint { true }
+    }
+
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
-            .virtualTypeSupport { false }
+            .virtualTypeSupport { true }
             .shortCircuitEmptyQuery { true }
     }
 }

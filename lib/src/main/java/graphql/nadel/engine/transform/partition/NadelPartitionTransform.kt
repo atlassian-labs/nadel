@@ -225,7 +225,9 @@ internal class NadelPartitionTransform(
         }
 
         val errorInstructions = resultFromPartitionCalls
+            .asSequence()
             .flatMap { it.errors }
+            .filterNotNull()
             .map { error ->
                 NadelResultInstruction.AddError(
                     toGraphQLError(
@@ -237,6 +239,7 @@ internal class NadelPartitionTransform(
                     )
                 )
             }
+            .toList()
 
         return mergedData + errorInstructions
     }
