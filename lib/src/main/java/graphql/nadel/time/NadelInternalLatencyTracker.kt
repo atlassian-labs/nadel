@@ -10,24 +10,6 @@ import java.util.function.Supplier
 
 interface NadelInternalLatencyTracker {
     /**
-     * Starts tracking internal latency.
-     *
-     * Should be invoked for any of the following
-     * * As soon as the GraphQL request is received.
-     * * As soon as all external calls complete.
-     */
-    fun start()
-
-    /**
-     * Stops tracking internal latency.
-     *
-     * Should be invoked for any of the following
-     * * When the GraphQL request is sent back to the caller.
-     * * When any external call starts.
-     */
-    fun stop()
-
-    /**
      * Gets the _current_ internal latency.
      *
      * This can be invoked before the latency is completely tracked to get a running track
@@ -42,14 +24,6 @@ interface NadelInternalLatencyTracker {
         private val internalLatency: NadelStopwatch,
     ) : NadelInternalLatencyTracker {
         private val outstandingExternalLatencyCount = AtomicInteger()
-
-        override fun start() {
-            internalLatency.start()
-        }
-
-        override fun stop() {
-            internalLatency.stop()
-        }
 
         override fun getInternalLatency(): Duration {
             return internalLatency.elapsed()
@@ -122,13 +96,13 @@ interface NadelInternalLatencyTracker {
 
         protected fun onExternalCallStart() {
             if (outstandingExternalLatencyCount.getAndIncrement() == 0) {
-                stop()
+                internalLatency.stop()
             }
         }
 
         protected fun onExternalCallEnd() {
             if (outstandingExternalLatencyCount.decrementAndGet() == 0) {
-                start()
+                internalLatency.start()
             }
         }
     }

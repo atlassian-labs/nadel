@@ -5,6 +5,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Creates a stopped stopwatch. Thread safe.
+ *
+ * Can be stopped and started multiple times, will record the total time elapsed.
  */
 class NadelStopwatch(
     private val ticker: () -> Long = defaultTicker,
