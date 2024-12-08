@@ -6,6 +6,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnab
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
+import graphql.nadel.time.NadelInstrumentationTimer
 import io.kotest.core.spec.style.DescribeSpec
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch

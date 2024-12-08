@@ -6,7 +6,7 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
+import graphql.nadel.time.NadelInstrumentationTimer
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.result.NadelResultTracker
