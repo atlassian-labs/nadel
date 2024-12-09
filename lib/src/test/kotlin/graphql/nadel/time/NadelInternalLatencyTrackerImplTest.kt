@@ -17,16 +17,18 @@ class NadelInternalLatencyTrackerImplTest {
     @Test
     fun `stops time as code is running`() {
         val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
-        val stopTestCountdownLatch = CountDownLatch(1)
-        val stopThreadCountdownLatch = CountDownLatch(1)
+        // Used to tell the test that the external work has started running
+        val externalWorkRunning = CountDownLatch(1)
+        // Used to stop the external work from completing until the test says so
+        val stopExternalWork = CountDownLatch(1)
 
         every { internalLatency.start() } returns Unit
         every { internalLatency.stop() } returns Unit
 
         val thread = Thread {
             tracker.onExternalRun {
-                stopTestCountdownLatch.countDown()
-                stopThreadCountdownLatch.await()
+                externalWorkRunning.countDown()
+                stopExternalWork.await()
             }
         }
 
@@ -34,14 +36,14 @@ class NadelInternalLatencyTrackerImplTest {
         thread.start()
 
         // Then
-        stopTestCountdownLatch.await()
+        externalWorkRunning.await()
         verify(exactly = 1) {
             internalLatency.stop()
         }
         confirmVerified(internalLatency)
 
         // When
-        stopThreadCountdownLatch.countDown()
+        stopExternalWork.countDown()
         thread.join()
 
         // Then
@@ -54,7 +56,9 @@ class NadelInternalLatencyTrackerImplTest {
     @Test
     fun `stops time as supplier is running`() {
         val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
+        // Used to pause the test until the thread runs
         val stopTestCountdownLatch = CountDownLatch(1)
+        // Used to stop the thread until the test says so
         val stopThreadCountdownLatch = CountDownLatch(1)
 
         every { internalLatency.start() } returns Unit
@@ -159,7 +163,9 @@ class NadelInternalLatencyTrackerImplTest {
     @Test
     fun `stops time as supplied future is running`() {
         val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
+        // This is used to pause the supplier until it is counted down
         val stopSupplierCountdownLatch = CountDownLatch(1)
+        // This is used to pause the test until the thread runs
         val stopTestCountdownLatch = CountDownLatch(1)
 
         every { internalLatency.start() } returns Unit
@@ -207,8 +213,10 @@ class NadelInternalLatencyTrackerImplTest {
     @Test
     fun `keeps internal latency paused if there are still external calls pending`() {
         val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
+        // These are counted down when the thread actually starts
         val thread1RunningCountdownLatch = CountDownLatch(1)
         val thread2RunningCountdownLatch = CountDownLatch(1)
+        // These are invoked to finish the threads
         val finishThread1CountdownLatch = CountDownLatch(1)
         val finishThread2CountdownLatch = CountDownLatch(1)
 

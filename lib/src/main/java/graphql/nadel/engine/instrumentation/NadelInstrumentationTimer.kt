@@ -19,6 +19,10 @@ internal class NadelInstrumentationTimer(
         step: Step,
         function: () -> T,
     ): T {
+        if (!instrumentation.isTimingEnabled()) {
+            return function()
+        }
+
         val start = ticker()
 
         val result = try {
@@ -89,6 +93,10 @@ internal class NadelInstrumentationTimer(
         private var exception: Throwable? = null
 
         inline fun <T> time(step: Step, function: () -> T): T {
+            if (!instrumentation.isTimingEnabled()) {
+                return function()
+            }
+
             timings.computeIfAbsent(step) {
                 AtomicReference(Duration.ZERO)
             }

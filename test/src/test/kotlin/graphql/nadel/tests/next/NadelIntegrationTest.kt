@@ -272,6 +272,9 @@ abstract class NadelIntegrationTest(
 
     open fun makeInstrumentation(): NadelInstrumentation {
         return object : NadelInstrumentation {
+            override fun isTimingEnabled(): Boolean {
+                return true
+            }
         }
     }
 

@@ -28,6 +28,12 @@ class ChainedNadelInstrumentation(
 ) : NadelInstrumentation {
     constructor(vararg instrumentations: NadelInstrumentation) : this(instrumentations.toList())
 
+    override fun isTimingEnabled(): Boolean {
+        return instrumentations.any {
+            it.isTimingEnabled()
+        }
+    }
+
     fun getInstrumentations(): List<NadelInstrumentation> {
         return Collections.unmodifiableList(instrumentations)
     }
