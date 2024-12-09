@@ -18,7 +18,7 @@ import graphql.schema.GraphQLUnionType
 
 internal class NadelTypeValidation(
     private val fieldValidation: NadelFieldValidation,
-    private val inputValidation: NadelInputValidation,
+    private val inputValidation: NadelInputObjectValidation,
     private val unionValidation: NadelUnionValidation,
     private val enumValidation: NadelEnumValidation,
     private val interfaceValidation: NadelInterfaceValidation,
@@ -262,15 +262,12 @@ internal class NadelTypeValidation(
         return engineSchema.operationTypes.any { it.name == typeName }
     }
 
+    /**
+     * @return true to visit
+     */
     context(NadelValidationContext)
     private fun visitElement(schemaElement: NadelServiceSchemaElement): Boolean {
-        val schemaElementRef = schemaElement.toRef()
-
-        return if (schemaElementRef in visitedTypes) {
-            false // Already visited
-        } else {
-            visitedTypes.add(schemaElementRef)
-            true
-        }
+        // Returns true if the element was added i.e. haven't visited before
+        return visitedTypes.add(schemaElement.toRef())
     }
 }

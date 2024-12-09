@@ -376,7 +376,7 @@ class NadelVirtualTypeValidationTest {
     }
 
     @Test
-    fun `can reference `() {
+    fun `can use original field output type in virtual type`() {
         // Given
         val fixture = makeFixture(
             overallSchema = mapOf(

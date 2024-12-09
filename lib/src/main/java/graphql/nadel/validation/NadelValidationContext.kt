@@ -71,6 +71,13 @@ fun getHydrationDefinitions(
 
 context(NadelValidationContext)
 fun isRenamed(
+    container: NadelServiceSchemaElement.Type,
+): Boolean {
+    return getRenamedOrNull(container.overall) != null
+}
+
+context(NadelValidationContext)
+fun isRenamed(
     container: GraphQLFieldsContainer,
     field: GraphQLFieldDefinition,
 ): Boolean {
