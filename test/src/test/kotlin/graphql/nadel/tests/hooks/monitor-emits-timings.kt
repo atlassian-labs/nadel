@@ -17,6 +17,7 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
@@ -134,7 +135,7 @@ class `monitor-emits-timings` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder.instrumentation(
             object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 

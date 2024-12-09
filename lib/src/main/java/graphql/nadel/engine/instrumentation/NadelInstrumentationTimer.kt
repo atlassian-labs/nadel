@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 internal class NadelInstrumentationTimer(
+    private val isEnabled: Boolean,
     private val ticker: () -> Duration,
     private val instrumentation: NadelInstrumentation,
     private val userContext: Any?,
@@ -19,7 +20,7 @@ internal class NadelInstrumentationTimer(
         step: Step,
         function: () -> T,
     ): T {
-        if (!instrumentation.isTimingEnabled()) {
+        if (!isEnabled) {
             return function()
         }
 
@@ -93,7 +94,7 @@ internal class NadelInstrumentationTimer(
         private var exception: Throwable? = null
 
         inline fun <T> time(step: Step, function: () -> T): T {
-            if (!instrumentation.isTimingEnabled()) {
+            if (!isEnabled) {
                 return function()
             }
 

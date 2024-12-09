@@ -7,6 +7,7 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
@@ -28,9 +29,9 @@ class ChainedNadelInstrumentation(
 ) : NadelInstrumentation {
     constructor(vararg instrumentations: NadelInstrumentation) : this(instrumentations.toList())
 
-    override fun isTimingEnabled(): Boolean {
+    override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
         return instrumentations.any {
-            it.isTimingEnabled()
+            it.isTimingEnabled(params)
         }
     }
 
