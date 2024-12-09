@@ -102,6 +102,18 @@ class `top-level-field-is-removed` : EngineTestHook {
 }
 
 @UseHook
+class `top-level-field-is-removed-for-a-subscription` : EngineTestHook {
+    override val customTransforms = listOf(RemoveFieldTestTransform())
+    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
+}
+
+@UseHook
+class `top-level-field-is-removed-for-a-subscription-with-namespaced-field` : EngineTestHook {
+    override val customTransforms = listOf(RemoveFieldTestTransform())
+    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
+}
+
+@UseHook
 class `top-level-field-is-removed-hint-is-off` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
     override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { false }
