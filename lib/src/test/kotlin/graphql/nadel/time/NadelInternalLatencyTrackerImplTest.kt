@@ -160,6 +160,7 @@ class NadelInternalLatencyTrackerImplTest {
     fun `stops time as supplied future is running`() {
         val tracker = NadelInternalLatencyTrackerImpl(stopwatch)
         val stopSupplierCountdownLatch = CountDownLatch(1)
+        val stopTestCountdownLatch = CountDownLatch(1)
 
         every { stopwatch.start() } returns Unit
         every { stopwatch.stop() } returns Unit
@@ -170,6 +171,7 @@ class NadelInternalLatencyTrackerImplTest {
         var wrappedFuture: CompletableFuture<String>? = null
         val thread = Thread {
             wrappedFuture = tracker.onExternalFuture {
+                stopTestCountdownLatch.countDown()
                 stopSupplierCountdownLatch.await()
                 rawFuture
             }
@@ -177,6 +179,7 @@ class NadelInternalLatencyTrackerImplTest {
         thread.start()
 
         // Then: stopwatch is started even before supplier completes
+        stopTestCountdownLatch.await()
         verify(exactly = 1) {
             stopwatch.stop()
         }
