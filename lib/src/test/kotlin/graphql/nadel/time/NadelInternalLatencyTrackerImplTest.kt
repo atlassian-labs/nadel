@@ -12,16 +12,16 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class NadelInternalLatencyTrackerImplTest {
-    private val stopwatch = mock<NadelStopwatch>()
+    private val internalLatency = mock<NadelStopwatch>()
 
     @Test
     fun `stops time as code is running`() {
-        val tracker = NadelInternalLatencyTrackerImpl(stopwatch)
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
         val stopTestCountdownLatch = CountDownLatch(1)
         val stopThreadCountdownLatch = CountDownLatch(1)
 
-        every { stopwatch.start() } returns Unit
-        every { stopwatch.stop() } returns Unit
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
 
         val thread = Thread {
             tracker.onExternalRun {
@@ -36,9 +36,9 @@ class NadelInternalLatencyTrackerImplTest {
         // Then
         stopTestCountdownLatch.await()
         verify(exactly = 1) {
-            stopwatch.stop()
+            internalLatency.stop()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
 
         // When
         stopThreadCountdownLatch.countDown()
@@ -46,19 +46,19 @@ class NadelInternalLatencyTrackerImplTest {
 
         // Then
         verify(exactly = 1) {
-            stopwatch.start()
+            internalLatency.start()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
     }
 
     @Test
     fun `stops time as supplier is running`() {
-        val tracker = NadelInternalLatencyTrackerImpl(stopwatch)
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
         val stopTestCountdownLatch = CountDownLatch(1)
         val stopThreadCountdownLatch = CountDownLatch(1)
 
-        every { stopwatch.start() } returns Unit
-        every { stopwatch.stop() } returns Unit
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
 
         var getResult: Any? = null
 
@@ -76,9 +76,9 @@ class NadelInternalLatencyTrackerImplTest {
         // Then
         stopTestCountdownLatch.await()
         verify(exactly = 1) {
-            stopwatch.stop()
+            internalLatency.stop()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
 
         // When
         stopThreadCountdownLatch.countDown()
@@ -87,17 +87,17 @@ class NadelInternalLatencyTrackerImplTest {
         // Then
         assertTrue(getResult == "Hello world")
         verify(exactly = 1) {
-            stopwatch.start()
+            internalLatency.start()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
     }
 
     @Test
     fun `stops time as future is running`() {
-        val tracker = NadelInternalLatencyTrackerImpl(stopwatch)
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
 
-        every { stopwatch.start() } returns Unit
-        every { stopwatch.stop() } returns Unit
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
 
         val rawFuture = CompletableFuture<String>()
 
@@ -106,9 +106,9 @@ class NadelInternalLatencyTrackerImplTest {
 
         // Then
         verify(exactly = 1) {
-            stopwatch.stop()
+            internalLatency.stop()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
         assertTrue(wrappedResult.getNow("nothing") == "nothing")
 
         // When
@@ -117,17 +117,17 @@ class NadelInternalLatencyTrackerImplTest {
         // Then
         assertTrue(wrappedResult.getNow("nothing") == "Hello world")
         verify(exactly = 1) {
-            stopwatch.start()
+            internalLatency.start()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
     }
 
     @Test
     fun `stops time even if future fails`() {
-        val tracker = NadelInternalLatencyTrackerImpl(stopwatch)
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
 
-        every { stopwatch.start() } returns Unit
-        every { stopwatch.stop() } returns Unit
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
 
         val rawFuture = CompletableFuture<String>()
 
@@ -136,9 +136,9 @@ class NadelInternalLatencyTrackerImplTest {
 
         // Then
         verify(exactly = 1) {
-            stopwatch.stop()
+            internalLatency.stop()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
         assertTrue(wrappedResult.getNow("nothing") == "nothing")
 
         // When
@@ -151,19 +151,19 @@ class NadelInternalLatencyTrackerImplTest {
         }
         assertTrue(exception.cause?.message == "Something went wrong")
         verify(exactly = 1) {
-            stopwatch.start()
+            internalLatency.start()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
     }
 
     @Test
     fun `stops time as supplied future is running`() {
-        val tracker = NadelInternalLatencyTrackerImpl(stopwatch)
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
         val stopSupplierCountdownLatch = CountDownLatch(1)
         val stopTestCountdownLatch = CountDownLatch(1)
 
-        every { stopwatch.start() } returns Unit
-        every { stopwatch.stop() } returns Unit
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
 
         val rawFuture = CompletableFuture<String>()
 
@@ -181,9 +181,9 @@ class NadelInternalLatencyTrackerImplTest {
         // Then: stopwatch is started even before supplier completes
         stopTestCountdownLatch.await()
         verify(exactly = 1) {
-            stopwatch.stop()
+            internalLatency.stop()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
         assertTrue(wrappedFuture == null)
 
         // When: supplier completes
@@ -199,8 +199,67 @@ class NadelInternalLatencyTrackerImplTest {
         // Then
         assertTrue(wrappedFuture!!.getNow("nothing") == "Hello world")
         verify(exactly = 1) {
-            stopwatch.start()
+            internalLatency.start()
         }
-        confirmVerified(stopwatch)
+        confirmVerified(internalLatency)
+    }
+
+    @Test
+    fun `keeps internal latency paused if there are still external calls pending`() {
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
+        val thread1RunningCountdownLatch = CountDownLatch(1)
+        val thread2RunningCountdownLatch = CountDownLatch(1)
+        val finishThread1CountdownLatch = CountDownLatch(1)
+        val finishThread2CountdownLatch = CountDownLatch(1)
+
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
+
+        val thread1 = Thread {
+            tracker.onExternalRun {
+                thread1RunningCountdownLatch.countDown()
+                finishThread1CountdownLatch.await()
+            }
+        }
+        val thread2 = Thread {
+            tracker.onExternalRun {
+                thread2RunningCountdownLatch.countDown()
+                finishThread2CountdownLatch.await()
+            }
+        }
+
+        // When: start thread ONE external work
+        thread1.start()
+
+        // Then: internal latency is stopped
+        thread1RunningCountdownLatch.await()
+        verify(exactly = 1) {
+            internalLatency.stop()
+        }
+        confirmVerified(internalLatency)
+
+        // When: start thread TWO external work
+        thread2.start()
+
+        // Then: does not stop already stopped internal latency
+        thread2RunningCountdownLatch.await()
+        confirmVerified(internalLatency)
+
+        // When: thread ONE finishes
+        finishThread1CountdownLatch.countDown()
+        thread1.join()
+
+        // Then: internal latency is not started because there is still pending external work
+        confirmVerified(internalLatency)
+
+        // When: thread TWO finishes
+        finishThread2CountdownLatch.countDown()
+        thread2.join()
+
+        // Then: internal latency is started again as all external work completes
+        verify(exactly=1){
+            internalLatency.start()
+        }
+        confirmVerified(internalLatency)
     }
 }
