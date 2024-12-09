@@ -91,9 +91,9 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                     if (underlyingFields.isNullOrEmpty()) continue
 
                     for (step in steps) {
-                        timer.time(step.resultTransformTimingStep) {
-                            asyncInstructions.add(
-                                async {
+                        asyncInstructions.add(
+                            async {
+                                timer.time(step.resultTransformTimingStep) {
                                     step.transform.getResultInstructions(
                                         executionContext,
                                         serviceExecutionContext,
@@ -106,8 +106,8 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                                         nodes
                                     )
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             }
