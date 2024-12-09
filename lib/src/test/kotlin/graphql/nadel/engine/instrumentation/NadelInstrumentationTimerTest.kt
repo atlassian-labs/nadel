@@ -20,6 +20,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -50,6 +54,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                 }
@@ -77,6 +85,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -114,6 +126,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -157,6 +173,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -192,6 +212,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -230,6 +254,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }
@@ -266,6 +294,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }
@@ -308,6 +340,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }
@@ -344,6 +380,10 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }

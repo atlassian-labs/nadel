@@ -26,7 +26,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParame
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.NadelTransformAdapter
-import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.time.NadelInternalLatencyTrackerImpl
 import graphql.nadel.time.NadelStopwatch
 import graphql.normalized.ExecutableNormalizedField
@@ -135,6 +134,10 @@ class `monitor-emits-timings` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder.instrumentation(
             object : NadelInstrumentation {
+                override fun isTimingEnabled(): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     println(parameters)
 

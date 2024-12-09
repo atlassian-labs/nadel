@@ -28,6 +28,10 @@ import java.util.concurrent.CompletableFuture
  * operations such as fetching data and resolving it into objects.
  */
 interface NadelInstrumentation {
+    fun isTimingEnabled(): Boolean {
+        return false
+    }
+
     /**
      * This will be called just before execution to create an object that is given back to all instrumentation methods
      * to allow them to have per execution request state
