@@ -20,7 +20,7 @@ open class NadelInternalLatencyTrackerImpl(
         return internalLatency.elapsed()
     }
 
-    fun onExternalCall(code: Runnable) {
+    fun onExternalRun(code: Runnable) {
         onExternalCallStart()
 
         try {
@@ -30,7 +30,7 @@ open class NadelInternalLatencyTrackerImpl(
         }
     }
 
-    fun <T : Any> onExternalCall(code: Supplier<T>): T {
+    fun <T : Any> onExternalGet(code: Supplier<T>): T {
         onExternalCallStart()
 
         try {
@@ -40,7 +40,7 @@ open class NadelInternalLatencyTrackerImpl(
         }
     }
 
-    fun <T : Any> onExternalCall(future: CompletableFuture<T>): CompletableFuture<T> {
+    fun <T : Any> onExternalFuture(future: CompletableFuture<T>): CompletableFuture<T> {
         onExternalCallStart()
 
         return future
@@ -49,40 +49,13 @@ open class NadelInternalLatencyTrackerImpl(
             }
     }
 
-    fun <T : Any> onExternalCall(future: Supplier<CompletableFuture<T>>): CompletableFuture<T> {
+    fun <T : Any> onExternalFuture(future: Supplier<CompletableFuture<T>>): CompletableFuture<T> {
         onExternalCallStart()
 
         return future.get()
             .whenComplete { _, _ ->
                 onExternalCallEnd()
             }
-    }
-
-    fun <T, P : Publisher<T>> onExternalCall(publisher: Publisher<T>): Publisher<T> {
-        return Publisher<T> { realSubscriber ->
-            publisher.subscribe(
-                object : Subscriber<T> {
-                    override fun onSubscribe(s: Subscription) {
-                        onExternalCallStart()
-                        realSubscriber.onSubscribe(s)
-                    }
-
-                    override fun onError(t: Throwable?) {
-                        onExternalCallEnd()
-                        realSubscriber.onError(t)
-                    }
-
-                    override fun onComplete() {
-                        onExternalCallEnd()
-                        realSubscriber.onComplete()
-                    }
-
-                    override fun onNext(t: T) {
-                        realSubscriber.onNext(t)
-                    }
-                }
-            )
-        }
     }
 
     protected fun onExternalCallStart() {
