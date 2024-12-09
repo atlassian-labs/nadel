@@ -4,10 +4,13 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
+import java.io.Closeable
 import java.time.Duration
-import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 
 internal class NadelInstrumentationTimer(
+    private val ticker: () -> Duration,
     private val instrumentation: NadelInstrumentation,
     private val userContext: Any?,
     private val instrumentationState: InstrumentationState?,
@@ -16,14 +19,17 @@ internal class NadelInstrumentationTimer(
         step: Step,
         function: () -> T,
     ): T {
-        val start = Instant.now()
-        val startNs = System.nanoTime()
+        val start = ticker()
 
         val result = try {
             function()
         } catch (e: Throwable) {
             try {
-                emit(step, start = start, startNs = startNs, exception = e)
+                emit(
+                    step = step,
+                    internalLatency = ticker() - start,
+                    exception = e,
+                )
             } catch (e2: Throwable) {
                 e2.addSuppressed(e)
                 throw e2
@@ -32,78 +38,81 @@ internal class NadelInstrumentationTimer(
             throw e
         }
 
-        emit(step, start, startNs = startNs)
+        emit(
+            step = step,
+            internalLatency = ticker() - start,
+        )
 
         return result
     }
 
     fun batch(): BatchTimer {
-        return BatchTimer(timer = this)
+        return BatchTimer()
     }
 
     inline fun <T> batch(function: (BatchTimer) -> T): T {
-        return BatchTimer(timer = this).use(function)
+        return BatchTimer().use(function)
     }
 
     @Suppress("NOTHING_TO_INLINE") // inline anyway
-    private inline fun emit(step: Step, start: Instant, startNs: Long, exception: Throwable? = null) {
-        val endNs = System.nanoTime()
-        val duration = Duration.ofNanos(endNs - startNs)
-
-        instrumentation.onStepTimed(newParameters(step, start, duration, exception))
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // inline anyway
-    private inline fun emit(step: Step, duration: Duration, exception: Throwable? = null) {
-        instrumentation.onStepTimed(newParameters(step, null, duration, exception))
+    private inline fun emit(
+        step: Step,
+        internalLatency: Duration,
+        exception: Throwable? = null,
+    ) {
+        instrumentation.onStepTimed(
+            newParameters(
+                step = step,
+                internalLatency = internalLatency,
+                exception = exception,
+            ),
+        )
     }
 
     private fun newParameters(
         step: Step,
-        startedAt: Instant?,
-        duration: Duration,
+        internalLatency: Duration,
         exception: Throwable? = null,
     ): NadelInstrumentationTimingParameters {
         return NadelInstrumentationTimingParameters(
             step = step,
-            startedAt = startedAt,
-            duration = duration,
+            internalLatency = internalLatency,
             exception = exception,
             context = userContext,
             instrumentationState = instrumentationState,
         )
     }
 
-    class BatchTimer(
-        private val timer: NadelInstrumentationTimer,
-        private val timings: MutableMap<Step, Long> = mutableMapOf(),
-    ) {
+    inner class BatchTimer internal constructor() : Closeable {
+        private val timings: MutableMap<Step, AtomicReference<Duration>> = ConcurrentHashMap()
+
         private var exception: Throwable? = null
 
         inline fun <T> time(step: Step, function: () -> T): T {
-            val start = System.nanoTime()
+            timings.computeIfAbsent(step) {
+                AtomicReference(Duration.ZERO)
+            }
+
+            val start = ticker()
+
             return try {
                 function()
             } catch (e: Throwable) {
                 exception = e
                 throw e
             } finally {
-                val end = System.nanoTime()
-                timings[step] = (timings[step] ?: 0) + (end - start)
+                val end = ticker()
+
+                timings[step]!!.getAndUpdate { current ->
+                    // Just get the max
+                    current.coerceAtLeast(end - start)
+                }
             }
         }
 
-        fun submit() {
+        override fun close() {
             timings.forEach { (step, durationNs) ->
-                timer.emit(step, duration = Duration.ofNanos(durationNs), exception)
-            }
-        }
-
-        inline fun <T> use(function: (timer: BatchTimer) -> T): T {
-            try {
-                return function(this)
-            } finally {
-                submit()
+                emit(step, durationNs.get(), exception)
             }
         }
 

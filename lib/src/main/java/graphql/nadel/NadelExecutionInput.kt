@@ -2,9 +2,11 @@ package graphql.nadel
 
 import graphql.GraphQLContext
 import graphql.execution.ExecutionId
+import graphql.nadel.time.NadelInternalLatencyTracker
+import graphql.nadel.time.NadelInternalLatencyTrackerImpl
+import graphql.nadel.time.NadelStopwatch
 import java.util.function.Consumer
 
-@Suppress("DataClassPrivateConstructor") // Don't care
 data class NadelExecutionInput private constructor(
     val query: String,
     val operationName: String?,
@@ -13,7 +15,8 @@ data class NadelExecutionInput private constructor(
     val variables: Map<String, Any?>,
     val extensions: Map<String, Any?>,
     val executionId: ExecutionId?,
-    val nadelExecutionHints: NadelExecutionHints,
+    val executionHints: NadelExecutionHints,
+    val latencyTracker: NadelInternalLatencyTracker,
 ) {
     class Builder {
         private var query: String? = null
@@ -24,6 +27,7 @@ data class NadelExecutionInput private constructor(
         private var extensions: Map<String, Any?> = LinkedHashMap()
         private var executionId: ExecutionId? = null
         private var executionHints = NadelExecutionHints.newHints().build()
+        private var latencyTracker: NadelInternalLatencyTracker? = null
 
         fun query(query: String): Builder {
             this.query = query
@@ -77,6 +81,11 @@ data class NadelExecutionInput private constructor(
             return this
         }
 
+        fun latencyTracker(latencyTracker: NadelInternalLatencyTracker): Builder {
+            this.latencyTracker = latencyTracker
+            return this
+        }
+
         fun build(): NadelExecutionInput {
             return NadelExecutionInput(
                 query = requireNotNull(query) { "Query must be provided" },
@@ -86,7 +95,8 @@ data class NadelExecutionInput private constructor(
                 variables = variables,
                 extensions = extensions,
                 executionId = executionId,
-                nadelExecutionHints = executionHints,
+                executionHints = executionHints,
+                latencyTracker = latencyTracker ?: NadelInternalLatencyTrackerImpl(NadelStopwatch()),
             )
         }
     }
