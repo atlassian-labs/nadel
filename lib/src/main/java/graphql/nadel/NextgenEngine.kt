@@ -5,11 +5,13 @@ import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
+import graphql.execution.UnknownOperationException
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.incremental.DeferPayload
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.language.Document
+import graphql.language.OperationDefinition
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelIncrementalResultSupport
 import graphql.nadel.engine.NadelServiceExecutionContext
@@ -29,6 +31,7 @@ import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
+import graphql.nadel.engine.util.getOperationDefinitionOrNull
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
 import graphql.nadel.engine.util.newGraphQLError
@@ -43,6 +46,7 @@ import graphql.nadel.hooks.createServiceExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep.Companion.DocumentCompilation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
@@ -165,12 +169,10 @@ internal class NextgenEngine(
         latencyTracker: NadelInternalLatencyTracker,
     ): ExecutionResult = supervisorScope {
         try {
-            val timer = NadelInstrumentationTimer(
-                ticker = latencyTracker::getInternalLatency,
-                instrumentation = instrumentation,
-                userContext = executionInput.context,
-                instrumentationState = instrumentationState,
-            )
+            val operationDefinition = queryDocument.getOperationDefinitionOrNull(executionInput.operationName)
+                ?: throw UnknownOperationException("Must provide operation name if query contains multiple operations")
+
+            val timer = makeTimer(operationDefinition, executionInput, latencyTracker, instrumentationState)
 
             val operationParseOptions = baseParseOptions
                 .deferSupport(executionHints.deferSupport.invoke())
@@ -203,6 +205,7 @@ internal class NextgenEngine(
             val beginExecuteContext = instrumentation.beginExecute(
                 operation,
                 queryDocument,
+                operationDefinition,
                 executionInput,
                 engineSchema,
                 instrumentationState,
@@ -539,6 +542,29 @@ internal class NextgenEngine(
             serviceExecutionContext,
             executionPlan,
             field,
+        )
+    }
+
+    private fun makeTimer(
+        operationDefinition: OperationDefinition,
+        executionInput: ExecutionInput,
+        latencyTracker: NadelInternalLatencyTracker,
+        instrumentationState: InstrumentationState?,
+    ): NadelInstrumentationTimer {
+        val isTimerEnabled = instrumentation.isTimingEnabled(
+            params = NadelInstrumentationIsTimingEnabledParameters(
+                instrumentationState = instrumentationState,
+                context = executionInput.context,
+                operationName = operationDefinition.name,
+            ),
+        )
+
+        return NadelInstrumentationTimer(
+            isEnabled = isTimerEnabled,
+            ticker = latencyTracker::getInternalLatency,
+            instrumentation = instrumentation,
+            userContext = executionInput.context,
+            instrumentationState = instrumentationState,
         )
     }
 }

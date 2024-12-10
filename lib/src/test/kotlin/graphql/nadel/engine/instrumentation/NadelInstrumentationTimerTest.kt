@@ -2,6 +2,7 @@ package graphql.nadel.engine.instrumentation
 
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
@@ -20,7 +21,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -30,6 +31,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -54,7 +56,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -63,6 +65,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -85,7 +88,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -95,6 +98,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -126,7 +130,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -139,6 +143,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             val state = object : InstrumentationState {
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = userContext,
@@ -173,7 +178,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -184,6 +189,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -212,7 +218,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -223,6 +229,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -254,7 +261,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -263,6 +270,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -294,7 +302,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -303,6 +311,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -340,7 +349,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -349,6 +358,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
@@ -380,7 +390,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
-                override fun isTimingEnabled(): Boolean {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
                     return true
                 }
 
@@ -389,6 +399,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
+                isEnabled = true,
                 ticker = ticker,
                 instrumentation = instrumentation,
                 userContext = null,
