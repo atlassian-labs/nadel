@@ -43,6 +43,7 @@ import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.NadelUserContext
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -484,7 +485,7 @@ internal suspend fun NadelInstrumentation.beginExecute(
         queryDocument.getOperationDefinitionOrNull(executionInput.operationName)
             ?: error("Unable to find operation. This should not happen. Query document should be valid by now."),
         instrumentationState,
-        executionInput.context,
+        executionInput.context as NadelUserContext?,
     )
 
     return beginExecute(nadelInstrumentationExecuteOperationParameters)

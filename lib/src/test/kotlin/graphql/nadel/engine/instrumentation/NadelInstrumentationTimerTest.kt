@@ -1,6 +1,7 @@
 package graphql.nadel.engine.instrumentation
 
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.nadel.NadelUserContext
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
@@ -135,7 +136,8 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                     instrumentationParams = parameters
                 }
             }
-            val userContext = mapOf("Test" to "Hello World")
+            val userContext = object : NadelUserContext {
+            }
             val state = object : InstrumentationState {
             }
             val timer = NadelInstrumentationTimer(
@@ -158,9 +160,8 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val params = requireNotNull(instrumentationParams)
 
-            val contextFromParams = params.getContext<Map<String, String>>()
+            val contextFromParams = params.getContext<NadelUserContext>()
             assert(contextFromParams === userContext)
-            assert(contextFromParams?.get("Test") == "Hello World")
 
             val stateFromParams = params.getInstrumentationState<InstrumentationState>()
             assert(stateFromParams === state)

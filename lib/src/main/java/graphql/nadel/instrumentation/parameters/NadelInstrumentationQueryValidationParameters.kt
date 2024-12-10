@@ -3,6 +3,7 @@ package graphql.nadel.instrumentation.parameters
 import graphql.ExecutionInput
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
+import graphql.nadel.NadelUserContext
 import graphql.schema.GraphQLSchema
 
 /**
@@ -13,9 +14,9 @@ data class NadelInstrumentationQueryValidationParameters(
     val document: Document,
     val schema: GraphQLSchema,
     private val instrumentationState: InstrumentationState?,
-    private val context: Any?,
-){
-    fun <T> getContext(): T? {
+    private val context: NadelUserContext?,
+) {
+    fun <T : NadelUserContext> getContext(): T? {
         @Suppress("UNCHECKED_CAST") // trust the caller
         return context as T?
     }

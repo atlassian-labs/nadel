@@ -9,7 +9,7 @@ import graphql.normalized.ExecutableNormalizedField
 
 class ServiceExecutionParameters internal constructor(
     val query: Document,
-    val context: Any?,
+    val context: NadelUserContext?,
     val graphQLContext: GraphQLContext,
     val variables: Map<String, Any>,
     val operationDefinition: OperationDefinition,

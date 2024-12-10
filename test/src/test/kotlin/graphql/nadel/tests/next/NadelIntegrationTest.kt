@@ -16,6 +16,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NadelSchemas
+import graphql.nadel.NadelUserContext
 import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.error.NadelGraphQLErrorException
@@ -49,7 +50,7 @@ abstract class NadelIntegrationTest(
     @Language("GraphQL")
     val query: String,
     val variables: JsonMap = emptyMap(),
-    val userContext: Any? = null,
+    val userContext: NadelUserContext? = null,
     val services: List<Service>,
 ) {
     private val executionCapture = TestExecutionCapture()

@@ -10,7 +10,7 @@ import java.util.function.Consumer
 data class NadelExecutionInput private constructor(
     val query: String,
     val operationName: String?,
-    val context: Any?,
+    val context: NadelUserContext?,
     val graphqlContext: GraphQLContext,
     val variables: Map<String, Any?>,
     val extensions: Map<String, Any?>,
@@ -21,7 +21,7 @@ data class NadelExecutionInput private constructor(
     class Builder {
         private var query: String? = null
         private var operationName: String? = null
-        private var context: Any? = null
+        private var context: NadelUserContext? = null
         private var graphqlContextBuilder: GraphQLContext.Builder = GraphQLContext.newContext()
         private var variables: Map<String, Any?> = LinkedHashMap()
         private var extensions: Map<String, Any?> = LinkedHashMap()
@@ -39,7 +39,7 @@ data class NadelExecutionInput private constructor(
             return this
         }
 
-        fun context(context: Any?): Builder {
+        fun context(context: NadelUserContext?): Builder {
             this.context = context
             return this
         }

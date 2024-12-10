@@ -1,6 +1,7 @@
 package graphql.nadel.engine.instrumentation
 
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.nadel.NadelUserContext
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class NadelInstrumentationTimer(
     private val ticker: () -> Duration,
     private val instrumentation: NadelInstrumentation,
-    private val userContext: Any?,
+    private val userContext: NadelUserContext?,
     private val instrumentationState: InstrumentationState?,
 ) {
     inline fun <T> time(

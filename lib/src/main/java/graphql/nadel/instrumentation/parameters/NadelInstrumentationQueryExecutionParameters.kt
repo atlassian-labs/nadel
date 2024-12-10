@@ -2,6 +2,7 @@ package graphql.nadel.instrumentation.parameters
 
 import graphql.ExecutionInput
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.nadel.NadelUserContext
 import graphql.schema.GraphQLSchema
 
 /**
@@ -11,7 +12,7 @@ data class NadelInstrumentationQueryExecutionParameters(
     val executionInput: ExecutionInput,
     val query: String,
     val operation: String?,
-    private val context: Any?,
+    private val context: NadelUserContext?,
     val variables: Map<String?, Any?>,
     private val instrumentationState: InstrumentationState?,
     val schema: GraphQLSchema,
@@ -24,13 +25,13 @@ data class NadelInstrumentationQueryExecutionParameters(
         executionInput,
         query = executionInput.query,
         operation = executionInput.operationName,
-        context = executionInput.context,
+        context = executionInput.context as NadelUserContext,
         variables = executionInput.variables,
         instrumentationState,
         schema,
     )
 
-    fun <T> getContext(): T? {
+    fun <T : NadelUserContext> getContext(): T? {
         @Suppress("UNCHECKED_CAST") // trust the caller
         return context as T?
     }

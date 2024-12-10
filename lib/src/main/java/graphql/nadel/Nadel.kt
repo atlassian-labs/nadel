@@ -77,7 +77,9 @@ class Nadel private constructor(
             NadelInstrumentationCreateStateParameters(querySchema, executionInput),
         )
         val instrumentationParameters = NadelInstrumentationQueryExecutionParameters(
-            executionInput, querySchema, instrumentationState
+            executionInput = executionInput,
+            schema = querySchema,
+            instrumentationState = instrumentationState
         )
 
         return try {
@@ -133,12 +135,14 @@ class Nadel private constructor(
                     CompletableFuture.completedFuture(
                         ExecutionResultImpl(result.errors),
                     )
-                } else engine.execute(
-                    executionInputRef.get()!!,
-                    result.document,
-                    instrumentationState,
-                    nadelExecutionParams,
-                )
+                } else {
+                    engine.execute(
+                        executionInputRef.get()!!,
+                        result.document,
+                        instrumentationState,
+                        nadelExecutionParams,
+                    )
+                }
             }
     }
 
@@ -224,7 +228,7 @@ class Nadel private constructor(
                 document = document,
                 schema = graphQLSchema,
                 instrumentationState = instrumentationState,
-                context = executionInput.context,
+                context = executionInput.context as NadelUserContext,
             ),
         )
         val validator = Validator()
@@ -250,8 +254,6 @@ class Nadel private constructor(
         private var blueprintHint = NadelValidationBlueprintHint { false }
 
         private var nadelValidation: NadelSchemaValidation? = null
-
-        private var latencyTracker: NadelInternalLatencyTracker? = null
 
         fun schemas(schemas: NadelSchemas): Builder {
             this.schemas = schemas

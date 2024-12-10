@@ -4,6 +4,7 @@ import graphql.ExecutionInput
 import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.NadelUserContext
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
@@ -34,9 +35,9 @@ data class NadelExecutionContext internal constructor(
     internal val deferSupport: NadelIncrementalResultSupport
         get() = incrementalResultSupport
 
-    val userContext: Any?
+    val userContext: NadelUserContext?
         get() {
-            return executionInput.context
+            return executionInput.context as NadelUserContext?
         }
 
     val graphQLContext: GraphQLContext

@@ -1,6 +1,7 @@
 package graphql.nadel.instrumentation.parameters
 
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.nadel.NadelUserContext
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
@@ -16,10 +17,10 @@ data class NadelInstrumentationTimingParameters(
      * If an exception occurred during the timing of the step, then it is passed in here.
      */
     val exception: Throwable?,
-    private val context: Any?,
+    private val context: NadelUserContext?,
     private val instrumentationState: InstrumentationState?,
 ) {
-    fun <T> getContext(): T? {
+    fun <T : NadelUserContext> getContext(): T? {
         @Suppress("UNCHECKED_CAST") // trust the caller
         return context as T
     }

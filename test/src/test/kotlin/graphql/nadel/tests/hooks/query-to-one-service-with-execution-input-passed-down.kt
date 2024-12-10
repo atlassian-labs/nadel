@@ -2,13 +2,13 @@ package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
+import graphql.nadel.NadelUserContext
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.serviceExecutionFactory
-import strikt.api.expectThat
-import strikt.assertions.isEqualTo
+import kotlin.test.assertTrue
 
 @UseHook
 class `query-to-one-service-with-execution-input-passed-down` : EngineTestHook {
@@ -21,10 +21,7 @@ class `query-to-one-service-with-execution-input-passed-down` : EngineTestHook {
                     val default = serviceExecutionFactory.getServiceExecution(serviceName)
 
                     return ServiceExecution { params ->
-                        expectThat(params)
-                            .get { context }
-                            .isEqualTo("contextObj")
-
+                        assertTrue(params.context is TestContext)
                         default.execute(params)
                     }
                 }
@@ -35,6 +32,8 @@ class `query-to-one-service-with-execution-input-passed-down` : EngineTestHook {
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
         return builder
-            .context("contextObj")
+            .context(TestContext())
     }
+
+    class TestContext : NadelUserContext
 }

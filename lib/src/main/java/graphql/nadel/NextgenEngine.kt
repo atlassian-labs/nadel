@@ -168,7 +168,7 @@ internal class NextgenEngine(
             val timer = NadelInstrumentationTimer(
                 ticker = latencyTracker::getInternalLatency,
                 instrumentation = instrumentation,
-                userContext = executionInput.context,
+                userContext = executionInput.context as NadelUserContext?,
                 instrumentationState = instrumentationState,
             )
 
@@ -406,7 +406,7 @@ internal class NextgenEngine(
 
         val serviceExecParams = ServiceExecutionParameters(
             query = compileResult.document,
-            context = executionInput.context,
+            context = executionInput.context as NadelUserContext?,
             graphQLContext = executionInput.graphQLContext,
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
             variables = compileResult.variables,
