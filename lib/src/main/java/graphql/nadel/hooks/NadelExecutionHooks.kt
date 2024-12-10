@@ -1,6 +1,5 @@
 package graphql.nadel.hooks
 
-import graphql.language.ScalarValue
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
@@ -8,14 +7,12 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
 import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.GraphQLInputValueDefinition
 import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 
@@ -23,21 +20,6 @@ import java.util.concurrent.CompletableFuture
  * These hooks allow you to change the way service execution happens
  */
 interface NadelExecutionHooks {
-    /**
-     * Creates one context per [Service] per request.
-     *
-     * So even if a request has multiple calls to one [Service] we will reuse the same context.
-     *
-     * This is deprecated now, please use [createServiceExecutionContext] instead.
-     *
-     * @param params the parameters to this call
-     * @return an async context object of your choosing
-     */
-    @Deprecated("Use createServiceExecutionContext instead")
-    fun createServiceContext(params: CreateServiceContextParams): CompletableFuture<Any?> {
-        return CompletableFuture.completedFuture(null)
-    }
-
     fun createServiceExecutionContext(params: NadelCreateServiceExecutionContextParams): CompletableFuture<NadelServiceExecutionContext> {
         return CompletableFuture.completedFuture(NadelServiceExecutionContext.None)
     }

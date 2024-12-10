@@ -4,10 +4,8 @@ import graphql.ExecutionInput
 import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
-import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.result.NadelResultTracker
 import graphql.normalized.ExecutableNormalizedOperation
@@ -43,16 +41,4 @@ data class NadelExecutionContext internal constructor(
         get() {
             return executionInput.graphQLContext!!
         }
-
-    /**
-     * Get the service context for a given service
-     */
-    @Deprecated("Replaced with NadelServiceExecutionContext")
-    fun getContextForService(service: Service): CompletableFuture<Any?> {
-        return serviceContexts.getOrPut(service.name) {
-            hooks.createServiceContext(
-                CreateServiceContextParams(service)
-            )
-        }
-    }
 }
