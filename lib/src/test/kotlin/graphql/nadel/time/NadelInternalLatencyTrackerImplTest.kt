@@ -1,5 +1,6 @@
 package graphql.nadel.time
 
+import graphql.Assert.assertFalse
 import graphql.nadel.test.mock
 import io.mockk.confirmVerified
 import io.mockk.every
@@ -51,6 +52,8 @@ class NadelInternalLatencyTrackerImplTest {
             internalLatency.start()
         }
         confirmVerified(internalLatency)
+
+        assertTrue(tracker.noOutstandingCalls())
     }
 
     @Test
@@ -94,6 +97,8 @@ class NadelInternalLatencyTrackerImplTest {
             internalLatency.start()
         }
         confirmVerified(internalLatency)
+
+        assertTrue(tracker.noOutstandingCalls())
     }
 
     @Test
@@ -124,6 +129,8 @@ class NadelInternalLatencyTrackerImplTest {
             internalLatency.start()
         }
         confirmVerified(internalLatency)
+
+        assertTrue(tracker.noOutstandingCalls())
     }
 
     @Test
@@ -158,6 +165,8 @@ class NadelInternalLatencyTrackerImplTest {
             internalLatency.start()
         }
         confirmVerified(internalLatency)
+
+        assertTrue(tracker.noOutstandingCalls())
     }
 
     @Test
@@ -208,6 +217,8 @@ class NadelInternalLatencyTrackerImplTest {
             internalLatency.start()
         }
         confirmVerified(internalLatency)
+
+        assertTrue(tracker.noOutstandingCalls())
     }
 
     @Test
@@ -265,9 +276,63 @@ class NadelInternalLatencyTrackerImplTest {
         thread2.join()
 
         // Then: internal latency is started again as all external work completes
-        verify(exactly=1){
+        verify(exactly = 1) {
             internalLatency.start()
         }
         confirmVerified(internalLatency)
+
+        assertTrue(tracker.noOutstandingCalls())
+    }
+
+    @Test
+    fun `cannot close external call more than once`() {
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
+
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
+
+        val call1 = tracker.newExternalCall()
+        val call2 = tracker.newExternalCall()
+
+        // When: close call 1 multiple times
+        call1.close()
+        call1.close()
+        call1.close()
+
+        // Then: does not resume internal latency
+        assertFalse(tracker.noOutstandingCalls())
+        verify(exactly = 1) {
+            internalLatency.stop()
+        }
+        confirmVerified(internalLatency)
+
+        // When: close call 2
+        call2.close()
+
+        // Then: it resumes internal latency as there are more no outstanding calls
+        assertTrue(tracker.noOutstandingCalls())
+        verify(exactly = 1) {
+            internalLatency.start()
+        }
+        confirmVerified(internalLatency)
+
+        // When: open another external call
+        val call3 = tracker.newExternalCall()
+
+        // Then: has outstanding call
+        assertFalse(tracker.noOutstandingCalls())
+
+        // When: closing already closed calls
+        call1.close()
+        call2.close()
+
+        // Then: still has outstanding call 3
+        assertFalse(tracker.noOutstandingCalls())
+
+        // When: close call 3
+        call3.close()
+
+        // Then: all calls are closed
+        assertTrue(tracker.noOutstandingCalls())
     }
 }
