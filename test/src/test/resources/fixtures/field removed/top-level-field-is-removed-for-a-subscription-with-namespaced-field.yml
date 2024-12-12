@@ -45,16 +45,16 @@ serviceCalls: [ ]
 # language=JSON
 response: |-
   {
-    "errors": [
-      {
-        "locations": [],
-        "message": "null",
-        "extensions": {
-          "classification": "ValidationError"
-        }
-      }
-    ],
     "data": {
       "commentsApi": null
-    }
+    },
+    "errors": [
+      {
+        "message": "field `CommentsApi.onCommentUpdated` has been removed by RemoveFieldTestTransform",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ]
   }
