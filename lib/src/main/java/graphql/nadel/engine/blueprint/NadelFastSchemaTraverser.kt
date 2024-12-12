@@ -17,10 +17,15 @@ internal class NadelSchemaTraverser {
     ) {
         val queue: MutableList<NadelSchemaTraverserElement> = roots
             .mapNotNullTo(mutableListOf()) { typeName ->
-                val type = schema.typeMap[typeName] ?: schema.getDirective(typeName)
+                val type = schema.typeMap[typeName]
                 // Types can be deleted by transformer, so they may not exist in end schema
                 if (type == null) {
-                    null
+                    val directive = schema.getDirective(typeName)
+                    if (directive == null) {
+                        null
+                    } else {
+                        NadelSchemaTraverserElement.from(directive)
+                    }
                 } else {
                     NadelSchemaTraverserElement.from(type)
                 }

@@ -1,4 +1,4 @@
-package graphql.nadel
+package graphql.nadel.archunit
 
 import com.tngtech.archunit.base.DescribedPredicate
 import com.tngtech.archunit.core.domain.JavaAccess

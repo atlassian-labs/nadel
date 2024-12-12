@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration.statics
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationRemainingArgumentsTest>()
+    graphql.nadel.tests.next.update<StaticHydrationNestedErrorTest>()
 }
 
 /**
@@ -19,55 +19,24 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
+public class StaticHydrationNestedErrorTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
-                | query (${'$'}v0: JSON) {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?", remainingArgs: ${'$'}v0) {
+                | {
+                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
                 |     __typename
                 |     edges {
+                |       __typename
                 |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
+                |       cursor
                 |     }
-                |   }
-                | }
-                """.trimMargin(),
-                variables = """
-                | {
-                |   "v0": {
-                |     "orgId": "turtles",
-                |     "teamId": null
-                |   }
-                | }
-                """.trimMargin(),
-                result = """
-                | {
-                |   "data": {
-                |     "graphStore_query": {
-                |       "__typename": "GraphStoreQueryConnection",
-                |       "edges": [
-                |         {
-                |           "batch_hydration__node__nodeId": "ari:cloud:jira::issue/1",
-                |           "__typename__batch_hydration__node": "GraphStoreQueryEdge"
-                |         }
-                |       ]
+                |     pageInfo {
+                |       __typename
+                |       hasNextPage
                 |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "jira",
-                query = """
-                | {
-                |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
-                |     __typename
-                |     key
-                |     batch_hydration__node__id: id
                 |   }
                 | }
                 """.trimMargin(),
@@ -75,13 +44,21 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 result = """
                 | {
                 |   "data": {
-                |     "issuesByIds": [
-                |       {
-                |         "__typename": "JiraIssue",
-                |         "key": "GQLGW-1",
-                |         "batch_hydration__node__id": "ari:cloud:jira::issue/1"
+                |     "graphStore_query": {
+                |       "__typename": "GraphStoreQueryConnection",
+                |       "edges": [
+                |         {
+                |           "__typename": "GraphStoreQueryEdge",
+                |           "batch_hydration__node__nodeId": "ari:cloud:jira::issue/1",
+                |           "__typename__batch_hydration__node": "GraphStoreQueryEdge",
+                |           "cursor": "1"
+                |         }
+                |       ],
+                |       "pageInfo": {
+                |         "__typename": "PageInfo",
+                |         "hasNextPage": true
                 |       }
-                |     ]
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -93,17 +70,29 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
     /**
      * ```json
      * {
+     *   "errors": [
+     *     {
+     *       "message": "BYE",
+     *       "locations": [],
+     *       "extensions": {
+     *         "classification": "Bye"
+     *       }
+     *     }
+     *   ],
      *   "data": {
      *     "businessReport_findRecentWorkByTeam": {
      *       "__typename": "WorkConnection",
      *       "edges": [
      *         {
-     *           "node": {
-     *             "__typename": "JiraIssue",
-     *             "key": "GQLGW-1"
-     *           }
+     *           "__typename": "WorkEdge",
+     *           "cursor": "1",
+     *           "node": null
      *         }
-     *       ]
+     *       ],
+     *       "pageInfo": {
+     *         "__typename": "PageInfo",
+     *         "hasNextPage": true
+     *       }
      *     }
      *   }
      * }
@@ -112,17 +101,29 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
+            |   "errors": [
+            |     {
+            |       "message": "BYE",
+            |       "locations": [],
+            |       "extensions": {
+            |         "classification": "Bye"
+            |       }
+            |     }
+            |   ],
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
             |       "__typename": "WorkConnection",
             |       "edges": [
             |         {
-            |           "node": {
-            |             "__typename": "JiraIssue",
-            |             "key": "GQLGW-1"
-            |           }
+            |           "__typename": "WorkEdge",
+            |           "cursor": "1",
+            |           "node": null
             |         }
-            |       ]
+            |       ],
+            |       "pageInfo": {
+            |         "__typename": "PageInfo",
+            |         "hasNextPage": true
+            |       }
             |     }
             |   }
             | }

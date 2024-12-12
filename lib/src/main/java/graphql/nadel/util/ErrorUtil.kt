@@ -11,10 +11,11 @@ typealias GraphQLErrorBuilder = GraphqlErrorBuilder<*>
  * A helper class that can to deal with graphql errors
  */
 internal object ErrorUtil {
-    fun createGraphQLErrorsFromRawErrors(errors: List<Map<String, Any?>>): List<GraphQLError> {
-        return errors.map {
-            createGraphQLErrorFromRawError(it)
-        }
+    fun createGraphQLErrorsFromRawErrors(errors: List<Map<String, Any?>?>): List<GraphQLError> {
+        return errors
+            .mapNotNull {
+                it?.let(::createGraphQLErrorFromRawError)
+            }
     }
 
     fun createGraphQLErrorFromRawError(rawError: Map<String, Any?>): GraphQLError {
