@@ -3,7 +3,9 @@ package graphql.nadel.time
 import java.time.Duration
 
 /**
- * Timings are submitted into this as sorted by end time.
+ * This calculates the time elapsed while considering that times can overlap.
+ *
+ * Timings are submitted to [submit] as soon as they finish i.e. earliest end first
  */
 internal class NadelParallelElapsedCalculator {
     /**

@@ -88,6 +88,7 @@ internal class NadelInstrumentationTimer(
     }
 
     inner class BatchTimer internal constructor() : Closeable {
+        private val timings: MutableMap<Step, NadelParallelElapsedCalculator> = ConcurrentHashMap()
 
         private var exception: Throwable? = null
 
