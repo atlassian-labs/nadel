@@ -1,7 +1,9 @@
 package graphql.nadel.time
 
+import java.io.Closeable
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
@@ -17,53 +19,67 @@ open class NadelInternalLatencyTrackerImpl(
         return internalLatency.elapsed()
     }
 
-    fun onExternalRun(code: Runnable) {
-        onExternalCallStart()
+    fun newExternalCall(): Closeable {
+        return ExternalCall()
+    }
 
-        try {
+    fun onExternalRun(code: Runnable) {
+        newExternalCall().use {
             code.run()
-        } finally {
-            onExternalCallEnd()
         }
     }
 
     fun <T : Any> onExternalGet(code: Supplier<T>): T {
-        onExternalCallStart()
-
-        try {
-            return code.get()
-        } finally {
-            onExternalCallEnd()
+        return newExternalCall().use {
+            code.get()
         }
     }
 
     fun <T : Any> onExternalFuture(future: CompletableFuture<T>): CompletableFuture<T> {
-        onExternalCallStart()
+        val call = newExternalCall()
 
         return future
             .whenComplete { _, _ ->
-                onExternalCallEnd()
+                call.close()
             }
     }
 
     fun <T : Any> onExternalFuture(future: Supplier<CompletableFuture<T>>): CompletableFuture<T> {
-        onExternalCallStart()
+        val call = newExternalCall()
 
         return future.get()
             .whenComplete { _, _ ->
-                onExternalCallEnd()
+                call.close()
             }
     }
 
-    protected fun onExternalCallStart() {
-        if (outstandingExternalLatencyCount.getAndIncrement() == 0) {
-            internalLatency.stop()
-        }
+    /**
+     * Used to ensure that at the end of a request, there are no outstanding external calls.
+     *
+     * @return true if all external calls were closed
+     */
+    fun noOutstandingCalls(): Boolean {
+        return outstandingExternalLatencyCount.get() == 0
     }
 
-    protected fun onExternalCallEnd() {
-        if (outstandingExternalLatencyCount.decrementAndGet() == 0) {
-            internalLatency.start()
+    private inner class ExternalCall : Closeable {
+        /**
+         * Used to ensure the call does not decrement the counter more than once.
+         */
+        private val closed = AtomicBoolean(false)
+
+        init {
+            if (outstandingExternalLatencyCount.getAndIncrement() == 0) {
+                internalLatency.stop()
+            }
+        }
+
+        override fun close() {
+            if (!closed.getAndSet(true)) {
+                if (outstandingExternalLatencyCount.decrementAndGet() == 0) {
+                    internalLatency.start()
+                }
+            }
         }
     }
 }
