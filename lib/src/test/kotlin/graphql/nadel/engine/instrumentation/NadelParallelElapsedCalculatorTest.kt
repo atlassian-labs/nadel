@@ -198,26 +198,32 @@ class NadelParallelElapsedCalculatorTest {
     fun doTest(expectedResult: Long, vararg calls: Pair<String, Long>) {
         val calculator = NadelParallelElapsedCalculator()
 
-        val timings = calls
+        // Convert (start, duration) to Instant
+        val timings: List<Pair<Instant, Instant>> = calls
             .map { (time, duration) ->
                 val start = Instant.parse(time)
                 val end = start + Duration.ofMillis(duration)
                 start to end
             }
+
+        // Finds the min time to figure out where the nanos should be offset from
         val min = timings.minOf { (start) ->
             start
         }
+
+        // Convert to NS
         val timingsNs = timings
             .map { (start, end) ->
                 val startNs = start - min
                 val endNs = end - min
                 startNs to endNs
             }
+
+        timingsNs
+            // Timings need to be submitted into calculator as they finish i.e. earliest first
             .sortedBy { (_, end) ->
                 end
             }
-
-        timingsNs
             .forEach { (start, end) ->
                 calculator.submit(start, end)
             }
