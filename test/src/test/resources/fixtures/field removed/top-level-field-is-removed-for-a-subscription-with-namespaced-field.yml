@@ -1,4 +1,4 @@
-name: "top-level-field-is-removed-hint-is-off"
+name: "top level field is removed for a subscription with namespaced field"
 enabled: true
 # language=GraphQL
 overallSchema:
@@ -6,6 +6,12 @@ overallSchema:
     directive @toBeDeleted on FIELD_DEFINITION
     type Query {
       commentById(id: ID): Comment @toBeDeleted
+    }
+    type Subscription {
+      commentsApi: CommentsApi @namespaced
+    }
+    type CommentsApi {
+      onCommentUpdated(id: ID): Comment @toBeDeleted
     }
     type Comment {
       id: ID
@@ -16,43 +22,35 @@ underlyingSchema:
     type Query {
       commentById(id: ID): Comment
     }
+    type Subscription {
+      commentsApi: CommentsApi
+    }
+    type CommentsApi {
+      onCommentUpdated(id: ID): Comment
+    }
     type Comment {
       id: ID
     }
 # language=GraphQL
 query: |
-  query {
-    commentById(id: "C1") {
-      id
+  subscription {
+    commentsApi {
+      onCommentUpdated(id: "C1") {
+        id
+      }
     }
   }
 variables: { }
-serviceCalls:
-  - serviceName: "CommentService"
-    request:
-      # language=GraphQL
-      query: |
-        {
-          uuid_typename: __typename
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "uuid_typename": "Query"
-        },
-        "extensions": {}
-      }
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {
     "data": {
-      "commentById": null
+      "commentsApi": null
     },
     "errors": [
       {
-        "message": "field `Query.commentById` has been removed by RemoveFieldTestTransform",
+        "message": "field `CommentsApi.onCommentUpdated` has been removed by RemoveFieldTestTransform",
         "locations": [],
         "extensions": {
           "classification": "DataFetchingException"

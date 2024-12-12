@@ -31,16 +31,16 @@ serviceCalls: [ ]
 # language=JSON
 response: |-
   {
-    "errors": [
-      {
-        "locations": [],
-        "message": "null",
-        "extensions": {
-          "classification": "ValidationError"
-        }
-      }
-    ],
     "data": {
       "commentById": null
-    }
+    },
+    "errors": [
+      {
+        "message": "field `Query.commentById` has been removed by RemoveFieldTestTransform",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ]
   }

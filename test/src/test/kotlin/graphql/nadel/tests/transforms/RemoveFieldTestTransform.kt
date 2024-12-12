@@ -1,5 +1,6 @@
 package graphql.nadel.tests.transforms
 
+import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.introspection.Introspection
 import graphql.nadel.Service
@@ -15,11 +16,10 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.util.newGraphQLError
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLObjectType
-import graphql.validation.ValidationError.newValidationError
-import graphql.validation.ValidationErrorType
 
 class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
     override suspend fun isApplicable(
@@ -40,7 +40,10 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
             ?: return null
 
         if (objectType.getField(overallField.name)?.getDirective("toBeDeleted") != null) {
-            return newValidationError().validationErrorType(ValidationErrorType.WrongType).build()
+            return newGraphQLError(
+                "field `${objectType.name}.${overallField.name}` has been removed by RemoveFieldTestTransform",
+                ErrorType.DataFetchingException,
+            )
         }
 
         return null

@@ -91,19 +91,19 @@ serviceCalls:
 # language=JSON
 response: |-
   {
-    "errors": [
-      {
-        "locations": [],
-        "message": "An error has occurred",
-        "extensions": {
-          "classification": "ValidationError"
-        }
-      }
-    ],
     "data": {
       "issueById": {
         "id": "C1",
         "comment": null
       }
-    }
+    },
+    "errors": [
+      {
+        "message": "field `CommentApi.commentById` has been removed by RemoveFieldTestTransform",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ]
   }
