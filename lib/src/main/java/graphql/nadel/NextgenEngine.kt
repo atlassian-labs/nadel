@@ -414,7 +414,6 @@ internal class NextgenEngine(
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
             variables = compileResult.variables,
             operationDefinition = compileResult.document.definitions.singleOfType(),
-            serviceContext = executionContext.getContextForService(service).await(),
             serviceExecutionContext = serviceExecutionContext,
             hydrationDetails = executionHydrationDetails,
             // Prefer non __typename field first, otherwise we just get first
