@@ -94,7 +94,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             .filter { objectTypeName ->
                 isTypeOwnedByService(
                     objectTypeName,
-                    executionContext,
                     service,
                     executionBlueprint,
                 )
@@ -119,7 +118,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
 
     private fun isTypeOwnedByService(
         objectTypeName: String,
-        executionContext: NadelExecutionContext,
         service: Service,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): Boolean {
@@ -133,7 +131,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         // concat 1 giant set and then check
         return objectTypeName in typeNamesOwnedByService
             || objectTypeName in underlyingTypeNamesOwnedByService
-            || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService)
     }
 
     override suspend fun transformField(
