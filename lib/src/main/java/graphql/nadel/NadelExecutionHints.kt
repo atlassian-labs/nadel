@@ -3,7 +3,6 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
-import graphql.nadel.hints.NadelServiceTypenameShadowingHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
