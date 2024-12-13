@@ -17,7 +17,6 @@ data class NadelExecutionHints(
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
     val virtualTypeSupport: NadelVirtualTypeSupportHint,
-    val serviceTypenameShadowing: NadelServiceTypenameShadowingHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -37,7 +36,6 @@ data class NadelExecutionHints(
         private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
-        private var serviceTypenameShadowing = NadelServiceTypenameShadowingHint.default
 
         constructor()
 
@@ -83,11 +81,6 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun serviceTypenameShadowing(flag: NadelServiceTypenameShadowingHint): Builder {
-            serviceTypenameShadowing = flag
-            return this
-        }
-
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -97,7 +90,6 @@ data class NadelExecutionHints(
                 sharedTypeRenames,
                 shortCircuitEmptyQuery,
                 virtualTypeSupport,
-                serviceTypenameShadowing,
             )
         }
     }
