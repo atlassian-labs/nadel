@@ -100,7 +100,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             .all { objectTypeName ->
                 objectTypeName in typeNamesOwnedByService
                     || objectTypeName in underlyingTypeNamesOwnedByService
-                    || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService)
             }
 
         if (noForeignTypes) {
@@ -110,7 +109,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames.filter { objectTypeName ->
             objectTypeName in typeNamesOwnedByService
                 || objectTypeName in underlyingTypeNamesOwnedByService
-                || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService)
         }
 
         return State(
