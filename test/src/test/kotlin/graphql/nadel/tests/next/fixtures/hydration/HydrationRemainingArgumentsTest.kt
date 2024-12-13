@@ -171,11 +171,6 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
         ),
     ),
 ) {
-    override fun makeNadel(): Nadel.Builder {
-        return super.makeNadel()
-            .blueprintHint { true }
-    }
-
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .virtualTypeSupport { true }

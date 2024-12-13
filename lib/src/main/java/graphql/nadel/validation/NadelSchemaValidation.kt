@@ -7,7 +7,6 @@ import graphql.nadel.Service
 import graphql.nadel.definition.hydration.hasHydratedDefinition
 import graphql.nadel.definition.hydration.hasIdHydratedDefinition
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintImpl
 import graphql.nadel.engine.blueprint.NadelTypeRenameInstructions
 import graphql.nadel.engine.blueprint.NadelUnderlyingExecutionBlueprint
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -143,7 +142,7 @@ class NadelSchemaValidation internal constructor(
         val typenamesForService = all
             .filterIsInstance<NadelReachableServiceTypesResult>()
 
-        return NadelOverallExecutionBlueprintImpl(
+        return NadelOverallExecutionBlueprint(
             engineSchema = schemas.engineSchema,
             fieldInstructions = fieldInstructions
                 .groupBy(keySelector = { it.fieldInstruction.location }, valueTransform = { it.fieldInstruction }),

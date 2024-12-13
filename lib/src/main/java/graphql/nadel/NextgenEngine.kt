@@ -16,9 +16,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelIncrementalResultSupport
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
-import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintMigrator
 import graphql.nadel.engine.document.DocumentPredicates
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
@@ -40,7 +38,6 @@ import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.hints.NadelValidationBlueprintHint
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.createServiceExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -55,7 +52,6 @@ import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.util.OperationNameUtil
-import graphql.nadel.util.getLogger
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
@@ -73,7 +69,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
@@ -92,27 +87,13 @@ internal class NextgenEngine(
     services: List<Service>,
     transforms: List<NadelTransform<out Any>>,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
-    blueprintHint: NadelValidationBlueprintHint,
     nadelValidation: NadelSchemaValidation,
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = services.strictAssociateBy { it.name }
     private val engineSchemaIntrospectionService = IntrospectionService(engineSchema, introspectionRunnerFactory)
-    private val overallExecutionBlueprint = NadelOverallExecutionBlueprintMigrator(
-        hint = blueprintHint,
-        old = NadelExecutionBlueprintFactory.create(
-            engineSchema = engineSchema,
-            services = services,
-        ),
-        new = lazy {
-            try {
-                nadelValidation.validateAndGenerateBlueprint(NadelSchemas(engineSchema, services))
-            } catch (e: Exception) {
-                getLogger<NextgenEngine>().error("Unable to create validated blueprint", e)
-                null
-            }
-        },
-    )
+    private val overallExecutionBlueprint = nadelValidation
+        .validateAndGenerateBlueprint(NadelSchemas(engineSchema, services))
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
