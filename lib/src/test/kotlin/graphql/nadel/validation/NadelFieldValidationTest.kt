@@ -701,5 +701,30 @@ class NadelFieldValidationTest : DescribeSpec({
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
             assert(error.message == "Must have at least one field without @hidden on type Query")
         }
+
+        it("passes if schema contains at least one field as not hidden") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                type Query {
+                    echo: String @hidden
+                    hello: String
+                   
+                }
+            """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                type Query {
+                    echo: String
+                    hello: String
+                }
+            """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isEmpty())
+        }
     }
 })
