@@ -4,6 +4,7 @@ import graphql.ExecutionResult
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -31,7 +32,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
-                    service: Service,
+                    service: ServiceLike,
                     overallField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Unit? {
@@ -44,7 +45,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
+                    service: ServiceLike,
                     field: ExecutableNormalizedField,
                     state: Unit,
                 ): NadelTransformFieldResult {
@@ -56,7 +57,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     executionContext: NadelExecutionContext,
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
+                    service: ServiceLike,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,

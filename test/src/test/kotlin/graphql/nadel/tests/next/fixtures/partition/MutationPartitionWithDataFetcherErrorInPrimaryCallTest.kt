@@ -1,10 +1,13 @@
 package graphql.nadel.tests.next.fixtures.partition
 
 import graphql.nadel.Nadel
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.fixtures.partition.hooks.RoutingBasedPartitionTransformHook
+import graphql.normalized.ExecutableNormalizedField
 
 open class MutationPartitionWithDataFetcherErrorInPrimaryCallTest : NadelIntegrationTest(
     query = """
@@ -117,6 +120,13 @@ type LinkThingsPayload {
         return super.makeNadel()
             .executionHooks(
                 object : NadelExecutionHooks {
+                    override fun resolveServiceForField(
+                        services: List<ServiceLike>,
+                        executableNormalizedField: ExecutableNormalizedField,
+                    ): NadelDynamicServiceResolutionResult {
+                        throw UnsupportedOperationException()
+                    }
+
                     override fun partitionTransformerHook(): NadelPartitionTransformHook {
                         return RoutingBasedPartitionTransformHook()
                     }

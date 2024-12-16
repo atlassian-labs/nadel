@@ -4,6 +4,7 @@ import graphql.language.StringValue
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -28,7 +29,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Set<String>? {
@@ -54,7 +55,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         state: Set<String>,
     ): NadelTransformFieldResult {
@@ -88,7 +89,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

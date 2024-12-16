@@ -14,6 +14,7 @@ import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toBuilderWithoutTypes
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
+import graphql.nadel.util.NamespacedUtil.isNamespacedLike
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
@@ -66,7 +67,7 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
                     // This inserts data fetchers for namespaced fields so we can handle their __typename internally
                     getFieldsWithCoordinates(schema.queryType, schema.mutationType, schema.subscriptionType)
                         .filter { (_, field) ->
-                            isNamespacedField(field)
+                            isNamespacedLike(field)
                         }
                         .forEach { (coordinates) ->
                             builder.dataFetcher(coordinates) { _: DataFetchingEnvironment ->

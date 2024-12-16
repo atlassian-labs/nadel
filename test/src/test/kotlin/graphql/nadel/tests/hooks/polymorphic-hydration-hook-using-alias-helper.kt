@@ -5,15 +5,18 @@ import graphql.ExecutionResult
 import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.serviceExecutionFactory
+import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -24,6 +27,13 @@ import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
 private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
+    override fun resolveServiceForField(
+        services: List<ServiceLike>,
+        executableNormalizedField: ExecutableNormalizedField,
+    ): NadelDynamicServiceResolutionResult {
+        throw UnsupportedOperationException()
+    }
+
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode,

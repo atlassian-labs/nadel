@@ -2,10 +2,14 @@ package graphql.nadel.validation
 
 import graphql.language.EnumTypeDefinition
 import graphql.language.ImplementingTypeDefinition
+import graphql.nadel.NadelExecutableService
+import graphql.nadel.NadelFieldInstructions
+import graphql.nadel.NadelFieldMap
 import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.hasHydratedDefinition
 import graphql.nadel.definition.hydration.hasIdHydratedDefinition
+import graphql.nadel.engine.blueprint.NadelExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelTypeRenameInstructions
 import graphql.nadel.engine.blueprint.NadelUnderlyingExecutionBlueprint
@@ -115,13 +119,85 @@ class NadelSchemaValidation internal constructor(
 
     fun validateAndGenerateBlueprint(
         schemas: NadelSchemas,
-    ): NadelOverallExecutionBlueprint {
+    ): Pair<NadelExecutionBlueprint, NadelOverallExecutionBlueprint> {
         val fieldContributorMap = makeFieldContributorMap(schemas.services)
         val all = validateAll(
             schemas = schemas,
             fieldContributorMap = fieldContributorMap,
         ).asSequence().toList()
 
+        return createExecutionBlueprint(all, schemas, fieldContributorMap) to
+            createLegacyExecutionBlueprint(all, schemas, fieldContributorMap)
+    }
+
+    private fun createExecutionBlueprint(
+        all: List<NadelSchemaValidationResult>,
+        schemas: NadelSchemas,
+        fieldContributorMap: Map<FieldCoordinates, Service>,
+    ): NadelExecutionBlueprint {
+        val executableServices = makeExecutableServices(all)
+
+        val fieldOwnershipMap: NadelFieldMap<NadelExecutableService> = NadelFieldMap.from(
+            values = fieldContributorMap
+                .entries
+                .map { (coordinates, service) ->
+                    coordinates to executableServices.first { it.name == service.name }
+                },
+            getCoordinates = { (coords) -> coords },
+            getValue = { (_, service) -> service },
+        )
+
+        return NadelExecutionBlueprint(
+            engineSchema = schemas.engineSchema,
+            services = executableServices,
+            fieldOwnershipMap = fieldOwnershipMap,
+        )
+    }
+
+    private fun makeExecutableServices(
+        all: List<NadelSchemaValidationResult>,
+    ): List<NadelExecutableService> {
+        val resultsByService = all
+            .asSequence()
+            .filterIsInstance<NadelServiceValidationResult>()
+            .groupBy {
+                it.service
+            }
+
+        return resultsByService
+            .map { (service, results) ->
+                val declaredTypes = results
+                    .asSequence()
+                    .filterIsInstance<NadelDeclaredServiceTypesResult>()
+                    .single()
+                val fieldInstructions = results
+                    .asSequence()
+                    .filterIsInstance<NadelValidatedFieldResult>()
+                    .map { it.fieldInstruction }
+                    .toList()
+                val typeInstructions = results
+                    .asSequence()
+                    .filterIsInstance<NadelValidatedTypeResult>()
+                    .map { it.typeRenameInstruction }
+                    .toList()
+
+                NadelExecutableService(
+                    name = service.name,
+                    fieldInstructions = NadelFieldInstructions(fieldInstructions),
+                    typeInstructions = NadelTypeRenameInstructions(typeInstructions),
+                    declaredOverallTypeNames = declaredTypes.overallTypeNames,
+                    declaredUnderlyingTypeNames = declaredTypes.underlyingTypeNames,
+                    serviceExecution = service.serviceExecution,
+                    service = service,
+                )
+            }
+    }
+
+    private fun createLegacyExecutionBlueprint(
+        all: List<NadelSchemaValidationResult>,
+        schemas: NadelSchemas,
+        fieldContributorMap: Map<FieldCoordinates, Service>,
+    ): NadelOverallExecutionBlueprint {
         val fieldInstructions = all
             .filterIsInstance<NadelValidatedFieldResult>()
             .groupBy {
@@ -140,14 +216,14 @@ class NadelSchemaValidation internal constructor(
         val typeInstructions = all
             .filterIsInstance<NadelValidatedTypeResult>()
         val typenamesForService = all
-            .filterIsInstance<NadelReachableServiceTypesResult>()
+            .filterIsInstance<NadelDeclaredServiceTypesResult>()
 
         return NadelOverallExecutionBlueprint(
             engineSchema = schemas.engineSchema,
             fieldInstructions = fieldInstructions
                 .groupBy(keySelector = { it.fieldInstruction.location }, valueTransform = { it.fieldInstruction }),
-            underlyingTypeNamesByService = typenamesForService.associate { it.service to it.underlyingTypeNames },
-            overallTypeNamesByService = typenamesForService.associate { it.service to it.overallTypeNames },
+            underlyingTypeNamesByService = typenamesForService.associate { it.service.name to it.underlyingTypeNames },
+            overallTypeNamesByService = typenamesForService.associate { it.service.name to it.overallTypeNames },
             underlyingBlueprints = schemas.services.associate { service -> // Blank map to ensure that all services are represented
                 service.name to NadelUnderlyingExecutionBlueprint(
                     service = service,

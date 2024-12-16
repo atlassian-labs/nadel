@@ -1,37 +1,56 @@
 package graphql.nadel.engine.transform.query
 
-import graphql.introspection.Introspection
-import graphql.nadel.NadelExecutionHints
+import graphql.nadel.NadelExecutableService
+import graphql.nadel.NadelFieldInstructions
 import graphql.nadel.Service
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.blueprint.IntrospectionService
+import graphql.nadel.engine.blueprint.NadelExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.blueprint.NadelTypeRenameInstructions
 import graphql.nadel.engine.util.copyWithChildren
 import graphql.nadel.engine.util.makeFieldCoordinates
+import graphql.nadel.hints.NadelExecutableServiceMigrationHint
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
-import graphql.nadel.util.NamespacedUtil.serviceOwnsNamespacedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import graphql.schema.GraphQLSchema
 
 internal class NadelFieldToService(
     querySchema: GraphQLSchema,
+    private val executionBlueprint: NadelExecutionBlueprint,
     private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     private val dynamicServiceResolution: DynamicServiceResolution,
-    private val services: Map<String, Service>,
+    private val executableServiceMigrationHint: NadelExecutableServiceMigrationHint,
 ) {
-    private val introspectionService = IntrospectionService(querySchema, introspectionRunnerFactory)
+    private val publicIntrospectionService = IntrospectionService(querySchema, introspectionRunnerFactory)
+
+    private val executablePublicIntrospectionService = NadelExecutableService(
+        name = publicIntrospectionService.name,
+        fieldInstructions = NadelFieldInstructions.Empty,
+        typeInstructions = NadelTypeRenameInstructions.Empty,
+        declaredOverallTypeNames = emptySet(),
+        declaredUnderlyingTypeNames = emptySet(),
+        serviceExecution = publicIntrospectionService.serviceExecution,
+        service = publicIntrospectionService,
+    )
 
     fun getServicesForTopLevelFields(
         query: ExecutableNormalizedOperation,
-        executionHints: NadelExecutionHints,
     ): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
             if (isNamespacedField(topLevelField)) {
-                getServicePairsForNamespacedFields(topLevelField, executionHints)
+                getServicePairsForNamespacedFields(topLevelField)
             } else {
-                listOf(getServicePairFor(field = topLevelField))
+                val serviceLike = if (executableServiceMigrationHint()) {
+                    getExecutableService(topLevelField)
+                } else {
+                    getService(topLevelField)
+                }
+
+                listOf(NadelFieldAndService(topLevelField, serviceLike))
             }
         }
     }
@@ -42,8 +61,8 @@ internal class NadelFieldToService(
      */
     fun resolveDynamicService(
         field: ExecutableNormalizedField,
-        originalService: Service,
-    ): Service {
+        originalService: ServiceLike,
+    ): ServiceLike {
         return if (dynamicServiceResolution.needsDynamicServiceResolution(field)) {
             dynamicServiceResolution.resolveServiceForField(field)
         } else {
@@ -53,64 +72,56 @@ internal class NadelFieldToService(
 
     private fun getServicePairsForNamespacedFields(
         topLevelField: ExecutableNormalizedField,
-        executionHints: NadelExecutionHints,
     ): List<NadelFieldAndService> {
         return topLevelField.children
             .groupBy { childField ->
-                getServiceForNamespacedField(childField, executionHints)
+                if (executableServiceMigrationHint()) {
+                    getExecutableService(childField)
+                } else {
+                    getService(childField)
+                }
             }
-            .map { (service, childTopLevelFields) ->
+            .map { (serviceLike, childTopLevelFields) ->
                 NadelFieldAndService(
                     field = topLevelField.copyWithChildren(childTopLevelFields),
-                    service = service,
+                    serviceLike = serviceLike,
                 )
             }
     }
 
-    private fun getServicePairFor(field: ExecutableNormalizedField): NadelFieldAndService {
-        return NadelFieldAndService(
-            field = field,
-            service = getService(field),
-        )
-    }
-
-    private fun getServiceForNamespacedField(
+    private fun getService(
         overallField: ExecutableNormalizedField,
-        executionHints: NadelExecutionHints,
     ): Service {
-        if (overallField.name == Introspection.TypeNameMetaFieldDef.name) {
-            val namespaceTypeName = overallField.objectTypeNames.single()
-
-            return if (executionHints.newResultMergerAndNamespacedTypename()) {
-                introspectionService
-            } else {
-                services.values.first { service ->
-                    serviceOwnsNamespacedField(namespaceTypeName, service)
-                }
-            }
-        }
-
-        return getService(overallField)
-    }
-
-    private fun getService(overallField: ExecutableNormalizedField): Service {
         if (overallField.name.startsWith("__")) {
-            return introspectionService
+            return publicIntrospectionService
         }
 
         val operationTypeName = overallField.objectTypeNames.single()
         val fieldCoordinates = makeFieldCoordinates(operationTypeName, overallField.name)
+
         return overallExecutionBlueprint.getServiceOwning(fieldCoordinates)
-            ?: error("Unable to find service for field at: $fieldCoordinates")
+            ?: throw NadelFieldNotFoundException(overallField)
+    }
+
+    private fun getExecutableService(
+        overallField: ExecutableNormalizedField,
+    ): NadelExecutableService {
+        if (overallField.name.startsWith("__")) {
+            return executablePublicIntrospectionService
+        }
+
+        val operationTypeName = overallField.objectTypeNames.single()
+
+        return executionBlueprint.fieldOwnershipMap.getByCoordinates(operationTypeName, overallField.name)
+            ?: throw NadelFieldNotFoundException(overallField)
     }
 
     private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
-        return isNamespacedField(field, overallExecutionBlueprint.engineSchema)
+        return isNamespacedField(field, executionBlueprint.engineSchema)
     }
 }
 
-data class NadelFieldAndService(
+data class NadelFieldAndService internal constructor(
     val field: ExecutableNormalizedField,
-    val service: Service,
+    internal val serviceLike: ServiceLike,
 )
-

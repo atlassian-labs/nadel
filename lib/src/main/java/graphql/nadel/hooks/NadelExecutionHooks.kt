@@ -2,6 +2,7 @@ package graphql.nadel.hooks
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
@@ -38,11 +39,9 @@ interface NadelExecutionHooks {
      * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
      */
     fun resolveServiceForField(
-        services: List<Service>,
+        services: List<ServiceLike>,
         executableNormalizedField: ExecutableNormalizedField,
-    ): ServiceOrError? {
-        return null
-    }
+    ): NadelDynamicServiceResolutionResult
 
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
@@ -95,13 +94,13 @@ interface NadelExecutionHooks {
     }
 
     fun partitionTransformerHook(): NadelPartitionTransformHook {
-        return object: NadelPartitionTransformHook {
+        return object : NadelPartitionTransformHook {
             override fun getFieldPartitionContext(
                 executionContext: NadelExecutionContext,
                 serviceExecutionContext: NadelServiceExecutionContext,
                 executionBlueprint: NadelOverallExecutionBlueprint,
                 services: Map<String, Service>,
-                service: Service,
+                service: ServiceLike,
                 overallField: ExecutableNormalizedField,
                 hydrationDetails: ServiceExecutionHydrationDetails?,
             ): NadelFieldPartitionContext? {
@@ -118,7 +117,7 @@ interface NadelExecutionHooks {
 /**
  * Util function for internal use.
  */
-internal suspend fun NadelExecutionHooks.createServiceExecutionContext(service: Service): NadelServiceExecutionContext {
+internal suspend fun NadelExecutionHooks.createServiceExecutionContext(service: ServiceLike): NadelServiceExecutionContext {
     return createServiceExecutionContext(
         NadelCreateServiceExecutionContextParams(
             service = service,

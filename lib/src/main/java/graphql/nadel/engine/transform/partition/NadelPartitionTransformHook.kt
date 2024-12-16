@@ -2,6 +2,7 @@ package graphql.nadel.engine.transform.partition
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -27,7 +28,7 @@ interface NadelPartitionTransformHook {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelFieldPartitionContext?

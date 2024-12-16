@@ -3,6 +3,7 @@ package graphql.nadel.engine.transform
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelDeepRenameFieldInstruction
@@ -87,7 +88,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
@@ -159,7 +160,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -242,7 +243,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         state: State,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         objectTypeName: GraphQLObjectTypeName,
         deepRename: NadelDeepRenameFieldInstruction,
@@ -294,7 +295,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

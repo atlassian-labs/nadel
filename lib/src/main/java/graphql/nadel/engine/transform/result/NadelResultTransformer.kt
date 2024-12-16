@@ -2,8 +2,8 @@ package graphql.nadel.engine.transform.result
 
 import graphql.GraphQLError
 import graphql.incremental.DeferPayload
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -26,7 +26,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
+        service: ServiceLike,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
         val nodes = JsonNodes(result.data)
@@ -50,7 +50,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
+        service: ServiceLike,
         result: ServiceExecutionResult,
         deferPayload: DeferPayload,
     ): DeferPayload {
@@ -78,7 +78,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
+        service: ServiceLike,
         result: ServiceExecutionResult,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {

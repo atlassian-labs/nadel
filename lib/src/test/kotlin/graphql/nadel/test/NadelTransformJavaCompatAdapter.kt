@@ -3,6 +3,7 @@ package graphql.nadel.test
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -20,7 +21,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<Any?> {
@@ -32,7 +33,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         state: Any,
     ): CompletableFuture<NadelTransformFieldResult> {
@@ -43,7 +44,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

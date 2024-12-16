@@ -6,6 +6,7 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
@@ -28,12 +29,9 @@ import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.emptyOrSingle
-import graphql.nadel.engine.util.getFieldDefinitionSequence
-import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toGraphQLError
-import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
@@ -57,7 +55,7 @@ internal class NadelHydrationTransform(
          * its associated instruction.
          */
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelHydrationFieldInstruction>>,
-        val virtualFieldService: Service,
+        val virtualFieldService: ServiceLike,
         /**
          * The field in question for the transform, stored for quick access when
          * the [State] is passed around.
@@ -73,19 +71,15 @@ internal class NadelHydrationTransform(
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)
             .ifEmpty {
-                if (executionContext.hints.virtualTypeSupport(service)) {
-                    executionBlueprint
-                        .getInstructionInsideVirtualType(hydrationDetails, overallField)
-                } else {
-                    emptyMap()
-                }
+                executionBlueprint
+                    .getInstructionInsideVirtualType(hydrationDetails, overallField)
             }
 
         return if (instructionsByObjectTypeName.isEmpty()) {
@@ -107,7 +101,7 @@ internal class NadelHydrationTransform(
         serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -162,7 +156,7 @@ internal class NadelHydrationTransform(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
@@ -174,7 +168,7 @@ internal class NadelHydrationTransform(
             flatten = true,
         )
 
-        return if (isDeferred(executionContext, executionBlueprint, overallField)) {
+        return if (isDeferred(executionContext, overallField)) {
             deferHydration(parentNodes, state, executionBlueprint, overallField, executionContext)
             return emptyList()
         } else {
@@ -305,7 +299,7 @@ internal class NadelHydrationTransform(
         }
     }
 
-    private suspend fun prepareHydration(
+    private fun prepareHydration(
         parentNode: JsonNode,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -334,8 +328,6 @@ internal class NadelHydrationTransform(
             }
 
         val backingQueries = NadelHydrationFieldsBuilder.makeBackingQueries(
-            executionContext = executionContext,
-            service = state.virtualFieldService,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             virtualField = virtualField,
@@ -436,7 +428,6 @@ internal class NadelHydrationTransform(
 
     private fun isDeferred(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         overallField: ExecutableNormalizedField,
     ): Boolean {
         // Disable defer in nested hydration
@@ -445,29 +436,6 @@ internal class NadelHydrationTransform(
         }
 
         return executionContext.hints.deferSupport() && overallField.deferredExecutions.isNotEmpty()
-    }
-
-    private fun areAnyParentFieldsOutputtingLists(
-        field: ExecutableNormalizedField,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-    ): Boolean {
-        var cursor: ExecutableNormalizedField? = field.parent
-
-        while (cursor != null) {
-            val isList = cursor.getFieldDefinitionSequence(executionBlueprint.engineSchema)
-                // todo: I think we don't need to check all of them? just one should be enough since they must conform to the same shape
-                .any {
-                    it.type.unwrapNonNull().isList
-                }
-
-            if (isList) {
-                return true
-            }
-
-            cursor = cursor.parent
-        }
-
-        return false
     }
 }
 

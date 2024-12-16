@@ -9,5 +9,5 @@ fun interface AllDocumentVariablesHint {
      * @param service the service in question
      * @return true to use all variables
      */
-    operator fun invoke(service: Service): Boolean
+    operator fun invoke(): Boolean
 }

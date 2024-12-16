@@ -72,13 +72,13 @@ fun List<NadelSchemaValidationResult>.toResult(): NadelSchemaValidationResult {
 }
 
 internal class NadelValidatedTypeResult(
+    override val service: Service,
     val typeRenameInstruction: NadelTypeRenameInstruction,
 ) : NadelSchemaValidationResult, NadelServiceValidationResult {
-    override val service: Service get() = typeRenameInstruction.service
     override val isError: Boolean = false
 }
 
-internal class NadelReachableServiceTypesResult(
+internal class NadelDeclaredServiceTypesResult(
     override val service: Service,
     val underlyingTypeNames: Set<String>,
     val overallTypeNames: Set<String>,

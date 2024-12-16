@@ -6,6 +6,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -15,6 +16,7 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelCreateServiceExecutionContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
@@ -133,6 +135,13 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                     ): CompletableFuture<NadelServiceExecutionContext> {
                         return CompletableFuture.completedFuture(TestServiceExecutionContext())
                     }
+
+                    override fun resolveServiceForField(
+                        services: List<ServiceLike>,
+                        executableNormalizedField: ExecutableNormalizedField,
+                    ): NadelDynamicServiceResolutionResult {
+                        throw UnsupportedOperationException()
+                    }
                 },
             )
             .transforms(
@@ -143,7 +152,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             serviceExecutionContext: NadelServiceExecutionContext,
                             executionBlueprint: NadelOverallExecutionBlueprint,
                             services: Map<String, graphql.nadel.Service>,
-                            service: graphql.nadel.Service,
+                            service: ServiceLike,
                             overallField: ExecutableNormalizedField,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
                         ): Unit? {
@@ -156,7 +165,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             serviceExecutionContext: NadelServiceExecutionContext,
                             transformer: NadelQueryTransformer,
                             executionBlueprint: NadelOverallExecutionBlueprint,
-                            service: graphql.nadel.Service,
+                            service: ServiceLike,
                             field: ExecutableNormalizedField,
                             state: Unit,
                         ): NadelTransformFieldResult {
@@ -168,7 +177,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             executionContext: NadelExecutionContext,
                             serviceExecutionContext: NadelServiceExecutionContext,
                             executionBlueprint: NadelOverallExecutionBlueprint,
-                            service: graphql.nadel.Service,
+                            service: ServiceLike,
                             overallField: ExecutableNormalizedField,
                             underlyingParentField: ExecutableNormalizedField?,
                             result: ServiceExecutionResult,

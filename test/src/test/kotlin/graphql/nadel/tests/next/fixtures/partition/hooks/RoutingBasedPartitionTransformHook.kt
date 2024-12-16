@@ -3,6 +3,7 @@ package graphql.nadel.tests.next.fixtures.partition.hooks
 import graphql.language.ScalarValue
 import graphql.language.StringValue
 import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -18,7 +19,7 @@ class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, graphql.nadel.Service>,
-        service: graphql.nadel.Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelFieldPartitionContext {

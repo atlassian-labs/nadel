@@ -1,0 +1,38 @@
+name: "handles include directive on single field namespace like field"
+enabled: true
+# language=GraphQL
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: String
+    }
+# language=GraphQL
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: String
+    }
+# language=GraphQL
+query: |
+  query ($test: Boolean!) {
+    foo {
+      id @include(if: $test)
+    }
+  }
+variables:
+  test: false
+serviceCalls: []
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {}
+    },
+    "extensions": {}
+  }

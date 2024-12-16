@@ -49,7 +49,7 @@ internal class NadelTypeValidation(
     private fun getReachableTypeMetadata(
         serviceTypes: List<NadelServiceSchemaElement>,
         service: Service,
-    ): NadelReachableServiceTypesResult {
+    ): NadelDeclaredServiceTypesResult {
         val reachableOverallTypeNames = serviceTypes
             .mapTo(mutableSetOf()) { it.overall.name }
         val reachableUnderlyingTypeNames = serviceTypes
@@ -57,7 +57,7 @@ internal class NadelTypeValidation(
 
         val definedUnderlyingTypeNames = service.underlyingSchema.typeMap.keys
 
-        return NadelReachableServiceTypesResult(
+        return NadelDeclaredServiceTypesResult(
             service = service,
             overallTypeNames = reachableOverallTypeNames,
             underlyingTypeNames = (reachableUnderlyingTypeNames + definedUnderlyingTypeNames).toSet(),
@@ -135,8 +135,8 @@ internal class NadelTypeValidation(
         }
 
         return NadelValidatedTypeResult(
+            service = type.service,
             typeRenameInstruction = NadelTypeRenameInstruction(
-                service = type.service,
                 overallName = type.overall.name,
                 underlyingName = type.underlying.name,
             ),

@@ -4,49 +4,44 @@ import graphql.ErrorType
 import graphql.GraphqlErrorBuilder
 import graphql.execution.ResultPath
 import graphql.nadel.Nadel
-import graphql.nadel.Service
+import graphql.nadel.ServiceLike
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelExecutionHooks
-import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 
 class Hooks : NadelExecutionHooks {
-
     private fun resolveServiceGeneric(
-        services: Collection<Service>,
+        services: List<ServiceLike>,
         idArgument: Any,
-        resultPath: ResultPath
-    ): ServiceOrError {
+        resultPath: ResultPath,
+    ): NadelDynamicServiceResolutionResult {
         if (idArgument.toString().contains("pull-request")) {
-            return ServiceOrError(
-                services.stream().filter { service -> (service.name == "RepoService") }.findFirst().get(),
-                null
+            return NadelDynamicServiceResolutionResult.Success(
+                services.first { service -> service.name == "RepoService" },
             )
         }
 
         if (idArgument.toString().contains("issue")) {
-            return ServiceOrError(
-                services.stream().filter { service -> (service.name == "IssueService") }.findFirst()
-                    .get(), null
+            return NadelDynamicServiceResolutionResult.Success(
+                services.first { service -> service.name == "IssueService" },
             )
         }
 
-        return ServiceOrError(
-            null,
+        return NadelDynamicServiceResolutionResult.Error(
             GraphqlErrorBuilder.newError()
                 .message("Could not resolve service for field: %s", resultPath)
                 .errorType(ErrorType.ExecutionAborted)
                 .path(resultPath)
                 .build()
         )
-
     }
 
     override fun resolveServiceForField(
-        services: List<Service>,
-        executableNormalizedField: ExecutableNormalizedField
-    ): ServiceOrError {
+        services: List<ServiceLike>,
+        executableNormalizedField: ExecutableNormalizedField,
+    ): NadelDynamicServiceResolutionResult {
         return resolveServiceGeneric(
             services,
             executableNormalizedField.getNormalizedArgument("id").value,

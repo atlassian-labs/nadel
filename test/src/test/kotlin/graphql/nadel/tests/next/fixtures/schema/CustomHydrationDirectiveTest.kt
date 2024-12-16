@@ -2,7 +2,7 @@ package graphql.nadel.tests.next.fixtures.schema
 
 import graphql.language.Value
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
+import graphql.nadel.ServiceLike
 import graphql.nadel.definition.NadelDefinition
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
@@ -14,11 +14,13 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.nadel.validation.NadelSchemaValidationHook
+import graphql.normalized.ExecutableNormalizedField
 import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLFieldDefinition
@@ -266,6 +268,13 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
         return super.makeNadel()
             .executionHooks(
                 object : NadelExecutionHooks {
+                    override fun resolveServiceForField(
+                        services: List<ServiceLike>,
+                        executableNormalizedField: ExecutableNormalizedField,
+                    ): NadelDynamicServiceResolutionResult {
+                        throw UnsupportedOperationException()
+                    }
+
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
                         instructions: List<T>,
                         parentNode: JsonNode,
@@ -365,10 +374,5 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
                 }
             }
         }.create()
-    }
-
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
     }
 }

@@ -3,6 +3,7 @@ package graphql.nadel.tests.next.fixtures.hydration
 import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -102,7 +103,7 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             serviceExecutionContext: NadelServiceExecutionContext,
             executionBlueprint: NadelOverallExecutionBlueprint,
             services: Map<String, graphql.nadel.Service>,
-            service: graphql.nadel.Service,
+            service: ServiceLike,
             overallField: ExecutableNormalizedField,
             hydrationDetails: ServiceExecutionHydrationDetails?,
         ): Any? {
@@ -117,7 +118,7 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             executionContext: NadelExecutionContext,
             serviceExecutionContext: NadelServiceExecutionContext,
             executionBlueprint: NadelOverallExecutionBlueprint,
-            service: graphql.nadel.Service,
+            service: ServiceLike,
             overallField: ExecutableNormalizedField,
             underlyingParentField: ExecutableNormalizedField?,
             result: ServiceExecutionResult,
@@ -132,7 +133,7 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             serviceExecutionContext: NadelServiceExecutionContext,
             transformer: NadelQueryTransformer,
             executionBlueprint: NadelOverallExecutionBlueprint,
-            service: graphql.nadel.Service,
+            service: ServiceLike,
             field: ExecutableNormalizedField,
             state: Any,
         ): NadelTransformFieldResult {

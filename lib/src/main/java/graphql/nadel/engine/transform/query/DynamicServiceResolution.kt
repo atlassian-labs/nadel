@@ -1,10 +1,9 @@
 package graphql.nadel.engine.transform.query
 
-import graphql.GraphqlErrorException
-import graphql.nadel.Service
-import graphql.nadel.engine.util.queryPath
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.util.toGraphQLErrorException
 import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.normalized.ExecutableNormalizedField
@@ -14,7 +13,7 @@ import graphql.schema.GraphQLSchema
 internal class DynamicServiceResolution(
     private val engineSchema: GraphQLSchema,
     private val executionHooks: NadelExecutionHooks,
-    private val services: List<Service>,
+    private val services: List<ServiceLike>,
 ) {
 
     /**
@@ -30,27 +29,21 @@ internal class DynamicServiceResolution(
             }
             .onEach {
                 require(it.type.unwrapNonNull() is GraphQLInterfaceType) {
-                    "field annotated with ${dynamicServiceDirectiveDefinition.name} directive is expected to be of GraphQLInterfaceType"
+                    "Field annotated with ${dynamicServiceDirectiveDefinition.name} directive is expected to be of GraphQLInterfaceType"
                 }
             }
-            .any { it != null }
+            .filterNotNull()
+            .any()
 
     /**
      * Resolves the service for a field
      */
-    fun resolveServiceForField(field: ExecutableNormalizedField): Service {
-        val serviceOrError = executionHooks.resolveServiceForField(services, field)
-            ?: throw GraphqlErrorException.newErrorException()
-                .message("Could not resolve service for field '${field.name}'")
-                .path(field.queryPath.segments)
-                .build()
+    fun resolveServiceForField(field: ExecutableNormalizedField): ServiceLike {
+        val result = executionHooks.resolveServiceForField(services, field)
 
-        // Either or… but needs to be better
-        val error = serviceOrError.error
-        if (error != null) {
-            throw error.toGraphQLErrorException()
-        } else {
-            return requireNotNull(serviceOrError.service)
+        return when (result) {
+            is NadelDynamicServiceResolutionResult.Error -> throw result.error.toGraphQLErrorException()
+            is NadelDynamicServiceResolutionResult.Success -> result.service
         }
     }
 }

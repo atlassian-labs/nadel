@@ -6,6 +6,7 @@ import graphql.language.Field
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -63,7 +64,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
@@ -93,7 +94,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -112,7 +113,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

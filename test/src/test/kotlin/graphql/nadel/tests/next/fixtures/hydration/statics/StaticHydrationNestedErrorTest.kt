@@ -4,6 +4,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -207,12 +208,6 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
         ),
     ),
 ) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
-            .shortCircuitEmptyQuery { true }
-    }
-
     override fun makeNadel(): Nadel.Builder {
         return super.makeNadel()
             .transforms(
@@ -228,7 +223,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             serviceExecutionContext: NadelServiceExecutionContext,
             executionBlueprint: NadelOverallExecutionBlueprint,
             services: Map<String, graphql.nadel.Service>,
-            service: graphql.nadel.Service,
+            service: ServiceLike,
             overallField: ExecutableNormalizedField,
             hydrationDetails: ServiceExecutionHydrationDetails?,
         ): Any? {
@@ -244,7 +239,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             serviceExecutionContext: NadelServiceExecutionContext,
             transformer: NadelQueryTransformer,
             executionBlueprint: NadelOverallExecutionBlueprint,
-            service: graphql.nadel.Service,
+            service: ServiceLike,
             field: ExecutableNormalizedField,
             state: Any,
         ): NadelTransformFieldResult {
@@ -255,7 +250,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             executionContext: NadelExecutionContext,
             serviceExecutionContext: NadelServiceExecutionContext,
             executionBlueprint: NadelOverallExecutionBlueprint,
-            service: graphql.nadel.Service,
+            service: ServiceLike,
             overallField: ExecutableNormalizedField,
             underlyingParentField: ExecutableNormalizedField?,
             result: ServiceExecutionResult,

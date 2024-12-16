@@ -1,7 +1,10 @@
 package graphql.nadel.engine.blueprint
 
+import graphql.nadel.NadelExecutableService
+import graphql.nadel.NadelFieldMap
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -11,41 +14,49 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 
+data class NadelExecutionBlueprint(
+    val engineSchema: GraphQLSchema,
+    val services: List<NadelExecutableService>,
+    val fieldOwnershipMap: NadelFieldMap<NadelExecutableService>,
+)
+
 /**
  * Execution blueprint where keys are in terms of the overall schema.
  */
+@Deprecated("Use NadelExecutionBlueprint instead")
 data class NadelOverallExecutionBlueprint(
     val engineSchema: GraphQLSchema,
     val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
-    private val underlyingTypeNamesByService: Map<Service, Set<String>>,
-    private val overallTypeNamesByService: Map<Service, Set<String>>,
+    private val underlyingTypeNamesByService: Map<String, Set<String>>,
+    private val overallTypeNamesByService: Map<String, Set<String>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,
     private val typeRenamesByOverallTypeName: Map<String, NadelTypeRenameInstruction>,
 ) {
     private fun setOfServiceTypes(
-        map: Map<Service, Set<String>>,
-        service: Service,
+        map: Map<String, Set<String>>,
+        service: ServiceLike,
     ): Set<String> {
-        return (map[service] ?: error("Could not find service: ${service.name}"))
+        return (map[service.name] ?: error("Could not find service: ${service.name}"))
     }
 
-    fun getUnderlyingTypeNamesForService(service: Service): Set<String> {
+    fun getUnderlyingTypeNamesForService(service: ServiceLike): Set<String> {
         return setOfServiceTypes(underlyingTypeNamesByService, service)
     }
 
-    fun getOverAllTypeNamesForService(service: Service): Set<String> {
+    fun getOverAllTypeNamesForService(service: ServiceLike): Set<String> {
         return setOfServiceTypes(overallTypeNamesByService, service)
     }
 
     fun getUnderlyingTypeName(
-        service: Service,
+        service: ServiceLike,
         overallTypeName: String,
     ): String {
         // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
         if (service.name == IntrospectionService.name) {
             return overallTypeName
         }
+
         return getUnderlyingBlueprint(service).typeInstructions.getUnderlyingName(overallTypeName)
     }
 
@@ -58,7 +69,7 @@ data class NadelOverallExecutionBlueprint(
     }
 
     fun getOverallTypeName(
-        service: Service,
+        service: ServiceLike,
         underlyingTypeName: String,
     ): String {
         // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
@@ -107,7 +118,7 @@ data class NadelOverallExecutionBlueprint(
         )
     }
 
-    private fun getUnderlyingBlueprint(service: Service): NadelUnderlyingExecutionBlueprint {
+    private fun getUnderlyingBlueprint(service: ServiceLike): NadelUnderlyingExecutionBlueprint {
         val name = service.name
         return underlyingBlueprints[name] ?: error("Could not find service: $name")
     }
@@ -138,6 +149,13 @@ data class NadelTypeRenameInstructions internal constructor(
     private val byUnderlyingName: Map<String, NadelTypeRenameInstruction>,
     private val byOverallName: Map<String, NadelTypeRenameInstruction>,
 ) {
+    constructor(
+        typeInstructions: List<NadelTypeRenameInstruction>,
+    ) : this(
+        byUnderlyingName = typeInstructions.strictAssociateBy { it.underlyingName },
+        byOverallName = typeInstructions.strictAssociateBy { it.overallName },
+    )
+
     fun getUnderlyingName(overallTypeName: String): String {
         return byOverallName[overallTypeName]?.underlyingName ?: overallTypeName
     }
@@ -147,15 +165,7 @@ data class NadelTypeRenameInstructions internal constructor(
     }
 
     companion object {
-        // Hack for secondary constructor for data classes
-        operator fun invoke(
-            typeInstructions: List<NadelTypeRenameInstruction>,
-        ): NadelTypeRenameInstructions {
-            return NadelTypeRenameInstructions(
-                byUnderlyingName = typeInstructions.strictAssociateBy { it.underlyingName },
-                byOverallName = typeInstructions.strictAssociateBy { it.overallName },
-            )
-        }
+        internal val Empty = NadelTypeRenameInstructions(emptyMap(), emptyMap())
     }
 }
 

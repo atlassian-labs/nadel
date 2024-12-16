@@ -16,6 +16,8 @@ import graphql.language.Document
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.hints.NadelExecutableServiceMigrationHint
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -23,11 +25,11 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
-import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.util.getLogger
 import graphql.nadel.util.getNotPrivacySafeLogger
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationFactory
+import graphql.normalized.ExecutableNormalizedField
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
@@ -234,11 +236,19 @@ class Nadel private constructor(
 
     class Builder {
         private var instrumentation: NadelInstrumentation = object : NadelInstrumentation {}
-        private var executionHooks: NadelExecutionHooks = object : NadelExecutionHooks {}
+        private var executionHooks: NadelExecutionHooks = object : NadelExecutionHooks {
+            override fun resolveServiceForField(
+                services: List<ServiceLike>,
+                executableNormalizedField: ExecutableNormalizedField,
+            ): NadelDynamicServiceResolutionResult {
+                throw UnsupportedOperationException("Not yet implemented")
+            }
+        }
         private var preparsedDocumentProvider: PreparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE
         private var executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER
         private var transforms = emptyList<NadelTransform<out Any>>()
         private var introspectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner)
+        private var executableServiceMigrationHint = NadelExecutableServiceMigrationHint { false }
 
         private var schemas: NadelSchemas? = null
         private var schemaBuilder = NadelSchemas.Builder()
@@ -373,6 +383,11 @@ class Nadel private constructor(
             return this
         }
 
+        fun executableServiceMigrationHint(executableServiceMigrationHint: NadelExecutableServiceMigrationHint): Builder {
+            this.executableServiceMigrationHint = executableServiceMigrationHint
+            return this
+        }
+
         fun build(): Nadel {
             val (engineSchema, services) = schemas ?: schemaBuilder.build()
 
@@ -390,6 +405,7 @@ class Nadel private constructor(
                     services = services,
                     transforms = transforms,
                     introspectionRunnerFactory = introspectionRunnerFactory,
+                    executableServiceMigrationHint = executableServiceMigrationHint,
                     nadelValidation = nadelValidation ?: NadelSchemaValidationFactory.create(),
                 ),
                 services = services,

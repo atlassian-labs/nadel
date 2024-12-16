@@ -3,6 +3,7 @@ package graphql.nadel.engine.transform
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -34,7 +35,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         val objectTypesWithoutRename: Set<String>,
         val aliasHelper: NadelAliasHelper,
         val overallField: ExecutableNormalizedField,
-        val service: Service,
+        val service: ServiceLike,
     )
 
     override suspend fun isApplicable(
@@ -42,7 +43,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
@@ -71,7 +72,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         serviceExecutionContext: NadelServiceExecutionContext,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -156,7 +157,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         state: State,
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         field: ExecutableNormalizedField,
         typeName: GraphQLObjectTypeName,
         rename: NadelRenameFieldInstruction,
@@ -180,7 +181,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
+        service: ServiceLike,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,

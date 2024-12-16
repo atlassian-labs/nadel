@@ -4,12 +4,14 @@ import graphql.language.ScalarValue
 import graphql.language.StringValue
 import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
 import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
+import graphql.nadel.hooks.NadelDynamicServiceResolutionResult
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.normalized.ExecutableNormalizedField
@@ -96,6 +98,13 @@ type Thing {
         return super.makeNadel()
             .executionHooks(
                 object : NadelExecutionHooks {
+                    override fun resolveServiceForField(
+                        services: List<ServiceLike>,
+                        executableNormalizedField: ExecutableNormalizedField,
+                    ): NadelDynamicServiceResolutionResult {
+                        throw UnsupportedOperationException()
+                    }
+
                     override fun partitionTransformerHook(): NadelPartitionTransformHook {
                         return object : NadelPartitionTransformHook {
                             override fun getFieldPartitionContext(
@@ -103,7 +112,7 @@ type Thing {
                                 serviceExecutionContext: NadelServiceExecutionContext,
                                 executionBlueprint: NadelOverallExecutionBlueprint,
                                 services: Map<String, graphql.nadel.Service>,
-                                service: graphql.nadel.Service,
+                                service: ServiceLike,
                                 overallField: ExecutableNormalizedField,
                                 hydrationDetails: ServiceExecutionHydrationDetails?,
                             ): NadelFieldPartitionContext {

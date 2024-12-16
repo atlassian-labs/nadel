@@ -5,6 +5,7 @@ import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -700,7 +701,7 @@ private class NadelBatchHydratorContext(
     val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
     val executionContext: NadelExecutionContext,
     val sourceField: ExecutableNormalizedField,
-    val sourceFieldService: Service,
+    val sourceFieldService: ServiceLike,
     val aliasHelper: NadelAliasHelper,
     val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {

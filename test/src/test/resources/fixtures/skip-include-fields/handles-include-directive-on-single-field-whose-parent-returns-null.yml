@@ -4,7 +4,7 @@ enabled: true
 overallSchema:
   service: |
     type Query {
-      foo: Foo
+      foo(id: ID): Foo
     }
     type Foo {
       id: String
@@ -13,7 +13,7 @@ overallSchema:
 underlyingSchema:
   service: |
     type Query {
-      foo: Foo
+      foo(id: ID): Foo
     }
     type Foo {
       id: String

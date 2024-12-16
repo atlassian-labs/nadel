@@ -21,9 +21,9 @@ private suspend fun main() {
 @Suppress("unused")
 public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-        ExpectedServiceCall(
-            service = "bitbucket",
-            query = """
+            ExpectedServiceCall(
+                service = "bitbucket",
+                query = """
                 | {
                 |   pullRequestsByIds(ids: ["ari:cloud:bitbucket::pull-request/2"]) {
                 |     title
@@ -32,8 +32,8 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = " {}",
+                result = """
                 | {
                 |   "data": {
                 |     "pullRequestsByIds": [
@@ -46,12 +46,12 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "graph_store",
-            query = """
+            ExpectedServiceCall(
+                service = "graph_store",
+                query = """
                 | query (${'$'}v0: JSON) {
                 |   graphStore_query(other: ${'$'}v0, query: "DROP TABLE", after: "2012", first: 10) {
                 |     edges {
@@ -66,14 +66,14 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            variables = """
+                variables = """
                 | {
                 |   "v0": {
                 |     "teamId": "hello"
                 |   }
                 | }
                 """.trimMargin(),
-            result = """
+                result = """
                 | {
                 |   "data": {
                 |     "graphStore_query": {
@@ -96,12 +96,12 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "jira",
-            query = """
+            ExpectedServiceCall(
+                service = "jira",
+                query = """
                 | {
                 |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
                 |     key
@@ -109,8 +109,8 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = " {}",
+                result = """
                 | {
                 |   "data": {
                 |     "issuesByIds": [
@@ -122,28 +122,10 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "work",
-            query = """
-                | {
-                |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
-                | }
-                """.trimMargin(),
-            variables = " {}",
-            result = """
-                | {
-                |   "data": {
-                |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
-                |   }
-                | }
-                """.trimMargin(),
-            delayedResults = listOfJsonStrings(
-            ),
-        ),
-    )
+        )
 
     /**
      * ```json
@@ -174,7 +156,7 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-        result = """
+            result = """
             | {
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
@@ -200,7 +182,7 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
             |   }
             | }
             """.trimMargin(),
-        delayedResults = listOfJsonStrings(
-        ),
-    )
+            delayedResults = listOfJsonStrings(
+            ),
+        )
 }

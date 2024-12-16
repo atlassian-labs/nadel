@@ -2,6 +2,7 @@ package graphql.nadel.engine.transform
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.blueprint.NadelFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
@@ -18,7 +19,7 @@ import graphql.normalized.incremental.NormalizedDeferredExecution
  */
 private fun getOverallTypeNameOfNode(
     executionBlueprint: NadelOverallExecutionBlueprint,
-    service: Service,
+    service: ServiceLike,
     aliasHelper: NadelAliasHelper,
     node: JsonNode,
 ): String? {
@@ -53,7 +54,7 @@ fun makeTypeNameField(
  */
 fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, T>.getInstructionForNode(
     executionBlueprint: NadelOverallExecutionBlueprint,
-    service: Service,
+    service: ServiceLike,
     aliasHelper: NadelAliasHelper,
     parentNode: JsonNode,
 ): T? = let { instructions ->
@@ -69,7 +70,7 @@ fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, T>.getInstructionForN
 
 fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, List<T>>.getInstructionsForNode(
     executionBlueprint: NadelOverallExecutionBlueprint,
-    service: Service,
+    service: ServiceLike,
     aliasHelper: NadelAliasHelper,
     parentNode: JsonNode,
 ): List<T> = let { instructions ->

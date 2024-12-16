@@ -46,6 +46,7 @@ class NadelPrefixTest {
             private val grandfatheredClasses = setOf(
                 "graphql.nadel.NextgenEngine",
                 "graphql.nadel.Service",
+                "graphql.nadel.ServiceLike",
                 "graphql.nadel.ServiceExecution",
                 "graphql.nadel.ServiceExecutionFactory",
                 "graphql.nadel.ServiceExecutionHydrationDetails",

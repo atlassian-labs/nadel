@@ -1,11 +1,11 @@
 package graphql.nadel.engine.transform.hydration
 
-import graphql.nadel.Service
-import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.ServiceLike
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
@@ -21,8 +21,6 @@ import graphql.normalized.NormalizedInputValue
 
 internal object NadelHydrationFieldsBuilder {
     fun makeBackingQueries(
-        executionContext: NadelExecutionContext,
-        service: Service,
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         virtualField: ExecutableNormalizedField,
@@ -46,10 +44,11 @@ internal object NadelHydrationFieldsBuilder {
             }
             // Fix types for virtual fields
             .onEach { field ->
-                if (executionContext.hints.virtualTypeSupport(service)) {
-                    setBackingObjectTypeNames(instruction, field)
+                val virtualTypeContext = instruction.virtualTypeContext
+                if (virtualTypeContext != null) {
+                    setBackingObjectTypeNames(virtualTypeContext, field)
                     field.traverseSubTree { child ->
-                        setBackingObjectTypeNames(instruction, child)
+                        setBackingObjectTypeNames(virtualTypeContext, child)
                     }
                 }
             }
@@ -111,7 +110,7 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     fun makeRequiredSourceFields(
-        service: Service,
+        service: ServiceLike,
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         objectTypeName: GraphQLObjectTypeName,
@@ -158,11 +157,10 @@ internal object NadelHydrationFieldsBuilder {
      * to the backing types.
      */
     private fun setBackingObjectTypeNames(
-        instruction: NadelHydrationFieldInstruction,
+        virtualTypeContext: NadelVirtualTypeContext,
         field: ExecutableNormalizedField,
     ) {
-        val virtualTypeToBackingType = instruction.virtualTypeContext?.virtualTypeToBackingType
-            ?: return // Nothing to do
+        val virtualTypeToBackingType = virtualTypeContext.virtualTypeToBackingType
 
         field.objectTypeNames.forEach { virtualType ->
             val backingType = virtualTypeToBackingType[virtualType] ?: return@forEach

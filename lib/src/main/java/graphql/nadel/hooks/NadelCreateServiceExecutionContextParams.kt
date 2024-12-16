@@ -1,5 +1,5 @@
 package graphql.nadel.hooks
 
-import graphql.nadel.Service
+import graphql.nadel.ServiceLike
 
-data class NadelCreateServiceExecutionContextParams internal constructor(val service: Service)
+data class NadelCreateServiceExecutionContextParams internal constructor(val service: ServiceLike)

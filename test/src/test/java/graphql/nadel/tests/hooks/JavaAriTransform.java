@@ -4,6 +4,7 @@ import graphql.language.StringValue;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionHydrationDetails;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.ServiceLike;
 import graphql.nadel.engine.NadelExecutionContext;
 import graphql.nadel.engine.NadelServiceExecutionContext;
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint;
@@ -52,7 +53,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                        @NotNull NadelServiceExecutionContext serviceExecutionContext,
                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                        @NotNull Map<String, ? extends Service> services,
-                                                       @NotNull Service service,
+                                                       @NotNull ServiceLike service,
                                                        @NotNull ExecutableNormalizedField overallField,
                                                        @Nullable ServiceExecutionHydrationDetails hydrationDetails) {
 
@@ -83,7 +84,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                        @NotNull NadelServiceExecutionContext serviceExecutionContext,
                                                                        @NotNull NadelQueryTransformerJavaCompat transformer,
                                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
-                                                                       @NotNull Service service,
+                                                                       @NotNull ServiceLike service,
                                                                        @NotNull ExecutableNormalizedField field,
                                                                        @NotNull Set<String> fieldsArgsToInterpret) {
         return CompletableFuture.completedFuture(
@@ -129,7 +130,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
     public CompletableFuture<List<NadelResultInstruction>> getResultInstructions(@NotNull NadelExecutionContext executionContext,
                                                                                  @NotNull NadelServiceExecutionContext serviceExecutionContext,
                                                                                  @NotNull NadelOverallExecutionBlueprint executionBlueprint,
-                                                                                 @NotNull Service service,
+                                                                                 @NotNull ServiceLike service,
                                                                                  @NotNull ExecutableNormalizedField overallField,
                                                                                  @Nullable ExecutableNormalizedField underlyingParentField,
                                                                                  @NotNull ServiceExecutionResult result,
