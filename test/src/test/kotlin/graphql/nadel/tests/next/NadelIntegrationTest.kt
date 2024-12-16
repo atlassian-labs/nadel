@@ -20,6 +20,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.tests.assertJsonObjectEquals
 import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
@@ -272,6 +273,9 @@ abstract class NadelIntegrationTest(
 
     open fun makeInstrumentation(): NadelInstrumentation {
         return object : NadelInstrumentation {
+            override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                return true
+            }
         }
     }
 

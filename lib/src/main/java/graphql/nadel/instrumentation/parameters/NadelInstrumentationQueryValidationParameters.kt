@@ -20,7 +20,7 @@ data class NadelInstrumentationQueryValidationParameters(
         return context as T?
     }
 
-    fun <T : InstrumentationState?> getInstrumentationState(): T? {
+    fun <T : InstrumentationState> getInstrumentationState(): T? {
         @Suppress("UNCHECKED_CAST") // trust the caller
         return instrumentationState as T?
     }

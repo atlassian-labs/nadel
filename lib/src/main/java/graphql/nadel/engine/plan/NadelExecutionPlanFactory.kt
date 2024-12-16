@@ -20,16 +20,32 @@ import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.Comp
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.QueryTransforming
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ResultTransforming
 import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
-    private val transforms: List<NadelTransform<Any>>,
+    transforms: List<NadelTransform<Any>>,
 ) {
-    // This will avoid creating the ChildStep object too many times
+    /**
+     * This creates the [ChildStep] objects upfront to avoid constantly recreating them.
+     */
+    private data class TransformWithTimingInfo(
+        val transform: NadelTransform<Any>,
+        val executionPlanTimingStep: ChildStep,
+        val queryTransformTimingStep: ChildStep,
+        val resultTransformTimingStep: ChildStep,
+    )
+
     private val transformsWithTimingStepInfo = transforms
         .map { transform ->
-            transform to ChildStep(parent = ExecutionPlanning, transform = transform)
+            TransformWithTimingInfo(
+                transform = transform,
+                executionPlanTimingStep = ChildStep(parent = ExecutionPlanning, transform = transform),
+                queryTransformTimingStep = ChildStep(parent = QueryTransforming, transform = transform),
+                resultTransformTimingStep = ChildStep(parent = ResultTransforming, transform = transform),
+            )
         }
 
     /**
@@ -48,7 +64,8 @@ internal class NadelExecutionPlanFactory(
 
         executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
-                transformsWithTimingStepInfo.forEach { (transform, timingStep) ->
+                transformsWithTimingStepInfo.forEach { transformWithTimingInfo ->
+                    val transform = transformWithTimingInfo.transform
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
                     // See NadelSkipIncludeTransform.isApplicable for more details
@@ -56,7 +73,7 @@ internal class NadelExecutionPlanFactory(
                         return@forEach
                     }
 
-                    val state = timer.time(step = timingStep) {
+                    val state = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
                         transform.isApplicable(
                             executionContext,
                             serviceExecutionContext,
@@ -71,10 +88,12 @@ internal class NadelExecutionPlanFactory(
                     if (state != null) {
                         executionSteps.add(
                             NadelExecutionPlan.Step(
-                                service,
-                                field,
-                                transform,
-                                state,
+                                service = service,
+                                field = field,
+                                transform = transform,
+                                queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
+                                resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
+                                state = state,
                             ),
                         )
                     }

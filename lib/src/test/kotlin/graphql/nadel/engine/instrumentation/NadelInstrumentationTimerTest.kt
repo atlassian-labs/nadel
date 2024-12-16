@@ -1,55 +1,73 @@
 package graphql.nadel.engine.instrumentation
 
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import io.kotest.core.spec.style.DescribeSpec
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.assertThrows
+import java.time.Duration
 
 class NadelInstrumentationTimerTest : DescribeSpec({
     describe("time") {
         it("records the time on success") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
 
             // when
             timer.time(RootStep.ExecutionPlanning) {
-                delay(128)
+                time += 100L
             }
 
             // then
             val params = requireNotNull(instrumentationParams)
             assert(params.step.name == "ExecutionPlanning")
-            assert(params.duration.toMillis() in 128..256)
+            assert(params.internalLatency == Duration.ofMillis(100))
         }
 
         it("returns the result from the input function") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -65,15 +83,24 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
         it("emits time on exception") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -81,7 +108,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             // when
             val ex = assertThrows<UnsupportedOperationException> {
                 timer.time(RootStep.QueryTransforming) {
-                    delay(256)
+                    time += 123L
                     throw UnsupportedOperationException("no-op")
                 }
             }
@@ -91,15 +118,22 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
             val params = requireNotNull(instrumentationParams)
             assert(params.step.name == "QueryTransforming")
-            assert(params.duration.toMillis() in 256..400)
+            assert(params.internalLatency.toMillis() == 123L)
             assert(params.exception === ex)
             assert(params.exception?.message == "no-op")
         }
 
         it("passes the user context and instrumentation state to the instrumentation") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -109,7 +143,9 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             val state = object : InstrumentationState {
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = userContext,
                 instrumentationState = state,
             )
@@ -117,7 +153,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             // when
             val ex = assertThrows<UnsupportedOperationException> {
                 timer.time(RootStep.QueryTransforming) {
-                    delay(256)
+                    time += 256
                     throw UnsupportedOperationException("no-op")
                 }
             }
@@ -137,8 +173,15 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
         it("handles exceptions inside onStepTimed") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -146,7 +189,9 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -154,7 +199,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             // when
             val ex = assertThrows<UnsupportedOperationException> {
                 timer.time(RootStep.QueryTransforming) {
-                    delay(256)
+                    time += 256
                 }
             }
 
@@ -162,14 +207,21 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             assert(ex.message == "No step timing")
 
             val params = requireNotNull(instrumentationParams)
-            assert(params.duration.toMillis() in 256..400)
+            assert(params.internalLatency == Duration.ofMillis(256))
             assert(params.exception == null)
         }
 
         it("handles exceptions inside onStepTimed when already handling exception from function") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             var instrumentationParams: NadelInstrumentationTimingParameters? = null
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     assert(instrumentationParams == null) // Ensure only invoked once
                     instrumentationParams = parameters
@@ -177,7 +229,9 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -185,7 +239,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             // when
             val ex = assertThrows<UnsupportedOperationException> {
                 timer.time(RootStep.QueryTransforming) {
-                    delay(256)
+                    time += 256
                     throw IllegalArgumentException("ID is invalid")
                 }
             }
@@ -202,14 +256,23 @@ class NadelInstrumentationTimerTest : DescribeSpec({
     describe("BatchTimer") {
         it("time returns function result") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -219,7 +282,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 val timeResult = batchTimer.time(
                     ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
                 ) {
-                    delay(64)
+                    time += 64
                     "Hello World"
                 }
 
@@ -234,14 +297,23 @@ class NadelInstrumentationTimerTest : DescribeSpec({
 
         it("exceptions inside function are thrown to caller") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -252,7 +324,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                     batchTimer.time(
                         ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
                     ) {
-                        delay(64)
+                        time += 64
                         throw UnsupportedOperationException("Bye")
                     }
 
@@ -266,20 +338,29 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             assert(instrumentationParams.isNotEmpty())
 
             val param = instrumentationParams.single()
-            assert(param.duration.toMillis() in 64..100)
+            assert(param.internalLatency.toMillis() == 64L)
             assert(param.exception?.message == "Bye")
         }
 
         it("batch timer does not emit times until submit is invoked") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -289,29 +370,38 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             batchTimer.time(
                 ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
             ) {
-                delay(64)
+                time += 64
             }
 
             // then
             assert(instrumentationParams.isEmpty())
 
             // when
-            batchTimer.submit()
+            batchTimer.close()
 
             // then
             assert(instrumentationParams.isNotEmpty())
         }
 
-        it("combines times together") {
+        it("takes the highest time in a batch") {
             // given
+            var time = 10L
+            val ticker = { Duration.ofMillis(time) }
+
             val instrumentationParams = mutableListOf<NadelInstrumentationTimingParameters>()
             val instrumentation = object : NadelInstrumentation {
+                override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                    return true
+                }
+
                 override fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
                     instrumentationParams.add(parameters)
                 }
             }
             val timer = NadelInstrumentationTimer(
-                instrumentation,
+                isEnabled = true,
+                ticker = ticker,
+                instrumentation = instrumentation,
                 userContext = null,
                 instrumentationState = null,
             )
@@ -322,29 +412,29 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                     launch {
                         batchTimer.time(
                             ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
-                        ) { delay(64) }
+                        ) { time += 64 }
                         batchTimer.time(
                             ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
-                        ) { delay(128) }
+                        ) { time += 128 }
                         batchTimer.time(
                             ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
-                        ) { delay(128) }
+                        ) { time += 128 }
                     }
                     launch {
                         batchTimer.time(
                             ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
-                        ) { delay(32) }
+                        ) { time += 32 }
                         batchTimer.time(
                             ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
-                        ) { delay(32) }
+                        ) { time += 32 }
                     }
                     launch {
                         batchTimer.time(
                             ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
-                        ) { delay(256) }
+                        ) { time += 256 }
                         batchTimer.time(
                             ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
-                        ) { delay(64) }
+                        ) { time += 64 }
                     }
                 }
             }
@@ -354,19 +444,19 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 it.step.getFullName() == "ExecutionPlanning.NadelHydrationTransform"
             }
             assert(planHydration.exception == null)
-            assert(planHydration.duration.toMillis() in 320..400)
+            assert(planHydration.internalLatency == Duration.ofMillis(128))
 
             val planBatchHydration = instrumentationParams.single {
                 it.step.getFullName() == "ExecutionPlanning.NadelBatchHydrationTransform"
             }
             assert(planBatchHydration.exception == null)
-            assert(planBatchHydration.duration.toMillis() in 64..100)
+            assert(planBatchHydration.internalLatency == Duration.ofMillis(32))
 
             val resultTransformBatchHydration = instrumentationParams.single {
                 it.step.getFullName() == "ResultTransforming.NadelBatchHydrationTransform"
             }
             assert(resultTransformBatchHydration.exception == null)
-            assert(resultTransformBatchHydration.duration.toMillis() in 320..400)
+            assert(resultTransformBatchHydration.internalLatency == Duration.ofMillis(256))
         }
     }
 })
