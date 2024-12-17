@@ -676,5 +676,55 @@ class NadelFieldValidationTest : DescribeSpec({
 
             assert(error.message == "The overall field Query.fieldA defines argument id which does not exist in service test field Query.fieldA")
         }
+
+        it("fails if schema contains all fields as hidden") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                type Query {
+                    echo: String @hidden
+                }
+            """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                type Query {
+                    echo: String
+                }
+            """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<NadelSchemaValidationError>()
+            assert(error.message == "Must have at least one field without @hidden on type Query")
+        }
+
+        it("passes if schema contains at least one field as not hidden") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                type Query {
+                    echo: String @hidden
+                    hello: String
+                   
+                }
+            """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                type Query {
+                    echo: String
+                    hello: String
+                }
+            """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isEmpty())
+        }
     }
 })
