@@ -20,7 +20,7 @@ import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintMigrator
 import graphql.nadel.engine.document.DocumentPredicates
-import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
+import graphql.nadel.time.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
