@@ -77,12 +77,11 @@ response: |-
     },
     "errors": [
       {
-        "message": "null",
+        "message": "field `Foo.epicEntity` has been removed by RemoveFieldTestTransform",
         "locations": [],
         "extensions": {
-          "classification": "ValidationError"
+          "classification": "DataFetchingException"
         }
       }
-    ],
-    "extensions": {}
+    ]
   }
