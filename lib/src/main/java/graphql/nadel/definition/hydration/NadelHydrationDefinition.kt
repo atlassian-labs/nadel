@@ -8,7 +8,6 @@ import graphql.nadel.definition.NadelDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition.Keyword
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.parseDefinition
-import graphql.nadel.validation.NadelValidationContext
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLFieldDefinition
 
@@ -16,20 +15,8 @@ fun FieldDefinition.hasHydratedDefinition(): Boolean {
     return hasDirective(Keyword.hydrated)
 }
 
-context(NadelValidationContext)
-@Deprecated("Mistake to use this inside validation", level = DeprecationLevel.ERROR)
-fun GraphQLFieldDefinition.hasHydratedDefinition(): Nothing {
-    throw UnsupportedOperationException()
-}
-
 fun GraphQLFieldDefinition.hasHydratedDefinition(): Boolean {
     return hasAppliedDirective(Keyword.hydrated)
-}
-
-context(NadelValidationContext)
-@Deprecated("Mistake to use this inside validation", level = DeprecationLevel.ERROR)
-fun GraphQLFieldDefinition.parseHydrationDefinitions(): Nothing {
-    throw UnsupportedOperationException()
 }
 
 fun GraphQLFieldDefinition.parseHydrationDefinitions(): List<NadelHydrationDefinition> {
