@@ -3,7 +3,6 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
-import graphql.nadel.hints.NadelServiceTypenameShadowingHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
@@ -17,7 +16,6 @@ data class NadelExecutionHints(
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
     val virtualTypeSupport: NadelVirtualTypeSupportHint,
-    val serviceTypenameShadowing: NadelServiceTypenameShadowingHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -37,7 +35,6 @@ data class NadelExecutionHints(
         private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
-        private var serviceTypenameShadowing = NadelServiceTypenameShadowingHint.default
 
         constructor()
 
@@ -83,11 +80,6 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun serviceTypenameShadowing(flag: NadelServiceTypenameShadowingHint): Builder {
-            serviceTypenameShadowing = flag
-            return this
-        }
-
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -97,7 +89,6 @@ data class NadelExecutionHints(
                 sharedTypeRenames,
                 shortCircuitEmptyQuery,
                 virtualTypeSupport,
-                serviceTypenameShadowing,
             )
         }
     }

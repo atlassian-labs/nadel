@@ -290,7 +290,6 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
                     }
                 }
             )
-            .blueprintHint { true }
     }
 
     override fun makeNadelSchemaValidation(): NadelSchemaValidation {

@@ -8,7 +8,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintMigrator
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform.State
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -16,7 +15,6 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
-import graphql.nadel.util.getLogger
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 
@@ -65,8 +63,6 @@ import graphql.normalized.ExecutableNormalizedField.newNormalizedField
  * - service-types-are-completely-filtered.yml
  */
 class NadelServiceTypeFilterTransform : NadelTransform<State> {
-    private val logger = getLogger<NadelServiceTypeFilterTransform>()
-
     data class State(
         val aliasHelper: NadelAliasHelper,
         val typeNamesOwnedByService: Set<String>,
@@ -96,39 +92,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
 
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
             .filter { objectTypeName ->
-                if (executionBlueprint is NadelOverallExecutionBlueprintMigrator && executionContext.hints.serviceTypenameShadowing.isShadowingEnabled()) {
-                    val oldDecision = isTypeOwnedByService(
-                        objectTypeName,
-                        executionContext,
-                        service,
-                        executionBlueprint.old,
-                    )
-
-                    try {
-                        val newDecision = executionBlueprint.new.value?.let { newBlueprint ->
-                            isTypeOwnedByService(
-                                objectTypeName,
-                                executionContext,
-                                service,
-                                newBlueprint,
-                            )
-                        }
-
-                        if (newDecision != null && oldDecision != newDecision) {
-                            executionContext.hints.serviceTypenameShadowing.onMismatch(
-                                executionContext.userContext,
-                                oldDecision,
-                                newDecision,
-                                service,
-                                objectTypeName,
-                                overallField,
-                            )
-                        }
-                    } catch (e: Exception) {
-                        logger.error("Error shadowing service typename filter transform", e)
-                    }
-                }
-
                 isTypeOwnedByService(
                     objectTypeName,
                     executionContext,

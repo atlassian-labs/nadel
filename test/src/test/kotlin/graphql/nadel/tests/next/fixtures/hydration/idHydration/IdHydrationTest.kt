@@ -77,9 +77,4 @@ class IdHydrationTest : NadelIntegrationTest(
             },
         ),
     ),
-) {
-    override fun makeNadel(): Nadel.Builder {
-        return super.makeNadel()
-            .blueprintHint { true }
-    }
-}
+)
