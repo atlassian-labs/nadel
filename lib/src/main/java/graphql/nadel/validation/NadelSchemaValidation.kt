@@ -14,6 +14,7 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toMapStrictly
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.util.NadelFieldMap
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
@@ -144,8 +145,15 @@ class NadelSchemaValidation internal constructor(
 
         return NadelOverallExecutionBlueprint(
             engineSchema = schemas.engineSchema,
-            fieldInstructions = fieldInstructions
-                .groupBy(keySelector = { it.fieldInstruction.location }, valueTransform = { it.fieldInstruction }),
+            fieldInstructions = NadelFieldMap.groupBy(
+                values = fieldInstructions,
+                getCoordinates = {
+                    it.fieldInstruction.location
+                },
+                getValue = {
+                    it.fieldInstruction
+                },
+            ),
             underlyingTypeNamesByService = typenamesForService.associate { it.service to it.underlyingTypeNames },
             overallTypeNamesByService = typenamesForService.associate { it.service to it.overallTypeNames },
             underlyingBlueprints = schemas.services.associate { service -> // Blank map to ensure that all services are represented

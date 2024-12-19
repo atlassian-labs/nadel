@@ -28,10 +28,6 @@ data class NadelExecutionContext internal constructor(
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
 
-    @Deprecated("Use incrementalSupport instead", ReplaceWith("incrementalResultSupport"))
-    internal val deferSupport: NadelIncrementalResultSupport
-        get() = incrementalResultSupport
-
     val userContext: Any?
         get() {
             return executionInput.context

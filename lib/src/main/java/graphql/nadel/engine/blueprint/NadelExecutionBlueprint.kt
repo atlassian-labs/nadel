@@ -5,8 +5,8 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeFieldCoordinates
-import graphql.nadel.engine.util.mapFrom
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.util.NadelFieldMap
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
@@ -16,7 +16,7 @@ import graphql.schema.GraphQLSchema
  */
 data class NadelOverallExecutionBlueprint(
     val engineSchema: GraphQLSchema,
-    val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
+    val fieldInstructions: NadelFieldMap<List<NadelFieldInstruction>>,
     private val underlyingTypeNamesByService: Map<Service, Set<String>>,
     private val overallTypeNamesByService: Map<Service, Set<String>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
@@ -70,6 +70,38 @@ data class NadelOverallExecutionBlueprint(
 
     fun getServiceOwning(fieldCoordinates: FieldCoordinates): Service? {
         return coordinatesToService[fieldCoordinates]
+    }
+
+    inline fun <reified T : NadelFieldInstruction> getTypeNameToInstructionMap(
+        field: ExecutableNormalizedField,
+    ): Map<GraphQLObjectTypeName, T> {
+        val map: MutableMap<GraphQLObjectTypeName, T> = mutableMapOf()
+
+        field.objectTypeNames.forEach { objectTypeName ->
+            val instruction = fieldInstructions.get(objectTypeName, field.name)
+                ?.asSequence()
+                ?.filterIsInstance<T>()
+                ?.emptyOrSingle() ?: return@forEach
+            map[objectTypeName] = instruction
+        }
+
+        return map
+    }
+
+    inline fun <reified T : NadelFieldInstruction> getTypeNameToInstructionsMap(
+        field: ExecutableNormalizedField,
+    ): Map<GraphQLObjectTypeName, List<T>> {
+        val map: MutableMap<GraphQLObjectTypeName, List<T>> = mutableMapOf()
+
+        field.objectTypeNames.forEach { objectTypeName ->
+            val instructions = fieldInstructions.get(objectTypeName, field.name)
+                ?.filterIsInstance<T>()
+            if (instructions?.isNotEmpty() == true) {
+                map[objectTypeName] = instructions
+            }
+        }
+
+        return map
     }
 
     inline fun <reified T : NadelFieldInstruction> getInstructionInsideVirtualType(
@@ -157,42 +189,4 @@ data class NadelTypeRenameInstructions internal constructor(
             )
         }
     }
-}
-
-/**
- * todo: why doesn't this belong inside [NadelOverallExecutionBlueprint]
- */
-inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionMap(
-    field: ExecutableNormalizedField,
-): Map<GraphQLObjectTypeName, T> {
-    return mapFrom(
-        field.objectTypeNames
-            .mapNotNull { objectTypeName ->
-                val coordinates = makeFieldCoordinates(objectTypeName, field.name)
-                val instruction = this[coordinates]
-                    ?.filterIsInstance<T>()
-                    ?.emptyOrSingle() ?: return@mapNotNull null
-                objectTypeName to instruction
-            },
-    )
-}
-
-/**
- * todo: why doesn't this belong inside [NadelOverallExecutionBlueprint]
- */
-inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionsMap(
-    field: ExecutableNormalizedField,
-): Map<GraphQLObjectTypeName, List<T>> {
-    return mapFrom(
-        field.objectTypeNames
-            .mapNotNull { objectTypeName ->
-                val coordinates = makeFieldCoordinates(objectTypeName, field.name)
-                val instructions = (this[coordinates] ?: return@mapNotNull null)
-                    .filterIsInstance<T>()
-                when {
-                    instructions.isEmpty() -> return@mapNotNull null
-                    else -> objectTypeName to instructions
-                }
-            },
-    )
 }
