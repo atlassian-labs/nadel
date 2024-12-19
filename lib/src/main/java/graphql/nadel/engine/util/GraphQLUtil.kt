@@ -70,6 +70,7 @@ import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
 import org.intellij.lang.annotations.Language
+import java.lang.invoke.MethodHandles
 
 internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
@@ -191,10 +192,17 @@ private fun GraphQLFieldsContainer.getFieldContainerFor(
     }
 }
 
+private val ExecutableNormalizedFieldConstructor = ExecutableNormalizedField.Builder::class.java
+    .getDeclaredConstructor(ExecutableNormalizedField::class.java)
+    .also {
+        it.trySetAccessible()
+    }
+    .let {
+        MethodHandles.lookup().unreflectConstructor(it)
+    }
+
 fun ExecutableNormalizedField.toBuilder(): ExecutableNormalizedField.Builder {
-    var builder: ExecutableNormalizedField.Builder? = null
-    transform { builder = it }
-    return builder!!
+    return ExecutableNormalizedFieldConstructor.invokeExact(this) as ExecutableNormalizedField.Builder
 }
 
 fun GraphQLCodeRegistry.toBuilder(): GraphQLCodeRegistry.Builder {
@@ -204,15 +212,20 @@ fun GraphQLCodeRegistry.toBuilder(): GraphQLCodeRegistry.Builder {
 }
 
 fun GraphQLSchema.toBuilder(): GraphQLSchema.Builder {
-    var builder: GraphQLSchema.Builder? = null
-    transform { builder = it }
-    return builder!!
+    return GraphQLSchema.newSchema(this)
 }
 
+private val GraphQLSchemaBuilderWithoutTypesConstructor = GraphQLSchema.BuilderWithoutTypes::class.java
+    .getDeclaredConstructor(GraphQLSchema::class.java)
+    .also {
+        it.trySetAccessible()
+    }
+    .let {
+        MethodHandles.lookup().unreflectConstructor(it)
+    }
+
 fun GraphQLSchema.toBuilderWithoutTypes(): GraphQLSchema.BuilderWithoutTypes {
-    var builder: GraphQLSchema.BuilderWithoutTypes? = null
-    transformWithoutTypes { builder = it }
-    return builder!!
+    return GraphQLSchemaBuilderWithoutTypesConstructor.invokeExact(this) as GraphQLSchema.BuilderWithoutTypes
 }
 
 fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormalizedField>): ExecutableNormalizedField {
@@ -630,7 +643,7 @@ fun compileToDocument(
     }
 }
 
-internal fun DelayedIncrementalPartialResult.copy(
+fun DelayedIncrementalPartialResult.copy(
     incremental: List<IncrementalPayload>? = this.incremental,
     extensions: Map<Any?, Any?>? = this.extensions,
     hasNext: Boolean = this.hasNext(),

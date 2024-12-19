@@ -57,7 +57,7 @@ class NadelQueryTransformer private constructor(
 
     private data class TransformContext(
         val artificialFields: MutableList<ExecutableNormalizedField> = mutableListOf(),
-        val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, List<ExecutableNormalizedField>> = mutableMapOf(),
+        val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, MutableList<ExecutableNormalizedField>> = mutableMapOf(),
     )
 
     data class TransformResult(
@@ -71,10 +71,6 @@ class NadelQueryTransformer private constructor(
         val artificialFields: List<ExecutableNormalizedField>,
         val overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
     )
-
-    fun markArtificial(field: ExecutableNormalizedField) {
-        transformContext.artificialFields.add(field)
-    }
 
     /**
      * Helper for calling [transform] for all the given [fields].
@@ -124,11 +120,20 @@ class NadelQueryTransformer private constructor(
         transformContext.artificialFields.addAll(artificialFields)
 
         // Track overall -> underlying fields
-        transformContext.overallToUnderlyingFields.compute(field) { _, oldValue ->
-            (oldValue ?: emptyList()) + newField + artificialFields
-        }
+        transformContext.overallToUnderlyingFields
+            .computeIfAbsent(field) {
+                mutableListOf()
+            }
+            .also {
+                it.addAll(newField)
+                it.addAll(artificialFields)
+            }
 
-        return artificialFields + newField
+        return if (artificialFields.isEmpty()) {
+            newField
+        } else {
+            newField + artificialFields
+        }
     }
 
     /**
@@ -142,9 +147,13 @@ class NadelQueryTransformer private constructor(
             .build()
             .also { newField ->
                 // Track overall -> underlying fields
-                transformContext.overallToUnderlyingFields.compute(field) { _, oldValue ->
-                    (oldValue ?: emptyList()) + newField
-                }
+                transformContext.overallToUnderlyingFields
+                    .computeIfAbsent(field) {
+                        mutableListOf()
+                    }
+                    .also {
+                        it.add(newField)
+                    }
             }
     }
 
@@ -152,8 +161,9 @@ class NadelQueryTransformer private constructor(
         field: ExecutableNormalizedField,
         transformationSteps: List<NadelExecutionPlan.Step<Any>>,
     ): NadelTransformFieldResult {
-        var fieldFromPreviousTransform: ExecutableNormalizedField = field
-        var aggregatedTransformResult: NadelTransformFieldResult? = null
+        var newField: ExecutableNormalizedField = field
+        val artificialFields = mutableListOf<ExecutableNormalizedField>()
+
         for (transformStep in transformationSteps) {
             val transformResultForStep = timer.time(transformStep.queryTransformTimingStep) {
                 transformStep.transform.transformField(
@@ -162,21 +172,19 @@ class NadelQueryTransformer private constructor(
                     this,
                     executionBlueprint,
                     service,
-                    fieldFromPreviousTransform,
+                    newField,
                     transformStep.state,
                 )
             }
-            aggregatedTransformResult = if (aggregatedTransformResult == null) {
-                transformResultForStep
-            } else {
-                NadelTransformFieldResult(
-                    newField = transformResultForStep.newField,
-                    artificialFields = aggregatedTransformResult.artificialFields + transformResultForStep.artificialFields,
-                )
-            }
-            fieldFromPreviousTransform = transformResultForStep.newField ?: break
+            artificialFields.addAll(transformResultForStep.artificialFields)
+            newField = transformResultForStep.newField
+                ?: return NadelTransformFieldResult(null, artificialFields)
         }
-        return aggregatedTransformResult!!
+
+        return NadelTransformFieldResult(
+            newField = newField,
+            artificialFields = artificialFields,
+        )
     }
 
     private fun getUnderlyingTypeNames(objectTypeNames: Collection<String>): List<String> {
