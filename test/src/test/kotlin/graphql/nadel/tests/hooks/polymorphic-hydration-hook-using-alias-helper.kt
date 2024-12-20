@@ -63,6 +63,15 @@ open class PolymorphicHydrationWithAliasTestHook : EngineTestHook {
 class `batch-polymorphic-hydration` : PolymorphicHydrationWithAliasTestHook()
 
 @UseHook
+class `batch-polymorphic-hydration-return-null` : PolymorphicHydrationWithAliasTestHook()
+
+@UseHook
+class `batch-polymorphic-hydration-return-null-with-error` : PolymorphicHydrationWithAliasTestHook()
+
+@UseHook
+class `batch-polymorphic-hydration-return-error` : PolymorphicHydrationWithAliasTestHook()
+
+@UseHook
 class `batch-polymorphic-hydration-actor-fields-are-in-the-same-service` : PolymorphicHydrationWithAliasTestHook()
 
 @UseHook
