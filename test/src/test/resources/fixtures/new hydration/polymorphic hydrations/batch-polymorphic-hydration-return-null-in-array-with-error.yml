@@ -1,4 +1,4 @@
-name: "batch polymorphic hydration return null"
+name: "batch polymorphic hydration return null in array with error"
 enabled: true
 # language=GraphQL
 overallSchema:
@@ -175,6 +175,11 @@ serviceCalls:
             }
           ]
         },
+        "errors": [
+          {
+            "message": "invalid id PET-0"
+          }
+        ],
         "extensions": {}
       }
   - serviceName: "people"
@@ -250,5 +255,13 @@ response: |-
         }
       ]
     },
-    "errors": []
+    "errors": [
+      {
+        "message": "invalid id PET-0",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ]
   }

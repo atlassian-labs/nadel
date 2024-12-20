@@ -1,4 +1,4 @@
-name: "batch polymorphic hydration return error"
+name: "batch polymorphic hydration return top level null"
 enabled: true
 # language=GraphQL
 overallSchema:
@@ -165,11 +165,6 @@ serviceCalls:
     response: |-
       {
         "data": null,
-        "errors": [
-          {
-            "message": "something went wrong"
-          }
-        ],
         "extensions": {}
       }
   - serviceName: "people"
@@ -240,14 +235,5 @@ response: |-
           }
         }
       ]
-    },
-    "errors": [
-      {
-        "message": "something went wrong",
-        "locations": [],
-        "extensions": {
-          "classification": "DataFetchingException"
-        }
-      }
-    ]
+    }
   }
