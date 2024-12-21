@@ -39,7 +39,7 @@ def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
 group = "com.atlassian"
 allprojects {
-    description = "Nadel is a Java library that combines multiple GrahpQL services together into one API."
+    description = "Nadel is a Kotlin library that combines multiple GraphQL services together into one GraphQL API."
 }
 gradle.buildFinished { buildResult ->
     println "*******************************"

@@ -7,6 +7,8 @@ import graphql.language.Value
 import graphql.scalars.ExtendedScalars
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
+import graphql.schema.DataFetcherFactory
+import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLScalarType
 import graphql.schema.TypeResolver
 import graphql.schema.idl.FieldWiringEnvironment
@@ -84,9 +86,7 @@ open class NeverWiringFactory : WiringFactory {
     }
 
     override fun getTypeResolver(environment: InterfaceWiringEnvironment): TypeResolver {
-        return TypeResolver {
-            assertShouldNeverHappen("This interface type resolver should NEVER be called from Nadel")
-        }
+        return NEVER_TR
     }
 
     override fun providesTypeResolver(environment: UnionWiringEnvironment): Boolean {
@@ -100,18 +100,31 @@ open class NeverWiringFactory : WiringFactory {
     }
 
     override fun providesDataFetcher(environment: FieldWiringEnvironment): Boolean {
-        return true
+        return false
     }
 
     override fun getDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
-        return DataFetcher {
-            assertShouldNeverHappen<Any?>("This data fetcher should NEVER be called from Nadel")
-        }
+        return assertShouldNeverHappen("getDataFetcher should NEVER be called from Nadel - we returned false")
     }
 
-    override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
-        return DataFetcher {
+    override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*>? {
+        return null
+    }
+
+
+    companion object {
+        val NEVER_TR =  TypeResolver {
+            assertShouldNeverHappen("This interface type resolver should NEVER be called from Nadel")
+        }
+        private val NEVER_DF = DataFetcher {
             assertShouldNeverHappen<Any?>("This data fetcher should NEVER be called from Nadel")
         }
+        private val NEVER_DFF = DataFetcherFactory {
+            NEVER_DF
+        }
+
+        val NEVER_CODE_REGISTRY: GraphQLCodeRegistry = GraphQLCodeRegistry.newCodeRegistry()
+            .defaultDataFetcher(NEVER_DFF).build()
+
     }
 }

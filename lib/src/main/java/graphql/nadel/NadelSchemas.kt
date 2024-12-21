@@ -27,6 +27,7 @@ data class NadelSchemas(
         internal var overallWiringFactory: WiringFactory = NeverWiringFactory()
         internal var underlyingWiringFactory: WiringFactory = NeverWiringFactory()
 
+
         internal var serviceExecutionFactory: ServiceExecutionFactory? = null
 
         // .nadel files
@@ -224,7 +225,11 @@ data class NadelSchemas(
         private fun createEngineSchema(services: List<Service>): GraphQLSchema {
             val overallSchemaGenerator = OverallSchemaGenerator()
             val serviceRegistries = services.map(Service::definitionRegistry)
-            val schema = overallSchemaGenerator.buildOverallSchema(serviceRegistries, builder.overallWiringFactory)
+            val schema = overallSchemaGenerator.buildOverallSchema(
+                serviceRegistries,
+                builder.overallWiringFactory,
+                NeverWiringFactory.NEVER_CODE_REGISTRY
+            )
             val newSchema = builder.schemaTransformationHook.apply(schema, services)
 
             // make sure that the overall schema has the standard scalars in
