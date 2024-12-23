@@ -7,7 +7,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
-import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.NadelRenameTransform.State
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NFUtil.createField
@@ -46,7 +45,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val renameInstructions = executionBlueprint.fieldInstructions
+        val renameInstructions = executionBlueprint
             .getTypeNameToInstructionMap<NadelRenameFieldInstruction>(overallField)
         if (renameInstructions.isEmpty()) {
             return null

@@ -13,6 +13,8 @@ import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
 import graphql.nadel.validation.util.NadelReferencedType
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.getReferencedTypeNames
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLUnionType
 
@@ -31,7 +33,7 @@ internal class NadelTypeValidation(
     ): NadelSchemaValidationResult {
         val (serviceTypes, serviceTypeErrors) = getServiceTypes(service)
 
-        val serviceTypeMetadata = getReachableTypeMetadata(serviceTypes, service)
+        val reachableTypeMetadata = getReachableTypeMetadata(serviceTypes, service)
 
         val typeValidationResult = serviceTypes
             .map {
@@ -42,8 +44,12 @@ internal class NadelTypeValidation(
         return results(
             serviceTypeErrors,
             typeValidationResult,
-            serviceTypeMetadata,
+            reachableTypeMetadata,
         )
+    }
+
+    fun GraphQLFieldsContainer.hasField(field: GraphQLFieldDefinition): Boolean {
+        return getFieldDefinition(field.name) != null
     }
 
     private fun getReachableTypeMetadata(
