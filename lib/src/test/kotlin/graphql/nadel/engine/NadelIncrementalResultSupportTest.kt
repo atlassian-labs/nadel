@@ -43,7 +43,7 @@ class NadelIncrementalResultSupportTest {
     @Test
     fun `channel closes once initial result comes in and there are no pending defer jobs`() {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
 
         assertFalse(channel.isClosedForSend)
         assertFalse(channel.isClosedForReceive)
@@ -60,7 +60,7 @@ class NadelIncrementalResultSupportTest {
     fun `after last job the hasNext is false`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
         // Use locks to continue the deferred jobs when we release the lock
         val firstLock = Mutex(true)
         val secondLock = Mutex(true)
@@ -142,7 +142,7 @@ class NadelIncrementalResultSupportTest {
     fun `does not send anything before onInitialResultComplete is invoked`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
         val lock = CompletableDeferred<Boolean>()
 
         every {
@@ -197,7 +197,7 @@ class NadelIncrementalResultSupportTest {
     @Test
     fun `hasNext is true if last job launches more jobs`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
         val firstLock = CompletableDeferred<Boolean>()
         val secondLock = CompletableDeferred<Boolean>()
 
@@ -269,7 +269,7 @@ class NadelIncrementalResultSupportTest {
     fun `hasNext is true if there is another job still running`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
         val firstLock = CompletableDeferred<Boolean>()
         val secondLock = CompletableDeferred<Boolean>()
 
@@ -346,7 +346,7 @@ class NadelIncrementalResultSupportTest {
     fun `emits nothing if accumulator returns null`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
 
         every {
             accumulator.accumulate(any())
@@ -391,7 +391,7 @@ class NadelIncrementalResultSupportTest {
     fun `forwards responses from multiple Flows`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
 
         every {
             accumulator.accumulate(any())
@@ -482,7 +482,7 @@ class NadelIncrementalResultSupportTest {
             runTest {
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-                val subject = NadelIncrementalResultSupport(accumulator, channel)
+                val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
 
                 val failureMutex = Mutex(true)
 
@@ -548,7 +548,7 @@ class NadelIncrementalResultSupportTest {
     fun `handles empty Flow`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
 
         // When
         subject.defer(emptyFlow())
@@ -564,7 +564,7 @@ class NadelIncrementalResultSupportTest {
     fun `Flow can launch more defer jobs`() = runTest {
         val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-        val subject = NadelIncrementalResultSupport(accumulator, channel)
+        val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
         val childLock = Mutex(locked = true)
 
         every {
@@ -638,7 +638,7 @@ class NadelIncrementalResultSupportTest {
             runTest {
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-                val subject = NadelIncrementalResultSupport(accumulator, channel)
+                val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
 
                 every {
                     accumulator.accumulate(any())
@@ -692,7 +692,7 @@ class NadelIncrementalResultSupportTest {
             runTest {
                 val channel = Channel<DelayedIncrementalPartialResult>(UNLIMITED)
 
-                val subject = NadelIncrementalResultSupport(accumulator, channel)
+                val subject = NadelIncrementalResultSupport(lazy { accumulator }, channel)
                 val lock = CompletableDeferred<Boolean>()
 
                 assertFalse(channel.isClosedForSend)

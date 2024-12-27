@@ -8,7 +8,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
@@ -47,7 +46,7 @@ internal class NadelBatchHydrationTransform(
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
+        val instructionsByObjectTypeName = executionBlueprint
             .getTypeNameToInstructionsMap<NadelBatchHydrationFieldInstruction>(overallField)
             .ifEmpty {
                 if (executionContext.hints.virtualTypeSupport(service)) {
