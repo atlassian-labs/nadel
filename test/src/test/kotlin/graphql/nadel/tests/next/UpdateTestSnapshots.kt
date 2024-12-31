@@ -56,13 +56,17 @@ private suspend fun main(vararg args: String) {
         .forEach { (klass, test) ->
             println("Recording ${klass.qualifiedName}")
 
-            val captured = test.capture()
+            try {
+                val captured = test.capture()
 
-            writeTestSnapshotClass(
-                testClassName = klass.asClassName(),
-                captured = captured,
-                sourceRoot = sourceRoot,
-            )
+                writeTestSnapshotClass(
+                    testClassName = klass.asClassName(),
+                    captured = captured,
+                    sourceRoot = sourceRoot,
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 }
 
