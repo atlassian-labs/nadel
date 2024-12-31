@@ -26,7 +26,6 @@ public class `oneOf fails when no values are passed snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": null,
      *   "errors": [
      *     {
      *       "message": "Validation error (WrongType@[search]) : Exactly one key must be specified
@@ -48,7 +47,6 @@ public class `oneOf fails when no values are passed snapshot` : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": null,
             |   "errors": [
             |     {
             |       "message": "Validation error (WrongType@[search]) : Exactly one key must be specified for OneOf type 'SearchInput'.",

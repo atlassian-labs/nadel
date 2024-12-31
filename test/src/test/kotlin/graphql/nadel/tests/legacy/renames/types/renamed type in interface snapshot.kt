@@ -24,7 +24,7 @@ public class `renamed type in interface snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   rename__nodes__all: all {
                 |     __typename
                 |     id
@@ -43,15 +43,18 @@ public class `renamed type in interface snapshot` : TestSnapshot() {
                 |     "rename__nodes__all": [
                 |       {
                 |         "__typename": "Issue",
+                |         "id": "issue/1",
                 |         "links": null
                 |       },
                 |       null,
                 |       {
                 |         "__typename": "Issue",
+                |         "id": "issue/2",
                 |         "links": []
                 |       },
                 |       {
                 |         "__typename": "Issue",
+                |         "id": "issue/3",
                 |         "links": [
                 |           {
                 |             "__typename": "User"
@@ -65,10 +68,12 @@ public class `renamed type in interface snapshot` : TestSnapshot() {
                 |         ]
                 |       },
                 |       {
-                |         "__typename": "Monkey"
+                |         "__typename": "Monkey",
+                |         "id": "monkey/1"
                 |       },
                 |       {
-                |         "__typename": "User"
+                |         "__typename": "User",
+                |         "id": "user/1"
                 |       }
                 |     ]
                 |   }
@@ -86,15 +91,18 @@ public class `renamed type in interface snapshot` : TestSnapshot() {
      *     "nodes": [
      *       {
      *         "__typename": "JiraIssue",
+     *         "id": "issue/1",
      *         "links": null
      *       },
      *       null,
      *       {
      *         "__typename": "JiraIssue",
+     *         "id": "issue/2",
      *         "links": []
      *       },
      *       {
      *         "__typename": "JiraIssue",
+     *         "id": "issue/3",
      *         "links": [
      *           {
      *             "__typename": "User"
@@ -108,10 +116,12 @@ public class `renamed type in interface snapshot` : TestSnapshot() {
      *         ]
      *       },
      *       {
-     *         "__typename": "Donkey"
+     *         "__typename": "Donkey",
+     *         "id": "monkey/1"
      *       },
      *       {
-     *         "__typename": "User"
+     *         "__typename": "User",
+     *         "id": "user/1"
      *       }
      *     ]
      *   }
@@ -125,15 +135,18 @@ public class `renamed type in interface snapshot` : TestSnapshot() {
             |     "nodes": [
             |       {
             |         "__typename": "JiraIssue",
+            |         "id": "issue/1",
             |         "links": null
             |       },
             |       null,
             |       {
             |         "__typename": "JiraIssue",
+            |         "id": "issue/2",
             |         "links": []
             |       },
             |       {
             |         "__typename": "JiraIssue",
+            |         "id": "issue/3",
             |         "links": [
             |           {
             |             "__typename": "User"
@@ -147,10 +160,12 @@ public class `renamed type in interface snapshot` : TestSnapshot() {
             |         ]
             |       },
             |       {
-            |         "__typename": "Donkey"
+            |         "__typename": "Donkey",
+            |         "id": "monkey/1"
             |       },
             |       {
-            |         "__typename": "User"
+            |         "__typename": "User",
+            |         "id": "user/1"
             |       }
             |     ]
             |   }

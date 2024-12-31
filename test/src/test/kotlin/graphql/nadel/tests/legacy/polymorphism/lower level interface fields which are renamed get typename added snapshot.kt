@@ -50,7 +50,6 @@ public class `lower level interface fields which are renamed get typename added 
                 |       {
                 |         "name": "Sparky",
                 |         "rename__collarToRenamed__collar": {
-                |           "__typename": "DogCollar",
                 |           "color": "blue"
                 |         },
                 |         "__typename__rename__collarToRenamed": "Dog"
@@ -58,7 +57,6 @@ public class `lower level interface fields which are renamed get typename added 
                 |       {
                 |         "name": "Whiskers",
                 |         "rename__collarToRenamed__collar": {
-                |           "__typename": "CatCollar",
                 |           "color": "red"
                 |         },
                 |         "__typename__rename__collarToRenamed": "Cat"

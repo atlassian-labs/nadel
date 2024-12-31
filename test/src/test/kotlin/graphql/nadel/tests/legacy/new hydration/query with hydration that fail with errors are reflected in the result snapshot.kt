@@ -38,7 +38,11 @@ public class `query with hydration that fail with errors are reflected in the re
                 | {
                 |   "errors": [
                 |     {
-                |       "message": "Error during hydration"
+                |       "message": "Error during hydration",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ],
                 |   "data": {

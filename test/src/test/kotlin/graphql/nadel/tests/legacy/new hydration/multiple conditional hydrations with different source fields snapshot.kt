@@ -51,29 +51,7 @@ public class `multiple conditional hydrations with different source fields snaps
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
-                |   barById(id: "BAR_A") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
                 | {
-                |   "data": {
-                |     "barById": {
-                |       "name": "Bar A"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "service2",
-                query = """
-                | query {
                 |   barById(id: "BAR_B") {
                 |     name
                 |   }

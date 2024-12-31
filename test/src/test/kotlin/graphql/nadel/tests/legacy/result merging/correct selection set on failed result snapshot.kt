@@ -21,27 +21,6 @@ private suspend fun main() {
 @Suppress("unused")
 public class `correct selection set on failed result snapshot` : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "service",
-                query = """
-                | query {
-                |   foo
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {},
-                |   "errors": [
-                |     {
-                |       "message": "Test"
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**

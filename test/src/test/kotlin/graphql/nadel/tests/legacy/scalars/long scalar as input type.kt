@@ -3,6 +3,7 @@ package graphql.nadel.tests.legacy.scalars
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 import graphql.scalars.ExtendedScalars
 import graphql.scalars.alias.AliasedScalar
+import java.math.BigInteger
 import kotlin.Any
 
 public class `long scalar as input type` : NadelLegacyIntegrationTest(query = """
@@ -33,7 +34,7 @@ public class `long scalar as input type` : NadelLegacyIntegrationTest(query = ""
     |""".trimMargin(), runtimeWiring = { wiring ->
       wiring.type("Query") { type ->
         type.dataFetcher("foo") { env ->
-          if (env.getArgument<Any?>("input") == 3_000_000_000) {
+          if (env.getArgument<BigInteger?>("input")?.toLong() == 3_000_000_000L) {
             Service_Foo(thing = "What, were you expecting something else?")}
           else {
             null}

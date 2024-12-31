@@ -1,8 +1,15 @@
 package graphql.nadel.tests.legacy.`new hydration`.batching
 
+import graphql.language.AstPrinter
+import graphql.language.AstSorter
+import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.ServiceExecution
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
+import java.security.MessageDigest
+import java.util.concurrent.CompletableFuture
 import kotlin.Any
 import kotlin.String
+import kotlin.test.assertTrue
 
 public class `batching absent source input` : NadelLegacyIntegrationTest(query = """
 |{
@@ -131,4 +138,46 @@ public class `batching absent source input` : NadelLegacyIntegrationTest(query =
     public val id: String? = null,
     public val content: String? = null,
   )
+
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        if (service.name == "activity") {
+            // This test returns data that normal GraphQL can't i.e. it's illegal response missing fields
+            return ServiceExecution {
+                val query = AstPrinter.printAstCompact(AstSorter().sort(it.query))
+
+                @OptIn(ExperimentalStdlibApi::class)
+                val queryHash = MessageDigest.getInstance("SHA-1")
+                    .digest(query.toByteArray(Charsets.UTF_8))
+                    .toHexString()
+
+                assertTrue(queryHash == "c123547d3405f8b721b5ed0802570f034cfaa9a7")
+
+                CompletableFuture.completedFuture(
+                    NadelServiceExecutionResultImpl(
+                        data = mutableMapOf(
+                            "activity" to mutableListOf(
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity"
+                                ),
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity",
+                                    "batch_hydration__content__contentId" to ""
+                                ),
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity",
+                                    "batch_hydration__content__contentId" to "comment/9001"
+                                ),
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity",
+                                    "batch_hydration__content__contentId" to "issue/1234"
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            }
+        }
+
+        return super.makeServiceExecution(service)
+    }
 }

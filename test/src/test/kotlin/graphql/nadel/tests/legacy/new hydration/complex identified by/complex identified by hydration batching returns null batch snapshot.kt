@@ -61,7 +61,13 @@ public class `complex identified by hydration batching returns null batch snapsh
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                result = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "barsById": null
+                |   }
+                | }
+                """.trimMargin(),
                 delayedResults = listOfJsonStrings(
                 ),
             ),

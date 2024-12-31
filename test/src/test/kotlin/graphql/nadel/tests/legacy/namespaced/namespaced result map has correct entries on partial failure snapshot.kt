@@ -25,7 +25,7 @@ public class `namespaced result map has correct entries on partial failure snaps
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -36,7 +36,6 @@ public class `namespaced result map has correct entries on partial failure snaps
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {},
                 |   "errors": [
                 |     {
                 |       "message": "Error",
@@ -45,7 +44,10 @@ public class `namespaced result map has correct entries on partial failure snaps
                 |         "classification": "DataFetchingException"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(

@@ -3,7 +3,7 @@ package graphql.nadel.tests.legacy.basic
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 
 public class `can execute document with multiple operation definitions` :
-    NadelLegacyIntegrationTest(query = """
+    NadelLegacyIntegrationTest(operationName = "Test", query = """
 |query Foo {
 |  foo
 |}

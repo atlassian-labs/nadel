@@ -55,11 +55,9 @@ public class `deep rename with more interfaces snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "names": [
                 |       {
-                |         "__typename": "Issue",
                 |         "name": "GQLGW-001"
                 |       },
                 |       {
-                |         "__typename": "Issue",
                 |         "name": "GQLGW-1102"
                 |       },
                 |       {
@@ -77,7 +75,6 @@ public class `deep rename with more interfaces snapshot` : TestSnapshot() {
                 |         }
                 |       },
                 |       {
-                |         "__typename": "Edible",
                 |         "name": "Spaghetti"
                 |       }
                 |     ]

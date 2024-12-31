@@ -21,8 +21,7 @@ public class `not nullable top level field has null` : NadelLegacyIntegrationTes
     |""".trimMargin(), runtimeWiring = { wiring ->
       wiring.type("Query") { type ->
         type.dataFetcher("foo") { env ->
-          DataFetcherResult.newResult<Any>().data(null).errors(listOf(toGraphQLError(mapOf("message"
-              to "Test")))).build()}
+          null}
       }
     }
     )

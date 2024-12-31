@@ -3,9 +3,6 @@ package graphql.nadel.tests.legacy.namespaced
 import graphql.execution.DataFetcherResult
 import graphql.nadel.engine.util.toGraphQLError
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
-import kotlin.Any
-import kotlin.Int
-import kotlin.String
 
 public class `not nullable namespaced child is absent` : NadelLegacyIntegrationTest(query = """
 |{

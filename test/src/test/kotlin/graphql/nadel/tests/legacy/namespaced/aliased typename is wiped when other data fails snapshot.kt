@@ -35,10 +35,16 @@ public class `aliased typename is wiped when other data fails snapshot` : TestSn
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {},
+                |   "data": {
+                |     "issue": null
+                |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error"
+                |       "message": "Error",
+                |        "locations": [],
+                |        "extensions": {
+                |          "classification": "DataFetchingException"
+                |        }
                 |     }
                 |   ]
                 | }

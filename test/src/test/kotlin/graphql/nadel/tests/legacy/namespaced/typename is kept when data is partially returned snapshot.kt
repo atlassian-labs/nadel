@@ -61,12 +61,18 @@ public class `typename is kept when data is partially returned snapshot` : TestS
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {},
                 |   "errors": [
                 |     {
-                |       "message": "Error"
+                |       "message": "Error",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -77,15 +83,6 @@ public class `typename is kept when data is partially returned snapshot` : TestS
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": {
-     *       "__typename": "IssueQuery",
-     *       "search": {
-     *         "count": 10
-     *       },
-     *       "getIssue": null
-     *     }
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error",
@@ -94,22 +91,22 @@ public class `typename is kept when data is partially returned snapshot` : TestS
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": {
+     *       "__typename": "IssueQuery",
+     *       "search": {
+     *         "count": 10
+     *       },
+     *       "getIssue": null
+     *     }
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": {
-            |       "__typename": "IssueQuery",
-            |       "search": {
-            |         "count": 10
-            |       },
-            |       "getIssue": null
-            |     }
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error",
@@ -118,7 +115,16 @@ public class `typename is kept when data is partially returned snapshot` : TestS
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": {
+            |       "__typename": "IssueQuery",
+            |       "search": {
+            |         "count": 10
+            |       },
+            |       "getIssue": null
+            |     }
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

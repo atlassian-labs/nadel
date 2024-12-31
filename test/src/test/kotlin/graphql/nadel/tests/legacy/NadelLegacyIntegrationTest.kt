@@ -51,7 +51,7 @@ abstract class NadelLegacyIntegrationTest(
     }
 
     override fun makeServiceExecution(service: Service): ServiceExecution {
-        return legacyHook.wrapServiceExecution(super.makeServiceExecution(service))
+        return legacyHook.wrapServiceExecution(service.name, super.makeServiceExecution(service))
     }
 
     override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {

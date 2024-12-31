@@ -26,11 +26,42 @@ public class `exceptions in service execution result completable future in graph
 
     /**
      * ```json
-     * {}
+     * {
+     *   "errors": [
+     *     {
+     *       "message": "An exception occurred invoking the service 'MyService': Pop goes the
+     * weasel",
+     *       "locations": [],
+     *       "extensions": {
+     *         "executionId": "test",
+     *         "classification": "DataFetchingException"
+     *       }
+     *     }
+     *   ],
+     *   "data": {
+     *     "hello": null
+     *   }
+     * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-            result = "{}",
+            result = """
+            | {
+            |   "errors": [
+            |     {
+            |       "message": "An exception occurred invoking the service 'MyService': Pop goes the weasel",
+            |       "locations": [],
+            |       "extensions": {
+            |         "executionId": "test",
+            |         "classification": "DataFetchingException"
+            |       }
+            |     }
+            |   ],
+            |   "data": {
+            |     "hello": null
+            |   }
+            | }
+            """.trimMargin(),
             delayedResults = listOfJsonStrings(
             ),
         )

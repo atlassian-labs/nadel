@@ -57,9 +57,16 @@ public class `hydration call forwards error snapshot` : TestSnapshot() {
                 variables = "{}",
                 result = """
                 | {
+                |   "data": {
+                |     "barById": null
+                |   },
                 |   "errors": [
                 |     {
-                |       "message": "Some error occurred"
+                |       "message": "Some error occurred",
+                |        "locations": [],
+                |        "extensions": {
+                |          "classification": "DataFetchingException"
+                |        }
                 |     },
                 |     {
                 |       "message": "Some error with extension occurred",
@@ -67,6 +74,7 @@ public class `hydration call forwards error snapshot` : TestSnapshot() {
                 |         "barById",
                 |         "name"
                 |       ],
+                |       "locations": [],
                 |       "extensions": {
                 |         "classification": "SomeCustomError"
                 |       }

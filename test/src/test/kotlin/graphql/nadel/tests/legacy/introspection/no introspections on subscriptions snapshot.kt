@@ -26,7 +26,6 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": null,
      *   "errors": [
      *     {
      *       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription
@@ -48,7 +47,6 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": null,
             |   "errors": [
             |     {
             |       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription operation 'null' root field '__typename' cannot be an introspection field",

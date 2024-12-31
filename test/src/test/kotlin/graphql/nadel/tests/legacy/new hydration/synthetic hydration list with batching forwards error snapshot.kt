@@ -66,10 +66,18 @@ public class `synthetic hydration list with batching forwards error snapshot` : 
                 | {
                 |   "errors": [
                 |     {
-                |       "message": "Some error occurred"
+                |       "message": "Some error occurred",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ],
-                |   "data": null
+                |   "data": {
+                |     "barsQuery": {
+                |       "barsById": null
+                |     }
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(

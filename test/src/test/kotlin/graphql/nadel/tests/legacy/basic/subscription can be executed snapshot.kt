@@ -21,33 +21,15 @@ private suspend fun main() {
 @Suppress("unused")
 public class `subscription can be executed snapshot` : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "MyService",
-                query = """
-                | subscription M {
-                |   onWorldUpdate {
-                |     id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "onWorldUpdate": null
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-        )
+            )
 
     /**
      * ```json
      * {
      *   "data": {
-     *     "onWorldUpdate": null
+     *     "onWorldUpdate": {
+     *       "id": "subscription M{onWorldUpdate{id}}"
+     *     }
      *   }
      * }
      * ```
@@ -56,7 +38,9 @@ public class `subscription can be executed snapshot` : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "onWorldUpdate": null
+            |     "onWorldUpdate": {
+            |       "id": "subscription M{onWorldUpdate{id}}"
+            |     }
             |   }
             | }
             """.trimMargin(),

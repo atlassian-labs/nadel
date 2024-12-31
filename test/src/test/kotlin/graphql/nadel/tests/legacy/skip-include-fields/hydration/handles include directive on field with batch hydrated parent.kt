@@ -50,7 +50,8 @@ public class `handles include directive on field with batch hydrated parent` :
 
         .dataFetcher("tests") { env ->
           if (env.getArgument<Any?>("ids") == listOf("Foo-3", "Foo-4")) {
-            listOf(Service_Foo(), Service_Foo())}
+              listOf(Service_Test(id = "Foo-4"), Service_Test(id = "Foo-3"))
+          }
           else {
             null}
         }

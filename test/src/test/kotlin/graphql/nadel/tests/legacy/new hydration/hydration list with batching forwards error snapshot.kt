@@ -61,14 +61,20 @@ public class `hydration list with batching forwards error snapshot` : TestSnapsh
                 """.trimMargin(),
                 variables = "{}",
                 result = """
-                | {
-                |   "data": null,
-                |   "errors": [
-                |     {
-                |       "message": "Some error occurred"
-                |     }
-                |   ]
-                | }
+                |{
+                |  "data": {
+                |    "barsById": null
+                |  },
+                |  "errors": [
+                |    {
+                |      "message": "Some error occurred",
+                |      "locations": [],
+                |      "extensions": {
+                |        "classification": "DataFetchingException"
+                |      }
+                |    }
+                |  ]
+                |}
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
                 ),

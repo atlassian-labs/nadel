@@ -39,18 +39,14 @@ public class `lower level interface fields get typename added snapshot` : TestSn
                 |   "data": {
                 |     "pets": [
                 |       {
-                |         "__typename": "Dog",
                 |         "name": "Sparky",
                 |         "collar": {
-                |           "__typename": "DogCollar",
                 |           "color": "blue"
                 |         }
                 |       },
                 |       {
-                |         "__typename": "Cat",
                 |         "name": "Whiskers",
                 |         "collar": {
-                |           "__typename": "CatCollar",
                 |           "color": "red"
                 |         }
                 |       }

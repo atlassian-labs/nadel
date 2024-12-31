@@ -40,7 +40,11 @@ public class `one of the namespaced services returns error snapshot` : TestSnaps
                 |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error on IssueSearch"
+                |       "message": "Error on IssueSearch",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ]
                 | }

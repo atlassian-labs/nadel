@@ -42,8 +42,9 @@ public class `top level field is null in batched synthetic hydration` :
     |}
     |""".trimMargin(), runtimeWiring = { wiring ->
       wiring.type("Query") { type ->
-        type.dataFetcher("users") {
-          Unit}
+          type.dataFetcher("users") {
+              null
+          }
       }
       wiring.type("UsersQuery") { type ->
         type.dataFetcher("usersByIds") { env ->

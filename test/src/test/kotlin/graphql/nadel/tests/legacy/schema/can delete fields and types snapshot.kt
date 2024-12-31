@@ -25,11 +25,159 @@ public class `can delete fields and types snapshot` : TestSnapshot() {
 
     /**
      * ```json
-     * {}
+     * {
+     *   "data": {
+     *     "__schema": {
+     *       "types": [
+     *         {
+     *           "name": "Bar"
+     *         },
+     *         {
+     *           "name": "Boolean"
+     *         },
+     *         {
+     *           "name": "Float"
+     *         },
+     *         {
+     *           "name": "Foo"
+     *         },
+     *         {
+     *           "name": "ID"
+     *         },
+     *         {
+     *           "name": "Int"
+     *         },
+     *         {
+     *           "name": "JSON"
+     *         },
+     *         {
+     *           "name": "NadelBatchObjectIdentifiedBy"
+     *         },
+     *         {
+     *           "name": "NadelHydrationArgument"
+     *         },
+     *         {
+     *           "name": "NadelHydrationCondition"
+     *         },
+     *         {
+     *           "name": "NadelHydrationResultCondition"
+     *         },
+     *         {
+     *           "name": "NadelHydrationResultFieldPredicate"
+     *         },
+     *         {
+     *           "name": "Query"
+     *         },
+     *         {
+     *           "name": "String"
+     *         },
+     *         {
+     *           "name": "__Directive"
+     *         },
+     *         {
+     *           "name": "__DirectiveLocation"
+     *         },
+     *         {
+     *           "name": "__EnumValue"
+     *         },
+     *         {
+     *           "name": "__Field"
+     *         },
+     *         {
+     *           "name": "__InputValue"
+     *         },
+     *         {
+     *           "name": "__Schema"
+     *         },
+     *         {
+     *           "name": "__Type"
+     *         },
+     *         {
+     *           "name": "__TypeKind"
+     *         }
+     *       ]
+     *     }
+     *   }
+     * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-            result = "{}",
+            result = """
+            | {
+            |   "data": {
+            |     "__schema": {
+            |       "types": [
+            |         {
+            |           "name": "Bar"
+            |         },
+            |         {
+            |           "name": "Boolean"
+            |         },
+            |         {
+            |           "name": "Float"
+            |         },
+            |         {
+            |           "name": "Foo"
+            |         },
+            |         {
+            |           "name": "ID"
+            |         },
+            |         {
+            |           "name": "Int"
+            |         },
+            |         {
+            |           "name": "JSON"
+            |         },
+            |         {
+            |           "name": "NadelBatchObjectIdentifiedBy"
+            |         },
+            |         {
+            |           "name": "NadelHydrationArgument"
+            |         },
+            |         {
+            |           "name": "NadelHydrationCondition"
+            |         },
+            |         {
+            |           "name": "NadelHydrationResultCondition"
+            |         },
+            |         {
+            |           "name": "NadelHydrationResultFieldPredicate"
+            |         },
+            |         {
+            |           "name": "Query"
+            |         },
+            |         {
+            |           "name": "String"
+            |         },
+            |         {
+            |           "name": "__Directive"
+            |         },
+            |         {
+            |           "name": "__DirectiveLocation"
+            |         },
+            |         {
+            |           "name": "__EnumValue"
+            |         },
+            |         {
+            |           "name": "__Field"
+            |         },
+            |         {
+            |           "name": "__InputValue"
+            |         },
+            |         {
+            |           "name": "__Schema"
+            |         },
+            |         {
+            |           "name": "__Type"
+            |         },
+            |         {
+            |           "name": "__TypeKind"
+            |         }
+            |       ]
+            |     }
+            |   }
+            | }
+            """.trimMargin(),
             delayedResults = listOfJsonStrings(
             ),
         )

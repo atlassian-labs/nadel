@@ -25,11 +25,33 @@ public class `rejects multiple operation defs without explicit op name snapshot`
 
     /**
      * ```json
-     * {}
+     * {
+     *   "errors": [
+     *     {
+     *       "message": "Must provide operation name if query contains multiple operations",
+     *       "extensions": {
+     *         "classification": "ValidationError"
+     *       }
+     *     }
+     *   ],
+     *   "data": null
+     * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-            result = "{}",
+            result = """
+            | {
+            |   "errors": [
+            |     {
+            |       "message": "Must provide operation name if query contains multiple operations",
+            |       "extensions": {
+            |         "classification": "ValidationError"
+            |       }
+            |     }
+            |   ],
+            |   "data": null
+            | }
+            """.trimMargin(),
             delayedResults = listOfJsonStrings(
             ),
         )

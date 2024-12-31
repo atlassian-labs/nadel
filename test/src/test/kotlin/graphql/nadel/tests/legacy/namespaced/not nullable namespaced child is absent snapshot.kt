@@ -35,10 +35,16 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
                 variables = "{}",
                 result = """
                 | {
-                |   "data": null,
+                |   "data": {
+                |     "issue": null
+                |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error on IssueSearch"
+                |       "message": "Error on IssueSearch",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ]
                 | }

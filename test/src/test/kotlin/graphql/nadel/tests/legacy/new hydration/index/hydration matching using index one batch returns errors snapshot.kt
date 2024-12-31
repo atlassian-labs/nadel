@@ -104,14 +104,18 @@ public class `hydration matching using index one batch returns errors snapshot` 
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "usersByIds": null
-                |   },
                 |   "errors": [
                 |     {
-                |       "message": "Fail"
+                |       "message": "Fail",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "usersByIds": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(

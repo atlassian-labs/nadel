@@ -35,12 +35,18 @@ public class `multiple typenames are wiped when other data fails snapshot` : Tes
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {},
                 |   "errors": [
                 |     {
-                |       "message": "Error"
+                |       "message": "Error",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(

@@ -41,7 +41,11 @@ public class
                 | {
                 |   "errors": [
                 |     {
-                |       "message": "Error during hydration"
+                |       "message": "Error during hydration",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ],
                 |   "data": {

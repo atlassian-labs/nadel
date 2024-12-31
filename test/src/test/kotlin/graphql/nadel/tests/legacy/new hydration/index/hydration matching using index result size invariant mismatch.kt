@@ -86,4 +86,8 @@ public class `hydration matching using index result size invariant mismatch` :
     public val authorIds: List<String?>? = null,
     public val id: String? = null,
   )
+
+    override fun assertFailure(e: Exception): Boolean {
+        return e.message == "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments"
+    }
 }

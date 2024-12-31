@@ -3,6 +3,7 @@ package graphql.nadel.tests.legacy.scalars
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 import graphql.scalars.ExtendedScalars
 import graphql.scalars.alias.AliasedScalar
+import java.math.BigInteger
 import kotlin.Any
 
 public class `long scalar argument with default values` : NadelLegacyIntegrationTest(query = """
@@ -23,7 +24,7 @@ public class `long scalar argument with default values` : NadelLegacyIntegration
     |""".trimMargin(), runtimeWiring = { wiring ->
       wiring.type("Query") { type ->
         type.dataFetcher("getFoo") { env ->
-          if (env.getArgument<Any?>("arg") == 15) {
+          if (env.getArgument<BigInteger?>("arg")?.toInt() == 15) {
             "KFC Good"}
           else {
             null}

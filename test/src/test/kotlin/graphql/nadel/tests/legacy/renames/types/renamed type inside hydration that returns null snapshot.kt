@@ -37,8 +37,7 @@ public class `renamed type inside hydration that returns null snapshot` : TestSn
                 result = """
                 | {
                 |   "data": {
-                |     "issueById": null,
-                |     "extensions": {}
+                |     "issueById": null
                 |   }
                 | }
                 """.trimMargin(),

@@ -40,7 +40,11 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
                 |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error"
+                |       "message": "Error",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ]
                 | }
@@ -67,7 +71,11 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
                 |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error"
+                |       "message": "Error",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ]
                 | }

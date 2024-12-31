@@ -1,9 +1,9 @@
 package graphql.nadel.tests.legacy.`result merging`
 
-import graphql.execution.DataFetcherResult
-import graphql.nadel.engine.util.toGraphQLError
+import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.ServiceExecution
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
-import kotlin.Any
+import java.util.concurrent.CompletableFuture
 
 public class `correct selection set on partially failed result` : NadelLegacyIntegrationTest(query =
     """
@@ -20,11 +20,6 @@ public class `correct selection set on partially failed result` : NadelLegacyInt
     |  foo: String
     |}
     |""".trimMargin(), runtimeWiring = { wiring ->
-      wiring.type("Query") { type ->
-        type.dataFetcher("foo") { env ->
-          DataFetcherResult.newResult<Any>().data(null).errors(listOf(toGraphQLError(mapOf("message"
-              to "Test")))).build()}
-      }
     }
     )
 , Service(name="bar", overallSchema="""
@@ -42,4 +37,23 @@ public class `correct selection set on partially failed result` : NadelLegacyInt
       }
     }
     )
-))
+)){
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        if (service.name == "foo") {
+            return ServiceExecution {
+                CompletableFuture.completedFuture(
+                    NadelServiceExecutionResultImpl(
+                        data = mutableMapOf(),
+                        errors = mutableListOf(
+                            mutableMapOf(
+                                "message" to "Test",
+                            ),
+                        ),
+                    ),
+                )
+            }
+        } else {
+            return super.makeServiceExecution(service)
+        }
+    }
+}

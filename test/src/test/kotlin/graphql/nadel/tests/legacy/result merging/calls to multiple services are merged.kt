@@ -33,7 +33,7 @@ public class `calls to multiple services are merged` : NadelLegacyIntegrationTes
     |""".trimMargin(), runtimeWiring = { wiring ->
       wiring.type("Query") { type ->
         type.dataFetcher("foo") { env ->
-          if (env.getArgument<Any?>("id") == "1") {
+          if (env.getArgument<Any?>("id") == "1" && env.field.alias == null) {
             Foo_Foo(name = "Hello")}
           else if (env.getArgument<Any?>("id") == "1") {
             Foo_Foo(name = "World")}

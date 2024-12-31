@@ -64,7 +64,11 @@ public class `synthetic hydration batching returns null snapshot` : TestSnapshot
                 variables = "{}",
                 result = """
                 | {
-                |   "data": null
+                |   "data": {
+                |     "barsQuery": {
+                |       "barsById": null
+                |     }
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(

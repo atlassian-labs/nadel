@@ -36,10 +36,18 @@ public class `errors and some data from a service execution are reflected in the
                 | {
                 |   "errors": [
                 |     {
-                |       "message": "Problem1"
+                |       "message": "Problem1",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     },
                 |     {
-                |       "message": "Problem2"
+                |       "message": "Problem2",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ],
                 |   "data": {

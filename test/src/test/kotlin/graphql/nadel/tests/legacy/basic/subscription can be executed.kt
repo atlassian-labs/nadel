@@ -1,7 +1,10 @@
 package graphql.nadel.tests.legacy.basic
 
+import graphql.language.AstPrinter
+import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.ServiceExecution
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
-import kotlin.String
+import java.util.concurrent.CompletableFuture
 
 public class `subscription can be executed` : NadelLegacyIntegrationTest(query = """
 |subscription M {
@@ -9,8 +12,8 @@ public class `subscription can be executed` : NadelLegacyIntegrationTest(query =
 |    id
 |  }
 |}
-|""".trimMargin(), variables = emptyMap(), services = listOf(Service(name="MyService",
-    overallSchema="""
+|""".trimMargin(), variables = emptyMap(), services = listOf(Service(name = "MyService",
+    overallSchema = """
     |type Query {
     |  hello: World
     |}
@@ -25,7 +28,7 @@ public class `subscription can be executed` : NadelLegacyIntegrationTest(query =
     |  onWorldUpdate: World
     |  onAnotherUpdate: World
     |}
-    |""".trimMargin(), underlyingSchema="""
+    |""".trimMargin(), underlyingSchema = """
     |type Mutation {
     |  hello: String
     |}
@@ -44,15 +47,25 @@ public class `subscription can be executed` : NadelLegacyIntegrationTest(query =
     |  name: String
     |}
     |""".trimMargin(), runtimeWiring = { wiring ->
-      wiring.type("Subscription") { type ->
-        type.dataFetcher("onWorldUpdate") { env ->
-          null}
-      }
+        wiring.type("Subscription") { type ->
+            type.dataFetcher("onWorldUpdate") { env ->
+                null
+            }
+        }
     }
-    )
+)
 )) {
-  private data class MyService_World(
-    public val id: String? = null,
-    public val name: String? = null,
-  )
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        return ServiceExecution {
+            CompletableFuture.completedFuture(
+                NadelServiceExecutionResultImpl(
+                    data = mutableMapOf(
+                        "onWorldUpdate" to mutableMapOf(
+                            "id" to AstPrinter.printAstCompact(it.query),
+                        ),
+                    ),
+                )
+            )
+        }
+    }
 }

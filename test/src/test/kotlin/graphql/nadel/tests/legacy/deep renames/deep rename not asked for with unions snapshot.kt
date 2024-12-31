@@ -41,15 +41,12 @@ public class `deep rename not asked for with unions snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "names": [
                 |       {
-                |         "__typename": "Issue",
                 |         "name": "GQLGW-001"
                 |       },
                 |       {
-                |         "__typename": "Issue",
                 |         "name": "GQLGW-1102"
                 |       },
                 |       {
-                |         "__typename": "Edible",
                 |         "name": "Spaghetti"
                 |       }
                 |     ]

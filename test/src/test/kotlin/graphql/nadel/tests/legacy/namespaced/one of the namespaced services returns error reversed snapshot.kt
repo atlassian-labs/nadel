@@ -66,7 +66,11 @@ public class `one of the namespaced services returns error reversed snapshot` : 
                 |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error on IssueSearch"
+                |       "message": "Error on IssueSearch",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ]
                 | }

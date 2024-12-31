@@ -61,7 +61,9 @@ public class `service types are completely filtered snapshot` : TestSnapshot() {
      * {
      *   "data": {
      *     "test": {
-     *       "extensions": {}
+     *       "extensions": [
+     *          {}
+     *       ]
      *     }
      *   }
      * }
@@ -72,7 +74,9 @@ public class `service types are completely filtered snapshot` : TestSnapshot() {
             | {
             |   "data": {
             |     "test": {
-            |       "extensions": {}
+            |       "extensions": [
+            |         {}
+            |       ]
             |     }
             |   }
             | }

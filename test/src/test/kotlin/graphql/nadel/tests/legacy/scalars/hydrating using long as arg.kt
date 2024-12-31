@@ -3,6 +3,7 @@ package graphql.nadel.tests.legacy.scalars
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 import graphql.scalars.ExtendedScalars
 import graphql.scalars.alias.AliasedScalar
+import java.math.BigInteger
 import kotlin.Any
 import kotlin.Long
 import kotlin.String
@@ -49,7 +50,7 @@ public class `hydrating using long as arg` : NadelLegacyIntegrationTest(query = 
           Service_Foo(createdAt = 3_000_000_000)}
 
         .dataFetcher("successor") { env ->
-          if (env.getArgument<Any?>("after") == 3_000_000_000) {
+          if (env.getArgument<Any?>("after") == BigInteger.valueOf(3_000_000_000)) {
             Service_Foo(id = "2023")}
           else {
             null}

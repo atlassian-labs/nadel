@@ -24,7 +24,7 @@ public class `not nullable namespaced child has null snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -35,16 +35,21 @@ public class `not nullable namespaced child has null snapshot` : TestSnapshot() 
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "issue": {
-                |       "search": null
-                |     }
-                |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error on IssueSearch"
+                |       "message": "The field at path '/issue/search' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'SearchResult' within parent type 'IssueQuery'",
+                |       "path": [
+                |         "issue",
+                |         "search"
+                |       ],
+                |       "extensions": {
+                |         "classification": "NullValueInNonNullableField"
+                |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -53,7 +58,7 @@ public class `not nullable namespaced child has null snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -81,36 +86,48 @@ public class `not nullable namespaced child has null snapshot` : TestSnapshot() 
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": null
-     *   },
      *   "errors": [
      *     {
-     *       "message": "Error on IssueSearch",
+     *       "message": "The field at path '/issue/search' was declared as a non null type, but the
+     * code involved in retrieving data has wrongly returned a null value.  The graphql specification
+     * requires that the parent field be set to null, or if that is non nullable that it bubble up null
+     * to its parent and so on. The non-nullable type is 'SearchResult' within parent type
+     * 'IssueQuery'",
      *       "locations": [],
+     *       "path": [
+     *         "issue",
+     *         "search"
+     *       ],
      *       "extensions": {
-     *         "classification": "DataFetchingException"
+     *         "classification": "NullValueInNonNullableField"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": null
-            |   },
             |   "errors": [
             |     {
-            |       "message": "Error on IssueSearch",
+            |       "message": "The field at path '/issue/search' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'SearchResult' within parent type 'IssueQuery'",
             |       "locations": [],
+            |       "path": [
+            |         "issue",
+            |         "search"
+            |       ],
             |       "extensions": {
-            |         "classification": "DataFetchingException"
+            |         "classification": "NullValueInNonNullableField"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

@@ -24,19 +24,25 @@ public class `not nullable top level field is absent snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {},
                 |   "errors": [
                 |     {
-                |       "message": "Test"
+                |       "message": "The field at path '/foo' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'String' within parent type 'Query'",
+                |       "path": [
+                |         "foo"
+                |       ],
+                |       "extensions": {
+                |         "classification": "NullValueInNonNullableField"
+                |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": null
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -47,32 +53,41 @@ public class `not nullable top level field is absent snapshot` : TestSnapshot() 
     /**
      * ```json
      * {
-     *   "data": null,
      *   "errors": [
      *     {
-     *       "message": "Test",
+     *       "message": "The field at path '/foo' was declared as a non null type, but the code
+     * involved in retrieving data has wrongly returned a null value.  The graphql specification
+     * requires that the parent field be set to null, or if that is non nullable that it bubble up null
+     * to its parent and so on. The non-nullable type is 'String' within parent type 'Query'",
      *       "locations": [],
+     *       "path": [
+     *         "foo"
+     *       ],
      *       "extensions": {
-     *         "classification": "DataFetchingException"
+     *         "classification": "NullValueInNonNullableField"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": null
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": null,
             |   "errors": [
             |     {
-            |       "message": "Test",
+            |       "message": "The field at path '/foo' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'String' within parent type 'Query'",
             |       "locations": [],
+            |       "path": [
+            |         "foo"
+            |       ],
             |       "extensions": {
-            |         "classification": "DataFetchingException"
+            |         "classification": "NullValueInNonNullableField"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": null
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

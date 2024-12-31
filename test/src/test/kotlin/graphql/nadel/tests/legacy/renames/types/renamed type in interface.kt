@@ -54,10 +54,10 @@ public class `renamed type in interface` : NadelLegacyIntegrationTest(query = ""
     |""".trimMargin(), runtimeWiring = { wiring ->
       wiring.type("Query") { type ->
         type.dataFetcher("all") { env ->
-          listOf(IssueService_Issue(id = null, links = null), null, IssueService_Issue(id = null,
-              links = listOf()), IssueService_Issue(id = null, links = listOf(IssueService_User(),
-              IssueService_Issue(), IssueService_Monkey())), IssueService_Monkey(id = null),
-              IssueService_User(id = null))}
+          listOf(IssueService_Issue(id = "issue/1", links = null), null, IssueService_Issue(id = "issue/2",
+              links = listOf()), IssueService_Issue(id = "issue/3", links = listOf(IssueService_User(id="user/1"),
+              IssueService_Issue("issue/1"), IssueService_Monkey("monkey/1"))), IssueService_Monkey(id = "monkey/1"),
+              IssueService_User(id = "user/1"))}
       }
       wiring.type("Node") { type ->
         type.typeResolver { typeResolver ->

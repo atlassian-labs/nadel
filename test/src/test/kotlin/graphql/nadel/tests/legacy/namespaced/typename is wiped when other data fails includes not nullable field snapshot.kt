@@ -36,10 +36,16 @@ public class `typename is wiped when other data fails includes not nullable fiel
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {},
+                |   "data": {
+                |     "issue": null
+                |   },
                 |   "errors": [
                 |     {
-                |       "message": "Error"
+                |       "message": "Error",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ]
                 | }

@@ -61,10 +61,18 @@ public class `synthetic hydration forwards error snapshot` : TestSnapshot() {
                 | {
                 |   "errors": [
                 |     {
-                |       "message": "Some error occurred"
+                |       "message": "Some error occurred",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ],
-                |   "data": null
+                |   "data": {
+                |     "barsQuery": {
+                |       "barById": null
+                |     }
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(

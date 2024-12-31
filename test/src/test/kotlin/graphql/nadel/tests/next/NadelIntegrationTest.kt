@@ -28,6 +28,7 @@ import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
@@ -70,7 +71,15 @@ abstract class NadelIntegrationTest(
         val executionInput = makeExecutionInput().build()
 
         // When
-        val result = nadel.execute(executionInput).await()
+        val result = try {
+            nadel.execute(executionInput).await()
+        } catch (e: Exception) {
+            // Let tests expect Exception
+            if (assertFailure(e)) {
+                return@runTest
+            }
+            throw e
+        }
 
         val incrementalResults = if (result is IncrementalExecutionResult) {
             result.incrementalItemPublisher
@@ -188,12 +197,16 @@ abstract class NadelIntegrationTest(
         val schemas = makeNadelSchemas().build()
         val nadelSchemaValidation = makeNadelSchemaValidation()
         val schemaErrors = nadelSchemaValidation.validate(schemas)
-        assertTrue(schemaErrors.map { it.message }.isEmpty())
+        assertSchemaErrors(schemaErrors)
 
         return Nadel.newNadel()
             .schemas(schemas)
             .instrumentation(makeInstrumentation())
             .schemaValidation(nadelSchemaValidation)
+    }
+
+    open fun assertSchemaErrors(errors: Set<NadelSchemaValidationError>) {
+        assertTrue(errors.map { it.message }.isEmpty())
     }
 
     open fun makeNadelSchemas(): NadelSchemas.Builder {
@@ -296,6 +309,15 @@ abstract class NadelIntegrationTest(
 
     open fun getTestSnapshot(): TestSnapshot {
         return _testSnapshot.value
+    }
+
+    /**
+     * Allows for a chance to recover from an [Exception] if it is expected
+     *
+     * @return true to pass the test
+     */
+    open fun assertFailure(e: Exception): Boolean {
+        return false
     }
 
     open fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {

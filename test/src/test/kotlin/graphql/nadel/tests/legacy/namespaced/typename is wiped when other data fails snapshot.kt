@@ -24,7 +24,7 @@ public class `typename is wiped when other data fails snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -35,12 +35,18 @@ public class `typename is wiped when other data fails snapshot` : TestSnapshot()
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {},
                 |   "errors": [
                 |     {
-                |       "message": "Error"
+                |       "message": "Error",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -51,9 +57,6 @@ public class `typename is wiped when other data fails snapshot` : TestSnapshot()
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error",
@@ -62,16 +65,16 @@ public class `typename is wiped when other data fails snapshot` : TestSnapshot()
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error",
@@ -80,7 +83,10 @@ public class `typename is wiped when other data fails snapshot` : TestSnapshot()
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

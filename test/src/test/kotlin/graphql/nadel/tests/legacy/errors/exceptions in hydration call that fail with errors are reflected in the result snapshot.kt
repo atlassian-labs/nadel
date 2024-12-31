@@ -51,11 +51,45 @@ public class
 
     /**
      * ```json
-     * {}
+     * {
+     *   "errors": [
+     *     {
+     *       "message": "An exception occurred invoking the service 'Bar': Pop goes the weasel",
+     *       "locations": [],
+     *       "extensions": {
+     *         "executionId": "test",
+     *         "classification": "DataFetchingException"
+     *       }
+     *     }
+     *   ],
+     *   "data": {
+     *     "foo": {
+     *       "bar": null
+     *     }
+     *   }
+     * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-            result = "{}",
+            result = """
+            | {
+            |   "errors": [
+            |     {
+            |       "message": "An exception occurred invoking the service 'Bar': Pop goes the weasel",
+            |       "locations": [],
+            |       "extensions": {
+            |         "executionId": "test",
+            |         "classification": "DataFetchingException"
+            |       }
+            |     }
+            |   ],
+            |   "data": {
+            |     "foo": {
+            |       "bar": null
+            |     }
+            |   }
+            | }
+            """.trimMargin(),
             delayedResults = listOfJsonStrings(
             ),
         )

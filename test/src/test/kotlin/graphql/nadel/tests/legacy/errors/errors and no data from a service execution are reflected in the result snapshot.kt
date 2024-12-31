@@ -36,13 +36,23 @@ public class `errors and no data from a service execution are reflected in the r
                 | {
                 |   "errors": [
                 |     {
-                |       "message": "Problem1"
+                |       "message": "Problem1",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     },
                 |     {
-                |       "message": "Problem2"
+                |       "message": "Problem2",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
                 |   ],
-                |   "data": null
+                |   "data": {
+                |     "hello": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(

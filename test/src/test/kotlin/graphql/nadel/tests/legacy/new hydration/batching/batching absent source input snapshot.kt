@@ -22,44 +22,6 @@ private suspend fun main() {
 public class `batching absent source input snapshot` : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "activity",
-                query = """
-                | {
-                |   activity {
-                |     __typename__batch_hydration__content: __typename
-                |     batch_hydration__content__contentId: contentId
-                |     batch_hydration__content__contentId: contentId
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "activity": [
-                |       {
-                |         "__typename__batch_hydration__content": "Activity"
-                |       },
-                |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentId": ""
-                |       },
-                |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentId": "comment/9001"
-                |       },
-                |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentId": "issue/1234"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
                 service = "comments",
                 query = """
                 | {

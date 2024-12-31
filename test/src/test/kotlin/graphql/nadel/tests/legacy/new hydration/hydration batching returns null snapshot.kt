@@ -60,7 +60,13 @@ public class `hydration batching returns null snapshot` : TestSnapshot() {
                 | }
                 """.trimMargin(),
                 variables = "{}",
-                result = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "barsById": null
+                |   }
+                | }
+                """.trimMargin(),
                 delayedResults = listOfJsonStrings(
                 ),
             ),

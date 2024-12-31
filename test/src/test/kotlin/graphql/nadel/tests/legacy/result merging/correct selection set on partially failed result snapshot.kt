@@ -39,27 +39,6 @@ public class `correct selection set on partially failed result snapshot` : TestS
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "foo",
-                query = """
-                | query {
-                |   foo
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": null,
-                |   "errors": [
-                |     {
-                |       "message": "Test"
-                |     }
-                |   ]
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**

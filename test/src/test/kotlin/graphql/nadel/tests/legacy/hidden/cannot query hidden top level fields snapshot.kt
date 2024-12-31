@@ -26,7 +26,6 @@ public class `cannot query hidden top level fields snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": null,
      *   "errors": [
      *     {
      *       "message": "Validation error (FieldUndefined@[hiddenField]) : Field 'hiddenField' in
@@ -48,7 +47,6 @@ public class `cannot query hidden top level fields snapshot` : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": null,
             |   "errors": [
             |     {
             |       "message": "Validation error (FieldUndefined@[hiddenField]) : Field 'hiddenField' in type 'Query' is undefined",

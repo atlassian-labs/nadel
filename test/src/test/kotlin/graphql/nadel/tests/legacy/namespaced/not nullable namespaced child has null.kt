@@ -1,11 +1,6 @@
 package graphql.nadel.tests.legacy.namespaced
 
-import graphql.execution.DataFetcherResult
-import graphql.nadel.engine.util.toGraphQLError
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
-import kotlin.Any
-import kotlin.Int
-import kotlin.String
 
 public class `not nullable namespaced child has null` : NadelLegacyIntegrationTest(query = """
 |{
@@ -79,9 +74,7 @@ public class `not nullable namespaced child has null` : NadelLegacyIntegrationTe
     |""".trimMargin(), runtimeWiring = { wiring ->
       wiring.type("Query") { type ->
         type.dataFetcher("issue") { env ->
-          DataFetcherResult.newResult<Any>().data(IssueSearch_IssueQuery(search =
-              null)).errors(listOf(toGraphQLError(mapOf("message" to
-              "Error on IssueSearch")))).build()}
+            IssueSearch_IssueQuery(search = null)}
       }
     }
     )
