@@ -24,17 +24,10 @@ open class NeverWiringFactory : WiringFactory {
     }
 
     override fun getScalar(environment: ScalarWiringEnvironment): GraphQLScalarType? {
-        return when (val scalarName = environment.scalarTypeDefinition.name) {
-            ExtendedScalars.Json.name -> {
-                ExtendedScalars.Json
-            }
-            else -> {
-                AliasedScalar.Builder()
-                    .name(scalarName)
-                    .aliasedScalar(ExtendedScalars.Json)
-                    .build()
-            }
-        }
+        return AliasedScalar.Builder()
+            .name(environment.scalarTypeDefinition.name)
+            .aliasedScalar(ExtendedScalars.Json)
+            .build()
     }
 
     override fun providesTypeResolver(environment: InterfaceWiringEnvironment): Boolean {
