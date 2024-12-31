@@ -1,36 +1,42 @@
 package graphql.nadel.tests.legacy.oneOf
 
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
-import kotlin.String
 
-public class `oneOf fails when invalid variables are passed` : NadelLegacyIntegrationTest(query =
-    """
-|query myQuery(${'$'}name: String, ${'$'}id: ID) {
-|  search(by: {name: ${'$'}name, id: ${'$'}id})
-|}
-|""".trimMargin(), variables = mapOf("name" to "Figaro"), services =
-    listOf(Service(name="MyService", overallSchema="""
-    |type Query {
-    |  search(by: SearchInput!): String
-    |}
-    |input SearchInput @oneOf {
-    |  name: String
-    |  id: ID
-    |}
-    |""".trimMargin(), underlyingSchema="""
-    |type Query {
-    |  search(by: SearchInput!): String
-    |}
-    |input SearchInput @oneOf {
-    |  name: String
-    |  id: ID
-    |}
-    """.trimMargin(), runtimeWiring = { wiring ->
-    }
+class `oneOf fails when invalid variables are passed` : NadelLegacyIntegrationTest(
+    query = """
+        query myQuery(${'$'}name: String, ${'$'}id: ID) {
+          search(by: {name: ${'$'}name, id: ${'$'}id})
+        }
+    """.trimIndent(),
+    variables = mapOf("name" to "Figaro"),
+    services = listOf(
+        Service(
+            name = "MyService",
+            overallSchema = """
+                type Query {
+                  search(by: SearchInput!): String
+                }
+                input SearchInput @oneOf {
+                  name: String
+                  id: ID
+                }
+            """.trimIndent(),
+            underlyingSchema = """
+                type Query {
+                  search(by: SearchInput!): String
+                }
+                input SearchInput @oneOf {
+                  name: String
+                  id: ID
+                }
+            """.trimIndent(),
+            runtimeWiring = { wiring ->
+            },
+        ),
+    ),
+) {
+    private data class MyService_SearchInput(
+        val name: String? = null,
+        val id: String? = null,
     )
-)) {
-  private data class MyService_SearchInput(
-    public val name: String? = null,
-    public val id: String? = null,
-  )
 }
