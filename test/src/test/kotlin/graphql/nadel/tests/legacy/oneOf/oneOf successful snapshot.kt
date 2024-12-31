@@ -25,7 +25,7 @@ public class `oneOf successful snapshot` : TestSnapshot() {
                 service = "MyService",
                 query = """
                 | query myQuery {
-                |   search(by: {name: "Figaro"})
+                |   search(by: {name : "Figaro"})
                 | }
                 """.trimMargin(),
                 variables = "{}",

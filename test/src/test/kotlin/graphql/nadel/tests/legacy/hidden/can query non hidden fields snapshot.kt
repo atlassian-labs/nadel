@@ -24,7 +24,7 @@ public class `can query non hidden fields snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   hello {
                 |     id
                 |     name

@@ -24,7 +24,7 @@ public class `correct typename is returned snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   typenameTest {
                 |     __typename
                 |     object {

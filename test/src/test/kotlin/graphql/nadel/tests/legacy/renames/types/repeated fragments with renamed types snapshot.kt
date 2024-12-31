@@ -24,7 +24,7 @@ public class `repeated fragments with renamed types snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Users",
                 query = """
-                | query {
+                | {
                 |   service(id: "service-1") {
                 |     __typename
                 |     dependedOn {
@@ -218,30 +218,30 @@ public class `repeated fragments with renamed types snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "service": {
                 |       "__typename": "Service",
-                |       "id": "service-0",
-                |       "name": "API Gateway",
                 |       "dependedOn": {
                 |         "__typename": "RelationshipConnection",
                 |         "nodes": [
                 |           {
                 |             "__typename": "Relationship",
-                |             "id": "relationship-1",
-                |             "type": "unsure",
                 |             "endService": null,
+                |             "id": "relationship-1",
                 |             "startService": {
                 |               "__typename": "Service",
-                |               "id": "service-1",
-                |               "name": "GraphQL Gateway",
+                |               "dependedOn": null,
                 |               "dependsOn": null,
-                |               "dependedOn": null
-                |             }
+                |               "id": "service-1",
+                |               "name": "GraphQL Gateway"
+                |             },
+                |             "type": "unsure"
                 |           }
                 |         ]
                 |       },
                 |       "dependsOn": {
                 |         "__typename": "RelationshipConnection",
                 |         "nodes": []
-                |       }
+                |       },
+                |       "id": "service-0",
+                |       "name": "API Gateway"
                 |     }
                 |   }
                 | }
@@ -257,30 +257,30 @@ public class `repeated fragments with renamed types snapshot` : TestSnapshot() {
      *   "data": {
      *     "service": {
      *       "__typename": "MyService",
-     *       "id": "service-0",
-     *       "name": "API Gateway",
      *       "dependedOn": {
      *         "__typename": "ServiceRelationshipConnection",
      *         "nodes": [
      *           {
      *             "__typename": "ServiceRelationship",
-     *             "id": "relationship-1",
-     *             "type": "unsure",
      *             "endService": null,
+     *             "id": "relationship-1",
      *             "startService": {
      *               "__typename": "MyService",
-     *               "id": "service-1",
-     *               "name": "GraphQL Gateway",
+     *               "dependedOn": null,
      *               "dependsOn": null,
-     *               "dependedOn": null
-     *             }
+     *               "id": "service-1",
+     *               "name": "GraphQL Gateway"
+     *             },
+     *             "type": "unsure"
      *           }
      *         ]
      *       },
      *       "dependsOn": {
      *         "__typename": "ServiceRelationshipConnection",
      *         "nodes": []
-     *       }
+     *       },
+     *       "id": "service-0",
+     *       "name": "API Gateway"
      *     }
      *   }
      * }
@@ -292,30 +292,30 @@ public class `repeated fragments with renamed types snapshot` : TestSnapshot() {
             |   "data": {
             |     "service": {
             |       "__typename": "MyService",
-            |       "id": "service-0",
-            |       "name": "API Gateway",
             |       "dependedOn": {
             |         "__typename": "ServiceRelationshipConnection",
             |         "nodes": [
             |           {
             |             "__typename": "ServiceRelationship",
-            |             "id": "relationship-1",
-            |             "type": "unsure",
             |             "endService": null,
+            |             "id": "relationship-1",
             |             "startService": {
             |               "__typename": "MyService",
-            |               "id": "service-1",
-            |               "name": "GraphQL Gateway",
+            |               "dependedOn": null,
             |               "dependsOn": null,
-            |               "dependedOn": null
-            |             }
+            |               "id": "service-1",
+            |               "name": "GraphQL Gateway"
+            |             },
+            |             "type": "unsure"
             |           }
             |         ]
             |       },
             |       "dependsOn": {
             |         "__typename": "ServiceRelationshipConnection",
             |         "nodes": []
-            |       }
+            |       },
+            |       "id": "service-0",
+            |       "name": "API Gateway"
             |     }
             |   }
             | }

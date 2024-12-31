@@ -24,7 +24,7 @@ public class `query with two services sharing a namespaced field snapshot` : Tes
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -50,7 +50,7 @@ public class `query with two services sharing a namespaced field snapshot` : Tes
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text

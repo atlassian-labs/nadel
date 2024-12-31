@@ -24,7 +24,7 @@ public class `deep rename of list of list snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   details {
                 |     __typename__deep_rename__labels: __typename
                 |     deep_rename__labels__issue: issue {

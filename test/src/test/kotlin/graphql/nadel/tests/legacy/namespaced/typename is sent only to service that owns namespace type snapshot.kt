@@ -24,7 +24,7 @@ public class `typename is sent only to service that owns namespace type snapshot
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename
                 |     getIssue {

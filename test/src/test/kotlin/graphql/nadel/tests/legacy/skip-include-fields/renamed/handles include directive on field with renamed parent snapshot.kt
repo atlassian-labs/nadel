@@ -24,7 +24,7 @@ public class `handles include directive on field with renamed parent snapshot` :
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   rename__foo__bar: bar {
                 |     __typename__skip_include____skip: __typename
                 |   }

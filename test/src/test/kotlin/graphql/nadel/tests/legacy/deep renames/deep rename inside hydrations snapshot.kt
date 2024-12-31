@@ -24,7 +24,7 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issueById(id: "issue-1") {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
@@ -52,7 +52,7 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issueById(id: "issue-2") {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
@@ -80,7 +80,7 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issueById(id: "issue-3") {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
@@ -108,7 +108,7 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   users {
                 |     __typename__hydration__issue: __typename
                 |     hydration__issue__issueId: issueId
@@ -121,16 +121,16 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "users": [
                 |       {
-                |         "__typename__hydration__issue": "User",
-                |         "hydration__issue__issueId": "issue-1"
+                |         "hydration__issue__issueId": "issue-1",
+                |         "__typename__hydration__issue": "User"
                 |       },
                 |       {
-                |         "__typename__hydration__issue": "User",
-                |         "hydration__issue__issueId": "issue-2"
+                |         "hydration__issue__issueId": "issue-2",
+                |         "__typename__hydration__issue": "User"
                 |       },
                 |       {
-                |         "__typename__hydration__issue": "User",
-                |         "hydration__issue__issueId": "issue-3"
+                |         "hydration__issue__issueId": "issue-3",
+                |         "__typename__hydration__issue": "User"
                 |       }
                 |     ]
                 |   }

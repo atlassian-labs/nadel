@@ -25,7 +25,7 @@ public class `multiple conditional hydrations with different source fields snaps
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__class: class
@@ -38,9 +38,9 @@ public class `multiple conditional hydrations with different source fields snaps
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__bar": "Foo",
+                |       "hydration__bar__type": 2,
                 |       "hydration__bar__class": "ABC_123",
-                |       "hydration__bar__type": 2
+                |       "__typename__hydration__bar": "Foo"
                 |     }
                 |   }
                 | }

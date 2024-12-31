@@ -24,7 +24,7 @@ public class `batching of hydration list with flattened arguments snapshot` : Te
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authors: authors {
@@ -40,6 +40,7 @@ public class `batching of hydration list with flattened arguments snapshot` : Te
                 |   "data": {
                 |     "issues": [
                 |       {
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authors": [
                 |           {
                 |             "authorId": "USER-1"
@@ -48,19 +49,19 @@ public class `batching of hydration list with flattened arguments snapshot` : Te
                 |             "authorId": "USER-2"
                 |           }
                 |         ],
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
+                |         "id": "ISSUE-2",
                 |         "batch_hydration__authors__authors": [
                 |           {
                 |             "authorId": "USER-3"
                 |           }
                 |         ],
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "id": "ISSUE-2"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
+                |         "id": "ISSUE-3",
                 |         "batch_hydration__authors__authors": [
                 |           {
                 |             "authorId": "USER-2"
@@ -72,8 +73,7 @@ public class `batching of hydration list with flattened arguments snapshot` : Te
                 |             "authorId": "USER-5"
                 |           }
                 |         ],
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "id": "ISSUE-3"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -85,7 +85,7 @@ public class `batching of hydration list with flattened arguments snapshot` : Te
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
                 |     id
                 |     batch_hydration__authors__id: id
@@ -119,7 +119,7 @@ public class `batching of hydration list with flattened arguments snapshot` : Te
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["USER-4", "USER-5"]) {
                 |     id
                 |     batch_hydration__authors__id: id

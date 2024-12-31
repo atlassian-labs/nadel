@@ -24,7 +24,7 @@ public class `rename on shared abstract type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "worlds",
                 query = """
-                | query {
+                | {
                 |   node(id: "world-1") {
                 |     id
                 |   }

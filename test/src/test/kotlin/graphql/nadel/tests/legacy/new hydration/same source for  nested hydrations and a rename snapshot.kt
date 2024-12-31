@@ -24,7 +24,7 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   detail(detailId: "ID") {
                 |     name
                 |   }
@@ -46,7 +46,7 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__issue: __typename
                 |     __typename__hydration__detail: __typename
@@ -68,18 +68,18 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__deep_rename__renamedField": "Foo",
                 |       "hydration__issue__issue": {
                 |         "fooId": "ID"
                 |       },
+                |       "__typename__hydration__issue": "Foo",
                 |       "hydration__detail__issue": {
                 |         "fooId": "ID"
                 |       },
-                |       "__typename__hydration__issue": "Foo",
                 |       "__typename__hydration__detail": "Foo",
                 |       "deep_rename__renamedField__issue": {
                 |         "field": "field1"
-                |       }
+                |       },
+                |       "__typename__deep_rename__renamedField": "Foo"
                 |     }
                 |   }
                 | }
@@ -90,7 +90,7 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   issue(issueId: "ID") {
                 |     field
                 |   }

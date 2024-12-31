@@ -24,7 +24,7 @@ public class `query to two services with field rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   bar {
                 |     __typename__rename__name: __typename
                 |     rename__name__title: title
@@ -48,7 +48,7 @@ public class `query to two services with field rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   rename__otherFoo__fooOriginal: fooOriginal {
                 |     name
                 |   }

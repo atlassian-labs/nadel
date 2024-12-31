@@ -24,7 +24,7 @@ public class `one hydration call with input value having longer path snapshot` :
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__barLongerInput: __typename
                 |     hydration__barLongerInput__fooDetails: fooDetails {
@@ -52,7 +52,7 @@ public class `one hydration call with input value having longer path snapshot` :
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId") {
                 |     name
                 |   }

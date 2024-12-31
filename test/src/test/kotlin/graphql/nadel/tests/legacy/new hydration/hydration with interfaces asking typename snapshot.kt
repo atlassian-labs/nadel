@@ -24,7 +24,7 @@ public class `hydration with interfaces asking typename snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   ariById(id: "ari:i-always-forget-the-format/1")
                 | }
                 """.trimMargin(),
@@ -42,7 +42,7 @@ public class `hydration with interfaces asking typename snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   nodes {
                 |     __typename
                 |     ... on Issue {
@@ -70,8 +70,8 @@ public class `hydration with interfaces asking typename snapshot` : TestSnapshot
                 |       },
                 |       {
                 |         "__typename": "User",
-                |         "__typename__hydration__id": "User",
-                |         "hydration__id__id": "ari:i-always-forget-the-format/1"
+                |         "hydration__id__id": "ari:i-always-forget-the-format/1",
+                |         "__typename__hydration__id": "User"
                 |       }
                 |     ]
                 |   }

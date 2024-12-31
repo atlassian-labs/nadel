@@ -24,7 +24,7 @@ public class `renamed and hydrated query using same underlying source snapshot` 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   detail(detailId: "ID") {
                 |     name
                 |   }
@@ -46,7 +46,7 @@ public class `renamed and hydrated query using same underlying source snapshot` 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__deep_rename__renamedField: __typename
                 |     __typename__hydration__details: __typename
@@ -64,14 +64,14 @@ public class `renamed and hydrated query using same underlying source snapshot` 
                 | {
                 |   "data": {
                 |     "foo": {
+                |       "deep_rename__renamedField__issue": {
+                |         "field": "field"
+                |       },
                 |       "__typename__deep_rename__renamedField": "Foo",
-                |       "__typename__hydration__details": "Foo",
                 |       "hydration__details__issue": {
                 |         "fooId": "ID"
                 |       },
-                |       "deep_rename__renamedField__issue": {
-                |         "field": "field"
-                |       }
+                |       "__typename__hydration__details": "Foo"
                 |     }
                 |   }
                 | }

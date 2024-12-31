@@ -26,7 +26,7 @@ public class
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barQuery {
                 |     barById(id: "barId123") {
                 |       __typename__hydration__nestedBar: __typename
@@ -61,7 +61,7 @@ public class
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barId: barId

@@ -25,7 +25,7 @@ public class `date time scalar is passthrough and can be anything technically sn
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   aField
                 | }
                 """.trimMargin(),

@@ -24,7 +24,7 @@ public class `service types are filtered snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "test",
                 query = """
-                | query {
+                | {
                 |   test {
                 |     ... on QueryError {
                 |       extensions {

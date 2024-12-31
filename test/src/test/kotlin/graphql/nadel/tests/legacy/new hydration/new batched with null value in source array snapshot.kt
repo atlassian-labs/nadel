@@ -37,13 +37,13 @@ public class `new batched with null value in source array snapshot` : TestSnapsh
                 | {
                 |   "data": {
                 |     "issueById": {
-                |       "__typename__batch_hydration__collaborators": "Issue",
+                |       "key": "GQLGW-1000",
                 |       "batch_hydration__collaborators__collaboratorIds": [
                 |         "100",
                 |         null,
                 |         "200"
                 |       ],
-                |       "key": "GQLGW-1000"
+                |       "__typename__batch_hydration__collaborators": "Issue"
                 |     }
                 |   }
                 | }
@@ -69,13 +69,13 @@ public class `new batched with null value in source array snapshot` : TestSnapsh
                 |     "usersByIds": [
                 |       {
                 |         "__typename": "User",
-                |         "batch_hydration__collaborators__id": "100",
-                |         "name": "John Doe"
+                |         "name": "John Doe",
+                |         "batch_hydration__collaborators__id": "100"
                 |       },
                 |       {
                 |         "__typename": "User",
-                |         "batch_hydration__collaborators__id": "200",
-                |         "name": "Joe"
+                |         "name": "Joe",
+                |         "batch_hydration__collaborators__id": "200"
                 |       }
                 |     ]
                 |   }

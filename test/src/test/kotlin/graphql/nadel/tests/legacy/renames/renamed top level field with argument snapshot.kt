@@ -24,7 +24,7 @@ public class `renamed top level field with argument snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
                 |     name
                 |   }

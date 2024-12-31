@@ -25,7 +25,7 @@ public class `typename is correctly passed on and artificial typename is removed
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename
                 |     id
@@ -41,19 +41,19 @@ public class `typename is correctly passed on and artificial typename is removed
                 |   "data": {
                 |     "issues": [
                 |       {
+                |         "__typename": "Issue",
+                |         "id": "ISSUE-1",
                 |         "authorIds": [
                 |           "USER-1",
                 |           "USER-2"
-                |         ],
-                |         "__typename": "Issue",
-                |         "id": "ISSUE-1"
+                |         ]
                 |       },
                 |       {
+                |         "__typename": "Issue",
+                |         "id": "ISSUE-2",
                 |         "authorIds": [
                 |           "USER-3"
-                |         ],
-                |         "__typename": "Issue",
-                |         "id": "ISSUE-2"
+                |         ]
                 |       }
                 |     ]
                 |   }

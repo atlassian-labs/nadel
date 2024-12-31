@@ -28,9 +28,6 @@ public class
     /**
      * ```json
      * {
-     *   "data": {
-     *     "step": "beginExecute"
-     *   },
      *   "errors": [
      *     {
      *       "message": "beginExecute",
@@ -38,16 +35,16 @@ public class
      *         "classification": "ExecutionAborted"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "step": "beginExecute"
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "step": "beginExecute"
-            |   },
             |   "errors": [
             |     {
             |       "message": "beginExecute",
@@ -55,7 +52,10 @@ public class
             |         "classification": "ExecutionAborted"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "step": "beginExecute"
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

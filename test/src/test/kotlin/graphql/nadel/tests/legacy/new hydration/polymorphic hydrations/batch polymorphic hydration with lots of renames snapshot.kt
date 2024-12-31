@@ -24,7 +24,7 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | query {
+                | {
                 |   humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
                 |     __typename
                 |     __typename__rename__id: __typename
@@ -41,17 +41,17 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
                 |     "humanById": [
                 |       {
                 |         "__typename": "Human",
-                |         "__typename__rename__id": "Human",
-                |         "batch_hydration__data__hiddenId": "HUMAN-0",
                 |         "rename__id__identifier": "PERSON-0",
-                |         "name": "Fanny Longbottom"
+                |         "__typename__rename__id": "Human",
+                |         "name": "Fanny Longbottom",
+                |         "batch_hydration__data__hiddenId": "HUMAN-0"
                 |       },
                 |       {
                 |         "__typename": "Human",
-                |         "__typename__rename__id": "Human",
-                |         "batch_hydration__data__hiddenId": "HUMAN-1",
                 |         "rename__id__identifier": "PERSON-1",
-                |         "name": "John Doe"
+                |         "__typename__rename__id": "Human",
+                |         "name": "John Doe",
+                |         "batch_hydration__data__hiddenId": "HUMAN-1"
                 |       }
                 |     ]
                 |   }
@@ -63,7 +63,7 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | query {
+                | {
                 |   petById(ids: ["PET-0", "PET-1"]) {
                 |     __typename
                 |     __typename__rename__id: __typename
@@ -81,19 +81,19 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
                 |     "petById": [
                 |       {
                 |         "__typename": "Pet",
-                |         "__typename__rename__id": "Pet",
-                |         "__typename__rename__breed": "Pet",
-                |         "batch_hydration__data__hiddenId": "PET-0",
                 |         "rename__id__identifier": "ANIMAL-0",
-                |         "rename__breed__kind": "Akita"
+                |         "__typename__rename__id": "Pet",
+                |         "rename__breed__kind": "Akita",
+                |         "__typename__rename__breed": "Pet",
+                |         "batch_hydration__data__hiddenId": "PET-0"
                 |       },
                 |       {
                 |         "__typename": "Pet",
-                |         "__typename__rename__id": "Pet",
-                |         "__typename__rename__breed": "Pet",
-                |         "batch_hydration__data__hiddenId": "PET-1",
                 |         "rename__id__identifier": "ANIMAL-1",
-                |         "rename__breed__kind": "Labrador"
+                |         "__typename__rename__id": "Pet",
+                |         "rename__breed__kind": "Labrador",
+                |         "__typename__rename__breed": "Pet",
+                |         "batch_hydration__data__hiddenId": "PET-1"
                 |       }
                 |     ]
                 |   }
@@ -105,7 +105,7 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     __typename__batch_hydration__data: __typename
@@ -122,27 +122,27 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
                 |     "foo": [
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-0",
                 |         "batch_hydration__data__dataId": "PET-0",
-                |         "id": "FOO-0"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-1",
                 |         "batch_hydration__data__dataId": "HUMAN-0",
-                |         "id": "FOO-1"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-2",
                 |         "batch_hydration__data__dataId": "PET-1",
-                |         "id": "FOO-2"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-3",
                 |         "batch_hydration__data__dataId": "HUMAN-1",
-                |         "id": "FOO-3"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       }
                 |     ]
                 |   }
@@ -172,8 +172,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
      *         "id": "FOO-1",
      *         "data": {
      *           "__typename": "Person",
-     *           "id": "PERSON-0",
-     *           "name": "Fanny Longbottom"
+     *           "name": "Fanny Longbottom",
+     *           "id": "PERSON-0"
      *         }
      *       },
      *       {
@@ -190,8 +190,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
      *         "id": "FOO-3",
      *         "data": {
      *           "__typename": "Person",
-     *           "id": "PERSON-1",
-     *           "name": "John Doe"
+     *           "name": "John Doe",
+     *           "id": "PERSON-1"
      *         }
      *       }
      *     ]
@@ -218,8 +218,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             |         "id": "FOO-1",
             |         "data": {
             |           "__typename": "Person",
-            |           "id": "PERSON-0",
-            |           "name": "Fanny Longbottom"
+            |           "name": "Fanny Longbottom",
+            |           "id": "PERSON-0"
             |         }
             |       },
             |       {
@@ -236,8 +236,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             |         "id": "FOO-3",
             |         "data": {
             |           "__typename": "Person",
-            |           "id": "PERSON-1",
-            |           "name": "John Doe"
+            |           "name": "John Doe",
+            |           "id": "PERSON-1"
             |         }
             |       }
             |     ]

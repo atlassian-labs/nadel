@@ -24,7 +24,7 @@ public class `batch polymorphic hydration with rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     __typename__batch_hydration__data: __typename
@@ -41,27 +41,27 @@ public class `batch polymorphic hydration with rename snapshot` : TestSnapshot()
                 |     "foo": [
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-0",
                 |         "batch_hydration__data__dataId": "PET-0",
-                |         "id": "FOO-0"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-1",
                 |         "batch_hydration__data__dataId": "HUMAN-0",
-                |         "id": "FOO-1"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-2",
                 |         "batch_hydration__data__dataId": "PET-1",
-                |         "id": "FOO-2"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-3",
                 |         "batch_hydration__data__dataId": "HUMAN-1",
-                |         "id": "FOO-3"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       }
                 |     ]
                 |   }
@@ -73,7 +73,7 @@ public class `batch polymorphic hydration with rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | query {
+                | {
                 |   humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
                 |     __typename
                 |     id
@@ -90,14 +90,14 @@ public class `batch polymorphic hydration with rename snapshot` : TestSnapshot()
                 |       {
                 |         "__typename": "Person",
                 |         "id": "HUMAN-0",
-                |         "batch_hydration__data__id": "HUMAN-0",
-                |         "name": "Fanny Longbottom"
+                |         "name": "Fanny Longbottom",
+                |         "batch_hydration__data__id": "HUMAN-0"
                 |       },
                 |       {
                 |         "__typename": "Person",
                 |         "id": "HUMAN-1",
-                |         "batch_hydration__data__id": "HUMAN-1",
-                |         "name": "John Doe"
+                |         "name": "John Doe",
+                |         "batch_hydration__data__id": "HUMAN-1"
                 |       }
                 |     ]
                 |   }
@@ -109,7 +109,7 @@ public class `batch polymorphic hydration with rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "pets",
                 query = """
-                | query {
+                | {
                 |   petById(ids: ["PET-0", "PET-1"]) {
                 |     __typename
                 |     __typename__rename__breed: __typename
@@ -126,17 +126,17 @@ public class `batch polymorphic hydration with rename snapshot` : TestSnapshot()
                 |     "petById": [
                 |       {
                 |         "__typename": "Pet",
-                |         "__typename__rename__breed": "Pet",
                 |         "id": "PET-0",
-                |         "batch_hydration__data__id": "PET-0",
-                |         "rename__breed__kind": "Akita"
+                |         "rename__breed__kind": "Akita",
+                |         "__typename__rename__breed": "Pet",
+                |         "batch_hydration__data__id": "PET-0"
                 |       },
                 |       {
                 |         "__typename": "Pet",
-                |         "__typename__rename__breed": "Pet",
                 |         "id": "PET-1",
-                |         "batch_hydration__data__id": "PET-1",
-                |         "rename__breed__kind": "Labrador"
+                |         "rename__breed__kind": "Labrador",
+                |         "__typename__rename__breed": "Pet",
+                |         "batch_hydration__data__id": "PET-1"
                 |       }
                 |     ]
                 |   }

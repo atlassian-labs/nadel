@@ -24,7 +24,7 @@ public class `handles include directive field with hydrated parent snapshot` : T
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   fooById(id: "Foo-1") {
                 |     __typename__skip_include____skip: __typename
                 |   }
@@ -46,7 +46,7 @@ public class `handles include directive field with hydrated parent snapshot` : T
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   rename__foo__bar: bar {
                 |     __typename__hydration__water: __typename
                 |     hydration__water__id: id
@@ -58,8 +58,8 @@ public class `handles include directive field with hydrated parent snapshot` : T
                 | {
                 |   "data": {
                 |     "rename__foo__bar": {
-                |       "__typename__hydration__water": "Foo",
-                |       "hydration__water__id": "Foo-1"
+                |       "hydration__water__id": "Foo-1",
+                |       "__typename__hydration__water": "Foo"
                 |     }
                 |   }
                 | }

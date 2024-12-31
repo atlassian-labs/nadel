@@ -24,7 +24,7 @@ public class `synthetic hydration list with batching forwards error snapshot` : 
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barId: barId
@@ -36,12 +36,12 @@ public class `synthetic hydration list with batching forwards error snapshot` : 
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barId": [
                 |         "barId1",
                 |         "barId2",
                 |         "barId3"
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -52,7 +52,7 @@ public class `synthetic hydration list with batching forwards error snapshot` : 
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barsQuery {
                 |     barsById(id: ["barId1", "barId2", "barId3"]) {
                 |       batch_hydration__bar__id: id

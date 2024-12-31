@@ -24,7 +24,7 @@ public class `basic hydration with static arg array snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__id: id
@@ -36,8 +36,8 @@ public class `basic hydration with static arg array snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__bar": "Foo",
-                |       "hydration__bar__id": "barId"
+                |       "hydration__bar__id": "barId",
+                |       "__typename__hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -48,8 +48,8 @@ public class `basic hydration with static arg array snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
-                |   barById(id: "barId", friendIds: ["barId2", "barId3", "barId4"]) {
+                | {
+                |   barById(friendIds: ["barId2", "barId3", "barId4"], id: "barId") {
                 |     name
                 |   }
                 | }

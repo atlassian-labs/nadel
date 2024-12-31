@@ -26,7 +26,7 @@ public class
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text

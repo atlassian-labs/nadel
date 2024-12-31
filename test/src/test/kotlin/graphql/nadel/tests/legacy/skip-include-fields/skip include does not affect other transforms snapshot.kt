@@ -24,7 +24,7 @@ public class `skip include does not affect other transforms snapshot` : TestSnap
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     foo {
                 |       __typename__skip_include____skip: __typename

@@ -25,7 +25,7 @@ public class `expecting one child error on extensive field argument passed to hy
             ExpectedServiceCall(
                 service = "TestBoard",
                 query = """
-                | query {
+                | {
                 |   board(id: 1) {
                 |     __typename__rename__cardChildren: __typename
                 |     id
@@ -46,37 +46,37 @@ public class `expecting one child error on extensive field argument passed to hy
                 | {
                 |   "data": {
                 |     "board": {
-                |       "__typename__rename__cardChildren": "Board",
                 |       "id": "1",
                 |       "rename__cardChildren__issueChildren": [
                 |         {
-                |           "__typename__batch_hydration__assignee": "Card",
                 |           "id": "a1",
                 |           "batch_hydration__assignee__issue": {
                 |             "assignee": {
                 |               "accountId": "1"
                 |             }
-                |           }
+                |           },
+                |           "__typename__batch_hydration__assignee": "Card"
                 |         },
                 |         {
-                |           "__typename__batch_hydration__assignee": "Card",
                 |           "id": "a2",
                 |           "batch_hydration__assignee__issue": {
                 |             "assignee": {
                 |               "accountId": "2"
                 |             }
-                |           }
+                |           },
+                |           "__typename__batch_hydration__assignee": "Card"
                 |         },
                 |         {
-                |           "__typename__batch_hydration__assignee": "Card",
                 |           "id": "a3",
                 |           "batch_hydration__assignee__issue": {
                 |             "assignee": {
                 |               "accountId": "3"
                 |             }
-                |           }
+                |           },
+                |           "__typename__batch_hydration__assignee": "Card"
                 |         }
-                |       ]
+                |       ],
+                |       "__typename__rename__cardChildren": "Board"
                 |     }
                 |   }
                 | }
@@ -87,7 +87,7 @@ public class `expecting one child error on extensive field argument passed to hy
             ExpectedServiceCall(
                 service = "Users",
                 query = """
-                | query {
+                | {
                 |   users(accountIds: ["1", "2", "3"]) {
                 |     accountId
                 |     batch_hydration__assignee__accountId: accountId
@@ -100,16 +100,16 @@ public class `expecting one child error on extensive field argument passed to hy
                 |   "data": {
                 |     "users": [
                 |       {
-                |         "batch_hydration__assignee__accountId": "1",
-                |         "accountId": "1"
+                |         "accountId": "1",
+                |         "batch_hydration__assignee__accountId": "1"
                 |       },
                 |       {
-                |         "batch_hydration__assignee__accountId": "2",
-                |         "accountId": "2"
+                |         "accountId": "2",
+                |         "batch_hydration__assignee__accountId": "2"
                 |       },
                 |       {
-                |         "batch_hydration__assignee__accountId": "3",
-                |         "accountId": "3"
+                |         "accountId": "3",
+                |         "batch_hydration__assignee__accountId": "3"
                 |       }
                 |     ]
                 |   }

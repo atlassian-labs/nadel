@@ -26,7 +26,6 @@ public class `oneOf fails when null value is passed snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": null,
      *   "errors": [
      *     {
      *       "message": "OneOf type field 'SearchInput.name' must be non-null.",
@@ -34,14 +33,14 @@ public class `oneOf fails when null value is passed snapshot` : TestSnapshot() {
      *         "classification": "ValidationError"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": null
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": null,
             |   "errors": [
             |     {
             |       "message": "OneOf type field 'SearchInput.name' must be non-null.",
@@ -49,7 +48,8 @@ public class `oneOf fails when null value is passed snapshot` : TestSnapshot() {
             |         "classification": "ValidationError"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": null
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

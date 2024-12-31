@@ -25,7 +25,7 @@ public class `simple synthetic hydration with one service and type renaming snap
             ExpectedServiceCall(
                 service = "testing",
                 query = """
-                | query {
+                | {
                 |   tests {
                 |     character(id: "C1") {
                 |       id
@@ -40,8 +40,8 @@ public class `simple synthetic hydration with one service and type renaming snap
                 |   "data": {
                 |     "tests": {
                 |       "character": {
-                |         "name": "Luke",
-                |         "id": "C1"
+                |         "id": "C1",
+                |         "name": "Luke"
                 |       }
                 |     }
                 |   }
@@ -53,7 +53,7 @@ public class `simple synthetic hydration with one service and type renaming snap
             ExpectedServiceCall(
                 service = "testing",
                 query = """
-                | query {
+                | {
                 |   tests {
                 |     testing {
                 |       movie {
@@ -73,10 +73,10 @@ public class `simple synthetic hydration with one service and type renaming snap
                 |     "tests": {
                 |       "testing": {
                 |         "movie": {
+                |           "id": "M1",
                 |           "name": "Movie 1",
-                |           "__typename__hydration__character": "Movie",
                 |           "hydration__character__characterId": "C1",
-                |           "id": "M1"
+                |           "__typename__hydration__character": "Movie"
                 |         }
                 |       }
                 |     }

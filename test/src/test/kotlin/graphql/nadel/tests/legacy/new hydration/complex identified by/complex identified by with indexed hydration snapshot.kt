@@ -47,44 +47,44 @@ public class `complex identified by with indexed hydration snapshot` : TestSnaps
                 |   "data": {
                 |     "activities": [
                 |       {
-                |         "__typename__batch_hydration__issue": "Activity",
+                |         "id": "ACTIVITY-0",
                 |         "batch_hydration__issue__context": {
                 |           "issueHydrationInput": {
                 |             "id": "ISSUE-0",
                 |             "site": "CLOUD-0"
                 |           }
                 |         },
-                |         "id": "ACTIVITY-0"
+                |         "__typename__batch_hydration__issue": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "Activity",
+                |         "id": "ACTIVITY-1",
                 |         "batch_hydration__issue__context": {
                 |           "issueHydrationInput": {
                 |             "id": "ISSUE-1",
                 |             "site": "CLOUD-0"
                 |           }
                 |         },
-                |         "id": "ACTIVITY-1"
+                |         "__typename__batch_hydration__issue": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "Activity",
+                |         "id": "ACTIVITY-2",
                 |         "batch_hydration__issue__context": {
                 |           "issueHydrationInput": {
                 |             "id": "ISSUE-2",
                 |             "site": "CLOUD-0"
                 |           }
                 |         },
-                |         "id": "ACTIVITY-2"
+                |         "__typename__batch_hydration__issue": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "Activity",
+                |         "id": "ACTIVITY-3",
                 |         "batch_hydration__issue__context": {
                 |           "issueHydrationInput": {
                 |             "id": "ISSUE-3",
                 |             "site": "CLOUD-0"
                 |           }
                 |         },
-                |         "id": "ACTIVITY-3"
+                |         "__typename__batch_hydration__issue": "Activity"
                 |       }
                 |     ]
                 |   }
@@ -97,7 +97,7 @@ public class `complex identified by with indexed hydration snapshot` : TestSnaps
                 service = "Issue",
                 query = """
                 | {
-                |   issues(issuesInput: [{id: "ISSUE-0", site: "CLOUD-0"}, {id: "ISSUE-1", site: "CLOUD-0"}, {id: "ISSUE-2", site: "CLOUD-0"}, {id: "ISSUE-3", site: "CLOUD-0"}]) {
+                |   issues(issuesInput: [{id : "ISSUE-0", site : "CLOUD-0"}, {id : "ISSUE-1", site : "CLOUD-0"}, {id : "ISSUE-2", site : "CLOUD-0"}, {id : "ISSUE-3", site : "CLOUD-0"}]) {
                 |     description
                 |     issueId
                 |   }

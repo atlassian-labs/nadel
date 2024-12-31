@@ -24,7 +24,7 @@ public class `deep rename inside another rename of type List snapshot` : TestSna
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   boardScope {
                 |     board {
                 |       __typename__rename__cardChildren: __typename
@@ -49,31 +49,31 @@ public class `deep rename inside another rename of type List snapshot` : TestSna
                 |   "data": {
                 |     "boardScope": {
                 |       "board": {
-                |         "__typename__rename__cardChildren": "Board",
                 |         "rename__cardChildren__issueChildren": [
                 |           {
-                |             "__typename__deep_rename__key": "Card",
                 |             "id": "1234",
+                |             "deep_rename__key__issue": {
+                |               "key": "abc"
+                |             },
+                |             "__typename__deep_rename__key": "Card",
                 |             "deep_rename__summary__issue": {
                 |               "summary": "Summary 1"
                 |             },
-                |             "__typename__deep_rename__summary": "Card",
-                |             "deep_rename__key__issue": {
-                |               "key": "abc"
-                |             }
+                |             "__typename__deep_rename__summary": "Card"
                 |           },
                 |           {
-                |             "__typename__deep_rename__key": "Card",
                 |             "id": "456",
+                |             "deep_rename__key__issue": {
+                |               "key": "def"
+                |             },
+                |             "__typename__deep_rename__key": "Card",
                 |             "deep_rename__summary__issue": {
                 |               "summary": "Summary 2"
                 |             },
-                |             "__typename__deep_rename__summary": "Card",
-                |             "deep_rename__key__issue": {
-                |               "key": "def"
-                |             }
+                |             "__typename__deep_rename__summary": "Card"
                 |           }
-                |         ]
+                |         ],
+                |         "__typename__rename__cardChildren": "Board"
                 |       }
                 |     }
                 |   }

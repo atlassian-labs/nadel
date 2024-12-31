@@ -38,26 +38,26 @@ public class `batching no source inputs snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "activity": [
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentIds": []
+                |         "batch_hydration__content__contentIds": [],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentIds": []
+                |         "batch_hydration__content__contentIds": [],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
                 |         "batch_hydration__content__contentIds": [
                 |           "issue/7496",
                 |           "comment/9001"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
                 |         "batch_hydration__content__contentIds": [
                 |           "issue/1234",
                 |           "comment/1234"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       }
                 |     ]
                 |   }
@@ -86,14 +86,14 @@ public class `batching no source inputs snapshot` : TestSnapshot() {
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/1234",
-                |         "batch_hydration__content__id": "comment/1234",
-                |         "content": "One Two Three Four"
+                |         "content": "One Two Three Four",
+                |         "batch_hydration__content__id": "comment/1234"
                 |       },
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/9001",
-                |         "batch_hydration__content__id": "comment/9001",
-                |         "content": "It's over 9000"
+                |         "content": "It's over 9000",
+                |         "batch_hydration__content__id": "comment/9001"
                 |       }
                 |     ]
                 |   }
@@ -122,14 +122,14 @@ public class `batching no source inputs snapshot` : TestSnapshot() {
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/7496",
-                |         "batch_hydration__content__id": "issue/7496",
-                |         "title": "Seven Four Nine Six"
+                |         "title": "Seven Four Nine Six",
+                |         "batch_hydration__content__id": "issue/7496"
                 |       },
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/1234",
-                |         "batch_hydration__content__id": "issue/1234",
-                |         "title": "One Two Three Four"
+                |         "title": "One Two Three Four",
+                |         "batch_hydration__content__id": "issue/1234"
                 |       }
                 |     ]
                 |   }

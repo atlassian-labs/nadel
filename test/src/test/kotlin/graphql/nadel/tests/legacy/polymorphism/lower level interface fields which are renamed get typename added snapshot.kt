@@ -49,17 +49,17 @@ public class `lower level interface fields which are renamed get typename added 
                 |     "pets": [
                 |       {
                 |         "name": "Sparky",
+                |         "__typename__rename__collarToRenamed": "Dog",
                 |         "rename__collarToRenamed__collar": {
                 |           "color": "blue"
-                |         },
-                |         "__typename__rename__collarToRenamed": "Dog"
+                |         }
                 |       },
                 |       {
                 |         "name": "Whiskers",
+                |         "__typename__rename__collarToRenamed": "Cat",
                 |         "rename__collarToRenamed__collar": {
                 |           "color": "red"
-                |         },
-                |         "__typename__rename__collarToRenamed": "Cat"
+                |         }
                 |       }
                 |     ]
                 |   }

@@ -24,7 +24,7 @@ public class `nested list hydration under a renamed top level field snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   connection(id: "ID") {
                 |     __typename__hydration__nodes: __typename
                 |     hydration__nodes__edges: edges {
@@ -38,12 +38,12 @@ public class `nested list hydration under a renamed top level field snapshot` : 
                 | {
                 |   "data": {
                 |     "connection": {
-                |       "__typename__hydration__nodes": "Connection",
                 |       "hydration__nodes__edges": [
                 |         {
                 |           "node": "1"
                 |         }
-                |       ]
+                |       ],
+                |       "__typename__hydration__nodes": "Connection"
                 |     }
                 |   }
                 | }
@@ -54,7 +54,7 @@ public class `nested list hydration under a renamed top level field snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   node(id: "1") {
                 |     __typename__hydration__space: __typename
                 |     hydration__space__id: id
@@ -78,7 +78,7 @@ public class `nested list hydration under a renamed top level field snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   rename__fooService__service: service {
                 |     __typename__hydration__otherServices: __typename
                 |     hydration__otherServices__id: id
@@ -90,8 +90,8 @@ public class `nested list hydration under a renamed top level field snapshot` : 
                 | {
                 |   "data": {
                 |     "rename__fooService__service": {
-                |       "__typename__hydration__otherServices": "Service",
-                |       "hydration__otherServices__id": "ID"
+                |       "hydration__otherServices__id": "ID",
+                |       "__typename__hydration__otherServices": "Service"
                 |     }
                 |   }
                 | }
@@ -102,7 +102,7 @@ public class `nested list hydration under a renamed top level field snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   space(id: "1a") {
                 |     id
                 |   }

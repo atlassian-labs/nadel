@@ -25,7 +25,7 @@ public class `two deep renames merged fields with same path and field rename sna
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename__deep_rename__authorId: __typename
                 |     __typename__deep_rename__authorName: __typename
@@ -49,20 +49,20 @@ public class `two deep renames merged fields with same path and field rename sna
                 | {
                 |   "data": {
                 |     "issue": {
+                |       "id": "ISSUE-1",
                 |       "deep_rename__authorId__authorDetails": {
                 |         "authorId": "USER-1"
                 |       },
                 |       "__typename__deep_rename__authorId": "Issue",
-                |       "__typename__rename__details": "Issue",
-                |       "__typename__deep_rename__authorName": "Issue",
-                |       "id": "ISSUE-1",
-                |       "rename__details__authorDetails": {
-                |         "__typename__rename__extra": "AuthorDetail",
-                |         "rename__extra__extraInfo": "extra 1"
-                |       },
                 |       "deep_rename__authorName__authorDetails": {
                 |         "name": "User 1"
-                |       }
+                |       },
+                |       "__typename__deep_rename__authorName": "Issue",
+                |       "rename__details__authorDetails": {
+                |         "rename__extra__extraInfo": "extra 1",
+                |         "__typename__rename__extra": "AuthorDetail"
+                |       },
+                |       "__typename__rename__details": "Issue"
                 |     }
                 |   }
                 | }

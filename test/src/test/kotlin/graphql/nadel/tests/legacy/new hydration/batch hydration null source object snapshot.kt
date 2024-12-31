@@ -38,9 +38,9 @@ public class `batch hydration null source object snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "myIssues": [
                 |       {
-                |         "__typename__batch_hydration__assignee": "Issue",
+                |         "title": "Popular",
                 |         "batch_hydration__assignee__assigneeId": "user-256",
-                |         "title": "Popular"
+                |         "__typename__batch_hydration__assignee": "Issue"
                 |       },
                 |       null
                 |     ]
@@ -66,8 +66,8 @@ public class `batch hydration null source object snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "usersByIds": [
                 |       {
-                |         "batch_hydration__assignee__id": "user-256",
-                |         "name": "2^8"
+                |         "name": "2^8",
+                |         "batch_hydration__assignee__id": "user-256"
                 |       }
                 |     ]
                 |   }

@@ -24,7 +24,7 @@ public class `execution id is transferred from input snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   hello {
                 |     id
                 |     name

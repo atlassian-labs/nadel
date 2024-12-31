@@ -25,7 +25,7 @@ public class `errors and some data from a service execution are reflected in the
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   hello {
                 |     name
                 |   }

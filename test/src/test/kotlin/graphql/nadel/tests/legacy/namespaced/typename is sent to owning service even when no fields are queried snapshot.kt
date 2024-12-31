@@ -25,7 +25,7 @@ public class `typename is sent to owning service even when no fields are queried
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -40,8 +40,8 @@ public class `typename is sent to owning service even when no fields are queried
                 |   "data": {
                 |     "issue": {
                 |       "search": {
-                |         "count": 1001,
-                |         "id": "search-id"
+                |         "id": "search-id",
+                |         "count": 1001
                 |       }
                 |     }
                 |   }
@@ -53,7 +53,7 @@ public class `typename is sent to owning service even when no fields are queried
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename
                 |   }

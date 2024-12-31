@@ -25,7 +25,7 @@ public class `can generate legacy operation name on batch hydration for specific
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barId: barId
@@ -37,12 +37,12 @@ public class `can generate legacy operation name on batch hydration for specific
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barId": [
                 |         "barId1",
                 |         "barId2",
                 |         "barId3"
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }

@@ -24,7 +24,7 @@ public class `long scalar argument with default values snapshot` : TestSnapshot(
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   getFoo(arg: 15)
                 | }
                 """.trimMargin(),

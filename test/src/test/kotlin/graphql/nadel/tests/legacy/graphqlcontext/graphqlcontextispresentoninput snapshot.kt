@@ -24,7 +24,7 @@ public class `graphqlcontextispresentoninput snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   hello(arg: "x") {
                 |     name
                 |   }

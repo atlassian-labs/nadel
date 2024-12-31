@@ -24,7 +24,7 @@ public class `handles skip include directive on field snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     foo {
                 |       __typename

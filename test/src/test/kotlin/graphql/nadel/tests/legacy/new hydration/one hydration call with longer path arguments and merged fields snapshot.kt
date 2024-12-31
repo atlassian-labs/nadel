@@ -25,7 +25,7 @@ public class `one hydration call with longer path arguments and merged fields sn
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authors: authors {
@@ -41,6 +41,7 @@ public class `one hydration call with longer path arguments and merged fields sn
                 |   "data": {
                 |     "issues": [
                 |       {
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authors": [
                 |           {
                 |             "authorId": "USER-1"
@@ -49,8 +50,7 @@ public class `one hydration call with longer path arguments and merged fields sn
                 |             "authorId": "USER-2"
                 |           }
                 |         ],
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -62,7 +62,7 @@ public class `one hydration call with longer path arguments and merged fields sn
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["USER-1", "USER-2"]) {
                 |     id
                 |     batch_hydration__authors__id: id

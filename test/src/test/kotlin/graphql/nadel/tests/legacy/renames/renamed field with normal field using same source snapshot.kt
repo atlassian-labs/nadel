@@ -24,7 +24,7 @@ public class `renamed field with normal field using same source snapshot` : Test
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__deep_rename__renamedField: __typename
                 |     issue {
@@ -48,10 +48,10 @@ public class `renamed field with normal field using same source snapshot` : Test
                 |           "name": "fooName"
                 |         }
                 |       },
-                |       "__typename__deep_rename__renamedField": "Foo",
                 |       "deep_rename__renamedField__issue": {
                 |         "field": "field"
-                |       }
+                |       },
+                |       "__typename__deep_rename__renamedField": "Foo"
                 |     }
                 |   }
                 | }

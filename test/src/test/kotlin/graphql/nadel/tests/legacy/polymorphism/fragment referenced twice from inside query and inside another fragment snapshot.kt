@@ -25,7 +25,7 @@ public class `fragment referenced twice from inside query and inside another fra
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     id
                 |   }

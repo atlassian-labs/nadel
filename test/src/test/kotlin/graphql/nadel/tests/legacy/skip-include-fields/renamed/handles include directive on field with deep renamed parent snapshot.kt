@@ -25,7 +25,7 @@ public class `handles include directive on field with deep renamed parent snapsh
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__deep_rename__bar: __typename
                 |     deep_rename__bar__details: details {
@@ -41,12 +41,12 @@ public class `handles include directive on field with deep renamed parent snapsh
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__deep_rename__bar": "Foo",
                 |       "deep_rename__bar__details": {
                 |         "bar": {
                 |           "__typename__skip_include____skip": "Bar"
                 |         }
-                |       }
+                |       },
+                |       "__typename__deep_rename__bar": "Foo"
                 |     }
                 |   }
                 | }

@@ -24,7 +24,7 @@ public class `renamed type is shared even deeper snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Nextgen",
                 query = """
-                | query {
+                | {
                 |   elements {
                 |     __typename
                 |     nodes {

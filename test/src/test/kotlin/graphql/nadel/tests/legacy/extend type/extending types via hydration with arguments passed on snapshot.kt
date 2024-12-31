@@ -24,8 +24,8 @@ public class `extending types via hydration with arguments passed on snapshot` :
             ExpectedServiceCall(
                 service = "Association",
                 query = """
-                | query {
-                |   association(filter: {name: "value"}, id: "ISSUE-1") {
+                | {
+                |   association(filter: {name : "value"}, id: "ISSUE-1") {
                 |     nameOfAssociation
                 |   }
                 | }
@@ -46,7 +46,7 @@ public class `extending types via hydration with arguments passed on snapshot` :
             ExpectedServiceCall(
                 service = "Issue",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename__hydration__association: __typename
                 |     hydration__association__id: id

@@ -37,12 +37,12 @@ public class `index hydration all null ids snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "issueById": {
-                |       "__typename__batch_hydration__collaborators": "Issue",
+                |       "key": "GQLGW-1000",
                 |       "batch_hydration__collaborators__collaboratorIds": [
                 |         null,
                 |         null
                 |       ],
-                |       "key": "GQLGW-1000"
+                |       "__typename__batch_hydration__collaborators": "Issue"
                 |     }
                 |   }
                 | }

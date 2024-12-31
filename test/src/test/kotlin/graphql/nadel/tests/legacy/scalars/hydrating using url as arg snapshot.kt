@@ -24,7 +24,7 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__details: __typename
                 |     url
@@ -37,9 +37,9 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__details": "Foo",
+                |       "url": "https://github.com/atlassian-labs/nadel",
                 |       "hydration__details__url": "https://github.com/atlassian-labs/nadel",
-                |       "url": "https://github.com/atlassian-labs/nadel"
+                |       "__typename__hydration__details": "Foo"
                 |     }
                 |   }
                 | }
@@ -50,7 +50,7 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   lookup(url: "https://github.com/atlassian-labs/nadel") {
                 |     baseUrl
                 |     createdAt
@@ -64,8 +64,8 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "lookup": {
                 |       "baseUrl": "https://github.com/",
-                |       "createdAt": "2018-02-13T06:23:41Z",
-                |       "owner": "amarek"
+                |       "owner": "amarek",
+                |       "createdAt": "2018-02-13T06:23:41Z"
                 |     }
                 |   }
                 | }
@@ -83,8 +83,8 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
      *       "url": "https://github.com/atlassian-labs/nadel",
      *       "details": {
      *         "baseUrl": "https://github.com/",
-     *         "createdAt": "2018-02-13T06:23:41Z",
-     *         "owner": "amarek"
+     *         "owner": "amarek",
+     *         "createdAt": "2018-02-13T06:23:41Z"
      *       }
      *     }
      *   }
@@ -99,8 +99,8 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
             |       "url": "https://github.com/atlassian-labs/nadel",
             |       "details": {
             |         "baseUrl": "https://github.com/",
-            |         "createdAt": "2018-02-13T06:23:41Z",
-            |         "owner": "amarek"
+            |         "owner": "amarek",
+            |         "createdAt": "2018-02-13T06:23:41Z"
             |       }
             |     }
             |   }

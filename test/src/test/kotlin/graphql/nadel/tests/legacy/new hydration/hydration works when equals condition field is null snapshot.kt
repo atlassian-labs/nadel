@@ -24,7 +24,7 @@ public class `hydration works when equals condition field is null snapshot` : Te
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__type: type
@@ -37,8 +37,8 @@ public class `hydration works when equals condition field is null snapshot` : Te
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__bar": "Foo",
-                |       "hydration__bar__type": null
+                |       "hydration__bar__type": null,
+                |       "__typename__hydration__bar": "Foo"
                 |     }
                 |   }
                 | }

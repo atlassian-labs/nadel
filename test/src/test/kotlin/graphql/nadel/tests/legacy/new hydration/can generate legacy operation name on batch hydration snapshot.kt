@@ -36,12 +36,12 @@ public class `can generate legacy operation name on batch hydration snapshot` : 
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barId": [
                 |         "barId1",
                 |         "barId2",
                 |         "barId3"
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }

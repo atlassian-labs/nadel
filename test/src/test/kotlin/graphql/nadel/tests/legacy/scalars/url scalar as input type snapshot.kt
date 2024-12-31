@@ -24,7 +24,7 @@ public class `url scalar as input type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo(input: "https://atlassian.com") {
                 |     thing
                 |   }

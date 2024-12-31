@@ -24,7 +24,7 @@ public class `ari argument transform on renamed field snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   rename__issue__issueById: issueById(id: "57") {
                 |     __typename__rename__key: __typename
                 |     rename__key__id: id
@@ -36,8 +36,8 @@ public class `ari argument transform on renamed field snapshot` : TestSnapshot()
                 | {
                 |   "data": {
                 |     "rename__issue__issueById": {
-                |       "__typename__rename__key": "Issue",
-                |       "rename__key__id": "57"
+                |       "rename__key__id": "57",
+                |       "__typename__rename__key": "Issue"
                 |     }
                 |   }
                 | }

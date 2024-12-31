@@ -25,7 +25,7 @@ public class `typename is wiped when other data fails includes not nullable fiel
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -36,9 +36,6 @@ public class `typename is wiped when other data fails includes not nullable fiel
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "issue": null
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "Error",
@@ -47,7 +44,10 @@ public class `typename is wiped when other data fails includes not nullable fiel
                 |         "classification": "DataFetchingException"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -58,9 +58,6 @@ public class `typename is wiped when other data fails includes not nullable fiel
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error",
@@ -69,16 +66,16 @@ public class `typename is wiped when other data fails includes not nullable fiel
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error",
@@ -87,7 +84,10 @@ public class `typename is wiped when other data fails includes not nullable fiel
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

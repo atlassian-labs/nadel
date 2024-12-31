@@ -24,7 +24,7 @@ public class `batching conditional hydration works with int type snapshot` : Tes
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barIds: barIds
@@ -36,12 +36,12 @@ public class `batching conditional hydration works with int type snapshot` : Tes
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barIds": [
                 |         1,
                 |         2,
                 |         3
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -52,7 +52,7 @@ public class `batching conditional hydration works with int type snapshot` : Tes
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barsById(ids: [2]) {
                 |     batch_hydration__bar__id: id
                 |     name
@@ -65,8 +65,8 @@ public class `batching conditional hydration works with int type snapshot` : Tes
                 |   "data": {
                 |     "barsById": [
                 |       {
-                |         "batch_hydration__bar__id": 2,
-                |         "name": "Bar2"
+                |         "name": "Bar2",
+                |         "batch_hydration__bar__id": 2
                 |       }
                 |     ]
                 |   }

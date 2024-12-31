@@ -39,8 +39,8 @@ public class `batching null source input object snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "activity": [
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__reference": null
+                |         "batch_hydration__content__reference": null,
+                |         "__typename__batch_hydration__content": "Activity"
                 |       }
                 |     ]
                 |   }

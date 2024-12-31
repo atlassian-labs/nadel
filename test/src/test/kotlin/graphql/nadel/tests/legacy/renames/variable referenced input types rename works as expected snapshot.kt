@@ -25,7 +25,7 @@ public class `variable referenced input types rename works as expected snapshot`
                 service = "MyService",
                 query = """
                 | query X {
-                |   renameInput(arg1: {inputVal: "x"})
+                |   renameInput(arg1: {inputVal : "x"})
                 | }
                 """.trimMargin(),
                 variables = "{}",

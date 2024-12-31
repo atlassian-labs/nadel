@@ -24,7 +24,7 @@ public class `hydration with multiple true conditions takes first snapshot` : Te
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__type: type
@@ -37,8 +37,8 @@ public class `hydration with multiple true conditions takes first snapshot` : Te
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__bar": "Foo",
-                |       "hydration__bar__type": "type_B"
+                |       "hydration__bar__type": "type_B",
+                |       "__typename__hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -49,7 +49,7 @@ public class `hydration with multiple true conditions takes first snapshot` : Te
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "BAR_A") {
                 |     name
                 |   }

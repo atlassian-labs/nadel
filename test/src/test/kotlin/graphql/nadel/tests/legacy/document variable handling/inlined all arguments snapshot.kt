@@ -24,7 +24,7 @@ public class `inlined all arguments snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query myQuery(${'$'}v0: InputWithJsonUnderlying, ${'$'}v1: JSON!, , ${'$'}v2: String, ${'$'}v3: String, ${'$'}v4: String) {
+                | query myQuery(${'$'}v0: InputWithJsonUnderlying, ${'$'}v1: JSON!, ${'$'}v2: String, ${'$'}v3: String, ${'$'}v4: String) {
                 |   hello(arg: ${'$'}v0, arg1: ${'$'}v1, arg2: ${'$'}v2, arg3: ${'$'}v3, arg4Nullable: ${'$'}v4)
                 | }
                 """.trimMargin(),

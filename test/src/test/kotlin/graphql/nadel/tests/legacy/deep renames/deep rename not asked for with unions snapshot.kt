@@ -24,7 +24,7 @@ public class `deep rename not asked for with unions snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   names {
                 |     ... on Edible {
                 |       name

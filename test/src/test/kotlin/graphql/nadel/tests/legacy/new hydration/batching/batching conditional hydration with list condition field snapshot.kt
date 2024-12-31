@@ -24,7 +24,7 @@ public class `batching conditional hydration with list condition field snapshot`
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barIds: barIds
@@ -36,12 +36,12 @@ public class `batching conditional hydration with list condition field snapshot`
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barIds": [
                 |         "barId1",
                 |         "barId2",
                 |         "barId3"
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -52,7 +52,7 @@ public class `batching conditional hydration with list condition field snapshot`
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barsById(ids: ["barId2"]) {
                 |     batch_hydration__bar__id: id
                 |     name
@@ -65,8 +65,8 @@ public class `batching conditional hydration with list condition field snapshot`
                 |   "data": {
                 |     "barsById": [
                 |       {
-                |         "batch_hydration__bar__id": "barId2",
-                |         "name": "Bar2"
+                |         "name": "Bar2",
+                |         "batch_hydration__bar__id": "barId2"
                 |       }
                 |     ]
                 |   }

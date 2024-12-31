@@ -25,7 +25,7 @@ public class `execution id is transferred from provider if missing in input snap
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   hello {
                 |     id
                 |     name

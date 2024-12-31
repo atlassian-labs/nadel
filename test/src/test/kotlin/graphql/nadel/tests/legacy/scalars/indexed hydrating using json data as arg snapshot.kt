@@ -125,33 +125,33 @@ public class `indexed hydrating using json data as arg snapshot` : TestSnapshot(
                 |   "data": {
                 |     "foo": [
                 |       {
-                |         "__typename__batch_hydration__foo": "Foo",
                 |         "batch_hydration__foo__baz": {
                 |           "id": "102",
                 |           "appConfig": {
                 |             "status": "active",
                 |             "bounce": false
                 |           }
-                |         }
+                |         },
+                |         "__typename__batch_hydration__foo": "Foo"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__foo": "Foo",
                 |         "batch_hydration__foo__baz": {
                 |           "ari": "ari:cloud:api-platform::thing/103",
                 |           "config": {
                 |             "status": "active",
                 |             "bounce": true
                 |           }
-                |         }
+                |         },
+                |         "__typename__batch_hydration__foo": "Foo"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__foo": "Foo",
                 |         "batch_hydration__foo__baz": {
                 |           "app-config": {
                 |             "status": "deactivated",
                 |             "bounce": true
                 |           }
-                |         }
+                |         },
+                |         "__typename__batch_hydration__foo": "Foo"
                 |       }
                 |     ]
                 |   }

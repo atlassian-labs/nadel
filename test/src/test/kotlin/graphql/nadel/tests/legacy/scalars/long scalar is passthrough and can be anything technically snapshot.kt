@@ -25,7 +25,7 @@ public class `long scalar is passthrough and can be anything technically snapsho
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   aField
                 | }
                 """.trimMargin(),

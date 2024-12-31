@@ -25,7 +25,7 @@ public class `deep rename of an object with transformations inside object snapsh
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__deep_rename__authorName: __typename
                 |     deep_rename__authorName__authorDetails: authorDetails {
@@ -45,26 +45,26 @@ public class `deep rename of an object with transformations inside object snapsh
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__deep_rename__authorName": "Issue",
                 |         "id": "ISSUE-1",
                 |         "deep_rename__authorName__authorDetails": {
                 |           "name": {
-                |             "lastName": "Smith",
                 |             "rename__firstName__originalFirstName": "George",
-                |             "__typename__rename__firstName": "OriginalName"
+                |             "__typename__rename__firstName": "OriginalName",
+                |             "lastName": "Smith"
                 |           }
-                |         }
+                |         },
+                |         "__typename__deep_rename__authorName": "Issue"
                 |       },
                 |       {
-                |         "__typename__deep_rename__authorName": "Issue",
                 |         "id": "ISSUE-2",
                 |         "deep_rename__authorName__authorDetails": {
                 |           "name": {
-                |             "lastName": "Windsor",
                 |             "rename__firstName__originalFirstName": "Elizabeth",
-                |             "__typename__rename__firstName": "OriginalName"
+                |             "__typename__rename__firstName": "OriginalName",
+                |             "lastName": "Windsor"
                 |           }
-                |         }
+                |         },
+                |         "__typename__deep_rename__authorName": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -83,15 +83,15 @@ public class `deep rename of an object with transformations inside object snapsh
      *       {
      *         "id": "ISSUE-1",
      *         "authorName": {
-     *           "firstName": "George",
-     *           "lastName": "Smith"
+     *           "lastName": "Smith",
+     *           "firstName": "George"
      *         }
      *       },
      *       {
      *         "id": "ISSUE-2",
      *         "authorName": {
-     *           "firstName": "Elizabeth",
-     *           "lastName": "Windsor"
+     *           "lastName": "Windsor",
+     *           "firstName": "Elizabeth"
      *         }
      *       }
      *     ]
@@ -107,15 +107,15 @@ public class `deep rename of an object with transformations inside object snapsh
             |       {
             |         "id": "ISSUE-1",
             |         "authorName": {
-            |           "firstName": "George",
-            |           "lastName": "Smith"
+            |           "lastName": "Smith",
+            |           "firstName": "George"
             |         }
             |       },
             |       {
             |         "id": "ISSUE-2",
             |         "authorName": {
-            |           "firstName": "Elizabeth",
-            |           "lastName": "Windsor"
+            |           "lastName": "Windsor",
+            |           "firstName": "Elizabeth"
             |         }
             |       }
             |     ]

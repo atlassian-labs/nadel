@@ -24,7 +24,7 @@ public class `hydration call with fragments in the hydrated part snapshot` : Tes
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorDetails: authorDetails {
@@ -40,6 +40,7 @@ public class `hydration call with fragments in the hydrated part snapshot` : Tes
                 |   "data": {
                 |     "issues": [
                 |       {
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authorDetails": [
                 |           {
                 |             "authorId": "USER-1"
@@ -48,8 +49,7 @@ public class `hydration call with fragments in the hydrated part snapshot` : Tes
                 |             "authorId": "USER-2"
                 |           }
                 |         ],
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -61,7 +61,7 @@ public class `hydration call with fragments in the hydrated part snapshot` : Tes
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["USER-1", "USER-2"]) {
                 |     id
                 |     batch_hydration__authors__id: id
@@ -75,13 +75,13 @@ public class `hydration call with fragments in the hydrated part snapshot` : Tes
                 |   "data": {
                 |     "usersByIds": [
                 |       {
-                |         "name": "User 1",
                 |         "id": "USER-1",
+                |         "name": "User 1",
                 |         "batch_hydration__authors__id": "USER-1"
                 |       },
                 |       {
-                |         "name": "User 2",
                 |         "id": "USER-2",
+                |         "name": "User 2",
                 |         "batch_hydration__authors__id": "USER-2"
                 |       }
                 |     ]
@@ -94,7 +94,7 @@ public class `hydration call with fragments in the hydrated part snapshot` : Tes
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["USER-1"]) {
                 |     id
                 |     name
@@ -107,8 +107,8 @@ public class `hydration call with fragments in the hydrated part snapshot` : Tes
                 |   "data": {
                 |     "usersByIds": [
                 |       {
-                |         "name": "User 1",
-                |         "id": "USER-1"
+                |         "id": "USER-1",
+                |         "name": "User 1"
                 |       }
                 |     ]
                 |   }

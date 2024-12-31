@@ -24,7 +24,7 @@ public class `renaming url typed field snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   rename__aField__test: test
                 | }
                 """.trimMargin(),

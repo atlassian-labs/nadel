@@ -26,7 +26,6 @@ public class `missing null variables are handled snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": null,
      *   "errors": [
      *     {
      *       "message": "Variable 'var1' has an invalid value: Variable 'var1' has coerced Null
@@ -41,14 +40,14 @@ public class `missing null variables are handled snapshot` : TestSnapshot() {
      *         "classification": "ValidationError"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": null
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": null,
             |   "errors": [
             |     {
             |       "message": "Variable 'var1' has an invalid value: Variable 'var1' has coerced Null value for NonNull type 'String!'",
@@ -62,7 +61,8 @@ public class `missing null variables are handled snapshot` : TestSnapshot() {
             |         "classification": "ValidationError"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": null
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

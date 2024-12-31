@@ -5,9 +5,6 @@ import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
-import kotlin.Suppress
-import kotlin.collections.List
-import kotlin.collections.listOf
 
 private suspend fun main() {
     graphql.nadel.tests.next.update<`hydration matching using index result size invariant mismatch`>()
@@ -19,70 +16,68 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class `hydration matching using index result size invariant mismatch snapshot` :
-        TestSnapshot() {
-    override val calls: List<ExpectedServiceCall> = listOf(
+class `hydration matching using index result size invariant mismatch snapshot` : TestSnapshot() {
+    override val calls: List<ExpectedServiceCall> =
+        listOf(
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
-                |   issues {
-                |     __typename__batch_hydration__authors: __typename
-                |     batch_hydration__authors__authorIds: authorIds
-                |     id
-                |   }
-                | }
-                """.trimMargin(),
+                    query {
+                      issues {
+                        __typename__batch_hydration__authors: __typename
+                        batch_hydration__authors__authorIds: authorIds
+                        id
+                      }
+                    }
+                """.trimIndent(),
                 variables = "{}",
                 result = """
-                | {
-                |   "data": {
-                |     "issues": [
-                |       {
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "batch_hydration__authors__authorIds": [
-                |           "1"
-                |         ],
-                |         "id": "ISSUE-1"
-                |       },
-                |       {
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "batch_hydration__authors__authorIds": [
-                |           "1",
-                |           "2"
-                |         ],
-                |         "id": "ISSUE-2"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
+                    {
+                      "data": {
+                        "issues": [
+                          {
+                            "__typename__batch_hydration__authors": "Issue",
+                            "batch_hydration__authors__authorIds": [
+                              "1"
+                            ],
+                            "id": "ISSUE-1"
+                          },
+                          {
+                            "__typename__batch_hydration__authors": "Issue",
+                            "batch_hydration__authors__authorIds": [
+                              "1",
+                              "2"
+                            ],
+                            "id": "ISSUE-2"
+                          }
+                        ]
+                      }
+                    }
+                """.trimIndent(),
+                delayedResults = listOfJsonStrings(),
             ),
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
-                |   usersByIds(ids: ["1", "2"]) {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
+                    query {
+                      usersByIds(ids: ["1", "2"]) {
+                        name
+                      }
+                    }
+                """.trimIndent(),
                 variables = "{}",
                 result = """
-                | {
-                |   "data": {
-                |     "usersByIds": [
-                |       {
-                |         "name": "Name"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
+                    {
+                      "data": {
+                        "usersByIds": [
+                          {
+                            "name": "Name"
+                          }
+                        ]
+                      }
+                    }
+                """.trimIndent(),
+                delayedResults = listOfJsonStrings(),
             ),
         )
 
@@ -91,9 +86,9 @@ public class `hydration matching using index result size invariant mismatch snap
      * {}
      * ```
      */
-    override val result: ExpectedNadelResult = ExpectedNadelResult(
+    override val result: ExpectedNadelResult =
+        ExpectedNadelResult(
             result = "{}",
-            delayedResults = listOfJsonStrings(
-            ),
+            delayedResults = listOfJsonStrings(),
         )
 }

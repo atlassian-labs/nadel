@@ -25,7 +25,7 @@ public class `conditional hydration matches predicate works with id type snapsho
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__type: type
@@ -38,8 +38,8 @@ public class `conditional hydration matches predicate works with id type snapsho
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__bar": "Foo",
-                |       "hydration__bar__type": "type_B"
+                |       "hydration__bar__type": "type_B",
+                |       "__typename__hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -50,7 +50,7 @@ public class `conditional hydration matches predicate works with id type snapsho
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "BAR_B") {
                 |     name
                 |   }

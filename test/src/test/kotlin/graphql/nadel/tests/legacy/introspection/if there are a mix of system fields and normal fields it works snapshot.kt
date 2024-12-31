@@ -25,7 +25,7 @@ public class `if there are a mix of system fields and normal fields it works sna
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   hello {
                 |     name
                 |   }

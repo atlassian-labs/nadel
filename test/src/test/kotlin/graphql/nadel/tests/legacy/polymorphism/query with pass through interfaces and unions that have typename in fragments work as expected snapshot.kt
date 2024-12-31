@@ -46,13 +46,13 @@ public class
                 |     "pets": [
                 |       {
                 |         "name": "Sparky",
-                |         "wearsCollar": true,
-                |         "__typename": "Dog"
+                |         "__typename": "Dog",
+                |         "wearsCollar": true
                 |       },
                 |       {
                 |         "name": "Whiskers",
-                |         "wearsBell": false,
-                |         "__typename": "Cat"
+                |         "__typename": "Cat",
+                |         "wearsBell": false
                 |       }
                 |     ]
                 |   }
@@ -81,8 +81,8 @@ public class
                 | {
                 |   "data": {
                 |     "raining": {
-                |       "wearsCollar": true,
-                |       "__typename": "Dog"
+                |       "__typename": "Dog",
+                |       "wearsCollar": true
                 |     }
                 |   }
                 | }
@@ -99,8 +99,8 @@ public class
      *     "pets": [
      *       {
      *         "name": "Sparky",
-     *         "wearsCollar": true,
-     *         "__typename": "Dog"
+     *         "__typename": "Dog",
+     *         "wearsCollar": true
      *       },
      *       {
      *         "name": "Whiskers",
@@ -109,8 +109,8 @@ public class
      *       }
      *     ],
      *     "raining": {
-     *       "wearsCollar": true,
-     *       "__typename": "Dog"
+     *       "__typename": "Dog",
+     *       "wearsCollar": true
      *     }
      *   }
      * }
@@ -123,8 +123,8 @@ public class
             |     "pets": [
             |       {
             |         "name": "Sparky",
-            |         "wearsCollar": true,
-            |         "__typename": "Dog"
+            |         "__typename": "Dog",
+            |         "wearsCollar": true
             |       },
             |       {
             |         "name": "Whiskers",
@@ -133,8 +133,8 @@ public class
             |       }
             |     ],
             |     "raining": {
-            |       "wearsCollar": true,
-            |       "__typename": "Dog"
+            |       "__typename": "Dog",
+            |       "wearsCollar": true
             |     }
             |   }
             | }

@@ -56,7 +56,7 @@ public class `namespaced result map has correct entries on partial failure snaps
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -84,14 +84,6 @@ public class `namespaced result map has correct entries on partial failure snaps
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": {
-     *       "getIssue": {
-     *         "text": "Foo"
-     *       },
-     *       "search": null
-     *     }
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error",
@@ -100,21 +92,21 @@ public class `namespaced result map has correct entries on partial failure snaps
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": {
+     *       "getIssue": {
+     *         "text": "Foo"
+     *       },
+     *       "search": null
+     *     }
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": {
-            |       "getIssue": {
-            |         "text": "Foo"
-            |       },
-            |       "search": null
-            |     }
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error",
@@ -123,7 +115,15 @@ public class `namespaced result map has correct entries on partial failure snaps
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": {
+            |       "getIssue": {
+            |         "text": "Foo"
+            |       },
+            |       "search": null
+            |     }
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

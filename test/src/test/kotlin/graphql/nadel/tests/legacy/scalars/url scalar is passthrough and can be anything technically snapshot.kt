@@ -24,7 +24,7 @@ public class `url scalar is passthrough and can be anything technically snapshot
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   aField
                 | }
                 """.trimMargin(),

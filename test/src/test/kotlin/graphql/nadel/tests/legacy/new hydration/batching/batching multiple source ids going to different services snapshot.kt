@@ -38,32 +38,32 @@ public class `batching multiple source ids going to different services snapshot`
                 |   "data": {
                 |     "activity": [
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
                 |         "batch_hydration__content__contentIds": [
                 |           "issue/4000",
                 |           "comment/5000",
                 |           "comment/6000"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
                 |         "batch_hydration__content__contentIds": [
                 |           "issue/8080"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
                 |         "batch_hydration__content__contentIds": [
                 |           "issue/7496",
                 |           "comment/9001"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
                 |         "batch_hydration__content__contentIds": [
                 |           "issue/1234",
                 |           "comment/1234"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__content": "Activity"
                 |       }
                 |     ]
                 |   }
@@ -92,26 +92,26 @@ public class `batching multiple source ids going to different services snapshot`
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/5000",
-                |         "batch_hydration__content__id": "comment/5000",
-                |         "content": "Five Thousand"
+                |         "content": "Five Thousand",
+                |         "batch_hydration__content__id": "comment/5000"
                 |       },
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/6000",
-                |         "batch_hydration__content__id": "comment/6000",
-                |         "content": "Six Thousand"
+                |         "content": "Six Thousand",
+                |         "batch_hydration__content__id": "comment/6000"
                 |       },
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/9001",
-                |         "batch_hydration__content__id": "comment/9001",
-                |         "content": "It's over 9000"
+                |         "content": "It's over 9000",
+                |         "batch_hydration__content__id": "comment/9001"
                 |       },
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/1234",
-                |         "batch_hydration__content__id": "comment/1234",
-                |         "content": "One Two Three Four"
+                |         "content": "One Two Three Four",
+                |         "batch_hydration__content__id": "comment/1234"
                 |       }
                 |     ]
                 |   }
@@ -140,26 +140,26 @@ public class `batching multiple source ids going to different services snapshot`
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/4000",
-                |         "batch_hydration__content__id": "issue/4000",
-                |         "title": "Four Thousand"
+                |         "title": "Four Thousand",
+                |         "batch_hydration__content__id": "issue/4000"
                 |       },
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/8080",
-                |         "batch_hydration__content__id": "issue/8080",
-                |         "title": "Eighty Eighty"
+                |         "title": "Eighty Eighty",
+                |         "batch_hydration__content__id": "issue/8080"
                 |       },
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/7496",
-                |         "batch_hydration__content__id": "issue/7496",
-                |         "title": "Seven Four Nine Six"
+                |         "title": "Seven Four Nine Six",
+                |         "batch_hydration__content__id": "issue/7496"
                 |       },
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/1234",
-                |         "batch_hydration__content__id": "issue/1234",
-                |         "title": "One Two Three Four"
+                |         "title": "One Two Three Four",
+                |         "batch_hydration__content__id": "issue/1234"
                 |       }
                 |     ]
                 |   }

@@ -24,7 +24,7 @@ public class `aliased typename is wiped when other data fails snapshot` : TestSn
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -35,18 +35,18 @@ public class `aliased typename is wiped when other data fails snapshot` : TestSn
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "issue": null
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "Error",
-                |        "locations": [],
-                |        "extensions": {
-                |          "classification": "DataFetchingException"
-                |        }
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -57,9 +57,6 @@ public class `aliased typename is wiped when other data fails snapshot` : TestSn
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error",
@@ -68,16 +65,16 @@ public class `aliased typename is wiped when other data fails snapshot` : TestSn
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error",
@@ -86,7 +83,10 @@ public class `aliased typename is wiped when other data fails snapshot` : TestSn
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

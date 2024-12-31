@@ -24,7 +24,7 @@ public class `renamed type inside batch hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
                 |     details {
                 |       __typename
@@ -40,25 +40,25 @@ public class `renamed type inside batch hydration snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issuesByIds": [
                 |       {
-                |         "batch_hydration__issue__id": "issue-1",
                 |         "details": {
                 |           "__typename": "Details",
                 |           "name": "Details of issue one"
-                |         }
+                |         },
+                |         "batch_hydration__issue__id": "issue-1"
                 |       },
                 |       {
-                |         "batch_hydration__issue__id": "issue-2",
                 |         "details": {
                 |           "__typename": "Details",
                 |           "name": "Issue two"
-                |         }
+                |         },
+                |         "batch_hydration__issue__id": "issue-2"
                 |       },
                 |       {
-                |         "batch_hydration__issue__id": "issue-3",
                 |         "details": {
                 |           "__typename": "Details",
                 |           "name": "Issue four – no wait three"
-                |         }
+                |         },
+                |         "batch_hydration__issue__id": "issue-3"
                 |       }
                 |     ]
                 |   }
@@ -70,7 +70,7 @@ public class `renamed type inside batch hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   users {
                 |     __typename__batch_hydration__issue: __typename
                 |     batch_hydration__issue__issueId: issueId
@@ -83,16 +83,16 @@ public class `renamed type inside batch hydration snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "users": [
                 |       {
-                |         "__typename__batch_hydration__issue": "User",
-                |         "batch_hydration__issue__issueId": "issue-1"
+                |         "batch_hydration__issue__issueId": "issue-1",
+                |         "__typename__batch_hydration__issue": "User"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "User",
-                |         "batch_hydration__issue__issueId": "issue-2"
+                |         "batch_hydration__issue__issueId": "issue-2",
+                |         "__typename__batch_hydration__issue": "User"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "User",
-                |         "batch_hydration__issue__issueId": "issue-3"
+                |         "batch_hydration__issue__issueId": "issue-3",
+                |         "__typename__batch_hydration__issue": "User"
                 |       }
                 |     ]
                 |   }

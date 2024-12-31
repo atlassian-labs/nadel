@@ -24,7 +24,7 @@ public class `handles include directive on batch hydrated field snapshot` : Test
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foos {
                 |     __typename__skip_include____skip: __typename
                 |   }

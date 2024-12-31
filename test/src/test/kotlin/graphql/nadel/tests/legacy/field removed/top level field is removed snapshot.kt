@@ -26,9 +26,6 @@ public class `top level field is removed snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": {
-     *     "commentById": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "field `Query.commentById` has been removed by RemoveFieldTestTransform",
@@ -37,16 +34,16 @@ public class `top level field is removed snapshot` : TestSnapshot() {
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "commentById": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "commentById": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "field `Query.commentById` has been removed by RemoveFieldTestTransform",
@@ -55,7 +52,10 @@ public class `top level field is removed snapshot` : TestSnapshot() {
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "commentById": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

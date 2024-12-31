@@ -24,7 +24,7 @@ public class `dynamic service resolution multiple services snapshot` : TestSnaps
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issue: node(id: "issue/id-123") {
                 |     id
                 |     ... on Issue {
@@ -50,7 +50,7 @@ public class `dynamic service resolution multiple services snapshot` : TestSnaps
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | query {
+                | {
                 |   pr: node(id: "pull-request:id-123") {
                 |     id
                 |     ... on PullRequest {

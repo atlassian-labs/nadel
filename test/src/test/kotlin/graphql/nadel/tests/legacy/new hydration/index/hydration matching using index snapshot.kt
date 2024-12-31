@@ -24,7 +24,7 @@ public class `hydration matching using index snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorIds: authorIds
@@ -38,19 +38,19 @@ public class `hydration matching using index snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authorIds": [
                 |           "1"
                 |         ],
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-2",
                 |         "batch_hydration__authors__authorIds": [
                 |           "1",
                 |           "2"
                 |         ],
-                |         "id": "ISSUE-2"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -62,7 +62,7 @@ public class `hydration matching using index snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(ids: ["1", "2"]) {
                 |     name
                 |   }

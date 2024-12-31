@@ -24,7 +24,7 @@ public class `two transforms on a field snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     uuid_typename: __typename
                 |     id
@@ -50,12 +50,6 @@ public class `two transforms on a field snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": {
-     *     "foo": {
-     *       "id": "FOO-1",
-     *       "epicEntity": null
-     *     }
-     *   },
      *   "errors": [
      *     {
      *       "message": "field `Foo.epicEntity` has been removed by RemoveFieldTestTransform",
@@ -64,19 +58,19 @@ public class `two transforms on a field snapshot` : TestSnapshot() {
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "foo": {
+     *       "id": "FOO-1",
+     *       "epicEntity": null
+     *     }
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "foo": {
-            |       "id": "FOO-1",
-            |       "epicEntity": null
-            |     }
-            |   },
             |   "errors": [
             |     {
             |       "message": "field `Foo.epicEntity` has been removed by RemoveFieldTestTransform",
@@ -85,7 +79,13 @@ public class `two transforms on a field snapshot` : TestSnapshot() {
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "foo": {
+            |       "id": "FOO-1",
+            |       "epicEntity": null
+            |     }
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

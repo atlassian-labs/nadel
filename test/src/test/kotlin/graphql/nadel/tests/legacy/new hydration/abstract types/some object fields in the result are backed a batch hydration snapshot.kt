@@ -50,12 +50,12 @@ public class `some object fields in the result are backed a batch hydration snap
                 |         }
                 |       },
                 |       {
-                |         "__typename__batch_hydration__user": "Activity",
-                |         "batch_hydration__user__userId": "user-100"
+                |         "batch_hydration__user__userId": "user-100",
+                |         "__typename__batch_hydration__user": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__user": "Activity",
-                |         "batch_hydration__user__userId": "user-20"
+                |         "batch_hydration__user__userId": "user-20",
+                |         "__typename__batch_hydration__user": "Activity"
                 |       },
                 |       {
                 |         "user": {
@@ -85,12 +85,12 @@ public class `some object fields in the result are backed a batch hydration snap
                 |   "data": {
                 |     "usersByIds": [
                 |       {
-                |         "batch_hydration__user__id": "user-100",
-                |         "name": "Spaces"
+                |         "name": "Spaces",
+                |         "batch_hydration__user__id": "user-100"
                 |       },
                 |       {
-                |         "batch_hydration__user__id": "user-20",
-                |         "name": "Newmarket"
+                |         "name": "Newmarket",
+                |         "batch_hydration__user__id": "user-20"
                 |       }
                 |     ]
                 |   }

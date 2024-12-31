@@ -38,20 +38,20 @@ public class `batching single source id snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "activity": [
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentId": "issue/4000"
+                |         "batch_hydration__content__contentId": "issue/4000",
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentId": "issue/8080"
+                |         "batch_hydration__content__contentId": "issue/8080",
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentId": "issue/7496"
+                |         "batch_hydration__content__contentId": "issue/7496",
+                |         "__typename__batch_hydration__content": "Activity"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__content": "Activity",
-                |         "batch_hydration__content__contentId": "comment/1234"
+                |         "batch_hydration__content__contentId": "comment/1234",
+                |         "__typename__batch_hydration__content": "Activity"
                 |       }
                 |     ]
                 |   }
@@ -80,8 +80,8 @@ public class `batching single source id snapshot` : TestSnapshot() {
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/1234",
-                |         "batch_hydration__content__id": "comment/1234",
-                |         "content": "One Two Three Four"
+                |         "content": "One Two Three Four",
+                |         "batch_hydration__content__id": "comment/1234"
                 |       }
                 |     ]
                 |   }
@@ -110,20 +110,20 @@ public class `batching single source id snapshot` : TestSnapshot() {
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/4000",
-                |         "batch_hydration__content__id": "issue/4000",
-                |         "title": "Four Thousand"
+                |         "title": "Four Thousand",
+                |         "batch_hydration__content__id": "issue/4000"
                 |       },
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/8080",
-                |         "batch_hydration__content__id": "issue/8080",
-                |         "title": "Eighty Eighty"
+                |         "title": "Eighty Eighty",
+                |         "batch_hydration__content__id": "issue/8080"
                 |       },
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/7496",
-                |         "batch_hydration__content__id": "issue/7496",
-                |         "title": "Seven Four Nine Six"
+                |         "title": "Seven Four Nine Six",
+                |         "batch_hydration__content__id": "issue/7496"
                 |       }
                 |     ]
                 |   }

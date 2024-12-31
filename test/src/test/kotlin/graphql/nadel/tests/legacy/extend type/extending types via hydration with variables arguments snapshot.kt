@@ -25,7 +25,7 @@ public class `extending types via hydration with variables arguments snapshot` :
                 service = "Association",
                 query = """
                 | query MyQuery {
-                |   association(filter: {name: "value"}, id: "ISSUE-1") {
+                |   association(filter: {name : "value"}, id: "ISSUE-1") {
                 |     nameOfAssociation
                 |   }
                 | }

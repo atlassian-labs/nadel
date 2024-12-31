@@ -24,7 +24,7 @@ public class `a lot of renames snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Boards",
                 query = """
-                | query {
+                | {
                 |   boardScope {
                 |     __typename__rename__cardParents: __typename
                 |     rename__cardParents__issueParents: issueParents {

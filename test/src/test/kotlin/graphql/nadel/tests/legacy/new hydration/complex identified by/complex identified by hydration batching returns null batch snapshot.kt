@@ -25,7 +25,7 @@ public class `complex identified by hydration batching returns null batch snapsh
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barId: barId
@@ -37,12 +37,12 @@ public class `complex identified by hydration batching returns null batch snapsh
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barId": [
                 |         "barId1",
                 |         "barId2",
                 |         "barId3"
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -53,7 +53,7 @@ public class `complex identified by hydration batching returns null batch snapsh
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barsById(id: ["barId1", "barId2", "barId3"]) {
                 |     batch_hydration__bar__id: id
                 |     name

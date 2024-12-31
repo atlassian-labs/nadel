@@ -102,17 +102,17 @@ public class `query with hydrated interfaces work as expected snapshot` : TestSn
                 |     "pets": [
                 |       {
                 |         "name": "Sparky",
+                |         "__typename__hydration__owners": "Dog",
                 |         "hydration__owners__ownerIds": [
                 |           "dearly"
-                |         ],
-                |         "__typename__hydration__owners": "Dog"
+                |         ]
                 |       },
                 |       {
                 |         "name": "Whiskers",
+                |         "__typename__hydration__owners": "Cat",
                 |         "hydration__owners__ownerIds": [
                 |           "cruella"
-                |         ],
-                |         "__typename__hydration__owners": "Cat"
+                |         ]
                 |       }
                 |     ]
                 |   }

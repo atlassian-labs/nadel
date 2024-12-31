@@ -24,7 +24,7 @@ public class `hydration from field in interface snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | query {
+                | {
                 |   issue(id: "1") {
                 |     __typename__hydration__issueAuthor: __typename
                 |     hydration__issueAuthor__author: author {
@@ -54,7 +54,7 @@ public class `hydration from field in interface snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | query {
+                | {
                 |   user(id: "1001") {
                 |     name
                 |   }

@@ -24,7 +24,7 @@ public class `basic hydration with static arg integer snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |   }
@@ -46,7 +46,7 @@ public class `basic hydration with static arg integer snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: 12345) {
                 |     name
                 |   }

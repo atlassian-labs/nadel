@@ -26,7 +26,7 @@ public class
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | query {
+                | {
                 |   humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
                 |     __typename
                 |     id
@@ -43,14 +43,14 @@ public class
                 |       {
                 |         "__typename": "Human",
                 |         "id": "HUMAN-0",
-                |         "batch_hydration__data__id": "HUMAN-0",
-                |         "name": "Fanny Longbottom"
+                |         "name": "Fanny Longbottom",
+                |         "batch_hydration__data__id": "HUMAN-0"
                 |       },
                 |       {
                 |         "__typename": "Human",
                 |         "id": "HUMAN-1",
-                |         "batch_hydration__data__id": "HUMAN-1",
-                |         "name": "John Doe"
+                |         "name": "John Doe",
+                |         "batch_hydration__data__id": "HUMAN-1"
                 |       }
                 |     ]
                 |   }
@@ -62,7 +62,7 @@ public class
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | query {
+                | {
                 |   petById(ids: ["PET-0", "PET-1"]) {
                 |     __typename
                 |     breed
@@ -78,14 +78,14 @@ public class
                 |     "petById": [
                 |       {
                 |         "__typename": "Pet",
-                |         "breed": "Akita",
                 |         "id": "PET-0",
+                |         "breed": "Akita",
                 |         "batch_hydration__data__id": "PET-0"
                 |       },
                 |       {
                 |         "__typename": "Pet",
-                |         "breed": "Labrador",
                 |         "id": "PET-1",
+                |         "breed": "Labrador",
                 |         "batch_hydration__data__id": "PET-1"
                 |       }
                 |     ]
@@ -98,7 +98,7 @@ public class
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     __typename__batch_hydration__data: __typename
@@ -115,27 +115,27 @@ public class
                 |     "foo": [
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-0",
                 |         "batch_hydration__data__dataId": "PET-0",
-                |         "id": "FOO-0"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-1",
                 |         "batch_hydration__data__dataId": "HUMAN-0",
-                |         "id": "FOO-1"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-2",
                 |         "batch_hydration__data__dataId": "PET-1",
-                |         "id": "FOO-2"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-3",
                 |         "batch_hydration__data__dataId": "HUMAN-1",
-                |         "id": "FOO-3"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       }
                 |     ]
                 |   }

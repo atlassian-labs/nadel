@@ -24,7 +24,7 @@ public class `batched hydration with default int argument values snapshot` : Tes
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorIds: authorIds
@@ -38,28 +38,28 @@ public class `batched hydration with default int argument values snapshot` : Tes
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authorIds": [
                 |           "USER-1",
                 |           "USER-2"
                 |         ],
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-2",
                 |         "batch_hydration__authors__authorIds": [
                 |           "USER-3"
                 |         ],
-                |         "id": "ISSUE-2"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-3",
                 |         "batch_hydration__authors__authorIds": [
                 |           "USER-2",
                 |           "USER-4",
                 |           "USER-5"
                 |         ],
-                |         "id": "ISSUE-3"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -71,7 +71,7 @@ public class `batched hydration with default int argument values snapshot` : Tes
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["USER-1", "USER-2", "USER-3"], test: 42) {
                 |     id
                 |     batch_hydration__authors__id: id
@@ -105,7 +105,7 @@ public class `batched hydration with default int argument values snapshot` : Tes
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["USER-4", "USER-5"], test: 42) {
                 |     id
                 |     batch_hydration__authors__id: id

@@ -25,7 +25,7 @@ public class `inline fragment type rename and field rename works as expected sna
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   rename__renameObject__renameObjectUnderlying: renameObjectUnderlying {
                 |     name
                 |   }

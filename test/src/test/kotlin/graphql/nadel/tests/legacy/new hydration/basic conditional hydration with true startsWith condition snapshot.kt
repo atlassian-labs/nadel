@@ -25,7 +25,7 @@ public class `basic conditional hydration with true startsWith condition snapsho
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barId: barId
@@ -39,8 +39,8 @@ public class `basic conditional hydration with true startsWith condition snapsho
                 |   "data": {
                 |     "foo": {
                 |       "hydration__bar__barId": "barId",
-                |       "__typename__hydration__bar": "Foo",
-                |       "hydration__bar__type": "someType"
+                |       "hydration__bar__type": "someType",
+                |       "__typename__hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -51,7 +51,7 @@ public class `basic conditional hydration with true startsWith condition snapsho
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId") {
                 |     name
                 |   }

@@ -25,7 +25,7 @@ public class `query with  namespaced fields that have matching subfields snapsho
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -51,7 +51,7 @@ public class `query with  namespaced fields that have matching subfields snapsho
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -77,7 +77,7 @@ public class `query with  namespaced fields that have matching subfields snapsho
             ExpectedServiceCall(
                 service = "Pages",
                 query = """
-                | query {
+                | {
                 |   page {
                 |     getIssue {
                 |       pageText

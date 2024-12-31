@@ -24,7 +24,7 @@ public class `deep rename with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   names {
                 |     ... on Edible {
                 |       name
@@ -61,18 +61,18 @@ public class `deep rename with more interfaces snapshot` : TestSnapshot() {
                 |         "name": "GQLGW-1102"
                 |       },
                 |       {
-                |         "__typename__deep_rename__name": "Troll",
                 |         "deep_rename__name__firstEat": {
                 |           "item": {
                 |             "name": "My Arm"
                 |           }
-                |         }
+                |         },
+                |         "__typename__deep_rename__name": "Troll"
                 |       },
                 |       {
-                |         "__typename__deep_rename__name": "User",
                 |         "deep_rename__name__details": {
                 |           "firstName": "Franklin"
-                |         }
+                |         },
+                |         "__typename__deep_rename__name": "User"
                 |       },
                 |       {
                 |         "name": "Spaghetti"

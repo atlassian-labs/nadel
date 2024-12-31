@@ -24,7 +24,7 @@ public class `deep rename with interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   names {
                 |     ... on Issue {
                 |       name
@@ -50,10 +50,10 @@ public class `deep rename with interfaces snapshot` : TestSnapshot() {
                 |         "name": "GQLGW-1102"
                 |       },
                 |       {
-                |         "__typename__deep_rename__name": "User",
                 |         "deep_rename__name__details": {
                 |           "firstName": "Franklin"
-                |         }
+                |         },
+                |         "__typename__deep_rename__name": "User"
                 |       }
                 |     ]
                 |   }

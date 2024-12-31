@@ -24,7 +24,7 @@ public class `rename with interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   nodes {
                 |     ... on Issue {
                 |       id
@@ -48,8 +48,8 @@ public class `rename with interfaces snapshot` : TestSnapshot() {
                 |         "id": "GQLGW-1102"
                 |       },
                 |       {
-                |         "__typename__rename__id": "User",
-                |         "rename__id__ari": "ari:i-always-forget-the-format/1"
+                |         "rename__id__ari": "ari:i-always-forget-the-format/1",
+                |         "__typename__rename__id": "User"
                 |       }
                 |     ]
                 |   }

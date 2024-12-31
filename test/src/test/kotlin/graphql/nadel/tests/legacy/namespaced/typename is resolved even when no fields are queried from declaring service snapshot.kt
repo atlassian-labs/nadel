@@ -25,7 +25,7 @@ public class `typename is resolved even when no fields are queried from declarin
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -40,8 +40,8 @@ public class `typename is resolved even when no fields are queried from declarin
                 |   "data": {
                 |     "issue": {
                 |       "search": {
-                |         "count": 1001,
-                |         "id": "search-id"
+                |         "id": "search-id",
+                |         "count": 1001
                 |       }
                 |     }
                 |   }

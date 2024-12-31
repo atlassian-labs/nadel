@@ -24,7 +24,7 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorIds: authorIds
@@ -38,27 +38,27 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authorIds": [
                 |           "site-1/user-1",
                 |           "site-2/user-2"
                 |         ],
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-2",
                 |         "batch_hydration__authors__authorIds": [
                 |           "site-1/user-3"
                 |         ],
-                |         "id": "ISSUE-2"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-3",
                 |         "batch_hydration__authors__authorIds": [
                 |           "site-2/user-4",
                 |           "site-1/user-5"
                 |         ],
-                |         "id": "ISSUE-3"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -70,7 +70,7 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["site-1/user-1", "site-1/user-3"]) {
                 |     id
                 |   }
@@ -97,7 +97,7 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["site-1/user-5"]) {
                 |     id
                 |   }
@@ -121,7 +121,7 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["site-2/user-2", "site-2/user-4"]) {
                 |     id
                 |   }

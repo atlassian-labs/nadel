@@ -21,14 +21,11 @@ private suspend fun main() {
 @Suppress("unused")
 public class `correct selection set on failed result snapshot` : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-        )
+            )
 
     /**
      * ```json
      * {
-     *   "data": {
-     *     "foo": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "Test",
@@ -37,16 +34,16 @@ public class `correct selection set on failed result snapshot` : TestSnapshot() 
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "foo": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "foo": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "Test",
@@ -55,7 +52,10 @@ public class `correct selection set on failed result snapshot` : TestSnapshot() 
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "foo": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

@@ -24,7 +24,7 @@ public class `date time scalar as input type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo(input: "2022-03-09T05:01:50Z") {
                 |     thing
                 |   }

@@ -26,9 +26,6 @@ public class `top level field is removed for a subscription snapshot` : TestSnap
     /**
      * ```json
      * {
-     *   "data": {
-     *     "onCommentUpdated": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "field `Subscription.onCommentUpdated` has been removed by
@@ -38,16 +35,16 @@ public class `top level field is removed for a subscription snapshot` : TestSnap
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "onCommentUpdated": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "onCommentUpdated": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "field `Subscription.onCommentUpdated` has been removed by RemoveFieldTestTransform",
@@ -56,7 +53,10 @@ public class `top level field is removed for a subscription snapshot` : TestSnap
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "onCommentUpdated": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

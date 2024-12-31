@@ -24,7 +24,7 @@ public class `rename with first path element returning null snapshot` : TestSnap
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__details: details {

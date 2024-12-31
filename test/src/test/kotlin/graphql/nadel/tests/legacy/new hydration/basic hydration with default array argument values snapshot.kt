@@ -24,7 +24,7 @@ public class `basic hydration with default array argument values snapshot` : Tes
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barId: barId
@@ -48,8 +48,8 @@ public class `basic hydration with default array argument values snapshot` : Tes
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
-                |   barById(id: "barId" test: ["Hello", "World"]) {
+                | {
+                |   barById(id: "barId", test: ["Hello", "World"]) {
                 |     name
                 |   }
                 | }

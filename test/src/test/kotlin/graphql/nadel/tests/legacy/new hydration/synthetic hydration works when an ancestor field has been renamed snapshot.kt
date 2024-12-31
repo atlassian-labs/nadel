@@ -25,7 +25,7 @@ public class `synthetic hydration works when an ancestor field has been renamed 
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   rename__devOpsRelationships__relationships: relationships {
                 |     __typename__rename__devOpsNodes: __typename
                 |     rename__devOpsNodes__nodes: nodes {
@@ -40,13 +40,13 @@ public class `synthetic hydration works when an ancestor field has been renamed 
                 | {
                 |   "data": {
                 |     "rename__devOpsRelationships__relationships": {
-                |       "__typename__rename__devOpsNodes": "RelationshipConnection",
                 |       "rename__devOpsNodes__nodes": [
                 |         {
-                |           "__typename__hydration__devOpsIssue": "Relationship",
-                |           "hydration__devOpsIssue__issueId": "1"
+                |           "hydration__devOpsIssue__issueId": "1",
+                |           "__typename__hydration__devOpsIssue": "Relationship"
                 |         }
-                |       ]
+                |       ],
+                |       "__typename__rename__devOpsNodes": "RelationshipConnection"
                 |     }
                 |   }
                 | }
@@ -57,7 +57,7 @@ public class `synthetic hydration works when an ancestor field has been renamed 
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   syntheticIssue {
                 |     issue(id: "1") {
                 |       id

@@ -24,7 +24,7 @@ public class `typename is passed on namespaced fields snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename
                 |     aliasTypename: __typename
@@ -44,9 +44,9 @@ public class `typename is passed on namespaced fields snapshot` : TestSnapshot()
                 |       "__typename": "IssueQuery",
                 |       "aliasTypename": "IssueQuery",
                 |       "getIssue": {
-                |         "text": "Foo",
                 |         "__typename": "Issue",
-                |         "aliasTypename": "Issue"
+                |         "aliasTypename": "Issue",
+                |         "text": "Foo"
                 |       }
                 |     }
                 |   }
@@ -65,9 +65,9 @@ public class `typename is passed on namespaced fields snapshot` : TestSnapshot()
      *       "__typename": "IssueQuery",
      *       "aliasTypename": "IssueQuery",
      *       "getIssue": {
-     *         "text": "Foo",
      *         "__typename": "Issue",
-     *         "aliasTypename": "Issue"
+     *         "aliasTypename": "Issue",
+     *         "text": "Foo"
      *       }
      *     }
      *   }
@@ -82,9 +82,9 @@ public class `typename is passed on namespaced fields snapshot` : TestSnapshot()
             |       "__typename": "IssueQuery",
             |       "aliasTypename": "IssueQuery",
             |       "getIssue": {
-            |         "text": "Foo",
             |         "__typename": "Issue",
-            |         "aliasTypename": "Issue"
+            |         "aliasTypename": "Issue",
+            |         "text": "Foo"
             |       }
             |     }
             |   }

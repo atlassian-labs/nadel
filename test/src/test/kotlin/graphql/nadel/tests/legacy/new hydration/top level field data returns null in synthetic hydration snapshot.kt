@@ -24,7 +24,7 @@ public class `top level field data returns null in synthetic hydration snapshot`
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename__hydration__project: __typename
                 |     hydration__project__projectId: projectId
@@ -48,7 +48,7 @@ public class `top level field data returns null in synthetic hydration snapshot`
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   projects {
                 |     project(id: "project1") {
                 |       name

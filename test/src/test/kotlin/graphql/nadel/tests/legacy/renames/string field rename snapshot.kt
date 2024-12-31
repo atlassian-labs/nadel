@@ -24,7 +24,7 @@ public class `string field rename snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   rename__renameString__renameStringUnderlying: renameStringUnderlying
                 | }
                 """.trimMargin(),

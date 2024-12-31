@@ -24,7 +24,7 @@ public class `deep rename inside deep rename snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   rename__issue__first: first {
                 |     __typename__deep_rename__extras: __typename
                 |     deep_rename__extras__details: details {
@@ -43,15 +43,15 @@ public class `deep rename inside deep rename snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "rename__issue__first": {
-                |       "__typename__deep_rename__extras": "Issue",
                 |       "deep_rename__extras__details": {
                 |         "extras": {
-                |           "__typename__deep_rename__ownerName": "IssueExtra",
                 |           "deep_rename__ownerName__owner": {
                 |             "name": "Franklin"
-                |           }
+                |           },
+                |           "__typename__deep_rename__ownerName": "IssueExtra"
                 |         }
-                |       }
+                |       },
+                |       "__typename__deep_rename__extras": "Issue"
                 |     }
                 |   }
                 | }

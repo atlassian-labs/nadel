@@ -25,7 +25,7 @@ public class `hydration call with two argument values from original field argume
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__author: __typename
                 |     batch_hydration__author__authorId: authorId
@@ -39,9 +39,9 @@ public class `hydration call with two argument values from original field argume
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
                 |         "id": "ISSUE-1",
-                |         "batch_hydration__author__authorId": "USER-1"
+                |         "batch_hydration__author__authorId": "USER-1",
+                |         "__typename__batch_hydration__author": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -53,7 +53,7 @@ public class `hydration call with two argument values from original field argume
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(extraArg1: "extraArg1", extraArg2: 10, id: ["USER-1"]) {
                 |     batch_hydration__author__id: id
                 |     name

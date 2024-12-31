@@ -24,7 +24,7 @@ public class `hydration with interfaces no source id snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   nodes {
                 |     ... on Issue {
                 |       id

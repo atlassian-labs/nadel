@@ -45,7 +45,6 @@ public class `ari argument in renamed object input in hydration snapshot` : Test
                 | {
                 |   "data": {
                 |     "issue": {
-                |       "__typename__batch_hydration__related": "Issue",
                 |       "batch_hydration__related__relatedIds": [
                 |         {
                 |           "projectId": "ari:cloud:jira-software::project/100",
@@ -59,7 +58,8 @@ public class `ari argument in renamed object input in hydration snapshot` : Test
                 |           "projectId": "ari:cloud:jira-software::project/101",
                 |           "issueId": "ari:cloud:jira-software::issue/3"
                 |         }
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__related": "Issue"
                 |     }
                 |   }
                 | }
@@ -102,16 +102,16 @@ public class `ari argument in renamed object input in hydration snapshot` : Test
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "batch_hydration__related__id": "1",
-                |         "key": "GQLGW-001",
                 |         "projectId": "100",
-                |         "batch_hydration__related__projectId": "100"
+                |         "key": "GQLGW-001",
+                |         "batch_hydration__related__projectId": "100",
+                |         "batch_hydration__related__id": "1"
                 |       },
                 |       {
-                |         "batch_hydration__related__id": "3",
-                |         "key": "BUILD-003",
                 |         "projectId": "101",
-                |         "batch_hydration__related__projectId": "101"
+                |         "key": "BUILD-003",
+                |         "batch_hydration__related__projectId": "101",
+                |         "batch_hydration__related__id": "3"
                 |       }
                 |     ]
                 |   }
@@ -129,13 +129,13 @@ public class `ari argument in renamed object input in hydration snapshot` : Test
      *     "issue": {
      *       "related": [
      *         {
-     *           "key": "GQLGW-001",
-     *           "projectId": "ari:cloud:jira-software::project/100"
+     *           "projectId": "ari:cloud:jira-software::project/100",
+     *           "key": "GQLGW-001"
      *         },
      *         null,
      *         {
-     *           "key": "BUILD-003",
-     *           "projectId": "ari:cloud:jira-software::project/101"
+     *           "projectId": "ari:cloud:jira-software::project/101",
+     *           "key": "BUILD-003"
      *         }
      *       ]
      *     }
@@ -150,13 +150,13 @@ public class `ari argument in renamed object input in hydration snapshot` : Test
             |     "issue": {
             |       "related": [
             |         {
-            |           "key": "GQLGW-001",
-            |           "projectId": "ari:cloud:jira-software::project/100"
+            |           "projectId": "ari:cloud:jira-software::project/100",
+            |           "key": "GQLGW-001"
             |         },
             |         null,
             |         {
-            |           "key": "BUILD-003",
-            |           "projectId": "ari:cloud:jira-software::project/101"
+            |           "projectId": "ari:cloud:jira-software::project/101",
+            |           "key": "BUILD-003"
             |         }
             |       ]
             |     }

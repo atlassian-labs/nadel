@@ -24,7 +24,7 @@ public class `handles include directive on deep renamed field snapshot` : TestSn
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__skip_include____skip: __typename
                 |   }

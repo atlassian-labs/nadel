@@ -24,7 +24,7 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barsQuery {
                 |     barsById(id: ["bar1", "bar2"]) {
                 |       __typename__batch_hydration__nestedBar: __typename
@@ -43,15 +43,15 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
                 |       "barsById": [
                 |         {
                 |           "name": "Bar 1",
-                |           "batch_hydration__bar__barId": "bar1",
                 |           "batch_hydration__nestedBar__nestedBarId": "nestedBar1",
-                |           "__typename__batch_hydration__nestedBar": "Bar"
+                |           "__typename__batch_hydration__nestedBar": "Bar",
+                |           "batch_hydration__bar__barId": "bar1"
                 |         },
                 |         {
                 |           "name": "Bar 2",
-                |           "batch_hydration__bar__barId": "bar2",
                 |           "batch_hydration__nestedBar__nestedBarId": "nestedBar2",
-                |           "__typename__batch_hydration__nestedBar": "Bar"
+                |           "__typename__batch_hydration__nestedBar": "Bar",
+                |           "batch_hydration__bar__barId": "bar2"
                 |         }
                 |       ]
                 |     }
@@ -64,7 +64,7 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barsQuery {
                 |     barsById(id: ["bar3"]) {
                 |       __typename__batch_hydration__nestedBar: __typename
@@ -83,9 +83,9 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
                 |       "barsById": [
                 |         {
                 |           "name": "Bar 3",
-                |           "batch_hydration__bar__barId": "bar3",
                 |           "batch_hydration__nestedBar__nestedBarId": null,
-                |           "__typename__batch_hydration__nestedBar": "Bar"
+                |           "__typename__batch_hydration__nestedBar": "Bar",
+                |           "batch_hydration__bar__barId": "bar3"
                 |         }
                 |       ]
                 |     }
@@ -98,7 +98,7 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barsQuery {
                 |     barsById(id: ["nestedBar1", "nestedBar2"]) {
                 |       __typename__batch_hydration__nestedBar: __typename
@@ -117,9 +117,9 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
                 |       "barsById": [
                 |         {
                 |           "name": "NestedBarName1",
-                |           "batch_hydration__nestedBar__barId": "nestedBar1",
                 |           "batch_hydration__nestedBar__nestedBarId": "nestedBarId456",
-                |           "__typename__batch_hydration__nestedBar": "Bar"
+                |           "__typename__batch_hydration__nestedBar": "Bar",
+                |           "batch_hydration__nestedBar__barId": "nestedBar1"
                 |         }
                 |       ]
                 |     }
@@ -132,7 +132,7 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barsQuery {
                 |     barsById(id: ["nestedBarId456"]) {
                 |       batch_hydration__nestedBar__barId: barId
@@ -162,7 +162,7 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foos {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barId: barId
@@ -175,16 +175,16 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
                 |   "data": {
                 |     "foos": [
                 |       {
-                |         "__typename__batch_hydration__bar": "Foo",
-                |         "batch_hydration__bar__barId": "bar1"
+                |         "batch_hydration__bar__barId": "bar1",
+                |         "__typename__batch_hydration__bar": "Foo"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__bar": "Foo",
-                |         "batch_hydration__bar__barId": "bar2"
+                |         "batch_hydration__bar__barId": "bar2",
+                |         "__typename__batch_hydration__bar": "Foo"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__bar": "Foo",
-                |         "batch_hydration__bar__barId": "bar3"
+                |         "batch_hydration__bar__barId": "bar3",
+                |         "__typename__batch_hydration__bar": "Foo"
                 |       }
                 |     ]
                 |   }

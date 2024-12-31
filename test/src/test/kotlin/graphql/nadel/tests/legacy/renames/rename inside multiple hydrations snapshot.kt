@@ -24,7 +24,7 @@ public class `rename inside multiple hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foos {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barId: barId
@@ -54,7 +54,7 @@ public class `rename inside multiple hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId") {
                 |     __typename__rename__title: __typename
                 |     rename__title__name: name
@@ -78,7 +78,7 @@ public class `rename inside multiple hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId2") {
                 |     __typename__rename__title: __typename
                 |     rename__title__name: name

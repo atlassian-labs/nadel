@@ -24,7 +24,7 @@ public class `multiple typenames are wiped when other data fails snapshot` : Tes
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -57,9 +57,6 @@ public class `multiple typenames are wiped when other data fails snapshot` : Tes
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error",
@@ -68,16 +65,16 @@ public class `multiple typenames are wiped when other data fails snapshot` : Tes
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error",
@@ -86,7 +83,10 @@ public class `multiple typenames are wiped when other data fails snapshot` : Tes
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

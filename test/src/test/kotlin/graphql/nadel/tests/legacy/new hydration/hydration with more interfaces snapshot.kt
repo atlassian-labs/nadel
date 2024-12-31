@@ -24,7 +24,7 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   ariById(id: "Franklin")
                 | }
                 """.trimMargin(),
@@ -42,7 +42,7 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   nodes {
                 |     ... on Issue {
                 |       id
@@ -70,12 +70,12 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
                 |         "id": "GQLGW-1102"
                 |       },
                 |       {
-                |         "__typename__hydration__id": "Troll",
-                |         "hydration__id__id": "My Arm"
+                |         "hydration__id__id": "My Arm",
+                |         "__typename__hydration__id": "Troll"
                 |       },
                 |       {
-                |         "__typename__hydration__id": "User",
-                |         "hydration__id__id": "Franklin"
+                |         "hydration__id__id": "Franklin",
+                |         "__typename__hydration__id": "User"
                 |       },
                 |       {
                 |         "id": "GQLGW-11"
@@ -90,7 +90,7 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   trollName(id: "My Arm")
                 | }
                 """.trimMargin(),

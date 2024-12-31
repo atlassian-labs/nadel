@@ -42,12 +42,9 @@ private suspend fun main(vararg args: String) {
         .filter {
             args.isEmpty() || args.contains(it.qualifiedName)
         }
-        .toList()
-        .let { klasses ->
-            // Running this wll first generate snapshots for tests that do not have snapshots
-            // If all tests have snapshots, then we update them all
-            getNonExistentOrAll(klasses)
-                .asSequence()
+        // Only process non-existent by default
+        .filter { klass ->
+            classForNameOrNull(getSnapshotClassName(klass.asClassName()).reflectionName()) == null
         }
         .onEach { klass ->
             println("Loading ${klass.qualifiedName}")
@@ -106,17 +103,6 @@ fun getSnapshotClassName(className: ClassName): ClassName {
     }
 
     return ClassName(className.packageName, className.simpleName + suffix)
-}
-
-private fun getNonExistentOrAll(klasses: List<KClass<out NadelIntegrationTest>>): List<KClass<out NadelIntegrationTest>> {
-    return klasses
-        .filter { klass ->
-            classForNameOrNull(getSnapshotClassName(klass.asClassName()).reflectionName()) == null
-        }
-        .takeIf {
-            it.isNotEmpty()
-        }
-        ?: klasses
 }
 
 fun makeUpdateSnapshotFunction(testClassName: ClassName): FunSpec {

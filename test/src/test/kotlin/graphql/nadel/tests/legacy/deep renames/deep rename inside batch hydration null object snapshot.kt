@@ -24,7 +24,7 @@ public class `deep rename inside batch hydration null object snapshot` : TestSna
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
@@ -40,18 +40,18 @@ public class `deep rename inside batch hydration null object snapshot` : TestSna
                 |   "data": {
                 |     "issuesByIds": [
                 |       {
-                |         "batch_hydration__issue__id": "issue-1",
                 |         "deep_rename__name__detail": {
                 |           "detailName": "Memes are the DNA of the soul"
                 |         },
-                |         "__typename__deep_rename__name": "Issue"
+                |         "__typename__deep_rename__name": "Issue",
+                |         "batch_hydration__issue__id": "issue-1"
                 |       },
                 |       {
-                |         "batch_hydration__issue__id": "issue-3",
                 |         "deep_rename__name__detail": {
                 |           "detailName": "Names are arbitrary"
                 |         },
-                |         "__typename__deep_rename__name": "Issue"
+                |         "__typename__deep_rename__name": "Issue",
+                |         "batch_hydration__issue__id": "issue-3"
                 |       },
                 |       null
                 |     ]
@@ -64,7 +64,7 @@ public class `deep rename inside batch hydration null object snapshot` : TestSna
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   users {
                 |     __typename__batch_hydration__issue: __typename
                 |     batch_hydration__issue__issueId: issueId
@@ -77,16 +77,16 @@ public class `deep rename inside batch hydration null object snapshot` : TestSna
                 |   "data": {
                 |     "users": [
                 |       {
-                |         "__typename__batch_hydration__issue": "User",
-                |         "batch_hydration__issue__issueId": "issue-1"
+                |         "batch_hydration__issue__issueId": "issue-1",
+                |         "__typename__batch_hydration__issue": "User"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "User",
-                |         "batch_hydration__issue__issueId": "issue-2"
+                |         "batch_hydration__issue__issueId": "issue-2",
+                |         "__typename__batch_hydration__issue": "User"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "User",
-                |         "batch_hydration__issue__issueId": "issue-3"
+                |         "batch_hydration__issue__issueId": "issue-3",
+                |         "__typename__batch_hydration__issue": "User"
                 |       }
                 |     ]
                 |   }

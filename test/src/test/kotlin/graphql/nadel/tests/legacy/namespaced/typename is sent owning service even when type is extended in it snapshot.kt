@@ -25,7 +25,7 @@ public class `typename is sent owning service even when type is extended in it s
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename
                 |     getIssue {

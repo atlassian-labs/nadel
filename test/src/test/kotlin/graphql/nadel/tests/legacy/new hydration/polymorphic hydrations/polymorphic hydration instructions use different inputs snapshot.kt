@@ -24,7 +24,7 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
             ExpectedServiceCall(
                 service = "Dogs",
                 query = """
-                | query {
+                | {
                 |   dogsByIds(ids: ["good-boye-1"]) {
                 |     __typename
                 |     batch_hydration__animal__id: id
@@ -39,8 +39,8 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
                 |     "dogsByIds": [
                 |       {
                 |         "__typename": "Dog",
-                |         "batch_hydration__animal__id": "good-boye-1",
-                |         "name": "Abe"
+                |         "name": "Abe",
+                |         "batch_hydration__animal__id": "good-boye-1"
                 |       }
                 |     ]
                 |   }
@@ -52,7 +52,7 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
             ExpectedServiceCall(
                 service = "Pets",
                 query = """
-                | query {
+                | {
                 |   petsByIds(ids: ["good-boye-1", "tall-boye-9"]) {
                 |     __typename__batch_hydration__animal: __typename
                 |     batch_hydration__animal__animalId: animalId
@@ -75,18 +75,18 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
                 |   "data": {
                 |     "petsByIds": [
                 |       {
-                |         "__typename__batch_hydration__animal": "Pet",
                 |         "batch_hydration__animal__animalId": "good-boye-1",
-                |         "batch_hydration__animal__giraffeInput": null
+                |         "batch_hydration__animal__giraffeInput": null,
+                |         "__typename__batch_hydration__animal": "Pet"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__animal": "Pet",
                 |         "batch_hydration__animal__animalId": "tall-boye-9",
                 |         "batch_hydration__animal__giraffeInput": {
                 |           "nickname": "Tall Boye",
                 |           "birthday": 1001203200,
                 |           "height": 570
-                |         }
+                |         },
+                |         "__typename__batch_hydration__animal": "Pet"
                 |       }
                 |     ]
                 |   }
@@ -98,8 +98,8 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
             ExpectedServiceCall(
                 service = "Zoo",
                 query = """
-                | query {
-                |   giraffes(filters: [{birthday: 1001203200, height: 570, nickname: "Tall Boye"}]) {
+                | {
+                |   giraffes(filters: [{birthday : 1001203200, height : 570, nickname : "Tall Boye"}]) {
                 |     __typename
                 |     birthday
                 |     batch_hydration__animal__birthday: birthday
@@ -117,12 +117,12 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
                 |     "giraffes": [
                 |       {
                 |         "__typename": "Giraffe",
-                |         "birthday": 1001203200,
-                |         "batch_hydration__animal__birthday": 1001203200,
-                |         "height": 570,
-                |         "batch_hydration__animal__height": 570,
                 |         "name": "Rukiya",
-                |         "batch_hydration__animal__nickname": "Tall Boye"
+                |         "birthday": 1001203200,
+                |         "height": 570,
+                |         "batch_hydration__animal__nickname": "Tall Boye",
+                |         "batch_hydration__animal__birthday": 1001203200,
+                |         "batch_hydration__animal__height": 570
                 |       }
                 |     ]
                 |   }
@@ -147,9 +147,9 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
      *       {
      *         "animal": {
      *           "__typename": "Giraffe",
+     *           "name": "Rukiya",
      *           "birthday": 1001203200,
-     *           "height": 570,
-     *           "name": "Rukiya"
+     *           "height": 570
      *         }
      *       }
      *     ]
@@ -171,9 +171,9 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
             |       {
             |         "animal": {
             |           "__typename": "Giraffe",
+            |           "name": "Rukiya",
             |           "birthday": 1001203200,
-            |           "height": 570,
-            |           "name": "Rukiya"
+            |           "height": 570
             |         }
             |       }
             |     ]

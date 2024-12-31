@@ -24,7 +24,7 @@ public class `hydration input is absent snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__hydration__authors: __typename
                 |     hydration__authors__authors: authors {
@@ -40,9 +40,9 @@ public class `hydration input is absent snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__hydration__authors": "Issue",
                 |         "id": "ISSUE-1",
-                |         "hydration__authors__authors": []
+                |         "hydration__authors__authors": [],
+                |         "__typename__hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }

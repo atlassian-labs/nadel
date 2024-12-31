@@ -25,7 +25,7 @@ public class `hydration call with fragments in the hydrated part and synthetic f
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorDetails: authorDetails {
@@ -41,6 +41,7 @@ public class `hydration call with fragments in the hydrated part and synthetic f
                 |   "data": {
                 |     "issues": [
                 |       {
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authorDetails": [
                 |           {
                 |             "authorId": "USER-1"
@@ -49,8 +50,7 @@ public class `hydration call with fragments in the hydrated part and synthetic f
                 |             "authorId": "USER-2"
                 |           }
                 |         ],
-                |         "__typename__batch_hydration__authors": "Issue",
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -62,7 +62,7 @@ public class `hydration call with fragments in the hydrated part and synthetic f
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   userQuery {
                 |     usersByIds(id: ["USER-1", "USER-2"]) {
                 |       id
@@ -79,13 +79,13 @@ public class `hydration call with fragments in the hydrated part and synthetic f
                 |     "userQuery": {
                 |       "usersByIds": [
                 |         {
-                |           "name": "User 1",
                 |           "id": "USER-1",
+                |           "name": "User 1",
                 |           "batch_hydration__authors__id": "USER-1"
                 |         },
                 |         {
-                |           "name": "User 2",
                 |           "id": "USER-2",
+                |           "name": "User 2",
                 |           "batch_hydration__authors__id": "USER-2"
                 |         }
                 |       ]
@@ -99,7 +99,7 @@ public class `hydration call with fragments in the hydrated part and synthetic f
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   userQuery {
                 |     usersByIds(id: ["USER-1"]) {
                 |       id
@@ -115,8 +115,8 @@ public class `hydration call with fragments in the hydrated part and synthetic f
                 |     "userQuery": {
                 |       "usersByIds": [
                 |         {
-                |           "name": "User 1",
-                |           "id": "USER-1"
+                |           "id": "USER-1",
+                |           "name": "User 1"
                 |         }
                 |       ]
                 |     }

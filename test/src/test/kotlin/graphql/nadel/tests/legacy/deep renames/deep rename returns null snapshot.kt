@@ -24,7 +24,7 @@ public class `deep rename returns null snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   troll {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__firstEat: firstEat {
@@ -40,10 +40,10 @@ public class `deep rename returns null snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "troll": {
-                |       "__typename__deep_rename__name": "Troll",
                 |       "deep_rename__name__firstEat": {
                 |         "item": null
-                |       }
+                |       },
+                |       "__typename__deep_rename__name": "Troll"
                 |     }
                 |   }
                 | }

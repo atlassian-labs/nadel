@@ -24,7 +24,7 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   detail(detailId: "ID") {
                 |     name
                 |   }
@@ -46,7 +46,7 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__issue: __typename
                 |     __typename__hydration__detail: __typename
@@ -60,9 +60,9 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "hydration__detail__fooId": "ID",
                 |       "hydration__issue__fooId": "ID",
                 |       "__typename__hydration__issue": "Foo",
+                |       "hydration__detail__fooId": "ID",
                 |       "__typename__hydration__detail": "Foo"
                 |     }
                 |   }
@@ -74,7 +74,7 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   issue(issueId: "ID") {
                 |     field
                 |   }

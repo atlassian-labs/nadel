@@ -37,13 +37,13 @@ public class `batch hydration instruction hook returns null snapshot` : TestSnap
                 | {
                 |   "data": {
                 |     "issueById": {
-                |       "__typename__batch_hydration__collaborators": "Issue",
+                |       "key": "GQLGW-1000",
                 |       "batch_hydration__collaborators__collaboratorIds": [
                 |         "100",
                 |         "NULL/1",
                 |         "200"
                 |       ],
-                |       "key": "GQLGW-1000"
+                |       "__typename__batch_hydration__collaborators": "Issue"
                 |     }
                 |   }
                 | }
@@ -69,13 +69,13 @@ public class `batch hydration instruction hook returns null snapshot` : TestSnap
                 |     "usersByIds": [
                 |       {
                 |         "__typename": "User",
-                |         "batch_hydration__collaborators__id": "100",
-                |         "name": "John Doe"
+                |         "name": "John Doe",
+                |         "batch_hydration__collaborators__id": "100"
                 |       },
                 |       {
                 |         "__typename": "User",
-                |         "batch_hydration__collaborators__id": "200",
-                |         "name": "Joe"
+                |         "name": "Joe",
+                |         "batch_hydration__collaborators__id": "200"
                 |       }
                 |     ]
                 |   }

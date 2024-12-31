@@ -24,7 +24,7 @@ public class `hydration list with batching forwards error snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barId: barId
@@ -36,12 +36,12 @@ public class `hydration list with batching forwards error snapshot` : TestSnapsh
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barId": [
                 |         "barId1",
                 |         "barId2",
                 |         "barId3"
-                |       ]
+                |       ],
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -52,7 +52,7 @@ public class `hydration list with batching forwards error snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barsById(id: ["barId1", "barId2", "barId3"]) {
                 |     batch_hydration__bar__id: id
                 |     name
@@ -61,20 +61,20 @@ public class `hydration list with batching forwards error snapshot` : TestSnapsh
                 """.trimMargin(),
                 variables = "{}",
                 result = """
-                |{
-                |  "data": {
-                |    "barsById": null
-                |  },
-                |  "errors": [
-                |    {
-                |      "message": "Some error occurred",
-                |      "locations": [],
-                |      "extensions": {
-                |        "classification": "DataFetchingException"
-                |      }
-                |    }
-                |  ]
-                |}
+                | {
+                |   "errors": [
+                |     {
+                |       "message": "Some error occurred",
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
+                |     }
+                |   ],
+                |   "data": {
+                |     "barsById": null
+                |   }
+                | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
                 ),

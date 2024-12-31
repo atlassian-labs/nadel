@@ -25,7 +25,7 @@ public class `dynamic service resolution multiple services with one unmapped nod
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issue: node(id: "issue/id-123") {
                 |     id
                 |     ... on Issue {
@@ -53,13 +53,6 @@ public class `dynamic service resolution multiple services with one unmapped nod
     /**
      * ```json
      * {
-     *   "data": {
-     *     "commit": null,
-     *     "issue": {
-     *       "id": "issue/id-123",
-     *       "issueKey": "ISSUE-1"
-     *     }
-     *   },
      *   "errors": [
      *     {
      *       "message": "Could not resolve service for field: /commit",
@@ -71,20 +64,20 @@ public class `dynamic service resolution multiple services with one unmapped nod
      *         "classification": "ExecutionAborted"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "commit": null,
+     *     "issue": {
+     *       "id": "issue/id-123",
+     *       "issueKey": "ISSUE-1"
+     *     }
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "commit": null,
-            |     "issue": {
-            |       "id": "issue/id-123",
-            |       "issueKey": "ISSUE-1"
-            |     }
-            |   },
             |   "errors": [
             |     {
             |       "message": "Could not resolve service for field: /commit",
@@ -96,7 +89,14 @@ public class `dynamic service resolution multiple services with one unmapped nod
             |         "classification": "ExecutionAborted"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "commit": null,
+            |     "issue": {
+            |       "id": "issue/id-123",
+            |       "issueKey": "ISSUE-1"
+            |     }
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

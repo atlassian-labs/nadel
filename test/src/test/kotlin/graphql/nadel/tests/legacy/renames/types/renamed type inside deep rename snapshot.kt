@@ -24,7 +24,7 @@ public class `renamed type inside deep rename snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issueById(id: "issue-1") {
                 |     __typename__deep_rename__assignee: __typename
                 |     deep_rename__assignee__details: details {
@@ -44,9 +44,9 @@ public class `renamed type inside deep rename snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "issueById": {
-                |       "__typename__deep_rename__assignee": "Issue",
                 |       "deep_rename__assignee__details": {
                 |         "assignee": {
+                |           "name": "Franklin",
                 |           "__typename": "User",
                 |           "friends": [
                 |             {
@@ -55,10 +55,10 @@ public class `renamed type inside deep rename snapshot` : TestSnapshot() {
                 |             {
                 |               "__typename": "User"
                 |             }
-                |           ],
-                |           "name": "Franklin"
+                |           ]
                 |         }
-                |       }
+                |       },
+                |       "__typename__deep_rename__assignee": "Issue"
                 |     }
                 |   }
                 | }
@@ -74,8 +74,8 @@ public class `renamed type inside deep rename snapshot` : TestSnapshot() {
      *   "data": {
      *     "issueById": {
      *       "assignee": {
-     *         "__typename": "IssueUser",
      *         "name": "Franklin",
+     *         "__typename": "IssueUser",
      *         "friends": [
      *           {
      *             "__typename": "IssueUser"
@@ -96,8 +96,8 @@ public class `renamed type inside deep rename snapshot` : TestSnapshot() {
             |   "data": {
             |     "issueById": {
             |       "assignee": {
-            |         "__typename": "IssueUser",
             |         "name": "Franklin",
+            |         "__typename": "IssueUser",
             |         "friends": [
             |           {
             |             "__typename": "IssueUser"

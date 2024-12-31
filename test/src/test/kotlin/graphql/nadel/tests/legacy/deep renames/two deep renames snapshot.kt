@@ -24,7 +24,7 @@ public class `two deep renames snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__deep_rename__authorId: __typename
                 |     __typename__deep_rename__authorName: __typename
@@ -44,26 +44,26 @@ public class `two deep renames snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
+                |         "id": "ISSUE-1",
                 |         "deep_rename__authorId__authorDetails": {
                 |           "authorId": "USER-1"
                 |         },
                 |         "__typename__deep_rename__authorId": "Issue",
-                |         "id": "ISSUE-1",
-                |         "__typename__deep_rename__authorName": "Issue",
                 |         "deep_rename__authorName__authorDetails": {
                 |           "name": "User 1"
-                |         }
+                |         },
+                |         "__typename__deep_rename__authorName": "Issue"
                 |       },
                 |       {
+                |         "id": "ISSUE-2",
                 |         "deep_rename__authorId__authorDetails": {
                 |           "authorId": "USER-2"
                 |         },
                 |         "__typename__deep_rename__authorId": "Issue",
-                |         "id": "ISSUE-2",
-                |         "__typename__deep_rename__authorName": "Issue",
                 |         "deep_rename__authorName__authorDetails": {
                 |           "name": "User 2"
-                |         }
+                |         },
+                |         "__typename__deep_rename__authorName": "Issue"
                 |       }
                 |     ]
                 |   }

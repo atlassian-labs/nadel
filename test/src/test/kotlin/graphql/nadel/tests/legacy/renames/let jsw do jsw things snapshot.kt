@@ -24,7 +24,7 @@ public class `let jsw do jsw things snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo
                 | }
                 """.trimMargin(),

@@ -24,7 +24,7 @@ public class `nested renamed types snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     parent {
@@ -45,8 +45,8 @@ public class `nested renamed types snapshot` : TestSnapshot() {
                 |     "foo": {
                 |       "__typename": "Foo",
                 |       "parent": {
-                |         "__typename": "Foo",
                 |         "id": "ParentFoo1",
+                |         "__typename": "Foo",
                 |         "building": {
                 |           "__typename": "Building",
                 |           "id": "Bar-1"
@@ -68,8 +68,8 @@ public class `nested renamed types snapshot` : TestSnapshot() {
      *     "foo": {
      *       "__typename": "FooX",
      *       "parent": {
-     *         "__typename": "FooX",
      *         "id": "ParentFoo1",
+     *         "__typename": "FooX",
      *         "building": {
      *           "__typename": "Bar",
      *           "id": "Bar-1"
@@ -87,8 +87,8 @@ public class `nested renamed types snapshot` : TestSnapshot() {
             |     "foo": {
             |       "__typename": "FooX",
             |       "parent": {
-            |         "__typename": "FooX",
             |         "id": "ParentFoo1",
+            |         "__typename": "FooX",
             |         "building": {
             |           "__typename": "Bar",
             |           "id": "Bar-1"

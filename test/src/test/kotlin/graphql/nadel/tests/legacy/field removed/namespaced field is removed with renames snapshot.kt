@@ -26,11 +26,6 @@ public class `namespaced field is removed with renames snapshot` : TestSnapshot(
     /**
      * ```json
      * {
-     *   "data": {
-     *     "commentApi": {
-     *       "commentById": null
-     *     }
-     *   },
      *   "errors": [
      *     {
      *       "message": "field `CommentApi.commentById` has been removed by
@@ -40,18 +35,18 @@ public class `namespaced field is removed with renames snapshot` : TestSnapshot(
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "commentApi": {
+     *       "commentById": null
+     *     }
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "commentApi": {
-            |       "commentById": null
-            |     }
-            |   },
             |   "errors": [
             |     {
             |       "message": "field `CommentApi.commentById` has been removed by RemoveFieldTestTransform",
@@ -60,7 +55,12 @@ public class `namespaced field is removed with renames snapshot` : TestSnapshot(
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "commentApi": {
+            |       "commentById": null
+            |     }
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

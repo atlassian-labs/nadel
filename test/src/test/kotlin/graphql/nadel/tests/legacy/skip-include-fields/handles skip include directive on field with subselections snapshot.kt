@@ -25,7 +25,7 @@ public class `handles skip include directive on field with subselections snapsho
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     bar: foo {
                 |       id

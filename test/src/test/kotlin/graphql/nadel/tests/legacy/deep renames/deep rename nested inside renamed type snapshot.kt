@@ -24,7 +24,7 @@ public class `deep rename nested inside renamed type snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   first {
                 |     user {
                 |       __typename__deep_rename__name: __typename
@@ -41,10 +41,10 @@ public class `deep rename nested inside renamed type snapshot` : TestSnapshot() 
                 |   "data": {
                 |     "first": {
                 |       "user": {
-                |         "__typename__deep_rename__name": "User",
                 |         "deep_rename__name__details": {
                 |           "firstName": "name-from-details"
-                |         }
+                |         },
+                |         "__typename__deep_rename__name": "User"
                 |       }
                 |     }
                 |   }
@@ -56,7 +56,7 @@ public class `deep rename nested inside renamed type snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   second: first {
                 |     __typename
                 |     user {
@@ -75,10 +75,10 @@ public class `deep rename nested inside renamed type snapshot` : TestSnapshot() 
                 |     "second": {
                 |       "__typename": "Issue",
                 |       "user": {
-                |         "__typename__deep_rename__name": "User",
                 |         "deep_rename__name__details": {
                 |           "firstName": "name-from-details-2"
-                |         }
+                |         },
+                |         "__typename__deep_rename__name": "User"
                 |       }
                 |     }
                 |   }

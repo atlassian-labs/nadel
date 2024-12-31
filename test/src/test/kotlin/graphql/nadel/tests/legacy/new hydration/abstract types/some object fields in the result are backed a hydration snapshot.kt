@@ -49,12 +49,12 @@ public class `some object fields in the result are backed a hydration snapshot` 
                 |         }
                 |       },
                 |       {
-                |         "__typename__hydration__user": "Activity",
-                |         "hydration__user__userId": "user-100"
+                |         "hydration__user__userId": "user-100",
+                |         "__typename__hydration__user": "Activity"
                 |       },
                 |       {
-                |         "__typename__hydration__user": "Activity",
-                |         "hydration__user__userId": "user-20"
+                |         "hydration__user__userId": "user-20",
+                |         "__typename__hydration__user": "Activity"
                 |       },
                 |       {
                 |         "user": {

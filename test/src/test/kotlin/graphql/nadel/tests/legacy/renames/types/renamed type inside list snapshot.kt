@@ -24,7 +24,7 @@ public class `renamed type inside list snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename
                 |   }

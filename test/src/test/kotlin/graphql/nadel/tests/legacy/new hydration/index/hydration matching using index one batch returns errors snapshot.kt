@@ -24,7 +24,7 @@ public class `hydration matching using index one batch returns errors snapshot` 
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorIds: authorIds
@@ -39,26 +39,26 @@ public class `hydration matching using index one batch returns errors snapshot` 
                 |     "issues": [
                 |       {
                 |         "id": "ISSUE-1",
-                |         "__typename__batch_hydration__authors": "Issue",
                 |         "batch_hydration__authors__authorIds": [
                 |           "1"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
                 |         "id": "ISSUE-2",
-                |         "__typename__batch_hydration__authors": "Issue",
                 |         "batch_hydration__authors__authorIds": [
                 |           "1",
                 |           "2"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
                 |         "id": "ISSUE-3",
-                |         "__typename__batch_hydration__authors": "Issue",
                 |         "batch_hydration__authors__authorIds": [
                 |           "2",
                 |           "4"
-                |         ]
+                |         ],
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -70,7 +70,7 @@ public class `hydration matching using index one batch returns errors snapshot` 
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(ids: ["1", "2"]) {
                 |     name
                 |   }
@@ -95,7 +95,7 @@ public class `hydration matching using index one batch returns errors snapshot` 
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(ids: ["4"]) {
                 |     name
                 |   }
@@ -126,6 +126,15 @@ public class `hydration matching using index one batch returns errors snapshot` 
     /**
      * ```json
      * {
+     *   "errors": [
+     *     {
+     *       "message": "Fail",
+     *       "locations": [],
+     *       "extensions": {
+     *         "classification": "DataFetchingException"
+     *       }
+     *     }
+     *   ],
      *   "data": {
      *     "issues": [
      *       {
@@ -153,22 +162,22 @@ public class `hydration matching using index one batch returns errors snapshot` 
      *         ]
      *       }
      *     ]
-     *   },
-     *   "errors": [
-     *     {
-     *       "message": "Fail",
-     *       "locations": [],
-     *       "extensions": {
-     *         "classification": "DataFetchingException"
-     *       }
-     *     }
-     *   ]
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
+            |   "errors": [
+            |     {
+            |       "message": "Fail",
+            |       "locations": [],
+            |       "extensions": {
+            |         "classification": "DataFetchingException"
+            |       }
+            |     }
+            |   ],
             |   "data": {
             |     "issues": [
             |       {
@@ -196,16 +205,7 @@ public class `hydration matching using index one batch returns errors snapshot` 
             |         ]
             |       }
             |     ]
-            |   },
-            |   "errors": [
-            |     {
-            |       "message": "Fail",
-            |       "locations": [],
-            |       "extensions": {
-            |         "classification": "DataFetchingException"
-            |       }
-            |     }
-            |   ]
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

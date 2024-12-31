@@ -24,7 +24,7 @@ public class `java ari transform snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   issue(id: "57") {
                 |     __typename__rename__key: __typename
                 |     rename__key__id: id
@@ -36,8 +36,8 @@ public class `java ari transform snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "issue": {
-                |       "__typename__rename__key": "Issue",
-                |       "rename__key__id": "57"
+                |       "rename__key__id": "57",
+                |       "__typename__rename__key": "Issue"
                 |     }
                 |   }
                 | }

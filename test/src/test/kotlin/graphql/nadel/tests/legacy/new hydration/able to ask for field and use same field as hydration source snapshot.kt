@@ -25,7 +25,7 @@ public class `able to ask for field and use same field as hydration source snaps
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   bar {
                 |     __typename__hydration__nestedBar: __typename
                 |     barId
@@ -39,9 +39,9 @@ public class `able to ask for field and use same field as hydration source snaps
                 | {
                 |   "data": {
                 |     "bar": {
-                |       "__typename__hydration__nestedBar": "Bar",
                 |       "barId": "1",
                 |       "hydration__nestedBar__barId": "1",
+                |       "__typename__hydration__nestedBar": "Bar",
                 |       "name": "Test"
                 |     }
                 |   }
@@ -53,7 +53,7 @@ public class `able to ask for field and use same field as hydration source snaps
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barById(id: "1") {
                 |     __typename__hydration__nestedBar: __typename
                 |     hydration__nestedBar__barId: barId
@@ -66,8 +66,8 @@ public class `able to ask for field and use same field as hydration source snaps
                 | {
                 |   "data": {
                 |     "barById": {
-                |       "__typename__hydration__nestedBar": "Bar",
                 |       "hydration__nestedBar__barId": "1",
+                |       "__typename__hydration__nestedBar": "Bar",
                 |       "barId": "1"
                 |     }
                 |   }
@@ -79,7 +79,7 @@ public class `able to ask for field and use same field as hydration source snaps
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barById(id: "1") {
                 |     barId
                 |   }
@@ -106,13 +106,13 @@ public class `able to ask for field and use same field as hydration source snaps
      *   "data": {
      *     "bar": {
      *       "barId": "1",
+     *       "name": "Test",
      *       "nestedBar": {
      *         "barId": "1",
      *         "nestedBar": {
      *           "barId": "1"
      *         }
-     *       },
-     *       "name": "Test"
+     *       }
      *     }
      *   }
      * }
@@ -124,13 +124,13 @@ public class `able to ask for field and use same field as hydration source snaps
             |   "data": {
             |     "bar": {
             |       "barId": "1",
+            |       "name": "Test",
             |       "nestedBar": {
             |         "barId": "1",
             |         "nestedBar": {
             |           "barId": "1"
             |         }
-            |       },
-            |       "name": "Test"
+            |       }
             |     }
             |   }
             | }

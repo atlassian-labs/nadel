@@ -25,7 +25,7 @@ public class `query with three nested hydrations and simple data and lots of ren
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barsById(id: ["bar1"]) {
                 |     __typename__rename__barName: __typename
                 |     __typename__batch_hydration__nestedBar: __typename
@@ -41,11 +41,11 @@ public class `query with three nested hydrations and simple data and lots of ren
                 |   "data": {
                 |     "barsById": [
                 |       {
-                |         "batch_hydration__bar__barId": "bar1",
+                |         "rename__barName__name": "Bar 1",
+                |         "__typename__rename__barName": "Bar",
                 |         "batch_hydration__nestedBar__nestedBarId": "nestedBar1",
                 |         "__typename__batch_hydration__nestedBar": "Bar",
-                |         "__typename__rename__barName": "Bar",
-                |         "rename__barName__name": "Bar 1"
+                |         "batch_hydration__bar__barId": "bar1"
                 |       }
                 |     ]
                 |   }
@@ -57,7 +57,7 @@ public class `query with three nested hydrations and simple data and lots of ren
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barsById(id: ["nestedBar1"]) {
                 |     __typename__rename__barName: __typename
                 |     __typename__batch_hydration__nestedBar: __typename
@@ -73,11 +73,11 @@ public class `query with three nested hydrations and simple data and lots of ren
                 |   "data": {
                 |     "barsById": [
                 |       {
-                |         "batch_hydration__nestedBar__barId": "nestedBar1",
+                |         "rename__barName__name": "NestedBarName1",
+                |         "__typename__rename__barName": "Bar",
                 |         "batch_hydration__nestedBar__nestedBarId": "nestedBarId456",
                 |         "__typename__batch_hydration__nestedBar": "Bar",
-                |         "__typename__rename__barName": "Bar",
-                |         "rename__barName__name": "NestedBarName1"
+                |         "batch_hydration__nestedBar__barId": "nestedBar1"
                 |       }
                 |     ]
                 |   }
@@ -89,7 +89,7 @@ public class `query with three nested hydrations and simple data and lots of ren
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   barsById(id: ["nestedBarId456"]) {
                 |     __typename__rename__barName: __typename
                 |     __typename__rename__barDetails: __typename
@@ -115,21 +115,21 @@ public class `query with three nested hydrations and simple data and lots of ren
                 |   "data": {
                 |     "barsById": [
                 |       {
-                |         "batch_hydration__nestedBar__barId": "nestedBarId456",
+                |         "rename__barName__name": "NestedBarName2",
+                |         "__typename__rename__barName": "Bar",
                 |         "rename__barDetails__details": {
+                |           "rename__barAge__age": 1,
+                |           "__typename__rename__barAge": "Details",
                 |           "rename__barContact__contact": {
-                |             "rename__barPhone__phone": 1,
                 |             "rename__barEmail__email": "test",
                 |             "__typename__rename__barEmail": "ContactDetails",
+                |             "rename__barPhone__phone": 1,
                 |             "__typename__rename__barPhone": "ContactDetails"
                 |           },
-                |           "rename__barAge__age": 1,
-                |           "__typename__rename__barContact": "Details",
-                |           "__typename__rename__barAge": "Details"
+                |           "__typename__rename__barContact": "Details"
                 |         },
                 |         "__typename__rename__barDetails": "Bar",
-                |         "__typename__rename__barName": "Bar",
-                |         "rename__barName__name": "NestedBarName2"
+                |         "batch_hydration__nestedBar__barId": "nestedBarId456"
                 |       }
                 |     ]
                 |   }
@@ -141,7 +141,7 @@ public class `query with three nested hydrations and simple data and lots of ren
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   rename__fooz__foos: foos {
                 |     __typename__rename__fooDetails: __typename
                 |     __typename__batch_hydration__bar: __typename
@@ -168,22 +168,22 @@ public class `query with three nested hydrations and simple data and lots of ren
                 |   "data": {
                 |     "rename__fooz__foos": [
                 |       {
-                |         "__typename__rename__fooDetails": "Foo",
                 |         "rename__fooDetails__details": {
-                |           "__typename__rename__fooContact": "Details",
+                |           "rename__fooName__name": "smith",
                 |           "__typename__rename__fooName": "Details",
                 |           "rename__fooAge__age": 1,
                 |           "__typename__rename__fooAge": "Details",
                 |           "rename__fooContact__contact": {
-                |             "rename__fooPhone__phone": 1,
                 |             "rename__fooEmail__email": "test",
-                |             "__typename__rename__fooPhone": "ContactDetails",
-                |             "__typename__rename__fooEmail": "ContactDetails"
+                |             "__typename__rename__fooEmail": "ContactDetails",
+                |             "rename__fooPhone__phone": 1,
+                |             "__typename__rename__fooPhone": "ContactDetails"
                 |           },
-                |           "rename__fooName__name": "smith"
+                |           "__typename__rename__fooContact": "Details"
                 |         },
-                |         "__typename__batch_hydration__bar": "Foo",
-                |         "batch_hydration__bar__barId": "bar1"
+                |         "__typename__rename__fooDetails": "Foo",
+                |         "batch_hydration__bar__barId": "bar1",
+                |         "__typename__batch_hydration__bar": "Foo"
                 |       }
                 |     ]
                 |   }

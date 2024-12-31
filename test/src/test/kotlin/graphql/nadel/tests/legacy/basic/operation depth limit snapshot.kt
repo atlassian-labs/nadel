@@ -26,7 +26,6 @@ public class `operation depth limit snapshot` : TestSnapshot() {
     /**
      * ```json
      * {
-     *   "data": null,
      *   "errors": [
      *     {
      *       "message": "Maximum query depth exceeded. 11 > 10",
@@ -34,14 +33,14 @@ public class `operation depth limit snapshot` : TestSnapshot() {
      *         "classification": "ExecutionAborted"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": null
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": null,
             |   "errors": [
             |     {
             |       "message": "Maximum query depth exceeded. 11 > 10",
@@ -49,7 +48,8 @@ public class `operation depth limit snapshot` : TestSnapshot() {
             |         "classification": "ExecutionAborted"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": null
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

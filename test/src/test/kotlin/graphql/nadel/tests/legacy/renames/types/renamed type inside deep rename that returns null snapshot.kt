@@ -24,7 +24,7 @@ public class `renamed type inside deep rename that returns null snapshot` : Test
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issueById(id: "issue-1") {
                 |     __typename__deep_rename__assignee: __typename
                 |     deep_rename__assignee__details: details {
@@ -44,10 +44,10 @@ public class `renamed type inside deep rename that returns null snapshot` : Test
                 | {
                 |   "data": {
                 |     "issueById": {
-                |       "__typename__deep_rename__assignee": "Issue",
                 |       "deep_rename__assignee__details": {
                 |         "assignee": null
-                |       }
+                |       },
+                |       "__typename__deep_rename__assignee": "Issue"
                 |     }
                 |   }
                 | }

@@ -24,7 +24,7 @@ public class `long scalar as input type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo(input: 3000000000) {
                 |     thing
                 |   }

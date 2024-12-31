@@ -24,7 +24,7 @@ public class `hydration list input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barIds: barIds
@@ -52,7 +52,7 @@ public class `hydration list input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId1") {
                 |     id
                 |     name
@@ -64,8 +64,8 @@ public class `hydration list input snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "barById": {
-                |       "name": "Bar1",
-                |       "id": "barId1"
+                |       "id": "barId1",
+                |       "name": "Bar1"
                 |     }
                 |   }
                 | }
@@ -76,7 +76,7 @@ public class `hydration list input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId2") {
                 |     id
                 |     name
@@ -88,8 +88,8 @@ public class `hydration list input snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "barById": {
-                |       "name": "Bar3",
-                |       "id": "barId2"
+                |       "id": "barId2",
+                |       "name": "Bar3"
                 |     }
                 |   }
                 | }
@@ -100,7 +100,7 @@ public class `hydration list input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId3") {
                 |     id
                 |     name
@@ -112,8 +112,8 @@ public class `hydration list input snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "barById": {
-                |       "name": "Bar4",
-                |       "id": "barId3"
+                |       "id": "barId3",
+                |       "name": "Bar4"
                 |     }
                 |   }
                 | }

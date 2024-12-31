@@ -24,7 +24,7 @@ public class `deep rename of an object snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__deep_rename__authorName: __typename
                 |     deep_rename__authorName__authorDetails: authorDetails {
@@ -45,28 +45,28 @@ public class `deep rename of an object snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__deep_rename__authorName": "Issue",
                 |         "id": "ISSUE-1",
                 |         "deep_rename__authorName__authorDetails": {
                 |           "name": {
+                |             "rename__firstName__fName": "George",
                 |             "__typename__rename__firstName": "Name",
                 |             "rename__lastName__lName": "Smith",
-                |             "__typename__rename__lastName": "Name",
-                |             "rename__firstName__fName": "George"
+                |             "__typename__rename__lastName": "Name"
                 |           }
-                |         }
+                |         },
+                |         "__typename__deep_rename__authorName": "Issue"
                 |       },
                 |       {
-                |         "__typename__deep_rename__authorName": "Issue",
                 |         "id": "ISSUE-2",
                 |         "deep_rename__authorName__authorDetails": {
                 |           "name": {
+                |             "rename__firstName__fName": "Elizabeth",
                 |             "__typename__rename__firstName": "Name",
                 |             "rename__lastName__lName": "Windsor",
-                |             "__typename__rename__lastName": "Name",
-                |             "rename__firstName__fName": "Elizabeth"
+                |             "__typename__rename__lastName": "Name"
                 |           }
-                |         }
+                |         },
+                |         "__typename__deep_rename__authorName": "Issue"
                 |       }
                 |     ]
                 |   }

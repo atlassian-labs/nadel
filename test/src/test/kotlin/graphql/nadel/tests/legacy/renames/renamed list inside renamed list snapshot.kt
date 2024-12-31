@@ -24,7 +24,7 @@ public class `renamed list inside renamed list snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssuesService",
                 query = """
-                | query {
+                | {
                 |   rename__renamedIssue__issue: issue {
                 |     __typename__rename__renamedTicket: __typename
                 |     rename__renamedTicket__ticket: ticket {
@@ -45,18 +45,18 @@ public class `renamed list inside renamed list snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "rename__renamedIssue__issue": [
                 |       {
-                |         "__typename__rename__renamedTicket": "Issue",
                 |         "rename__renamedTicket__ticket": {
-                |           "__typename__rename__renamedTicketTypes": "Ticket",
                 |           "rename__renamedTicketTypes__ticketTypes": [
                 |             {
                 |               "rename__renamedId__id": "1",
+                |               "__typename__rename__renamedId": "TicketType",
                 |               "rename__renamedDate__date": "20/11/2020",
-                |               "__typename__rename__renamedDate": "TicketType",
-                |               "__typename__rename__renamedId": "TicketType"
+                |               "__typename__rename__renamedDate": "TicketType"
                 |             }
-                |           ]
-                |         }
+                |           ],
+                |           "__typename__rename__renamedTicketTypes": "Ticket"
+                |         },
+                |         "__typename__rename__renamedTicket": "Issue"
                 |       }
                 |     ]
                 |   }

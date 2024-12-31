@@ -24,7 +24,7 @@ public class `one call to one service with list result snapshot` : TestSnapshot(
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo
                 | }
                 """.trimMargin(),

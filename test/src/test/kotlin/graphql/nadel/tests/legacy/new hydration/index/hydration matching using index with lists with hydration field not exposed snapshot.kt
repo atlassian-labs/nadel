@@ -25,7 +25,7 @@ public class `hydration matching using index with lists with hydration field not
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     id
@@ -39,14 +39,14 @@ public class `hydration matching using index with lists with hydration field not
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
                 |         "id": "ISSUE-1",
-                |         "batch_hydration__authors__id": "ISSUE-1"
+                |         "batch_hydration__authors__id": "ISSUE-1",
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
                 |         "id": "ISSUE-2",
-                |         "batch_hydration__authors__id": "ISSUE-2"
+                |         "batch_hydration__authors__id": "ISSUE-2",
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -58,7 +58,7 @@ public class `hydration matching using index with lists with hydration field not
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
                 |     name
                 |   }

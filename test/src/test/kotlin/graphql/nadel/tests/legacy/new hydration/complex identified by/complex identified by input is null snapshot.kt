@@ -24,7 +24,7 @@ public class `complex identified by input is null snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorIds: authorIds
@@ -38,9 +38,9 @@ public class `complex identified by input is null snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
                 |         "id": "ISSUE-1",
-                |         "batch_hydration__authors__authorIds": null
+                |         "batch_hydration__authors__authorIds": null,
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }

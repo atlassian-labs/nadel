@@ -25,7 +25,7 @@ public class `inlined json arguments snapshot` : TestSnapshot() {
                 service = "MyService",
                 query = """
                 | query myQuery(${'$'}v0: JSON, ${'$'}v1: JSON!) {
-                |   hello(arg: {payload: ${'$'}v0}, arg1: ${'$'}v1)
+                |   hello(arg: {payload : ${'$'}v0}, arg1: ${'$'}v1)
                 | }
                 """.trimMargin(),
                 variables = """

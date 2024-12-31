@@ -24,7 +24,7 @@ public class `one of the namespaced services returns error reversed snapshot` : 
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -50,7 +50,7 @@ public class `one of the namespaced services returns error reversed snapshot` : 
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -61,9 +61,6 @@ public class `one of the namespaced services returns error reversed snapshot` : 
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "issue": null
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "Error on IssueSearch",
@@ -72,7 +69,10 @@ public class `one of the namespaced services returns error reversed snapshot` : 
                 |         "classification": "DataFetchingException"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -83,14 +83,6 @@ public class `one of the namespaced services returns error reversed snapshot` : 
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": {
-     *       "getIssue": null,
-     *       "search": {
-     *         "count": 1
-     *       }
-     *     }
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error on IssueSearch",
@@ -99,21 +91,21 @@ public class `one of the namespaced services returns error reversed snapshot` : 
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": {
+     *       "search": {
+     *         "count": 1
+     *       },
+     *       "getIssue": null
+     *     }
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": {
-            |       "getIssue": null,
-            |       "search": {
-            |         "count": 1
-            |       }
-            |     }
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error on IssueSearch",
@@ -122,7 +114,15 @@ public class `one of the namespaced services returns error reversed snapshot` : 
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": {
+            |       "search": {
+            |         "count": 1
+            |       },
+            |       "getIssue": null
+            |     }
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

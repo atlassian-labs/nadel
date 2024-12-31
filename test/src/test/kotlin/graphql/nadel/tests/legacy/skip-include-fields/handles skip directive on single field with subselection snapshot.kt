@@ -24,7 +24,7 @@ public class `handles skip directive on single field with subselection snapshot`
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__skip_include____skip: __typename
                 |   }

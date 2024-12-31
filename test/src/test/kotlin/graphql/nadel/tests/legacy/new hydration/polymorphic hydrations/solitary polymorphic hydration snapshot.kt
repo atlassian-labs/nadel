@@ -24,7 +24,7 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     __typename__hydration__data: __typename
@@ -41,15 +41,15 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
                 |     "foo": [
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__hydration__data": "Foo",
+                |         "id": "FOO-0",
                 |         "hydration__data__dataId": "PET-0",
-                |         "id": "FOO-0"
+                |         "__typename__hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__hydration__data": "Foo",
+                |         "id": "FOO-1",
                 |         "hydration__data__dataId": "HUMAN-0",
-                |         "id": "FOO-1"
+                |         "__typename__hydration__data": "Foo"
                 |       }
                 |     ]
                 |   }
@@ -61,7 +61,7 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | query {
+                | {
                 |   humanById(id: "HUMAN-0") {
                 |     __typename
                 |     __typename__type_filter__id: __typename
@@ -78,8 +78,8 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
                 |     "humanById": {
                 |       "__typename": "Human",
                 |       "__typename__type_filter__id": "Human",
-                |       "__typename__type_filter__breed": "Human",
                 |       "id": "HUMAN-0",
+                |       "__typename__type_filter__breed": "Human",
                 |       "name": "Fanny Longbottom"
                 |     }
                 |   }
@@ -91,7 +91,7 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "pets",
                 query = """
-                | query {
+                | {
                 |   petById(id: "PET-0") {
                 |     __typename
                 |     __typename__type_filter__id: __typename
@@ -107,10 +107,10 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "petById": {
                 |       "__typename": "Pet",
-                |       "__typename__type_filter__id": "Pet",
-                |       "__typename__type_filter__name": "Pet",
                 |       "id": "PET-0",
-                |       "breed": "Akita"
+                |       "__typename__type_filter__id": "Pet",
+                |       "breed": "Akita",
+                |       "__typename__type_filter__name": "Pet"
                 |     }
                 |   }
                 | }

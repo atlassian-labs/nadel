@@ -24,7 +24,7 @@ public class `solitary polymorphic hydration when hook returns null snapshot` : 
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     __typename__hydration__data: __typename
@@ -41,15 +41,15 @@ public class `solitary polymorphic hydration when hook returns null snapshot` : 
                 |     "foo": [
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__hydration__data": "Foo",
+                |         "id": "FOO-0",
                 |         "hydration__data__dataId": "NULL-0",
-                |         "id": "FOO-0"
+                |         "__typename__hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__hydration__data": "Foo",
+                |         "id": "FOO-1",
                 |         "hydration__data__dataId": "HUMAN-0",
-                |         "id": "FOO-1"
+                |         "__typename__hydration__data": "Foo"
                 |       }
                 |     ]
                 |   }
@@ -61,7 +61,7 @@ public class `solitary polymorphic hydration when hook returns null snapshot` : 
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | query {
+                | {
                 |   humanById(id: "HUMAN-0") {
                 |     __typename
                 |     __typename__type_filter__id: __typename
@@ -78,8 +78,8 @@ public class `solitary polymorphic hydration when hook returns null snapshot` : 
                 |     "humanById": {
                 |       "__typename": "Human",
                 |       "__typename__type_filter__id": "Human",
-                |       "__typename__type_filter__breed": "Human",
                 |       "id": "HUMAN-0",
+                |       "__typename__type_filter__breed": "Human",
                 |       "name": "Fanny Longbottom"
                 |     }
                 |   }

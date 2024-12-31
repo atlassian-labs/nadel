@@ -24,7 +24,7 @@ public class `renamed type in union snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   rename__nodes__all: all {
                 |     __typename
                 |     ... on Issue {

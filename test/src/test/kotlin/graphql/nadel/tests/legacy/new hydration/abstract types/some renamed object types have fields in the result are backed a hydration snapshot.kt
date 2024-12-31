@@ -27,14 +27,14 @@ public class `some renamed object types have fields in the result are backed a h
                 query = """
                 | {
                 |   activity {
-                |     ... on SomethingLame {
-                |       __typename__hydration__user: __typename
-                |       hydration__user__userId: userId
-                |     }
                 |     ... on SingleActivity {
                 |       user {
                 |         name
                 |       }
+                |     }
+                |     ... on SomethingLame {
+                |       __typename__hydration__user: __typename
+                |       hydration__user__userId: userId
                 |     }
                 |   }
                 | }
@@ -50,12 +50,12 @@ public class `some renamed object types have fields in the result are backed a h
                 |         }
                 |       },
                 |       {
-                |         "__typename__hydration__user": "SomethingLame",
-                |         "hydration__user__userId": "user-100"
+                |         "hydration__user__userId": "user-100",
+                |         "__typename__hydration__user": "SomethingLame"
                 |       },
                 |       {
-                |         "__typename__hydration__user": "SomethingLame",
-                |         "hydration__user__userId": "user-20"
+                |         "hydration__user__userId": "user-20",
+                |         "__typename__hydration__user": "SomethingLame"
                 |       },
                 |       {
                 |         "user": {

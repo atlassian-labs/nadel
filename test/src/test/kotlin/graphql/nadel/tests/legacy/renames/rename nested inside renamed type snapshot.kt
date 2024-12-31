@@ -24,7 +24,7 @@ public class `rename nested inside renamed type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     parent {
@@ -41,8 +41,8 @@ public class `rename nested inside renamed type snapshot` : TestSnapshot() {
                 |     "foo": {
                 |       "__typename": "Foo",
                 |       "parent": {
-                |         "__typename__rename__title": "Foo",
-                |         "rename__title__barId": "Foo1-2"
+                |         "rename__title__barId": "Foo1-2",
+                |         "__typename__rename__title": "Foo"
                 |       }
                 |     }
                 |   }

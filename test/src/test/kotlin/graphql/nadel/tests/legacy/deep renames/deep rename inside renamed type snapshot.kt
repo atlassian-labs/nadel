@@ -24,7 +24,7 @@ public class `deep rename inside renamed type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   first {
                 |     __typename
                 |     __typename__deep_rename__name: __typename
@@ -54,7 +54,7 @@ public class `deep rename inside renamed type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   second: first {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__details: details {

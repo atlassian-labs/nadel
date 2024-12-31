@@ -24,7 +24,7 @@ public class `rename inside renamed type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename
                 |     __typename__rename__title: __typename
@@ -38,8 +38,8 @@ public class `rename inside renamed type snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "foo": {
                 |       "__typename": "Foo",
-                |       "__typename__rename__title": "Foo",
-                |       "rename__title__barId": "Bar1"
+                |       "rename__title__barId": "Bar1",
+                |       "__typename__rename__title": "Foo"
                 |     }
                 |   }
                 | }

@@ -24,7 +24,7 @@ public class `interface rename direct works as expected snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
                 |     name
                 |   }

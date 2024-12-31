@@ -24,7 +24,7 @@ public class `dynamic service resolution with no fragments snapshot` : TestSnaps
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | query {
+                | {
                 |   node(id: "pull-request:id-123") {
                 |     id
                 |   }

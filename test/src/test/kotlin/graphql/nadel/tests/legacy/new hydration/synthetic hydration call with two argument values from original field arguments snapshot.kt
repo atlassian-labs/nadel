@@ -26,7 +26,7 @@ public class
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__author: __typename
                 |     batch_hydration__author__authorId: authorId
@@ -40,9 +40,9 @@ public class
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
                 |         "id": "ISSUE-1",
-                |         "batch_hydration__author__authorId": "USER-1"
+                |         "batch_hydration__author__authorId": "USER-1",
+                |         "__typename__batch_hydration__author": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -54,7 +54,7 @@ public class
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersQuery {
                 |     usersByIds(extraArg1: "extraArg1", extraArg2: 10, id: ["USER-1"]) {
                 |       batch_hydration__author__id: id

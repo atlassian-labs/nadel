@@ -24,7 +24,7 @@ public class `correct selection set on partially failed result snapshot` : TestS
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | query {
+                | {
                 |   bar
                 | }
                 """.trimMargin(),
@@ -44,10 +44,6 @@ public class `correct selection set on partially failed result snapshot` : TestS
     /**
      * ```json
      * {
-     *   "data": {
-     *     "foo": null,
-     *     "bar": "Hello"
-     *   },
      *   "errors": [
      *     {
      *       "message": "Test",
@@ -56,17 +52,17 @@ public class `correct selection set on partially failed result snapshot` : TestS
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "foo": null,
+     *     "bar": "Hello"
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "foo": null,
-            |     "bar": "Hello"
-            |   },
             |   "errors": [
             |     {
             |       "message": "Test",
@@ -75,7 +71,11 @@ public class `correct selection set on partially failed result snapshot` : TestS
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "foo": null,
+            |     "bar": "Hello"
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

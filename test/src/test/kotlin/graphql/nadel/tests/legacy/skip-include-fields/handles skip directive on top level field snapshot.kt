@@ -24,7 +24,7 @@ public class `handles skip directive on top level field snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   bar
                 | }
                 """.trimMargin(),

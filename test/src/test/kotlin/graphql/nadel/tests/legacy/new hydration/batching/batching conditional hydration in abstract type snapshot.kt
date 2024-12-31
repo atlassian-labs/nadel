@@ -92,26 +92,26 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/5000",
-                |         "batch_hydration__content__id": "comment/5000",
-                |         "content": "Five Thousand"
+                |         "content": "Five Thousand",
+                |         "batch_hydration__content__id": "comment/5000"
                 |       },
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/6000",
-                |         "batch_hydration__content__id": "comment/6000",
-                |         "content": "Six Thousand"
+                |         "content": "Six Thousand",
+                |         "batch_hydration__content__id": "comment/6000"
                 |       },
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/9001",
-                |         "batch_hydration__content__id": "comment/9001",
-                |         "content": "It's over 9000"
+                |         "content": "It's over 9000",
+                |         "batch_hydration__content__id": "comment/9001"
                 |       },
                 |       {
                 |         "__typename": "Comment",
                 |         "id": "comment/1234",
-                |         "batch_hydration__content__id": "comment/1234",
-                |         "content": "One Two Three Four"
+                |         "content": "One Two Three Four",
+                |         "batch_hydration__content__id": "comment/1234"
                 |       }
                 |     ]
                 |   }
@@ -140,8 +140,8 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/4000",
-                |         "batch_hydration__content__id": "issue/4000",
-                |         "title": "Four Thousand"
+                |         "title": "Four Thousand",
+                |         "batch_hydration__content__id": "issue/4000"
                 |       }
                 |     ]
                 |   }
@@ -170,8 +170,8 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |       {
                 |         "__typename": "Issue",
                 |         "id": "issue/7496",
-                |         "batch_hydration__content__id": "issue/7496",
-                |         "title": "Seven Four Nine Six"
+                |         "title": "Seven Four Nine Six",
+                |         "batch_hydration__content__id": "issue/7496"
                 |       }
                 |     ]
                 |   }

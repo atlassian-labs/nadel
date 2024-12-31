@@ -24,7 +24,7 @@ public class `hydration with interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   idByAri(id: "ari:i-always-forget-the-format/1")
                 | }
                 """.trimMargin(),
@@ -42,7 +42,7 @@ public class `hydration with interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   nodes {
                 |     ... on Issue {
                 |       id
@@ -66,8 +66,8 @@ public class `hydration with interfaces snapshot` : TestSnapshot() {
                 |         "id": "GQLGW-1102"
                 |       },
                 |       {
-                |         "__typename__hydration__id": "User",
-                |         "hydration__id__ari": "ari:i-always-forget-the-format/1"
+                |         "hydration__id__ari": "ari:i-always-forget-the-format/1",
+                |         "__typename__hydration__id": "User"
                 |       }
                 |     ]
                 |   }

@@ -24,7 +24,7 @@ public class `hydration works when an ancestor field has been renamed snapshot` 
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issue(id: "1") {
                 |     id
                 |   }
@@ -46,7 +46,7 @@ public class `hydration works when an ancestor field has been renamed snapshot` 
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   rename__devOpsRelationships__relationships: relationships {
                 |     nodes {
                 |       __typename__hydration__devOpsIssue: __typename
@@ -62,8 +62,8 @@ public class `hydration works when an ancestor field has been renamed snapshot` 
                 |     "rename__devOpsRelationships__relationships": {
                 |       "nodes": [
                 |         {
-                |           "__typename__hydration__devOpsIssue": "Relationship",
-                |           "hydration__devOpsIssue__issueId": "1"
+                |           "hydration__devOpsIssue__issueId": "1",
+                |           "__typename__hydration__devOpsIssue": "Relationship"
                 |         }
                 |       ]
                 |     }

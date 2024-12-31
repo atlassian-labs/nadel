@@ -25,7 +25,7 @@ public class `errors and no data from a service execution are reflected in the r
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   hello {
                 |     name
                 |   }

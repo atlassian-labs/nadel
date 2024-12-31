@@ -24,7 +24,7 @@ public class `renamed type inside renamed field snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   rename__issues__all: all {
                 |     __typename
                 |   }

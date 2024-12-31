@@ -24,7 +24,7 @@ public class `long scalar as output type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   aField
                 | }
                 """.trimMargin(),

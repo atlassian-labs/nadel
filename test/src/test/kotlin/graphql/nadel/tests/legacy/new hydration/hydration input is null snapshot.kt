@@ -24,7 +24,7 @@ public class `hydration input is null snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__hydration__author: __typename
                 |     hydration__author__authorId: authorId
@@ -38,9 +38,9 @@ public class `hydration input is null snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__hydration__author": "Issue",
                 |         "id": "ISSUE-1",
-                |         "hydration__author__authorId": null
+                |         "hydration__author__authorId": null,
+                |         "__typename__hydration__author": "Issue"
                 |       }
                 |     ]
                 |   }

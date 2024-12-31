@@ -24,7 +24,7 @@ public class `hydration call forwards error snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barId: barId
@@ -48,7 +48,7 @@ public class `hydration call forwards error snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId1") {
                 |     name
                 |   }
@@ -57,29 +57,29 @@ public class `hydration call forwards error snapshot` : TestSnapshot() {
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "barById": null
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "Some error occurred",
-                |        "locations": [],
-                |        "extensions": {
-                |          "classification": "DataFetchingException"
-                |        }
+                |       "locations": [],
+                |       "extensions": {
+                |         "classification": "DataFetchingException"
+                |       }
                 |     },
                 |     {
                 |       "message": "Some error with extension occurred",
+                |       "locations": [],
                 |       "path": [
                 |         "barById",
                 |         "name"
                 |       ],
-                |       "locations": [],
                 |       "extensions": {
                 |         "classification": "SomeCustomError"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "barById": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -100,11 +100,11 @@ public class `hydration call forwards error snapshot` : TestSnapshot() {
      *     },
      *     {
      *       "message": "Some error with extension occurred",
+     *       "locations": [],
      *       "path": [
      *         "barById",
      *         "name"
      *       ],
-     *       "locations": [],
      *       "extensions": {
      *         "classification": "SomeCustomError"
      *       }
@@ -131,11 +131,11 @@ public class `hydration call forwards error snapshot` : TestSnapshot() {
             |     },
             |     {
             |       "message": "Some error with extension occurred",
+            |       "locations": [],
             |       "path": [
             |         "barById",
             |         "name"
             |       ],
-            |       "locations": [],
             |       "extensions": {
             |         "classification": "SomeCustomError"
             |       }

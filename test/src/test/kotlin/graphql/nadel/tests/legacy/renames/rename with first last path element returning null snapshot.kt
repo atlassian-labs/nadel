@@ -24,7 +24,7 @@ public class `rename with first last path element returning null snapshot` : Tes
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__details: details {

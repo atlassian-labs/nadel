@@ -25,7 +25,7 @@ public class `handles include directive on single field whose parent returns nul
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__skip_include____skip: __typename
                 |   }

@@ -24,7 +24,7 @@ public class `two top level fields with a fragment snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     id
                 |   }
@@ -51,7 +51,7 @@ public class `two top level fields with a fragment snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   user {
                 |     id
                 |     name
@@ -63,8 +63,8 @@ public class `two top level fields with a fragment snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "user": {
-                |       "name": "User 1",
-                |       "id": "USER-1"
+                |       "id": "USER-1",
+                |       "name": "User 1"
                 |     }
                 |   }
                 | }

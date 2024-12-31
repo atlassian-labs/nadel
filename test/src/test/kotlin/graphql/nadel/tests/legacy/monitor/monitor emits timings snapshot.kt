@@ -24,7 +24,7 @@ public class `monitor emits timings snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo
                 | }
                 """.trimMargin(),

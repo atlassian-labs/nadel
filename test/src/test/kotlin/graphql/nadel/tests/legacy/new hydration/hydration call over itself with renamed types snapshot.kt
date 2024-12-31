@@ -24,7 +24,7 @@ public class `hydration call over itself with renamed types snapshot` : TestSnap
             ExpectedServiceCall(
                 service = "testing",
                 query = """
-                | query {
+                | {
                 |   characters(ids: ["C1", "C2", "C3"]) {
                 |     id
                 |     batch_hydration__characters__id: id
@@ -38,19 +38,19 @@ public class `hydration call over itself with renamed types snapshot` : TestSnap
                 |   "data": {
                 |     "characters": [
                 |       {
+                |         "id": "C1",
                 |         "name": "Luke",
-                |         "batch_hydration__characters__id": "C1",
-                |         "id": "C1"
+                |         "batch_hydration__characters__id": "C1"
                 |       },
                 |       {
+                |         "id": "C2",
                 |         "name": "Leia",
-                |         "batch_hydration__characters__id": "C2",
-                |         "id": "C2"
+                |         "batch_hydration__characters__id": "C2"
                 |       },
                 |       {
+                |         "id": "C3",
                 |         "name": "Anakin",
-                |         "batch_hydration__characters__id": "C3",
-                |         "id": "C3"
+                |         "batch_hydration__characters__id": "C3"
                 |       }
                 |     ]
                 |   }
@@ -62,7 +62,7 @@ public class `hydration call over itself with renamed types snapshot` : TestSnap
             ExpectedServiceCall(
                 service = "testing",
                 query = """
-                | query {
+                | {
                 |   testing {
                 |     movies {
                 |       __typename__batch_hydration__characters: __typename
@@ -80,8 +80,8 @@ public class `hydration call over itself with renamed types snapshot` : TestSnap
                 |     "testing": {
                 |       "movies": [
                 |         {
-                |           "name": "Movie 1",
                 |           "id": "M1",
+                |           "name": "Movie 1",
                 |           "batch_hydration__characters__characterIds": [
                 |             "C1",
                 |             "C2"
@@ -89,8 +89,8 @@ public class `hydration call over itself with renamed types snapshot` : TestSnap
                 |           "__typename__batch_hydration__characters": "Movie"
                 |         },
                 |         {
-                |           "name": "Movie 2",
                 |           "id": "M2",
+                |           "name": "Movie 2",
                 |           "batch_hydration__characters__characterIds": [
                 |             "C1",
                 |             "C2",

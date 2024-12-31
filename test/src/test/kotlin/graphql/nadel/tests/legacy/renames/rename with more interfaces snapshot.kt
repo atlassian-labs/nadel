@@ -24,7 +24,7 @@ public class `rename with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   nodes {
                 |     ... on Issue {
                 |       id
@@ -52,12 +52,12 @@ public class `rename with more interfaces snapshot` : TestSnapshot() {
                 |         "id": "GQLGW-1102"
                 |       },
                 |       {
-                |         "__typename__rename__id": "Troll",
-                |         "rename__id__nameOfFirstThingEaten": "My Arm"
+                |         "rename__id__nameOfFirstThingEaten": "My Arm",
+                |         "__typename__rename__id": "Troll"
                 |       },
                 |       {
-                |         "__typename__rename__id": "User",
-                |         "rename__id__ari": "Franklin"
+                |         "rename__id__ari": "Franklin",
+                |         "__typename__rename__id": "User"
                 |       },
                 |       {
                 |         "id": "GQLGW-11"

@@ -24,7 +24,7 @@ public class `interface rename with fragments works as expected snapshot` : Test
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   rename__renameObject__renameObjectUnderlying: renameObjectUnderlying {
                 |     name
                 |   }

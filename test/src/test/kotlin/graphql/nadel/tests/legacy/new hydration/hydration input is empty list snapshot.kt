@@ -24,7 +24,7 @@ public class `hydration input is empty list snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__hydration__author: __typename
                 |     hydration__author__authorIds: authorIds
@@ -38,9 +38,9 @@ public class `hydration input is empty list snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__hydration__author": "Issue",
                 |         "id": "ISSUE-1",
-                |         "hydration__author__authorIds": null
+                |         "hydration__author__authorIds": null,
+                |         "__typename__hydration__author": "Issue"
                 |       }
                 |     ]
                 |   }

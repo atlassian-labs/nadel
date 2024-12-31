@@ -24,7 +24,7 @@ public class `typename is resolved on namespaced fields snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       __typename
@@ -40,9 +40,9 @@ public class `typename is resolved on namespaced fields snapshot` : TestSnapshot
                 |   "data": {
                 |     "issue": {
                 |       "getIssue": {
-                |         "text": "Foo",
                 |         "__typename": "Issue",
-                |         "aliasTypename": "Issue"
+                |         "aliasTypename": "Issue",
+                |         "text": "Foo"
                 |       }
                 |     }
                 |   }
@@ -61,9 +61,9 @@ public class `typename is resolved on namespaced fields snapshot` : TestSnapshot
      *       "__typename": "IssueQuery",
      *       "aliasTypename": "IssueQuery",
      *       "getIssue": {
-     *         "text": "Foo",
      *         "__typename": "Issue",
-     *         "aliasTypename": "Issue"
+     *         "aliasTypename": "Issue",
+     *         "text": "Foo"
      *       }
      *     }
      *   }
@@ -78,9 +78,9 @@ public class `typename is resolved on namespaced fields snapshot` : TestSnapshot
             |       "__typename": "IssueQuery",
             |       "aliasTypename": "IssueQuery",
             |       "getIssue": {
-            |         "text": "Foo",
             |         "__typename": "Issue",
-            |         "aliasTypename": "Issue"
+            |         "aliasTypename": "Issue",
+            |         "text": "Foo"
             |       }
             |     }
             |   }

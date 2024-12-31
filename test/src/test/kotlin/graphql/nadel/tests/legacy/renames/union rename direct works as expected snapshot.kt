@@ -24,7 +24,7 @@ public class `union rename direct works as expected snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   rename__renameUnion__renameUnionUnderlying: renameUnionUnderlying {
                 |     ... on XUnderlying {
                 |       x

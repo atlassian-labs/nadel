@@ -24,7 +24,7 @@ public class `hydrating json data snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Baz",
                 query = """
-                | query {
+                | {
                 |   otherFoo(id: "10000") {
                 |     id
                 |   }
@@ -65,8 +65,8 @@ public class `hydrating json data snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__foo": "Foo",
-                |       "hydration__foo__id": "10000"
+                |       "hydration__foo__id": "10000",
+                |       "__typename__hydration__foo": "Foo"
                 |     }
                 |   }
                 | }

@@ -75,14 +75,14 @@ public class `hydrating using json data as arg snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__foo": "Foo",
                 |       "hydration__foo__baz": {
                 |         "id": "102",
                 |         "appConfig": {
                 |           "status": "active",
                 |           "bounce": false
                 |         }
-                |       }
+                |       },
+                |       "__typename__hydration__foo": "Foo"
                 |     }
                 |   }
                 | }

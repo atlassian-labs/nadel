@@ -24,7 +24,7 @@ public class `hydration list with one element snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barId: barId
@@ -50,7 +50,7 @@ public class `hydration list with one element snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "barId1") {
                 |     id
                 |     name
@@ -62,8 +62,8 @@ public class `hydration list with one element snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "barById": {
-                |       "name": "Bar1",
-                |       "id": "barId1"
+                |       "id": "barId1",
+                |       "name": "Bar1"
                 |     }
                 |   }
                 | }

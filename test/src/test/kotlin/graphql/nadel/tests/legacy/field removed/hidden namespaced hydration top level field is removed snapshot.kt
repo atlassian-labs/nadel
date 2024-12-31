@@ -37,9 +37,9 @@ public class `hidden namespaced hydration top level field is removed snapshot` :
                 | {
                 |   "data": {
                 |     "issueById": {
-                |       "__typename__hydration__comment": "Issue",
+                |       "id": "C1",
                 |       "hydration__comment__commentId": "C1",
-                |       "id": "C1"
+                |       "__typename__hydration__comment": "Issue"
                 |     }
                 |   }
                 | }
@@ -52,12 +52,6 @@ public class `hidden namespaced hydration top level field is removed snapshot` :
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issueById": {
-     *       "id": "C1",
-     *       "comment": null
-     *     }
-     *   },
      *   "errors": [
      *     {
      *       "message": "field `CommentApi.commentById` has been removed by
@@ -67,19 +61,19 @@ public class `hidden namespaced hydration top level field is removed snapshot` :
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issueById": {
+     *       "id": "C1",
+     *       "comment": null
+     *     }
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issueById": {
-            |       "id": "C1",
-            |       "comment": null
-            |     }
-            |   },
             |   "errors": [
             |     {
             |       "message": "field `CommentApi.commentById` has been removed by RemoveFieldTestTransform",
@@ -88,7 +82,13 @@ public class `hidden namespaced hydration top level field is removed snapshot` :
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issueById": {
+            |       "id": "C1",
+            |       "comment": null
+            |     }
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

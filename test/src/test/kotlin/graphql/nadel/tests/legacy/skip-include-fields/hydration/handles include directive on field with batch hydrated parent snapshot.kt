@@ -25,7 +25,7 @@ public class `handles include directive on field with batch hydrated parent snap
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foos {
                 |     __typename__batch_hydration__test: __typename
                 |     batch_hydration__test__id: id
@@ -38,12 +38,12 @@ public class `handles include directive on field with batch hydrated parent snap
                 |   "data": {
                 |     "foos": [
                 |       {
-                |         "__typename__batch_hydration__test": "Foo",
-                |         "batch_hydration__test__id": "Foo-3"
+                |         "batch_hydration__test__id": "Foo-3",
+                |         "__typename__batch_hydration__test": "Foo"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__test": "Foo",
-                |         "batch_hydration__test__id": "Foo-4"
+                |         "batch_hydration__test__id": "Foo-4",
+                |         "__typename__batch_hydration__test": "Foo"
                 |       }
                 |     ]
                 |   }
@@ -55,7 +55,7 @@ public class `handles include directive on field with batch hydrated parent snap
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   tests(ids: ["Foo-3", "Foo-4"]) {
                 |     __typename__skip_include____skip: __typename
                 |     batch_hydration__test__id: id

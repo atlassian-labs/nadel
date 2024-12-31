@@ -25,7 +25,7 @@ public class `repeated hydrated fields on the same level when using batch hydrat
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__issue: __typename
                 |     batch_hydration__issue__issueId: issueId
@@ -49,7 +49,7 @@ public class `repeated hydrated fields on the same level when using batch hydrat
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   issues(issueIds: ["ISSUE-1"]) {
                 |     desc
                 |     batch_hydration__issue__id: id
@@ -64,8 +64,8 @@ public class `repeated hydrated fields on the same level when using batch hydrat
                 |     "issues": [
                 |       {
                 |         "name": "I AM A NAME",
-                |         "batch_hydration__issue__id": "ISSUE-1",
-                |         "desc": "I AM A DESC"
+                |         "desc": "I AM A DESC",
+                |         "batch_hydration__issue__id": "ISSUE-1"
                 |       }
                 |     ]
                 |   }

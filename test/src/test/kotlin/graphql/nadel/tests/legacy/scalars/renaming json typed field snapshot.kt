@@ -24,7 +24,7 @@ public class `renaming json typed field snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   rename__aField__test: test
                 | }
                 """.trimMargin(),
@@ -44,7 +44,7 @@ public class `renaming json typed field snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   rename__test__test: test
                 | }
                 """.trimMargin(),

@@ -24,7 +24,7 @@ public class `chain rename transform with type rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query {
+                | {
                 |   rename__test__world: world(arg: "aaarrg") {
                 |     __typename
                 |     __typename__rename__cities: __typename
@@ -39,11 +39,11 @@ public class `chain rename transform with type rename snapshot` : TestSnapshot()
                 |   "data": {
                 |     "rename__test__world": {
                 |       "__typename": "World",
-                |       "__typename__rename__cities": "World",
                 |       "id": "Earth",
                 |       "rename__cities__places": [
                 |         "Uhh yea I know cities"
-                |       ]
+                |       ],
+                |       "__typename__rename__cities": "World"
                 |     }
                 |   }
                 | }

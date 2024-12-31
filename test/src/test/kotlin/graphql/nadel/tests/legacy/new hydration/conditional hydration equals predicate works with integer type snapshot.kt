@@ -25,7 +25,7 @@ public class `conditional hydration equals predicate works with integer type sna
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__type: type
@@ -38,8 +38,8 @@ public class `conditional hydration equals predicate works with integer type sna
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__bar": "Foo",
-                |       "hydration__bar__type": 2
+                |       "hydration__bar__type": 2,
+                |       "__typename__hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -50,7 +50,7 @@ public class `conditional hydration equals predicate works with integer type sna
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barById(id: "BAR_B") {
                 |     name
                 |   }

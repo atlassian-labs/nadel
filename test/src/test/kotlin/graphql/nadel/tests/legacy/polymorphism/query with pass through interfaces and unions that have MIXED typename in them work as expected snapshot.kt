@@ -80,8 +80,8 @@ public class
                 | {
                 |   "data": {
                 |     "raining": {
-                |       "wearsCollar": true,
-                |       "__typename": "Dog"
+                |       "__typename": "Dog",
+                |       "wearsCollar": true
                 |     }
                 |   }
                 | }

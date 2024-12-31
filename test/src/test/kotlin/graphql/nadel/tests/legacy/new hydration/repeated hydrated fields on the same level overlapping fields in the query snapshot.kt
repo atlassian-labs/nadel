@@ -25,7 +25,7 @@ public class `repeated hydrated fields on the same level overlapping fields in t
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__issue: __typename
                 |     hydration__issue__issueId: issueId
@@ -49,7 +49,7 @@ public class `repeated hydrated fields on the same level overlapping fields in t
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   issue(issueId: "ISSUE-1") {
                 |     desc
                 |     name

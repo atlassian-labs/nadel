@@ -24,7 +24,7 @@ public class `custom json scalar as output type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   aField
                 | }
                 """.trimMargin(),
@@ -42,7 +42,7 @@ public class `custom json scalar as output type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   bField
                 | }
                 """.trimMargin(),
@@ -60,7 +60,7 @@ public class `custom json scalar as output type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   cField: bField
                 | }
                 """.trimMargin(),
@@ -80,7 +80,7 @@ public class `custom json scalar as output type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   dField: aField
                 | }
                 """.trimMargin(),
@@ -103,10 +103,10 @@ public class `custom json scalar as output type snapshot` : TestSnapshot() {
      *   "data": {
      *     "aField": "1000",
      *     "bField": 1000,
-     *     "dField": false,
      *     "cField": {
      *       "Something": "Cool"
-     *     }
+     *     },
+     *     "dField": false
      *   }
      * }
      * ```
@@ -117,10 +117,10 @@ public class `custom json scalar as output type snapshot` : TestSnapshot() {
             |   "data": {
             |     "aField": "1000",
             |     "bField": 1000,
-            |     "dField": false,
             |     "cField": {
             |       "Something": "Cool"
-            |     }
+            |     },
+            |     "dField": false
             |   }
             | }
             """.trimMargin(),

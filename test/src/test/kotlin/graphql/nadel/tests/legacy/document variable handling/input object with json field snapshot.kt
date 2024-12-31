@@ -25,7 +25,7 @@ public class `input object with json field snapshot` : TestSnapshot() {
                 service = "MyService",
                 query = """
                 | query myQuery(${'$'}v0: JSON) {
-                |   hello(arg: {payload: ${'$'}v0})
+                |   hello(arg: {payload : ${'$'}v0})
                 | }
                 """.trimMargin(),
                 variables = """

@@ -24,7 +24,7 @@ public class `hydrating using date time as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__successor: __typename
                 |     hydration__successor__createdAt: createdAt
@@ -36,8 +36,8 @@ public class `hydrating using date time as arg snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__successor": "Foo",
-                |       "hydration__successor__createdAt": "2022-03-09T05:01:50Z"
+                |       "hydration__successor__createdAt": "2022-03-09T05:01:50Z",
+                |       "__typename__hydration__successor": "Foo"
                 |     }
                 |   }
                 | }
@@ -48,7 +48,7 @@ public class `hydrating using date time as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | query {
+                | {
                 |   successor(after: "2022-03-09T05:01:50Z") {
                 |     id
                 |   }

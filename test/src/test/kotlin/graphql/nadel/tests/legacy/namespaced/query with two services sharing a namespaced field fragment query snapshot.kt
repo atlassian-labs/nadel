@@ -25,7 +25,7 @@ public class `query with two services sharing a namespaced field fragment query 
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -51,7 +51,7 @@ public class `query with two services sharing a namespaced field fragment query 
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text

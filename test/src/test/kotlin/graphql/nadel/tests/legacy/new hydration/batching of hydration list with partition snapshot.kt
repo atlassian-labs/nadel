@@ -24,7 +24,7 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__authors: __typename
                 |     batch_hydration__authors__authorIds: authorIds
@@ -38,27 +38,27 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__authors__authorIds": [
                 |           "CLOUD-ID-1/USER-1",
                 |           "CLOUD-ID-2/USER-2"
                 |         ],
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-2",
                 |         "batch_hydration__authors__authorIds": [
                 |           "CLOUD-ID-1/USER-3"
                 |         ],
-                |         "id": "ISSUE-2"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__authors": "Issue",
+                |         "id": "ISSUE-3",
                 |         "batch_hydration__authors__authorIds": [
                 |           "CLOUD-ID-2/USER-4",
                 |           "CLOUD-ID-1/USER-5"
                 |         ],
-                |         "id": "ISSUE-3"
+                |         "__typename__batch_hydration__authors": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -70,7 +70,7 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["CLOUD-ID-1/USER-1", "CLOUD-ID-1/USER-3"]) {
                 |     id
                 |     batch_hydration__authors__id: id
@@ -100,7 +100,7 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["CLOUD-ID-1/USER-5"]) {
                 |     id
                 |     batch_hydration__authors__id: id
@@ -126,7 +126,7 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   usersByIds(id: ["CLOUD-ID-2/USER-2", "CLOUD-ID-2/USER-4"]) {
                 |     id
                 |     batch_hydration__authors__id: id

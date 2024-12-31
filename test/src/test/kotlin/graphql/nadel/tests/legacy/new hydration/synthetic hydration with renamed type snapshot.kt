@@ -24,7 +24,7 @@ public class `synthetic hydration with renamed type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | query {
+                | {
                 |   bars {
                 |     barById(id: "hydrated-bar") {
                 |       id
@@ -50,7 +50,7 @@ public class `synthetic hydration with renamed type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   rename__foo__fooOriginal: fooOriginal {
                 |     __typename__hydration__fooBar: __typename
                 |     hydration__fooBar__fooBarId: fooBarId
@@ -63,8 +63,8 @@ public class `synthetic hydration with renamed type snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "rename__foo__fooOriginal": {
-                |       "hydration__fooBar__fooBarId": "hydrated-bar",
                 |       "id": "Foo",
+                |       "hydration__fooBar__fooBarId": "hydrated-bar",
                 |       "__typename__hydration__fooBar": "Foo"
                 |     }
                 |   }

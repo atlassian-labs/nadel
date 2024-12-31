@@ -24,7 +24,7 @@ public class `synthetic hydration forwards error snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__hydration__bar: __typename
                 |     hydration__bar__barId: barId
@@ -48,7 +48,7 @@ public class `synthetic hydration forwards error snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   barsQuery {
                 |     barById(id: "barId1") {
                 |       name

@@ -24,7 +24,7 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -35,9 +35,6 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "issue": null
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "Error",
@@ -46,7 +43,10 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
                 |         "classification": "DataFetchingException"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -55,7 +55,7 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -66,9 +66,6 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "issue": null
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "Error",
@@ -77,7 +74,10 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
                 |         "classification": "DataFetchingException"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -88,9 +88,6 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error",
@@ -106,16 +103,16 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error",
@@ -131,7 +128,10 @@ public class `both of the namespaced services returns error snapshot` : TestSnap
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

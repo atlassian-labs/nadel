@@ -26,7 +26,7 @@ public class
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barIds: barIds
@@ -41,12 +41,12 @@ public class
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barIds": [
                 |         "barId1",
                 |         "barId2"
                 |       ],
-                |       "batch_hydration__bar__type": "thisType"
+                |       "batch_hydration__bar__type": "thisType",
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }
@@ -57,7 +57,7 @@ public class
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query {
+                | {
                 |   othersById(ids: ["barId1", "barId2"]) {
                 |     batch_hydration__bar__id: id
                 |     name
@@ -70,12 +70,12 @@ public class
                 |   "data": {
                 |     "othersById": [
                 |       {
-                |         "batch_hydration__bar__id": "barId1",
-                |         "name": "Bar1"
+                |         "name": "Bar1",
+                |         "batch_hydration__bar__id": "barId1"
                 |       },
                 |       {
-                |         "batch_hydration__bar__id": "barId2",
-                |         "name": "Bar2"
+                |         "name": "Bar2",
+                |         "batch_hydration__bar__id": "barId2"
                 |       }
                 |     ]
                 |   }

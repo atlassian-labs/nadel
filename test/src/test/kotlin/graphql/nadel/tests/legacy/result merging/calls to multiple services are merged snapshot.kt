@@ -24,7 +24,7 @@ public class `calls to multiple services are merged snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | query {
+                | {
                 |   bar(id: "1") {
                 |     name
                 |   }
@@ -46,7 +46,7 @@ public class `calls to multiple services are merged snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | query {
+                | {
                 |   foo(id: "1") {
                 |     name
                 |   }
@@ -68,7 +68,7 @@ public class `calls to multiple services are merged snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | query {
+                | {
                 |   loot: foo(id: "1") {
                 |     name
                 |   }

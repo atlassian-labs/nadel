@@ -24,7 +24,7 @@ public class `extending types from another service is possible snapshot` : TestS
             ExpectedServiceCall(
                 service = "Service1",
                 query = """
-                | query {
+                | {
                 |   anotherRoot
                 | }
                 """.trimMargin(),
@@ -42,7 +42,7 @@ public class `extending types from another service is possible snapshot` : TestS
             ExpectedServiceCall(
                 service = "Service1",
                 query = """
-                | query {
+                | {
                 |   root {
                 |     __typename__hydration__extension: __typename
                 |     id
@@ -57,9 +57,9 @@ public class `extending types from another service is possible snapshot` : TestS
                 |   "data": {
                 |     "root": {
                 |       "id": "rootId",
+                |       "name": "rootName",
                 |       "hydration__extension__id": "rootId",
-                |       "__typename__hydration__extension": "Root",
-                |       "name": "rootName"
+                |       "__typename__hydration__extension": "Root"
                 |     }
                 |   }
                 | }
@@ -70,7 +70,7 @@ public class `extending types from another service is possible snapshot` : TestS
             ExpectedServiceCall(
                 service = "Service2",
                 query = """
-                | query {
+                | {
                 |   lookup(id: "rootId") {
                 |     id
                 |     name
@@ -99,11 +99,11 @@ public class `extending types from another service is possible snapshot` : TestS
      *   "data": {
      *     "root": {
      *       "id": "rootId",
+     *       "name": "rootName",
      *       "extension": {
      *         "id": "rootId",
      *         "name": "extensionName"
-     *       },
-     *       "name": "rootName"
+     *       }
      *     },
      *     "anotherRoot": "anotherRoot"
      *   }
@@ -116,11 +116,11 @@ public class `extending types from another service is possible snapshot` : TestS
             |   "data": {
             |     "root": {
             |       "id": "rootId",
+            |       "name": "rootName",
             |       "extension": {
             |         "id": "rootId",
             |         "name": "extensionName"
-            |       },
-            |       "name": "rootName"
+            |       }
             |     },
             |     "anotherRoot": "anotherRoot"
             |   }

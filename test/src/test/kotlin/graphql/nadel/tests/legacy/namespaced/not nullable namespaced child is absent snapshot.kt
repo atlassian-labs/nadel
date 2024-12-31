@@ -24,7 +24,7 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     search {
                 |       count
@@ -35,9 +35,6 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "issue": null
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "Error on IssueSearch",
@@ -46,7 +43,10 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
                 |         "classification": "DataFetchingException"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "issue": null
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -55,7 +55,7 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issue {
                 |     getIssue {
                 |       text
@@ -83,9 +83,6 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
     /**
      * ```json
      * {
-     *   "data": {
-     *     "issue": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "Error on IssueSearch",
@@ -94,16 +91,16 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "issue": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issue": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "Error on IssueSearch",
@@ -112,7 +109,10 @@ public class `not nullable namespaced child is absent snapshot` : TestSnapshot()
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "issue": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(

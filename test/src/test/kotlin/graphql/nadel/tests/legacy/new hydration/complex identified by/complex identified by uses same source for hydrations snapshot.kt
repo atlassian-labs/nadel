@@ -24,7 +24,7 @@ public class `complex identified by uses same source for hydrations snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   details(detailIds: ["Foo-1", "Foo-2"]) {
                 |     batch_hydration__detail__detailId: detailId
                 |     name
@@ -37,12 +37,12 @@ public class `complex identified by uses same source for hydrations snapshot` : 
                 |   "data": {
                 |     "details": [
                 |       {
-                |         "batch_hydration__detail__detailId": "Foo-2",
-                |         "name": "Foo 2 Electric Boogaloo"
+                |         "name": "Foo 2 Electric Boogaloo",
+                |         "batch_hydration__detail__detailId": "Foo-2"
                 |       },
                 |       {
-                |         "batch_hydration__detail__detailId": "Foo-1",
-                |         "name": "apple"
+                |         "name": "apple",
+                |         "batch_hydration__detail__detailId": "Foo-1"
                 |       }
                 |     ]
                 |   }
@@ -54,7 +54,7 @@ public class `complex identified by uses same source for hydrations snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   details(detailIds: ["Foo-3"]) {
                 |     batch_hydration__detail__detailId: detailId
                 |     name
@@ -67,8 +67,8 @@ public class `complex identified by uses same source for hydrations snapshot` : 
                 |   "data": {
                 |     "details": [
                 |       {
-                |         "batch_hydration__detail__detailId": "Foo-3",
-                |         "name": "Three Apples"
+                |         "name": "Three Apples",
+                |         "batch_hydration__detail__detailId": "Foo-3"
                 |       }
                 |     ]
                 |   }
@@ -80,7 +80,7 @@ public class `complex identified by uses same source for hydrations snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
+                | {
                 |   foos {
                 |     __typename__batch_hydration__issue: __typename
                 |     __typename__batch_hydration__detail: __typename
@@ -95,52 +95,22 @@ public class `complex identified by uses same source for hydrations snapshot` : 
                 |   "data": {
                 |     "foos": [
                 |       {
-                |         "__typename__batch_hydration__issue": "Foo",
-                |         "__typename__batch_hydration__detail": "Foo",
                 |         "batch_hydration__issue__fooId": "Foo-1",
-                |         "batch_hydration__detail__fooId": "Foo-1"
+                |         "__typename__batch_hydration__issue": "Foo",
+                |         "batch_hydration__detail__fooId": "Foo-1",
+                |         "__typename__batch_hydration__detail": "Foo"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__issue": "Foo",
-                |         "__typename__batch_hydration__detail": "Foo",
                 |         "batch_hydration__issue__fooId": "Foo-2",
-                |         "batch_hydration__detail__fooId": "Foo-2"
-                |       },
-                |       {
                 |         "__typename__batch_hydration__issue": "Foo",
-                |         "__typename__batch_hydration__detail": "Foo",
-                |         "batch_hydration__issue__fooId": "Foo-3",
-                |         "batch_hydration__detail__fooId": "Foo-3"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | query {
-                |   issues(issueIds: ["Foo-1", "Foo-2"]) {
-                |     batch_hydration__issue__issueId: issueId
-                |     field
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issues": [
-                |       {
-                |         "batch_hydration__issue__issueId": "Foo-1",
-                |         "field": "field_name"
+                |         "batch_hydration__detail__fooId": "Foo-2",
+                |         "__typename__batch_hydration__detail": "Foo"
                 |       },
                 |       {
-                |         "batch_hydration__issue__issueId": "Foo-2",
-                |         "field": "field_name-2"
+                |         "batch_hydration__issue__fooId": "Foo-3",
+                |         "__typename__batch_hydration__issue": "Foo",
+                |         "batch_hydration__detail__fooId": "Foo-3",
+                |         "__typename__batch_hydration__detail": "Foo"
                 |       }
                 |     ]
                 |   }
@@ -152,10 +122,10 @@ public class `complex identified by uses same source for hydrations snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | query {
-                |   issues(issueIds: ["Foo-3"]) {
-                |     batch_hydration__issue__issueId: issueId
+                | {
+                |   issues(issueIds: ["Foo-1", "Foo-2"]) {
                 |     field
+                |     batch_hydration__issue__issueId: issueId
                 |   }
                 | }
                 """.trimMargin(),
@@ -165,8 +135,38 @@ public class `complex identified by uses same source for hydrations snapshot` : 
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "batch_hydration__issue__issueId": "Foo-3",
-                |         "field": "field-3"
+                |         "field": "field_name",
+                |         "batch_hydration__issue__issueId": "Foo-1"
+                |       },
+                |       {
+                |         "field": "field_name-2",
+                |         "batch_hydration__issue__issueId": "Foo-2"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
+                | {
+                |   issues(issueIds: ["Foo-3"]) {
+                |     field
+                |     batch_hydration__issue__issueId: issueId
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "issues": [
+                |       {
+                |         "field": "field-3",
+                |         "batch_hydration__issue__issueId": "Foo-3"
                 |       }
                 |     ]
                 |   }

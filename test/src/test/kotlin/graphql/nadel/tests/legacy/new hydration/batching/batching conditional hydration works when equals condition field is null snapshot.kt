@@ -25,7 +25,7 @@ public class `batching conditional hydration works when equals condition field i
             ExpectedServiceCall(
                 service = "service1",
                 query = """
-                | query {
+                | {
                 |   foo {
                 |     __typename__batch_hydration__bar: __typename
                 |     batch_hydration__bar__barIds: barIds
@@ -40,12 +40,12 @@ public class `batching conditional hydration works when equals condition field i
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bar": "Foo",
                 |       "batch_hydration__bar__barIds": [
                 |         "barId1",
                 |         "barId2"
                 |       ],
-                |       "batch_hydration__bar__type": null
+                |       "batch_hydration__bar__type": null,
+                |       "__typename__batch_hydration__bar": "Foo"
                 |     }
                 |   }
                 | }

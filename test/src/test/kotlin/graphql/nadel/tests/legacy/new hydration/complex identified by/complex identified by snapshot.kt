@@ -24,7 +24,7 @@ public class `complex identified by snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | query {
+                | {
                 |   issues {
                 |     __typename__batch_hydration__author: __typename
                 |     batch_hydration__author__authorId: authorId {
@@ -43,60 +43,60 @@ public class `complex identified by snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
+                |         "id": "ISSUE-1",
                 |         "batch_hydration__author__authorId": {
                 |           "userId": "USER-1",
                 |           "site": "hello"
                 |         },
-                |         "id": "ISSUE-1"
+                |         "__typename__batch_hydration__author": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
+                |         "id": "ISSUE-2",
                 |         "batch_hydration__author__authorId": {
                 |           "userId": "USER-3",
                 |           "site": "hello"
                 |         },
-                |         "id": "ISSUE-2"
+                |         "__typename__batch_hydration__author": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
+                |         "id": "ISSUE-3",
                 |         "batch_hydration__author__authorId": {
                 |           "userId": "USER-2",
                 |           "site": "jdog"
                 |         },
-                |         "id": "ISSUE-3"
+                |         "__typename__batch_hydration__author": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
+                |         "id": "ISSUE-4",
                 |         "batch_hydration__author__authorId": {
                 |           "userId": "USER-4",
                 |           "site": "hello"
                 |         },
-                |         "id": "ISSUE-4"
+                |         "__typename__batch_hydration__author": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
+                |         "id": "ISSUE-5",
                 |         "batch_hydration__author__authorId": {
                 |           "userId": "USER-5",
                 |           "site": "hello"
                 |         },
-                |         "id": "ISSUE-5"
+                |         "__typename__batch_hydration__author": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
+                |         "id": "ISSUE-6",
                 |         "batch_hydration__author__authorId": {
                 |           "userId": "USER-2",
                 |           "site": "jdog"
                 |         },
-                |         "id": "ISSUE-6"
+                |         "__typename__batch_hydration__author": "Issue"
                 |       },
                 |       {
-                |         "__typename__batch_hydration__author": "Issue",
+                |         "id": "ISSUE-7",
                 |         "batch_hydration__author__authorId": {
                 |           "userId": "USER-2",
                 |           "site": "hello"
                 |         },
-                |         "id": "ISSUE-7"
+                |         "__typename__batch_hydration__author": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -108,11 +108,11 @@ public class `complex identified by snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
-                |   users(id: [{site: "hello", userId: "USER-1"}, {site: "hello", userId: "USER-3"}, {site: "jdog", userId: "USER-2"}, {site: "hello", userId: "USER-4"}]) {
+                | {
+                |   users(id: [{site : "hello", userId : "USER-1"}, {site : "hello", userId : "USER-3"}, {site : "jdog", userId : "USER-2"}, {site : "hello", userId : "USER-4"}]) {
                 |     id
-                |     name
                 |     batch_hydration__author__id: id
+                |     name
                 |     batch_hydration__author__siteId: siteId
                 |   }
                 | }
@@ -156,11 +156,11 @@ public class `complex identified by snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
-                |   users(id: [{site: "hello", userId: "USER-5"}, {site: "hello", userId: "USER-2"}]) {
+                | {
+                |   users(id: [{site : "hello", userId : "USER-5"}, {site : "hello", userId : "USER-2"}]) {
                 |     id
-                |     name
                 |     batch_hydration__author__id: id
+                |     name
                 |     batch_hydration__author__siteId: siteId
                 |   }
                 | }

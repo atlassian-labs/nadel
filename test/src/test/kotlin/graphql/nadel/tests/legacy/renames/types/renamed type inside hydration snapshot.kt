@@ -24,7 +24,7 @@ public class `renamed type inside hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | query {
+                | {
                 |   issueById(id: "issue-2") {
                 |     details {
                 |       __typename
@@ -52,7 +52,7 @@ public class `renamed type inside hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | query {
+                | {
                 |   me {
                 |     __typename__hydration__issue: __typename
                 |     hydration__issue__issueId: issueId
@@ -64,8 +64,8 @@ public class `renamed type inside hydration snapshot` : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "me": {
-                |       "__typename__hydration__issue": "User",
-                |       "hydration__issue__issueId": "issue-2"
+                |       "hydration__issue__issueId": "issue-2",
+                |       "__typename__hydration__issue": "User"
                 |     }
                 |   }
                 | }

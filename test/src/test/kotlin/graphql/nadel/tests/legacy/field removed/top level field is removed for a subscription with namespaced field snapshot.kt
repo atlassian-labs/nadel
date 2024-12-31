@@ -27,9 +27,6 @@ public class `top level field is removed for a subscription with namespaced fiel
     /**
      * ```json
      * {
-     *   "data": {
-     *     "commentsApi": null
-     *   },
      *   "errors": [
      *     {
      *       "message": "field `CommentsApi.onCommentUpdated` has been removed by
@@ -39,16 +36,16 @@ public class `top level field is removed for a subscription with namespaced fiel
      *         "classification": "DataFetchingException"
      *       }
      *     }
-     *   ]
+     *   ],
+     *   "data": {
+     *     "commentsApi": null
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "commentsApi": null
-            |   },
             |   "errors": [
             |     {
             |       "message": "field `CommentsApi.onCommentUpdated` has been removed by RemoveFieldTestTransform",
@@ -57,7 +54,10 @@ public class `top level field is removed for a subscription with namespaced fiel
             |         "classification": "DataFetchingException"
             |       }
             |     }
-            |   ]
+            |   ],
+            |   "data": {
+            |     "commentsApi": null
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
