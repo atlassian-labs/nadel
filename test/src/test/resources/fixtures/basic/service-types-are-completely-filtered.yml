@@ -128,9 +128,11 @@ serviceCalls:
       {
         "data": {
           "test": {
-            "extensions": {
-              "__typename__type_filter__statusCode": "GenericQueryErrorExtension"
-            }
+            "extensions": [
+              {
+                "__typename__type_filter__statusCode": "GenericQueryErrorExtension"
+              }
+            ]
           }
         },
         "extensions": {}

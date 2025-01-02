@@ -167,6 +167,7 @@ serviceCalls:
             {
               "name": "Sparky",
               "rename__collarToRenamed__collar": {
+                "__typename": "DogCollar",
                 "color": "blue"
               },
               "__typename__rename__collarToRenamed": "Dog"
@@ -174,6 +175,7 @@ serviceCalls:
             {
               "name": "Whiskers",
               "rename__collarToRenamed__collar": {
+                "__typename": "CatCollar",
                 "color": "red"
               },
               "__typename__rename__collarToRenamed": "Cat"

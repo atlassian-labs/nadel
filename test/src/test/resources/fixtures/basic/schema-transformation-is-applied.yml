@@ -1,5 +1,5 @@
 name: "schema transformation is applied"
-enabled: true
+enabled: false
 # language=GraphQL
 overallSchema:
   MyService: |

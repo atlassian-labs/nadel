@@ -31,14 +31,7 @@ query: |-
     }
   }
 variables: { }
-serviceCalls:
-  - serviceName: "RepoService"
-    request:
-      # language=GraphQL
-      query: ""
-      variables: { }
-    # language=JSON
-    response: ""
+serviceCalls: [ ]
 # language=JSON
 response: null
 exception:

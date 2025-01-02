@@ -1,5 +1,6 @@
 package graphql.nadel.tests.next
 
+import com.squareup.kotlinpoet.asClassName
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.execution.DataFetcherExceptionHandler
@@ -12,6 +13,7 @@ import graphql.execution.instrumentation.parameters.InstrumentationExecutionPara
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.language.AstPrinter
+import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
@@ -284,7 +286,7 @@ abstract class NadelIntegrationTest(
      */
     private val _testSnapshot = lazy {
         try {
-            Class.forName(this::class.qualifiedName + "Snapshot")
+            Class.forName(getSnapshotClassName(this::class.asClassName()).canonicalName)
                 .getDeclaredConstructor()
                 .newInstance() as TestSnapshot
         } catch (e: ClassNotFoundException) {
@@ -301,7 +303,11 @@ abstract class NadelIntegrationTest(
 
     private fun assertServiceCalls(testSnapshot: TestSnapshot) {
         fun getCanonicalQuery(query: String): String {
-            return AstPrinter.printAstCompact(Parser().parseDocument(query))
+            return AstPrinter.printAstCompact(
+                AstSorter().sort(
+                    Parser().parseDocument(query),
+                ),
+            )
         }
 
         fun isDelayedResultsEqual(

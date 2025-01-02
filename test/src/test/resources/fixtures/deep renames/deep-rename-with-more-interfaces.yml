@@ -98,9 +98,11 @@ serviceCalls:
         "data": {
           "names": [
             {
+              "__typename": "Issue",
               "name": "GQLGW-001"
             },
             {
+              "__typename": "Issue",
               "name": "GQLGW-1102"
             },
             {
@@ -118,6 +120,7 @@ serviceCalls:
               }
             },
             {
+              "__typename": "Edible",
               "name": "Spaghetti"
             }
           ]
