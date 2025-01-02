@@ -86,8 +86,7 @@ class `batch polymorphic hydrations are executed in parallel` : NadelLegacyInteg
                             listOf(
                                 People_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
                                 People_Human(
-                                    id =
-                                    "HUMAN-1",
+                                    id = "HUMAN-1",
                                     name = "John Doe",
                                 ),
                             )

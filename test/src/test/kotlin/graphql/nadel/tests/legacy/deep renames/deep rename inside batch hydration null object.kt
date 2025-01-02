@@ -42,16 +42,13 @@ class `deep rename inside batch hydration null object` : NadelLegacyIntegrationT
                         if (env.getArgument<Any?>("id") == listOf("issue-1", "issue-2", "issue-3")) {
                             listOf(
                                 IssueService_Issue(
-                                    detail =
-                                    IssueService_IssueDetails(
-                                        detailName =
-                                        "Memes are the DNA of the soul",
+                                    detail = IssueService_IssueDetails(
+                                        detailName = "Memes are the DNA of the soul",
                                     ),
                                     id = "issue-1",
                                 ),
                                 IssueService_Issue(
-                                    detail =
-                                    IssueService_IssueDetails(detailName = "Names are arbitrary"),
+                                    detail = IssueService_IssueDetails(detailName = "Names are arbitrary"),
                                     id = "issue-3",
                                 ),
                                 null,

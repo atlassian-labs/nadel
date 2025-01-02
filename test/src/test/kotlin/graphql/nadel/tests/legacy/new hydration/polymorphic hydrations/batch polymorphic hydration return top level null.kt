@@ -83,8 +83,7 @@ public class `batch polymorphic hydration return top level null` : NadelLegacyIn
                         if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
                             listOf(
                                 People_Human(id = "HUMAN-0", name = "Fanny Longbottom"), People_Human(
-                                    id =
-                                    "HUMAN-1", name = "John Doe"
+                                    id = "HUMAN-1", name = "John Doe"
                                 )
                             )
                         } else {

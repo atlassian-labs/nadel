@@ -123,8 +123,7 @@ class `solitary polymorphic hydration when hook returns null` : NadelLegacyInteg
                             Foo_Foo(dataId = "NULL-0", id = "FOO-0"),
                             Foo_Foo(
                                 dataId = "HUMAN-0",
-                                id =
-                                "FOO-1",
+                                id = "FOO-1",
                             ),
                         )
                     }

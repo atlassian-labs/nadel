@@ -81,19 +81,15 @@ class `synthetic hydration call over itself within renamed types` : NadelLegacyI
                 wiring.type("Query") { type ->
                     type.dataFetcher("tests") { env ->
                         Testing_TestQuery(
-                            testing =
-                            Testing_Testing(
-                                movies =
-                                listOf(
+                            testing = Testing_Testing(
+                                movies = listOf(
                                     Testing_Movie(
-                                        characterIds =
-                                        listOf("C1", "C2"),
+                                        characterIds = listOf("C1", "C2"),
                                         id = "M1",
                                         name = "Movie 1",
                                     ),
                                     Testing_Movie(
-                                        characterIds =
-                                        listOf("C1", "C2", "C3"),
+                                        characterIds = listOf("C1", "C2", "C3"),
                                         id = "M2",
                                         name = "Movie 2",
                                     ),

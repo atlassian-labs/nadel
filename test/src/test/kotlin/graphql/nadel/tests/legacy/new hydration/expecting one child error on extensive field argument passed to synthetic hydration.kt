@@ -17,8 +17,7 @@ class `expecting one child error on extensive field argument passed to synthetic
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "TestBoard",
                 overallSchema = """
@@ -67,27 +66,20 @@ class `expecting one child error on extensive field argument passed to synthetic
                             if (env.getArgument<Any?>("id") == "1") {
                                 TestBoard_Board(
                                     id = "1",
-                                    issueChildren =
-                                    listOf(
+                                    issueChildren = listOf(
                                         TestBoard_Card(
-                                            issue =
-                                            TestBoard_Issue(assignee = TestBoard_TestUser(accountId = "1")),
+                                            issue = TestBoard_Issue(assignee = TestBoard_TestUser(accountId = "1")),
                                         ),
                                         TestBoard_Card(
-                                            issue =
-                                            TestBoard_Issue(
-                                                assignee =
-                                                TestBoard_TestUser(
-                                                    accountId =
-                                                    "2",
+                                            issue = TestBoard_Issue(
+                                                assignee = TestBoard_TestUser(
+                                                    accountId = "2",
                                                 ),
                                             ),
                                         ),
                                         TestBoard_Card(
-                                            issue =
-                                            TestBoard_Issue(
-                                                assignee =
-                                                TestBoard_TestUser(accountId = "3"),
+                                            issue = TestBoard_Issue(
+                                                assignee = TestBoard_TestUser(accountId = "3"),
                                             ),
                                         ),
                                     ),

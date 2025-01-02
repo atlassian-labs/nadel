@@ -16,8 +16,7 @@ class `batching conditional hydration accepts true condition after a false condi
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "service2",
                 overallSchema = """

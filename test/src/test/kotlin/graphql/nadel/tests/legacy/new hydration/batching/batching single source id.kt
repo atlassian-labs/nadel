@@ -64,8 +64,7 @@ class `batching single source id` : NadelLegacyIntegrationTest(
                         listOf(
                             Activity_Activity(contentId = "issue/4000"),
                             Activity_Activity(
-                                contentId =
-                                "issue/8080",
+                                contentId = "issue/8080",
                             ),
                             Activity_Activity(contentId = "issue/7496"),
                             Activity_Activity(contentId = "comment/1234"),

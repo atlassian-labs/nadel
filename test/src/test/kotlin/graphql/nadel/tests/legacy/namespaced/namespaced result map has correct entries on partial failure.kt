@@ -88,14 +88,11 @@ class `namespaced result map has correct entries on partial failure` : NadelLega
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error",
+                                            "message" to "Error",
                                             "locations" to emptyList<Any?>(),
-                                            "extensions" to
-                                                mapOf(
-                                                    "classification"
-                                                        to "DataFetchingException",
-                                                ),
+                                            "extensions" to mapOf(
+                                                "classification" to "DataFetchingException",
+                                            ),
                                         ),
                                     ),
                                 ),

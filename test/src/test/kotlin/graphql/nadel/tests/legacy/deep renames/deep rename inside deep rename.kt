@@ -48,12 +48,9 @@ class `deep rename inside deep rename` : NadelLegacyIntegrationTest(
                 wiring.type("Query") { type ->
                     type.dataFetcher("first") { env ->
                         Issues_Issue(
-                            details =
-                            Issues_IssueDetail(
-                                extras =
-                                Issues_IssueExtra(
-                                    owner =
-                                    Issues_User(name = "Franklin"),
+                            details = Issues_IssueDetail(
+                                extras = Issues_IssueExtra(
+                                    owner = Issues_User(name = "Franklin"),
                                 ),
                             ),
                         )

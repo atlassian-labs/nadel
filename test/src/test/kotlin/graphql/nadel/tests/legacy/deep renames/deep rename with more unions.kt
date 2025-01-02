@@ -79,8 +79,7 @@ class `deep rename with more unions` : NadelLegacyIntegrationTest(
                             Issues_Troll(firstEat = Issues_EatLog(item = Issues_Edible(name = "My Arm"))),
                             Issues_User(details = Issues_UserDetails(firstName = "Franklin")),
                             Issues_Edible(
-                                name =
-                                "Spaghetti",
+                                name = "Spaghetti",
                             ),
                         )
                     }

@@ -40,23 +40,18 @@ class `deep rename inside batch hydration` : NadelLegacyIntegrationTest(
                 wiring.type("Query") { type ->
                     val issuesByIds = listOf(
                         IssueService_Issue(
-                            detail =
-                            IssueService_IssueDetails(
-                                detailName =
-                                "It amounts to nothing",
+                            detail = IssueService_IssueDetails(
+                                detailName = "It amounts to nothing",
                             ),
                             id = "issue-1",
                         ),
                         IssueService_Issue(
-                            detail =
-                            IssueService_IssueDetails(detailName = "Details are cool"),
+                            detail = IssueService_IssueDetails(detailName = "Details are cool"),
                             id = "issue-2",
                         ),
                         IssueService_Issue(
-                            detail =
-                            IssueService_IssueDetails(
-                                detailName =
-                                "Names are arbitrary",
+                            detail = IssueService_IssueDetails(
+                                detailName = "Names are arbitrary",
                             ),
                             id = "issue-3",
                         ),

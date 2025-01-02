@@ -49,37 +49,29 @@ class `indexed hydrating using json data as arg` : NadelLegacyIntegrationTest(
                         if (env.getArgument<Any?>("input") == mapOf("something" to true, "answer" to "42")) {
                             listOf(
                                 Service_Foo(
-                                    baz =
-                                    mapOf(
+                                    baz = mapOf(
                                         "id" to "102",
-                                        "appConfig" to
-                                            mapOf(
-                                                "status" to "active",
-                                                "bounce" to false,
-                                            ),
+                                        "appConfig" to mapOf(
+                                            "status" to "active",
+                                            "bounce" to false,
+                                        ),
                                     ),
                                 ),
                                 Service_Foo(
-                                    baz =
-                                    mapOf(
-                                        "ari" to
-                                            "ari:cloud:api-platform::thing/103",
-                                        "config" to
-                                            mapOf(
-                                                "status" to "active",
-                                                "bounce" to true,
-                                            ),
+                                    baz = mapOf(
+                                        "ari" to "ari:cloud:api-platform::thing/103",
+                                        "config" to mapOf(
+                                            "status" to "active",
+                                            "bounce" to true,
+                                        ),
                                     ),
                                 ),
                                 Service_Foo(
-                                    baz =
-                                    mapOf(
-                                        "app-config" to
-                                            mapOf(
-                                                "status" to
-                                                    "deactivated",
-                                                "bounce" to true,
-                                            ),
+                                    baz = mapOf(
+                                        "app-config" to mapOf(
+                                            "status" to "deactivated",
+                                            "bounce" to true,
+                                        ),
                                     ),
                                 ),
                             )
@@ -115,18 +107,14 @@ class `indexed hydrating using json data as arg` : NadelLegacyIntegrationTest(
                             listOf(
                                 mapOf(
                                     "id" to "102",
-                                    "appConfig" to
-                                        mapOf("status" to "active", "bounce" to false),
+                                    "appConfig" to mapOf("status" to "active", "bounce" to false),
                                 ),
                                 mapOf(
-                                    "ari" to
-                                        "ari:cloud:api-platform::thing/103",
-                                    "config" to
-                                        mapOf(
-                                            "status" to "active",
-                                            "bounce"
-                                                to true,
-                                        ),
+                                    "ari" to "ari:cloud:api-platform::thing/103",
+                                    "config" to mapOf(
+                                        "status" to "active",
+                                        "bounce" to true,
+                                    ),
                                 ),
                             )
                         ) {
@@ -134,12 +122,10 @@ class `indexed hydrating using json data as arg` : NadelLegacyIntegrationTest(
                         } else if (env.getArgument<Any?>("data") ==
                             listOf(
                                 mapOf(
-                                    "app-config" to
-                                        mapOf(
-                                            "status" to
-                                                "deactivated",
-                                            "bounce" to true,
-                                        ),
+                                    "app-config" to mapOf(
+                                        "status" to "deactivated",
+                                        "bounce" to true,
+                                    ),
                                 ),
                             )
                         ) {

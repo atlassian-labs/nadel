@@ -57,8 +57,7 @@ class `correct selection set on partially failed result` : NadelLegacyIntegratio
                 CompletableFuture.completedFuture(
                     NadelServiceExecutionResultImpl(
                         data = mutableMapOf(),
-                        errors =
-                        mutableListOf(
+                        errors = mutableListOf(
                             mutableMapOf(
                                 "message" to "Test",
                             ),

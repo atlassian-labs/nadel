@@ -87,8 +87,7 @@ class `one of the namespaced services returns error` : NadelLegacyIntegrationTes
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error on IssueSearch",
+                                            "message" to "Error on IssueSearch",
                                         ),
                                     ),
                                 ),

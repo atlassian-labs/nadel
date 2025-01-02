@@ -38,10 +38,8 @@ class `deep rename of list of list` : NadelLegacyIntegrationTest(
                     type.dataFetcher("details") { env ->
                         listOf(
                             Issues_IssueDetail(
-                                issue =
-                                Issues_Issue(
-                                    labels =
-                                    listOf(
+                                issue = Issues_Issue(
+                                    labels = listOf(
                                         listOf("label1", "label2"),
                                         listOf("label3"),
                                     ),

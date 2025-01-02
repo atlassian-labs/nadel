@@ -15,8 +15,7 @@ class `synthetic hydration call with two argument values from original field arg
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "UserService",
                 overallSchema = """

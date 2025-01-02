@@ -56,8 +56,7 @@ class `both of the namespaced services returns error` : NadelLegacyIntegrationTe
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error",
+                                            "message" to "Error",
                                         ),
                                     ),
                                 ),
@@ -99,8 +98,7 @@ class `both of the namespaced services returns error` : NadelLegacyIntegrationTe
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error",
+                                            "message" to "Error",
                                         ),
                                     ),
                                 ),

@@ -50,14 +50,12 @@ class `basic hydration with static arg object array` : NadelLegacyIntegrationTes
                             listOf(
                                 mapOf("firstName" to "first", "lastName" to "last"),
                                 mapOf(
-                                    "firstName" to
-                                        "first2",
+                                    "firstName" to "first2",
                                     "lastName" to "last2",
                                 ),
                                 mapOf(
                                     "firstName" to "first3",
-                                    "lastName" to
-                                        "last3",
+                                    "lastName" to "last3",
                                 ),
                             )
                         ) {

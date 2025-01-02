@@ -61,8 +61,7 @@ class `typename is passed on queries using dynamic resolved services` : NadelLeg
                         if (env.getArgument<Any?>("id") == "pull-request:id-123") {
                             RepoService_PullRequest(
                                 id = "pull-request:id-123",
-                                description =
-                                "this is a pull request",
+                                description = "this is a pull request",
                             )
                         } else {
                             null

@@ -78,11 +78,9 @@ class `typename is sent to owning service even when no fields are queried` : Nad
                 wiring.type("Query") { type ->
                     type.dataFetcher("issue") { env ->
                         IssueSearch_IssueQuery(
-                            search =
-                            IssueSearch_SearchResult(
+                            search = IssueSearch_SearchResult(
                                 count = 1_001,
-                                id =
-                                "search-id",
+                                id = "search-id",
                             ),
                         )
                     }

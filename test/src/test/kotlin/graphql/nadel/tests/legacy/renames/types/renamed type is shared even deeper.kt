@@ -48,13 +48,10 @@ class `renamed type is shared even deeper` : NadelLegacyIntegrationTest(
                 wiring.type("Query") { type ->
                     type.dataFetcher("elements") { env ->
                         Nextgen_ElementConnection(
-                            nodes =
-                            listOf(
+                            nodes = listOf(
                                 Nextgen_Element(
-                                    other =
-                                    Nextgen_Other(
-                                        id =
-                                        "OTHER-1",
+                                    other = Nextgen_Other(
+                                        id = "OTHER-1",
                                     ),
                                 ),
                             ),

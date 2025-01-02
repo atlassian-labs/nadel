@@ -73,8 +73,7 @@ class `batching absent source input` : NadelLegacyIntegrationTest(
                             Activity_Activity(contentId = ""),
                             Activity_Activity(contentId = "comment/9001"),
                             Activity_Activity(
-                                contentId =
-                                "issue/1234",
+                                contentId = "issue/1234",
                             ),
                         )
                     }
@@ -172,36 +171,33 @@ class `batching absent source input` : NadelLegacyIntegrationTest(
                 val query = AstPrinter.printAstCompact(AstSorter().sort(it.query))
 
                 @OptIn(ExperimentalStdlibApi::class)
-                val queryHash =
-                    MessageDigest
-                        .getInstance("SHA-1")
-                        .digest(query.toByteArray(Charsets.UTF_8))
-                        .toHexString()
+                val queryHash = MessageDigest
+                    .getInstance("SHA-1")
+                    .digest(query.toByteArray(Charsets.UTF_8))
+                    .toHexString()
 
                 assertTrue(queryHash == "c123547d3405f8b721b5ed0802570f034cfaa9a7")
 
                 CompletableFuture.completedFuture(
                     NadelServiceExecutionResultImpl(
-                        data =
-                        mutableMapOf(
-                            "activity" to
-                                mutableListOf(
-                                    mutableMapOf(
-                                        "__typename__batch_hydration__content" to "Activity",
-                                    ),
-                                    mutableMapOf(
-                                        "__typename__batch_hydration__content" to "Activity",
-                                        "batch_hydration__content__contentId" to "",
-                                    ),
-                                    mutableMapOf(
-                                        "__typename__batch_hydration__content" to "Activity",
-                                        "batch_hydration__content__contentId" to "comment/9001",
-                                    ),
-                                    mutableMapOf(
-                                        "__typename__batch_hydration__content" to "Activity",
-                                        "batch_hydration__content__contentId" to "issue/1234",
-                                    ),
+                        data = mutableMapOf(
+                            "activity" to mutableListOf(
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity",
                                 ),
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity",
+                                    "batch_hydration__content__contentId" to "",
+                                ),
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity",
+                                    "batch_hydration__content__contentId" to "comment/9001",
+                                ),
+                                mutableMapOf(
+                                    "__typename__batch_hydration__content" to "Activity",
+                                    "batch_hydration__content__contentId" to "issue/1234",
+                                ),
+                            ),
                         ),
                     ),
                 )

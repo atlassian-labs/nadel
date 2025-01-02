@@ -104,8 +104,7 @@ class `hydration call with fragments in the hydrated part` : NadelLegacyIntegrat
                     type.dataFetcher("issues") { env ->
                         listOf(
                             Issues_Issue(
-                                authorDetails =
-                                listOf(
+                                authorDetails = listOf(
                                     Issues_AuthorDetail(authorId = "USER-1"),
                                     Issues_AuthorDetail(authorId = "USER-2"),
                                 ),

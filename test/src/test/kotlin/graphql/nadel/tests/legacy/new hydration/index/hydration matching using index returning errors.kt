@@ -76,8 +76,7 @@ class `hydration matching using index returning errors` : NadelLegacyIntegration
                         listOf(
                             Issues_Issue(authorIds = listOf("1"), id = "ISSUE-1"),
                             Issues_Issue(
-                                authorIds =
-                                listOf("1", "2"),
+                                authorIds = listOf("1", "2"),
                                 id = "ISSUE-2",
                             ),
                         )

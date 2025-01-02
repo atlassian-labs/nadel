@@ -15,8 +15,7 @@ class `typename is resolved even when there are multiple services declaring name
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "Issues",
                 overallSchema = """

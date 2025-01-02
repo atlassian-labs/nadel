@@ -81,8 +81,7 @@ class `hydration matching using index with null input nodes` : NadelLegacyIntegr
                         listOf(
                             Issues_Issue(authorIds = listOf("1"), id = "ISSUE-1"),
                             Issues_Issue(
-                                authorIds =
-                                listOf(null, "2"),
+                                authorIds = listOf(null, "2"),
                                 id = "ISSUE-2",
                             ),
                         )

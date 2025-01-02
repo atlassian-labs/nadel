@@ -14,8 +14,7 @@ class `some renamed object types have fields in the result are backed a batch hy
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "activity",
                 overallSchema = """

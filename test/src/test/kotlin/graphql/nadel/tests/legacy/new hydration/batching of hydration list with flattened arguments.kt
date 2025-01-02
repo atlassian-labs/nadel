@@ -85,21 +85,18 @@ class `batching of hydration list with flattened arguments` : NadelLegacyIntegra
                     type.dataFetcher("issues") { env ->
                         listOf(
                             Issues_Issue(
-                                authors =
-                                listOf(
+                                authors = listOf(
                                     Issues_IssueUser(authorId = "USER-1"),
                                     Issues_IssueUser(authorId = "USER-2"),
                                 ),
                                 id = "ISSUE-1",
                             ),
                             Issues_Issue(
-                                authors =
-                                listOf(Issues_IssueUser(authorId = "USER-3")),
+                                authors = listOf(Issues_IssueUser(authorId = "USER-3")),
                                 id = "ISSUE-2",
                             ),
                             Issues_Issue(
-                                authors =
-                                listOf(
+                                authors = listOf(
                                     Issues_IssueUser(authorId = "USER-2"),
                                     Issues_IssueUser(authorId = "USER-4"),
                                     Issues_IssueUser(authorId = "USER-5"),

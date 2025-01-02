@@ -54,10 +54,8 @@ class `renamed list inside renamed list` : NadelLegacyIntegrationTest(
                     type.dataFetcher("issue") { env ->
                         listOf(
                             IssuesService_Issue(
-                                ticket =
-                                IssuesService_Ticket(
-                                    ticketTypes =
-                                    listOf(IssuesService_TicketType(date = "20/11/2020", id = "1")),
+                                ticket = IssuesService_Ticket(
+                                    ticketTypes = listOf(IssuesService_TicketType(date = "20/11/2020", id = "1")),
                                 ),
                             ),
                         )

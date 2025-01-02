@@ -56,8 +56,7 @@ class `one of the namespaced services returns error reversed` : NadelLegacyInteg
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error on IssueSearch",
+                                            "message" to "Error on IssueSearch",
                                         ),
                                     ),
                                 ),

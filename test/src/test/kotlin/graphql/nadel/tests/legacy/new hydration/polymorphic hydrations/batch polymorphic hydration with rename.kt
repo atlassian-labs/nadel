@@ -86,8 +86,7 @@ class `batch polymorphic hydration with rename` : NadelLegacyIntegrationTest(
                             listOf(
                                 People_Person(id = "HUMAN-0", name = "Fanny Longbottom"),
                                 People_Person(
-                                    id =
-                                    "HUMAN-1",
+                                    id = "HUMAN-1",
                                     name = "John Doe",
                                 ),
                             )

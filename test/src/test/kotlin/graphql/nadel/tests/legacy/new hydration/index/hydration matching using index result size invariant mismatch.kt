@@ -80,8 +80,7 @@ class `hydration matching using index result size invariant mismatch` : NadelLeg
                         listOf(
                             Issues_Issue(authorIds = listOf("1"), id = "ISSUE-1"),
                             Issues_Issue(
-                                authorIds =
-                                listOf("1", "2"),
+                                authorIds = listOf("1", "2"),
                                 id = "ISSUE-2",
                             ),
                         )
@@ -101,7 +100,6 @@ class `hydration matching using index result size invariant mismatch` : NadelLeg
         val id: String? = null,
     )
 
-    override fun assertFailure(e: Exception): Boolean =
-        e.message ==
-            "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments"
+    override fun assertFailure(e: Exception): Boolean = e.message ==
+        "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments"
 }

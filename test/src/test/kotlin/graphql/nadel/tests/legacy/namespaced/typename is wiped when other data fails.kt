@@ -54,8 +54,7 @@ class `typename is wiped when other data fails` : NadelLegacyIntegrationTest(
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error",
+                                            "message" to "Error",
                                         ),
                                     ),
                                 ),

@@ -54,8 +54,7 @@ class `complex identified by with some null source ids` : NadelLegacyIntegration
                                 mapOf("userId" to "USER-3", "site" to "hello"),
                                 mapOf(
                                     "userId" to "USER-2",
-                                    "site" to
-                                        "jdog",
+                                    "site" to "jdog",
                                 ),
                             )
                         ) {
@@ -68,8 +67,7 @@ class `complex identified by with some null source ids` : NadelLegacyIntegration
                             listOf(
                                 mapOf(
                                     "userId" to "USER-5",
-                                    "site" to
-                                        "hello",
+                                    "site" to "hello",
                                 ),
                             )
                         ) {
@@ -119,36 +117,30 @@ class `complex identified by with some null source ids` : NadelLegacyIntegration
                     type.dataFetcher("issues") { env ->
                         listOf(
                             Issues_Issue(
-                                authorIds =
-                                listOf(
+                                authorIds = listOf(
                                     null,
                                     Issues_UserRef(
                                         userId = "USER-2",
-                                        site =
-                                        "hello",
+                                        site = "hello",
                                     ),
                                 ),
                                 id = "ISSUE-1",
                             ),
                             Issues_Issue(
-                                authorIds =
-                                listOf(
+                                authorIds = listOf(
                                     Issues_UserRef(
-                                        userId =
-                                        "USER-3",
+                                        userId = "USER-3",
                                         site = "hello",
                                     ),
                                 ),
                                 id = "ISSUE-2",
                             ),
                             Issues_Issue(
-                                authorIds =
-                                listOf(
+                                authorIds = listOf(
                                     Issues_UserRef(userId = "USER-2", site = "jdog"),
                                     null,
                                     Issues_UserRef(
-                                        userId =
-                                        "USER-5",
+                                        userId = "USER-5",
                                         site = "hello",
                                     ),
                                 ),

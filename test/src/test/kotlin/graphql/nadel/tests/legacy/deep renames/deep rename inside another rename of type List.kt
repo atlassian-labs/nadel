@@ -61,10 +61,8 @@ class `deep rename inside another rename of type List` : NadelLegacyIntegrationT
                 wiring.type("Query") { type ->
                     type.dataFetcher("boardScope") { env ->
                         Issues_BoardScope(
-                            board =
-                            Issues_Board(
-                                issueChildren =
-                                listOf(
+                            board = Issues_Board(
+                                issueChildren = listOf(
                                     Issues_Card(
                                         id = "1234",
                                         issue = Issues_Issue(key = "abc", summary = "Summary 1"),

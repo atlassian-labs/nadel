@@ -15,8 +15,7 @@ class `abort beginExecute in CF within instrumentation still calls enhancing ins
             }
         """.trimIndent(),
         variables = mapOf("var1" to "val1"),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "MyService",
                 overallSchema = """

@@ -87,8 +87,7 @@ class `top level field is null in batched synthetic hydration` : NadelLegacyInte
                             Service1_Issue(authorIds = listOf("USER-1", "USER-2"), id = "ISSUE-1"),
                             Service1_Issue(authorIds = listOf("USER-3"), id = "ISSUE-2"),
                             Service1_Issue(
-                                authorIds =
-                                listOf("USER-2", "USER-4", "USER-5"),
+                                authorIds = listOf("USER-2", "USER-4", "USER-5"),
                                 id = "ISSUE-3",
                             ),
                         )

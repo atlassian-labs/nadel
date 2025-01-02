@@ -40,10 +40,8 @@ class `deep rename inside list` : NadelLegacyIntegrationTest(
                             Issues_Issue(details = Issues_IssueDetail(key = "GQLGW-1012")),
                             Issues_Issue(details = null),
                             Issues_Issue(
-                                details =
-                                Issues_IssueDetail(
-                                    key =
-                                    "Fix the bug",
+                                details = Issues_IssueDetail(
+                                    key = "Fix the bug",
                                 ),
                             ),
                         )

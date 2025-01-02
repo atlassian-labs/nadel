@@ -55,8 +55,7 @@ class `batch polymorphic hydration return top level null and error` : NadelLegac
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "something went wrong"
+                                            "message" to "something went wrong"
                                         )
                                     )
                                 )
@@ -94,8 +93,7 @@ class `batch polymorphic hydration return top level null and error` : NadelLegac
                         if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
                             listOf(
                                 People_Human(id = "HUMAN-0", name = "Fanny Longbottom"), People_Human(
-                                    id =
-                                    "HUMAN-1", name = "John Doe"
+                                    id = "HUMAN-1", name = "John Doe"
                                 )
                             )
                         } else {

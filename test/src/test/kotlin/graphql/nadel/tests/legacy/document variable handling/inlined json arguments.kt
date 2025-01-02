@@ -36,20 +36,17 @@ class `inlined json arguments` : NadelLegacyIntegrationTest(
                     type.dataFetcher("hello") { env ->
                         if (env.getArgument<Any?>("arg") ==
                             mapOf(
-                                "payload" to
-                                    mapOf(
-                                        "name" to "Bobert",
-                                        "age" to
-                                            "23",
-                                    ),
+                                "payload" to mapOf(
+                                    "name" to "Bobert",
+                                    "age" to "23",
+                                ),
                             ) &&
                             env.getArgument<Any?>("arg1") ==
                             mapOf(
-                                "interests" to
-                                    listOf(
-                                        "photography",
-                                        "basketball",
-                                    ),
+                                "interests" to listOf(
+                                    "photography",
+                                    "basketball",
+                                ),
                             )
                         ) {
                             "world"

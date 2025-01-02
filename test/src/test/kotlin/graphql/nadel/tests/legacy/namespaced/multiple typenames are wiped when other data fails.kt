@@ -56,8 +56,7 @@ class `multiple typenames are wiped when other data fails` : NadelLegacyIntegrat
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error",
+                                            "message" to "Error",
                                         ),
                                     ),
                                 ),

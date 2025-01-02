@@ -52,22 +52,22 @@ class `deep rename of an object` : NadelLegacyIntegrationTest(
                     type.dataFetcher("issues") { env ->
                         listOf(
                             Issues_Issue(
-                                authorDetails =
-                                Issues_AuthorDetail(
-                                    name =
-                                    Issues_Name(
-                                        fName =
-                                        "George",
+                                authorDetails = Issues_AuthorDetail(
+                                    name = Issues_Name(
+                                        fName = "George",
                                         lName = "Smith",
                                     ),
                                 ),
                                 id = "ISSUE-1",
                             ),
                             Issues_Issue(
-                                authorDetails =
-                                Issues_AuthorDetail(name = Issues_Name(fName = "Elizabeth", lName = "Windsor")),
-                                id =
-                                "ISSUE-2",
+                                authorDetails = Issues_AuthorDetail(
+                                    name = Issues_Name(
+                                        fName = "Elizabeth",
+                                        lName = "Windsor"
+                                    )
+                                ),
+                                id = "ISSUE-2",
                             ),
                         )
                     }

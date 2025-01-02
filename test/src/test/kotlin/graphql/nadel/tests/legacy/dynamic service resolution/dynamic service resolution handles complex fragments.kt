@@ -84,14 +84,11 @@ class `dynamic service resolution handles complex fragments` : NadelLegacyIntegr
                         if (env.getArgument<Any?>("id") == "pull-request:id-123") {
                             RepoService_PullRequest(
                                 id = "pull-request:id-123",
-                                author =
-                                RepoService_User(
-                                    avatarUrl =
-                                    "https://avatar.acme.com/user-123",
+                                author = RepoService_User(
+                                    avatarUrl = "https://avatar.acme.com/user-123",
                                     name = "I'm an User",
                                 ),
-                                description =
-                                "this is a pull request",
+                                description = "this is a pull request",
                             )
                         } else {
                             null

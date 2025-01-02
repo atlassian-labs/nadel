@@ -64,12 +64,10 @@ class `subscription can be executed` : NadelLegacyIntegrationTest(
         ServiceExecution {
             CompletableFuture.completedFuture(
                 NadelServiceExecutionResultImpl(
-                    data =
-                    mutableMapOf(
-                        "onWorldUpdate" to
-                            mutableMapOf(
-                                "id" to AstPrinter.printAstCompact(it.query),
-                            ),
+                    data = mutableMapOf(
+                        "onWorldUpdate" to mutableMapOf(
+                            "id" to AstPrinter.printAstCompact(it.query),
+                        ),
                     ),
                 ),
             )

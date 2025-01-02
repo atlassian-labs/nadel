@@ -53,23 +53,17 @@ class `deep rename nested inside renamed type` : NadelLegacyIntegrationTest(
                     type.dataFetcher("first") { env ->
                         if (env.field.resultKey == "first") {
                             Issues_Issue(
-                                user =
-                                Issues_User(
-                                    details =
-                                    Issues_UserDetails(
-                                        firstName =
-                                        "name-from-details",
+                                user = Issues_User(
+                                    details = Issues_UserDetails(
+                                        firstName = "name-from-details",
                                     ),
                                 ),
                             )
                         } else if (env.field.resultKey == "second") {
                             Issues_Issue(
-                                user =
-                                Issues_User(
-                                    details =
-                                    Issues_UserDetails(
-                                        firstName =
-                                        "name-from-details-2",
+                                user = Issues_User(
+                                    details = Issues_UserDetails(
+                                        firstName = "name-from-details-2",
                                     ),
                                 ),
                             )

@@ -56,8 +56,7 @@ class `hydration matching using index one batch returns errors` : NadelLegacyInt
                                     listOf(
                                         toGraphQLError(
                                             mapOf(
-                                                "message"
-                                                    to "Fail",
+                                                "message" to "Fail",
                                             ),
                                         ),
                                     ),
@@ -102,14 +101,12 @@ class `hydration matching using index one batch returns errors` : NadelLegacyInt
                         listOf(
                             Issues_Issue(authorIds = listOf("1"), id = "ISSUE-1"),
                             Issues_Issue(
-                                authorIds =
-                                listOf("1", "2"),
+                                authorIds = listOf("1", "2"),
                                 id = "ISSUE-2",
                             ),
                             Issues_Issue(
                                 authorIds = listOf("2", "4"),
-                                id =
-                                "ISSUE-3",
+                                id = "ISSUE-3",
                             ),
                         )
                     }

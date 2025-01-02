@@ -112,8 +112,7 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                         .dataFetcher("activity") { env ->
                             listOf(
                                 Monolith_Activity(
-                                    contentIds =
-                                    listOf(
+                                    contentIds = listOf(
                                         "issue/4000",
                                         "comment/5000",
                                         "comment/6000",

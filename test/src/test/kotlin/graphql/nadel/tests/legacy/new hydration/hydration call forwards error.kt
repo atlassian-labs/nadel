@@ -47,14 +47,12 @@ class `hydration call forwards error` : NadelLegacyIntegrationTest(
                                     listOf(
                                         toGraphQLError(
                                             mapOf(
-                                                "message"
-                                                    to "Some error occurred",
+                                                "message" to "Some error occurred",
                                             ),
                                         ),
                                         toGraphQLError(
                                             mapOf(
-                                                "message" to
-                                                    "Some error with extension occurred",
+                                                "message" to "Some error with extension occurred",
                                                 "path" to listOf("barById", "name"),
                                                 "extensions" to mapOf("classification" to "SomeCustomError"),
                                             ),

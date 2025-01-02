@@ -57,8 +57,7 @@ class `typename is kept when data is partially returned` : NadelLegacyIntegratio
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error",
+                                            "message" to "Error",
                                         ),
                                     ),
                                 ),

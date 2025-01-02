@@ -65,8 +65,7 @@ class `some renamed object types have fields in the result are backed a hydratio
                             Activity_SingleActivity(user = Activity_User(name = "John")),
                             Activity_SomethingLame(userId = "user-100"),
                             Activity_SomethingLame(
-                                userId =
-                                "user-20",
+                                userId = "user-20",
                             ),
                             Activity_SingleActivity(user = Activity_User(name = "Mayor")),
                         )

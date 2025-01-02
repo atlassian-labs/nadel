@@ -46,14 +46,12 @@ class `hydrating using json data as arg` : NadelLegacyIntegrationTest(
                     type.dataFetcher("foo") { env ->
                         if (env.getArgument<Any?>("input") == mapOf("something" to true, "answer" to "42")) {
                             Service_Foo(
-                                baz =
-                                mapOf(
+                                baz = mapOf(
                                     "id" to "102",
-                                    "appConfig" to
-                                        mapOf(
-                                            "status" to "active",
-                                            "bounce" to false,
-                                        ),
+                                    "appConfig" to mapOf(
+                                        "status" to "active",
+                                        "bounce" to false,
+                                    ),
                                 ),
                             )
                         } else {
@@ -87,12 +85,10 @@ class `hydrating using json data as arg` : NadelLegacyIntegrationTest(
                         if (env.getArgument<Any?>("data") ==
                             mapOf(
                                 "id" to "102",
-                                "appConfig" to
-                                    mapOf(
-                                        "status" to
-                                            "active",
-                                        "bounce" to false,
-                                    ),
+                                "appConfig" to mapOf(
+                                    "status" to "active",
+                                    "bounce" to false,
+                                ),
                             )
                         ) {
                             Baz_Foo(id = "10000")

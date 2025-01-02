@@ -9,14 +9,11 @@ class `inlined all arguments with mixed literals and variables` : NadelLegacyInt
           hello(arg: { age: 50, inputWithJson: ${'$'}varX } )
         }
     """.trimIndent(),
-    variables =
-    mapOf(
-        "varX" to
-            mapOf(
-                "names" to listOf("Bobba", "Fett"),
-                "payload"
-                    to mapOf("name" to "Bobert", "age" to "23"),
-            ),
+    variables = mapOf(
+        "varX" to mapOf(
+            "names" to listOf("Bobba", "Fett"),
+            "payload" to mapOf("name" to "Bobert", "age" to "23"),
+        ),
     ),
     services = listOf(
         Service(
@@ -55,12 +52,10 @@ class `inlined all arguments with mixed literals and variables` : NadelLegacyInt
                         if (env.getArgument<Any?>("arg") ==
                             mapOf(
                                 "age" to 50,
-                                "inputWithJson" to
-                                    mapOf(
-                                        "names" to
-                                            listOf("Bobba", "Fett"),
-                                        "payload" to mapOf("name" to "Bobert", "age" to "23"),
-                                    ),
+                                "inputWithJson" to mapOf(
+                                    "names" to listOf("Bobba", "Fett"),
+                                    "payload" to mapOf("name" to "Bobert", "age" to "23"),
+                                ),
                             )
                         ) {
                             "world"

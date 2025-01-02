@@ -12,8 +12,7 @@ class `exceptions in service execution call result in graphql errors and call on
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "MyService",
                 overallSchema = """

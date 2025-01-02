@@ -78,25 +78,18 @@ class `ari argument in renamed object input in hydration` : NadelLegacyIntegrati
                         .dataFetcher("issue") { env ->
                             if (env.getArgument<Any?>("id") == "ari:cloud:jira-software::issue/123") {
                                 MyService_Issue(
-                                    relatedIds =
-                                    listOf(
+                                    relatedIds = listOf(
                                         MyService_RelatedIssue(
-                                            projectId =
-                                            "ari:cloud:jira-software::project/100",
-                                            issueId =
-                                            "ari:cloud:jira-software::issue/1",
+                                            projectId = "ari:cloud:jira-software::project/100",
+                                            issueId = "ari:cloud:jira-software::issue/1",
                                         ),
                                         MyService_RelatedIssue(
-                                            projectId =
-                                            "ari:cloud:jira-software::project/100",
-                                            issueId =
-                                            "ari:cloud:jira-software::issue/2",
+                                            projectId = "ari:cloud:jira-software::project/100",
+                                            issueId = "ari:cloud:jira-software::issue/2",
                                         ),
                                         MyService_RelatedIssue(
-                                            projectId =
-                                            "ari:cloud:jira-software::project/101",
-                                            issueId =
-                                            "ari:cloud:jira-software::issue/3",
+                                            projectId = "ari:cloud:jira-software::project/101",
+                                            issueId = "ari:cloud:jira-software::issue/3",
                                         ),
                                     ),
                                 )
@@ -109,10 +102,12 @@ class `ari argument in renamed object input in hydration` : NadelLegacyIntegrati
                                 listOf(
                                     mapOf(
                                         "projectId" to "100",
-                                        "issueId" to
-                                            "1",
+                                        "issueId" to "1",
                                     ),
-                                    mapOf("projectId" to "100", "issueId" to "2"),
+                                    mapOf(
+                                        "projectId" to "100",
+                                        "issueId" to "2"
+                                    ),
                                     mapOf(
                                         "projectId" to "101",
                                         "issueId" to "3",

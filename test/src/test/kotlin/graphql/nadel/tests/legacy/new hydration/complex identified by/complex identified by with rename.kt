@@ -62,8 +62,7 @@ class `complex identified by with rename` : NadelLegacyIntegrationTest(
                             listOf(
                                 mapOf(
                                     "userId" to "USER-1",
-                                    "site" to
-                                        "hello",
+                                    "site" to "hello",
                                 ),
                                 mapOf("userId" to "USER-3", "site" to "hello"),
                                 mapOf(
@@ -125,48 +124,40 @@ class `complex identified by with rename` : NadelLegacyIntegrationTest(
                         listOf(
                             Issues_Issue(
                                 authorId = Issues_UserRef(userId = "USER-1", site = "hello"),
-                                id =
-                                "ISSUE-1",
+                                id = "ISSUE-1",
                             ),
                             Issues_Issue(
                                 authorId = Issues_UserRef(userId = "USER-3", site = "hello"),
                                 id = "ISSUE-2",
                             ),
                             Issues_Issue(
-                                authorId =
-                                Issues_UserRef(
+                                authorId = Issues_UserRef(
                                     userId = "USER-2",
-                                    site =
-                                    "jdog",
+                                    site = "jdog",
                                 ),
                                 id = "ISSUE-3",
                             ),
                             Issues_Issue(
-                                authorId =
-                                Issues_UserRef(
+                                authorId = Issues_UserRef(
                                     userId = "USER-4",
                                     site = "hello",
                                 ),
                                 id = "ISSUE-4",
                             ),
                             Issues_Issue(
-                                authorId =
-                                Issues_UserRef(
-                                    userId =
-                                    "USER-5",
+                                authorId = Issues_UserRef(
+                                    userId = "USER-5",
                                     site = "hello",
                                 ),
                                 id = "ISSUE-5",
                             ),
                             Issues_Issue(
-                                authorId =
-                                Issues_UserRef(userId = "USER-2", site = "jdog"),
+                                authorId = Issues_UserRef(userId = "USER-2", site = "jdog"),
                                 id = "ISSUE-6",
                             ),
                             Issues_Issue(
                                 authorId = Issues_UserRef(userId = "USER-2", site = "hello"),
-                                id =
-                                "ISSUE-7",
+                                id = "ISSUE-7",
                             ),
                         )
                     }

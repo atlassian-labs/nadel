@@ -73,11 +73,9 @@ class `typename is resolved even when no fields are queried from declaring servi
                 wiring.type("Query") { type ->
                     type.dataFetcher("issue") { env ->
                         IssueSearch_IssueQuery(
-                            search =
-                            IssueSearch_SearchResult(
+                            search = IssueSearch_SearchResult(
                                 count = 1_001,
-                                id =
-                                "search-id",
+                                id = "search-id",
                             ),
                         )
                     }

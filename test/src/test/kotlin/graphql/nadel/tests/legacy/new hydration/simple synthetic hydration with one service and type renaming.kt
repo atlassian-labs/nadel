@@ -81,13 +81,10 @@ class `simple synthetic hydration with one service and type renaming` : NadelLeg
                 wiring.type("Query") { type ->
                     type.dataFetcher("tests") { env ->
                         Testing_TestQuery(
-                            testing =
-                            Testing_Testing(
-                                movie =
-                                Testing_Movie(
+                            testing = Testing_Testing(
+                                movie = Testing_Movie(
                                     characterId = "C1",
-                                    id =
-                                    "M1",
+                                    id = "M1",
                                     name = "Movie 1",
                                 ),
                             ),

@@ -85,8 +85,7 @@ class `one hydration call with longer path arguments and merged fields` : NadelL
                     type.dataFetcher("issues") { env ->
                         listOf(
                             Issues_Issue(
-                                authors =
-                                listOf(
+                                authors = listOf(
                                     Issues_IssueUser(authorId = "USER-1"),
                                     Issues_IssueUser(authorId = "USER-2"),
                                 ),

@@ -94,8 +94,7 @@ class `complex identified by uses same source for hydrations and a deep rename` 
                                     issue = Foo_Issue(`field` = "hmm-1"),
                                 ),
                                 Foo_Foo(
-                                    fooId =
-                                    "Foo-2",
+                                    fooId = "Foo-2",
                                     issue = Foo_Issue(`field` = "hmm-2"),
                                 ),
                                 Foo_Foo(

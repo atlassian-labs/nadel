@@ -70,8 +70,7 @@ class `renamed type in union` : NadelLegacyIntegrationTest(
                             ),
                             IssueService_Issue(
                                 id = "3",
-                                links =
-                                listOf(
+                                links = listOf(
                                     IssueService_User(),
                                     IssueService_Issue(),
                                     IssueService_Monkey(),

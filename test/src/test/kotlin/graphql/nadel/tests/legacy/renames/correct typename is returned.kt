@@ -103,8 +103,7 @@ class `correct typename is returned` : NadelLegacyIntegrationTest(
                     type.dataFetcher("typenameTest") { env ->
                         MyService_TypenameTest(
                             `object` = MyService_ObjectUnderlying(),
-                            objects =
-                            listOf(MyService_ObjectUnderlying(), MyService_ObjectUnderlying()),
+                            objects = listOf(MyService_ObjectUnderlying(), MyService_ObjectUnderlying()),
                         )
                     }
                 }

@@ -49,8 +49,7 @@ class `errors and some data from a service execution are reflected in the result
                             .newResult<Any>()
                             .data(
                                 MyService_World(
-                                    name =
-                                    "World",
+                                    name = "World",
                                 ),
                             ).errors(
                                 listOf(

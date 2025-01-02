@@ -80,8 +80,7 @@ class `typename is wiped when other data fails includes not nullable field` : Na
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error",
+                                            "message" to "Error",
                                         ),
                                     ),
                                 ),

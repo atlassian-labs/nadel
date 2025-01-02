@@ -89,14 +89,12 @@ class `batching of hydration list with partition` : NadelLegacyIntegrationTest(
                         listOf(
                             Issues_Issue(
                                 authorIds = listOf("CLOUD-ID-1/USER-1", "CLOUD-ID-2/USER-2"),
-                                id =
-                                "ISSUE-1",
+                                id = "ISSUE-1",
                             ),
                             Issues_Issue(authorIds = listOf("CLOUD-ID-1/USER-3"), id = "ISSUE-2"),
                             Issues_Issue(
                                 authorIds = listOf("CLOUD-ID-2/USER-4", "CLOUD-ID-1/USER-5"),
-                                id =
-                                "ISSUE-3",
+                                id = "ISSUE-3",
                             ),
                         )
                     }

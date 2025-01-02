@@ -61,8 +61,7 @@ class `query with hydration that fail with errors are reflected in the result` :
                                     listOf(
                                         toGraphQLError(
                                             mapOf(
-                                                "message"
-                                                    to "Error during hydration",
+                                                "message" to "Error during hydration",
                                             ),
                                         ),
                                     ),

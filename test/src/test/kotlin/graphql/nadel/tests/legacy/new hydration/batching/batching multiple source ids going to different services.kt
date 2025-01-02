@@ -63,8 +63,7 @@ class `batching multiple source ids going to different services` : NadelLegacyIn
                     type.dataFetcher("activity") { env ->
                         listOf(
                             Activity_Activity(
-                                contentIds =
-                                listOf(
+                                contentIds = listOf(
                                     "issue/4000",
                                     "comment/5000",
                                     "comment/6000",
@@ -112,19 +111,16 @@ class `batching multiple source ids going to different services` : NadelLegacyIn
                             listOf(
                                 Issues_Issue(id = "issue/4000", title = "Four Thousand"),
                                 Issues_Issue(
-                                    id =
-                                    "issue/8080",
+                                    id = "issue/8080",
                                     title = "Eighty Eighty",
                                 ),
                                 Issues_Issue(
                                     id = "issue/7496",
-                                    title =
-                                    "Seven Four Nine Six",
+                                    title = "Seven Four Nine Six",
                                 ),
                                 Issues_Issue(
                                     id = "issue/1234",
-                                    title =
-                                    "One Two Three Four",
+                                    title = "One Two Three Four",
                                 ),
                             )
                         } else {

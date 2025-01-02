@@ -26,8 +26,7 @@ class `query with pass through interfaces and unions that DONT have typename in 
             }
         """.trimIndent(),
         variables = mapOf("isLoyal" to true),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "PetService",
                 overallSchema = """
@@ -125,8 +124,7 @@ class `query with pass through interfaces and unions that DONT have typename in 
                                     listOf(
                                         PetService_Dog(name = "Sparky", wearsCollar = true),
                                         PetService_Cat(
-                                            name =
-                                            "Whiskers",
+                                            name = "Whiskers",
                                             wearsBell = false,
                                         ),
                                     )

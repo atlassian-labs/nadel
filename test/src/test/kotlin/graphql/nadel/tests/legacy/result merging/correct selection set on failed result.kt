@@ -30,18 +30,16 @@ class `correct selection set on failed result` : NadelLegacyIntegrationTest(
         ),
     ),
 ) {
-    override fun makeServiceExecution(service: Service): ServiceExecution =
-        ServiceExecution {
-            CompletableFuture.completedFuture(
-                NadelServiceExecutionResultImpl(
-                    data = mutableMapOf(),
-                    errors =
-                    mutableListOf(
-                        mutableMapOf(
-                            "message" to "Test",
-                        ),
+    override fun makeServiceExecution(service: Service): ServiceExecution = ServiceExecution {
+        CompletableFuture.completedFuture(
+            NadelServiceExecutionResultImpl(
+                data = mutableMapOf(),
+                errors = mutableListOf(
+                    mutableMapOf(
+                        "message" to "Test",
                     ),
                 ),
-            )
-        }
+            ),
+        )
+    }
 }

@@ -26,15 +26,12 @@ class `ari argument in renamed input` : NadelLegacyIntegrationTest(
           }
         }
     """.trimIndent(),
-    variables =
-    mapOf(
+    variables = mapOf(
         "boardId" to "ari:cloud:jira-software::board/123",
-        "sprintId"
-            to "ari:cloud:jira-software::sprint/456",
+        "sprintId" to "ari:cloud:jira-software::sprint/456",
         "name" to "Test Input",
         "goal" to null,
-        "startDate" to
-            "2022-03-22",
+        "startDate" to "2022-03-22",
         "endDate" to "2022-04-02",
     ),
     services = listOf(
@@ -93,8 +90,7 @@ class `ari argument in renamed input` : NadelLegacyIntegrationTest(
                                 "name" to "Test Input",
                                 "goal" to null,
                                 "startDate" to "2022-03-22",
-                                "endDate" to
-                                    "2022-04-02",
+                                "endDate" to "2022-04-02",
                             )
                         ) {
                             MyService_Sprint()

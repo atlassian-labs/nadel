@@ -82,14 +82,12 @@ class `hydration call over itself with renamed types` : NadelLegacyIntegrationTe
                                 movies = listOf(
                                     Testing_Movie(
                                         characterIds = listOf("C1", "C2"),
-                                        id =
-                                        "M1",
+                                        id = "M1",
                                         name = "Movie 1",
                                     ),
                                     Testing_Movie(
                                         characterIds = listOf("C1", "C2", "C3"),
-                                        id =
-                                        "M2",
+                                        id = "M2",
                                         name = "Movie 2",
                                     ),
                                 ),

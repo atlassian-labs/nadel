@@ -59,8 +59,7 @@ class `hydration with interfaces asking typename` : NadelLegacyIntegrationTest(
                                 Issues_Issue(id = "GQLGW-001"),
                                 Issues_Issue(id = "GQLGW-1102"),
                                 Issues_User(
-                                    id =
-                                    "ari:i-always-forget-the-format/1",
+                                    id = "ari:i-always-forget-the-format/1",
                                 ),
                             )
                         }

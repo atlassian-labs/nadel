@@ -132,8 +132,7 @@ class `solitary polymorphic hydration` : NadelLegacyIntegrationTest(
                             Foo_Foo(dataId = "PET-0", id = "FOO-0"),
                             Foo_Foo(
                                 dataId = "HUMAN-0",
-                                id =
-                                "FOO-1",
+                                id = "FOO-1",
                             ),
                         )
                     }

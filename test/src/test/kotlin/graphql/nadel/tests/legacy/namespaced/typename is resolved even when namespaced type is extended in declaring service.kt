@@ -15,8 +15,7 @@ class `typename is resolved even when namespaced type is extended in declaring s
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "Issues",
                 overallSchema = """

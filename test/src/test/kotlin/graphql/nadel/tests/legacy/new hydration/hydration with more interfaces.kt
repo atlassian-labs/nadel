@@ -72,8 +72,7 @@ class `hydration with more interfaces` : NadelLegacyIntegrationTest(
                                 Issues_Issue(id = "GQLGW-001"),
                                 Issues_Issue(id = "GQLGW-1102"),
                                 Issues_Troll(
-                                    id =
-                                    "My Arm",
+                                    id = "My Arm",
                                 ),
                                 Issues_User(id = "Franklin"),
                                 Issues_Issue(id = "GQLGW-11"),

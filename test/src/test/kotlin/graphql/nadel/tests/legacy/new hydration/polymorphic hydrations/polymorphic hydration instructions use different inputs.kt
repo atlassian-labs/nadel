@@ -203,8 +203,7 @@ class `polymorphic hydration instructions use different inputs` : NadelLegacyInt
                             listOf(
                                 mapOf(
                                     "nickname" to "Tall Boye",
-                                    "birthday"
-                                        to 1_001_203_200,
+                                    "birthday" to 1_001_203_200,
                                     "height" to 570,
                                 ),
                             )
@@ -214,8 +213,7 @@ class `polymorphic hydration instructions use different inputs` : NadelLegacyInt
                                     birthday = 1_001_203_200,
                                     height = 570,
                                     name = "Rukiya",
-                                    nickname =
-                                    "Tall Boye",
+                                    nickname = "Tall Boye",
                                 ),
                             )
                         } else {

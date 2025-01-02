@@ -66,24 +66,19 @@ class `expecting one child error on extensive field argument passed to hydration
                         if (env.getArgument<Any?>("id") == "1") {
                             TestBoard_Board(
                                 id = "1",
-                                issueChildren =
-                                listOf(
+                                issueChildren = listOf(
                                     TestBoard_Card(
                                         id = "a1",
-                                        issue =
-                                        TestBoard_Issue(assignee = TestBoard_TestUser(accountId = "1")),
+                                        issue = TestBoard_Issue(assignee = TestBoard_TestUser(accountId = "1")),
                                     ),
                                     TestBoard_Card(
-                                        id =
-                                        "a2",
+                                        id = "a2",
                                         issue = TestBoard_Issue(assignee = TestBoard_TestUser(accountId = "2")),
                                     ),
                                     TestBoard_Card(
                                         id = "a3",
-                                        issue =
-                                        TestBoard_Issue(
-                                            assignee =
-                                            TestBoard_TestUser(accountId = "3"),
+                                        issue = TestBoard_Issue(
+                                            assignee = TestBoard_TestUser(accountId = "3"),
                                         ),
                                     ),
                                 ),

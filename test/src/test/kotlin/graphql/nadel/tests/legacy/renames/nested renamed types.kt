@@ -52,11 +52,9 @@ class `nested renamed types` : NadelLegacyIntegrationTest(
                 wiring.type("Query") { type ->
                     type.dataFetcher("foo") { env ->
                         Service1_Foo(
-                            parent =
-                            Service1_Foo(
+                            parent = Service1_Foo(
                                 building = Service1_Building(id = "Bar-1"),
-                                id =
-                                "ParentFoo1",
+                                id = "ParentFoo1",
                             ),
                         )
                     }

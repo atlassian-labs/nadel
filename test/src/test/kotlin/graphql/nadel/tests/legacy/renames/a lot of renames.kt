@@ -61,13 +61,10 @@ class `a lot of renames` : NadelLegacyIntegrationTest(
                 wiring.type("Query") { type ->
                     type.dataFetcher("boardScope") { env ->
                         Boards_BoardScope(
-                            issueParents =
-                            listOf(
+                            issueParents = listOf(
                                 Boards_IssueParent(
-                                    issueType =
-                                    Boards_IssueType(
-                                        id =
-                                        "ID-1",
+                                    issueType = Boards_IssueType(
+                                        id = "ID-1",
                                         inlineIssueCreate = Boards_InlineIssueCreateConfig(enabled = true),
                                     ),
                                 ),

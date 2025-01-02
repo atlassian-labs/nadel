@@ -69,11 +69,9 @@ class `synthetic hydration works when an ancestor field has been renamed` : Nade
                 wiring.type("Query") { type ->
                     type.dataFetcher("relationships") { env ->
                         IssueService_RelationshipConnection(
-                            nodes =
-                            listOf(
+                            nodes = listOf(
                                 IssueService_Relationship(
-                                    issueId =
-                                    "1",
+                                    issueId = "1",
                                 ),
                             ),
                         )

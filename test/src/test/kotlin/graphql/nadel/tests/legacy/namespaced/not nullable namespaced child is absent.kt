@@ -87,8 +87,7 @@ class `not nullable namespaced child is absent` : NadelLegacyIntegrationTest(
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Error on IssueSearch",
+                                            "message" to "Error on IssueSearch",
                                         ),
                                     ),
                                 ),

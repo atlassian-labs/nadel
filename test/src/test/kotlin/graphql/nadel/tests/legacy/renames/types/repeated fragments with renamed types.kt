@@ -123,30 +123,24 @@ class `repeated fragments with renamed types` : NadelLegacyIntegrationTest(
                     type.dataFetcher("service") { env ->
                         if (env.getArgument<Any?>("id") == "service-1") {
                             Users_Service(
-                                dependedOn =
-                                Users_RelationshipConnection(
-                                    nodes =
-                                    listOf(
+                                dependedOn = Users_RelationshipConnection(
+                                    nodes = listOf(
                                         Users_Relationship(
                                             endService = null,
                                             id = "relationship-1",
-                                            startService =
-                                            Users_Service(
+                                            startService = Users_Service(
                                                 dependedOn = null,
                                                 dependsOn = null,
                                                 id = "service-1",
-                                                name =
-                                                "GraphQL Gateway",
+                                                name = "GraphQL Gateway",
                                             ),
                                             type = "unsure",
                                         ),
                                     ),
                                 ),
-                                dependsOn =
-                                Users_RelationshipConnection(nodes = listOf()),
+                                dependsOn = Users_RelationshipConnection(nodes = listOf()),
                                 id = "service-0",
-                                name =
-                                "API Gateway",
+                                name = "API Gateway",
                             )
                         } else {
                             null

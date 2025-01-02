@@ -94,16 +94,13 @@ class `query with three nested hydrations and simple data and lots of renames` :
                         Bar_Bar(
                             barId = "nestedBar1",
                             name = "NestedBarName1",
-                            nestedBarId =
-                            "nestedBarId456",
+                            nestedBarId = "nestedBarId456",
                         ),
                         Bar_Bar(
                             barId = "nestedBarId456",
-                            details =
-                            Bar_Details(
+                            details = Bar_Details(
                                 age = 1,
-                                contact =
-                                Bar_ContactDetails(
+                                contact = Bar_ContactDetails(
                                     email = "test",
                                     phone = 1,
                                 ),
@@ -169,11 +166,9 @@ class `query with three nested hydrations and simple data and lots of renames` :
                         listOf(
                             Foo_Foo(
                                 barId = "bar1",
-                                details =
-                                Foo_Details(
+                                details = Foo_Details(
                                     age = 1,
-                                    contact =
-                                    Foo_ContactDetails(email = "test", phone = 1),
+                                    contact = Foo_ContactDetails(email = "test", phone = 1),
                                     name = "smith",
                                 ),
                             ),

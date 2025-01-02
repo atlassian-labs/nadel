@@ -68,8 +68,7 @@ class `renamed type in interface` : NadelLegacyIntegrationTest(
                             ),
                             IssueService_Issue(
                                 id = "issue/3",
-                                links =
-                                listOf(
+                                links = listOf(
                                     IssueService_User(id = "user/1"),
                                     IssueService_Issue("issue/1"),
                                     IssueService_Monkey("monkey/1"),

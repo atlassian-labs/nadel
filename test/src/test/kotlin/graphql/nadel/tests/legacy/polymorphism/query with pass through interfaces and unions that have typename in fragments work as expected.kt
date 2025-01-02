@@ -35,8 +35,7 @@ class `query with pass through interfaces and unions that have typename in fragm
             }
         """.trimIndent(),
         variables = mapOf("isLoyal" to true),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "PetService",
                 overallSchema = """
@@ -127,8 +126,7 @@ class `query with pass through interfaces and unions that have typename in fragm
                                     listOf(
                                         PetService_Dog(name = "Sparky", wearsCollar = true),
                                         PetService_Cat(
-                                            name =
-                                            "Whiskers",
+                                            name = "Whiskers",
                                             wearsBell = false,
                                         ),
                                     )

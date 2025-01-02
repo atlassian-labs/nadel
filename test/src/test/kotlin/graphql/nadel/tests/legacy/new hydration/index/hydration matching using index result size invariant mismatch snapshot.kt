@@ -17,8 +17,7 @@ private suspend fun main() {
  */
 @Suppress("unused")
 class `hydration matching using index result size invariant mismatch snapshot` : TestSnapshot() {
-    override val calls: List<ExpectedServiceCall> =
-        listOf(
+    override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
@@ -86,8 +85,7 @@ class `hydration matching using index result size invariant mismatch snapshot` :
      * {}
      * ```
      */
-    override val result: ExpectedNadelResult =
-        ExpectedNadelResult(
+    override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = "{}",
             delayedResults = listOfJsonStrings(),
         )

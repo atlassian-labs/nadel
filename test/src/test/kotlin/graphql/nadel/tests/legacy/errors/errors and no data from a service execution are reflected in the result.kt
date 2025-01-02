@@ -52,8 +52,7 @@ class `errors and no data from a service execution are reflected in the result` 
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Problem1",
+                                            "message" to "Problem1",
                                         ),
                                     ),
                                     toGraphQLError(mapOf("message" to "Problem2")),

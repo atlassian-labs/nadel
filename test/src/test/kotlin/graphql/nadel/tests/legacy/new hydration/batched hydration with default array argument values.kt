@@ -89,8 +89,7 @@ class `batched hydration with default array argument values` : NadelLegacyIntegr
                             Issues_Issue(authorIds = listOf("USER-1", "USER-2"), id = "ISSUE-1"),
                             Issues_Issue(authorIds = listOf("USER-3"), id = "ISSUE-2"),
                             Issues_Issue(
-                                authorIds =
-                                listOf("USER-2", "USER-4", "USER-5"),
+                                authorIds = listOf("USER-2", "USER-4", "USER-5"),
                                 id = "ISSUE-3",
                             ),
                         )

@@ -16,8 +16,7 @@ class `one synthetic hydration call with longer path arguments and merged fields
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "UserService",
                 overallSchema = """
@@ -98,8 +97,7 @@ class `one synthetic hydration call with longer path arguments and merged fields
                         type.dataFetcher("issues") { env ->
                             listOf(
                                 Issues_Issue(
-                                    authors =
-                                    listOf(
+                                    authors = listOf(
                                         Issues_IssueUser(authorId = "USER-1"),
                                         Issues_IssueUser(authorId = "USER-2"),
                                     ),

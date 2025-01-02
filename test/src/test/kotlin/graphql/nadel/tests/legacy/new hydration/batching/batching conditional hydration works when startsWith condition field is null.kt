@@ -16,8 +16,7 @@ class `batching conditional hydration works when startsWith condition field is n
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "service2",
                 overallSchema = """

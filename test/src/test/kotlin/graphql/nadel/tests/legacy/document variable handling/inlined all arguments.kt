@@ -54,8 +54,7 @@ class `inlined all arguments` : NadelLegacyIntegrationTest(
                         if (env.getArgument<Any?>("arg") ==
                             mapOf(
                                 "names" to listOf("Bobba", "Fett"),
-                                "payload" to
-                                    mapOf("name" to "Bobert", "age" to "23"),
+                                "payload" to mapOf("name" to "Bobert", "age" to "23"),
                             ) &&
                             env.getArgument<Any?>("arg1") ==
                             mapOf("interests" to listOf("photography", "basketball")) &&

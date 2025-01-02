@@ -44,19 +44,15 @@ class `two deep renames` : NadelLegacyIntegrationTest(
                     type.dataFetcher("issues") { env ->
                         listOf(
                             Issues_Issue(
-                                authorDetails =
-                                Issues_AuthorDetail(
+                                authorDetails = Issues_AuthorDetail(
                                     authorId = "USER-1",
-                                    name =
-                                    "User 1",
+                                    name = "User 1",
                                 ),
                                 id = "ISSUE-1",
                             ),
                             Issues_Issue(
-                                authorDetails =
-                                Issues_AuthorDetail(
-                                    authorId =
-                                    "USER-2",
+                                authorDetails = Issues_AuthorDetail(
+                                    authorId = "USER-2",
                                     name = "User 2",
                                 ),
                                 id = "ISSUE-2",

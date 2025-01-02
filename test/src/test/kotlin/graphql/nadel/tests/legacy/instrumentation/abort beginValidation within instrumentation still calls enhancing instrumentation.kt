@@ -15,8 +15,7 @@ class `abort beginValidation within instrumentation still calls enhancing instru
             }
         """.trimIndent(),
         variables = mapOf("var1" to "val1"),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "MyService",
                 overallSchema = """

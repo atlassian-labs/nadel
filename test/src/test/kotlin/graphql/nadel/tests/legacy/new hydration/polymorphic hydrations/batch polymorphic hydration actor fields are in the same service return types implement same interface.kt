@@ -25,8 +25,7 @@ class `batch polymorphic hydration actor fields are in the same service return t
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "foo",
                 overallSchema = """

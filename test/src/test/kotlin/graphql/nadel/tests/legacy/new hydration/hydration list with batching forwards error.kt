@@ -46,8 +46,7 @@ class `hydration list with batching forwards error` : NadelLegacyIntegrationTest
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
-                                            "message"
-                                                to "Some error occurred",
+                                            "message" to "Some error occurred",
                                         ),
                                     ),
                                 ),

@@ -12,8 +12,7 @@ class `execution is aborted when beginExecute completes exceptionally using chai
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "MyService",
                 overallSchema = """

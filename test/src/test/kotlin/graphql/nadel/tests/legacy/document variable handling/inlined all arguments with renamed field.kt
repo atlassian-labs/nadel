@@ -11,14 +11,11 @@ class `inlined all arguments with renamed field` : NadelLegacyIntegrationTest(
           }
         }
     """.trimIndent(),
-    variables =
-    mapOf(
-        "varX" to
-            mapOf(
-                "names" to listOf("Bobba", "Fett"),
-                "payload"
-                    to mapOf("name" to "Bobert", "age" to "23"),
-            ),
+    variables = mapOf(
+        "varX" to mapOf(
+            "names" to listOf("Bobba", "Fett"),
+            "payload" to mapOf("name" to "Bobert", "age" to "23"),
+        ),
     ),
     services = listOf(
         Service(
@@ -63,12 +60,10 @@ class `inlined all arguments with renamed field` : NadelLegacyIntegrationTest(
                         if (env.getArgument<Any?>("arg") ==
                             mapOf(
                                 "age" to 50,
-                                "inputWithJson" to
-                                    mapOf(
-                                        "names" to
-                                            listOf("Bobba", "Fett"),
-                                        "payload" to mapOf("name" to "Bobert", "age" to "23"),
-                                    ),
+                                "inputWithJson" to mapOf(
+                                    "names" to listOf("Bobba", "Fett"),
+                                    "payload" to mapOf("name" to "Bobert", "age" to "23"),
+                                ),
                             )
                         ) {
                             MyService_OutputUnderlying(`value` = "world")

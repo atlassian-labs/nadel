@@ -15,8 +15,7 @@ class `typename is sent owning service even when namespaced field and type are d
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "Issues",
                 overallSchema = """

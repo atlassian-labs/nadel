@@ -128,8 +128,7 @@ class `query with hydrated interfaces work as expected` : NadelLegacyIntegration
                             listOf(
                                 PetService_Dog(name = "Sparky", ownerIds = listOf("dearly")),
                                 PetService_Cat(
-                                    name =
-                                    "Whiskers",
+                                    name = "Whiskers",
                                     ownerIds = listOf("cruella"),
                                 ),
                             )

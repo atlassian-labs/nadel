@@ -16,8 +16,7 @@ class `complex identified by doesnt use all input fields in the inputIdentifiedB
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "Activity",
                 overallSchema = """
@@ -57,34 +56,38 @@ class `complex identified by doesnt use all input fields in the inputIdentifiedB
                         type.dataFetcher("activities") { env ->
                             listOf(
                                 Activity_Activity(
-                                    context =
-                                    Activity_HydrationContext(
-                                        issueHydrationInput =
-                                        Activity_IssueHydrationInput(id = "ISSUE-0", site = "CLOUD-0"),
+                                    context = Activity_HydrationContext(
+                                        issueHydrationInput = Activity_IssueHydrationInput(
+                                            id = "ISSUE-0",
+                                            site = "CLOUD-0"
+                                        ),
                                     ),
                                     id = "ACTIVITY-0",
                                 ),
                                 Activity_Activity(
-                                    context =
-                                    Activity_HydrationContext(
-                                        issueHydrationInput =
-                                        Activity_IssueHydrationInput(id = "ISSUE-1", site = "CLOUD-0"),
+                                    context = Activity_HydrationContext(
+                                        issueHydrationInput = Activity_IssueHydrationInput(
+                                            id = "ISSUE-1",
+                                            site = "CLOUD-0"
+                                        ),
                                     ),
                                     id = "ACTIVITY-1",
                                 ),
                                 Activity_Activity(
-                                    context =
-                                    Activity_HydrationContext(
-                                        issueHydrationInput =
-                                        Activity_IssueHydrationInput(id = "ISSUE-2", site = "CLOUD-0"),
+                                    context = Activity_HydrationContext(
+                                        issueHydrationInput = Activity_IssueHydrationInput(
+                                            id = "ISSUE-2",
+                                            site = "CLOUD-0"
+                                        ),
                                     ),
                                     id = "ACTIVITY-2",
                                 ),
                                 Activity_Activity(
-                                    context =
-                                    Activity_HydrationContext(
-                                        issueHydrationInput =
-                                        Activity_IssueHydrationInput(id = "ISSUE-3", site = "CLOUD-0"),
+                                    context = Activity_HydrationContext(
+                                        issueHydrationInput = Activity_IssueHydrationInput(
+                                            id = "ISSUE-3",
+                                            site = "CLOUD-0"
+                                        ),
                                     ),
                                     id = "ACTIVITY-3",
                                 ),
@@ -128,8 +131,7 @@ class `complex identified by doesnt use all input fields in the inputIdentifiedB
                                 listOf(
                                     mapOf(
                                         "id" to "ISSUE-0",
-                                        "site" to
-                                            "CLOUD-0",
+                                        "site" to "CLOUD-0",
                                     ),
                                     mapOf("id" to "ISSUE-1", "site" to "CLOUD-0"),
                                     mapOf(
@@ -142,14 +144,12 @@ class `complex identified by doesnt use all input fields in the inputIdentifiedB
                                 listOf(
                                     Issue_Issue(description = "fix A", issueId = "ISSUE-0"),
                                     Issue_Issue(
-                                        description =
-                                        "fix B",
+                                        description = "fix B",
                                         issueId = "ISSUE-1",
                                     ),
                                     Issue_Issue(
                                         description = "fix C",
-                                        issueId =
-                                        "ISSUE-2",
+                                        issueId = "ISSUE-2",
                                     ),
                                     Issue_Issue(description = "fix D", issueId = "ISSUE-3"),
                                 )

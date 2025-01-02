@@ -20,8 +20,7 @@ class `exceptions in hydration call that fail with errors are reflected in the r
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "Bar",
                 overallSchema = """

@@ -57,12 +57,9 @@ class `renamed type inside deep rename` : NadelLegacyIntegrationTest(
                     type.dataFetcher("issueById") { env ->
                         if (env.getArgument<Any?>("id") == "issue-1") {
                             IssueService_Issue(
-                                details =
-                                IssueService_Details(
-                                    assignee =
-                                    IssueService_User(
-                                        friends =
-                                        listOf(IssueService_User(), IssueService_User()),
+                                details = IssueService_Details(
+                                    assignee = IssueService_User(
+                                        friends = listOf(IssueService_User(), IssueService_User()),
                                         name = "Franklin",
                                     ),
                                 ),

@@ -51,8 +51,7 @@ class `rename with interfaces` : NadelLegacyIntegrationTest(
                             Issues_Issue(id = "GQLGW-001"),
                             Issues_Issue(id = "GQLGW-1102"),
                             Issues_User(
-                                ari =
-                                "ari:i-always-forget-the-format/1",
+                                ari = "ari:i-always-forget-the-format/1",
                             ),
                         )
                     }

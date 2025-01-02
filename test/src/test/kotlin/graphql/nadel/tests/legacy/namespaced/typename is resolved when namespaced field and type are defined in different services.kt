@@ -15,8 +15,7 @@ class `typename is resolved when namespaced field and type are defined in differ
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "Issues",
                 overallSchema = """

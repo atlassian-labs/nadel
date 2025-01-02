@@ -11,15 +11,13 @@ class `inlined all arguments with renamed field input is wrapped in a list` : Na
           }
         }
     """.trimIndent(),
-    variables =
-    mapOf(
-        "varX" to
-            listOf(
-                mapOf(
-                    "names" to listOf("Bobba", "Fett"),
-                    "payload" to mapOf("name" to "Bobert", "age" to "23"),
-                ),
+    variables = mapOf(
+        "varX" to listOf(
+            mapOf(
+                "names" to listOf("Bobba", "Fett"),
+                "payload" to mapOf("name" to "Bobert", "age" to "23"),
             ),
+        ),
     ),
     services = listOf(
         Service(
@@ -65,18 +63,15 @@ class `inlined all arguments with renamed field input is wrapped in a list` : Na
                             listOf(
                                 mapOf(
                                     "age" to 50,
-                                    "inputWithJson" to
-                                        listOf(
-                                            mapOf(
-                                                "names" to listOf("Bobba", "Fett"),
-                                                "payload" to
-                                                    mapOf(
-                                                        "name" to
-                                                            "Bobert",
-                                                        "age" to "23",
-                                                    ),
+                                    "inputWithJson" to listOf(
+                                        mapOf(
+                                            "names" to listOf("Bobba", "Fett"),
+                                            "payload" to mapOf(
+                                                "name" to "Bobert",
+                                                "age" to "23",
                                             ),
                                         ),
+                                    ),
                                 ),
                             )
                         ) {

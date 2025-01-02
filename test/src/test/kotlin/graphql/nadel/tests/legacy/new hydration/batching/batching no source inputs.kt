@@ -64,8 +64,7 @@ class `batching no source inputs` : NadelLegacyIntegrationTest(
                         listOf(
                             Activity_Activity(contentIds = emptyList()),
                             Activity_Activity(
-                                contentIds =
-                                emptyList(),
+                                contentIds = emptyList(),
                             ),
                             Activity_Activity(contentIds = listOf("issue/7496", "comment/9001")),
                             Activity_Activity(contentIds = listOf("issue/1234", "comment/1234")),

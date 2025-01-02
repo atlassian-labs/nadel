@@ -51,8 +51,7 @@ class `two deep renames merged fields with same path and field rename` : NadelLe
                 wiring.type("Query") { type ->
                     type.dataFetcher("issue") { env ->
                         Issues_Issue(
-                            authorDetails =
-                            Issues_AuthorDetail(
+                            authorDetails = Issues_AuthorDetail(
                                 authorId = "USER-1",
                                 name = "User 1",
                                 extraInfo = "extra 1",

@@ -52,22 +52,16 @@ class `deep rename of an object with transformations inside object` : NadelLegac
                     type.dataFetcher("issues") { env ->
                         listOf(
                             Issues_Issue(
-                                authorDetails =
-                                Issues_AuthorDetail(
-                                    name =
-                                    Issues_OriginalName(lastName = "Smith", originalFirstName = "George"),
+                                authorDetails = Issues_AuthorDetail(
+                                    name = Issues_OriginalName(lastName = "Smith", originalFirstName = "George"),
                                 ),
-                                id =
-                                "ISSUE-1",
+                                id = "ISSUE-1",
                             ),
                             Issues_Issue(
-                                authorDetails =
-                                Issues_AuthorDetail(
-                                    name =
-                                    Issues_OriginalName(lastName = "Windsor", originalFirstName = "Elizabeth"),
+                                authorDetails = Issues_AuthorDetail(
+                                    name = Issues_OriginalName(lastName = "Windsor", originalFirstName = "Elizabeth"),
                                 ),
-                                id =
-                                "ISSUE-2",
+                                id = "ISSUE-2",
                             ),
                         )
                     }

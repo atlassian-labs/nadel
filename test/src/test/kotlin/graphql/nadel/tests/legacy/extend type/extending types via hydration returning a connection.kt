@@ -125,11 +125,9 @@ class `extending types via hydration returning a connection` : NadelLegacyIntegr
                             env.getArgument<Any?>("id") == "ISSUE-1"
                         ) {
                             Association_AssociationConnection(
-                                nodes =
-                                listOf(
+                                nodes = listOf(
                                     Association_Association(
-                                        pageId =
-                                        "1",
+                                        pageId = "1",
                                     ),
                                 ),
                             )

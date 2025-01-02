@@ -50,16 +50,13 @@ class `renamed type inside batch hydration` : NadelLegacyIntegrationTest(
                             id = "issue-1",
                         ),
                         IssueService_Issue(
-                            details =
-                            IssueService_Details(
-                                name =
-                                "Issue two",
+                            details = IssueService_Details(
+                                name = "Issue two",
                             ),
                             id = "issue-2",
                         ),
                         IssueService_Issue(
-                            details =
-                            IssueService_Details(name = "Issue four – no wait three"),
+                            details = IssueService_Details(name = "Issue four – no wait three"),
                             id = "issue-3",
                         ),
                     ).associateBy { it.id }

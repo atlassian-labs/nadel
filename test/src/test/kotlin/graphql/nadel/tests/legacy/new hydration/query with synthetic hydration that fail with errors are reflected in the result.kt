@@ -22,8 +22,7 @@ class `query with synthetic hydration that fail with errors are reflected in the
             }
         """.trimIndent(),
         variables = emptyMap(),
-        services =
-        listOf(
+        services = listOf(
             Service(
                 name = "Bar",
                 overallSchema = """
@@ -74,8 +73,7 @@ class `query with synthetic hydration that fail with errors are reflected in the
                                         listOf(
                                             toGraphQLError(
                                                 mapOf(
-                                                    "message"
-                                                        to "Error during hydration",
+                                                    "message" to "Error during hydration",
                                                 ),
                                             ),
                                         ),
