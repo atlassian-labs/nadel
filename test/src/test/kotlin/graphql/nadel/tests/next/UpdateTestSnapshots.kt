@@ -138,7 +138,7 @@ private fun makeTestSnapshotClass(
 ): TypeSpec {
     return TypeSpec.classBuilder(getSnapshotClassName(testClassName))
         .superclass(TestSnapshot::class)
-        .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots")
+        .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots]")
         .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
         .addProperty(makeServiceCallsProperty(captured))
         .addProperty(makeNadelResultProperty(captured))
