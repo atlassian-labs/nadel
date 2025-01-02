@@ -103,7 +103,8 @@ class `ari argument in renamed object input in hydration` : NadelLegacyIntegrati
                             } else {
                                 null
                             }
-                        }.dataFetcher("issues") { env ->
+                        }
+                        .dataFetcher("issues") { env ->
                             if (env.getArgument<Any?>("input") ==
                                 listOf(
                                     mapOf(

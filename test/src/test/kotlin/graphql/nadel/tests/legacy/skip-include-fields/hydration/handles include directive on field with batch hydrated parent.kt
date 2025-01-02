@@ -52,7 +52,8 @@ class `handles include directive on field with batch hydrated parent` : NadelLeg
                     type
                         .dataFetcher("foos") { env ->
                             listOf(Service_Foo(id = "Foo-3"), Service_Foo(id = "Foo-4"))
-                        }.dataFetcher("tests") { env ->
+                        }
+                        .dataFetcher("tests") { env ->
                             if (env.getArgument<Any?>("ids") == listOf("Foo-3", "Foo-4")) {
                                 listOf(Service_Test(id = "Foo-4"), Service_Test(id = "Foo-3"))
                             } else {

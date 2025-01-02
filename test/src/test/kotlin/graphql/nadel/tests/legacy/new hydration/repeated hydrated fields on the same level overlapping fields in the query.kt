@@ -61,7 +61,8 @@ class `repeated hydrated fields on the same level overlapping fields in the quer
                     type
                         .dataFetcher("foo") { env ->
                             Foo_Foo(issueId = "ISSUE-1")
-                        }.dataFetcher("issue") { env ->
+                        }
+                        .dataFetcher("issue") { env ->
                             if (env.getArgument<Any?>("issueId") == "ISSUE-1") {
                                 Foo_Issue(desc = "I AM A DESC", name = "I AM A NAME", summary = "I AM A SUMMARY")
                             } else {

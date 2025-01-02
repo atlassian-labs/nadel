@@ -76,7 +76,8 @@ class `complex identified by uses same source for hydrations` : NadelLegacyInteg
                     type
                         .dataFetcher("foos") { env ->
                             listOf(Foo_Foo(fooId = "Foo-1"), Foo_Foo(fooId = "Foo-2"), Foo_Foo(fooId = "Foo-3"))
-                        }.dataFetcher("issues") { env ->
+                        }
+                        .dataFetcher("issues") { env ->
                             if (env.getArgument<Any?>("issueIds") == listOf("Foo-1", "Foo-2")) {
                                 listOf(
                                     Foo_Issue(`field` = "field_name", issueId = "Foo-1"),
@@ -91,7 +92,8 @@ class `complex identified by uses same source for hydrations` : NadelLegacyInteg
                             } else {
                                 null
                             }
-                        }.dataFetcher("details") { env ->
+                        }
+                        .dataFetcher("details") { env ->
                             if (env.getArgument<Any?>("detailIds") == listOf("Foo-1", "Foo-2")) {
                                 listOf(
                                     Foo_Detail(detailId = "Foo-2", name = "Foo 2 Electric Boogaloo"),

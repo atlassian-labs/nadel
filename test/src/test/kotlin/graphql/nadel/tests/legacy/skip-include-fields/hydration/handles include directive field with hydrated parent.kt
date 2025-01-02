@@ -46,7 +46,8 @@ class `handles include directive field with hydrated parent` : NadelLegacyIntegr
                     type
                         .dataFetcher("bar") { env ->
                             Service_Foo(id = "Foo-1")
-                        }.dataFetcher("fooById") { env ->
+                        }
+                        .dataFetcher("fooById") { env ->
                             if (env.getArgument<Any?>("id") == "Foo-1") {
                                 Service_Foo()
                             } else {

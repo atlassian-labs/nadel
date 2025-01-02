@@ -105,7 +105,8 @@ class `extending types from another service is possible with synthetic fields` :
                     type
                         .dataFetcher("anotherRoot") { env ->
                             "anotherRoot"
-                        }.dataFetcher("root") { env ->
+                        }
+                        .dataFetcher("root") { env ->
                             Service1_Root(id = "rootId", name = "rootName")
                         }
                 }

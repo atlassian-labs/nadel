@@ -118,7 +118,8 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                                 Monolith_Activity(contentIds = listOf("comment/1234", "comment/9001")),
                                 Monolith_SingleActivity(contentId = "issue/7496"),
                             )
-                        }.dataFetcher("issuesByIds") { env ->
+                        }
+                        .dataFetcher("issuesByIds") { env ->
                             if (env.getArgument<Any?>("ids") == listOf("issue/4000")) {
                                 listOf(Monolith_Issue(id = "issue/4000", title = "Four Thousand"))
                             } else if (env.getArgument<Any?>("ids") == listOf("issue/8080", "issue/7496")) {
@@ -126,7 +127,8 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                             } else {
                                 null
                             }
-                        }.dataFetcher("commentsByIds") { env ->
+                        }
+                        .dataFetcher("commentsByIds") { env ->
                             if (env.getArgument<Any?>("ids") ==
                                 listOf(
                                     "comment/5000",

@@ -128,7 +128,8 @@ class `query with pass through interfaces and unions that have MIXED typename in
                                 } else {
                                     null
                                 }
-                            }.dataFetcher("raining") { env ->
+                            }
+                            .dataFetcher("raining") { env ->
                                 if (env.getArgument<Any?>("isLoyal") == true) {
                                     PetService_Dog(wearsCollar = true)
                                 } else {

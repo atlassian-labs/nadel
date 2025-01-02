@@ -89,7 +89,8 @@ class `hydration call over itself with renamed types` : NadelLegacyIntegrationTe
                                     ),
                                 ),
                             )
-                        }.dataFetcher("characters") { env ->
+                        }
+                        .dataFetcher("characters") { env ->
                             if (env.getArgument<Any?>("ids") == listOf("C1", "C2", "C3")) {
                                 listOf(
                                     Testing_Character(id = "C1", name = "Luke"),

@@ -78,13 +78,15 @@ class `hydration with more interfaces` : NadelLegacyIntegrationTest(
                                 Issues_User(id = "Franklin"),
                                 Issues_Issue(id = "GQLGW-11"),
                             )
-                        }.dataFetcher("trollName") { env ->
+                        }
+                        .dataFetcher("trollName") { env ->
                             if (env.getArgument<Any?>("id") == "My Arm") {
                                 "Troll"
                             } else {
                                 null
                             }
-                        }.dataFetcher("ariById") { env ->
+                        }
+                        .dataFetcher("ariById") { env ->
                             if (env.getArgument<Any?>("id") == "Franklin") {
                                 "ari:user/Franklin"
                             } else {

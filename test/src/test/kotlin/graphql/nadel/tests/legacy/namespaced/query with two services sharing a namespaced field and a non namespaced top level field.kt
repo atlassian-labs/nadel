@@ -62,7 +62,8 @@ class `query with two services sharing a namespaced field and a non namespaced t
                     type
                         .dataFetcher("conf") { env ->
                             Issues_Page(title = "Page title")
-                        }.dataFetcher("issue") { env ->
+                        }
+                        .dataFetcher("issue") { env ->
                             Issues_IssueQuery(getIssue = Issues_Issue(text = "Foo"))
                         }
                 }

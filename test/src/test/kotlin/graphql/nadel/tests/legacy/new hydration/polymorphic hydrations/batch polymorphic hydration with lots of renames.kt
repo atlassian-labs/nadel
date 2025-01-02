@@ -81,7 +81,8 @@ class `batch polymorphic hydration with lots of renames` : NadelLegacyIntegratio
                             } else {
                                 null
                             }
-                        }.dataFetcher("petById") { env ->
+                        }
+                        .dataFetcher("petById") { env ->
                             if (env.getArgument<Any?>("ids") == listOf("PET-0", "PET-1")) {
                                 listOf(
                                     Bar_Pet(hiddenId = "PET-0", identifier = "ANIMAL-0", kind = "Akita"),

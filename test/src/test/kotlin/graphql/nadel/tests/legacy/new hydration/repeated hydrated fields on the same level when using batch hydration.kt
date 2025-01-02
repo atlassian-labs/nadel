@@ -57,7 +57,8 @@ class `repeated hydrated fields on the same level when using batch hydration` : 
                     type
                         .dataFetcher("foo") { env ->
                             Foo_Foo(issueId = "ISSUE-1")
-                        }.dataFetcher("issues") { env ->
+                        }
+                        .dataFetcher("issues") { env ->
                             if (env.getArgument<Any?>("issueIds") == listOf("ISSUE-1")) {
                                 listOf(Foo_Issue(desc = "I AM A DESC", id = "ISSUE-1", name = "I AM A NAME"))
                             } else {

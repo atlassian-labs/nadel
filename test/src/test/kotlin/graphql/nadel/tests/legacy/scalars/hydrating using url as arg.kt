@@ -66,7 +66,8 @@ class `hydrating using url as arg` : NadelLegacyIntegrationTest(
                     type
                         .dataFetcher("foo") { env ->
                             Service_Foo(url = "https://github.com/atlassian-labs/nadel")
-                        }.dataFetcher("lookup") { env ->
+                        }
+                        .dataFetcher("lookup") { env ->
                             if (env.getArgument<Any?>("url") == "https://github.com/atlassian-labs/nadel") {
                                 Service_Lookup(
                                     baseUrl = "https://github.com/",

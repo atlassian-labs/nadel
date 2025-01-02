@@ -122,7 +122,8 @@ class `query with pass through interfaces and unions that have typename in them 
                                 } else {
                                     null
                                 }
-                            }.dataFetcher("pets") { env ->
+                            }
+                            .dataFetcher("pets") { env ->
                                 if (env.getArgument<Any?>("isLoyal") == true) {
                                     listOf(
                                         PetService_Dog(name = "Sparky", wearsCollar = true),

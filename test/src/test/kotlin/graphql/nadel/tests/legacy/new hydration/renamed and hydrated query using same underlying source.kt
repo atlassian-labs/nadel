@@ -60,7 +60,8 @@ class `renamed and hydrated query using same underlying source` : NadelLegacyInt
                     type
                         .dataFetcher("foo") { env ->
                             Foo_Foo(issue = Foo_Issue(`field` = "field", fooId = "ID"))
-                        }.dataFetcher("detail") { env ->
+                        }
+                        .dataFetcher("detail") { env ->
                             if (env.getArgument<Any?>("detailId") == "ID") {
                                 Foo_Detail(name = "apple")
                             } else {

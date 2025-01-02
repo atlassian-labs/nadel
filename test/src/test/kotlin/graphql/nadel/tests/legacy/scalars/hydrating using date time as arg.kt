@@ -52,7 +52,8 @@ class `hydrating using date time as arg` : NadelLegacyIntegrationTest(
                     type
                         .dataFetcher("foo") { env ->
                             Service_Foo(createdAt = "2022-03-09T05:01:50Z")
-                        }.dataFetcher("successor") { env ->
+                        }
+                        .dataFetcher("successor") { env ->
                             if (env.getArgument<Any?>("after") == "2022-03-09T05:01:50Z") {
                                 Service_Foo(id = "2023")
                             } else {

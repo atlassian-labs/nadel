@@ -63,7 +63,8 @@ class `hydration with interfaces asking typename` : NadelLegacyIntegrationTest(
                                     "ari:i-always-forget-the-format/1",
                                 ),
                             )
-                        }.dataFetcher("ariById") { env ->
+                        }
+                        .dataFetcher("ariById") { env ->
                             if (env.getArgument<Any?>("id") == "ari:i-always-forget-the-format/1") {
                                 "Definitely an ARI"
                             } else {

@@ -41,7 +41,8 @@ class `custom json scalar as output type` : NadelLegacyIntegrationTest(
                             } else {
                                 null
                             }
-                        }.dataFetcher("bField") { env ->
+                        }
+                        .dataFetcher("bField") { env ->
                             if (env.field.resultKey == "bField") {
                                 1_000
                             } else if (env.field.resultKey == "cField") {

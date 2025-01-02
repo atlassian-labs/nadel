@@ -120,7 +120,8 @@ class `batch polymorphic hydration actor fields are in the same service` : Nadel
                             } else {
                                 null
                             }
-                        }.dataFetcher("humanById") { env ->
+                        }
+                        .dataFetcher("humanById") { env ->
                             if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
                                 listOf(
                                     Bar_Human(id = "HUMAN-0", name = "Fanny Longbottom"),

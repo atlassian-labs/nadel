@@ -52,7 +52,8 @@ class `able to ask for field and use same field as hydration source` : NadelLega
                     type
                         .dataFetcher("bar") { env ->
                             Bar_Bar(barId = "1", name = "Test")
-                        }.dataFetcher("barById") { env ->
+                        }
+                        .dataFetcher("barById") { env ->
                             if (env.getArgument<Any?>("id") == "1") {
                                 Bar_Bar(barId = "1")
                             } else if (env.getArgument<Any?>("id") == "1") {

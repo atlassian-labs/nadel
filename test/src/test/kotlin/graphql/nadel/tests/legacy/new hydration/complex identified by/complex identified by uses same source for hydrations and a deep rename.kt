@@ -90,7 +90,8 @@ class `complex identified by uses same source for hydrations and a deep rename` 
                                     Foo_Issue(`field` = "hmm-3"),
                                 ),
                             )
-                        }.dataFetcher("issues") { env ->
+                        }
+                        .dataFetcher("issues") { env ->
                             if (env.getArgument<Any?>("issueIds") == listOf("Foo-1", "Foo-2")) {
                                 listOf(
                                     Foo_Issue(`field` = "field_name", issueId = "Foo-1"),
@@ -105,7 +106,8 @@ class `complex identified by uses same source for hydrations and a deep rename` 
                             } else {
                                 null
                             }
-                        }.dataFetcher("details") { env ->
+                        }
+                        .dataFetcher("details") { env ->
                             if (env.getArgument<Any?>("detailIds") == listOf("Foo-1", "Foo-2")) {
                                 listOf(
                                     Foo_Detail(detailId = "Foo-2", name = "Foo 2 Electric Boogaloo"),

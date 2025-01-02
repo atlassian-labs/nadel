@@ -75,13 +75,15 @@ class `same source for  nested hydrations and a rename` : NadelLegacyIntegration
                     type
                         .dataFetcher("foo") { env ->
                             Foo_Foo(issue = Foo_Issue(fooId = "ID", `field` = "field1"))
-                        }.dataFetcher("issue") { env ->
+                        }
+                        .dataFetcher("issue") { env ->
                             if (env.getArgument<Any?>("issueId") == "ID") {
                                 Foo_Issue(`field` = "field_name")
                             } else {
                                 null
                             }
-                        }.dataFetcher("detail") { env ->
+                        }
+                        .dataFetcher("detail") { env ->
                             if (env.getArgument<Any?>("detailId") == "ID") {
                                 Foo_Detail(name = "apple")
                             } else {

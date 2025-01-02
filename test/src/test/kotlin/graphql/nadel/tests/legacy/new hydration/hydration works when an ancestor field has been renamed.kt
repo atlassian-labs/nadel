@@ -67,7 +67,8 @@ class `hydration works when an ancestor field has been renamed` : NadelLegacyInt
                                     ),
                                 ),
                             )
-                        }.dataFetcher("issue") { env ->
+                        }
+                        .dataFetcher("issue") { env ->
                             if (env.getArgument<Any?>("id") == "1") {
                                 IssueService_Issue(id = "1")
                             } else {

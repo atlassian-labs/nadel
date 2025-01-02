@@ -102,19 +102,22 @@ class `nested list hydration under a renamed top level field` : NadelLegacyInteg
                     type
                         .dataFetcher("service") { env ->
                             Foo_Service(id = "ID")
-                        }.dataFetcher("connection") { env ->
+                        }
+                        .dataFetcher("connection") { env ->
                             if (env.getArgument<Any?>("id") == "ID") {
                                 Foo_Connection(edges = listOf(Foo_Edge(node = "1")))
                             } else {
                                 null
                             }
-                        }.dataFetcher("node") { env ->
+                        }
+                        .dataFetcher("node") { env ->
                             if (env.getArgument<Any?>("id") == "1") {
                                 Foo_Node(id = "1a")
                             } else {
                                 null
                             }
-                        }.dataFetcher("space") { env ->
+                        }
+                        .dataFetcher("space") { env ->
                             if (env.getArgument<Any?>("id") == "1a") {
                                 Foo_Space(id = "apple")
                             } else {

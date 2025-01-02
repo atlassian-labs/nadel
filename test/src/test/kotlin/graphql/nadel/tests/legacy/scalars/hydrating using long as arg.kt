@@ -53,7 +53,8 @@ class `hydrating using long as arg` : NadelLegacyIntegrationTest(
                     type
                         .dataFetcher("foo") { env ->
                             Service_Foo(createdAt = 3_000_000_000)
-                        }.dataFetcher("successor") { env ->
+                        }
+                        .dataFetcher("successor") { env ->
                             if (env.getArgument<Any?>("after") == BigInteger.valueOf(3_000_000_000)) {
                                 Service_Foo(id = "2023")
                             } else {
