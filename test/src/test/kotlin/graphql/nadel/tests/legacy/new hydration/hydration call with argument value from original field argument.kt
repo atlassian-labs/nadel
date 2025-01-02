@@ -37,12 +37,13 @@ class `hydration call with argument value from original field argument` : NadelL
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        UserService_User(id = "USER-1", name = "User 1"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("extraArg") == "extraArg" &&
-                            env.getArgument<Any?>("id") ==
-                            listOf("USER-1")
-                        ) {
-                            listOf(UserService_User(id = "USER-1", name = "User 1"))
+                        if (env.getArgument<Any?>("extraArg") == "extraArg") {
+                            env.getArgument<List<String>>("id")?.map(usersByIds::get)
                         } else {
                             null
                         }

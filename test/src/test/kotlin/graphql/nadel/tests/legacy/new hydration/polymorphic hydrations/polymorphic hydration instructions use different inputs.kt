@@ -121,12 +121,12 @@ class `polymorphic hydration instructions use different inputs` : NadelLegacyInt
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val dogsById = listOf(
+                        Dogs_Dog(id = "good-boye-1", name = "Abe"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("dogsByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("good-boye-1")) {
-                            listOf(Dogs_Dog(id = "good-boye-1", name = "Abe"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(dogsById::get)
                     }
                 }
             },

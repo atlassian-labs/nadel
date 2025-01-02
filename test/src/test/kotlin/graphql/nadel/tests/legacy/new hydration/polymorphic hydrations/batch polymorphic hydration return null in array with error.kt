@@ -53,20 +53,23 @@ class `batch polymorphic hydration return null in array with error` : NadelLegac
                 wiring.type("Query") { type ->
                     type.dataFetcher("petById") { env ->
                         if (env.getArgument<Any?>("ids") == listOf("PET-0", "PET-1")) {
-                            DataFetcherResult.newResult<Any>().data(
-                                listOf(
-                                    null,
-                                    Pets_Pet(breed = "Labrador", id = "PET-1")
+                            DataFetcherResult.newResult<Any>()
+                                .data(
+                                    listOf(
+                                        null,
+                                        Pets_Pet(breed = "Labrador", id = "PET-1"),
+                                    ),
                                 )
-                            ).errors(
-                                listOf(
-                                    toGraphQLError(
-                                        mapOf(
-                                            "message" to "invalid id PET-0"
-                                        )
-                                    )
+                                .errors(
+                                    listOf(
+                                        toGraphQLError(
+                                            mapOf(
+                                                "message" to "invalid id PET-0",
+                                            ),
+                                        ),
+                                    ),
                                 )
-                            ).build()
+                                .build()
                         } else {
                             null
                         }
@@ -98,16 +101,13 @@ class `batch polymorphic hydration return null in array with error` : NadelLegac
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val humansById = listOf(
+                        People_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
+                        People_Human(id = "HUMAN-1", name = "John Doe")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("humanById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
-                            listOf(
-                                People_Human(id = "HUMAN-0", name = "Fanny Longbottom"), People_Human(
-                                    id = "HUMAN-1", name = "John Doe"
-                                )
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(humansById::get)
                     }
                 }
             }

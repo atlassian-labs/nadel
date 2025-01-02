@@ -52,10 +52,7 @@ class `complex identified by with some null source ids` : NadelLegacyIntegration
                             listOf(
                                 mapOf("userId" to "USER-2", "site" to "hello"),
                                 mapOf("userId" to "USER-3", "site" to "hello"),
-                                mapOf(
-                                    "userId" to "USER-2",
-                                    "site" to "jdog",
-                                ),
+                                mapOf("userId" to "USER-2", "site" to "jdog"),
                             )
                         ) {
                             listOf(
@@ -65,10 +62,7 @@ class `complex identified by with some null source ids` : NadelLegacyIntegration
                             )
                         } else if (env.getArgument<Any?>("id") ==
                             listOf(
-                                mapOf(
-                                    "userId" to "USER-5",
-                                    "site" to "hello",
-                                ),
+                                mapOf("userId" to "USER-5", "site" to "hello"),
                             )
                         ) {
                             listOf(UserService_User(id = "USER-5", name = "H-Five", siteId = "hello"))

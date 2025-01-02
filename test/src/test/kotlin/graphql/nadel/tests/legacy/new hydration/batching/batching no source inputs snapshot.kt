@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class `batching no source inputs snapshot` : TestSnapshot() {
@@ -85,15 +85,15 @@ public class `batching no source inputs snapshot` : TestSnapshot() {
                 |     "commentsByIds": [
                 |       {
                 |         "__typename": "Comment",
-                |         "id": "comment/1234",
-                |         "content": "One Two Three Four",
-                |         "batch_hydration__content__id": "comment/1234"
-                |       },
-                |       {
-                |         "__typename": "Comment",
                 |         "id": "comment/9001",
                 |         "content": "It's over 9000",
                 |         "batch_hydration__content__id": "comment/9001"
+                |       },
+                |       {
+                |         "__typename": "Comment",
+                |         "id": "comment/1234",
+                |         "content": "One Two Three Four",
+                |         "batch_hydration__content__id": "comment/1234"
                 |       }
                 |     ]
                 |   }

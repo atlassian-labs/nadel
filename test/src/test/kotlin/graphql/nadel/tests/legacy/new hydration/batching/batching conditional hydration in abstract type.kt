@@ -107,6 +107,12 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                         Monolith_Issue(id = "issue/4000", title = "Four Thousand"),
                         Monolith_Issue(id = "issue/7496", title = "Seven Four Nine Six"),
                     ).associateBy { it.id }
+                    val commentsById = listOf(
+                        Monolith_Comment(content = "Five Thousand", id = "comment/5000"),
+                        Monolith_Comment(content = "Six Thousand", id = "comment/6000"),
+                        Monolith_Comment(content = "It's over 9000", id = "comment/9001"),
+                        Monolith_Comment(content = "One Two Three Four", id = "comment/1234"),
+                    ).associateBy { it.id }
 
                     type
                         .dataFetcher("activity") { env ->
@@ -127,23 +133,7 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                             env.getArgument<List<String>>("ids")?.mapNotNull(issuesById::get)
                         }
                         .dataFetcher("commentsByIds") { env ->
-                            if (env.getArgument<Any?>("ids") ==
-                                listOf(
-                                    "comment/5000",
-                                    "comment/6000",
-                                    "comment/1234",
-                                    "comment/9001",
-                                )
-                            ) {
-                                listOf(
-                                    Monolith_Comment(content = "Five Thousand", id = "comment/5000"),
-                                    Monolith_Comment(content = "Six Thousand", id = "comment/6000"),
-                                    Monolith_Comment(content = "It's over 9000", id = "comment/9001"),
-                                    Monolith_Comment(content = "One Two Three Four", id = "comment/1234"),
-                                )
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.map(commentsById::get)
                         }
                 }
                 wiring.type("ActivityContent") { type ->

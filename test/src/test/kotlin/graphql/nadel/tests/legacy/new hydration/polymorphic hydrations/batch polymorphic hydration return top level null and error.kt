@@ -50,19 +50,18 @@ class `batch polymorphic hydration return top level null and error` : NadelLegac
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("petById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("PET-0", "PET-1")) {
-                            DataFetcherResult.newResult<Any>().data(null).errors(
+                        DataFetcherResult.newResult<Any>()
+                            .data(null)
+                            .errors(
                                 listOf(
                                     toGraphQLError(
                                         mapOf(
                                             "message" to "something went wrong"
-                                        )
-                                    )
-                                )
-                            ).build()
-                        } else {
-                            null
-                        }
+                                        ),
+                                    ),
+                                ),
+                            )
+                            .build()
                     }
                 }
             }
@@ -89,16 +88,13 @@ class `batch polymorphic hydration return top level null and error` : NadelLegac
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val humansById = listOf(
+                        People_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
+                        People_Human(id = "HUMAN-1", name = "John Doe"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("humanById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
-                            listOf(
-                                People_Human(id = "HUMAN-0", name = "Fanny Longbottom"), People_Human(
-                                    id = "HUMAN-1", name = "John Doe"
-                                )
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(humansById::get)
                     }
                 }
             }

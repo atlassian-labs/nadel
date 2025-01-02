@@ -44,22 +44,19 @@ class `basic hydration with static arg object array` : NadelLegacyIntegrationTes
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barById = listOf(
+                        Service2_Bar(id = "barId", name = "Bar1")
+                    ).associateBy { it.id }
+
+                    val secret = listOf(
+                        mapOf("firstName" to "first", "lastName" to "last"),
+                        mapOf("firstName" to "first2", "lastName" to "last2"),
+                        mapOf("firstName" to "first3", "lastName" to "last3"),
+                    )
+
                     type.dataFetcher("barById") { env ->
-                        if (env.getArgument<Any?>("id") == "barId" &&
-                            env.getArgument<Any?>("friends") ==
-                            listOf(
-                                mapOf("firstName" to "first", "lastName" to "last"),
-                                mapOf(
-                                    "firstName" to "first2",
-                                    "lastName" to "last2",
-                                ),
-                                mapOf(
-                                    "firstName" to "first3",
-                                    "lastName" to "last3",
-                                ),
-                            )
-                        ) {
-                            Service2_Bar(name = "Bar1")
+                        if (env.getArgument<Any?>("friends") == secret) {
+                            barById[env.getArgument<String>("id")]
                         } else {
                             null
                         }

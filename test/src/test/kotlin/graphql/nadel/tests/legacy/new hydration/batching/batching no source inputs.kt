@@ -128,15 +128,13 @@ class `batching no source inputs` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val commentsById = listOf(
+                        Comments_Comment(content = "One Two Three Four", id = "comment/1234"),
+                        Comments_Comment(content = "It's over 9000", id = "comment/9001"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("commentsByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("comment/9001", "comment/1234")) {
-                            listOf(
-                                Comments_Comment(content = "One Two Three Four", id = "comment/1234"),
-                                Comments_Comment(content = "It's over 9000", id = "comment/9001"),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(commentsById::get)
                     }
                 }
             },

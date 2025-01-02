@@ -99,33 +99,27 @@ class `batching multiple source ids going to different services` : NadelLegacyIn
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val issuesById = listOf(
+                        Issues_Issue(
+                            id = "issue/4000",
+                            title = "Four Thousand",
+                        ),
+                        Issues_Issue(
+                            id = "issue/8080",
+                            title = "Eighty Eighty",
+                        ),
+                        Issues_Issue(
+                            id = "issue/7496",
+                            title = "Seven Four Nine Six",
+                        ),
+                        Issues_Issue(
+                            id = "issue/1234",
+                            title = "One Two Three Four",
+                        ),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("issuesByIds") { env ->
-                        if (env.getArgument<Any?>("ids") ==
-                            listOf(
-                                "issue/4000",
-                                "issue/8080",
-                                "issue/7496",
-                                "issue/1234",
-                            )
-                        ) {
-                            listOf(
-                                Issues_Issue(id = "issue/4000", title = "Four Thousand"),
-                                Issues_Issue(
-                                    id = "issue/8080",
-                                    title = "Eighty Eighty",
-                                ),
-                                Issues_Issue(
-                                    id = "issue/7496",
-                                    title = "Seven Four Nine Six",
-                                ),
-                                Issues_Issue(
-                                    id = "issue/1234",
-                                    title = "One Two Three Four",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.mapNotNull(issuesById::get)
                     }
                 }
             },

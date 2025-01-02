@@ -60,15 +60,9 @@ class `complex identified by with rename` : NadelLegacyIntegrationTest(
                             )
                         } else if (env.getArgument<Any?>("id") ==
                             listOf(
-                                mapOf(
-                                    "userId" to "USER-1",
-                                    "site" to "hello",
-                                ),
+                                mapOf("userId" to "USER-1", "site" to "hello"),
                                 mapOf("userId" to "USER-3", "site" to "hello"),
-                                mapOf(
-                                    "userId" to "USER-2",
-                                    "site" to "jdog",
-                                ),
+                                mapOf("userId" to "USER-2", "site" to "jdog"),
                                 mapOf("userId" to "USER-4", "site" to "hello"),
                             )
                         ) {

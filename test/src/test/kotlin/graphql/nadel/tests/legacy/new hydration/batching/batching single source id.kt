@@ -138,12 +138,12 @@ class `batching single source id` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val commentsById = listOf(
+                        Comments_Comment(content = "One Two Three Four", id = "comment/1234")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("commentsByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("comment/1234")) {
-                            listOf(Comments_Comment(content = "One Two Three Four", id = "comment/1234"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(commentsById::get)
                     }
                 }
             },

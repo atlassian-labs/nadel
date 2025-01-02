@@ -129,15 +129,9 @@ class `complex identified by doesnt use all input fields in the inputIdentifiedB
                         type.dataFetcher("issues") { env ->
                             if (env.getArgument<Any?>("issuesInput") ==
                                 listOf(
-                                    mapOf(
-                                        "id" to "ISSUE-0",
-                                        "site" to "CLOUD-0",
-                                    ),
+                                    mapOf("id" to "ISSUE-0", "site" to "CLOUD-0"),
                                     mapOf("id" to "ISSUE-1", "site" to "CLOUD-0"),
-                                    mapOf(
-                                        "id" to "ISSUE-2",
-                                        "site" to "CLOUD-0",
-                                    ),
+                                    mapOf("id" to "ISSUE-2", "site" to "CLOUD-0"),
                                     mapOf("id" to "ISSUE-3", "site" to "CLOUD-0"),
                                 )
                             ) {

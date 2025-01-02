@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class `deep rename inside batch hydration null object snapshot` : TestSnapshot() {
@@ -46,14 +46,14 @@ public class `deep rename inside batch hydration null object snapshot` : TestSna
                 |         "__typename__deep_rename__name": "Issue",
                 |         "batch_hydration__issue__id": "issue-1"
                 |       },
+                |       null,
                 |       {
                 |         "deep_rename__name__detail": {
                 |           "detailName": "Names are arbitrary"
                 |         },
                 |         "__typename__deep_rename__name": "Issue",
                 |         "batch_hydration__issue__id": "issue-3"
-                |       },
-                |       null
+                |       }
                 |     ]
                 |   }
                 | }

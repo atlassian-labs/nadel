@@ -81,18 +81,13 @@ class `batch polymorphic hydration with rename` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val humansById = listOf(
+                        People_Person(id = "HUMAN-0", name = "Fanny Longbottom"),
+                        People_Person(id = "HUMAN-1", name = "John Doe")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("humanById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
-                            listOf(
-                                People_Person(id = "HUMAN-0", name = "Fanny Longbottom"),
-                                People_Person(
-                                    id = "HUMAN-1",
-                                    name = "John Doe",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(humansById::get)
                     }
                 }
             },

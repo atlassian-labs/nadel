@@ -126,28 +126,16 @@ class `complex input object with indexed hydration` : NadelLegacyIntegrationTest
                     type.dataFetcher("issues") { env ->
                         if (env.getArgument<Any?>("issuesInput") ==
                             listOf(
-                                mapOf(
-                                    "id" to "ISSUE-0",
-                                    "site" to "CLOUD-0",
-                                ),
+                                mapOf("id" to "ISSUE-0", "site" to "CLOUD-0"),
                                 mapOf("id" to "ISSUE-1", "site" to "CLOUD-0"),
-                                mapOf(
-                                    "id" to "ISSUE-2",
-                                    "site" to "CLOUD-0",
-                                ),
+                                mapOf("id" to "ISSUE-2", "site" to "CLOUD-0"),
                                 mapOf("id" to "ISSUE-3", "site" to "CLOUD-0"),
                             )
                         ) {
                             listOf(
                                 Issue_Issue(description = "fix A", issueId = "ISSUE-0"),
-                                Issue_Issue(
-                                    description = "fix B",
-                                    issueId = "ISSUE-1",
-                                ),
-                                Issue_Issue(
-                                    description = "fix C",
-                                    issueId = "ISSUE-2",
-                                ),
+                                Issue_Issue(description = "fix B", issueId = "ISSUE-1"),
+                                Issue_Issue(description = "fix C", issueId = "ISSUE-2"),
                                 Issue_Issue(description = "fix D", issueId = "ISSUE-3"),
                             )
                         } else {

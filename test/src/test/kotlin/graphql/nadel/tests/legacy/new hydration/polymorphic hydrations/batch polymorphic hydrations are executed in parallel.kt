@@ -81,18 +81,13 @@ class `batch polymorphic hydrations are executed in parallel` : NadelLegacyInteg
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val humansById = listOf(
+                        People_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
+                        People_Human(id = "HUMAN-1", name = "John Doe")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("humanById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
-                            listOf(
-                                People_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
-                                People_Human(
-                                    id = "HUMAN-1",
-                                    name = "John Doe",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(humansById::get)
                     }
                 }
             },

@@ -36,12 +36,13 @@ class `basic hydration with default array argument values` : NadelLegacyIntegrat
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barById = listOf(
+                        Service2_Bar(id = "barId", name = "Bar1"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("barById") { env ->
-                        if (env.getArgument<Any?>("id") == "barId" &&
-                            env.getArgument<Any?>("test") ==
-                            listOf("Hello", "World")
-                        ) {
-                            Service2_Bar(name = "Bar1")
+                        if (env.getArgument<Any?>("test") == listOf("Hello", "World")) {
+                            barById[env.getArgument<String>("id")]
                         } else {
                             null
                         }

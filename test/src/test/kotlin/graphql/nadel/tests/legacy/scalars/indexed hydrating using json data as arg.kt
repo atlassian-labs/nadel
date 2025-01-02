@@ -107,7 +107,10 @@ class `indexed hydrating using json data as arg` : NadelLegacyIntegrationTest(
                             listOf(
                                 mapOf(
                                     "id" to "102",
-                                    "appConfig" to mapOf("status" to "active", "bounce" to false),
+                                    "appConfig" to mapOf(
+                                        "status" to "active",
+                                        "bounce" to false,
+                                    ),
                                 ),
                                 mapOf(
                                     "ari" to "ari:cloud:api-platform::thing/103",

@@ -36,12 +36,13 @@ class `basic hydration with static arg array` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barById = listOf(
+                        Service2_Bar(id = "barId", name = "Bar1")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("barById") { env ->
-                        if (env.getArgument<Any?>("id") == "barId" &&
-                            env.getArgument<Any?>("friendIds") ==
-                            listOf("barId2", "barId3", "barId4")
-                        ) {
-                            Service2_Bar(name = "Bar1")
+                        if (env.getArgument<Any?>("friendIds") == listOf("barId2", "barId3", "barId4")) {
+                            barById[env.getArgument<String>("id")]
                         } else {
                             null
                         }

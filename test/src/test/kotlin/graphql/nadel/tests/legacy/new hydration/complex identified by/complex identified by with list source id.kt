@@ -52,10 +52,7 @@ class `complex identified by with list source id` : NadelLegacyIntegrationTest(
                             listOf(
                                 mapOf("userId" to "USER-1", "site" to "hello"),
                                 mapOf("userId" to "USER-2", "site" to "hello"),
-                                mapOf(
-                                    "userId" to "USER-3",
-                                    "site" to "hello",
-                                ),
+                                mapOf("userId" to "USER-3", "site" to "hello"),
                             )
                         ) {
                             listOf(
@@ -65,15 +62,9 @@ class `complex identified by with list source id` : NadelLegacyIntegrationTest(
                             )
                         } else if (env.getArgument<Any?>("id") ==
                             listOf(
-                                mapOf(
-                                    "userId" to "USER-2",
-                                    "site" to "jdog",
-                                ),
+                                mapOf("userId" to "USER-2", "site" to "jdog"),
                                 mapOf("userId" to "USER-4", "site" to "hello"),
-                                mapOf(
-                                    "userId" to "USER-5",
-                                    "site" to "hello",
-                                ),
+                                mapOf("userId" to "USER-5", "site" to "hello"),
                             )
                         ) {
                             listOf(
