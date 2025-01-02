@@ -1,8 +1,11 @@
 package graphql.nadel.schema
 
 import graphql.Assert.assertShouldNeverHappen
+import graphql.GraphQLContext
+import graphql.execution.CoercedVariables
+import graphql.language.Value
 import graphql.scalars.ExtendedScalars
-import graphql.scalars.alias.AliasedScalar
+import graphql.schema.Coercing
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLScalarType
 import graphql.schema.TypeResolver
@@ -12,6 +15,7 @@ import graphql.schema.idl.ScalarInfo
 import graphql.schema.idl.ScalarWiringEnvironment
 import graphql.schema.idl.UnionWiringEnvironment
 import graphql.schema.idl.WiringFactory
+import java.util.Locale
 
 /**
  * This wiring factory is designed to be NEVER called and will assert if it ever is. Nadel
@@ -24,10 +28,55 @@ open class NeverWiringFactory : WiringFactory {
     }
 
     override fun getScalar(environment: ScalarWiringEnvironment): GraphQLScalarType? {
-        return AliasedScalar.Builder()
-            .name(environment.scalarTypeDefinition.name)
-            .aliasedScalar(ExtendedScalars.Json)
-            .build()
+        return when (val scalarName = environment.scalarTypeDefinition.name) {
+            ExtendedScalars.Json.name -> {
+                ExtendedScalars.Json
+            }
+            ExtendedScalars.GraphQLLong.name -> {
+                ExtendedScalars.GraphQLLong
+            }
+            else -> {
+                GraphQLScalarType.newScalar()
+                    .name(scalarName)
+                    .definition(environment.scalarTypeDefinition)
+                    .coercing(object : Coercing<Any?, Any?> {
+                        override fun serialize(
+                            dataFetcherResult: Any,
+                            graphQLContext: GraphQLContext,
+                            locale: Locale,
+                        ): Any? {
+                            return assertShouldNeverHappen(
+                                "This %s scalar coercing should NEVER be called from Nadel",
+                                scalarName
+                            )
+                        }
+
+                        override fun parseValue(
+                            input: Any,
+                            graphQLContext: GraphQLContext,
+                            locale: Locale,
+                        ): Any? {
+                            return assertShouldNeverHappen(
+                                "This %s scalar coercing should NEVER be called from Nadel",
+                                scalarName
+                            )
+                        }
+
+                        override fun parseLiteral(
+                            input: Value<*>,
+                            variables: CoercedVariables,
+                            graphQLContext: GraphQLContext,
+                            locale: Locale,
+                        ): Any? {
+                            return assertShouldNeverHappen(
+                                "This %s scalar coercing should NEVER be called from Nadel",
+                                scalarName
+                            )
+                        }
+                    })
+                    .build()
+            }
+        }
     }
 
     override fun providesTypeResolver(environment: InterfaceWiringEnvironment): Boolean {
