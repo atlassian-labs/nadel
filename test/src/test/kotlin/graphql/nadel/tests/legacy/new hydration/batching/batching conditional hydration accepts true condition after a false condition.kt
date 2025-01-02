@@ -42,19 +42,13 @@ class `batching conditional hydration accepts true condition after a false condi
                 """.trimIndent(),
                 runtimeWiring = { wiring ->
                     wiring.type("Query") { type ->
+                        val othersById = listOf(
+                            Service2_Bar(id = "barId1", name = "Bar1"),
+                            Service2_Bar(id = "barId2", name = "Bar2"),
+                        ).associateBy { it.id }
+
                         type.dataFetcher("othersById") { env ->
-                            if (env.getArgument<Any?>("ids") == listOf("barId1", "barId2")) {
-                                listOf(
-                                    Service2_Bar(id = "barId1", name = "Bar1"),
-                                    Service2_Bar(
-                                        id = "barId2",
-                                        name =
-                                        "Bar2",
-                                    ),
-                                )
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.map(othersById::get)
                         }
                     }
                 },

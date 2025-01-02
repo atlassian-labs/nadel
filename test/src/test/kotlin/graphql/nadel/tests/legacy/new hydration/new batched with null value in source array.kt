@@ -80,12 +80,13 @@ class `new batched with null value in source array` : NadelLegacyIntegrationTest
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        Users_User(id = "100", name = "John Doe"),
+                        Users_User(id = "200", name = "Joe")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("100", "200")) {
-                            listOf(Users_User(id = "100", name = "John Doe"), Users_User(id = "200", name = "Joe"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(usersByIds::get)
                     }
                 }
             },

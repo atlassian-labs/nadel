@@ -66,18 +66,17 @@ class `batch polymorphic hydration with interfaces` : NadelLegacyIntegrationTest
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
-                    type.dataFetcher("petById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("DOG-0", "FISH-0", "DOG-1", "FISH-1")) {
-                            listOf(
-                                Pets_Dog(id = "DOG-0", breed = "Akita"),
-                                Pets_Fish(id = "FISH-0", fins = 4),
-                                Pets_Dog(id = "DOG-1", breed = "Labrador"),
-                                Pets_Fish(id = "FISH-1", fins = 8),
-                            )
-                        } else {
-                            null
+                    val petById = listOf(
+                        Pets_Dog(id = "DOG-0", breed = "Akita"),
+                        Pets_Fish(id = "FISH-0", fins = 4),
+                        Pets_Dog(id = "DOG-1", breed = "Labrador"),
+                        Pets_Fish(id = "FISH-1", fins = 8),
+                    ).associateBy { it.id }
+
+                    type
+                        .dataFetcher("petById") { env ->
+                            env.getArgument<List<String>>("ids")?.map(petById::get)
                         }
-                    }
                 }
                 wiring.type("Pet") { type ->
                     type.typeResolver { typeResolver ->
@@ -110,13 +109,14 @@ class `batch polymorphic hydration with interfaces` : NadelLegacyIntegrationTest
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
-                    type.dataFetcher("humanById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("HUMAN-0")) {
-                            listOf(People_Human(id = "HUMAN-0", name = "Fanny Longbottom"))
-                        } else {
-                            null
+                    val humanById = listOf(
+                        People_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
+                    ).associateBy { it.id }
+
+                    type
+                        .dataFetcher("humanById") { env ->
+                            env.getArgument<List<String>>("ids")?.map(humanById::get)
                         }
-                    }
                 }
             },
         ),

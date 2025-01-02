@@ -37,12 +37,13 @@ class `hydration matching using index` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        UserService_User(id = "1", name = "Name"),
+                        UserService_User(id = "2", name = "Name 2"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("1", "2")) {
-                            listOf(UserService_User(name = "Name"), UserService_User(name = "Name 2"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(usersByIds::get)
                     }
                 }
             },

@@ -96,24 +96,23 @@ class `batching single source id` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val issuesByIds = listOf(
+                        Issues_Issue(
+                            id = "issue/4000",
+                            title = "Four Thousand",
+                        ),
+                        Issues_Issue(
+                            id = "issue/8080",
+                            title = "Eighty Eighty",
+                        ),
+                        Issues_Issue(
+                            id = "issue/7496",
+                            title = "Seven Four Nine Six",
+                        ),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("issuesByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("issue/4000", "issue/8080", "issue/7496")) {
-                            listOf(
-                                Issues_Issue(id = "issue/4000", title = "Four Thousand"),
-                                Issues_Issue(
-                                    id =
-                                    "issue/8080",
-                                    title = "Eighty Eighty",
-                                ),
-                                Issues_Issue(
-                                    id = "issue/7496",
-                                    title =
-                                    "Seven Four Nine Six",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(issuesByIds::get)
                     }
                 }
             },

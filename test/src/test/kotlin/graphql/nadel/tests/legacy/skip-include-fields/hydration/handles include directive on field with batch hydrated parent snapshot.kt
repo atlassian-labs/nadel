@@ -69,11 +69,11 @@ public class `handles include directive on field with batch hydrated parent snap
                 |     "tests": [
                 |       {
                 |         "__typename__skip_include____skip": "Test",
-                |         "batch_hydration__test__id": "Foo-4"
+                |         "batch_hydration__test__id": "Foo-3"
                 |       },
                 |       {
                 |         "__typename__skip_include____skip": "Test",
-                |         "batch_hydration__test__id": "Foo-3"
+                |         "batch_hydration__test__id": "Foo-4"
                 |       }
                 |     ]
                 |   }

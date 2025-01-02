@@ -35,16 +35,23 @@ class `index hydration with partitioned inputs` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersById = listOf(
+                        UserService_User(id = "site-1/user-1"),
+                        UserService_User(id = "site-1/user-3"),
+                        UserService_User(id = "site-1/user-5"),
+                        UserService_User(id = "site-2/user-2"),
+                        UserService_User(id = "site-2/user-4"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("site-1/user-1", "site-1/user-3")) {
-                            listOf(UserService_User(id = "site-1/user-1"), UserService_User(id = "site-1/user-3"))
-                        } else if (env.getArgument<Any?>("id") == listOf("site-1/user-5")) {
-                            listOf(UserService_User(id = "site-1/user-5"))
-                        } else if (env.getArgument<Any?>("id") == listOf("site-2/user-2", "site-2/user-4")) {
-                            listOf(UserService_User(id = "site-2/user-2"), UserService_User(id = "site-2/user-4"))
-                        } else {
-                            null
+                        val ids = env.getArgument<List<String>>("id")
+                        if (ids != null) {
+                            val uniqueCloudIds = ids.mapTo(mutableSetOf()) { it.substringBefore("/") }
+                            if (uniqueCloudIds.size > 1) {
+                                throw IllegalArgumentException("Cannot query multiple cloud IDs at once")
+                            }
                         }
+                        ids?.map(usersById::get)
                     }
                 }
             },

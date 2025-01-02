@@ -61,36 +61,30 @@ class `batch polymorphic hydration with lots of renames` : NadelLegacyIntegratio
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val petById = listOf(
+                        Bar_Pet(hiddenId = "PET-0", identifier = "ANIMAL-0", kind = "Akita"),
+                        Bar_Pet(hiddenId = "PET-1", identifier = "ANIMAL-1", kind = "Labrador"),
+                    ).associateBy { it.hiddenId }
+
+                    val humanById = listOf(
+                        Bar_Human(
+                            hiddenId = "HUMAN-0",
+                            identifier = "PERSON-0",
+                            name = "Fanny Longbottom",
+                        ),
+                        Bar_Human(
+                            hiddenId = "HUMAN-1",
+                            identifier = "PERSON-1",
+                            name = "John Doe",
+                        ),
+                    ).associateBy { it.hiddenId }
+
                     type
                         .dataFetcher("humanById") { env ->
-                            if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
-                                listOf(
-                                    Bar_Human(
-                                        hiddenId = "HUMAN-0",
-                                        identifier = "PERSON-0",
-                                        name =
-                                        "Fanny Longbottom",
-                                    ),
-                                    Bar_Human(
-                                        hiddenId = "HUMAN-1",
-                                        identifier = "PERSON-1",
-                                        name =
-                                        "John Doe",
-                                    ),
-                                )
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.map(humanById::get)
                         }
                         .dataFetcher("petById") { env ->
-                            if (env.getArgument<Any?>("ids") == listOf("PET-0", "PET-1")) {
-                                listOf(
-                                    Bar_Pet(hiddenId = "PET-0", identifier = "ANIMAL-0", kind = "Akita"),
-                                    Bar_Pet(hiddenId = "PET-1", identifier = "ANIMAL-1", kind = "Labrador"),
-                                )
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.map(petById::get)
                         }
                 }
             },

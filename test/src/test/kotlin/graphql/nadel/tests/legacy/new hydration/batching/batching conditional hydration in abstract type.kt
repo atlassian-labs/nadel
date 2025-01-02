@@ -103,6 +103,11 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val issuesById = listOf(
+                        Monolith_Issue(id = "issue/4000", title = "Four Thousand"),
+                        Monolith_Issue(id = "issue/7496", title = "Seven Four Nine Six"),
+                    ).associateBy { it.id }
+
                     type
                         .dataFetcher("activity") { env ->
                             listOf(
@@ -120,13 +125,7 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                             )
                         }
                         .dataFetcher("issuesByIds") { env ->
-                            if (env.getArgument<Any?>("ids") == listOf("issue/4000")) {
-                                listOf(Monolith_Issue(id = "issue/4000", title = "Four Thousand"))
-                            } else if (env.getArgument<Any?>("ids") == listOf("issue/8080", "issue/7496")) {
-                                listOf(Monolith_Issue(id = "issue/7496", title = "Seven Four Nine Six"))
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.mapNotNull(issuesById::get)
                         }
                         .dataFetcher("commentsByIds") { env ->
                             if (env.getArgument<Any?>("ids") ==

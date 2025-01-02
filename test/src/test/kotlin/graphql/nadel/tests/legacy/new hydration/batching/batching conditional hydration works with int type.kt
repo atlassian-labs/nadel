@@ -7,7 +7,7 @@ class `batching conditional hydration works with int type` : NadelLegacyIntegrat
         query {
           foo {
             bar {
-                name
+              name
             }
           }
         }
@@ -36,12 +36,12 @@ class `batching conditional hydration works with int type` : NadelLegacyIntegrat
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barsById = listOf(
+                        Service2_Bar(id = 2, name = "Bar2"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("barsById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf(2)) {
-                            listOf(Service2_Bar(id = 2, name = "Bar2"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<Int>>("ids")?.map(barsById::get)
                     }
                 }
             },

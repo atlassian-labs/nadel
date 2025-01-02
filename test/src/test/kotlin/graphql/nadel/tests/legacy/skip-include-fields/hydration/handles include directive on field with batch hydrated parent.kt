@@ -49,16 +49,17 @@ class `handles include directive on field with batch hydrated parent` : NadelLeg
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val testById = listOf(
+                        Service_Test(id = "Foo-4"),
+                        Service_Test(id = "Foo-3"),
+                    ).associateBy { it.id }
+
                     type
                         .dataFetcher("foos") { env ->
                             listOf(Service_Foo(id = "Foo-3"), Service_Foo(id = "Foo-4"))
                         }
                         .dataFetcher("tests") { env ->
-                            if (env.getArgument<Any?>("ids") == listOf("Foo-3", "Foo-4")) {
-                                listOf(Service_Test(id = "Foo-4"), Service_Test(id = "Foo-3"))
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.map(testById::get)
                         }
                 }
             },

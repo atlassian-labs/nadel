@@ -103,19 +103,13 @@ class `some renamed object types have fields in the result are backed a batch hy
                 """.trimIndent(),
                 runtimeWiring = { wiring ->
                     wiring.type("Query") { type ->
+                        val usersByIds = listOf(
+                            Users_User(id = "user-100", name = "Spaces"),
+                            Users_User(id = "user-20", name = "Newmarket"),
+                        ).associateBy { it.id }
+
                         type.dataFetcher("usersByIds") { env ->
-                            if (env.getArgument<Any?>("ids") == listOf("user-100", "user-20")) {
-                                listOf(
-                                    Users_User(id = "user-100", name = "Spaces"),
-                                    Users_User(
-                                        id = "user-20",
-                                        name =
-                                        "Newmarket",
-                                    ),
-                                )
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.map(usersByIds::get)
                         }
                     }
                 },

@@ -39,10 +39,16 @@ class `hydration matching using index one batch returns errors` : NadelLegacyInt
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        UserService_User(
+                            id = "1",
+                            name = "User-1",
+                        ),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("1", "2")) {
-                            listOf(UserService_User(name = "User-1"), null)
-                        } else if (env.getArgument<Any?>("ids") == listOf("4")) {
+                        val ids = env.getArgument<List<String>>("ids")
+                        if (ids?.contains("4") == true) {
                             DataFetcherResult
                                 .newResult<Any>()
                                 .data(null)
@@ -57,7 +63,7 @@ class `hydration matching using index one batch returns errors` : NadelLegacyInt
                                     ),
                                 ).build()
                         } else {
-                            null
+                            ids?.map(usersByIds::get)
                         }
                     }
                 }

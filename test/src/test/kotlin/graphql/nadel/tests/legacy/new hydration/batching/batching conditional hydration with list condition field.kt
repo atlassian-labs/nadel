@@ -36,12 +36,12 @@ class `batching conditional hydration with list condition field` : NadelLegacyIn
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barsById = listOf(
+                        Service2_Bar(id = "barId2", name = "Bar2"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("barsById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("barId2")) {
-                            listOf(Service2_Bar(id = "barId2", name = "Bar2"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(barsById::get)
                     }
                 }
             },

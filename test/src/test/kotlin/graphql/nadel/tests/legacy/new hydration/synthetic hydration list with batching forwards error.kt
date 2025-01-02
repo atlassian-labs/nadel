@@ -50,23 +50,19 @@ class `synthetic hydration list with batching forwards error` : NadelLegacyInteg
                 }
                 wiring.type("BarsQuery") { type ->
                     type.dataFetcher("barsById") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("barId1", "barId2", "barId3")) {
-                            DataFetcherResult
-                                .newResult<Any>()
-                                .data(null)
-                                .errors(
-                                    listOf(
-                                        toGraphQLError(
-                                            mapOf(
-                                                "message"
-                                                    to "Some error occurred",
-                                            ),
+                        DataFetcherResult
+                            .newResult<Any>()
+                            .data(null)
+                            .errors(
+                                listOf(
+                                    toGraphQLError(
+                                        mapOf(
+                                            "message"
+                                                to "Some error occurred",
                                         ),
                                     ),
-                                ).build()
-                        } else {
-                            null
-                        }
+                                ),
+                            ).build()
                     }
                 }
             },

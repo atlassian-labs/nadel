@@ -37,12 +37,12 @@ class `hydration matching using index result size invariant mismatch` : NadelLeg
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        UserService_User(id = "1", name = "Name")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("1", "2")) {
-                            listOf(UserService_User(name = "Name"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.mapNotNull(usersByIds::get)
                     }
                 }
             },

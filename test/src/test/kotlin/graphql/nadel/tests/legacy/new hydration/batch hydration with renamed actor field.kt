@@ -36,20 +36,14 @@ class `batch hydration with renamed actor field` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barsById = listOf(
+                        Service2_Bar(id = "barId1", name = "Bar1"),
+                        Service2_Bar(id = "barId2", name = "Bar2"),
+                        Service2_Bar(id = "barId3", name = "Bar3"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("barsById") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("barId1", "barId2", "barId3")) {
-                            listOf(
-                                Service2_Bar(id = "barId1", name = "Bar1"),
-                                Service2_Bar(
-                                    id = "barId2",
-                                    name =
-                                    "Bar2",
-                                ),
-                                Service2_Bar(id = "barId3", name = "Bar3"),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("id")?.map(barsById::get)
                     }
                 }
             },

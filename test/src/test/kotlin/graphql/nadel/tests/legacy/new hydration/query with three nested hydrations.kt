@@ -52,28 +52,35 @@ class `query with three nested hydrations` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barsById = listOf(
+                        Bar_Bar(
+                            barId = "bar3",
+                            name = "Bar 3",
+                            nestedBarId = null,
+                        ),
+                        Bar_Bar(
+                            barId = "bar1",
+                            name = "Bar 1",
+                            nestedBarId = "nestedBar1",
+                        ),
+                        Bar_Bar(
+                            barId = "bar2",
+                            name = "Bar 2",
+                            nestedBarId = "nestedBar2",
+                        ),
+                        Bar_Bar(
+                            barId = "nestedBar1",
+                            name = "NestedBarName1",
+                            nestedBarId = "nestedBarId456",
+                        ),
+                        Bar_Bar(
+                            barId = "nestedBarId456",
+                            name = "NestedBarName2",
+                        ),
+                    ).associateBy { it.barId }
+
                     type.dataFetcher("barsById") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("bar3")) {
-                            listOf(Bar_Bar(barId = "bar3", name = "Bar 3", nestedBarId = null))
-                        } else if (env.getArgument<Any?>("id") == listOf("bar1", "bar2")) {
-                            listOf(
-                                Bar_Bar(barId = "bar1", name = "Bar 1", nestedBarId = "nestedBar1"),
-                                Bar_Bar(barId = "bar2", name = "Bar 2", nestedBarId = "nestedBar2"),
-                            )
-                        } else if (env.getArgument<Any?>("id") == listOf("nestedBar1", "nestedBar2")) {
-                            listOf(
-                                Bar_Bar(
-                                    barId = "nestedBar1",
-                                    name = "NestedBarName1",
-                                    nestedBarId =
-                                    "nestedBarId456",
-                                ),
-                            )
-                        } else if (env.getArgument<Any?>("id") == listOf("nestedBarId456")) {
-                            listOf(Bar_Bar(barId = "nestedBarId456", name = "NestedBarName2"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("id")?.mapNotNull(barsById::get)
                     }
                 }
             },

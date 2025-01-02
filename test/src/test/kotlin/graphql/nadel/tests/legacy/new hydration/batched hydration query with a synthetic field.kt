@@ -50,21 +50,16 @@ class `batched hydration query with a synthetic field` : NadelLegacyIntegrationT
                     }
                 }
                 wiring.type("UsersQuery") { type ->
+                    val usersByIds = listOf(
+                        Service2_User(id = "USER-1"),
+                        Service2_User(id = "USER-2"),
+                        Service2_User(id = "USER-3"),
+                        Service2_User(id = "USER-4"),
+                        Service2_User(id = "USER-5"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("USER-4", "USER-5")) {
-                            listOf(Service2_User(id = "USER-4"), Service2_User(id = "USER-5"))
-                        } else if (env.getArgument<Any?>("id") == listOf("USER-1", "USER-2", "USER-3")) {
-                            listOf(
-                                Service2_User(id = "USER-1"),
-                                Service2_User(id = "USER-2"),
-                                Service2_User(
-                                    id =
-                                    "USER-3",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("id")?.map(usersByIds::get)
                     }
                 }
             },

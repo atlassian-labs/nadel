@@ -66,20 +66,13 @@ class `hydration call with fragments in the hydrated part and synthetic field` :
                     }
                 }
                 wiring.type("UserQuery") { type ->
+                    val usersById = listOf(
+                        UserService_User(id = "USER-1", name = "User 1"),
+                        UserService_User(id = "USER-2", name = "User 2"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("USER-1")) {
-                            listOf(UserService_User(id = "USER-1", name = "User 1"))
-                        } else if (env.getArgument<Any?>("id") == listOf("USER-1", "USER-2")) {
-                            listOf(
-                                UserService_User(id = "USER-1", name = "User 1"),
-                                UserService_User(
-                                    id = "USER-2",
-                                    name = "User 2",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("id")?.map(usersById::get)
                     }
                 }
             },

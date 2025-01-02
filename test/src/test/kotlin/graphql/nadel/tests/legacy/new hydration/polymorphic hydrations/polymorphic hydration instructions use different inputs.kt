@@ -77,26 +77,25 @@ class `polymorphic hydration instructions use different inputs` : NadelLegacyInt
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
-                    type.dataFetcher("petsByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("good-boye-1", "tall-boye-9")) {
-                            listOf(
-                                Pets_Pet(animalId = "good-boye-1", giraffeInput = null),
-                                Pets_Pet(
-                                    animalId =
-                                    "tall-boye-9",
-                                    giraffeInput =
-                                    Pets_PetGiraffeInput(
-                                        nickname = "Tall Boye",
-                                        birthday =
-                                        1_001_203_200,
-                                        height = 570,
-                                    ),
-                                ),
-                            )
-                        } else {
-                            null
+                    val petById = listOf(
+                        Pets_Pet(
+                            animalId = "good-boye-1",
+                            giraffeInput = null
+                        ),
+                        Pets_Pet(
+                            animalId = "tall-boye-9",
+                            giraffeInput = Pets_PetGiraffeInput(
+                                nickname = "Tall Boye",
+                                birthday = 1_001_203_200,
+                                height = 570,
+                            ),
+                        ),
+                    ).associateBy { it.animalId }
+
+                    type
+                        .dataFetcher("petsByIds") { env ->
+                            env.getArgument<List<String>>("ids")?.map(petById::get)
                         }
-                    }
                 }
             },
         ),

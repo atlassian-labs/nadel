@@ -39,18 +39,18 @@ class `hydration matching using index with lists with hydration field not expose
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIssueId = mapOf(
+                        "ISSUE-1" to listOf(
+                            UserService_User(id = "1", name = "Name"),
+                        ),
+                        "ISSUE-2" to listOf(
+                            UserService_User(id = "1", name = "Name"),
+                            UserService_User(id = "2", name = "Name 2"),
+                        ),
+                    )
+
                     type.dataFetcher("usersByIssueIds") { env ->
-                        if (env.getArgument<Any?>("issueIds") == listOf("ISSUE-1", "ISSUE-2")) {
-                            listOf(
-                                listOf(UserService_User(name = "Name")),
-                                listOf(
-                                    UserService_User(name = "Name"),
-                                    UserService_User(name = "Name 2"),
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("issueIds")?.map(usersByIssueId::get)
                     }
                 }
             },

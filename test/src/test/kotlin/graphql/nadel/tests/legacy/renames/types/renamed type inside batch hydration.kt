@@ -44,30 +44,28 @@ class `renamed type inside batch hydration` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val issuesByIds = listOf(
+                        IssueService_Issue(
+                            details = IssueService_Details(name = "Details of issue one"),
+                            id = "issue-1",
+                        ),
+                        IssueService_Issue(
+                            details =
+                            IssueService_Details(
+                                name =
+                                "Issue two",
+                            ),
+                            id = "issue-2",
+                        ),
+                        IssueService_Issue(
+                            details =
+                            IssueService_Details(name = "Issue four – no wait three"),
+                            id = "issue-3",
+                        ),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("issuesByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("issue-1", "issue-2", "issue-3")) {
-                            listOf(
-                                IssueService_Issue(
-                                    details = IssueService_Details(name = "Details of issue one"),
-                                    id = "issue-1",
-                                ),
-                                IssueService_Issue(
-                                    details =
-                                    IssueService_Details(
-                                        name =
-                                        "Issue two",
-                                    ),
-                                    id = "issue-2",
-                                ),
-                                IssueService_Issue(
-                                    details =
-                                    IssueService_Details(name = "Issue four – no wait three"),
-                                    id = "issue-3",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("id")?.map(issuesByIds::get)
                     }
                 }
             },

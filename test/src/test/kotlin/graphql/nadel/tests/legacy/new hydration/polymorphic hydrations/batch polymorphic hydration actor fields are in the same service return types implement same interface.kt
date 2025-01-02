@@ -114,33 +114,22 @@ class `batch polymorphic hydration actor fields are in the same service return t
                 """.trimIndent(),
                 runtimeWiring = { wiring ->
                     wiring.type("Query") { type ->
+                        val petById = listOf(
+                            Bar_Pet(breed = "Akita", id = "PET-0"),
+                            Bar_Pet(breed = "Labrador", id = "PET-1"),
+                        ).associateBy { it.id }
+
+                        val humanById = listOf(
+                            Bar_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
+                            Bar_Human(id = "HUMAN-1", name = "John Doe"),
+                        ).associateBy { it.id }
+
                         type
                             .dataFetcher("petById") { env ->
-                                if (env.getArgument<Any?>("ids") == listOf("PET-0", "PET-1")) {
-                                    listOf(
-                                        Bar_Pet(breed = "Akita", id = "PET-0"),
-                                        Bar_Pet(
-                                            breed = "Labrador",
-                                            id =
-                                            "PET-1",
-                                        ),
-                                    )
-                                } else {
-                                    null
-                                }
+                                env.getArgument<List<String>>("ids")?.map(petById::get)
                             }
                             .dataFetcher("humanById") { env ->
-                                if (env.getArgument<Any?>("ids") == listOf("HUMAN-0", "HUMAN-1")) {
-                                    listOf(
-                                        Bar_Human(id = "HUMAN-0", name = "Fanny Longbottom"),
-                                        Bar_Human(
-                                            id = "HUMAN-1",
-                                            name = "John Doe",
-                                        ),
-                                    )
-                                } else {
-                                    null
-                                }
+                                env.getArgument<List<String>>("ids")?.map(humanById::get)
                             }
                     }
                     wiring.type("Node") { type ->

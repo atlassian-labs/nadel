@@ -49,13 +49,7 @@ class `top level field data returns null in batched synthetic hydration` : Nadel
                 }
                 wiring.type("UsersQuery") { type ->
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("USER-4", "USER-5")) {
-                            null
-                        } else if (env.getArgument<Any?>("id") == listOf("USER-1", "USER-2", "USER-3")) {
-                            null
-                        } else {
-                            null
-                        }
+                        null
                     }
                 }
             },

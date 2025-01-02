@@ -52,23 +52,25 @@ class `query with three nested hydrations and simple data` : NadelLegacyIntegrat
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val barsById = listOf(
+                        Bar_Bar(
+                            barId = "bar1",
+                            name = "Bar 1",
+                            nestedBarId = "nestedBar1",
+                        ),
+                        Bar_Bar(
+                            barId = "nestedBar1",
+                            name = "NestedBarName1",
+                            nestedBarId = "nestedBarId456",
+                        ),
+                        Bar_Bar(
+                            barId = "nestedBarId456",
+                            name = "NestedBarName2",
+                        )
+                    ).associateBy { it.barId }
+
                     type.dataFetcher("barsById") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("bar1")) {
-                            listOf(Bar_Bar(barId = "bar1", name = "Bar 1", nestedBarId = "nestedBar1"))
-                        } else if (env.getArgument<Any?>("id") == listOf("nestedBar1")) {
-                            listOf(
-                                Bar_Bar(
-                                    barId = "nestedBar1",
-                                    name = "NestedBarName1",
-                                    nestedBarId =
-                                    "nestedBarId456",
-                                ),
-                            )
-                        } else if (env.getArgument<Any?>("id") == listOf("nestedBarId456")) {
-                            listOf(Bar_Bar(barId = "nestedBarId456", name = "NestedBarName2"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("id")?.map(barsById::get)
                     }
                 }
             },

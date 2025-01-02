@@ -35,33 +35,23 @@ class `batching of hydration list with partition` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        UserService_User(id = "CLOUD-ID-1/USER-1"),
+                        UserService_User(id = "CLOUD-ID-1/USER-3"),
+                        UserService_User(id = "CLOUD-ID-1/USER-5"),
+                        UserService_User(id = "CLOUD-ID-2/USER-2"),
+                        UserService_User(id = "CLOUD-ID-2/USER-4"),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("CLOUD-ID-1/USER-1", "CLOUD-ID-1/USER-3")) {
-                            listOf(
-                                UserService_User(id = "CLOUD-ID-1/USER-1"),
-                                UserService_User(
-                                    id =
-                                    "CLOUD-ID-1/USER-3",
-                                ),
-                            )
-                        } else if (env.getArgument<Any?>("id") == listOf("CLOUD-ID-1/USER-5")) {
-                            listOf(UserService_User(id = "CLOUD-ID-1/USER-5"))
-                        } else if (env.getArgument<Any?>("id") ==
-                            listOf(
-                                "CLOUD-ID-2/USER-2",
-                                "CLOUD-ID-2/USER-4",
-                            )
-                        ) {
-                            listOf(
-                                UserService_User(id = "CLOUD-ID-2/USER-2"),
-                                UserService_User(
-                                    id =
-                                    "CLOUD-ID-2/USER-4",
-                                ),
-                            )
-                        } else {
-                            null
+                        val ids = env.getArgument<List<String>>("id")
+                        if (ids != null) {
+                            val uniqueCloudIds = ids.mapTo(mutableSetOf()) { it.substringBefore("/") }
+                            if (uniqueCloudIds.size > 1) {
+                                throw IllegalArgumentException("Cannot query multiple cloud IDs at once")
+                            }
                         }
+                        ids?.map(usersByIds::get)
                     }
                 }
             },

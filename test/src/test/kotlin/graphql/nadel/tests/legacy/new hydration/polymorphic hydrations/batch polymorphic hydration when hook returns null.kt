@@ -47,13 +47,15 @@ class `batch polymorphic hydration when hook returns null` : NadelLegacyIntegrat
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
-                    type.dataFetcher("petById") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("PET-0")) {
-                            listOf(Pets_Pet(breed = "Akita", id = "PET-0"))
-                        } else {
-                            null
+                    val petById = listOf(
+                        Pets_Pet(breed = "Akita", id = "PET-0"),
+                        Pets_Pet(breed = "Labrador", id = "PET-1"),
+                    ).associateBy { it.id }
+
+                    type
+                        .dataFetcher("petById") { env ->
+                            env.getArgument<List<String>>("ids")?.map(petById::get)
                         }
-                    }
                 }
             },
         ),

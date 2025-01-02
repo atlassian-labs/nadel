@@ -73,37 +73,30 @@ class `complex identified by uses same source for hydrations` : NadelLegacyInteg
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val issuesByIds = listOf(
+                        Foo_Issue(`field` = "field_name", issueId = "Foo-1"),
+                        Foo_Issue(`field` = "field_name-2", issueId = "Foo-2"),
+                        Foo_Issue(`field` = "field-3", issueId = "Foo-3"),
+                    ).associateBy { it.issueId }
+                    val detailsByIds = listOf(
+                        Foo_Detail(detailId = "Foo-2", name = "Foo 2 Electric Boogaloo"),
+                        Foo_Detail(detailId = "Foo-1", name = "apple"),
+                        Foo_Detail(detailId = "Foo-3", name = "Three Apples"),
+                    ).associateBy { it.detailId }
+
                     type
                         .dataFetcher("foos") { env ->
-                            listOf(Foo_Foo(fooId = "Foo-1"), Foo_Foo(fooId = "Foo-2"), Foo_Foo(fooId = "Foo-3"))
+                            listOf(
+                                Foo_Foo(fooId = "Foo-1"),
+                                Foo_Foo(fooId = "Foo-2"),
+                                Foo_Foo(fooId = "Foo-3")
+                            )
                         }
                         .dataFetcher("issues") { env ->
-                            if (env.getArgument<Any?>("issueIds") == listOf("Foo-1", "Foo-2")) {
-                                listOf(
-                                    Foo_Issue(`field` = "field_name", issueId = "Foo-1"),
-                                    Foo_Issue(
-                                        `field` =
-                                        "field_name-2",
-                                        issueId = "Foo-2",
-                                    ),
-                                )
-                            } else if (env.getArgument<Any?>("issueIds") == listOf("Foo-3")) {
-                                listOf(Foo_Issue(`field` = "field-3", issueId = "Foo-3"))
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("issueIds")?.map(issuesByIds::get)
                         }
                         .dataFetcher("details") { env ->
-                            if (env.getArgument<Any?>("detailIds") == listOf("Foo-1", "Foo-2")) {
-                                listOf(
-                                    Foo_Detail(detailId = "Foo-2", name = "Foo 2 Electric Boogaloo"),
-                                    Foo_Detail(detailId = "Foo-1", name = "apple"),
-                                )
-                            } else if (env.getArgument<Any?>("detailIds") == listOf("Foo-3")) {
-                                listOf(Foo_Detail(detailId = "Foo-3", name = "Three Apples"))
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("detailIds")?.map(detailsByIds::get)
                         }
                 }
             },

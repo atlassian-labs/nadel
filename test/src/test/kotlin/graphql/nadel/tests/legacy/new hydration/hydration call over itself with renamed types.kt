@@ -70,11 +70,16 @@ class `hydration call over itself with renamed types` : NadelLegacyIntegrationTe
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val charactersById = listOf(
+                        Testing_Character(id = "C1", name = "Luke"),
+                        Testing_Character(id = "C2", name = "Leia"),
+                        Testing_Character(id = "C3", name = "Anakin"),
+                    ).associateBy { it.id }
+
                     type
                         .dataFetcher("testing") { env ->
                             Testing_Testing(
-                                movies =
-                                listOf(
+                                movies = listOf(
                                     Testing_Movie(
                                         characterIds = listOf("C1", "C2"),
                                         id =
@@ -91,19 +96,7 @@ class `hydration call over itself with renamed types` : NadelLegacyIntegrationTe
                             )
                         }
                         .dataFetcher("characters") { env ->
-                            if (env.getArgument<Any?>("ids") == listOf("C1", "C2", "C3")) {
-                                listOf(
-                                    Testing_Character(id = "C1", name = "Luke"),
-                                    Testing_Character(
-                                        id = "C2",
-                                        name =
-                                        "Leia",
-                                    ),
-                                    Testing_Character(id = "C3", name = "Anakin"),
-                                )
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("ids")?.map(charactersById::get)
                         }
                 }
             },

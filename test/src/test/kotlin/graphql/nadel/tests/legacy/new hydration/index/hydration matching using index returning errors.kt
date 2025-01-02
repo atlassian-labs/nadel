@@ -38,11 +38,7 @@ class `hydration matching using index returning errors` : NadelLegacyIntegration
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("1", "2")) {
-                            null
-                        } else {
-                            null
-                        }
+                        null
                     }
                 }
             },

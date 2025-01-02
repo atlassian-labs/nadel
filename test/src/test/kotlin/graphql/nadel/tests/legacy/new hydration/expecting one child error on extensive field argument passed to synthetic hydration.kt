@@ -130,19 +130,14 @@ class `expecting one child error on extensive field argument passed to synthetic
                         }
                     }
                     wiring.type("UserQuery") { type ->
+                        val usersById = listOf(
+                            Users_User(accountId = "1"),
+                            Users_User(accountId = "2"),
+                            Users_User(accountId = "3"),
+                        ).associateBy { it.accountId }
+
                         type.dataFetcher("users") { env ->
-                            if (env.getArgument<Any?>("accountIds") == listOf("1", "2", "3")) {
-                                listOf(
-                                    Users_User(accountId = "1"),
-                                    Users_User(accountId = "2"),
-                                    Users_User(
-                                        accountId =
-                                        "3",
-                                    ),
-                                )
-                            } else {
-                                null
-                            }
+                            env.getArgument<List<String>>("accountIds")?.map(usersById::get)
                         }
                     }
                 },

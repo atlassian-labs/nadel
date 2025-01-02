@@ -104,21 +104,16 @@ class `synthetic hydration call over itself within renamed types` : NadelLegacyI
                 }
 
                 wiring.type("TestQuery") { type ->
-                    type.dataFetcher("characters") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("C1", "C2", "C3")) {
-                            listOf(
-                                Testing_Character(id = "C1", name = "Luke"),
-                                Testing_Character(
-                                    id = "C2",
-                                    name =
-                                    "Leia",
-                                ),
-                                Testing_Character(id = "C3", name = "Anakin"),
-                            )
-                        } else {
-                            null
+                    val charactersById = listOf(
+                        Testing_Character(id = "C1", name = "Luke"),
+                        Testing_Character(id = "C2", name = "Leia"),
+                        Testing_Character(id = "C3", name = "Anakin"),
+                    ).associateBy { it.id }
+
+                    type
+                        .dataFetcher("characters") { env ->
+                            env.getArgument<List<String>>("ids")?.map(charactersById::get)
                         }
-                    }
                 }
             },
         ),

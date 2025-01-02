@@ -37,12 +37,12 @@ public class `complex identified by uses same source for hydrations snapshot` : 
                 |   "data": {
                 |     "details": [
                 |       {
-                |         "name": "Foo 2 Electric Boogaloo",
-                |         "batch_hydration__detail__detailId": "Foo-2"
-                |       },
-                |       {
                 |         "name": "apple",
                 |         "batch_hydration__detail__detailId": "Foo-1"
+                |       },
+                |       {
+                |         "name": "Foo 2 Electric Boogaloo",
+                |         "batch_hydration__detail__detailId": "Foo-2"
                 |       }
                 |     ]
                 |   }

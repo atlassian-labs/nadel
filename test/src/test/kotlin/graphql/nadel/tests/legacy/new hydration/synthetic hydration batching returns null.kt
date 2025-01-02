@@ -48,11 +48,7 @@ class `synthetic hydration batching returns null` : NadelLegacyIntegrationTest(
                 }
                 wiring.type("BarsQuery") { type ->
                     type.dataFetcher("barsById") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("barId1", "barId2", "barId3")) {
-                            null
-                        } else {
-                            null
-                        }
+                        null
                     }
                 }
             },

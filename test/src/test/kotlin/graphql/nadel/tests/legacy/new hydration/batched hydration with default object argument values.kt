@@ -49,33 +49,24 @@ class `batched hydration with default object argument values` : NadelLegacyInteg
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        UserService_User(id = "USER-1"),
+                        UserService_User(id = "USER-2"),
+                        UserService_User(id = "USER-3"),
+                        UserService_User(id = "USER-4"),
+                        UserService_User(id = "USER-5"),
+                    ).associateBy { it.id }
+
+                    val expectedTest = mapOf(
+                        "string" to "Test",
+                        "int" to 42,
+                        "bool" to false,
+                        "echo" to "Hello World",
+                    )
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("USER-1", "USER-2", "USER-3") &&
-                            env.getArgument<Any?>("test") ==
-                            mapOf(
-                                "string" to "Test",
-                                "int" to 42,
-                                "bool" to
-                                    false,
-                                "echo" to "Hello World",
-                            )
-                        ) {
-                            listOf(
-                                UserService_User(id = "USER-1"),
-                                UserService_User(id = "USER-2"),
-                                UserService_User(id = "USER-3"),
-                            )
-                        } else if (env.getArgument<Any?>("id") == listOf("USER-4", "USER-5") &&
-                            env.getArgument<Any?>("test") ==
-                            mapOf(
-                                "string" to "Test",
-                                "int" to 42,
-                                "bool" to
-                                    false,
-                                "echo" to "Hello World",
-                            )
-                        ) {
-                            listOf(UserService_User(id = "USER-4"), UserService_User(id = "USER-5"))
+                        if (env.getArgument<Any?>("test") == expectedTest) {
+                            env.getArgument<List<String>>("id")?.map(usersByIds::get)
                         } else {
                             null
                         }

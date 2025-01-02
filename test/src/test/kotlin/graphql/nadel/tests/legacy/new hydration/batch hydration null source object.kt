@@ -80,12 +80,12 @@ class `batch hydration null source object` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val usersByIds = listOf(
+                        Users_User(id = "user-256", name = "2^8")
+                    ).associateBy { it.id }
+
                     type.dataFetcher("usersByIds") { env ->
-                        if (env.getArgument<Any?>("ids") == listOf("user-256")) {
-                            listOf(Users_User(id = "user-256", name = "2^8"))
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("ids")?.map(usersByIds::get)
                     }
                 }
             },

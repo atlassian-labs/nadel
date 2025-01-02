@@ -38,34 +38,32 @@ class `deep rename inside batch hydration` : NadelLegacyIntegrationTest(
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
+                    val issuesByIds = listOf(
+                        IssueService_Issue(
+                            detail =
+                            IssueService_IssueDetails(
+                                detailName =
+                                "It amounts to nothing",
+                            ),
+                            id = "issue-1",
+                        ),
+                        IssueService_Issue(
+                            detail =
+                            IssueService_IssueDetails(detailName = "Details are cool"),
+                            id = "issue-2",
+                        ),
+                        IssueService_Issue(
+                            detail =
+                            IssueService_IssueDetails(
+                                detailName =
+                                "Names are arbitrary",
+                            ),
+                            id = "issue-3",
+                        ),
+                    ).associateBy { it.id }
+
                     type.dataFetcher("issuesByIds") { env ->
-                        if (env.getArgument<Any?>("id") == listOf("issue-1", "issue-2", "issue-3")) {
-                            listOf(
-                                IssueService_Issue(
-                                    detail =
-                                    IssueService_IssueDetails(
-                                        detailName =
-                                        "It amounts to nothing",
-                                    ),
-                                    id = "issue-1",
-                                ),
-                                IssueService_Issue(
-                                    detail =
-                                    IssueService_IssueDetails(detailName = "Details are cool"),
-                                    id = "issue-2",
-                                ),
-                                IssueService_Issue(
-                                    detail =
-                                    IssueService_IssueDetails(
-                                        detailName =
-                                        "Names are arbitrary",
-                                    ),
-                                    id = "issue-3",
-                                ),
-                            )
-                        } else {
-                            null
-                        }
+                        env.getArgument<List<String>>("id")?.map(issuesByIds::get)
                     }
                 }
             },
