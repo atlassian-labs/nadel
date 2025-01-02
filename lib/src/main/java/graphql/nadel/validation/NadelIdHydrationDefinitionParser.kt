@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
+import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
@@ -59,13 +60,17 @@ internal class NadelIdHydrationDefinitionParser {
     ): NadelValidationInterimResult<List<NadelHydrationDefinition>> {
         return NadelValidationInterimResult.Success.of(
             virtualFieldType.types
-                .map { unionMemberType ->
-                    getHydrationDefinitionForType(
-                        parent,
-                        virtualField,
-                        idHydration,
-                        unionMemberType as GraphQLObjectType,
-                    ).onErrorCast { return it }
+                .mapNotNull { unionMemberType ->
+                    if ((unionMemberType as? GraphQLNamedType)?.getDefaultHydrationOrNull() == null) {
+                        null
+                    } else {
+                        getHydrationDefinitionForType(
+                            parent,
+                            virtualField,
+                            idHydration,
+                            unionMemberType as GraphQLObjectType,
+                        ).onErrorCast { return it }
+                    }
                 },
         )
     }
@@ -79,36 +84,44 @@ internal class NadelIdHydrationDefinitionParser {
         val defaultHydration = (type as? GraphQLNamedType)?.getDefaultHydrationOrNull()
             ?: return NadelValidationInterimResult.Error.of(NadelMissingDefaultHydrationError(parent, virtualField))
 
-        val hydration = object : NadelHydrationDefinition {
-            override val backingField: List<String>
-                get() = defaultHydration.backingField
-
-            override val identifiedBy: String?
-                get() = idHydration.identifiedBy ?: defaultHydration.identifiedBy
-
-            override val isIndexed: Boolean
-                get() = false
-
-            override val batchSize: Int
-                get() = defaultHydration.batchSize
-
-            override val arguments: List<NadelHydrationArgumentDefinition>
-                get() = listOf(
-                    NadelHydrationArgumentDefinition.ObjectField(
-                        name = defaultHydration.idArgument,
-                        pathToField = idHydration.idField,
-                    ),
-                )
-            override val condition: NadelHydrationConditionDefinition?
-                get() = null
-
-            override val timeout: Int
-                get() = defaultHydration.timeout
-
-            override val inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>?
-                get() = null
-        }
-
-        return NadelValidationInterimResult.Success.of(hydration)
+        return NadelValidationInterimResult.Success.of(
+            NadelIdHydratedHydrationDefinition(
+                idHydration = idHydration,
+                defaultHydration = defaultHydration,
+            ),
+        )
     }
+}
+
+internal class NadelIdHydratedHydrationDefinition(
+    private val idHydration: NadelIdHydrationDefinition,
+    private val defaultHydration: NadelDefaultHydrationDefinition,
+) : NadelHydrationDefinition {
+    override val backingField: List<String>
+        get() = defaultHydration.backingField
+
+    override val identifiedBy: String?
+        get() = idHydration.identifiedBy ?: defaultHydration.identifiedBy
+
+    override val isIndexed: Boolean
+        get() = false
+
+    override val batchSize: Int
+        get() = defaultHydration.batchSize
+
+    override val arguments: List<NadelHydrationArgumentDefinition>
+        get() = listOf(
+            NadelHydrationArgumentDefinition.ObjectField(
+                name = defaultHydration.idArgument,
+                pathToField = idHydration.idField,
+            ),
+        )
+    override val condition: NadelHydrationConditionDefinition?
+        get() = null
+
+    override val timeout: Int
+        get() = defaultHydration.timeout
+
+    override val inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>?
+        get() = null
 }

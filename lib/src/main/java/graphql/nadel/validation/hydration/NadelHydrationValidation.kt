@@ -26,6 +26,7 @@ import graphql.nadel.engine.util.singleOfTypeOrNull
 import graphql.nadel.engine.util.startsWith
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
+import graphql.nadel.engine.util.whenType
 import graphql.nadel.validation.NadelBatchHydrationArgumentMissingSourceFieldError
 import graphql.nadel.validation.NadelBatchHydrationMatchingStrategyInvalidSourceIdError
 import graphql.nadel.validation.NadelBatchHydrationMatchingStrategyReferencesNonExistentSourceFieldError
@@ -35,6 +36,8 @@ import graphql.nadel.validation.NadelHydrationIncompatibleOutputTypeError
 import graphql.nadel.validation.NadelHydrationMustUseIndexExclusivelyError
 import graphql.nadel.validation.NadelHydrationReferencesNonExistentBackingFieldError
 import graphql.nadel.validation.NadelHydrationTypeMismatchError
+import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
+import graphql.nadel.validation.NadelHydrationUnionMissingTypeError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
@@ -116,12 +119,51 @@ class NadelHydrationValidation internal constructor() {
             .onError { return it }
         limitSourceField(parent, virtualField, hydrations)
             .onError { return it }
+        validateUnion(parent, virtualField, hydrations)
+            .onError { return it }
 
         return hydrations
             .map { hydration ->
                 validate(parent, virtualField, hydration, hasMoreThanOneHydration)
             }
             .toResult()
+    }
+
+    context(NadelValidationContext)
+    private fun validateUnion(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        virtualField: GraphQLFieldDefinition,
+        hydrations: List<NadelHydrationDefinition>,
+    ): NadelSchemaValidationResult {
+        val unionType = virtualField.type.unwrapAll() as? GraphQLUnionType
+            ?: return ok()
+
+        val suppliedTypes = hydrations
+            .flatMap { hydration ->
+                val backingTypes = engineSchema.queryType.getFieldAt(hydration.backingField)?.type?.unwrapAll()
+                    ?.whenType(
+                        enumType = ::listOf,
+                        inputObjectType = ::listOf,
+                        interfaceType = engineSchema::getImplementations,
+                        objectType = ::listOf,
+                        scalarType = ::listOf,
+                        unionType = GraphQLUnionType::getTypes,
+                    )
+                    ?: emptyList()
+
+                if (unionType.types.containsAll(backingTypes)) {
+                    backingTypes
+                } else {
+                    val missingTypes = backingTypes - unionType.types.toSet()
+                    return NadelHydrationUnionMissingTypeError(parent, virtualField, hydration, missingTypes)
+                }
+            }
+
+        return if (suppliedTypes.containsAll(unionType.types)) {
+            ok()
+        } else {
+            NadelHydrationUnionMemberNoBackingError(parent, virtualField, unionType.types - suppliedTypes.toSet())
+        }
     }
 
     context(NadelValidationContext)
