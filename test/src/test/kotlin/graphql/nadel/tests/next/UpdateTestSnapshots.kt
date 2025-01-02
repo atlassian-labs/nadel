@@ -45,6 +45,7 @@ private suspend fun main(vararg args: String) {
         // Only process non-existent by default
         .filter { klass ->
             classForNameOrNull(getSnapshotClassName(klass.asClassName()).reflectionName()) == null
+                || (args.isNotEmpty() && klass.qualifiedName in args)
         }
         .onEach { klass ->
             println("Loading ${klass.qualifiedName}")
