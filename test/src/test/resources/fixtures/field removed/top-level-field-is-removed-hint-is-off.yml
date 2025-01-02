@@ -1,4 +1,4 @@
-name: "top-level-field-is-removed-hint-is-off"
+name: "top level field is removed hint is off"
 enabled: true
 # language=GraphQL
 overallSchema:

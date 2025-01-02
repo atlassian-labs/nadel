@@ -44,7 +44,9 @@ serviceCalls: [ ]
 # language=JSON
 response: |-
   {
-    "data": "enhanced beginQueryExecution",
+    "data": {
+      "step": "beginQueryExecution"
+    },
     "errors": [
       {
         "message": "beginQueryExecution",

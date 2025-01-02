@@ -1,5 +1,6 @@
 package graphql.nadel.tests.next
 
+import com.squareup.kotlinpoet.asClassName
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.execution.DataFetcherExceptionHandler
@@ -12,6 +13,7 @@ import graphql.execution.instrumentation.parameters.InstrumentationExecutionPara
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.language.AstPrinter
+import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
@@ -26,6 +28,7 @@ import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
@@ -68,7 +71,15 @@ abstract class NadelIntegrationTest(
         val executionInput = makeExecutionInput().build()
 
         // When
-        val result = nadel.execute(executionInput).await()
+        val result = try {
+            nadel.execute(executionInput).await()
+        } catch (e: Exception) {
+            // Let tests expect Exception
+            if (assertFailure(e)) {
+                return@runTest
+            }
+            throw e
+        }
 
         val incrementalResults = if (result is IncrementalExecutionResult) {
             result.incrementalItemPublisher
@@ -186,12 +197,16 @@ abstract class NadelIntegrationTest(
         val schemas = makeNadelSchemas().build()
         val nadelSchemaValidation = makeNadelSchemaValidation()
         val schemaErrors = nadelSchemaValidation.validate(schemas)
-        assertTrue(schemaErrors.map { it.message }.isEmpty())
+        assertSchemaErrors(schemaErrors)
 
         return Nadel.newNadel()
             .schemas(schemas)
             .instrumentation(makeInstrumentation())
             .schemaValidation(nadelSchemaValidation)
+    }
+
+    open fun assertSchemaErrors(errors: Set<NadelSchemaValidationError>) {
+        assertTrue(errors.map { it.message }.isEmpty())
     }
 
     open fun makeNadelSchemas(): NadelSchemas.Builder {
@@ -284,7 +299,7 @@ abstract class NadelIntegrationTest(
      */
     private val _testSnapshot = lazy {
         try {
-            Class.forName(this::class.qualifiedName + "Snapshot")
+            Class.forName(getSnapshotClassName(this::class.asClassName()).canonicalName)
                 .getDeclaredConstructor()
                 .newInstance() as TestSnapshot
         } catch (e: ClassNotFoundException) {
@@ -296,12 +311,25 @@ abstract class NadelIntegrationTest(
         return _testSnapshot.value
     }
 
+    /**
+     * Allows for a chance to recover from an [Exception] if it is expected
+     *
+     * @return true to pass the test
+     */
+    open fun assertFailure(e: Exception): Boolean {
+        return false
+    }
+
     open fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
     }
 
     private fun assertServiceCalls(testSnapshot: TestSnapshot) {
         fun getCanonicalQuery(query: String): String {
-            return AstPrinter.printAstCompact(Parser().parseDocument(query))
+            return AstPrinter.printAstCompact(
+                AstSorter().sort(
+                    Parser().parseDocument(query),
+                ),
+            )
         }
 
         fun isDelayedResultsEqual(

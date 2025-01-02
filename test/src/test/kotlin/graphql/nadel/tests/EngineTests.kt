@@ -218,7 +218,7 @@ private suspend fun execute(
                             fail("Unable to invoke service '$serviceName'", e)
                         }
                     }
-                    return testHook.wrapServiceExecution(serviceExecution)
+                    return testHook.wrapServiceExecution(serviceName, serviceExecution)
                 }
 
                 private fun transformIncrementalExecutionResult(serviceCall: ServiceCall): CompletableFuture<ServiceExecutionResult> {

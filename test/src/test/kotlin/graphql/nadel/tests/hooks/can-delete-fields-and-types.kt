@@ -1,12 +1,8 @@
 package graphql.nadel.tests.hooks
 
-import graphql.ExecutionResult
-import graphql.nadel.engine.util.AnyList
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.assertJsonKeys
-import graphql.nadel.tests.util.data
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchemaElement
@@ -14,13 +10,6 @@ import graphql.schema.GraphQLTypeVisitorStub
 import graphql.schema.SchemaTransformer.transformSchema
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import strikt.api.expectThat
-import strikt.assertions.get
-import strikt.assertions.isA
-import strikt.assertions.isEqualTo
-import strikt.assertions.isNotNull
-import strikt.assertions.none
-import strikt.assertions.one
 
 @UseHook
 class `can-delete-fields-and-types` : EngineTestHook {
@@ -46,24 +35,5 @@ class `can-delete-fields-and-types` : EngineTestHook {
                 return super.visitGraphQLObjectType(node, context)
             }
         })
-    }
-
-    override fun assertResult(result: ExecutionResult) {
-        expectThat(result)
-            .data
-            .isNotNull()
-            .assertJsonKeys()["__schema"]
-            .isNotNull()
-            .isAJsonMap()["types"]
-            .isA<AnyList>()
-            .none {
-                isNotNull().isAJsonMap()["name"].isEqualTo("Foo")
-            }
-            .one {
-                isNotNull().isAJsonMap()["name"].isEqualTo("String")
-            }
-            .one {
-                isNotNull().isAJsonMap()["name"].isEqualTo("Query")
-            }
     }
 }

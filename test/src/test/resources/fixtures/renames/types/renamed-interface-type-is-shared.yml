@@ -28,6 +28,9 @@ underlyingSchema:
     type NextgenIssue implements Node {
       id: ID
     }
+    interface Node {
+      id: ID
+    }
   IssueService: |-
     type Query {
       issue(id: ID): Issue

@@ -66,7 +66,7 @@ interface EngineTestHook {
     /**
      * Allows you to wrap the base test service execution call, so you can do things before or after it
      */
-    fun wrapServiceExecution(baseTestServiceExecution: ServiceExecution): ServiceExecution {
+    fun wrapServiceExecution(serviceName: String, baseTestServiceExecution: ServiceExecution): ServiceExecution {
         return baseTestServiceExecution
     }
 }
@@ -78,9 +78,13 @@ private val hooksPackage: String = join(
 )
 
 internal fun getTestHook(fixture: TestFixture): EngineTestHook? {
+    return getTestHook(fixture.name)
+}
+
+internal fun getTestHook(name: String): EngineTestHook? {
     require(Util.validated) { "Tests hooks are not valid" }
 
-    val className = when (val name = fixture.name) {
+    val className = when (name) {
         "new transformer on hydration fields",
         "new can generate legacy operation name on batch hydration for specific service",
         "new can generate legacy operation name on batch hydration",

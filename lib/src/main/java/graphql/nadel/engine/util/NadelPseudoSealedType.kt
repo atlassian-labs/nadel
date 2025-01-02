@@ -10,13 +10,17 @@ import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLList
 import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLNonNull
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
+import graphql.schema.GraphQLType
 import graphql.schema.GraphQLUnionType
+import graphql.schema.GraphQLUnmodifiedType
 
-internal inline fun <T> GraphQLFieldsContainer.whenType(
+inline fun <T> GraphQLFieldsContainer.whenType(
     interfaceType: (GraphQLInterfaceType) -> T,
     objectType: (GraphQLObjectType) -> T,
 ): T {
@@ -27,7 +31,7 @@ internal inline fun <T> GraphQLFieldsContainer.whenType(
     }
 }
 
-internal inline fun <T> GraphQLNamedType.whenType(
+inline fun <T> GraphQLNamedType.whenType(
     enumType: (GraphQLEnumType) -> T,
     inputObjectType: (GraphQLInputObjectType) -> T,
     interfaceType: (GraphQLInterfaceType) -> T,
@@ -46,7 +50,7 @@ internal inline fun <T> GraphQLNamedType.whenType(
     }
 }
 
-internal inline fun <T> GraphQLOutputType.whenUnmodifiedType(
+inline fun <T> GraphQLOutputType.whenUnmodifiedType(
     enumType: (GraphQLEnumType) -> T,
     interfaceType: (GraphQLInterfaceType) -> T,
     objectType: (GraphQLObjectType) -> T,
@@ -63,7 +67,7 @@ internal inline fun <T> GraphQLOutputType.whenUnmodifiedType(
     }
 }
 
-internal inline fun <T> GraphQLInputType.whenUnmodifiedType(
+inline fun <T> GraphQLInputType.whenUnmodifiedType(
     enumType: (GraphQLEnumType) -> T,
     inputObjectType: (GraphQLInputObjectType) -> T,
     scalarType: (GraphQLScalarType) -> T,
@@ -76,3 +80,15 @@ internal inline fun <T> GraphQLInputType.whenUnmodifiedType(
     }
 }
 
+inline fun <T> GraphQLType.whenType(
+    listType: (GraphQLList) -> T,
+    nonNull: (GraphQLNonNull) -> T,
+    unmodifiedType: (GraphQLUnmodifiedType) -> T,
+): T {
+    return when (this) {
+        is GraphQLList -> listType(this)
+        is GraphQLNonNull -> nonNull(this)
+        is GraphQLUnmodifiedType -> unmodifiedType(this)
+        else -> throw IllegalStateException("Should never happen")
+    }
+}

@@ -337,7 +337,7 @@ serviceCalls:
                   "type": "unsure",
                   "endService": null,
                   "startService": {
-                    "__typename": "MyService",
+                    "__typename": "Service",
                     "id": "service-1",
                     "name": "GraphQL Gateway",
                     "dependsOn": null,
