@@ -1,5 +1,7 @@
 package graphql.nadel.tests.legacy.scalars
 
+import graphql.nadel.NadelSchemas
+import graphql.nadel.tests.GatewaySchemaWiringFactory
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 import graphql.scalars.ExtendedScalars
 import graphql.scalars.alias.AliasedScalar
@@ -58,6 +60,12 @@ class `date time scalar as input type` : NadelLegacyIntegrationTest(
         ),
     ),
 ) {
+    override fun makeNadelSchemas(): NadelSchemas.Builder {
+        return super.makeNadelSchemas()
+            .overallWiringFactory(GatewaySchemaWiringFactory())
+            .underlyingWiringFactory(GatewaySchemaWiringFactory())
+    }
+
     private data class Service_Foo(
         val thing: Any? = null,
     )
