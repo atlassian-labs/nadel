@@ -42,27 +42,27 @@ public class `batch polymorphic hydration return null in array with error snapsh
                 |     "foo": [
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-0",
                 |         "batch_hydration__data__dataId": "PET-0",
-                |         "id": "FOO-0"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-1",
                 |         "batch_hydration__data__dataId": "HUMAN-0",
-                |         "id": "FOO-1"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-2",
                 |         "batch_hydration__data__dataId": "PET-1",
-                |         "id": "FOO-2"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       },
                 |       {
                 |         "__typename": "Foo",
-                |         "__typename__batch_hydration__data": "Foo",
+                |         "id": "FOO-3",
                 |         "batch_hydration__data__dataId": "HUMAN-1",
-                |         "id": "FOO-3"
+                |         "__typename__batch_hydration__data": "Foo"
                 |       }
                 |     ]
                 |   }
@@ -91,14 +91,14 @@ public class `batch polymorphic hydration return null in array with error snapsh
                 |       {
                 |         "__typename": "Human",
                 |         "id": "HUMAN-0",
-                |         "batch_hydration__data__id": "HUMAN-0",
-                |         "name": "Fanny Longbottom"
+                |         "name": "Fanny Longbottom",
+                |         "batch_hydration__data__id": "HUMAN-0"
                 |       },
                 |       {
                 |         "__typename": "Human",
                 |         "id": "HUMAN-1",
-                |         "batch_hydration__data__id": "HUMAN-1",
-                |         "name": "John Doe"
+                |         "name": "John Doe",
+                |         "batch_hydration__data__id": "HUMAN-1"
                 |       }
                 |     ]
                 |   }
@@ -122,17 +122,6 @@ public class `batch polymorphic hydration return null in array with error snapsh
                 variables = "{}",
                 result = """
                 | {
-                |   "data": {
-                |     "petById": [
-                |       null,
-                |       {
-                |         "__typename": "Pet",
-                |         "breed": "Labrador",
-                |         "id": "PET-1",
-                |         "batch_hydration__data__id": "PET-1"
-                |       }
-                |     ]
-                |   },
                 |   "errors": [
                 |     {
                 |       "message": "invalid id PET-0",
@@ -141,7 +130,18 @@ public class `batch polymorphic hydration return null in array with error snapsh
                 |         "classification": "DataFetchingException"
                 |       }
                 |     }
-                |   ]
+                |   ],
+                |   "data": {
+                |     "petById": [
+                |       null,
+                |       {
+                |         "__typename": "Pet",
+                |         "id": "PET-1",
+                |         "breed": "Labrador",
+                |         "batch_hydration__data__id": "PET-1"
+                |       }
+                |     ]
+                |   }
                 | }
                 """.trimMargin(),
                 delayedResults = listOfJsonStrings(
@@ -152,6 +152,15 @@ public class `batch polymorphic hydration return null in array with error snapsh
     /**
      * ```json
      * {
+     *   "errors": [
+     *     {
+     *       "message": "invalid id PET-0",
+     *       "locations": [],
+     *       "extensions": {
+     *         "classification": "DataFetchingException"
+     *       }
+     *     }
+     *   ],
      *   "data": {
      *     "foo": [
      *       {
@@ -173,8 +182,8 @@ public class `batch polymorphic hydration return null in array with error snapsh
      *         "id": "FOO-2",
      *         "data": {
      *           "__typename": "Pet",
-     *           "breed": "Labrador",
-     *           "id": "PET-1"
+     *           "id": "PET-1",
+     *           "breed": "Labrador"
      *         }
      *       },
      *       {
@@ -187,22 +196,22 @@ public class `batch polymorphic hydration return null in array with error snapsh
      *         }
      *       }
      *     ]
-     *   },
-     *   "errors": [
-     *     {
-     *       "message": "invalid id PET-0",
-     *       "locations": [],
-     *       "extensions": {
-     *         "classification": "DataFetchingException"
-     *       }
-     *     }
-     *   ]
+     *   }
      * }
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
+            |   "errors": [
+            |     {
+            |       "message": "invalid id PET-0",
+            |       "locations": [],
+            |       "extensions": {
+            |         "classification": "DataFetchingException"
+            |       }
+            |     }
+            |   ],
             |   "data": {
             |     "foo": [
             |       {
@@ -224,8 +233,8 @@ public class `batch polymorphic hydration return null in array with error snapsh
             |         "id": "FOO-2",
             |         "data": {
             |           "__typename": "Pet",
-            |           "breed": "Labrador",
-            |           "id": "PET-1"
+            |           "id": "PET-1",
+            |           "breed": "Labrador"
             |         }
             |       },
             |       {
@@ -238,16 +247,7 @@ public class `batch polymorphic hydration return null in array with error snapsh
             |         }
             |       }
             |     ]
-            |   },
-            |   "errors": [
-            |     {
-            |       "message": "invalid id PET-0",
-            |       "locations": [],
-            |       "extensions": {
-            |         "classification": "DataFetchingException"
-            |       }
-            |     }
-            |   ]
+            |   }
             | }
             """.trimMargin(),
             delayedResults = listOfJsonStrings(
