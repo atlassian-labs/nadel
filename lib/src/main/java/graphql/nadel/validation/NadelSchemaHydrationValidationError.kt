@@ -629,24 +629,3 @@ data class NadelHydrationUnionMemberNoBackingError(
 
     override val subject = virtualField
 }
-
-data class NadelHydrationUnionMissingTypeError(
-    val parentType: NadelServiceSchemaElement,
-    val virtualField: GraphQLFieldDefinition,
-    val hydration: NadelHydrationDefinition,
-    val missingTypes: List<GraphQLNamedType>,
-) : NadelSchemaValidationError {
-    val service: Service get() = parentType.service
-
-    override val message = run {
-        val missingTypeNames = missingTypes.map { it.name }
-        getHydrationErrorMessage(
-            parentType,
-            virtualField,
-            hydration,
-            reason = "its union does not include type(s) $missingTypeNames that the backing field outputs",
-        )
-    }
-
-    override val subject = virtualField
-}

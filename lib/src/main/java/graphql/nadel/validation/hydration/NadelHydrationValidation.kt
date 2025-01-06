@@ -37,7 +37,6 @@ import graphql.nadel.validation.NadelHydrationMustUseIndexExclusivelyError
 import graphql.nadel.validation.NadelHydrationReferencesNonExistentBackingFieldError
 import graphql.nadel.validation.NadelHydrationTypeMismatchError
 import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
-import graphql.nadel.validation.NadelHydrationUnionMissingTypeError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
@@ -140,8 +139,15 @@ class NadelHydrationValidation internal constructor() {
 
         val suppliedTypes = hydrations
             .flatMap { hydration ->
-                val backingTypes = engineSchema.queryType.getFieldAt(hydration.backingField)?.type?.unwrapAll()
-                    ?.whenType(
+                val backingField = engineSchema.queryType.getFieldAt(hydration.backingField)
+                    ?: return NadelHydrationReferencesNonExistentBackingFieldError(
+                        parent,
+                        virtualField,
+                        hydration,
+                    )
+
+                backingField.type.unwrapAll()
+                    .whenType(
                         enumType = ::listOf,
                         inputObjectType = ::listOf,
                         interfaceType = engineSchema::getImplementations,
@@ -149,14 +155,6 @@ class NadelHydrationValidation internal constructor() {
                         scalarType = ::listOf,
                         unionType = GraphQLUnionType::getTypes,
                     )
-                    ?: emptyList()
-
-                if (unionType.types.containsAll(backingTypes)) {
-                    backingTypes
-                } else {
-                    val missingTypes = backingTypes - unionType.types.toSet()
-                    return NadelHydrationUnionMissingTypeError(parent, virtualField, hydration, missingTypes)
-                }
             }
 
         return if (suppliedTypes.containsAll(unionType.types)) {

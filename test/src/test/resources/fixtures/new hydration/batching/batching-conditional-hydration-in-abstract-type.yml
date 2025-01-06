@@ -40,6 +40,13 @@ overallSchema:
           {name: "ids" value: "$source.contentId"}
         ]
       )
+      @hydrated(
+        service: "monolith"
+        field: "commentsByIds"
+        arguments: [
+          {name: "ids" value: "$source.contentId"}
+        ]
+      )
     }
     type Issue {
       id: ID!
@@ -110,6 +117,7 @@ serviceCalls:
               batch_hydration__content__contentIds: contentIds
             }
             ... on SingleActivity {
+              batch_hydration__content__contentId: contentId
               batch_hydration__content__contentId: contentId
             }
           }

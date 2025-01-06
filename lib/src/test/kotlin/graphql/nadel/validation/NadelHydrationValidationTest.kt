@@ -237,7 +237,7 @@ class NadelHydrationValidationTest {
     }
 
     @Test
-    fun `fails if hydration actor field exists only in the underlying and not in the overall`() {
+    fun `fails if hydration backing field exists only in the underlying and not in the overall`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "issues" to """
@@ -470,7 +470,7 @@ class NadelHydrationValidationTest {
     }
 
     @Test
-    fun `fails if hydration actor field does not exist`() {
+    fun `fails if hydration backing field does not exist`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "issues" to """
@@ -903,7 +903,7 @@ class NadelHydrationValidationTest {
     }
 
     @Test
-    fun `checks the output type of the actor field against the output type of the hydrated field`() {
+    fun `checks the output type of the backing field against the output type of the hydrated field`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "issues" to """
@@ -991,8 +991,13 @@ class NadelHydrationValidationTest {
                         id: ID!
                         creator: AbstractUser
                         @hydrated(
-                            service: "users"
                             field: "externalUser"
+                            arguments: [
+                                {name: "id", value: "$source.creatorId"}
+                            ]
+                        )
+                        @hydrated(
+                            field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creatorId"}
                             ]
@@ -1052,7 +1057,7 @@ class NadelHydrationValidationTest {
     }
 
     @Test
-    fun `fails if actor output type does not implement interface`() {
+    fun `fails if backing output type does not implement interface`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "issues" to """
@@ -1128,7 +1133,7 @@ class NadelHydrationValidationTest {
     }
 
     @Test
-    fun `passes if actor output type implements the interface`() {
+    fun `passes if backing output type implements the interface`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "issues" to """
@@ -1200,7 +1205,7 @@ class NadelHydrationValidationTest {
     }
 
     @Test
-    fun `passes if actor output type belongs in union`() {
+    fun `passes if backing output type belongs in union`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "issues" to """
@@ -1211,8 +1216,13 @@ class NadelHydrationValidationTest {
                         id: ID!
                         creator: AbstractUser
                         @hydrated(
-                            service: "users"
                             field: "externalUser"
+                            arguments: [
+                                {name: "id", value: "$source.creatorId"}
+                            ]
+                        )
+                        @hydrated(
+                            field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creatorId"}
                             ]
