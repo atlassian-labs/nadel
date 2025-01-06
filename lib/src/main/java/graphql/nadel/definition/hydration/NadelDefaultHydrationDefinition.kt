@@ -1,8 +1,6 @@
 package graphql.nadel.definition.hydration
 
-import graphql.language.ArrayValue
 import graphql.language.DirectiveDefinition
-import graphql.language.ObjectValue
 import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition.Keyword
 import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLAppliedDirective
@@ -34,11 +32,9 @@ class NadelDefaultHydrationDefinition(
                     "How to identify matching results"
                     identifiedBy: String! = "id"
                     "The batch size"
-                    batchSize: Int
+                    batchSize: Int! = 200
                     "The timeout to use when completing hydration"
                     timeout: Int! = -1
-                    "The arguments to the hydrated field"
-                    arguments: [NadelHydrationArgument!]! = []
                 ) on OBJECT | INTERFACE
             """.trimIndent(),
         )
@@ -56,13 +52,6 @@ class NadelDefaultHydrationDefinition(
     val batchSize: Int
         get() = appliedDirective.getArgument(Keyword.batchSize).getValue()
 
-    val arguments: List<NadelHydrationArgumentDefinition>
-        get() = (appliedDirective.getArgument(Keyword.arguments).argumentValue.value as ArrayValue)
-            .values
-            .map {
-                NadelHydrationArgumentDefinition.from(it as ObjectValue)
-            }
-
     val timeout: Int
         get() = appliedDirective.getArgument(Keyword.timeout).getValue()
 
@@ -72,7 +61,6 @@ class NadelDefaultHydrationDefinition(
         const val identifiedBy = "identifiedBy"
         const val batchSize = "batchSize"
         const val timeout = "timeout"
-        const val arguments = "arguments"
         const val idArgument = "idArgument"
     }
 }
