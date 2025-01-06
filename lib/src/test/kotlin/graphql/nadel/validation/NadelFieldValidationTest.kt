@@ -7,6 +7,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingFiel
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
+import kotlin.test.assertTrue
 
 val namespaceDirectiveDef = """
     directive @namespaced on FIELD_DEFINITION
@@ -33,7 +34,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
 
         it("fails if argument value is missing") {
@@ -55,14 +56,14 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingArgumentOnUnderlying>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallField.name == "echo")
-            assert(error.subject == error.overallField)
-            assert(error.argument.name == "world")
+            assertTrue(error.parentType.overall.name == "Query")
+            assertTrue(error.parentType.underlying.name == "Query")
+            assertTrue(error.overallField.name == "echo")
+            assertTrue(error.subject == error.overallField)
+            assertTrue(error.argument.name == "world")
         }
 
         it("passes if overall argument value is stricter") {
@@ -84,7 +85,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
 
         it("passes if overall argument value is stricter with more wrappings") {
@@ -106,7 +107,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
 
         it("passes if overall argument value is stricter with more wrappings 2") {
@@ -128,15 +129,15 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
-            assert(error.subject == error.overallInputArg)
-            assert(error.overallField.name == "echo")
-            assert(error.overallInputArg.name == "world")
+            assertTrue(error.parentType.overall.name == "Query")
+            assertTrue(error.parentType.underlying.name == "Query")
+            assertTrue(error.overallInputArg.type.unwrapAll().name == "Boolean")
+            assertTrue(error.subject == error.overallInputArg)
+            assertTrue(error.overallField.name == "echo")
+            assertTrue(error.overallInputArg.name == "world")
         }
 
         context("fails if argument type list wrappings are not equal") {
@@ -169,15 +170,15 @@ class NadelFieldValidationTest : DescribeSpec({
                 )
 
                 val errors = validate(fixture)
-                assert(errors.map { it.message }.isNotEmpty())
+                assertTrue(errors.map { it.message }.isNotEmpty())
 
                 val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-                assert(error.parentType.overall.name == "Query")
-                assert(error.parentType.underlying.name == "Query")
-                assert(error.subject == error.overallInputArg)
-                assert(error.overallField.name == "echo")
-                assert(error.overallInputArg.name == "world")
-                assert(error.overallInputArg.type.unwrapAll().name == error.overallInputArg.type.unwrapAll().name)
+                assertTrue(error.parentType.overall.name == "Query")
+                assertTrue(error.parentType.underlying.name == "Query")
+                assertTrue(error.subject == error.overallInputArg)
+                assertTrue(error.overallField.name == "echo")
+                assertTrue(error.overallInputArg.name == "world")
+                assertTrue(error.overallInputArg.type.unwrapAll().name == error.overallInputArg.type.unwrapAll().name)
             }
         }
 
@@ -200,13 +201,13 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
-            assert(error.subject == error.overallInputArg)
+            assertTrue(error.parentType.overall.name == "Query")
+            assertTrue(error.parentType.underlying.name == "Query")
+            assertTrue(error.overallInputArg.type.unwrapAll().name == "Boolean")
+            assertTrue(error.subject == error.overallInputArg)
         }
 
         it("fails if argument value is not matching") {
@@ -228,14 +229,14 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
-            assert(error.underlyingInputArg.type.unwrapAll().name == "String")
-            assert(error.subject == error.overallInputArg)
+            assertTrue(error.parentType.overall.name == "Query")
+            assertTrue(error.parentType.underlying.name == "Query")
+            assertTrue(error.overallInputArg.type.unwrapAll().name == "Boolean")
+            assertTrue(error.underlyingInputArg.type.unwrapAll().name == "String")
+            assertTrue(error.subject == error.overallInputArg)
         }
 
         it("checks the output type") {
@@ -273,13 +274,13 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.parentType.overall.name == "Echo")
-            assert(error.parentType.underlying.name == "Echo")
-            assert(error.overallField.name == "hello")
-            assert(error.subject == error.overallField)
+            assertTrue(error.parentType.overall.name == "Echo")
+            assertTrue(error.parentType.underlying.name == "Echo")
+            assertTrue(error.overallField.name == "hello")
+            assertTrue(error.subject == error.overallField)
         }
 
         it("handles types whose fields are contributed from multiple services") {
@@ -341,7 +342,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            assertTrue(errors.map { it.message }.isEmpty())
         }
 
         it("fails if field in namespace does not exist") {
@@ -403,14 +404,14 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.service.name == "echo")
-            assert(error.parentType.overall.name == "TestQuery")
-            assert(error.parentType.underlying.name == "TestQuery")
-            assert(error.overallField.name == "worlds")
-            assert(error.subject == error.overallField)
+            assertTrue(error.service.name == "echo")
+            assertTrue(error.parentType.overall.name == "TestQuery")
+            assertTrue(error.parentType.underlying.name == "TestQuery")
+            assertTrue(error.overallField.name == "worlds")
+            assertTrue(error.subject == error.overallField)
         }
 
         it("checks mutation and subscription namespaced fields") {
@@ -530,33 +531,33 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val queryError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestQuery"
             }
-            assert(queryError.service.name == "echo")
-            assert(queryError.parentType.underlying.name == "TestQuery")
-            assert(queryError.overallField.name == "worlds")
-            assert(queryError.subject == queryError.overallField)
+            assertTrue(queryError.service.name == "echo")
+            assertTrue(queryError.parentType.underlying.name == "TestQuery")
+            assertTrue(queryError.overallField.name == "worlds")
+            assertTrue(queryError.subject == queryError.overallField)
 
             val mutationError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestMutation"
             }
-            assert(mutationError.service.name == "echo")
-            assert(mutationError.parentType.underlying.name == "TestMutation")
-            assert(mutationError.overallField.name == "active")
-            assert(mutationError.subject == mutationError.overallField)
+            assertTrue(mutationError.service.name == "echo")
+            assertTrue(mutationError.parentType.underlying.name == "TestMutation")
+            assertTrue(mutationError.overallField.name == "active")
+            assertTrue(mutationError.subject == mutationError.overallField)
 
             val subscriptionError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestSubscription"
             }
-            assert(subscriptionError.service.name == "issues")
-            assert(subscriptionError.parentType.underlying.name == "TestSubscription")
-            assert(subscriptionError.overallField.name == "issue")
-            assert(subscriptionError.subject == subscriptionError.overallField)
+            assertTrue(subscriptionError.service.name == "issues")
+            assertTrue(subscriptionError.parentType.underlying.name == "TestSubscription")
+            assertTrue(subscriptionError.overallField.name == "issue")
+            assertTrue(subscriptionError.subject == subscriptionError.overallField)
 
-            assert(errors.count { it is MissingUnderlyingField } == 3)
+            assertTrue(errors.count { it is MissingUnderlyingField } == 3)
         }
 
         it("passes if hydrated type is not present in underlying") {
@@ -608,7 +609,7 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            assertTrue(errors.isEmpty())
         }
 
         it("fails if fields declared in extensions are missing in underlying") {
@@ -643,10 +644,10 @@ class NadelFieldValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.size == 1)
+            assertTrue(errors.size == 1)
 
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
-            assert(error.message == "Could not find overall field TypeA.fieldFromExtension on the underlying type TypeA on service test")
+            assertTrue(error.message == "Could not find overall field TypeA.fieldFromExtension on the underlying type TypeA on service test")
         }
 
         it("fails if fields in extended Query are missing in underlying") {
@@ -670,61 +671,90 @@ class NadelFieldValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
 
-            assert(errors.size == 1)
+            assertTrue(errors.size == 1)
 
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
 
-            assert(error.message == "The overall field Query.fieldA defines argument id which does not exist in service test field Query.fieldA")
+            assertTrue(error.message == "The overall field Query.fieldA defines argument id which does not exist in service test field Query.fieldA")
         }
 
         it("fails if schema contains all fields as hidden") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "test" to """
-                type Query {
-                    echo: String @hidden
-                }
-            """.trimIndent(),
+                        type Query {
+                            echo: String @hidden
+                        }
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "test" to """
-                type Query {
-                    echo: String
-                }
-            """.trimIndent(),
+                        type Query {
+                            echo: String
+                        }
+                    """.trimIndent(),
                 ),
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assertTrue(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<NadelSchemaValidationError>()
-            assert(error.message == "Must have at least one field without @hidden on type Query")
+            assertTrue(error.message == "Must have at least one field without @hidden on type Query")
         }
 
         it("passes if schema contains at least one field as not hidden") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "test" to """
-                type Query {
-                    echo: String @hidden
-                    hello: String
-                   
-                }
-            """.trimIndent(),
+                        type Query {
+                            echo: String @hidden
+                            hello: String
+                        }
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "test" to """
-                type Query {
-                    echo: String
-                    hello: String
-                }
-            """.trimIndent(),
+                        type Query {
+                            echo: String
+                            hello: String
+                        }
+                    """.trimIndent(),
                 ),
             )
 
             val errors = validate(fixture)
-            assert(errors.isEmpty())
+            assertTrue(errors.isEmpty())
+        }
+
+        it("passes if all fields are hidden and their container type is deleted") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            hello: String
+                            other: Other @hidden
+                        }
+                        type Other {
+                            id: ID! @hidden
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            hello: String
+                            other: Other
+                        }
+                        type Other {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assertTrue(errors.isEmpty())
         }
     }
 })

@@ -20,6 +20,7 @@ data class NadelValidationContext internal constructor(
     val hydrationUnions: Set<String>,
     val namespaceTypeNames: Set<String>,
     val combinedTypeNames: Set<String>,
+    val hiddenTypeNames: Set<String>,
     val definitions: Map<NadelSchemaMemberCoordinates, List<NadelDefinition>>,
     val hook: NadelSchemaValidationHook,
 ) {
