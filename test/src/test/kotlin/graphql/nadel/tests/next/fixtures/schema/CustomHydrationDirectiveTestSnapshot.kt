@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.schema
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationCopiesFieldAndHasPolymorphicHydrationTest>()
+    graphql.nadel.tests.next.update<CustomHydrationDirectiveTest>()
 }
 
 /**
@@ -19,11 +19,11 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSnapshot() {
+public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "bitbucket",
-                query = """
+        ExpectedServiceCall(
+            service = "bitbucket",
+            query = """
                 | {
                 |   pullRequestsByIds(ids: ["ari:cloud:bitbucket::pull-request/2"]) {
                 |     title
@@ -32,8 +32,8 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
-                result = """
+            variables = " {}",
+            result = """
                 | {
                 |   "data": {
                 |     "pullRequestsByIds": [
@@ -46,14 +46,14 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
+            delayedResults = listOfJsonStrings(
             ),
-            ExpectedServiceCall(
-                service = "graph_store",
-                query = """
-                | {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
+        ),
+        ExpectedServiceCall(
+            service = "graph_store",
+            query = """
+                | query (${'$'}v0: JSON) {
+                |   graphStore_query(other: ${'$'}v0, query: "DROP TABLE", after: "2012", first: 10) {
                 |     edges {
                 |       batch_hydration__node__nodeId: nodeId
                 |       batch_hydration__node__nodeId: nodeId
@@ -66,8 +66,14 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
-                result = """
+            variables = """
+                | {
+                |   "v0": {
+                |     "teamId": "hello"
+                |   }
+                | }
+                """.trimMargin(),
+            result = """
                 | {
                 |   "data": {
                 |     "graphStore_query": {
@@ -90,12 +96,12 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
+            delayedResults = listOfJsonStrings(
             ),
-            ExpectedServiceCall(
-                service = "jira",
-                query = """
+        ),
+        ExpectedServiceCall(
+            service = "jira",
+            query = """
                 | {
                 |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
                 |     key
@@ -103,8 +109,8 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
-                result = """
+            variables = " {}",
+            result = """
                 | {
                 |   "data": {
                 |     "issuesByIds": [
@@ -116,10 +122,28 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
+            delayedResults = listOfJsonStrings(
             ),
-        )
+        ),
+        ExpectedServiceCall(
+            service = "work",
+            query = """
+                | {
+                |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
+                | }
+                """.trimMargin(),
+            variables = " {}",
+            result = """
+                | {
+                |   "data": {
+                |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+            delayedResults = listOfJsonStrings(
+            ),
+        ),
+    )
 
     /**
      * ```json
@@ -150,7 +174,7 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-            result = """
+        result = """
             | {
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
@@ -176,7 +200,7 @@ public class HydrationCopiesFieldAndHasPolymorphicHydrationTestSnapshot : TestSn
             |   }
             | }
             """.trimMargin(),
-            delayedResults = listOfJsonStrings(
-            ),
-        )
+        delayedResults = listOfJsonStrings(
+        ),
+    )
 }

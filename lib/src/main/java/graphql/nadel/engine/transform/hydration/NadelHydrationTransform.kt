@@ -11,7 +11,6 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.getInstructionInsideVirtualType
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
@@ -217,6 +216,7 @@ internal class NadelHydrationTransform(
                     )
                     val addErrors = hydration.errors
                         .asSequence()
+                        .filterNotNull()
                         .map { error ->
                             toGraphQLError(error)
                         }
@@ -288,12 +288,15 @@ internal class NadelHydrationTransform(
                                 .path(parentPath.toRawPath())
                                 .errors(
                                     hydration.errors
+                                        .asSequence()
+                                        .filterNotNull()
                                         .map {
                                             toGraphQLError(
                                                 raw = it,
                                                 path = path.toRawPath(),
                                             )
-                                        },
+                                        }
+                                        .toList(),
                                 )
                                 .build()
                         }
@@ -352,12 +355,13 @@ internal class NadelHydrationTransform(
                                     instruction.backingFieldDef
                                 )
                             val serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                                instruction = instruction,
                                 timeout = instruction.timeout,
                                 batchSize = 1,
                                 hydrationSourceService = hydrationSourceService,
                                 hydrationVirtualField = instruction.location,
                                 hydrationBackingField = hydrationBackingField,
-                                fieldPath = virtualField.listOfResultKeys
+                                fieldPath = virtualField.listOfResultKeys,
                             )
                             engine.executeHydration(
                                 service = instruction.backingService,
@@ -498,5 +502,5 @@ private fun interface NadelPreparedHydration {
 private data class NadelHydrationResult(
     val parentNode: JsonNode,
     val newValue: JsonNode?,
-    val errors: List<JsonMap>,
+    val errors: List<JsonMap?>,
 )

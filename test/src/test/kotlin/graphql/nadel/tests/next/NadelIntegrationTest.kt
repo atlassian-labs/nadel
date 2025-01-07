@@ -20,11 +20,13 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.tests.assertJsonObjectEquals
 import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -176,14 +178,20 @@ abstract class NadelIntegrationTest(
         return NadelExecutionHints.Builder()
     }
 
+    open fun makeNadelSchemaValidation(): NadelSchemaValidation {
+        return NadelSchemaValidationFactory.create()
+    }
+
     open fun makeNadel(): Nadel.Builder {
         val schemas = makeNadelSchemas().build()
-        val schemaErrors = NadelSchemaValidation(schemas).validate()
+        val nadelSchemaValidation = makeNadelSchemaValidation()
+        val schemaErrors = nadelSchemaValidation.validate(schemas)
         assertTrue(schemaErrors.map { it.message }.isEmpty())
 
         return Nadel.newNadel()
             .schemas(schemas)
             .instrumentation(makeInstrumentation())
+            .schemaValidation(nadelSchemaValidation)
     }
 
     open fun makeNadelSchemas(): NadelSchemas.Builder {
@@ -265,6 +273,9 @@ abstract class NadelIntegrationTest(
 
     open fun makeInstrumentation(): NadelInstrumentation {
         return object : NadelInstrumentation {
+            override fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+                return true
+            }
         }
     }
 

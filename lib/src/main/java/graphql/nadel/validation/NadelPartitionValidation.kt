@@ -2,14 +2,11 @@ package graphql.nadel.validation
 
 import graphql.Scalars
 import graphql.language.OperationDefinition.Operation
-import graphql.nadel.definition.hydration.isHydrated
 import graphql.nadel.definition.partition.NadelPartitionDefinition
-import graphql.nadel.definition.partition.getPartitionOrNull
 import graphql.nadel.engine.blueprint.NadelPartitionInstruction
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.nadel.util.NamespacedUtil.isNamespaceType
 import graphql.nadel.validation.NadelSchemaValidationError.CannotPartitionHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.InvalidPartitionArgument
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToFieldWithUnsupportedOutputType
@@ -28,17 +25,17 @@ internal class NadelPartitionValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        val partition = overallField.getPartitionOrNull()
+        val partition = getPartitionedOrNull(parent, overallField)
             ?: return ok()
 
-        if (overallField.isHydrated()) {
+        if (isHydrated(parent, overallField)) {
             return CannotPartitionHydratedField(parent, overallField)
         }
 
         val parentObject = parent as? NadelServiceSchemaElement.Object
             ?: return ok()
 
-        if (!isOperation(parentObject.overall) && !isNamespaceType(parentObject.overall, engineSchema)) {
+        if (!isOperation(parentObject.overall) && !namespaceTypeNames.contains(parentObject.overall.name)) {
             return PartitionAppliedToUnsupportedField(parent, overallField)
         }
 

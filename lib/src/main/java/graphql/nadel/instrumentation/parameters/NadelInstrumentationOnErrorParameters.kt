@@ -9,7 +9,7 @@ data class NadelInstrumentationOnErrorParameters(
     val errorData: ErrorData,
     private val instrumentationState: InstrumentationState?,
 ) {
-    fun <T : InstrumentationState?> getInstrumentationState(): T? {
+    fun <T : InstrumentationState> getInstrumentationState(): T? {
         @Suppress("UNCHECKED_CAST") // trust the caller
         return instrumentationState as T?
     }

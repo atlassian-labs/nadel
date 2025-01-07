@@ -179,11 +179,9 @@ class NadelTypeValidationTest : DescribeSpec({
                             world: World
                         }
                         type World {
-                            hello: Something @hydrated(
-                                service: "test"
-                                field: "echo.world"
-                                arguments: []
-                            )
+                            hello: Something
+                                @hydrated(field: "echo.world", arguments: [])
+                                @hydrated(field: "echo", arguments: [])
                         }
                         union Something = Echo | World
                     """.trimIndent(),

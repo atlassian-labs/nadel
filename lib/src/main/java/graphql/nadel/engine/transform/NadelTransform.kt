@@ -31,6 +31,8 @@ interface NadelTransform<State : Any> {
      * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
      * to you. You can make it mutable if that makes your life easier etc.
      *
+     * Note: a transform is applied to all fields recursively
+     *
      * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
      * @param service the [Service] the [overallField] belongs to
      * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms

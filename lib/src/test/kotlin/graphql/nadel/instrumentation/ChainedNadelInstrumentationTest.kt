@@ -122,7 +122,7 @@ class ChainedNadelInstrumentationTest : DescribeSpec({
                 } returns chainedState
 
                 every {
-                    params.copy(any(), any(), any(), any(), any(), any())
+                    params.copy(any(), any(), any(), any(), any())
                 } answers { copyCall ->
                     val newState = copyCall.invocation.args.singleOfType<InstrumentationState>()
                     mock { newParams ->
@@ -372,7 +372,7 @@ class ChainedNadelInstrumentationTest : DescribeSpec({
             val paramsCopy = mock<NadelInstrumentationTimingParameters>()
             val params = mock<NadelInstrumentationTimingParameters> { params ->
                 every { params.getInstrumentationState<InstrumentationState>() } returns chainedState
-                every { params.copy(any(), any(), any(), any(), any(), any()) } returns paramsCopy
+                every { params.copy(any(), any(), any(), any(), any()) } returns paramsCopy
             }
 
             // when

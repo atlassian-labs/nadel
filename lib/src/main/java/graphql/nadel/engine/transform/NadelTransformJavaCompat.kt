@@ -24,6 +24,8 @@ interface NadelTransformJavaCompat<State : Any> {
 
     /**
      * See [NadelTransform.isApplicable]
+     *
+     * Note: a transform is applied to all fields recursively
      */
     fun isApplicable(
         executionContext: NadelExecutionContext,

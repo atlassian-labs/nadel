@@ -42,7 +42,7 @@ class GraphQLServiceExecution(
                     @Suppress("UNCHECKED_CAST")
                     NadelIncrementalServiceExecutionResult(
                         data = spec["data"] as MutableMap<String, Any?>? ?: mutableMapOf(),
-                        errors = spec["errors"] as MutableList<MutableMap<String, Any?>>? ?: mutableListOf(),
+                        errors = spec["errors"] as MutableList<MutableMap<String, Any?>?>? ?: mutableListOf(),
                         extensions = spec["extensions"] as MutableMap<String, Any?>? ?: mutableMapOf(),
                         incremental = it.incremental,
                         incrementalItemPublisher = it.incrementalItemPublisher
@@ -63,7 +63,7 @@ class GraphQLServiceExecution(
                     @Suppress("UNCHECKED_CAST")
                     NadelServiceExecutionResultImpl(
                         data = spec["data"] as MutableMap<String, Any?>? ?: mutableMapOf(),
-                        errors = spec["errors"] as MutableList<MutableMap<String, Any?>>? ?: mutableListOf(),
+                        errors = spec["errors"] as MutableList<MutableMap<String, Any?>?>? ?: mutableListOf(),
                         extensions = spec["extensions"] as MutableMap<String, Any?>? ?: mutableMapOf(),
                     )
                 }

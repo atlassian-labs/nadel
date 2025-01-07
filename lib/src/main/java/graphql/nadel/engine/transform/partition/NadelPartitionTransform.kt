@@ -18,6 +18,7 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.util.fieldPath
 import graphql.nadel.engine.util.getType
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
@@ -139,12 +140,12 @@ internal class NadelPartitionTransform(
         val partitionCalls = otherPartitions.map {
             executionContext.executionCoroutine.async {
                 val topLevelField = NFUtil.createField(
-                    executionBlueprint.engineSchema,
-                    rootType,
-                    // TODO: queryPath contains field aliases, not field names, which results in an error.
-                    field.queryPath,
-                    it.normalizedArguments,
-                    it.children
+                    schema = executionBlueprint.engineSchema,
+                    parentType = rootType,
+                    queryPathToField = field.fieldPath,
+                    aliasedPath = it.queryPath,
+                    fieldArguments = it.normalizedArguments,
+                    fieldChildren = it.children
                 )
 
                 engine.executePartitionedCall(topLevelField, service, state.executionContext)
@@ -224,7 +225,9 @@ internal class NadelPartitionTransform(
         }
 
         val errorInstructions = resultFromPartitionCalls
+            .asSequence()
             .flatMap { it.errors }
+            .filterNotNull()
             .map { error ->
                 NadelResultInstruction.AddError(
                     toGraphQLError(
@@ -236,6 +239,7 @@ internal class NadelPartitionTransform(
                     )
                 )
             }
+            .toList()
 
         return mergedData + errorInstructions
     }

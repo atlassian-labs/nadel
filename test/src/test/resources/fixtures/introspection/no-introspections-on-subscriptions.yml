@@ -1,0 +1,52 @@
+name: "no introspections on subscriptions"
+enabled: true
+# language=GraphQL
+overallSchema:
+  MyService: |
+    type Query {
+      comment: Comment
+    }
+    type Subscription {
+      onComment: Comment @namespaced
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+underlyingSchema:
+  MyService: |
+    type Query {
+      comment: Comment
+    }
+    type Subscription {
+      onComment: Comment
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+query: |
+  subscription {
+    __typename
+  }
+variables: { }
+serviceCalls: [ ]
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [
+      {
+        "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription operation 'null' root field '__typename' cannot be an introspection field",
+        "locations": [
+          {
+            "line": 2,
+            "column": 3
+          }
+        ],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ]
+  }

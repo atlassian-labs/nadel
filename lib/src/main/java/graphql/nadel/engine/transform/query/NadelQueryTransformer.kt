@@ -4,6 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
@@ -17,6 +18,7 @@ class NadelQueryTransformer private constructor(
     private val serviceExecutionContext: NadelServiceExecutionContext,
     private val executionPlan: NadelExecutionPlan,
     private val transformContext: TransformContext,
+    private val timer: NadelInstrumentationTimer.BatchTimer,
 ) {
     companion object {
         suspend fun transformQuery(
@@ -29,24 +31,27 @@ class NadelQueryTransformer private constructor(
         ): TransformResult {
             val transformContext = TransformContext()
 
-            val transformer = NadelQueryTransformer(
-                executionBlueprint,
-                service,
-                executionContext,
-                serviceExecutionContext,
-                executionPlan,
-                transformContext,
-            )
-            val result = transformer.transform(field)
-                .also { rootFields ->
-                    transformer.fixParentRefs(parent = null, rootFields)
-                }
+            executionContext.timer.batch().use { timer ->
+                val transformer = NadelQueryTransformer(
+                    executionBlueprint,
+                    service,
+                    executionContext,
+                    serviceExecutionContext,
+                    executionPlan,
+                    transformContext,
+                    timer,
+                )
+                val result = transformer.transform(field)
+                    .also { rootFields ->
+                        transformer.fixParentRefs(parent = null, rootFields)
+                    }
 
-            return TransformResult(
-                result = result,
-                artificialFields = transformContext.artificialFields,
-                overallToUnderlyingFields = transformContext.overallToUnderlyingFields,
-            )
+                return TransformResult(
+                    result = result,
+                    artificialFields = transformContext.artificialFields,
+                    overallToUnderlyingFields = transformContext.overallToUnderlyingFields,
+                )
+            }
         }
     }
 
@@ -149,22 +154,24 @@ class NadelQueryTransformer private constructor(
     ): NadelTransformFieldResult {
         var fieldFromPreviousTransform: ExecutableNormalizedField = field
         var aggregatedTransformResult: NadelTransformFieldResult? = null
-        for ((_, _, transform, state) in transformationSteps) {
-            val transformResultForStep = transform.transformField(
-                executionContext,
-                serviceExecutionContext,
-                this,
-                executionBlueprint,
-                service,
-                fieldFromPreviousTransform,
-                state,
-            )
+        for (transformStep in transformationSteps) {
+            val transformResultForStep = timer.time(transformStep.queryTransformTimingStep) {
+                transformStep.transform.transformField(
+                    executionContext,
+                    serviceExecutionContext,
+                    this,
+                    executionBlueprint,
+                    service,
+                    fieldFromPreviousTransform,
+                    transformStep.state,
+                )
+            }
             aggregatedTransformResult = if (aggregatedTransformResult == null) {
                 transformResultForStep
             } else {
                 NadelTransformFieldResult(
-                    transformResultForStep.newField,
-                    aggregatedTransformResult.artificialFields + transformResultForStep.artificialFields,
+                    newField = transformResultForStep.newField,
+                    artificialFields = aggregatedTransformResult.artificialFields + transformResultForStep.artificialFields,
                 )
             }
             fieldFromPreviousTransform = transformResultForStep.newField ?: break

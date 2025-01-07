@@ -1,29 +1,47 @@
 package graphql.nadel.validation
 
 import graphql.nadel.Service
-import graphql.nadel.definition.hydration.isHydrated
-import graphql.nadel.definition.renamed.isRenamed
-import graphql.nadel.definition.virtualType.isVirtualType
+import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_LOOSER_OR_SAME
 import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_STRICTER_OR_SAME
+import graphql.nadel.validation.NadelVirtualTypeValidationContext.TraversalOutcome.DUPLICATED_BACKING_TYPE
+import graphql.nadel.validation.NadelVirtualTypeValidationContext.TraversalOutcome.SKIP
+import graphql.nadel.validation.NadelVirtualTypeValidationContext.TraversalOutcome.VISIT
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 
 private class NadelVirtualTypeValidationContext {
-    private val visited: MutableSet<Pair<String, String>> = mutableSetOf()
-
     /**
-     * @return true to visit the element, false to abort
+     * The previously visited elements by backing type name.
      */
-    fun visit(element: NadelServiceSchemaElement.VirtualType): Boolean {
-        return visited.add(element.overall.name to element.underlying.name)
+    private val visitedByBacking: MutableMap<String, NadelServiceSchemaElement.VirtualType> = mutableMapOf()
+
+    fun visit(element: NadelServiceSchemaElement.VirtualType): TraversalOutcome {
+        val existingTraversal = visitedByBacking[element.underlying.name]
+
+        @Suppress("CascadeIf") // Not as easy to understand
+        return if (existingTraversal == null) {
+            visitedByBacking[element.underlying.name] = element
+            VISIT
+        } else if (existingTraversal == element) {
+            SKIP
+        } else {
+            DUPLICATED_BACKING_TYPE
+        }
+    }
+
+    enum class TraversalOutcome {
+        VISIT,
+        DUPLICATED_BACKING_TYPE,
+        SKIP,
+        ;
     }
 }
 
-internal class NadelVirtualTypeValidation(
+class NadelVirtualTypeValidation internal constructor(
     private val hydrationValidation: NadelHydrationValidation,
 ) {
     private val typeWrappingValidation = NadelTypeWrappingValidation()
@@ -41,8 +59,10 @@ internal class NadelVirtualTypeValidation(
     private fun validate(
         schemaElement: NadelServiceSchemaElement.VirtualType,
     ): NadelSchemaValidationResult {
-        if (!visit(schemaElement)) {
-            return ok()
+        when (visit(schemaElement)) {
+            VISIT -> {}
+            DUPLICATED_BACKING_TYPE -> return NadelVirtualTypeDuplicationError(schemaElement)
+            SKIP -> return ok()
         }
 
         if (schemaElement.overall is GraphQLObjectType && schemaElement.underlying is GraphQLObjectType) {
@@ -80,7 +100,7 @@ internal class NadelVirtualTypeValidation(
         backingType: GraphQLObjectType,
     ): NadelSchemaValidationResult {
         return virtualType.fields.map { virtualField ->
-            if (virtualField.isRenamed()) {
+            if (isRenamed(virtualType, virtualField)) {
                 NadelVirtualTypeRenameFieldError(
                     type = NadelServiceSchemaElement.VirtualType(
                         service = service,
@@ -89,14 +109,14 @@ internal class NadelVirtualTypeValidation(
                     ),
                     virtualField = virtualField,
                 )
-            } else if (virtualField.isHydrated()) {
+            } else if (isHydrated(virtualType, virtualField)) {
                 hydrationValidation.validate(
                     parent = NadelServiceSchemaElement.Object(
                         service = service,
                         overall = virtualType,
-                        backingType,
+                        underlying = backingType,
                     ),
-                    overallField = virtualField,
+                    virtualField = virtualField,
                 )
             } else {
                 val backingField = backingType.getField(virtualField.name)
@@ -156,7 +176,7 @@ internal class NadelVirtualTypeValidation(
         val virtualFieldUnwrappedOutputType = virtualField.type.unwrapAll()
         val backingFieldUnwrappedOutputType = backingField.type.unwrapAll()
 
-        if (virtualFieldUnwrappedOutputType.isVirtualType()) {
+        if (virtualFieldUnwrappedOutputType.hasVirtualTypeDefinition()) {
             return validate(
                 NadelServiceSchemaElement.VirtualType(
                     service = parent.service,

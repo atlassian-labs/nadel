@@ -4,9 +4,9 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.NadelSchemas
 import graphql.nadel.Service
-import graphql.nadel.definition.hydration.isHydrated
+import graphql.nadel.definition.hydration.hasHydratedDefinition
+import graphql.nadel.definition.hydration.hasIdHydratedDefinition
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintImpl
 import graphql.nadel.engine.blueprint.NadelTypeRenameInstructions
 import graphql.nadel.engine.blueprint.NadelUnderlyingExecutionBlueprint
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -15,32 +15,44 @@ import graphql.nadel.engine.util.toMapStrictly
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
-import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLUnionType
 
-class NadelSchemaValidation(
-    // Why is this a constructor argument…
-    private val schemas: NadelSchemas,
+class NadelSchemaValidation internal constructor(
+    private val fieldValidation: NadelFieldValidation,
+    private val inputValidation: NadelInputValidation,
+    private val unionValidation: NadelUnionValidation,
+    private val enumValidation: NadelEnumValidation,
+    private val interfaceValidation: NadelInterfaceValidation,
+    private val namespaceValidation: NadelNamespaceValidation,
+    private val virtualTypeValidation: NadelVirtualTypeValidation,
+    private val definitionParser: NadelDefinitionParser,
+    private val hook: NadelSchemaValidationHook,
 ) {
-    private val fieldContributorMap = makeFieldContributorMap(schemas.services)
-
-    fun validate(): Set<NadelSchemaValidationError> {
-        return validateAll()
+    fun validate(
+        schemas: NadelSchemas,
+    ): Set<NadelSchemaValidationError> {
+        return validateAll(schemas)
             .asSequence()
             .filterIsInstanceTo(LinkedHashSet())
     }
 
-    fun validateAll(): NadelSchemaValidationResult {
+    fun validateAll(
+        schemas: NadelSchemas,
+        fieldContributorMap: Map<FieldCoordinates, Service> = makeFieldContributorMap(schemas.services),
+    ): NadelSchemaValidationResult {
         val (engineSchema, services) = schemas
 
         val servicesByName = services.strictAssociateBy(Service::name)
 
         val operationTypes = getOperationTypeNames(engineSchema)
         val namespaceTypes = getNamespaceOperationTypes(engineSchema)
+        val hiddenTypeNames = getHiddenTypeNames(engineSchema)
+
+        val definitions = definitionParser.parse(engineSchema)
+            .onError { return it }
 
         val context = NadelValidationContext(
             engineSchema = engineSchema,
@@ -49,8 +61,20 @@ class NadelSchemaValidation(
             hydrationUnions = getHydrationUnions(engineSchema),
             namespaceTypeNames = namespaceTypes,
             combinedTypeNames = namespaceTypes + operationTypes.map { it.name },
+            hiddenTypeNames = hiddenTypeNames,
+            definitions = definitions,
+            hook = hook,
         )
-        val typeValidation = NadelTypeValidation()
+
+        val typeValidation = NadelTypeValidation(
+            fieldValidation = fieldValidation,
+            inputValidation = inputValidation,
+            unionValidation = unionValidation,
+            enumValidation = enumValidation,
+            interfaceValidation = interfaceValidation,
+            namespaceValidation = namespaceValidation,
+            virtualTypeValidation = virtualTypeValidation,
+        )
 
         return with(context) {
             services
@@ -80,7 +104,10 @@ class NadelSchemaValidation(
             .asSequence()
             .filterIsInstance<GraphQLUnionType>()
             .filter { union ->
-                fieldsByUnionOutputTypes[union.name]?.all(GraphQLFieldDefinition::isHydrated) == true
+                fieldsByUnionOutputTypes[union.name]
+                    ?.all { field ->
+                        field.hasHydratedDefinition() || field.hasIdHydratedDefinition()
+                    } == true
             }
             .map {
                 it.name
@@ -88,8 +115,15 @@ class NadelSchemaValidation(
             .toSet()
     }
 
-    fun validateAndGenerateBlueprint(): NadelOverallExecutionBlueprint {
-        val all = validateAll().asSequence().toList()
+    fun validateAndGenerateBlueprint(
+        schemas: NadelSchemas,
+    ): NadelOverallExecutionBlueprint {
+        val fieldContributorMap = makeFieldContributorMap(schemas.services)
+        val all = validateAll(
+            schemas = schemas,
+            fieldContributorMap = fieldContributorMap,
+        ).asSequence().toList()
+
         val fieldInstructions = all
             .filterIsInstance<NadelValidatedFieldResult>()
             .groupBy {
@@ -110,7 +144,7 @@ class NadelSchemaValidation(
         val typenamesForService = all
             .filterIsInstance<NadelReachableServiceTypesResult>()
 
-        return NadelOverallExecutionBlueprintImpl(
+        return NadelOverallExecutionBlueprint(
             engineSchema = schemas.engineSchema,
             fieldInstructions = fieldInstructions
                 .groupBy(keySelector = { it.fieldInstruction.location }, valueTransform = { it.fieldInstruction }),
@@ -174,6 +208,37 @@ private fun makeFieldContributorMap(services: List<Service>): Map<FieldCoordinat
                 }
         }
         .toMapStrictly()
+}
+
+/**
+ * Gets the types that will be removed by the `@hidden` directive.
+ *
+ * i.e. all fields that reference this type are `@hidden`
+ */
+private fun getHiddenTypeNames(engineSchema: GraphQLSchema): Set<String> {
+    val hiddenTypeNames = HashMap<String, Boolean>(engineSchema.typeMap.size)
+
+    engineSchema
+        .typeMap
+        .values
+        .asSequence()
+        .filterIsInstance<GraphQLFieldsContainer>()
+        .forEach { type ->
+            type.fields.forEach { field ->
+                val outputTypeName = field.type.unwrapAll().name
+
+                if (field.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)) {
+                    val existing = hiddenTypeNames[outputTypeName]
+                    if (existing == null) {
+                        hiddenTypeNames[outputTypeName] = true
+                    }
+                } else {
+                    hiddenTypeNames[outputTypeName] = false
+                }
+            }
+        }
+
+    return hiddenTypeNames.keys
 }
 
 private fun getOperationTypeNames(engineSchema: GraphQLSchema): List<GraphQLObjectType> {

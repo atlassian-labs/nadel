@@ -1,0 +1,52 @@
+name: "top level field is removed for a subscription"
+enabled: true
+# language=GraphQL
+overallSchema:
+  CommentService: |
+    directive @toBeDeleted on FIELD_DEFINITION
+    type Query {
+      commentById(id: ID): Comment
+    }
+    type Subscription {
+      onCommentUpdated(id: ID): Comment @toBeDeleted
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+underlyingSchema:
+  CommentService: |
+    type Query {
+      commentById(id: ID): Comment
+    }
+    type Subscription {
+      onCommentUpdated(id: ID): Comment
+    }
+    type Comment {
+      id: ID
+    }
+# language=GraphQL
+query: |
+  subscription {
+    onCommentUpdated(id: "C1") {
+      id
+    }
+  }
+variables: { }
+serviceCalls: [ ]
+# language=JSON
+response: |-
+  {
+    "data": {
+      "onCommentUpdated": null
+    },
+    "errors": [
+      {
+        "message": "field `Subscription.onCommentUpdated` has been removed by RemoveFieldTestTransform",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ]
+  }

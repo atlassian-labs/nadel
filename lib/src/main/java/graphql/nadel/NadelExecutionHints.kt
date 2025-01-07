@@ -5,7 +5,6 @@ import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
-import graphql.nadel.hints.NadelValidationBlueprintHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 

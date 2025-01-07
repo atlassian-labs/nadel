@@ -245,8 +245,10 @@ val ExecutableNormalizedField.queryPath: NadelQueryPath
         getPath(ExecutableNormalizedField::getResultKey)
     )
 
-val ExecutableNormalizedField.fieldPath: List<String>
-    get() = getPath(ExecutableNormalizedField::getFieldName)
+val ExecutableNormalizedField.fieldPath: NadelQueryPath
+    get() = NadelQueryPath(
+        getPath(ExecutableNormalizedField::getFieldName)
+    )
 
 private inline fun ExecutableNormalizedField.getPath(
     pathSegmentExtractor: (ExecutableNormalizedField) -> String,
@@ -387,7 +389,7 @@ fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
 
 fun newServiceExecutionResult(
     data: MutableJsonMap = mutableMapOf(),
-    errors: MutableList<MutableJsonMap> = mutableListOf(),
+    errors: MutableList<MutableJsonMap?> = mutableListOf(),
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
     return NadelServiceExecutionResultImpl(data, errors, extensions)
@@ -458,7 +460,7 @@ fun Operation.getType(schema: GraphQLSchema): GraphQLObjectType {
  * operation and fragment definitions in [Map]s.
  */
 internal fun Document.getOperationDefinitionOrNull(operationName: String?): OperationDefinition? {
-    if (operationName == null || operationName.isEmpty()) {
+    if (operationName.isNullOrEmpty()) {
         return definitions.singleOfTypeOrNull()
     }
 
@@ -470,6 +472,7 @@ internal fun Document.getOperationDefinitionOrNull(operationName: String?): Oper
 internal suspend fun NadelInstrumentation.beginExecute(
     query: ExecutableNormalizedOperation,
     queryDocument: Document,
+    operationDefinition: OperationDefinition,
     executionInput: ExecutionInput,
     graphQLSchema: GraphQLSchema,
     instrumentationState: InstrumentationState?,
@@ -479,8 +482,7 @@ internal suspend fun NadelInstrumentation.beginExecute(
         queryDocument,
         graphQLSchema,
         executionInput.variables,
-        queryDocument.getOperationDefinitionOrNull(executionInput.operationName)
-            ?: error("Unable to find operation. This should not happen. Query document should be valid by now."),
+        operationDefinition,
         instrumentationState,
         executionInput.context,
     )

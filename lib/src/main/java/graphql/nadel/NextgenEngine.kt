@@ -5,18 +5,18 @@ import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQLError
 import graphql.execution.ExecutionIdProvider
+import graphql.execution.UnknownOperationException
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.incremental.DeferPayload
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.language.Document
+import graphql.language.OperationDefinition
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelIncrementalResultSupport
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
-import graphql.nadel.engine.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprintMigrator
 import graphql.nadel.engine.document.DocumentPredicates
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
@@ -29,6 +29,7 @@ import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
+import graphql.nadel.engine.util.getOperationDefinitionOrNull
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
 import graphql.nadel.engine.util.newGraphQLError
@@ -37,20 +38,20 @@ import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.hints.NadelValidationBlueprintHint
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.createServiceExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep.Companion.DocumentCompilation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
 import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
+import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.util.OperationNameUtil
-import graphql.nadel.util.getLogger
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
@@ -68,7 +69,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
@@ -87,28 +87,13 @@ internal class NextgenEngine(
     services: List<Service>,
     transforms: List<NadelTransform<out Any>>,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
-    blueprintHint: NadelValidationBlueprintHint,
+    nadelValidation: NadelSchemaValidation,
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = services.strictAssociateBy { it.name }
     private val engineSchemaIntrospectionService = IntrospectionService(engineSchema, introspectionRunnerFactory)
-    private val overallExecutionBlueprint = NadelOverallExecutionBlueprintMigrator(
-        hint = blueprintHint,
-        old = NadelExecutionBlueprintFactory.create(
-            engineSchema = engineSchema,
-            services = services,
-        ),
-        new = lazy {
-            try {
-                NadelSchemaValidation(
-                    NadelSchemas(engineSchema, services)
-                ).validateAndGenerateBlueprint()
-            } catch (e: Exception) {
-                getLogger<NextgenEngine>().error("Unable to create validated blueprint", e)
-                null
-            }
-        },
-    )
+    private val overallExecutionBlueprint = nadelValidation
+        .validateAndGenerateBlueprint(NadelSchemas(engineSchema, services))
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
@@ -143,7 +128,8 @@ internal class NextgenEngine(
                 executionInput,
                 queryDocument,
                 instrumentationState,
-                nadelExecutionParams.nadelExecutionHints,
+                nadelExecutionParams.executionHints,
+                nadelExecutionParams.latencyTracker,
             )
         }.asCompletableFuture()
     }
@@ -161,13 +147,13 @@ internal class NextgenEngine(
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
         executionHints: NadelExecutionHints,
+        latencyTracker: NadelInternalLatencyTracker,
     ): ExecutionResult = supervisorScope {
         try {
-            val timer = NadelInstrumentationTimer(
-                instrumentation,
-                userContext = executionInput.context,
-                instrumentationState,
-            )
+            val operationDefinition = queryDocument.getOperationDefinitionOrNull(executionInput.operationName)
+                ?: throw UnknownOperationException("Must provide operation name if query contains multiple operations")
+
+            val timer = makeTimer(operationDefinition, executionInput, latencyTracker, instrumentationState)
 
             val operationParseOptions = baseParseOptions
                 .deferSupport(executionHints.deferSupport.invoke())
@@ -200,6 +186,7 @@ internal class NextgenEngine(
             val beginExecuteContext = instrumentation.beginExecute(
                 operation,
                 queryDocument,
+                operationDefinition,
                 executionInput,
                 engineSchema,
                 instrumentationState,
@@ -266,13 +253,23 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         hydrationDetails: ServiceExecutionHydrationDetails,
     ): ServiceExecutionResult {
-        return executeTopLevelField(
-            topLevelField = topLevelField,
-            service = service,
-            executionContext = executionContext.copy(
-                hydrationDetails = hydrationDetails,
-            ),
-        )
+        return try {
+            executeTopLevelField(
+                topLevelField = topLevelField,
+                service = service,
+                executionContext = executionContext.copy(
+                    hydrationDetails = hydrationDetails,
+                ),
+            )
+        } catch (e: Exception) {
+            when (e) {
+                is GraphQLError -> newServiceExecutionErrorResult(
+                    field = topLevelField,
+                    error = e,
+                )
+                else -> throw e
+            }
+        }
     }
 
     internal suspend fun executePartitionedCall(
@@ -398,7 +395,6 @@ internal class NextgenEngine(
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
             variables = compileResult.variables,
             operationDefinition = compileResult.document.definitions.singleOfType(),
-            serviceContext = executionContext.getContextForService(service).await(),
             serviceExecutionContext = serviceExecutionContext,
             hydrationDetails = executionHydrationDetails,
             // Prefer non __typename field first, otherwise we just get first
@@ -526,6 +522,29 @@ internal class NextgenEngine(
             serviceExecutionContext,
             executionPlan,
             field,
+        )
+    }
+
+    private fun makeTimer(
+        operationDefinition: OperationDefinition,
+        executionInput: ExecutionInput,
+        latencyTracker: NadelInternalLatencyTracker,
+        instrumentationState: InstrumentationState?,
+    ): NadelInstrumentationTimer {
+        val isTimerEnabled = instrumentation.isTimingEnabled(
+            params = NadelInstrumentationIsTimingEnabledParameters(
+                instrumentationState = instrumentationState,
+                context = executionInput.context,
+                operationName = operationDefinition.name,
+            ),
+        )
+
+        return NadelInstrumentationTimer(
+            isEnabled = isTimerEnabled,
+            ticker = latencyTracker::getInternalLatency,
+            instrumentation = instrumentation,
+            userContext = executionInput.context,
+            instrumentationState = instrumentationState,
         )
     }
 }

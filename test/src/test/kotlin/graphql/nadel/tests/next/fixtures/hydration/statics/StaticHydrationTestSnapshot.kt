@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.next.fixtures.hydration.copy
+package graphql.nadel.tests.next.fixtures.hydration.statics
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<HydrationCopiesFieldTest>()
+    graphql.nadel.tests.next.update<StaticHydrationTest>()
 }
 
 /**
@@ -19,19 +19,22 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class HydrationCopiesFieldTestSnapshot : TestSnapshot() {
+public class StaticHydrationTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
                 | {
                 |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
+                |     __typename
                 |     edges {
+                |       __typename
                 |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
                 |       cursor
                 |     }
                 |     pageInfo {
+                |       __typename
                 |       hasNextPage
                 |     }
                 |   }
@@ -42,14 +45,17 @@ public class HydrationCopiesFieldTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "graphStore_query": {
+                |       "__typename": "GraphStoreQueryConnection",
                 |       "edges": [
                 |         {
+                |           "__typename": "GraphStoreQueryEdge",
                 |           "batch_hydration__node__nodeId": "ari:cloud:jira::issue/1",
                 |           "__typename__batch_hydration__node": "GraphStoreQueryEdge",
                 |           "cursor": "1"
                 |         }
                 |       ],
                 |       "pageInfo": {
+                |         "__typename": "PageInfo",
                 |         "hasNextPage": true
                 |       }
                 |     }
@@ -92,8 +98,10 @@ public class HydrationCopiesFieldTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "businessReport_findRecentWorkByTeam": {
+     *       "__typename": "WorkConnection",
      *       "edges": [
      *         {
+     *           "__typename": "WorkEdge",
      *           "cursor": "1",
      *           "node": {
      *             "key": "GQLGW-1"
@@ -101,6 +109,7 @@ public class HydrationCopiesFieldTestSnapshot : TestSnapshot() {
      *         }
      *       ],
      *       "pageInfo": {
+     *         "__typename": "PageInfo",
      *         "hasNextPage": true
      *       }
      *     }
@@ -113,8 +122,10 @@ public class HydrationCopiesFieldTestSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
+            |       "__typename": "WorkConnection",
             |       "edges": [
             |         {
+            |           "__typename": "WorkEdge",
             |           "cursor": "1",
             |           "node": {
             |             "key": "GQLGW-1"
@@ -122,6 +133,7 @@ public class HydrationCopiesFieldTestSnapshot : TestSnapshot() {
             |         }
             |       ],
             |       "pageInfo": {
+            |         "__typename": "PageInfo",
             |         "hasNextPage": true
             |       }
             |     }

@@ -779,4 +779,205 @@ class NadelHydrationValidationTest2 {
         assertTrue(error.offendingObjectIdentifier.sourceId == "id")
         assertTrue(error.offendingObjectIdentifier.resultId == "id")
     }
+
+    @Test
+    fun `union hydration uses @idHydrated for all member types`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    union ActivityContent = Comment | Page 
+                    type Activity {
+                        id: ID!
+                        data: ActivityContent
+                          @idHydrated(idField: "id")
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                    }
+                    type Comment @defaultHydration(field: "comments", idArgument: "ids", identifiedBy: "id") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page @defaultHydration(field: "pages", idArgument: "ids", identifiedBy: "id") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                    }
+                    type Comment {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `union hydration is missing default hydrations for some members`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    union ActivityContent = Comment | Page 
+                    type Activity {
+                        id: ID!
+                        data: ActivityContent
+                          @idHydrated(idField: "id")
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                    }
+                    type Comment @defaultHydration(field: "comments", idArgument: "ids", identifiedBy: "id") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                    }
+                    type Comment {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        assertTrue(errors.singleOrNull() is NadelHydrationUnionMemberNoBackingError)
+        val error = errors.single() as NadelHydrationUnionMemberNoBackingError
+        assertTrue(error.virtualField.name == "data")
+        assertTrue(error.membersNoBacking.map { it.name } == listOf("Page"))
+    }
+
+    @Test
+    fun `union hydration can use a mix of @idHydrated and @hydrated`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    union ActivityContent = Comment | Page 
+                    type Activity {
+                        id: ID!
+                        data: ActivityContent
+                          @idHydrated(idField: "id")
+                          @hydrated(
+                            field: "pages",
+                            arguments: [{name: "ids", value: "$source.id"}]
+                          )
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                    }
+                    type Comment @defaultHydration(field: "comments", idArgument: "ids", identifiedBy: "id") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                    }
+                    type Comment {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
 }

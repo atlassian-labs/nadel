@@ -23,8 +23,8 @@ import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
-import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
+import graphql.nadel.validation.NadelSchemaValidationFactory
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.flow.flowOf
@@ -235,7 +235,7 @@ private suspend fun execute(
                     return CompletableFuture.completedFuture(
                         NadelIncrementalServiceExecutionResult(
                             data = initialResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                            errors = initialResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                            errors = initialResponse["errors"] as MutableList<MutableJsonMap?>? ?: ArrayList(),
                             extensions = initialResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
                             incremental = emptyList(), // todo: support this if we need it
                             incrementalItemPublisher = incrementalItemPublisher,
@@ -248,7 +248,7 @@ private suspend fun execute(
                     return CompletableFuture.completedFuture(
                         NadelServiceExecutionResultImpl(
                             serviceCallResponse["data"] as MutableJsonMap? ?: LinkedHashMap(),
-                            serviceCallResponse["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                            serviceCallResponse["errors"] as MutableList<MutableJsonMap?>? ?: ArrayList(),
                             serviceCallResponse["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
                         ),
                     )
@@ -384,17 +384,16 @@ fun validate(
     fixture: TestFixture,
     hook: EngineTestHook,
 ) {
-    val validation = NadelSchemaValidation(
-        NadelSchemas.Builder()
-            .overallSchemas(fixture.overallSchema)
-            .underlyingSchemas(fixture.underlyingSchema)
-            .overallWiringFactory(GatewaySchemaWiringFactory())
-            .underlyingWiringFactory(GatewaySchemaWiringFactory())
-            .stubServiceExecution()
-            .build()
-    )
+    val nadelSchemas = NadelSchemas.Builder()
+        .overallSchemas(fixture.overallSchema)
+        .underlyingSchemas(fixture.underlyingSchema)
+        .overallWiringFactory(GatewaySchemaWiringFactory())
+        .underlyingWiringFactory(GatewaySchemaWiringFactory())
+        .stubServiceExecution()
+        .build()
 
-    val errors = validation.validate()
+    val errors = NadelSchemaValidationFactory.create()
+        .validate(nadelSchemas)
 
     if (errors.isEmpty()) {
         return

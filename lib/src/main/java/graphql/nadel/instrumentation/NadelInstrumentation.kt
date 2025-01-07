@@ -5,9 +5,9 @@ import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import graphql.language.Document
-import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
@@ -39,12 +39,12 @@ interface NadelInstrumentation {
         return null
     }
 
+    fun isTimingEnabled(params: NadelInstrumentationIsTimingEnabledParameters): Boolean {
+        return false
+    }
+
     /**
-     * This is called just before timing some specific Nadel code. See [NadelInstrumentationTimingParameters.step].
-     *
-     * After the timing of the step is complete [InstrumentationContext.onCompleted] is invoked.
-     *
-     * You can implement this function to record metrics in your Gateway service to determine what part of Nadel is taking up time.
+     * Use this to record timing information.
      */
     fun onStepTimed(parameters: NadelInstrumentationTimingParameters) {
     }
@@ -111,11 +111,5 @@ interface NadelInstrumentation {
      *  @param parameters to this step
      */
     fun onError(parameters: NadelInstrumentationOnErrorParameters) {
-    }
-
-    /**
-     * todo: create a root "internal" implementation so we can effectively have internal interface methods
-     */
-    fun onExecutionContext(context: NadelExecutionContext) {
     }
 }

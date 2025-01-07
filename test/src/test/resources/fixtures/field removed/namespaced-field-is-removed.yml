@@ -40,18 +40,18 @@ serviceCalls: [ ]
 # language=JSON
 response: |-
   {
-    "errors": [
-      {
-        "locations": [],
-        "message": "null",
-        "extensions": {
-          "classification": "ValidationError"
-        }
-      }
-    ],
     "data": {
       "commentApi": {
         "commentById": null
       }
-    }
+    },
+    "errors": [
+      {
+        "message": "field `CommentApi.commentById` has been removed by RemoveFieldTestTransform",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ]
   }

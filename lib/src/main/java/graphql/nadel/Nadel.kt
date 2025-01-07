@@ -16,7 +16,6 @@ import graphql.language.Document
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.hints.NadelValidationBlueprintHint
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -24,8 +23,11 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.schema.QuerySchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
+import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.util.getLogger
 import graphql.nadel.util.getNotPrivacySafeLogger
+import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.parser.InvalidSyntaxException
 import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
@@ -66,7 +68,10 @@ class Nadel private constructor(
             .executionId(nadelExecutionInput.executionId)
             .build()
 
-        val nadelExecutionParams = NadelExecutionParams(nadelExecutionInput.nadelExecutionHints)
+        val nadelExecutionParams = NadelExecutionParams(
+            nadelExecutionInput.executionHints,
+            nadelExecutionInput.latencyTracker,
+        )
         val instrumentationState = instrumentation.createState(
             NadelInstrumentationCreateStateParameters(querySchema, executionInput),
         )
@@ -241,7 +246,7 @@ class Nadel private constructor(
         private var maxQueryDepth = Integer.MAX_VALUE
         private var maxFieldCount = Integer.MAX_VALUE
 
-        private var blueprintHint = NadelValidationBlueprintHint { false }
+        private var nadelValidation: NadelSchemaValidation? = null
 
         fun schemas(schemas: NadelSchemas): Builder {
             this.schemas = schemas
@@ -363,8 +368,8 @@ class Nadel private constructor(
             return this
         }
 
-        fun blueprintHint(hint: NadelValidationBlueprintHint): Builder {
-            this.blueprintHint = hint
+        fun schemaValidation(nadelValidation: NadelSchemaValidation): Builder {
+            this.nadelValidation = nadelValidation
             return this
         }
 
@@ -385,7 +390,7 @@ class Nadel private constructor(
                     services = services,
                     transforms = transforms,
                     introspectionRunnerFactory = introspectionRunnerFactory,
-                    blueprintHint = blueprintHint,
+                    nadelValidation = nadelValidation ?: NadelSchemaValidationFactory.create(),
                 ),
                 services = services,
                 engineSchema = engineSchema,
