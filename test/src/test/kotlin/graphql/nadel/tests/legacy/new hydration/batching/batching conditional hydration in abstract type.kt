@@ -62,6 +62,13 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                       {name: "ids" value: "${'$'}source.contentId"}
                     ]
                   )
+                  @hydrated(
+                    service: "monolith"
+                    field: "commentsByIds"
+                    arguments: [
+                      {name: "ids" value: "$source.contentId"}
+                    ]
+                  )
                 }
                 type Issue {
                   id: ID!
