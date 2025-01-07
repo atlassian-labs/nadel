@@ -44,7 +44,9 @@ serviceCalls: [ ]
 # language=JSON
 response: |-
   {
-    "data": "enhanced beginExecute",
+    "data": {
+      "step": "beginExecute"
+    },
     "errors": [
       {
         "message": "beginExecute",

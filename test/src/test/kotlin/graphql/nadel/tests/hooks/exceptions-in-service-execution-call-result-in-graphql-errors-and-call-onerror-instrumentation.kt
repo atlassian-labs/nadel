@@ -1,9 +1,10 @@
 package graphql.nadel.tests.hooks
 
 import graphql.ExecutionResult
+import graphql.execution.ExecutionId
 import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
@@ -28,19 +29,26 @@ class `exceptions-in-service-execution-call-result-in-graphql-errors-and-call-on
     var errorMessage: String? = null
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
-            .serviceExecutionFactory(object : ServiceExecutionFactory {
-                override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    return ServiceExecution {
-                        throw RuntimeException("Pop goes the weasel")
-                    }
-                }
-            })
             .instrumentation(object : NadelInstrumentation {
                 override fun onError(parameters: NadelInstrumentationOnErrorParameters) {
                     serviceName = (parameters.errorData as ErrorData.ServiceExecutionErrorData).serviceName
                     errorMessage = parameters.message
                 }
             })
+    }
+
+    override fun makeExecutionInput(builder: NadelExecutionInput.Builder): NadelExecutionInput.Builder {
+        return super.makeExecutionInput(builder)
+            .executionId(ExecutionId.from("test"))
+    }
+
+    override fun wrapServiceExecution(
+        serviceName: String,
+        baseTestServiceExecution: ServiceExecution,
+    ): ServiceExecution {
+        return ServiceExecution {
+            throw RuntimeException("Pop goes the weasel")
+        }
     }
 
     override fun assertResult(result: ExecutionResult) {

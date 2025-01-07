@@ -8,7 +8,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
 abstract class HydrationDetailsHook : EngineTestHook {
-    override fun wrapServiceExecution(baseTestServiceExecution: ServiceExecution): ServiceExecution {
+    override fun wrapServiceExecution(serviceName: String, baseTestServiceExecution: ServiceExecution): ServiceExecution {
         return ServiceExecution { params ->
             if (params.hydrationDetails != null) {
                 assertHydrationDetails(params.hydrationDetails!!)

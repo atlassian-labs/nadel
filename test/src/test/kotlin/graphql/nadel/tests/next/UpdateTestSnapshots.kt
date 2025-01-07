@@ -42,12 +42,10 @@ private suspend fun main(vararg args: String) {
         .filter {
             args.isEmpty() || args.contains(it.qualifiedName)
         }
-        .toList()
-        .let { klasses ->
-            // Running this wll first generate snapshots for tests that do not have snapshots
-            // If all tests have snapshots, then we update them all
-            getNonExistentOrAll(klasses)
-                .asSequence()
+        // Only process non-existent by default
+        .filter { klass ->
+            classForNameOrNull(getSnapshotClassName(klass.asClassName()).reflectionName()) == null
+                || (args.isNotEmpty() && klass.qualifiedName in args)
         }
         .onEach { klass ->
             println("Loading ${klass.qualifiedName}")
@@ -59,22 +57,31 @@ private suspend fun main(vararg args: String) {
         .forEach { (klass, test) ->
             println("Recording ${klass.qualifiedName}")
 
-            val captured = test.capture()
+            try {
+                val captured = test.capture()
 
-            writeTestSnapshotClass(klass, captured, sourceRoot)
+                writeTestSnapshotClass(
+                    testClassName = klass.asClassName(),
+                    captured = captured,
+                    sourceRoot = sourceRoot,
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 }
 
 fun writeTestSnapshotClass(
-    klass: KClass<NadelIntegrationTest>,
+    testClassName: ClassName,
     captured: TestExecutionCapture,
     sourceRoot: File,
 ) {
-    val outputFile = FileSpec.builder(ClassName.bestGuess(klass.qualifiedName!! + "Snapshot"))
+    val snapshotClassName = getSnapshotClassName(testClassName)
+    val outputFile = FileSpec.builder(snapshotClassName)
         .indent(' '.toString().repeat(4))
         .addFileComment(FORMATTER_OFF)
-        .addFunction(makeUpdateSnapshotFunction(klass))
-        .addType(makeTestSnapshotClass(klass, captured))
+        .addFunction(makeUpdateSnapshotFunction(testClassName))
+        .addType(makeTestSnapshotClass(testClassName, captured))
         .build()
         .writeTo(sourceRoot)
 
@@ -93,25 +100,24 @@ fun writeTestSnapshotClass(
         )
 }
 
-private fun getNonExistentOrAll(klasses: List<KClass<NadelIntegrationTest>>): List<KClass<NadelIntegrationTest>> {
-    return klasses
-        .filter { klass ->
-            classForNameOrNull(klass.qualifiedName + "Snapshot") == null
-        }
-        .takeIf {
-            it.isNotEmpty()
-        }
-        ?: klasses
+fun getSnapshotClassName(className: ClassName): ClassName {
+    val suffix = if (className.simpleName.contains(" ") || className.simpleName.none(Char::isUpperCase)) {
+        " snapshot"
+    } else {
+        "Snapshot"
+    }
+
+    return ClassName(className.packageName, className.simpleName + suffix)
 }
 
-fun makeUpdateSnapshotFunction(klass: KClass<NadelIntegrationTest>): FunSpec {
+fun makeUpdateSnapshotFunction(testClassName: ClassName): FunSpec {
     return FunSpec.builder("main")
         .addModifiers(KModifier.PRIVATE, KModifier.SUSPEND)
-        .addCode("graphql.nadel.tests.next.update<%T>()", klass)
+        .addCode("graphql.nadel.tests.next.update<%T>()", testClassName)
         .build()
 }
 
-private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
+private fun getTestClassSequence(): Sequence<KClass<out NadelIntegrationTest>> {
     return ClassPath.from(ClassLoader.getSystemClassLoader())
         .getTopLevelClassesRecursive("graphql.nadel.tests")
         .asSequence()
@@ -127,12 +133,12 @@ private fun getTestClassSequence(): Sequence<KClass<NadelIntegrationTest>> {
 }
 
 private fun makeTestSnapshotClass(
-    klass: KClass<out Any>,
+    testClassName: ClassName,
     captured: TestExecutionCapture,
 ): TypeSpec {
-    return TypeSpec.classBuilder(klass.simpleName + "Snapshot")
+    return TypeSpec.classBuilder(getSnapshotClassName(testClassName))
         .superclass(TestSnapshot::class)
-        .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots")
+        .addKdoc("This class is generated. Do NOT modify.\n\nRefer to [graphql.nadel.tests.next.UpdateTestSnapshots]")
         .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "unused").build())
         .addProperty(makeServiceCallsProperty(captured))
         .addProperty(makeNadelResultProperty(captured))
@@ -244,6 +250,10 @@ private fun makeConstructorInvocationToExpectedServiceCall(call: TestExecutionCa
 }
 
 private fun writeResultJson(result: JsonMap): String {
+    if (result.isEmpty()) {
+        return "{}"
+    }
+
     return jsonObjectMapper
         .withPrettierPrinter()
         .writeValueAsString(result)
@@ -251,17 +261,11 @@ private fun writeResultJson(result: JsonMap): String {
 }
 
 private fun writeResultJson(result: ExecutionResult): String {
-    return jsonObjectMapper
-        .withPrettierPrinter()
-        .writeValueAsString(result.toSpecification())
-        .replaceIndent(" ")
+    return writeResultJson(result.toSpecification())
 }
 
 private fun writeResultJson(result: DelayedIncrementalPartialResult): String {
-    return jsonObjectMapper
-        .withPrettierPrinter()
-        .writeValueAsString(result.toSpecification())
-        .replaceIndent(" ")
+    return writeResultJson(result.toSpecification())
 }
 
 private fun classForNameOrNull(name: String): Class<*>? {

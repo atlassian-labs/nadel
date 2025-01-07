@@ -22,7 +22,7 @@ underlyingSchema:
     scalar JSON
 query: |
   query {
-    foo(input: {something: true answer: 42}) {
+    foo(input: {something: true answer: "42"}) {
       id
     }
   }
@@ -40,7 +40,7 @@ serviceCalls:
       variables:
         v0:
           something: true
-          answer: 42
+          answer: "42"
     # language=JSON
     response: |-
       {

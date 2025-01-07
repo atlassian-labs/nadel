@@ -1,17 +1,14 @@
 package graphql.nadel.tests.hooks
 
-import graphql.nadel.Nadel
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.GatewaySchemaWiringFactory
 import graphql.nadel.tests.UseHook
+import graphql.schema.idl.WiringFactory
 import java.io.File
 
 interface GatewayScalarEngineHook : EngineTestHook {
-    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
-        return super.makeNadel(builder)
-            .overallWiringFactory(GatewaySchemaWiringFactory())
-            .underlyingWiringFactory(GatewaySchemaWiringFactory())
-    }
+    override val wiringFactory: WiringFactory
+        get() = GatewaySchemaWiringFactory()
 }
 
 /**

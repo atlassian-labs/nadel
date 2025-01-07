@@ -44,7 +44,9 @@ serviceCalls: [ ]
 # language=JSON
 response: |-
   {
-    "data": "enhanced beginValidation",
+    "data": {
+      "step": "beginValidation"
+    },
     "errors": [
       {
         "message": "beginValidation",

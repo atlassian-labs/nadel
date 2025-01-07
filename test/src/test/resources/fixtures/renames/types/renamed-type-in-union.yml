@@ -84,15 +84,18 @@ serviceCalls:
           "rename__nodes__all": [
             {
               "__typename": "Issue",
+              "id": "1",
               "links": null
             },
             null,
             {
               "__typename": "Issue",
+              "id": "2",
               "links": []
             },
             {
               "__typename": "Issue",
+              "id": "3",
               "links": [
                 {
                   "__typename": "User"
@@ -106,10 +109,12 @@ serviceCalls:
               ]
             },
             {
-              "__typename": "Monkey"
+              "__typename": "Monkey",
+              "id": "4"
             },
             {
-              "__typename": "User"
+              "__typename": "User",
+              "id": "8"
             }
           ]
         },
@@ -122,15 +127,18 @@ response: |-
       "nodes": [
         {
           "__typename": "JiraIssue",
+          "id": "1",
           "links": null
         },
         null,
         {
           "__typename": "JiraIssue",
+          "id": "2",
           "links": []
         },
         {
           "__typename": "JiraIssue",
+          "id": "3",
           "links": [
             {
               "__typename": "User"
@@ -144,10 +152,12 @@ response: |-
           ]
         },
         {
-          "__typename": "Donkey"
+          "__typename": "Donkey",
+          "id": "4"
         },
         {
-          "__typename": "User"
+          "__typename": "User",
+          "id": "8"
         }
       ]
     },

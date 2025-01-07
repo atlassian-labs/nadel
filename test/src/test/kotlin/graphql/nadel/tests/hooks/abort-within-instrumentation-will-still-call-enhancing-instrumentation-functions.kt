@@ -35,7 +35,7 @@ class `abort-begin-execute-within-instrumentation-still-calls-enhancing-instrume
                         ExecutionResultImpl
                             .newExecutionResult()
                             .from(executionResult)
-                            .data("enhanced beginExecute")
+                            .data(mapOf("step" to "beginExecute"))
                             .build(),
                     )
                 }
@@ -65,7 +65,7 @@ class `abort-begin-execute-in-cf-within-instrumentation-still-calls-enhancing-in
                         ExecutionResultImpl
                             .newExecutionResult()
                             .from(executionResult)
-                            .data("enhanced beginExecute")
+                            .data(mapOf("step" to "beginExecute"))
                             .build(),
                     )
                 }
@@ -93,7 +93,7 @@ class `abort-begin-query-execution-within-instrumentation-still-calls-enhancing-
                         ExecutionResultImpl
                             .newExecutionResult()
                             .from(executionResult)
-                            .data("enhanced beginQueryExecution")
+                            .data(mapOf("step" to "beginQueryExecution"))
                             .build(),
                     )
                 }
@@ -121,7 +121,7 @@ class `abort-begin-validation-within-instrumentation-still-calls-enhancing-instr
                         ExecutionResultImpl
                             .newExecutionResult()
                             .from(executionResult)
-                            .data("enhanced beginValidation")
+                            .data(mapOf("step" to "beginValidation"))
                             .build(),
                     )
                 }
