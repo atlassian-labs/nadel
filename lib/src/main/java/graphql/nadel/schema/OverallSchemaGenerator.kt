@@ -14,7 +14,6 @@ import graphql.nadel.util.AnySDLDefinition
 import graphql.nadel.util.AnySDLNamedDefinition
 import graphql.nadel.util.isExtensionDef
 import graphql.scalars.ExtendedScalars
-import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -25,12 +24,13 @@ internal class OverallSchemaGenerator {
     fun buildOverallSchema(
         serviceRegistries: List<NadelDefinitionRegistry>,
         wiringFactory: WiringFactory,
-        codeRegistry: GraphQLCodeRegistry,
     ): GraphQLSchema {
         val schemaGenerator = SchemaGenerator()
         val runtimeWiring = RuntimeWiring.newRuntimeWiring()
             .wiringFactory(wiringFactory)
-            .codeRegistry(codeRegistry)
+            .codeRegistry(
+                NeverWiringFactory.NEVER_CODE_REGISTRY
+            )
             .build()
 
         return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring)

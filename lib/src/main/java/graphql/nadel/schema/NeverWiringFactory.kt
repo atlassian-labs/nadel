@@ -81,33 +81,33 @@ open class NeverWiringFactory : WiringFactory {
         }
     }
 
-    override fun providesTypeResolver(environment: InterfaceWiringEnvironment): Boolean {
+    final override fun providesTypeResolver(environment: InterfaceWiringEnvironment): Boolean {
         return true
     }
 
-    override fun getTypeResolver(environment: InterfaceWiringEnvironment): TypeResolver {
+    final override fun getTypeResolver(environment: InterfaceWiringEnvironment): TypeResolver {
         return NEVER_TR
     }
 
-    override fun providesTypeResolver(environment: UnionWiringEnvironment): Boolean {
+    final override fun providesTypeResolver(environment: UnionWiringEnvironment): Boolean {
         return true
     }
 
-    override fun getTypeResolver(environment: UnionWiringEnvironment): TypeResolver {
+    final override fun getTypeResolver(environment: UnionWiringEnvironment): TypeResolver {
         return TypeResolver {
             assertShouldNeverHappen("This union type resolver should NEVER be called from Nadel")
         }
     }
 
-    override fun providesDataFetcher(environment: FieldWiringEnvironment): Boolean {
+    final override fun providesDataFetcher(environment: FieldWiringEnvironment): Boolean {
         return false
     }
 
-    override fun getDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
+    final override fun getDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
         return assertShouldNeverHappen("getDataFetcher should NEVER be called from Nadel - we returned false")
     }
 
-    override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*>? {
+    final override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*>? {
         return null
     }
 

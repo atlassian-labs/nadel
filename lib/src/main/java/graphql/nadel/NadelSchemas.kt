@@ -227,8 +227,7 @@ data class NadelSchemas(
             val serviceRegistries = services.map(Service::definitionRegistry)
             val schema = overallSchemaGenerator.buildOverallSchema(
                 serviceRegistries,
-                builder.overallWiringFactory,
-                NeverWiringFactory.NEVER_CODE_REGISTRY
+                builder.overallWiringFactory
             )
             val newSchema = builder.schemaTransformationHook.apply(schema, services)
 
