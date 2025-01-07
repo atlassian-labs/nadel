@@ -92,22 +92,10 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
                     ?: overallTypeName
             }
 
-            val typeName: String = if (executionContext.hints.sharedTypeRenames(service)) {
-                if (overallField.objectTypeNames.contains(overallTypeName)) {
-                    overallTypeName
-                } else {
-                    overallField.objectTypeNames.singleOrNull {
-                        executionBlueprint.getRename(it)?.underlyingName == underlyingTypeName
-                    } ?: overallTypeName
-                }
-            } else {
-                overallTypeName
-            }
-
             NadelResultInstruction.Set(
                 subject = parentNode,
                 key = NadelResultKey(overallField.resultKey),
-                newValue = JsonNode(typeName),
+                newValue = JsonNode(overallTypeName),
             )
         }
     }
