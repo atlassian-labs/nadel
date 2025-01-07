@@ -15,7 +15,7 @@ import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputFieldsContainer
 import graphql.schema.GraphQLInputObjectField
 import graphql.schema.GraphQLNamedOutputType
-import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
 
@@ -609,6 +609,22 @@ data class NadelPolymorphicHydrationMustOutputUnionError(
     override val message = run {
         val vf = makeFieldCoordinates(parentType.overall.name, virtualField.name)
         "Field $vf has multiple @hydrated definitions so its output type MUST be a union"
+    }
+
+    override val subject = virtualField
+}
+
+data class NadelHydrationUnionMemberNoBackingError(
+    val parentType: NadelServiceSchemaElement,
+    val virtualField: GraphQLFieldDefinition,
+    val membersNoBacking: List<GraphQLNamedType>,
+) : NadelSchemaValidationError {
+    val service: Service get() = parentType.service
+
+    override val message = run {
+        val vf = makeFieldCoordinates(parentType.overall.name, virtualField.name)
+        val memberNamesNoBacking = membersNoBacking.map { it.name }
+        "Field $vf is missing hydration(s) for possible union type(s) $memberNamesNoBacking"
     }
 
     override val subject = virtualField
