@@ -37,9 +37,10 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallFields: List<GraphQLFieldDefinition>,
     ): NadelSchemaValidationResult {
-        if(areAllFieldsHidden(overallFields)) {
+        if (isTypeBrokenByHiddenFields(parent, overallFields)) {
             return NadelSchemaValidationError.AllFieldsUsingHiddenDirective(parent)
         }
+
         return overallFields
             .asSequence()
             .let { fieldSequence ->
@@ -57,8 +58,19 @@ class NadelFieldValidation internal constructor(
             .toResult()
     }
 
-    private fun areAllFieldsHidden(overallFields: List<GraphQLFieldDefinition>): Boolean {
-        return overallFields.all { it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name) };
+    context(NadelValidationContext)
+    private fun isTypeBrokenByHiddenFields(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        overallFields: List<GraphQLFieldDefinition>,
+    ): Boolean {
+        // Means type is deleted, so we're fine
+        if (hiddenTypeNames.contains(parent.overall.name)) {
+            return false
+        }
+
+        return overallFields.all {
+            it.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)
+        }
     }
 
     context(NadelValidationContext)

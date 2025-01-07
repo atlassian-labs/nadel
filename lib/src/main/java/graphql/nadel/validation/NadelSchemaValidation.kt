@@ -49,6 +49,7 @@ class NadelSchemaValidation internal constructor(
 
         val operationTypes = getOperationTypeNames(engineSchema)
         val namespaceTypes = getNamespaceOperationTypes(engineSchema)
+        val hiddenTypeNames = getHiddenTypeNames(engineSchema)
 
         val definitions = definitionParser.parse(engineSchema)
             .onError { return it }
@@ -60,6 +61,7 @@ class NadelSchemaValidation internal constructor(
             hydrationUnions = getHydrationUnions(engineSchema),
             namespaceTypeNames = namespaceTypes,
             combinedTypeNames = namespaceTypes + operationTypes.map { it.name },
+            hiddenTypeNames = hiddenTypeNames,
             definitions = definitions,
             hook = hook,
         )
@@ -206,6 +208,37 @@ private fun makeFieldContributorMap(services: List<Service>): Map<FieldCoordinat
                 }
         }
         .toMapStrictly()
+}
+
+/**
+ * Gets the types that will be removed by the `@hidden` directive.
+ *
+ * i.e. all fields that reference this type are `@hidden`
+ */
+private fun getHiddenTypeNames(engineSchema: GraphQLSchema): Set<String> {
+    val hiddenTypeNames = HashMap<String, Boolean>(engineSchema.typeMap.size)
+
+    engineSchema
+        .typeMap
+        .values
+        .asSequence()
+        .filterIsInstance<GraphQLFieldsContainer>()
+        .forEach { type ->
+            type.fields.forEach { field ->
+                val outputTypeName = field.type.unwrapAll().name
+
+                if (field.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name)) {
+                    val existing = hiddenTypeNames[outputTypeName]
+                    if (existing == null) {
+                        hiddenTypeNames[outputTypeName] = true
+                    }
+                } else {
+                    hiddenTypeNames[outputTypeName] = false
+                }
+            }
+        }
+
+    return hiddenTypeNames.keys
 }
 
 private fun getOperationTypeNames(engineSchema: GraphQLSchema): List<GraphQLObjectType> {
