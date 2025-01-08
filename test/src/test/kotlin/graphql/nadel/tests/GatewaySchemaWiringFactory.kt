@@ -15,18 +15,18 @@ import java.util.concurrent.ConcurrentHashMap
 class GatewaySchemaWiringFactory : NeverWiringFactory() {
     private val passThruScalars: MutableMap<String, GraphQLScalarType> = ConcurrentHashMap()
 
-    override fun providesScalar(env: ScalarWiringEnvironment): Boolean {
-        val scalarName = env.scalarTypeDefinition.name
+    override fun providesScalar(environment: ScalarWiringEnvironment): Boolean {
+        val scalarName = environment.scalarTypeDefinition.name
         return if (defaultScalars.containsKey(scalarName)) {
             true
         } else !ScalarInfo.isGraphqlSpecifiedScalar(scalarName)
     }
 
-    override fun getScalar(env: ScalarWiringEnvironment): GraphQLScalarType {
-        val scalarName = env.scalarTypeDefinition.name
+    override fun getScalar(environment: ScalarWiringEnvironment): GraphQLScalarType {
+        val scalarName = environment.scalarTypeDefinition.name
         val scalarType = defaultScalars[scalarName]
         return scalarType ?: passThruScalars.computeIfAbsent(scalarName) {
-            passThruScalar(env)
+            passThruScalar(environment)
         }
     }
 

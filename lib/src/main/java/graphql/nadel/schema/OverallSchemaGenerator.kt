@@ -28,6 +28,9 @@ internal class OverallSchemaGenerator {
         val schemaGenerator = SchemaGenerator()
         val runtimeWiring = RuntimeWiring.newRuntimeWiring()
             .wiringFactory(wiringFactory)
+            .codeRegistry(
+                NeverWiringFactory.NEVER_CODE_REGISTRY
+            )
             .build()
 
         return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring)

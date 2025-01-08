@@ -7,6 +7,8 @@ import graphql.language.Value
 import graphql.scalars.ExtendedScalars
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
+import graphql.schema.DataFetcherFactory
+import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLScalarType
 import graphql.schema.TypeResolver
 import graphql.schema.idl.FieldWiringEnvironment
@@ -79,39 +81,50 @@ open class NeverWiringFactory : WiringFactory {
         }
     }
 
-    override fun providesTypeResolver(environment: InterfaceWiringEnvironment): Boolean {
+    final override fun providesTypeResolver(environment: InterfaceWiringEnvironment): Boolean {
         return true
     }
 
-    override fun getTypeResolver(environment: InterfaceWiringEnvironment): TypeResolver {
-        return TypeResolver {
-            assertShouldNeverHappen("This interface type resolver should NEVER be called from Nadel")
-        }
+    final override fun getTypeResolver(environment: InterfaceWiringEnvironment): TypeResolver {
+        return NEVER_TR
     }
 
-    override fun providesTypeResolver(environment: UnionWiringEnvironment): Boolean {
+    final override fun providesTypeResolver(environment: UnionWiringEnvironment): Boolean {
         return true
     }
 
-    override fun getTypeResolver(environment: UnionWiringEnvironment): TypeResolver {
+    final override fun getTypeResolver(environment: UnionWiringEnvironment): TypeResolver {
         return TypeResolver {
             assertShouldNeverHappen("This union type resolver should NEVER be called from Nadel")
         }
     }
 
-    override fun providesDataFetcher(environment: FieldWiringEnvironment): Boolean {
-        return true
+    final override fun providesDataFetcher(environment: FieldWiringEnvironment): Boolean {
+        return false
     }
 
-    override fun getDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
-        return DataFetcher {
-            assertShouldNeverHappen<Any?>("This data fetcher should NEVER be called from Nadel")
-        }
+    final override fun getDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
+        return assertShouldNeverHappen("getDataFetcher should NEVER be called from Nadel - we returned false")
     }
 
-    override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*> {
-        return DataFetcher {
+    final override fun getDefaultDataFetcher(environment: FieldWiringEnvironment): DataFetcher<*>? {
+        return null
+    }
+
+
+    companion object {
+        val NEVER_TR =  TypeResolver {
+            assertShouldNeverHappen("This interface type resolver should NEVER be called from Nadel")
+        }
+        private val NEVER_DF = DataFetcher {
             assertShouldNeverHappen<Any?>("This data fetcher should NEVER be called from Nadel")
         }
+        private val NEVER_DFF = DataFetcherFactory {
+            NEVER_DF
+        }
+
+        val NEVER_CODE_REGISTRY: GraphQLCodeRegistry = GraphQLCodeRegistry.newCodeRegistry()
+            .defaultDataFetcher(NEVER_DFF).build()
+
     }
 }
