@@ -33,6 +33,7 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |     }
                 |     ... on SingleActivity {
                 |       batch_hydration__content__contentId: contentId
+                |       batch_hydration__content__contentId: contentId
                 |     }
                 |   }
                 | }
