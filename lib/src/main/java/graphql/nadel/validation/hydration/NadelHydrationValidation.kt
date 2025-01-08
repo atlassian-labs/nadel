@@ -53,6 +53,7 @@ import graphql.nadel.validation.isRenamed
 import graphql.nadel.validation.ok
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
+import graphql.nadel.validation.results
 import graphql.nadel.validation.toResult
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -118,18 +119,23 @@ class NadelHydrationValidation internal constructor() {
             .onError { return it }
         limitSourceField(parent, virtualField, hydrations)
             .onError { return it }
-        validateUnion(parent, virtualField, hydrations)
-            .onError { return it }
 
-        return hydrations
-            .map { hydration ->
-                validate(parent, virtualField, hydration, hasMoreThanOneHydration)
-            }
-            .toResult()
+        return results(
+            validateUnionMembersBacked(parent, virtualField, hydrations), // Do this instead of .onError for a soft error
+            hydrations
+                .map { hydration ->
+                    validate(parent, virtualField, hydration, hasMoreThanOneHydration)
+                }
+                .toResult(),
+        )
     }
 
+    /**
+     * Checks that if the virtual field outputs a union, that all of its union members have
+     * a corresponding backing field that can resolve it.
+     */
     context(NadelValidationContext)
-    private fun validateUnion(
+    private fun validateUnionMembersBacked(
         parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
         hydrations: List<NadelHydrationDefinition>,
