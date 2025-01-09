@@ -8,7 +8,6 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelPartitionInstruction
-import graphql.nadel.engine.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.partition.NadelPartitionMutationPayloadMerger.isMutationPayloadLike
@@ -54,7 +53,7 @@ internal class NadelPartitionTransform(
             return null
         }
 
-        val partitionInstructions = executionBlueprint.fieldInstructions
+        val partitionInstructions = executionBlueprint
             .getTypeNameToInstructionMap<NadelPartitionInstruction>(overallField)
 
         // We can't partition a field that has multiple partition instructions in different types. But, since

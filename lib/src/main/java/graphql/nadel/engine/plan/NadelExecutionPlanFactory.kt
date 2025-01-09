@@ -22,6 +22,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParame
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.QueryTransforming
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ResultTransforming
+import graphql.nadel.util.dfs
 import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
@@ -60,33 +61,34 @@ internal class NadelExecutionPlanFactory(
         rootField: ExecutableNormalizedField,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
-        val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
+        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
+            mutableMapOf()
 
         executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
-                transformsWithTimingStepInfo.forEach { transformWithTimingInfo ->
+                val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
                     // See NadelSkipIncludeTransform.isApplicable for more details
                     if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*>) !is NadelSkipIncludeTransform)) {
-                        return@forEach
-                    }
+                        null
+                    } else {
+                        val state = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
+                            transform.isApplicable(
+                                executionContext,
+                                serviceExecutionContext,
+                                executionBlueprint,
+                                services,
+                                service,
+                                field,
+                                serviceHydrationDetails,
+                            )
+                        }
 
-                    val state = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
-                        transform.isApplicable(
-                            executionContext,
-                            serviceExecutionContext,
-                            executionBlueprint,
-                            services,
-                            service,
-                            field,
-                            serviceHydrationDetails,
-                        )
-                    }
-
-                    if (state != null) {
-                        executionSteps.add(
+                        if (state == null) {
+                            null
+                        } else {
                             NadelExecutionPlan.Step(
                                 service = service,
                                 field = field,
@@ -94,26 +96,29 @@ internal class NadelExecutionPlanFactory(
                                 queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
                                 resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
                                 state = state,
-                            ),
-                        )
+                            )
+                        }
                     }
+                }
+
+                if (steps.isNotEmpty()) {
+                    executionSteps[field] = steps
                 }
             }
         }
 
-        return NadelExecutionPlan(
-            executionSteps.groupBy { it.field },
-        )
+        return NadelExecutionPlan(executionSteps)
     }
 
-    private suspend fun traverseQuery(
+    private inline fun traverseQuery(
         root: ExecutableNormalizedField,
-        consumer: suspend (ExecutableNormalizedField) -> Unit,
+        consumer: (ExecutableNormalizedField) -> Unit,
     ) {
-        consumer(root)
-        root.children.forEach {
-            traverseQuery(it, consumer)
-        }
+        dfs(
+            root = root,
+            getChildren = ExecutableNormalizedField::getChildren,
+            consumer = consumer,
+        )
     }
 
     companion object {

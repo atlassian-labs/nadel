@@ -23,16 +23,20 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class NadelIncrementalResultSupport internal constructor(
-    private val accumulator: NadelIncrementalResultAccumulator,
+    lazyAccumulator: Lazy<NadelIncrementalResultAccumulator>,
     private val delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
 ) {
+    private val accumulator by lazyAccumulator
+
     internal constructor(
         operation: ExecutableNormalizedOperation,
         delayedResultsChannel: Channel<DelayedIncrementalPartialResult> = makeDefaultChannel(),
     ) : this(
-        accumulator = NadelIncrementalResultAccumulator(
-            operation = operation,
-        ),
+        lazyAccumulator = lazy {
+            NadelIncrementalResultAccumulator(
+                operation = operation,
+            )
+        },
         delayedResultsChannel = delayedResultsChannel,
     )
 
