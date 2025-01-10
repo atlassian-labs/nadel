@@ -6,6 +6,7 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
+import graphql.normalized.ExecutableNormalizedField
 
 @UseHook
 class `batching-multiple-source-ids-going-to-different-services` : EngineTestHook {
@@ -14,10 +15,11 @@ class `batching-multiple-source-ids-going-to-different-services` : EngineTestHoo
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+                        virtualField: ExecutableNormalizedField,
                         instructions: List<T>,
                         sourceInput: JsonNode,
                         userContext: Any?,
-                    ): T {
+                    ): T? {
                         val type = (sourceInput.value as String).substringBefore("/")
 
                         return instructions

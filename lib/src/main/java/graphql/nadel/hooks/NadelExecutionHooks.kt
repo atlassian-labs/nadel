@@ -45,6 +45,7 @@ interface NadelExecutionHooks {
     }
 
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+        virtualField: ExecutableNormalizedField,
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
@@ -54,6 +55,7 @@ interface NadelExecutionHooks {
     }
 
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+        virtualField: ExecutableNormalizedField,
         instructions: List<T>,
         sourceInput: JsonNode,
         userContext: Any?,
