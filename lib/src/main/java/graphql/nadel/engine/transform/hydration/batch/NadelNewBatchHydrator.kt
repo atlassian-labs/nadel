@@ -585,6 +585,7 @@ internal class NadelNewBatchHydrator(
     ): NadelBatchHydrationFieldInstruction? {
         if (instructions.any { it.condition == null }) {
             return executionContext.hooks.getHydrationInstruction(
+                virtualField = sourceField,
                 instructions = instructions,
                 sourceInput = sourceInput,
                 userContext = executionContext.userContext,
@@ -612,6 +613,7 @@ internal class NadelNewBatchHydrator(
     ): NadelBatchHydrationFieldInstruction? {
         if (instructions.any { it.condition == null }) {
             return executionContext.hooks.getHydrationInstruction(
+                virtualField = sourceField,
                 instructions = instructions,
                 parentNode = sourceObject,
                 aliasHelper = aliasHelper,

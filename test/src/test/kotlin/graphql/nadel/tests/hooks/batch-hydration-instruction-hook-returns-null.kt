@@ -7,6 +7,7 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
+import graphql.normalized.ExecutableNormalizedField
 
 @UseHook
 class `batch-hydration-instruction-hook-returns-null` : EngineTestHook {
@@ -15,15 +16,17 @@ class `batch-hydration-instruction-hook-returns-null` : EngineTestHook {
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+                        virtualField: ExecutableNormalizedField,
                         instructions: List<T>,
                         parentNode: JsonNode,
                         aliasHelper: NadelAliasHelper,
                         userContext: Any?,
-                    ): Nothing {
+                    ): T? {
                         throw UnsupportedOperationException("should not run")
                     }
 
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+                        virtualField: ExecutableNormalizedField,
                         instructions: List<T>,
                         sourceInput: JsonNode,
                         userContext: Any?,

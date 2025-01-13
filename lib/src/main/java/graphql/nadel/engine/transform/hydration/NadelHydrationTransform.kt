@@ -417,12 +417,14 @@ internal class NadelHydrationTransform(
     ): NadelHydrationFieldInstruction? {
         if (instructions.any { it.condition == null }) {
             return hooks.getHydrationInstruction(
-                instructions,
-                parentNode,
-                state.aliasHelper,
-                state.executionContext.userContext
+                virtualField = state.virtualField,
+                instructions = instructions,
+                parentNode = parentNode,
+                aliasHelper = state.aliasHelper,
+                userContext = state.executionContext.userContext
             )
         }
+
         return instructions
             .firstOrNull {
                 // Note: due to the validation, all instructions in here have a condition, so can call explicitly

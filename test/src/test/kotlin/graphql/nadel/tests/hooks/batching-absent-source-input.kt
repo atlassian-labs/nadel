@@ -7,6 +7,7 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
+import graphql.normalized.ExecutableNormalizedField
 
 @UseHook
 class `batching-absent-source-input` : EngineTestHook {
@@ -15,10 +16,11 @@ class `batching-absent-source-input` : EngineTestHook {
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+                        virtualField: ExecutableNormalizedField,
                         instructions: List<T>,
                         sourceId: JsonNode,
                         userContext: Any?,
-                    ): T {
+                    ): T? {
                         val type = (sourceId.value as String).substringBefore("/")
 
                         return instructions
@@ -28,6 +30,7 @@ class `batching-absent-source-input` : EngineTestHook {
                     }
 
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+                        virtualField: ExecutableNormalizedField,
                         instructions: List<T>,
                         parentNode: JsonNode,
                         aliasHelper: NadelAliasHelper,

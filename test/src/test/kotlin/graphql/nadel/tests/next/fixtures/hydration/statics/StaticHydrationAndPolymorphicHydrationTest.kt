@@ -9,6 +9,7 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
+import graphql.normalized.ExecutableNormalizedField
 
 /**
  * Uses hydration to "copy" a field. Does not link two pieces of data together i.e. no $source fields used.
@@ -270,6 +271,7 @@ class StaticHydrationAndPolymorphicHydrationTest : NadelIntegrationTest(
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
+                        virtualField: ExecutableNormalizedField,
                         instructions: List<T>,
                         parentNode: JsonNode,
                         aliasHelper: NadelAliasHelper,
