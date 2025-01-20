@@ -1,19 +1,13 @@
 package graphql.nadel.validation
 
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
-import graphql.schema.GraphQLArgument
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectField
-import graphql.schema.GraphQLInputType
-import graphql.schema.GraphQLUnmodifiedType
 
-class NadelInputValidation internal constructor() {
-    private val typeWrappingValidation = NadelTypeWrappingValidation()
-
+class NadelInputObjectValidation internal constructor(
+    private val assignableTypeValidation: NadelAssignableTypeValidation,
+) {
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.InputObject,
@@ -61,46 +55,15 @@ class NadelInputValidation internal constructor() {
         overallInputField: GraphQLInputObjectField,
         underlyingInputField: GraphQLInputObjectField,
     ): NadelSchemaValidationResult {
-        return if (!isInputTypeValid(overallInputField.type, underlyingInputField.type)) {
-            IncompatibleFieldInputType(parent, overallInputField, underlyingInputField)
-        } else {
-            ok()
-        }
-    }
-
-    context(NadelValidationContext)
-    fun validate(
-        parent: NadelServiceSchemaElement.FieldsContainer,
-        overallField: GraphQLFieldDefinition,
-        overallInputArgument: GraphQLArgument,
-        underlyingInputArgument: GraphQLArgument,
-    ): NadelSchemaValidationResult {
-        return if (!isInputTypeValid(overallInputArgument.type, underlyingInputArgument.type)) {
-            IncompatibleArgumentInputType(parent, overallField, overallInputArgument, underlyingInputArgument)
-        } else {
-            ok()
-        }
-    }
-
-    context(NadelValidationContext)
-    private fun isInputTypeValid(
-        overallType: GraphQLInputType,
-        underlyingType: GraphQLInputType,
-    ): Boolean {
-        val typeWrappingValid = typeWrappingValidation.isTypeWrappingValid(
-            lhs = overallType,
-            rhs = underlyingType,
-            rule = NadelTypeWrappingValidation.Rule.LHS_MUST_BE_STRICTER_OR_SAME,
+        val isTypeAssignable = assignableTypeValidation.isInputTypeAssignable(
+            overallType = overallInputField.type,
+            underlyingType = underlyingInputField.type
         )
 
-        return typeWrappingValid && isInputTypeNameValid(overallType.unwrapAll(), underlyingType.unwrapAll())
-    }
-
-    context(NadelValidationContext)
-    private fun isInputTypeNameValid(
-        overallType: GraphQLUnmodifiedType,
-        underlyingType: GraphQLUnmodifiedType,
-    ): Boolean {
-        return getUnderlyingTypeName(overallType) == underlyingType.name
+        return if (isTypeAssignable) {
+            ok()
+        } else {
+            IncompatibleFieldInputType(parent, overallInputField, underlyingInputField)
+        }
     }
 }

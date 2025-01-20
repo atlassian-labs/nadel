@@ -3,8 +3,6 @@ package graphql.nadel.validation
 import graphql.nadel.Service
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_LOOSER_OR_SAME
-import graphql.nadel.validation.NadelTypeWrappingValidation.Rule.LHS_MUST_BE_STRICTER_OR_SAME
 import graphql.nadel.validation.NadelVirtualTypeValidationContext.TraversalOutcome.DUPLICATED_BACKING_TYPE
 import graphql.nadel.validation.NadelVirtualTypeValidationContext.TraversalOutcome.SKIP
 import graphql.nadel.validation.NadelVirtualTypeValidationContext.TraversalOutcome.VISIT
@@ -43,9 +41,8 @@ private class NadelVirtualTypeValidationContext {
 
 class NadelVirtualTypeValidation internal constructor(
     private val hydrationValidation: NadelHydrationValidation,
+    private val assignableTypeValidation: NadelAssignableTypeValidation,
 ) {
-    private val typeWrappingValidation = NadelTypeWrappingValidation()
-
     context(NadelValidationContext)
     fun validate(
         schemaElement: NadelServiceSchemaElement.VirtualType,
@@ -63,6 +60,10 @@ class NadelVirtualTypeValidation internal constructor(
             VISIT -> {}
             DUPLICATED_BACKING_TYPE -> return NadelVirtualTypeDuplicationError(schemaElement)
             SKIP -> return ok()
+        }
+
+        if (isRenamed(schemaElement)) {
+            return NadelVirtualTypeIllegalRenameError(schemaElement)
         }
 
         if (schemaElement.overall is GraphQLObjectType && schemaElement.underlying is GraphQLObjectType) {
@@ -186,23 +187,20 @@ class NadelVirtualTypeValidation internal constructor(
             )
         }
 
-        if (virtualFieldUnwrappedOutputType.name == backingFieldUnwrappedOutputType.name) {
-            val isTypeWrappingValid = typeWrappingValidation.isTypeWrappingValid(
-                lhs = virtualField.type,
-                rhs = backingField.type,
-                rule = LHS_MUST_BE_LOOSER_OR_SAME,
-            )
-
-            if (isTypeWrappingValid) {
-                return ok()
-            }
-        }
-
-        return NadelVirtualTypeIncompatibleFieldOutputTypeError(
-            parent = parent,
-            virtualField = virtualField,
+        val isOutputTypeAssignable = isOutputTypeAssignable(
             backingField = backingField,
+            virtualField = virtualField,
         )
+
+        return if (isOutputTypeAssignable) {
+            ok()
+        } else {
+            NadelVirtualTypeIncompatibleFieldOutputTypeError(
+                parent = parent,
+                virtualField = virtualField,
+                backingField = backingField,
+            )
+        }
     }
 
     /**
@@ -249,25 +247,19 @@ class NadelVirtualTypeValidation internal constructor(
         virtualFieldArgument: GraphQLArgument,
         backingFieldArgument: GraphQLArgument,
     ): NadelSchemaValidationResult {
-        if (virtualFieldArgument.type.unwrapAll().name == backingFieldArgument.type.unwrapAll().name) {
-            val isTypeWrappingValid = typeWrappingValidation.isTypeWrappingValid(
-                lhs = virtualFieldArgument.type,
-                rhs = backingFieldArgument.type,
-                rule = LHS_MUST_BE_STRICTER_OR_SAME,
+        val isInputTypeAssignable = isInputTypeAssignable(virtualFieldArgument, backingFieldArgument)
+
+        return if (isInputTypeAssignable) {
+            ok()
+        } else {
+            NadelVirtualTypeIncompatibleFieldArgumentError(
+                type = parent,
+                virtualField = virtualField,
+                backingField = backingField,
+                virtualFieldArgument = virtualFieldArgument,
+                backingFieldArgument = backingFieldArgument,
             )
-
-            if (isTypeWrappingValid) {
-                return ok()
-            }
         }
-
-        return NadelVirtualTypeIncompatibleFieldArgumentError(
-            type = parent,
-            virtualField = virtualField,
-            backingField = backingField,
-            virtualFieldArgument = virtualFieldArgument,
-            backingFieldArgument = backingFieldArgument,
-        )
     }
 
     /**
@@ -293,5 +285,40 @@ class NadelVirtualTypeValidation internal constructor(
                 )
             }
         }.toResult()
+    }
+
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
+    private fun isInputTypeAssignable(
+        virtualFieldArgument: GraphQLArgument,
+        backingFieldArgument: GraphQLArgument,
+    ): Boolean {
+        val suppliedType = virtualFieldArgument.type
+        val requiredType = backingFieldArgument.type
+
+        return assignableTypeValidation.isTypeAssignable(
+            suppliedType = suppliedType,
+            requiredType = requiredType,
+            // Note: we do not check for renames here, types must be used 1-1
+            suppliedTypeName = suppliedType.unwrapAll().name,
+            requiredTypeName = requiredType.unwrapAll().name,
+        )
+    }
+
+    context(NadelValidationContext, NadelVirtualTypeValidationContext)
+    private fun isOutputTypeAssignable(
+        backingField: GraphQLFieldDefinition,
+        virtualField: GraphQLFieldDefinition,
+    ): Boolean {
+        // Note: the (supplied) value comes from the backing service, and that value needs to fit the (required) virtual field's type
+        val suppliedType = backingField.type
+        val requiredType = virtualField.type
+
+        return assignableTypeValidation.isTypeAssignable(
+            suppliedType = suppliedType,
+            requiredType = requiredType,
+            // Note: we do not check for renames here, types must be used 1-1
+            suppliedTypeName = suppliedType.unwrapAll().name,
+            requiredTypeName = requiredType.unwrapAll().name,
+        )
     }
 }
