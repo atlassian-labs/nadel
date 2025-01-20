@@ -12,7 +12,7 @@ import java.util.Collections
  * Alternative to [graphql.schema.idl.TypeDefinitionRegistry] but is more generic
  * and tailored to Nadel specific operations to build the overall schema.
  */
-class NadelDefinitionRegistry {
+class NadelTypeDefinitionRegistry {
     private val _definitions: MutableList<AnySDLDefinition> = ArrayList()
     private val definitionsByClass = LinkedHashMap<Class<out AnySDLDefinition>, MutableList<AnySDLDefinition>>()
     private val definitionsByName = LinkedHashMap<String, MutableList<AnySDLDefinition>>()
@@ -101,8 +101,8 @@ class NadelDefinitionRegistry {
 
     companion object {
         @JvmStatic
-        fun from(definitions: List<AnySDLDefinition>): NadelDefinitionRegistry {
-            val registry = NadelDefinitionRegistry()
+        fun from(definitions: List<AnySDLDefinition>): NadelTypeDefinitionRegistry {
+            val registry = NadelTypeDefinitionRegistry()
             definitions.forEach(registry::add)
             return registry
         }

@@ -1,6 +1,7 @@
 package graphql.nadel.definition.hydration
 
 import graphql.language.DirectiveDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition.Keyword
 import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLAppliedDirective
@@ -11,14 +12,14 @@ fun GraphQLNamedType.hasDefaultHydration(): Boolean {
     return (this as? GraphQLDirectiveContainer)?.hasAppliedDirective(Keyword.defaultHydration) == true
 }
 
-fun GraphQLNamedType.getDefaultHydrationOrNull(): NadelDefaultHydrationDefinition? {
+fun GraphQLNamedType.parseDefaultHydrationOrNull(): NadelDefaultHydrationDefinition? {
     return (this as? GraphQLDirectiveContainer)?.getAppliedDirective(Keyword.defaultHydration)
         ?.let(::NadelDefaultHydrationDefinition)
 }
 
 class NadelDefaultHydrationDefinition(
     private val appliedDirective: GraphQLAppliedDirective,
-) {
+) : NadelInstructionDefinition {
     companion object {
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL

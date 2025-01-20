@@ -1,8 +1,9 @@
 package graphql.nadel.validation
 
-import graphql.nadel.definition.NadelDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.NadelSchemaMemberCoordinates
 import graphql.nadel.definition.coordinates
+import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseHydrationDefinitions
 import graphql.nadel.definition.partition.parsePartitionOrNull
 import graphql.nadel.definition.renamed.parseRenamedOrNull
@@ -13,14 +14,14 @@ import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
 import graphql.nadel.engine.blueprint.NadelSchemaTraverserVisitor
 import graphql.schema.GraphQLSchema
 
-internal class NadelDefinitionParser(
+internal class NadelInstructionDefinitionParser(
     private val hook: NadelSchemaValidationHook,
     private val idHydrationDefinitionParser: NadelIdHydrationDefinitionParser,
 ) {
     fun parse(
         engineSchema: GraphQLSchema,
-    ): NadelValidationInterimResult<Map<NadelSchemaMemberCoordinates, List<NadelDefinition>>> {
-        val definitions = mutableMapOf<NadelSchemaMemberCoordinates, MutableList<NadelDefinition>>()
+    ): NadelValidationInterimResult<NadelInstructionDefinitionRegistry> {
+        val definitionMap = mutableMapOf<NadelSchemaMemberCoordinates, MutableList<NadelInstructionDefinition>>()
         val errors = mutableListOf<NadelSchemaValidationResult>()
 
         NadelSchemaTraverser()
@@ -77,8 +78,8 @@ internal class NadelDefinitionParser(
                             parent.coordinates().field(node.name)
                         }
 
-                        fun addAll(defs: List<NadelDefinition>) {
-                            definitions.computeIfAbsent(coords) { mutableListOf() }.addAll(defs)
+                        fun addAll(defs: List<NadelInstructionDefinition>) {
+                            definitionMap.computeIfAbsent(coords) { mutableListOf() }.addAll(defs)
                         }
 
                         // todo: I think we can clean this up if we make all these extend from a new super NadelFieldDefinitionParser
@@ -162,30 +163,26 @@ internal class NadelDefinitionParser(
                     }
 
                     private fun visitType(element: NadelSchemaTraverserElement.Type) {
-                        val coordinates = when (element) {
-                            is NadelSchemaTraverserElement.EnumType -> element.node.coordinates()
-                            is NadelSchemaTraverserElement.InputObjectType -> element.node.coordinates()
-                            is NadelSchemaTraverserElement.ScalarType -> element.node.coordinates()
-                            is NadelSchemaTraverserElement.InterfaceType -> element.node.coordinates()
-                            is NadelSchemaTraverserElement.ObjectType -> element.node.coordinates()
-                            is NadelSchemaTraverserElement.UnionType -> element.node.coordinates()
-                        }
-
+                        val coordinates = element.coordinates()
                         val type = element.node
 
-                        type.parseRenamedOrNull()?.also { renamed ->
-                            definitions.computeIfAbsent(coordinates) { mutableListOf() }.add(renamed)
+                        val definitions by lazy {
+                            definitionMap.computeIfAbsent(coordinates) {
+                                mutableListOf()
+                            }
                         }
+
+                        type.parseRenamedOrNull()?.also(definitions::add)
+                        type.parseDefaultHydrationOrNull()?.also(definitions::add)
                         if (type.hasVirtualTypeDefinition()) {
-                            definitions.computeIfAbsent(coordinates) { mutableListOf() }
-                                .add(NadelVirtualTypeDefinition())
+                            definitions.add(NadelVirtualTypeDefinition())
                         }
                     }
                 }
             )
 
         return if (errors.isEmpty()) {
-            NadelValidationInterimResult.Success.of(definitions)
+            NadelValidationInterimResult.Success.of(NadelInstructionDefinitionRegistry(definitionMap))
         } else {
             NadelValidationInterimResult.Error.of(NadelSchemaValidationResults(errors))
         }

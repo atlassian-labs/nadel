@@ -25,10 +25,10 @@ internal class NadelPartitionValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        val partition = getPartitionedOrNull(parent, overallField)
+        val partition = instructionDefinitions.getPartitionedOrNull(parent, overallField)
             ?: return ok()
 
-        if (isHydrated(parent, overallField)) {
+        if (instructionDefinitions.isHydrated(parent, overallField)) {
             return CannotPartitionHydratedField(parent, overallField)
         }
 

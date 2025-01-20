@@ -6,7 +6,6 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.NadelValidationInterimResult
 import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.asInterimSuccess
-import graphql.nadel.validation.isHydrated
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
 import graphql.schema.GraphQLFieldDefinition
@@ -98,7 +97,7 @@ internal class NadelHydrationVirtualTypeValidation {
         if (virtualObjectType is GraphQLFieldsContainer && backingObjectType is GraphQLFieldsContainer) {
             return virtualObjectType.fields
                 .flatMap { virtualField ->
-                    if (isHydrated(virtualObjectType, virtualField)) {
+                    if (instructionDefinitions.isHydrated(virtualObjectType, virtualField)) {
                         emptyMapping
                     } else {
                         val backingField = backingObjectType.getField(virtualField.name)

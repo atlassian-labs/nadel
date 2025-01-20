@@ -586,6 +586,48 @@ data class NadelMissingDefaultHydrationError(
     override val subject = virtualField
 }
 
+data class NadelDefaultHydrationFieldNotFoundError(
+    val type: NadelServiceSchemaElement.Type,
+    val defaultHydration: NadelDefaultHydrationDefinition,
+) : NadelSchemaValidationError {
+    override val message = run {
+        val typeName = type.overall.name
+        val field = defaultHydration.backingField.joinToString(".")
+        "Type $typeName declares @defaultHydration which references field $field that does not exist"
+    }
+
+    override val subject = type.overall
+}
+
+data class NadelDefaultHydrationIncompatibleBackingFieldTypeError(
+    val type: NadelServiceSchemaElement.Type,
+    val defaultHydration: NadelDefaultHydrationDefinition,
+    val backingField: GraphQLFieldDefinition,
+) : NadelSchemaValidationError {
+    override val message = run {
+        val typeName = type.overall.name
+        val field = defaultHydration.backingField.joinToString(".")
+        "Type $typeName declares @defaultHydration backed by $field but that field does not return $typeName"
+    }
+
+    override val subject = type.overall
+}
+
+data class NadelDefaultHydrationIdArgumentNotFoundError(
+    val type: NadelServiceSchemaElement.Type,
+    val defaultHydration: NadelDefaultHydrationDefinition,
+    val backingField: GraphQLFieldDefinition,
+) : NadelSchemaValidationError {
+    override val message = run {
+        val typeName = type.overall.name
+        val field = defaultHydration.backingField.joinToString(".")
+        val idArgument = defaultHydration.idArgument
+        "Type $typeName declares @defaultHydration backed by field $field but it is missing specified $idArgument argument"
+    }
+
+    override val subject = type.overall
+}
+
 data class NadelPolymorphicHydrationIncompatibleSourceFieldsError(
     val parentType: NadelServiceSchemaElement,
     val virtualField: GraphQLFieldDefinition,
