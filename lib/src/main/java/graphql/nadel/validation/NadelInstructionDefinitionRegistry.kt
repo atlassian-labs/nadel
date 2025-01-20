@@ -3,9 +3,11 @@ package graphql.nadel.validation
 import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.NadelSchemaMemberCoordinates
 import graphql.nadel.definition.coordinates
+import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.engine.util.emptyOrSingle
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
@@ -24,24 +26,24 @@ data class NadelInstructionDefinitionRegistry(
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
     ): Boolean {
-        return getHydrationDefinitions(coords(container, field)).any()
+        return getHydrationDefinitionSequence(coords(container, field)).any()
     }
 
     fun getHydrationDefinitions(
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
     ): Sequence<NadelHydrationDefinition> {
-        return getHydrationDefinitions(coords(container, field))
+        return getHydrationDefinitionSequence(coords(container, field))
     }
 
     fun getHydrationDefinitions(
         container: GraphQLFieldsContainer,
         field: GraphQLFieldDefinition,
     ): Sequence<NadelHydrationDefinition> {
-        return getHydrationDefinitions(container.coordinates().field(field.name))
+        return getHydrationDefinitionSequence(container.coordinates().field(field.name))
     }
 
-    fun getHydrationDefinitions(
+    fun getHydrationDefinitionSequence(
         coords: NadelSchemaMemberCoordinates.Field,
     ): Sequence<NadelHydrationDefinition> {
         val definitions = definitions[coords]
@@ -152,6 +154,29 @@ data class NadelInstructionDefinitionRegistry(
         return definitions.asSequence()
             .filterIsInstance<NadelPartitionDefinition>()
             .firstOrNull()
+    }
+
+    fun hasDefaultHydration(
+        type: NadelServiceSchemaElement.Type,
+    ): Boolean {
+        return getDefaultHydrationSequence(type.overall.coordinates()).any()
+    }
+
+    fun getDefaultHydrationOrNull(
+        type: NadelServiceSchemaElement.Type,
+    ): NadelDefaultHydrationDefinition? {
+        return getDefaultHydrationSequence(type.overall.coordinates()).emptyOrSingle()
+    }
+
+    private fun getDefaultHydrationSequence(
+        coords: NadelSchemaMemberCoordinates.Type,
+    ): Sequence<NadelDefaultHydrationDefinition> {
+        val definitions = definitions[coords]
+            ?: return emptySequence()
+
+        return definitions
+            .asSequence()
+            .filterIsInstance<NadelDefaultHydrationDefinition>()
     }
 
     private fun coords(

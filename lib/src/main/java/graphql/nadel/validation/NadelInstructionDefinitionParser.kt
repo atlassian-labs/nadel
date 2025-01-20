@@ -3,6 +3,7 @@ package graphql.nadel.validation
 import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.NadelSchemaMemberCoordinates
 import graphql.nadel.definition.coordinates
+import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseHydrationDefinitions
 import graphql.nadel.definition.partition.parsePartitionOrNull
 import graphql.nadel.definition.renamed.parseRenamedOrNull
@@ -165,12 +166,16 @@ internal class NadelInstructionDefinitionParser(
                         val coordinates = element.coordinates()
                         val type = element.node
 
-                        type.parseRenamedOrNull()?.also { renamed ->
-                            definitionMap.computeIfAbsent(coordinates) { mutableListOf() }.add(renamed)
+                        val definitions by lazy {
+                            definitionMap.computeIfAbsent(coordinates) {
+                                mutableListOf()
+                            }
                         }
+
+                        type.parseRenamedOrNull()?.also(definitions::add)
+                        type.parseDefaultHydrationOrNull()?.also(definitions::add)
                         if (type.hasVirtualTypeDefinition()) {
-                            definitionMap.computeIfAbsent(coordinates) { mutableListOf() }
-                                .add(NadelVirtualTypeDefinition())
+                            definitions.add(NadelVirtualTypeDefinition())
                         }
                     }
                 }
