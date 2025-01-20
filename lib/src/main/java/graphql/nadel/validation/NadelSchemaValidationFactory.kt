@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.validation.hydration.NadelDefaultHydrationDefinitionValidation
 import graphql.nadel.validation.hydration.NadelHydrationArgumentTypeValidation
 import graphql.nadel.validation.hydration.NadelHydrationArgumentValidation
 import graphql.nadel.validation.hydration.NadelHydrationConditionValidation
@@ -15,13 +16,16 @@ abstract class NadelSchemaValidationFactory {
         )
 
         return NadelSchemaValidation(
-            fieldValidation = fieldValidation,
-            inputValidation = inputObjectValidation,
-            unionValidation = unionValidation,
-            enumValidation = enumValidation,
-            interfaceValidation = interfaceValidation,
-            namespaceValidation = namespaceValidation,
-            virtualTypeValidation = virtualTypeValidation,
+            typeValidation = NadelTypeValidation(
+                fieldValidation = fieldValidation,
+                inputObjectValidation = inputObjectValidation,
+                unionValidation = unionValidation,
+                enumValidation = enumValidation,
+                interfaceValidation = interfaceValidation,
+                namespaceValidation = namespaceValidation,
+                virtualTypeValidation = virtualTypeValidation,
+                defaultHydrationDefinitionValidation = defaultHydrationDefinitionValidation,
+            ),
             instructionDefinitionParser = definitionParser,
             hook = hook,
         )
@@ -42,6 +46,8 @@ abstract class NadelSchemaValidationFactory {
     private val hydrationConditionValidation = NadelHydrationConditionValidation()
     private val hydrationSourceFieldValidation = NadelHydrationSourceFieldValidation()
     private val hydrationVirtualTypeValidation = NadelHydrationVirtualTypeValidation()
+
+    private val defaultHydrationDefinitionValidation = NadelDefaultHydrationDefinitionValidation()
 
     private val hydrationValidation = NadelHydrationValidation(
         argumentValidation = hydrationArgumentValidation,
