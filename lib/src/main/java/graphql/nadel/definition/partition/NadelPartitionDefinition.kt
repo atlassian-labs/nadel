@@ -2,7 +2,7 @@ package graphql.nadel.definition.partition
 
 import graphql.language.DirectiveDefinition
 import graphql.language.FieldDefinition
-import graphql.nadel.definition.NadelDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition.Keyword
 import graphql.nadel.engine.util.parseDefinition
 import graphql.schema.GraphQLAppliedDirective
@@ -10,7 +10,7 @@ import graphql.schema.GraphQLFieldDefinition
 
 class NadelPartitionDefinition(
     private val appliedDirective: GraphQLAppliedDirective,
-) : NadelDefinition {
+) : NadelInstructionDefinition {
     companion object {
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL

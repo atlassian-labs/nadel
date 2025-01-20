@@ -2,7 +2,7 @@ package graphql.nadel.definition.renamed
 
 import graphql.language.DirectiveDefinition
 import graphql.language.DirectivesContainer
-import graphql.nadel.definition.NadelDefinition
+import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition.Keyword
 import graphql.nadel.engine.util.parseDefinition
 import graphql.nadel.validation.NadelValidationContext
@@ -11,7 +11,7 @@ import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
 
-sealed class NadelRenamedDefinition : NadelDefinition {
+sealed class NadelRenamedDefinition : NadelInstructionDefinition {
     companion object {
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL

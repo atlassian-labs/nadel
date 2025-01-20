@@ -13,7 +13,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertTrue
 
-val NadelDefinitionRegistry.typeNames: Set<String>
+val NadelTypeDefinitionRegistry.typeNames: Set<String>
     get() = definitions
         .asSequence()
         .filterIsInstance<NamedNode<*>>()
