@@ -22,13 +22,7 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLUnionType
 
 class NadelSchemaValidation internal constructor(
-    private val fieldValidation: NadelFieldValidation,
-    private val inputValidation: NadelInputObjectValidation,
-    private val unionValidation: NadelUnionValidation,
-    private val enumValidation: NadelEnumValidation,
-    private val interfaceValidation: NadelInterfaceValidation,
-    private val namespaceValidation: NadelNamespaceValidation,
-    private val virtualTypeValidation: NadelVirtualTypeValidation,
+    private val typeValidation: NadelTypeValidation,
     private val instructionDefinitionParser: NadelInstructionDefinitionParser,
     private val hook: NadelSchemaValidationHook,
 ) {
@@ -65,16 +59,6 @@ class NadelSchemaValidation internal constructor(
             hiddenTypeNames = hiddenTypeNames,
             instructionDefinitions = instructionDefinitions,
             hook = hook,
-        )
-
-        val typeValidation = NadelTypeValidation(
-            fieldValidation = fieldValidation,
-            inputValidation = inputValidation,
-            unionValidation = unionValidation,
-            enumValidation = enumValidation,
-            interfaceValidation = interfaceValidation,
-            namespaceValidation = namespaceValidation,
-            virtualTypeValidation = virtualTypeValidation,
         )
 
         return with(context) {

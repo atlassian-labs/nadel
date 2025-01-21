@@ -9,6 +9,7 @@ import graphql.nadel.engine.util.operationTypes
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
+import graphql.nadel.validation.hydration.NadelDefaultHydrationDefinitionValidation
 import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
 import graphql.nadel.validation.util.NadelReferencedType
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
@@ -20,12 +21,13 @@ import graphql.schema.GraphQLUnionType
 
 internal class NadelTypeValidation(
     private val fieldValidation: NadelFieldValidation,
-    private val inputValidation: NadelInputObjectValidation,
+    private val inputObjectValidation: NadelInputObjectValidation,
     private val unionValidation: NadelUnionValidation,
     private val enumValidation: NadelEnumValidation,
     private val interfaceValidation: NadelInterfaceValidation,
     private val namespaceValidation: NadelNamespaceValidation,
     private val virtualTypeValidation: NadelVirtualTypeValidation,
+    private val defaultHydrationDefinitionValidation: NadelDefaultHydrationDefinitionValidation,
 ) {
     context(NadelValidationContext)
     fun validate(
@@ -93,6 +95,12 @@ internal class NadelTypeValidation(
             ok()
         }
 
+        val defaultHydrationResult = if (schemaElement is NadelServiceSchemaElement.Type) {
+            defaultHydrationDefinitionValidation.validate(schemaElement)
+        } else {
+            ok()
+        }
+
         val typeSpecificResult = when (schemaElement) {
             is NadelServiceSchemaElement.Enum -> {
                 enumValidation.validate(schemaElement)
@@ -104,7 +112,7 @@ internal class NadelTypeValidation(
                 ok()
             }
             is NadelServiceSchemaElement.InputObject -> {
-                inputValidation.validate(schemaElement)
+                inputObjectValidation.validate(schemaElement)
             }
             is NadelServiceSchemaElement.Scalar -> {
                 ok()
@@ -123,6 +131,7 @@ internal class NadelTypeValidation(
         return results(
             fieldsContainerResult,
             renameResult,
+            defaultHydrationResult,
             typeSpecificResult,
         )
     }
