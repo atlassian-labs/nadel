@@ -586,6 +586,22 @@ data class NadelMissingDefaultHydrationError(
     override val subject = virtualField
 }
 
+data class NadelAmbiguousUnionDefaultHydrationError(
+    val parentType: GraphQLFieldsContainer,
+    val virtualField: GraphQLFieldDefinition,
+    val backingField: List<String>,
+) : NadelSchemaValidationError {
+    override val message = run {
+        val backingType = virtualField.type.unwrapAll().name
+        val virtualField = makeFieldCoordinates(parentType.name, virtualField.name)
+        val defaultHydration = NadelDefaultHydrationDefinition.directiveDefinition.name
+        val idHydrated = NadelIdHydrationDefinition.directiveDefinition.name
+        "Field $virtualField tried to use @$idHydrated but its output union $backingType contains multiple types backed by $backingField with different @$defaultHydration configurations"
+    }
+
+    override val subject = virtualField
+}
+
 data class NadelDefaultHydrationFieldNotFoundError(
     val type: NadelServiceSchemaElement.Type,
     val defaultHydration: NadelDefaultHydrationDefinition,

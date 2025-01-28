@@ -44,6 +44,24 @@ class NadelIdHydrationDefinition(
     val identifiedBy: String?
         get() = appliedDirective.getArgument(Keyword.identifiedBy).getValue()
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NadelIdHydrationDefinition
+
+        if (idField != other.idField) return false
+        if (identifiedBy != other.identifiedBy) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = idField.hashCode()
+        result = 31 * result + (identifiedBy?.hashCode() ?: 0)
+        return result
+    }
+
     internal object Keyword {
         const val idHydrated = "idHydrated"
         const val idField = "idField"
