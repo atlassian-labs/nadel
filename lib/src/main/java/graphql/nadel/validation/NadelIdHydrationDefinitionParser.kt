@@ -9,6 +9,7 @@ import graphql.nadel.definition.hydration.NadelIdHydrationDefinition
 import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseIdHydrationOrNull
 import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asInterimError
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
@@ -58,21 +59,30 @@ internal class NadelIdHydrationDefinitionParser {
         virtualField: GraphQLFieldDefinition,
         idHydration: NadelIdHydrationDefinition,
     ): NadelValidationInterimResult<List<NadelHydrationDefinition>> {
-        return NadelValidationInterimResult.Success.of(
-            virtualFieldType.types
-                .mapNotNull { unionMemberType ->
-                    if ((unionMemberType as? GraphQLNamedType)?.parseDefaultHydrationOrNull() == null) {
-                        null
-                    } else {
-                        getHydrationDefinitionForType(
-                            parent,
-                            virtualField,
-                            idHydration,
-                            unionMemberType as GraphQLObjectType,
-                        ).onErrorCast { return it }
-                    }
-                },
-        )
+        val hydrations = virtualFieldType.types
+            .mapNotNull { unionMemberType ->
+                if ((unionMemberType as? GraphQLNamedType)?.parseDefaultHydrationOrNull() == null) {
+                    null
+                } else {
+                    getHydrationDefinitionForType(
+                        parent,
+                        virtualField,
+                        idHydration,
+                        unionMemberType as GraphQLObjectType,
+                    ).onErrorCast { return it }
+                }
+            }
+
+        val uniqueHydrations = hydrations
+            .groupBy { it.backingField }
+            .map { (backingField, hydrations) ->
+                hydrations.toSet().singleOrNull()
+                    ?: return NadelValidationInterimResult.Error.of(
+                        NadelAmbiguousUnionDefaultHydrationError(parent, virtualField, backingField),
+                    )
+            }
+
+        return NadelValidationInterimResult.Success.of(uniqueHydrations)
     }
 
     private fun getHydrationDefinitionForType(
@@ -124,4 +134,22 @@ internal class NadelIdHydratedHydrationDefinition(
 
     override val inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>?
         get() = null
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NadelIdHydratedHydrationDefinition
+
+        if (idHydration != other.idHydration) return false
+        if (defaultHydration != other.defaultHydration) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = idHydration.hashCode()
+        result = 31 * result + defaultHydration.hashCode()
+        return result
+    }
 }

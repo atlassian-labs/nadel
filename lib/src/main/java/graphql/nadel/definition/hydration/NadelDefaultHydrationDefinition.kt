@@ -56,6 +56,30 @@ class NadelDefaultHydrationDefinition(
     val timeout: Int
         get() = appliedDirective.getArgument(Keyword.timeout).getValue()
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NadelDefaultHydrationDefinition
+
+        if (backingField != other.backingField) return false
+        if (identifiedBy != other.identifiedBy) return false
+        if (idArgument != other.idArgument) return false
+        if (batchSize != other.batchSize) return false
+        if (timeout != other.timeout) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = backingField.hashCode()
+        result = 31 * result + (identifiedBy?.hashCode() ?: 0)
+        result = 31 * result + idArgument.hashCode()
+        result = 31 * result + batchSize
+        result = 31 * result + timeout
+        return result
+    }
+
     internal object Keyword {
         const val defaultHydration = "defaultHydration"
         const val field = "field"

@@ -1,5 +1,6 @@
 package graphql.nadel.validation.hydration
 
+import graphql.nadel.validation.NadelAmbiguousUnionDefaultHydrationError
 import graphql.nadel.validation.NadelDefaultHydrationIdArgumentNotFoundError
 import graphql.nadel.validation.NadelDefaultHydrationIncompatibleBackingFieldTypeError
 import graphql.nadel.validation.NadelValidationTestFixture
@@ -171,6 +172,7 @@ class NadelDefaultHydrationDefinitionValidationTest {
         // Then
         assertTrue(errors.map { it.message }.isEmpty())
     }
+
     /**
      * This is a weird one. Technically it's a valid hydration. We allow it.
      *
@@ -216,5 +218,73 @@ class NadelDefaultHydrationDefinitionValidationTest {
 
         // Then
         assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `fails if multiple types are backed by same field and their configs are different`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                        users(ids: [ID!]!): [User]
+                    }
+                    type Comment {
+                        id: ID!
+                        commenterId: ID @hidden
+                        commenter: Commenter @idHydrated(idField: "commenterId")
+                    }
+                    union Commenter = AtlassianAccountUser | CustomerUser | AppUser
+                    interface User {
+                        id: ID!
+                    }
+                    type AtlassianAccountUser implements User @defaultHydration(field: "users", idArgument: "ids") {
+                        id: ID!
+                    }
+                    type CustomerUser implements User @defaultHydration(field: "users", idArgument: "ids", batchSize: 10) {
+                        id: ID!
+                    }
+                    type AppUser implements User @defaultHydration(field: "users", idArgument: "ids") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "issues" to /* language=GraphQL*/ """
+                    type Query {
+                        comments(ids: [ID!]!): [Comment]
+                        users(ids: [ID!]!): [User]
+                    }
+                    type Comment {
+                        id: ID!
+                        commenterId: ID
+                    }
+                    union Commenter = AtlassianAccountUser | CustomerUser | AppUser
+                    interface User {
+                        id: ID!
+                    }
+                    type AtlassianAccountUser implements User {
+                        id: ID!
+                    }
+                    type CustomerUser implements User {
+                        id: ID!
+                    }
+                    type AppUser implements User {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelAmbiguousUnionDefaultHydrationError>()
+        assertTrue(error.parentType.name == "Comment")
+        assertTrue(error.virtualField.name == "commenter")
+        assertTrue(error.backingField == listOf("users"))
     }
 }
