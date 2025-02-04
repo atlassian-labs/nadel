@@ -34,7 +34,7 @@ jobs:
 
       - name: build test and publish
         run: ./gradlew assemble && ./gradlew check --info && ./gradlew artifactoryPublish -x check --info
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: my-artifact
           path: lib/build
