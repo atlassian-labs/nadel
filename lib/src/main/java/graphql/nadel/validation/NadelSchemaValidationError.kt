@@ -197,13 +197,11 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         val service: Service get() = parentType.service
 
         override val message = run {
-            val s = service.name
-            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val ofa = makeFieldCoordinates(parentType.overall.name, overallInputArg.name)
-            val ufa = makeFieldCoordinates(parentType.underlying.name, underlyingInputArg.name)
-            val ot = GraphQLTypeUtil.simplePrint(overallInputArg.type)
-            val ut = GraphQLTypeUtil.simplePrint(underlyingInputArg.type)
-            "Overall field $of has argument $ofa has input type $ot but underlying field argument $ufa in service $s has input type $ut"
+            val field = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val argName = overallInputArg.name
+            val overallArgType = GraphQLTypeUtil.simplePrint(overallInputArg.type)
+            val underlyingArgType = GraphQLTypeUtil.simplePrint(underlyingInputArg.type)
+            "Argument $argName in $field has type $overallArgType that is incompatible with underlying argument type $underlyingArgType"
         }
 
         override val subject = overallInputArg
