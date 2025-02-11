@@ -1,7 +1,6 @@
 package graphql.nadel.tests.next.fixtures.hydration.statics
 
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
@@ -207,12 +206,6 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
         ),
     ),
 ) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
-            .shortCircuitEmptyQuery { true }
-    }
-
     override fun makeNadel(): Nadel.Builder {
         return super.makeNadel()
             .transforms(

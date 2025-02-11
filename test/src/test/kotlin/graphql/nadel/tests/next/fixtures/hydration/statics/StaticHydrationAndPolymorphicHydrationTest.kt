@@ -260,12 +260,6 @@ class StaticHydrationAndPolymorphicHydrationTest : NadelIntegrationTest(
         ),
     ),
 ) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
-            .shortCircuitEmptyQuery { true }
-    }
-
     override fun makeNadel(): Nadel.Builder {
         return super.makeNadel()
             .executionHooks(

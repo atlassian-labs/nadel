@@ -46,11 +46,9 @@ internal object NadelHydrationFieldsBuilder {
             }
             // Fix types for virtual fields
             .onEach { field ->
-                if (executionContext.hints.virtualTypeSupport(service)) {
-                    setBackingObjectTypeNames(instruction, field)
-                    field.traverseSubTree { child ->
-                        setBackingObjectTypeNames(instruction, child)
-                    }
+                setBackingObjectTypeNames(instruction, field)
+                field.traverseSubTree { child ->
+                    setBackingObjectTypeNames(instruction, child)
                 }
             }
     }

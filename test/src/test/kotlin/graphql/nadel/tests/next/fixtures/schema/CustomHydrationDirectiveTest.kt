@@ -368,9 +368,4 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
             }
         }.create()
     }
-
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
-    }
 }

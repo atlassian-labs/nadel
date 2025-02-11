@@ -466,11 +466,11 @@ internal class NextgenEngine(
         topLevelFields: List<ExecutableNormalizedField>,
         hints: NadelExecutionHints,
     ): ServiceExecution {
-        if (hints.shortCircuitEmptyQuery(service) && isOnlyTopLevelFieldTypename(topLevelFields, service)) {
-            return engineSchemaIntrospectionService.serviceExecution
+        return if (isOnlyTopLevelFieldTypename(topLevelFields, service)) {
+            engineSchemaIntrospectionService.serviceExecution
+        } else {
+            service.serviceExecution
         }
-
-        return service.serviceExecution
     }
 
     private fun isOnlyTopLevelFieldTypename(
