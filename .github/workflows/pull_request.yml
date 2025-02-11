@@ -25,7 +25,7 @@ jobs:
 
       - name: build and test
         run: ./gradlew assemble --info && ./gradlew check --info
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test-results
