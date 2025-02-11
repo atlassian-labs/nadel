@@ -77,14 +77,10 @@ internal class NadelHydrationTransform(
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         val instructionsByObjectTypeName = executionBlueprint
-            .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)
+            .getInstructionInsideVirtualType<NadelHydrationFieldInstruction>(hydrationDetails, overallField)
             .ifEmpty {
-                if (executionContext.hints.virtualTypeSupport(service)) {
-                    executionBlueprint
-                        .getInstructionInsideVirtualType(hydrationDetails, overallField)
-                } else {
-                    emptyMap()
-                }
+                executionBlueprint
+                    .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)
             }
 
         return if (instructionsByObjectTypeName.isEmpty()) {
