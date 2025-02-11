@@ -12,7 +12,11 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.normalized.ExecutableNormalizedField
 
 /**
- * Tests a case where
+ * Tests when the backing type itself declares a hydration.
+ * Then the virtual type redefines that hydration.
+ *
+ * i.e. `GraphStoreQueryEdge.node` defines a hydration and `WorkEdge.node` defines
+ * a hydration over it.
  */
 class StaticHydrationOverlappingHydrationTest : NadelIntegrationTest(
     query = """
