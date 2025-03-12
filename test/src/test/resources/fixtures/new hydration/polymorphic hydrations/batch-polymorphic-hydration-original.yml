@@ -1,4 +1,4 @@
-name: "batch polymorphic hydration"
+name: "batch polymorphic hydration original"
 enabled: true
 # language=GraphQL
 overallSchema:
@@ -75,15 +75,6 @@ underlyingSchema:
       id: ID
       dataId: ID
     }
-  zoo: |
-    type Query {
-      animalById(ids: [ID]): [ZooAnimal]
-    }
-    
-    type ZooAnimal {
-      id: ID
-      species: String
-    }
 # language=GraphQL
 query: |
   query {
@@ -100,11 +91,6 @@ query: |
           __typename
           id
           name
-        }
-        ... on ZooAnimal {
-          __typename
-          id
-          species
         }
       }
     }

@@ -122,7 +122,10 @@ internal class NextgenEngine(
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
         nadelExecutionParams: NadelExecutionParams,
+        additions: List<GraphQLObjectType>,
     ): CompletableFuture<ExecutionResult> {
+        println(additions)
+        println("additions yall")
         return coroutineScope.async {
             executeCoroutine(
                 executionInput,
@@ -130,6 +133,7 @@ internal class NextgenEngine(
                 instrumentationState,
                 nadelExecutionParams.executionHints,
                 nadelExecutionParams.latencyTracker,
+                additions
             )
         }.asCompletableFuture()
     }
@@ -148,8 +152,10 @@ internal class NextgenEngine(
         instrumentationState: InstrumentationState?,
         executionHints: NadelExecutionHints,
         latencyTracker: NadelInternalLatencyTracker,
+        additions: List<GraphQLObjectType>,
     ): ExecutionResult = supervisorScope {
         try {
+            println(additions)
             val operationDefinition = queryDocument.getOperationDefinitionOrNull(executionInput.operationName)
                 ?: throw UnknownOperationException("Must provide operation name if query contains multiple operations")
 

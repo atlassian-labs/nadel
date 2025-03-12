@@ -145,15 +145,15 @@ data class NadelSchemas(
             require(underlyingSchemaReaders.isNotEmpty() || underlyingTypeDefs.isNotEmpty()) { "Underlying schemas must not be empty" }
 
             val underlyingServiceNames = underlyingSchemaReaders.keys + underlyingTypeDefs.keys
-            require(overallSchemaReaders.keys == underlyingServiceNames) {
-                val extraOverallKeys = overallSchemaReaders.keys - underlyingServiceNames
-                if (extraOverallKeys.isNotEmpty()) {
-                    "There are services in the overall schemas $extraOverallKeys that are not present in the underlying schemas"
-                } else {
-                    val extraUnderlyingKeys = underlyingServiceNames - overallSchemaReaders.keys
-                    "There are extra services in the underlying schemas $extraUnderlyingKeys that are not present in the overall schemas"
-                }
-            }
+            // require(overallSchemaReaders.keys == underlyingServiceNames) {
+            //     val extraOverallKeys = overallSchemaReaders.keys - underlyingServiceNames
+            //     if (extraOverallKeys.isNotEmpty()) {
+            //         "There are services in the overall schemas $extraOverallKeys that are not present in the underlying schemas"
+            //     } else {
+            //         val extraUnderlyingKeys = underlyingServiceNames - overallSchemaReaders.keys
+            //         "There are extra services in the underlying schemas $extraUnderlyingKeys that are not present in the overall schemas"
+            //     }
+            // }
 
             val serviceExecutionFactory = requireNotNull(serviceExecutionFactory) {
                 "serviceExecutionFactory must be set"

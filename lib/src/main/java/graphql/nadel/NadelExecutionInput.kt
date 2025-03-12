@@ -5,6 +5,7 @@ import graphql.execution.ExecutionId
 import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.time.NadelInternalLatencyTrackerImpl
 import graphql.nadel.time.NadelStopwatch
+import graphql.schema.GraphQLObjectType
 import java.util.function.Consumer
 
 data class NadelExecutionInput private constructor(
@@ -17,6 +18,7 @@ data class NadelExecutionInput private constructor(
     val executionId: ExecutionId?,
     val executionHints: NadelExecutionHints,
     val latencyTracker: NadelInternalLatencyTracker,
+    val additions: List<GraphQLObjectType>,
 ) {
     class Builder {
         private var query: String? = null
@@ -28,9 +30,15 @@ data class NadelExecutionInput private constructor(
         private var executionId: ExecutionId? = null
         private var executionHints = NadelExecutionHints.newHints().build()
         private var latencyTracker: NadelInternalLatencyTracker? = null
+        private var additions: List<GraphQLObjectType> = listOf()
 
         fun query(query: String): Builder {
             this.query = query
+            return this
+        }
+
+        fun additions(additions: List<GraphQLObjectType>): Builder {
+            this.additions = additions
             return this
         }
 
@@ -97,6 +105,7 @@ data class NadelExecutionInput private constructor(
                 executionId = executionId,
                 executionHints = executionHints,
                 latencyTracker = latencyTracker ?: NadelInternalLatencyTrackerImpl(NadelStopwatch()),
+                additions = additions,
             )
         }
     }

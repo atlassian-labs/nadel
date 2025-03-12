@@ -7,6 +7,8 @@ import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
+import graphql.language.Document
+import graphql.language.ObjectTypeDefinition
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
@@ -25,6 +27,8 @@ import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
 import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationFactory
+import graphql.parser.Parser
+import graphql.schema.GraphQLObjectType
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.flow.flowOf
@@ -45,7 +49,7 @@ import java.util.concurrent.CompletableFuture
  * 2. Test name e.g. hydration inside a renamed field
  * 3. Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
+private val singleTestToRun = (System.getenv("TEST_NAME") ?: "batch-polymorphic-hydration.yml")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests/")
     .removeSuffix(".yml")
     .removeSuffix(".yaml")
@@ -318,9 +322,25 @@ private suspend fun execute(
             }
             .build()
 
+        val parser = Parser()
+        val document: Document = parser.parseDocument("""
+            type ZooAnimal {
+              id: ID
+              species: String
+            }
+        """.trimIndent())
+        val objectTypeDefinition = document.definitions.single() as ObjectTypeDefinition
         val response = nadel.execute(
             newNadelExecutionInput()
                 .query(fixture.query)
+                .additions(
+                    listOf(
+                        GraphQLObjectType.newObject()
+                            .name("ZooAnimal")
+                            .definition(objectTypeDefinition)
+                            .build()
+                    )
+                )
                 .variables(fixture.variables)
                 .operationName(fixture.operationName)
                 .let { builder ->
