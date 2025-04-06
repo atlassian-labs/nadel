@@ -1,5 +1,7 @@
 # Nadel: A distributed GraphQL engine
 
+<img src="assets/nadel-logo.svg" alt="Nadel Logo" width="240"/>
+
 Nadel is a Kotlin library to combine several GraphQL services together. This is achieved by combining several underlying
 GraphQL services (schemas) into one schema (overall schema).
 
@@ -105,3 +107,17 @@ many more examples.
 In order to run the tests from `EngineTests` in IntelliJ you need to have the KoTest plugin installed.
 
 [Understanding Nadel](./docs/Primer.MD).
+
+# Branding Assets
+
+The following logo variations are available in the `assets` directory:
+
+1. **Full Logo** (`nadel-logo.svg`) - Default logo with text and tagline
+2. **Icon Only** (`nadel-icon.svg`) - Standalone icon for favicon and small displays
+3. **Monochrome** (`nadel-monochrome.svg`) - Single color version for dark backgrounds and special use cases
+
+The logos use Atlassian's color palette:
+- Primary Blue: #0052CC
+- Secondary Blue: #0065FF
+- Text Color: #172B4D
+- Secondary Text: #5E6C84

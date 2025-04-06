@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="80" height="80" fill="none"/>
+  
+  <!-- Needle icon (centered and larger) -->
+  <g transform="translate(15,15) scale(1.5)">
+    <path d="M25,0 L35,10 L10,35 L0,25 Z" fill="#0052CC"/>
+    <path d="M40,15 L30,25 L35,30 L45,20 Z" fill="#0065FF"/>
+    <circle cx="7" cy="28" r="3" fill="#344563"/>
+  </g>
+</svg>
