@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark theme logo - white elements -->
+  <defs>
+    <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#FFFFFF"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- GraphQL inspired hexagon -->
+  <path d="M200 40 L340 130 L340 270 L200 360 L60 270 L60 130 Z" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="8"/>
+  
+  <!-- Needle and thread design -->
+  <path d="M160 120 C180 140, 220 160, 240 200 S280 260, 260 280" 
+        fill="none" 
+        stroke="url(#thread)" 
+        stroke-width="6"
+        stroke-linecap="round"/>
+  
+  <!-- Needle -->
+  <path d="M140 100 L180 140" 
+        stroke="#FFFFFF" 
+        stroke-width="12" 
+        stroke-linecap="round"/>
+  <circle cx="130" cy="90" r="8" fill="#FFFFFF"/>
+</svg>
