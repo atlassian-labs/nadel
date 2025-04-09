@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- GraphQL hexagon background -->
+  <path d="M60 20 L100 40 L100 80 L60 100 L20 80 L20 40 Z" fill="#E535AB" opacity="0.2"/>
+  
+  <!-- Needle element -->
+  <path d="M30 70 L90 30 L85 25 L25 65 Z" fill="#0052CC" stroke="#0052CC" stroke-width="2"/>
+  <circle cx="88" cy="28" r="4" fill="#0052CC"/>
+</svg>
