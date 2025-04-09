@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="300" height="80" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main text "NADEL" -->
+  <text x="20" y="45" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#172B4D">NADEL</text>
+  
+  <!-- Subtitle -->
+  <text x="20" y="65" font-family="Arial, sans-serif" font-size="16" fill="#42526E">GraphQL Service Composition</text>
+</svg>
