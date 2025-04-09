@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <!-- Abstract representation of schema transformation -->
+    <style>
+        .shape1 { fill: #0052CC; }
+        .shape2 { fill: #00B8D9; }
+        .arrow { fill: none; stroke: #172B4D; stroke-width: 4; }
+    </style>
+    <path class="shape1" d="M30,30 L50,30 L50,50 L30,50 Z" />
+    <path class="shape2" d="M70,70 L90,70 L80,90 Z" />
+    <path class="arrow" d="M40,40 C55,40 65,70 80,70" stroke-linecap="round" />
+</svg>

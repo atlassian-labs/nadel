@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <!-- Modern interpretation of a needle threading through nodes -->
+    <style>
+        .needle { fill: #172B4D; }
+        .thread { fill: none; stroke: #0052CC; stroke-width: 3; }
+        .node { fill: #00B8D9; }
+    </style>
+    <path class="needle" d="M20,60 L90,60 L100,65 L90,70 L20,70 L15,65 Z" />
+    <path class="thread" d="M30,40 C45,60 75,60 90,80" />
+    <circle class="node" cx="30" cy="40" r="5" />
+    <circle class="node" cx="60" cy="60" r="5" />
+    <circle class="node" cx="90" cy="80" r="5" />
+</svg>

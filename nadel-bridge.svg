@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <!-- Two hexagons representing GraphQL services connected by a bridge -->
+    <style>
+        .primary { fill: #0052CC; }
+        .secondary { fill: #00B8D9; }
+        .bridge { fill: none; stroke: #172B4D; stroke-width: 4; }
+    </style>
+    <polygon class="primary" points="30,30 45,20 60,30 60,50 45,60 30,50" />
+    <polygon class="secondary" points="60,70 75,60 90,70 90,90 75,100 60,90" />
+    <path class="bridge" d="M45,40 C60,40 60,80 75,80" />
+</svg>

@@ -1,5 +1,11 @@
 # Nadel: A distributed GraphQL engine
 
+<div align="center">
+  <img src="nadel-bridge.svg" width="120" alt="Nadel Bridge Logo" />
+  <img src="nadel-transform.svg" width="120" alt="Nadel Transform Logo" />
+  <img src="nadel-thread.svg" width="120" alt="Nadel Thread Logo" />
+</div>
+
 Nadel is a Kotlin library to combine several GraphQL services together. This is achieved by combining several underlying
 GraphQL services (schemas) into one schema (overall schema).
 
