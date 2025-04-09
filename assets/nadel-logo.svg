@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="240" height="80" viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="240" height="80" fill="transparent"/>
+  
+  <!-- Main GraphQL Node -->
+  <circle cx="40" cy="40" r="15" fill="#E10098"/>
+  
+  <!-- Connected Nodes representing schema stitching -->
+  <circle cx="80" cy="20" r="10" fill="#205AD4"/>
+  <circle cx="80" cy="60" r="10" fill="#205AD4"/>
+  
+  <!-- Connection lines -->
+  <line x1="55" y1="40" x2="70" y2="20" stroke="#666" stroke-width="2"/>
+  <line x1="55" y1="40" x2="70" y2="60" stroke="#666" stroke-width="2"/>
+  
+  <!-- Text "NADEL" -->
+  <text x="110" y="50" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#333">
+    NADEL
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="110" y="65" font-family="Arial, sans-serif" font-size="12" fill="#666">
+    GraphQL Schema Stitching
+  </text>
+</svg>
