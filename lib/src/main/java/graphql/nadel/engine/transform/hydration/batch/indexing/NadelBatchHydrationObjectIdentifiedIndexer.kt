@@ -3,6 +3,9 @@ package graphql.nadel.engine.transform.hydration.batch.indexing
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStrategy
+import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStrategy.NO_CAST
+import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStrategy.TO_STRING
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -42,7 +45,7 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
                     // or
                     // e.g. sourceInputPath is commentId
                     // e.g. identifiedBy.sourceId is commentId
-                    if (identifiedBy.sourceId == sourceInputPath) {
+                    val sourceObjectId = if (identifiedBy.sourceId == sourceInputPath) {
                         sourceInput
                     } else {
                         val pathFromSourceInput = identifiedBy.sourceId.drop(
@@ -57,8 +60,24 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
                         JsonNodeExtractor.getNodesAt(sourceInput, pathFromSourceInput, flatten = false)
                             .emptyOrSingle()
                     }
-                },
+
+                    if (sourceObjectId != null) {
+                        smartCastKey(sourceObjectId, identifiedBy.sourceIdCast)
+                    } else {
+                        null
+                    }
+                }
         )
+    }
+
+    private fun smartCastKey(
+        objectId: JsonNode,
+        identifiedBy: NadelObjectIdentifierCastingStrategy,
+    ): JsonNode {
+        return when (identifiedBy) {
+            TO_STRING -> objectId.copy(value = objectId.value.toString())
+            NO_CAST -> objectId
+        }
     }
 
     override fun getIndex(

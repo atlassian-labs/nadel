@@ -13,6 +13,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
+import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.getFieldAt
@@ -394,6 +395,7 @@ class NadelHydrationValidation internal constructor(
                 .onErrorCast { return it }
 
             NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                sourceIdCast = NadelObjectIdentifierCastingStrategy.NO_CAST,
                 sourceId = NadelQueryPath(
                     hydrationDefinition
                         .arguments
@@ -503,6 +505,7 @@ class NadelHydrationValidation internal constructor(
                 // }
 
                 NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                    sourceIdCast = NadelObjectIdentifierCastingStrategy.NO_CAST,
                     sourceId = NadelQueryPath(sourceIdPath),
                     resultId = identifier.resultId,
                 )
