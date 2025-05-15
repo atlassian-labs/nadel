@@ -136,6 +136,21 @@ fun GraphQLFieldsContainer.getFieldAt(
     return getFieldAt(pathToField, pathIndex = 0)
 }
 
+fun GraphQLFieldsContainer.getFieldCoordinatesFor(
+    pathToField: List<String>,
+): FieldCoordinates? {
+    val type = pathToField
+        .subList(0, pathToField.lastIndex) // Drop last item quickly
+        .fold(this) { container, fieldName ->
+            val field = container.getField(fieldName) ?: return null
+            field.type.unwrapAll() as? GraphQLFieldsContainer ?: return null
+        }
+
+    val fieldName = pathToField.last()
+
+    return makeFieldCoordinates(type.name, fieldName)
+}
+
 fun GraphQLFieldsContainer.getFieldsAlong(
     pathToField: List<String>,
 ): List<GraphQLFieldDefinition> {
