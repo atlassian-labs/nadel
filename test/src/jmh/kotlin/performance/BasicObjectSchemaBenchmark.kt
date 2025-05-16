@@ -17,8 +17,8 @@ open class BasicObjectSchemaBenchmark: BenchmarkTestBase() {
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.Throughput)
-    @OutputTimeUnit(TimeUnit.SECONDS)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
     fun bechmarkThroughput() {
         execute()
     }
