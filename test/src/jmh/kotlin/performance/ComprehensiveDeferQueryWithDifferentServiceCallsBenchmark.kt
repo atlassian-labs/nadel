@@ -17,7 +17,7 @@ open class ComprehensiveDeferQueryWithDifferentServiceCallsBenchmark: BenchmarkT
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     fun bechmarkThroughput() {
         execute()
     }
