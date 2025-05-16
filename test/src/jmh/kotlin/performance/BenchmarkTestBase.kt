@@ -20,13 +20,12 @@ open class BenchmarkTestBase {
     private lateinit var executionInput: NadelExecutionInput
 
     open fun setup() {
-        nadel = test.makeNadel()
-            .build()
-
         executionInput = test.makeExecutionInput().build()
     }
 
     fun execute() {
+        nadel = test.makeNadel()
+            .build()
         nadel.execute(executionInput)
     }
 }
