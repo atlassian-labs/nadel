@@ -15,6 +15,21 @@ import graphql.schema.GraphQLUnionType
 sealed interface NadelSchemaMemberCoordinates {
     val name: String
 
+    val parentOrNull: NadelSchemaMemberCoordinates?
+        get() = (this as? ChildCoordinates)?.parent
+
+    fun startsWith(other: NadelSchemaMemberCoordinates): Boolean {
+        var parent = this
+
+        while (true) {
+            if (parent == other) {
+                return true
+            }
+
+            parent = parent.parentOrNull ?: return false
+        }
+    }
+
     sealed interface ArgumentParent : NadelSchemaMemberCoordinates {
         fun argument(name: String): Argument {
             return Argument(parent = this, name = name)
@@ -34,10 +49,12 @@ sealed interface NadelSchemaMemberCoordinates {
     }
 
     sealed interface DefaultValueHolder : NadelSchemaMemberCoordinates
+
     sealed interface Type : NadelSchemaMemberCoordinates
+
     sealed interface ImplementingType : NadelSchemaMemberCoordinates
 
-    sealed interface ChildCoordinates {
+    sealed interface ChildCoordinates : NadelSchemaMemberCoordinates {
         val parent: NadelSchemaMemberCoordinates
     }
 
@@ -47,7 +64,11 @@ sealed interface NadelSchemaMemberCoordinates {
         Type,
         ImplementingType,
         AppliedDirectiveParent,
-        FieldContainer
+        FieldContainer {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class Interface(
         override val name: String,
@@ -55,25 +76,56 @@ sealed interface NadelSchemaMemberCoordinates {
         Type,
         ImplementingType,
         AppliedDirectiveParent,
-        FieldContainer
+        FieldContainer {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class Scalar(
         override val name: String,
     ) : NadelSchemaMemberCoordinates,
         Type,
-        AppliedDirectiveParent
+        AppliedDirectiveParent {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class Enum(
         override val name: String,
     ) : NadelSchemaMemberCoordinates,
         Type,
-        AppliedDirectiveParent
+        AppliedDirectiveParent {
+        fun enumValue(name: String): EnumValue {
+            return EnumValue(parent = this, name = name)
+        }
+
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
+
+    data class EnumValue(
+        override val parent: NadelSchemaMemberCoordinates,
+        override val name: String,
+    ) : NadelSchemaMemberCoordinates,
+        ChildCoordinates,
+        AppliedDirectiveParent {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class Union(
         override val name: String,
     ) : NadelSchemaMemberCoordinates,
         Type,
-        AppliedDirectiveParent
+        AppliedDirectiveParent {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class InputObject(
         override val name: String,
@@ -83,13 +135,21 @@ sealed interface NadelSchemaMemberCoordinates {
         fun field(name: String): InputObjectField {
             return InputObjectField(parent = this, name = name)
         }
+
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
     }
 
     data class Directive(
         override val name: String,
     ) : NadelSchemaMemberCoordinates,
         Type,
-        ArgumentParent
+        ArgumentParent {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class Field(
         override val parent: FieldContainer,
@@ -97,7 +157,11 @@ sealed interface NadelSchemaMemberCoordinates {
     ) : NadelSchemaMemberCoordinates,
         ChildCoordinates,
         ArgumentParent,
-        AppliedDirectiveParent
+        AppliedDirectiveParent {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class Argument(
         override val parent: ArgumentParent,
@@ -105,14 +169,35 @@ sealed interface NadelSchemaMemberCoordinates {
     ) : NadelSchemaMemberCoordinates,
         ChildCoordinates,
         AppliedDirectiveParent,
-        DefaultValueHolder
+        DefaultValueHolder {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class AppliedDirective(
         override val parent: AppliedDirectiveParent,
         override val name: String,
     ) : NadelSchemaMemberCoordinates,
-        ChildCoordinates,
-        ArgumentParent
+        ChildCoordinates {
+        fun argument(name: String): AppliedDirectiveArgument {
+            return AppliedDirectiveArgument(parent = this, name = name)
+        }
+
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
+
+    data class AppliedDirectiveArgument(
+        override val parent: AppliedDirective,
+        override val name: String,
+    ) : NadelSchemaMemberCoordinates,
+        ChildCoordinates {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
 
     data class InputObjectField(
         override val parent: InputObject,
@@ -120,7 +205,25 @@ sealed interface NadelSchemaMemberCoordinates {
     ) : NadelSchemaMemberCoordinates,
         ChildCoordinates,
         AppliedDirectiveParent,
-        DefaultValueHolder
+        DefaultValueHolder {
+        override fun toString(): String {
+            return toHumanReadableString(this)
+        }
+    }
+
+    companion object {
+        fun toHumanReadableString(coordinates: NadelSchemaMemberCoordinates): String {
+            val components = mutableListOf<String>()
+
+            var cursor: NadelSchemaMemberCoordinates? = coordinates
+            while (cursor != null) {
+                components.add("${cursor.name} (${cursor.javaClass.simpleName})")
+                cursor = (cursor as? ChildCoordinates)?.parent
+            }
+
+            return components.asReversed().joinToString(".")
+        }
+    }
 }
 
 fun GraphQLUnionType.coordinates(): NadelSchemaMemberCoordinates.Union {
