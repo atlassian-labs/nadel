@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transform.partition
 
 import graphql.VisibleForTesting
+import graphql.language.ArrayValue
 import graphql.language.ScalarValue
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -165,6 +166,11 @@ internal class NadelFieldPartition(
         return if (value != null) {
             if (value.value is List<*>) {
                 PartitionInstructions(inputValueDefinitions, value.value as List<*>, argumentRoot)
+            } else if (value.value is ArrayValue) {
+                // When partitioning happens as part of a hydration call, "value.value" will be of type "ArrayValue"
+                val arrayValue = value.value as ArrayValue
+
+                PartitionInstructions(inputValueDefinitions, arrayValue.values, argumentRoot)
             } else {
                 throw NadelCannotPartitionFieldException("Only list values can be partitioned but got '${value.value}' for field ${field.name}")
             }
@@ -175,7 +181,8 @@ internal class NadelFieldPartition(
     }
 
     data class PartitionInstructions(
-        val inputValueDefinitions: List<GraphQLInputValueDefinition>, val values: List<*>,
+        val inputValueDefinitions: List<GraphQLInputValueDefinition>,
+        val values: List<*>,
         val argumentRoot: NormalizedInputValue,
     )
 }
