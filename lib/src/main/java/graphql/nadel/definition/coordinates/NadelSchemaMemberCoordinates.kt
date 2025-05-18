@@ -20,6 +20,9 @@ sealed interface NadelSchemaMemberCoordinates : Comparable<NadelSchemaMemberCoor
         return parents.any { it == other }
     }
 
+    /**
+     * Should effectively be compared alphabetically by level.
+     */
     override fun compareTo(other: NadelSchemaMemberCoordinates?): Int {
         val compareLevel = compareValues(level, other?.level)
 
