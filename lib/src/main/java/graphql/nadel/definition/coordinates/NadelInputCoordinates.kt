@@ -1,3 +1,3 @@
 package graphql.nadel.definition.coordinates
 
-sealed interface NadelInputCoordinates : NadelSchemaMemberCoordinates
+sealed interface NadelInputCoordinates : NadelChildCoordinates
