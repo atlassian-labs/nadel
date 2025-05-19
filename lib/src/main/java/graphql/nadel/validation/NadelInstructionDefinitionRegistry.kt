@@ -1,8 +1,12 @@
 package graphql.nadel.validation
 
 import graphql.nadel.definition.NadelInstructionDefinition
-import graphql.nadel.definition.NadelSchemaMemberCoordinates
-import graphql.nadel.definition.coordinates
+import graphql.nadel.definition.coordinates.NadelFieldCoordinates
+import graphql.nadel.definition.coordinates.NadelInterfaceCoordinates
+import graphql.nadel.definition.coordinates.NadelObjectCoordinates
+import graphql.nadel.definition.coordinates.NadelSchemaMemberCoordinates
+import graphql.nadel.definition.coordinates.NadelTypeCoordinates
+import graphql.nadel.definition.coordinates.coordinates
 import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
@@ -44,7 +48,7 @@ data class NadelInstructionDefinitionRegistry(
     }
 
     fun getHydrationDefinitionSequence(
-        coords: NadelSchemaMemberCoordinates.Field,
+        coords: NadelFieldCoordinates,
     ): Sequence<NadelHydrationDefinition> {
         val definitions = definitions[coords]
             ?: return emptySequence()
@@ -88,7 +92,7 @@ data class NadelInstructionDefinitionRegistry(
         return getRenamedOrNull(coords(container, field))
     }
 
-    fun getRenamedOrNull(coords: NadelSchemaMemberCoordinates.Field): NadelRenamedDefinition.Field? {
+    fun getRenamedOrNull(coords: NadelFieldCoordinates): NadelRenamedDefinition.Field? {
         val definitions = definitions[coords]
             ?: return null
 
@@ -103,7 +107,7 @@ data class NadelInstructionDefinitionRegistry(
         return getRenamedOrNull(container.coordinates())
     }
 
-    fun getRenamedOrNull(coords: NadelSchemaMemberCoordinates.Type): NadelRenamedDefinition.Type? {
+    fun getRenamedOrNull(coords: NadelTypeCoordinates): NadelRenamedDefinition.Type? {
         val definitions = definitions[coords]
             ?: return null
 
@@ -146,7 +150,7 @@ data class NadelInstructionDefinitionRegistry(
     }
 
     fun getPartitionedOrNull(
-        coords: NadelSchemaMemberCoordinates.Field,
+        coords: NadelFieldCoordinates,
     ): NadelPartitionDefinition? {
         val definitions = definitions[coords]
             ?: return null
@@ -169,7 +173,7 @@ data class NadelInstructionDefinitionRegistry(
     }
 
     private fun getDefaultHydrationSequence(
-        coords: NadelSchemaMemberCoordinates.Type,
+        coords: NadelTypeCoordinates,
     ): Sequence<NadelDefaultHydrationDefinition> {
         val definitions = definitions[coords]
             ?: return emptySequence()
@@ -182,10 +186,10 @@ data class NadelInstructionDefinitionRegistry(
     private fun coords(
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
-    ): NadelSchemaMemberCoordinates.Field {
+    ): NadelFieldCoordinates {
         val containerCoords = when (container) {
-            is NadelServiceSchemaElement.Interface -> NadelSchemaMemberCoordinates.Interface(container.overall.name)
-            is NadelServiceSchemaElement.Object -> NadelSchemaMemberCoordinates.Object(container.overall.name)
+            is NadelServiceSchemaElement.Interface -> NadelInterfaceCoordinates(container.overall.name)
+            is NadelServiceSchemaElement.Object -> NadelObjectCoordinates(container.overall.name)
         }
 
         return containerCoords.field(field.name)

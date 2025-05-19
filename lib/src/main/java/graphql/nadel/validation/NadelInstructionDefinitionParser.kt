@@ -1,8 +1,8 @@
 package graphql.nadel.validation
 
 import graphql.nadel.definition.NadelInstructionDefinition
-import graphql.nadel.definition.NadelSchemaMemberCoordinates
-import graphql.nadel.definition.coordinates
+import graphql.nadel.definition.coordinates.NadelSchemaMemberCoordinates
+import graphql.nadel.definition.coordinates.coordinates
 import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseHydrationDefinitions
 import graphql.nadel.definition.partition.parsePartitionOrNull
