@@ -1,5 +1,6 @@
 package graphql.nadel.definition.coordinates
 
+import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLSchema
 
 data class NadelAppliedDirectiveCoordinates(
@@ -9,7 +10,7 @@ data class NadelAppliedDirectiveCoordinates(
     NadelChildCoordinates {
     override val level: Int = parent.level + 1
 
-    override fun resolve(schema: GraphQLSchema): Nothing {
+    override fun resolve(schema: GraphQLSchema): GraphQLAppliedDirective {
         throw UnsupportedOperationException()
     }
 
