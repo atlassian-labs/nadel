@@ -80,6 +80,12 @@ internal class NadelTypeValidation(
             return ok()
         }
 
+        val implementsResult = if (schemaElement is NadelServiceSchemaElement.ImplementingType) {
+            interfaceValidation.validateImplements(schemaElement)
+        } else {
+            ok()
+        }
+
         val fieldsContainerResult = if (schemaElement is NadelServiceSchemaElement.FieldsContainer) {
             fieldValidation.validate(schemaElement)
         } else {
@@ -129,6 +135,7 @@ internal class NadelTypeValidation(
         }
 
         return results(
+            implementsResult,
             fieldsContainerResult,
             renameResult,
             defaultHydrationResult,
