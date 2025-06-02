@@ -5,6 +5,17 @@ import kotlin.test.assertTrue
 
 class NadelSchemaMemberCoordinatesTest {
     @Test
+    fun `can get parents`() {
+        val coords = NadelObjectCoordinates("UserFilter").field("test").appliedDirective("hello").argument("wow")
+
+        // When
+        val parentNames = coords.parents.map { it.name }.toList()
+
+        // Then
+        assertTrue(parentNames == listOf("hello", "test", "UserFilter"))
+    }
+
+    @Test
     fun `compare level first`() {
         val inputObject = NadelInputObjectCoordinates("UserFilter")
         val field = inputObject.field("filter")
