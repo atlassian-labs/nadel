@@ -16,6 +16,7 @@ jobs:
     env:
       SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      RELEASE_VERSION: 1.${{ github.run_id }}
 
     steps:
       - uses: actions/checkout@v1
@@ -36,6 +37,11 @@ jobs:
         run: ./gradlew assemble && ./gradlew check --info
       - name: Publish
         run: ./gradlew artifactoryPublish -x check --info
+      - name: Tag commit with release
+        run: |
+          git tag -a "${RELEASE_VERSION}" -m "Tag release ${RELEASE_VERSION}"
+          git push origin ${RELEASE_VERSION}
+
       - uses: actions/upload-artifact@v4
         with:
           name: my-artifact
