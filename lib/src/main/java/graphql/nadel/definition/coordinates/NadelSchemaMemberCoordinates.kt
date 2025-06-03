@@ -12,7 +12,7 @@ sealed interface NadelSchemaMemberCoordinates : Comparable<NadelSchemaMemberCoor
         get() = (this as? NadelChildCoordinates)?.parent
 
     val parents: Sequence<NadelSchemaMemberCoordinates>
-        get() = generateSequence(seed = this) { it.parentOrNull }
+        get() = generateSequence(seed = parentOrNull) { it.parentOrNull }
 
     fun resolve(schema: GraphQLSchema): GraphQLSchemaElement?
 
