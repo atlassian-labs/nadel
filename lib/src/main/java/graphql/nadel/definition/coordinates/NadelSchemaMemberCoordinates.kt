@@ -45,7 +45,7 @@ sealed interface NadelSchemaMemberCoordinates : Comparable<NadelSchemaMemberCoor
 
     companion object {
         internal fun toHumanReadableString(coordinates: NadelSchemaMemberCoordinates): String {
-            return coordinates.parents
+            return (sequenceOf(coordinates) + coordinates.parents)
                 .map { c ->
                     val name = c.name
                     val kind = getHumanReadableKind(c)
