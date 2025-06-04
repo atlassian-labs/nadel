@@ -1,5 +1,7 @@
 package graphql.nadel.definition.coordinates
 
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -13,6 +15,64 @@ class NadelSchemaMemberCoordinatesTest {
 
         // Then
         assertTrue(parentNames == listOf("hello", "test", "UserFilter"))
+    }
+
+    @TestFactory
+    fun toHumanReadableString(): List<DynamicTest> {
+        data class TestCase(
+            val coordinates: NadelSchemaMemberCoordinates,
+            val expectedToString: String,
+        )
+
+        fun execute(testCase: TestCase) {
+            // When
+            val actual = NadelSchemaMemberCoordinates.toHumanReadableString(testCase.coordinates)
+
+            // Then
+            assertTrue(actual == testCase.expectedToString)
+        }
+
+        return listOf(
+            TestCase(
+                coordinates = NadelObjectCoordinates("UserFilter")
+                    .field("test")
+                    .appliedDirective("hello")
+                    .argument("wow"),
+                expectedToString = "UserFilter (Object).test (Field).hello (AppliedDirective).wow (AppliedDirectiveArgument)",
+            ),
+            TestCase(
+                NadelUnionCoordinates("User").appliedDirective("beta"),
+                "User (Union).beta (AppliedDirective)",
+            ),
+            TestCase(
+                NadelObjectCoordinates("User").appliedDirective("beta"),
+                "User (Object).beta (AppliedDirective)",
+            ),
+            TestCase(
+                NadelObjectCoordinates("Account").field("cheese"),
+                "Account (Object).cheese (Field)",
+            ),
+            TestCase(
+                NadelObjectCoordinates("User").field("cheese"),
+                "User (Object).cheese (Field)",
+            ),
+            TestCase(
+                NadelObjectCoordinates("User").field("cheese").argument("id"),
+                "User (Object).cheese (Field).id (Argument)",
+            ),
+            TestCase(
+                NadelObjectCoordinates("Account").field("cheese").argument("id"),
+                "Account (Object).cheese (Field).id (Argument)",
+            ),
+            TestCase(
+                NadelObjectCoordinates("Account").field("cheese").argument("cheese"),
+                "Account (Object).cheese (Field).cheese (Argument)",
+            ),
+        ).map {
+            DynamicTest.dynamicTest(it.toString()) {
+                execute(it)
+            }
+        }
     }
 
     @Test
