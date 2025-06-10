@@ -26,11 +26,12 @@ public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   issues {
-                |     ... on Task {
-                |       __typename__stubbed__key: __typename
-                |     }
+                |     id
                 |     ... on Issue {
                 |       key
+                |     }
+                |     ... on Task {
+                |       __typename__stubbed__key: __typename
                 |     }
                 |   }
                 | }
@@ -41,10 +42,12 @@ public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
+                |         "id": "123",
                 |         "key": "Wow"
                 |       },
                 |       null,
                 |       {
+                |         "id": "456",
                 |         "__typename__stubbed__key": "Task"
                 |       }
                 |     ]
@@ -62,10 +65,12 @@ public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "issues": [
      *       {
-     *         "key": null
+     *         "id": "123",
+     *         "key": "Wow"
      *       },
      *       null,
      *       {
+     *         "id": "456",
      *         "key": null
      *       }
      *     ]
@@ -79,10 +84,12 @@ public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
+            |         "id": "123",
             |         "key": "Wow"
             |       },
             |       null,
             |       {
+            |         "id": "456",
             |         "key": null
             |       }
             |     ]
