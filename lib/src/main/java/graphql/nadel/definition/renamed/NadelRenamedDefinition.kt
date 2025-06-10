@@ -5,7 +5,6 @@ import graphql.language.DirectivesContainer
 import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition.Keyword
 import graphql.nadel.engine.util.parseDefinition
-import graphql.nadel.validation.NadelValidationContext
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition

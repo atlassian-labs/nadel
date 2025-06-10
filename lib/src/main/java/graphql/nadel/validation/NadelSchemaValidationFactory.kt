@@ -33,6 +33,8 @@ abstract class NadelSchemaValidationFactory {
 
     private val idHydrationDefinitionParser = NadelIdHydrationDefinitionParser()
 
+    private val stubbedValidation = NadelStubbedValidation()
+
     private val partitionValidation = NadelPartitionValidation()
 
     private val typeWrappingValidation = NadelTypeWrappingValidation()
@@ -59,6 +61,7 @@ abstract class NadelSchemaValidationFactory {
     private val fieldValidation = NadelFieldValidation(
         hydrationValidation = hydrationValidation,
         partitionValidation = partitionValidation,
+        stubbedValidation = stubbedValidation,
         assignableTypeValidation = assignableTypeValidation,
     )
 

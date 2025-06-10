@@ -6,6 +6,7 @@ import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -43,7 +44,10 @@ import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
+import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationMustBeUsedExclusively
+import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.NadelSchemaValidationResult
 import graphql.nadel.validation.NadelServiceSchemaElement
 import graphql.nadel.validation.NadelValidatedFieldResult
@@ -88,8 +92,8 @@ class NadelHydrationValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (instructionDefinitions.isRenamed(parent, virtualField)) {
-            return CannotRenameHydratedField(parent, virtualField)
+        if (hasIncompatibleInstructions(parent, virtualField)) {
+            return HydrationMustBeUsedExclusively(parent, virtualField)
         }
 
         val hydrations = instructionDefinitions.getHydrationDefinitions(parent, virtualField).toList()
@@ -102,6 +106,17 @@ class NadelHydrationValidation internal constructor(
             virtualField = virtualField,
             hydrations = hydrations,
         )
+    }
+
+    context(NadelValidationContext)
+    private fun hasIncompatibleInstructions(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        virtualField: GraphQLFieldDefinition,
+    ): Boolean {
+        return instructionDefinitions.hasOtherInstructions(parent, virtualField) {
+            // Can use these definitions together
+            it is NadelHydrationDefinition || it is NadelPartitionDefinition
+        }
     }
 
     context(NadelValidationContext)

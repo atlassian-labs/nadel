@@ -11,6 +11,7 @@ import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.stubbed.NadelStubbedDefinition
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -77,6 +78,13 @@ data class NadelInstructionDefinitionRegistry(
         return getRenamedOrNull(coords(container, field)) != null
     }
 
+    fun isStubbed(
+        container: NadelServiceSchemaElement.FieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): Boolean {
+        return getStubbedOrNull(coords(container, field)) != null
+    }
+
     fun getRenamedOrNull(
         container: GraphQLFieldsContainer,
         field: GraphQLFieldDefinition,
@@ -98,6 +106,15 @@ data class NadelInstructionDefinitionRegistry(
 
         return definitions.asSequence()
             .filterIsInstance<NadelRenamedDefinition.Field>()
+            .firstOrNull()
+    }
+
+    fun getStubbedOrNull(coords: NadelFieldCoordinates): NadelStubbedDefinition? {
+        val definitions = definitions[coords]
+            ?: return null
+
+        return definitions.asSequence()
+            .filterIsInstance<NadelStubbedDefinition>()
             .firstOrNull()
     }
 
@@ -134,6 +151,14 @@ data class NadelInstructionDefinitionRegistry(
         return getPartitionedOrNull(coords(container, field)) != null
     }
 
+    fun hasOtherInstructions(
+        container: NadelServiceSchemaElement.FieldsContainer,
+        field: GraphQLFieldDefinition,
+        ignore: (NadelInstructionDefinition) -> Boolean = { false },
+    ): Boolean {
+        return hasOtherInstructions(coords(container, field), ignore)
+    }
+
     fun getPartitionedOrNull(
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
@@ -158,6 +183,17 @@ data class NadelInstructionDefinitionRegistry(
         return definitions.asSequence()
             .filterIsInstance<NadelPartitionDefinition>()
             .firstOrNull()
+    }
+
+    fun hasOtherInstructions(
+        coords: NadelFieldCoordinates,
+        ignore: (NadelInstructionDefinition) -> Boolean = { false },
+    ): Boolean {
+        val instructions = definitions[coords] ?: return false
+        return instructions
+            .asSequence()
+            .filterNot(ignore)
+            .count() > 1
     }
 
     fun hasDefaultHydration(

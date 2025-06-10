@@ -15,6 +15,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutp
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
+import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.schema.GraphQLFieldDefinition
@@ -22,6 +23,7 @@ import graphql.schema.GraphQLNamedSchemaElement
 
 class NadelFieldValidation internal constructor(
     private val hydrationValidation: NadelHydrationValidation,
+    private val stubbedValidation: NadelStubbedValidation,
     private val partitionValidation: NadelPartitionValidation,
     private val assignableTypeValidation: NadelAssignableTypeValidation,
 ) {
@@ -85,6 +87,8 @@ class NadelFieldValidation internal constructor(
             validateRename(parent, overallField)
         } else if (instructionDefinitions.isHydrated(parent, overallField)) {
             hydrationValidation.validate(parent, overallField)
+        } else if (instructionDefinitions.isStubbed(parent, overallField)) {
+            stubbedValidation.validate(parent, overallField)
         } else {
             val underlyingField = parent.underlying.getField(overallField.name)
             if (underlyingField == null) {
@@ -140,12 +144,8 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (instructionDefinitions.isHydrated(parent, overallField)) {
-            return CannotRenameHydratedField(parent, overallField)
-        }
-
-        if (instructionDefinitions.isPartitioned(parent, overallField)) {
-            return CannotRenamePartitionedField(parent, overallField)
+        if (instructionDefinitions.hasOtherInstructions(parent, overallField)) {
+            return RenameMustBeUsedExclusively(parent, overallField)
         }
 
         val rename = instructionDefinitions.getRenamedOrNull(parent, overallField)
