@@ -134,15 +134,3 @@ class NadelStubTransform : NadelTransform<StubState> {
         )
     }
 }
-
-data class NadelStubDirective(
-    private val appliedDirective: GraphQLAppliedDirective,
-) {
-    companion object {
-        const val directiveName = "stubbed"
-    }
-}
-
-fun GraphQLDirectiveContainer.hasStubbedDirective(): Boolean {
-    return hasAppliedDirective(NadelStubDirective.directiveName)
-}
