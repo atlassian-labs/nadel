@@ -59,6 +59,7 @@ class NadelStubTransform : NadelTransform<StubState> {
         field: ExecutableNormalizedField,
         state: StubState,
     ): NadelTransformFieldResult {
+        // Hmm, is this necessary?
         val remainingObjectTypeNames = field.objectTypeNames - state.stubByObjectTypeNames.keys
 
         return NadelTransformFieldResult(

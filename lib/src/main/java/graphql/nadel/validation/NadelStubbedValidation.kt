@@ -11,6 +11,7 @@ class NadelStubbedValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
+        // todo: Have a better think about how interfaces come into play here, may need more tests
         if (hasIncompatibleInstructions(parent, overallField)) {
             return NadelStubbedMustBeUsedExclusively(parent, overallField)
         }
