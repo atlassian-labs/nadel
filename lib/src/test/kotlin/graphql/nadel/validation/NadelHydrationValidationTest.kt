@@ -2,6 +2,7 @@ package graphql.nadel.validation
 
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
+import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
 import org.junit.jupiter.api.Test
@@ -348,7 +349,7 @@ class NadelHydrationValidationTest {
         val errors = validate(fixture)
         assert(errors.map { it.message }.isNotEmpty())
 
-        val error = errors.assertSingleOfType<CannotRenameHydratedField>()
+        val error = errors.assertSingleOfType<RenameMustBeUsedExclusively>()
         assert(error.parentType.overall.name == "JiraIssue")
         assert(error.parentType.underlying.name == "Issue")
         assert(error.overallField.name == "creator")

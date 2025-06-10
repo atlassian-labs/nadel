@@ -5,6 +5,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.InvalidPartitionArgum
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToFieldWithUnsupportedOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToSubscriptionField
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToUnsupportedField
+import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.datatest.withData
@@ -410,7 +411,7 @@ class NadelPartitionValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
 
-            errors.assertSingleOfType<CannotRenamePartitionedField>()
+            errors.assertSingleOfType<RenameMustBeUsedExclusively>()
         }
 
         context("fails when pathToPartitionArg value is invalid") {

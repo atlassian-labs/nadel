@@ -342,7 +342,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            "Overall field $of must not use @renamed with other field @transforms"
+            "Overall field $of must not use @renamed with other incompatible @transforms"
         }
 
         override val subject = overallField
