@@ -93,7 +93,7 @@ class NadelFieldValidation internal constructor(
             hydrationValidation.validate(parent, overallField)
         } else {
             val underlyingField = parent.underlying.getField(overallField.name)
-            return if (underlyingField == null) {
+            if (underlyingField == null) {
                 MissingUnderlyingField(parent, overallField = overallField)
             } else {
                 validate(
