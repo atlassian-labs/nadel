@@ -113,10 +113,7 @@ class NadelHydrationValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
     ): Boolean {
-        return instructionDefinitions.hasOtherInstructions(parent, virtualField) {
-            // Can use these definitions together
-            it is NadelHydrationDefinition || it is NadelPartitionDefinition
-        }
+        return instructionDefinitions.hasOtherInstructions<NadelHydrationDefinition>(parent, virtualField)
     }
 
     context(NadelValidationContext)

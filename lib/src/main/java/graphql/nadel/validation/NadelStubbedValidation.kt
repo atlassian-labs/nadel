@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.definition.stubbed.NadelStubbedDefinition
 import graphql.nadel.engine.blueprint.NadelStubbedInstruction
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -76,6 +77,6 @@ class NadelStubbedValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): Boolean {
-        return instructionDefinitions.hasOtherInstructions(parent, overallField)
+        return instructionDefinitions.hasOtherInstructions<NadelStubbedDefinition>(parent, overallField)
     }
 }

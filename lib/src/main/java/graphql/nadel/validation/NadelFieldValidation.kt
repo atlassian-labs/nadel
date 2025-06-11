@@ -149,7 +149,7 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (instructionDefinitions.hasOtherInstructions(parent, overallField)) {
+        if (instructionDefinitions.hasOtherInstructions<NadelRenamedDefinition>(parent, overallField)) {
             return RenameMustBeUsedExclusively(parent, overallField)
         }
 

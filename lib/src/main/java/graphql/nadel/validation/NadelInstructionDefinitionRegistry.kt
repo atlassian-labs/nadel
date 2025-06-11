@@ -17,6 +17,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
+import kotlin.reflect.KClass
 
 data class NadelInstructionDefinitionRegistry(
     private val definitions: Map<NadelSchemaMemberCoordinates, List<NadelInstructionDefinition>>,
@@ -169,12 +170,19 @@ data class NadelInstructionDefinitionRegistry(
         return getPartitionedOrNull(coords(container, field)) != null
     }
 
-    fun hasOtherInstructions(
+    inline fun <reified T : NadelInstructionDefinition> hasOtherInstructions(
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
-        ignore: (NadelInstructionDefinition) -> Boolean = { false },
     ): Boolean {
-        return hasOtherInstructions(coords(container, field), ignore)
+        return hasOtherInstructions(T::class, container, field)
+    }
+
+    fun <T : NadelInstructionDefinition> hasOtherInstructions(
+        instructionType: KClass<T>,
+        container: NadelServiceSchemaElement.FieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): Boolean {
+        return hasOtherInstructions(instructionType, coords(container, field))
     }
 
     fun getPartitionedOrNull(
@@ -203,14 +211,23 @@ data class NadelInstructionDefinitionRegistry(
             .firstOrNull()
     }
 
-    fun hasOtherInstructions(
+    inline fun <reified T : NadelInstructionDefinition> hasOtherInstructions(
         coords: NadelFieldCoordinates,
-        ignore: (NadelInstructionDefinition) -> Boolean = { false },
+    ): Boolean {
+        return hasOtherInstructions(T::class, coords)
+    }
+
+    fun <T : NadelInstructionDefinition> hasOtherInstructions(
+        instructionType: KClass<T>,
+        coords: NadelFieldCoordinates,
     ): Boolean {
         val instructions = definitions[coords] ?: return false
         return instructions
             .asSequence()
-            .filterNot(ignore)
+            .filterNot {
+                instructionType.isInstance(it)
+            }
+            .take(2) // Max 2 we don't care about the rest, just whether there's more than 1
             .count() > 1
     }
 
