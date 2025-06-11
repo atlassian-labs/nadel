@@ -10,7 +10,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 
-class NadelStubbedValidation {
+internal class NadelStubbedValidation {
     context(NadelValidationContext)
     fun validate(
         type: NadelServiceSchemaElement.StubbedType,
