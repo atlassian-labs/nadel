@@ -49,7 +49,7 @@ class NadelStubbedValidation {
         }
 
         if (overallField.type.isNonNull) {
-            return NadelStubbedOnNonNullFieldError(parent, overallField)
+            return NadelStubbedMustBeNullableError(parent, overallField)
         }
 
         return NadelValidatedFieldResult(
