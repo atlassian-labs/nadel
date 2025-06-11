@@ -177,19 +177,19 @@ data class NadelInstructionDefinitionRegistry(
         return getPartitionedOrNull(coords(container, field)) != null
     }
 
-    inline fun <reified T : NadelInstructionDefinition> hasOtherInstructions(
+    inline fun <reified T : NadelInstructionDefinition> hasInstructionsOtherThan(
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
     ): Boolean {
-        return hasOtherInstructions(T::class, container, field)
+        return hasInstructionsOtherThan(T::class, container, field)
     }
 
-    fun <T : NadelInstructionDefinition> hasOtherInstructions(
+    fun <T : NadelInstructionDefinition> hasInstructionsOtherThan(
         instructionType: KClass<T>,
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
     ): Boolean {
-        return hasOtherInstructions(instructionType, coords(container, field))
+        return hasInstructionsOtherThan(instructionType, coords(container, field))
     }
 
     fun getPartitionedOrNull(
@@ -218,13 +218,13 @@ data class NadelInstructionDefinitionRegistry(
             .firstOrNull()
     }
 
-    inline fun <reified T : NadelInstructionDefinition> hasOtherInstructions(
+    inline fun <reified T : NadelInstructionDefinition> hasInstructionsOtherThan(
         coords: NadelFieldCoordinates,
     ): Boolean {
-        return hasOtherInstructions(T::class, coords)
+        return hasInstructionsOtherThan(T::class, coords)
     }
 
-    fun <T : NadelInstructionDefinition> hasOtherInstructions(
+    fun <T : NadelInstructionDefinition> hasInstructionsOtherThan(
         instructionType: KClass<T>,
         coords: NadelFieldCoordinates,
     ): Boolean {

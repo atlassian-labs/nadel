@@ -98,7 +98,7 @@ class NadelStubbedValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): Boolean {
-        return instructionDefinitions.hasOtherInstructions<NadelStubbedDefinition>(parent, overallField)
+        return instructionDefinitions.hasInstructionsOtherThan<NadelStubbedDefinition>(parent, overallField)
     }
 
     context(NadelValidationContext)

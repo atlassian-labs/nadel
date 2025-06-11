@@ -6,7 +6,6 @@ import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
-import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -44,10 +43,7 @@ import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
-import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationMustBeUsedExclusively
-import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.NadelSchemaValidationResult
 import graphql.nadel.validation.NadelServiceSchemaElement
 import graphql.nadel.validation.NadelValidatedFieldResult
@@ -113,7 +109,7 @@ class NadelHydrationValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
     ): Boolean {
-        return instructionDefinitions.hasOtherInstructions<NadelHydrationDefinition>(parent, virtualField)
+        return instructionDefinitions.hasInstructionsOtherThan<NadelHydrationDefinition>(parent, virtualField)
     }
 
     context(NadelValidationContext)
