@@ -227,8 +227,7 @@ data class NadelInstructionDefinitionRegistry(
             .filterNot {
                 instructionType.isInstance(it)
             }
-            .take(2) // Max 2 we don't care about the rest, just whether there's more than 1
-            .count() > 1
+            .any()
     }
 
     fun hasDefaultHydration(
