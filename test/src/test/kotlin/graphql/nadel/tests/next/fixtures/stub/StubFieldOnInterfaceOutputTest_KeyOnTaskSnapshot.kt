@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubOneInterfaceImplementationFieldTest>()
+    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutputTest_KeyOnTask>()
 }
 
 /**
@@ -19,17 +19,13 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
+public class StubFieldOnInterfaceOutputTest_KeyOnTaskSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "myService",
                 query = """
                 | {
                 |   issues {
-                |     id
-                |     ... on Issue {
-                |       key
-                |     }
                 |     ... on Task {
                 |       __typename__stubbed__key: __typename
                 |     }
@@ -41,13 +37,9 @@ public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "issues": [
-                |       {
-                |         "id": "123",
-                |         "key": "Wow"
-                |       },
+                |       {},
                 |       null,
                 |       {
-                |         "id": "456",
                 |         "__typename__stubbed__key": "Task"
                 |       }
                 |     ]
@@ -64,13 +56,9 @@ public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "issues": [
-     *       {
-     *         "id": "123",
-     *         "key": "Wow"
-     *       },
+     *       {},
      *       null,
      *       {
-     *         "id": "456",
      *         "key": null
      *       }
      *     ]
@@ -83,13 +71,9 @@ public class StubOneInterfaceImplementationFieldTestSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "issues": [
-            |       {
-            |         "id": "123",
-            |         "key": "Wow"
-            |       },
+            |       {},
             |       null,
             |       {
-            |         "id": "456",
             |         "key": null
             |       }
             |     ]

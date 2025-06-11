@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutput_Id_KeyTask>()
+    graphql.nadel.tests.next.update<StubFieldOnOneInterfaceOutputTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubFieldOnInterfaceOutput_Id_KeyTaskSnapshot : TestSnapshot() {
+public class StubFieldOnOneInterfaceOutputTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "myService",
@@ -27,6 +27,9 @@ public class StubFieldOnInterfaceOutput_Id_KeyTaskSnapshot : TestSnapshot() {
                 | {
                 |   issues {
                 |     id
+                |     ... on Issue {
+                |       key
+                |     }
                 |     ... on Task {
                 |       __typename__stubbed__key: __typename
                 |     }
@@ -39,7 +42,8 @@ public class StubFieldOnInterfaceOutput_Id_KeyTaskSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "id": "123"
+                |         "id": "123",
+                |         "key": "Wow"
                 |       },
                 |       null,
                 |       {
@@ -61,7 +65,8 @@ public class StubFieldOnInterfaceOutput_Id_KeyTaskSnapshot : TestSnapshot() {
      *   "data": {
      *     "issues": [
      *       {
-     *         "id": "123"
+     *         "id": "123",
+     *         "key": "Wow"
      *       },
      *       null,
      *       {
@@ -79,7 +84,8 @@ public class StubFieldOnInterfaceOutput_Id_KeyTaskSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "id": "123"
+            |         "id": "123",
+            |         "key": "Wow"
             |       },
             |       null,
             |       {

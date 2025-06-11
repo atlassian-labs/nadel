@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutput_IdOnly>()
+    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutputTest_KeyOnIssueAndTask>()
 }
 
 /**
@@ -19,14 +19,19 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubFieldOnInterfaceOutput_IdOnlySnapshot : TestSnapshot() {
+public class StubFieldOnInterfaceOutputTest_KeyOnIssueAndTaskSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "myService",
                 query = """
                 | {
                 |   issues {
-                |     id
+                |     ... on Issue {
+                |       __typename__stubbed__key: __typename
+                |     }
+                |     ... on Task {
+                |       __typename__stubbed__key: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -36,11 +41,11 @@ public class StubFieldOnInterfaceOutput_IdOnlySnapshot : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "id": "123"
+                |         "__typename__stubbed__key": "Issue"
                 |       },
                 |       null,
                 |       {
-                |         "id": "456"
+                |         "__typename__stubbed__key": "Task"
                 |       }
                 |     ]
                 |   }
@@ -57,11 +62,11 @@ public class StubFieldOnInterfaceOutput_IdOnlySnapshot : TestSnapshot() {
      *   "data": {
      *     "issues": [
      *       {
-     *         "id": "123"
+     *         "key": null
      *       },
      *       null,
      *       {
-     *         "id": "456"
+     *         "key": null
      *       }
      *     ]
      *   }
@@ -74,11 +79,11 @@ public class StubFieldOnInterfaceOutput_IdOnlySnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "id": "123"
+            |         "key": null
             |       },
             |       null,
             |       {
-            |         "id": "456"
+            |         "key": null
             |       }
             |     ]
             |   }

@@ -3,47 +3,11 @@ package graphql.nadel.tests.next.fixtures.stub
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.SimpleClassNameTypeResolver
 
-class StubFieldOnInterfaceOutput_Id_KeyTask : StubFieldOnInterfaceOutput(
+class StubFieldOnOneInterfaceOutputTest : NadelIntegrationTest(
     query = """
-        {
+        query {
           issues {
             id
-            ... on Task {
-              key
-            }
-          }
-        }
-    """.trimIndent(),
-)
-
-class StubFieldOnInterfaceOutput_KeyOnTask : StubFieldOnInterfaceOutput(
-    query = """
-        {
-          issues {
-            ... on Task {
-              key
-            }
-          }
-        }
-    """.trimIndent(),
-)
-
-class StubFieldOnInterfaceOutput_KeyOnIssue : StubFieldOnInterfaceOutput(
-    query = """
-        {
-          issues {
-            ... on Issue {
-              key
-            }
-          }
-        }
-    """.trimIndent(),
-)
-
-class StubFieldOnInterfaceOutput_KeyOnIssueAndTask : StubFieldOnInterfaceOutput(
-    query = """
-        {
-          issues {
             ... on Issue {
               key
             }
@@ -53,20 +17,6 @@ class StubFieldOnInterfaceOutput_KeyOnIssueAndTask : StubFieldOnInterfaceOutput(
           }
         }
     """.trimIndent(),
-)
-
-class StubFieldOnInterfaceOutput_IdOnly : StubFieldOnInterfaceOutput(
-    query = """
-        {
-          issues {
-            id
-          }
-        }
-    """.trimIndent(),
-)
-
-abstract class StubFieldOnInterfaceOutput(query: String) : NadelIntegrationTest(
-    query = query,
     services = listOf(
         Service(
             name = "myService",
@@ -84,7 +34,7 @@ abstract class StubFieldOnInterfaceOutput(query: String) : NadelIntegrationTest(
                 }
                 type Issue implements IssueLike {
                   id: ID!
-                  key: String @stubbed
+                  key: String
                   title: String
                   description: String
                 }
@@ -102,6 +52,7 @@ abstract class StubFieldOnInterfaceOutput(query: String) : NadelIntegrationTest(
                 }
                 type Issue implements IssueLike {
                   id: ID!
+                  key: String
                   title: String
                   description: String
                 }
@@ -109,6 +60,7 @@ abstract class StubFieldOnInterfaceOutput(query: String) : NadelIntegrationTest(
             runtimeWiring = { wiring ->
                 data class Issue(
                     val id: String,
+                    val key: String,
                     val title: String,
                     val description: String,
                 )
@@ -129,6 +81,7 @@ abstract class StubFieldOnInterfaceOutput(query: String) : NadelIntegrationTest(
                                     Issue(
                                         id = "123",
                                         title = "Wow an issue",
+                                        key = "Wow",
                                         description = "Stop procrastinating and do the work",
                                     ),
                                     null,

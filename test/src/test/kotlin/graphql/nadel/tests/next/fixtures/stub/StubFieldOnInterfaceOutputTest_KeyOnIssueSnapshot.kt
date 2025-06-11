@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutput_KeyOnIssueAndTask>()
+    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutputTest_KeyOnIssue>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubFieldOnInterfaceOutput_KeyOnIssueAndTaskSnapshot : TestSnapshot() {
+public class StubFieldOnInterfaceOutputTest_KeyOnIssueSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "myService",
@@ -27,9 +27,6 @@ public class StubFieldOnInterfaceOutput_KeyOnIssueAndTaskSnapshot : TestSnapshot
                 | {
                 |   issues {
                 |     ... on Issue {
-                |       __typename__stubbed__key: __typename
-                |     }
-                |     ... on Task {
                 |       __typename__stubbed__key: __typename
                 |     }
                 |   }
@@ -44,9 +41,7 @@ public class StubFieldOnInterfaceOutput_KeyOnIssueAndTaskSnapshot : TestSnapshot
                 |         "__typename__stubbed__key": "Issue"
                 |       },
                 |       null,
-                |       {
-                |         "__typename__stubbed__key": "Task"
-                |       }
+                |       {}
                 |     ]
                 |   }
                 | }
@@ -65,9 +60,7 @@ public class StubFieldOnInterfaceOutput_KeyOnIssueAndTaskSnapshot : TestSnapshot
      *         "key": null
      *       },
      *       null,
-     *       {
-     *         "key": null
-     *       }
+     *       {}
      *     ]
      *   }
      * }
@@ -82,9 +75,7 @@ public class StubFieldOnInterfaceOutput_KeyOnIssueAndTaskSnapshot : TestSnapshot
             |         "key": null
             |       },
             |       null,
-            |       {
-            |         "key": null
-            |       }
+            |       {}
             |     ]
             |   }
             | }

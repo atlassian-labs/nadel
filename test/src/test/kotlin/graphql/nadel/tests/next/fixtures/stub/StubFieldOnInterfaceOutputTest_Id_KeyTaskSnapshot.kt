@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutput_KeyOnIssue>()
+    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutputTest_Id_KeyTask>()
 }
 
 /**
@@ -19,14 +19,15 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubFieldOnInterfaceOutput_KeyOnIssueSnapshot : TestSnapshot() {
+public class StubFieldOnInterfaceOutputTest_Id_KeyTaskSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "myService",
                 query = """
                 | {
                 |   issues {
-                |     ... on Issue {
+                |     id
+                |     ... on Task {
                 |       __typename__stubbed__key: __typename
                 |     }
                 |   }
@@ -38,10 +39,13 @@ public class StubFieldOnInterfaceOutput_KeyOnIssueSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "__typename__stubbed__key": "Issue"
+                |         "id": "123"
                 |       },
                 |       null,
-                |       {}
+                |       {
+                |         "id": "456",
+                |         "__typename__stubbed__key": "Task"
+                |       }
                 |     ]
                 |   }
                 | }
@@ -57,10 +61,13 @@ public class StubFieldOnInterfaceOutput_KeyOnIssueSnapshot : TestSnapshot() {
      *   "data": {
      *     "issues": [
      *       {
-     *         "key": null
+     *         "id": "123"
      *       },
      *       null,
-     *       {}
+     *       {
+     *         "id": "456",
+     *         "key": null
+     *       }
      *     ]
      *   }
      * }
@@ -72,10 +79,13 @@ public class StubFieldOnInterfaceOutput_KeyOnIssueSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "key": null
+            |         "id": "123"
             |       },
             |       null,
-            |       {}
+            |       {
+            |         "id": "456",
+            |         "key": null
+            |       }
             |     ]
             |   }
             | }

@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutput_KeyOnTask>()
+    graphql.nadel.tests.next.update<StubFieldOnInterfaceOutputTest_IdOnly>()
 }
 
 /**
@@ -19,16 +19,14 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubFieldOnInterfaceOutput_KeyOnTaskSnapshot : TestSnapshot() {
+public class StubFieldOnInterfaceOutputTest_IdOnlySnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "myService",
                 query = """
                 | {
                 |   issues {
-                |     ... on Task {
-                |       __typename__stubbed__key: __typename
-                |     }
+                |     id
                 |   }
                 | }
                 """.trimMargin(),
@@ -37,10 +35,12 @@ public class StubFieldOnInterfaceOutput_KeyOnTaskSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "issues": [
-                |       {},
+                |       {
+                |         "id": "123"
+                |       },
                 |       null,
                 |       {
-                |         "__typename__stubbed__key": "Task"
+                |         "id": "456"
                 |       }
                 |     ]
                 |   }
@@ -56,10 +56,12 @@ public class StubFieldOnInterfaceOutput_KeyOnTaskSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "issues": [
-     *       {},
+     *       {
+     *         "id": "123"
+     *       },
      *       null,
      *       {
-     *         "key": null
+     *         "id": "456"
      *       }
      *     ]
      *   }
@@ -71,10 +73,12 @@ public class StubFieldOnInterfaceOutput_KeyOnTaskSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "issues": [
-            |       {},
+            |       {
+            |         "id": "123"
+            |       },
             |       null,
             |       {
-            |         "key": null
+            |         "id": "456"
             |       }
             |     ]
             |   }

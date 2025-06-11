@@ -3,11 +3,47 @@ package graphql.nadel.tests.next.fixtures.stub
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.SimpleClassNameTypeResolver
 
-class StubOneInterfaceImplementationFieldTest : NadelIntegrationTest(
+class StubFieldOnInterfaceOutputTest_Id_KeyTask : StubFieldOnInterfaceOutputTest(
     query = """
-        query {
+        {
           issues {
             id
+            ... on Task {
+              key
+            }
+          }
+        }
+    """.trimIndent(),
+)
+
+class StubFieldOnInterfaceOutputTest_KeyOnTask : StubFieldOnInterfaceOutputTest(
+    query = """
+        {
+          issues {
+            ... on Task {
+              key
+            }
+          }
+        }
+    """.trimIndent(),
+)
+
+class StubFieldOnInterfaceOutputTest_KeyOnIssue : StubFieldOnInterfaceOutputTest(
+    query = """
+        {
+          issues {
+            ... on Issue {
+              key
+            }
+          }
+        }
+    """.trimIndent(),
+)
+
+class StubFieldOnInterfaceOutputTest_KeyOnIssueAndTask : StubFieldOnInterfaceOutputTest(
+    query = """
+        {
+          issues {
             ... on Issue {
               key
             }
@@ -17,6 +53,20 @@ class StubOneInterfaceImplementationFieldTest : NadelIntegrationTest(
           }
         }
     """.trimIndent(),
+)
+
+class StubFieldOnInterfaceOutputTest_IdOnly : StubFieldOnInterfaceOutputTest(
+    query = """
+        {
+          issues {
+            id
+          }
+        }
+    """.trimIndent(),
+)
+
+abstract class StubFieldOnInterfaceOutputTest(query: String) : NadelIntegrationTest(
+    query = query,
     services = listOf(
         Service(
             name = "myService",
@@ -34,7 +84,7 @@ class StubOneInterfaceImplementationFieldTest : NadelIntegrationTest(
                 }
                 type Issue implements IssueLike {
                   id: ID!
-                  key: String
+                  key: String @stubbed
                   title: String
                   description: String
                 }
@@ -52,7 +102,6 @@ class StubOneInterfaceImplementationFieldTest : NadelIntegrationTest(
                 }
                 type Issue implements IssueLike {
                   id: ID!
-                  key: String
                   title: String
                   description: String
                 }
@@ -60,7 +109,6 @@ class StubOneInterfaceImplementationFieldTest : NadelIntegrationTest(
             runtimeWiring = { wiring ->
                 data class Issue(
                     val id: String,
-                    val key: String,
                     val title: String,
                     val description: String,
                 )
@@ -81,7 +129,6 @@ class StubOneInterfaceImplementationFieldTest : NadelIntegrationTest(
                                     Issue(
                                         id = "123",
                                         title = "Wow an issue",
-                                        key = "Wow",
                                         description = "Stop procrastinating and do the work",
                                     ),
                                     null,
