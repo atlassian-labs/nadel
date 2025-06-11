@@ -26,6 +26,6 @@ open class BenchmarkTestBase {
     fun execute() {
         nadel = test.makeNadel()
             .build()
-        nadel.execute(executionInput)
+        nadel.execute(executionInput).get()
     }
 }
