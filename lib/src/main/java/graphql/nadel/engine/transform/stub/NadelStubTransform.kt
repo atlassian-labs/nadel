@@ -55,15 +55,16 @@ class NadelStubTransform : NadelTransform<StubState> {
         field: ExecutableNormalizedField,
         state: StubState,
     ): NadelTransformFieldResult {
-        val remainingObjectTypeNames = field.objectTypeNames - state.stubByObjectTypeNames.keys
+        // When stubbing interface fields, we allow some implementations to be stubbed, other fields can be real impls
+        val objectTypesWithRealFieldImplementations = field.objectTypeNames - state.stubByObjectTypeNames.keys
 
         return NadelTransformFieldResult(
-            newField = if (remainingObjectTypeNames.isEmpty()) {
+            newField = if (objectTypesWithRealFieldImplementations.isEmpty()) {
                 null
             } else {
                 field.toBuilder()
                     .clearObjectTypesNames()
-                    .objectTypeNames(remainingObjectTypeNames.toList())
+                    .objectTypeNames(objectTypesWithRealFieldImplementations.toList())
                     .build()
             },
             artificialFields = listOfNotNull(

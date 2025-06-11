@@ -87,6 +87,13 @@ data class NadelInstructionDefinitionRegistry(
         return getStubbedOrNull(coords(container, field)) != null
     }
 
+    fun isStubbed(
+        container: GraphQLFieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): Boolean {
+        return getStubbedOrNull(container.coordinates().field(field.name)) != null
+    }
+
     fun isStubbed(container: NadelServiceSchemaElement.Object): Boolean {
         return isStubbed(container.overall)
     }

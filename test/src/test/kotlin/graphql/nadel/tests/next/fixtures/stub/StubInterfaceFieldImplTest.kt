@@ -3,7 +3,7 @@ package graphql.nadel.tests.next.fixtures.stub
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.tests.next.SimpleClassNameTypeResolver
 
-class StubInterfaceFieldTest : NadelIntegrationTest(
+class StubInterfaceFieldImplTest : NadelIntegrationTest(
     query = """
         {
           myWork {
@@ -14,6 +14,12 @@ class StubInterfaceFieldTest : NadelIntegrationTest(
           }
           task {
             key
+            ... on Task {
+              whatTodo
+            }
+            ... on Issue {
+              whatsTheIssue
+            }
           }
         }
     """.trimIndent(),
@@ -23,20 +29,17 @@ class StubInterfaceFieldTest : NadelIntegrationTest(
             overallSchema = """
                 type Query {
                   myWork: [WorkItem]
-                  issue: Task
-                  task: Issue
+                  issue: WorkItem
+                  task: WorkItem
                 }
                 interface WorkItem {
-                  id: ID!
-                  key: String @stubbed
+                  key: String
                 }
                 type Issue implements WorkItem {
-                  id: ID!
-                  key: String @stubbed
+                  key: String
                   whatsTheIssue: String
                 }
                 type Task implements WorkItem {
-                  id: ID!
                   key: String @stubbed
                   whatTodo: String
                 }
@@ -44,18 +47,18 @@ class StubInterfaceFieldTest : NadelIntegrationTest(
             underlyingSchema = """
                 type Query {
                   myWork: [WorkItem]
-                  issue: Task
-                  task: Issue
+                  issue: WorkItem
+                  task: WorkItem
                 }
                 interface WorkItem {
-                  id: ID!
+                  key: String
                 }
                 type Issue implements WorkItem {
-                  id: ID!
+                  key: String
                   whatsTheIssue: String
                 }
                 type Task implements WorkItem {
-                  id: ID!
+                  key: String
                   whatTodo: String
                 }
             """.trimIndent(),
@@ -63,12 +66,12 @@ class StubInterfaceFieldTest : NadelIntegrationTest(
                 abstract class WorkItem
 
                 data class Task(
-                    val id: String,
+                    val key: String? = null,
                     val whatTodo: String,
                 ) : WorkItem()
 
                 data class Issue(
-                    val id: String,
+                    val key: String,
                     val whatsTheIssue: String,
                 ) : WorkItem()
 
@@ -78,15 +81,15 @@ class StubInterfaceFieldTest : NadelIntegrationTest(
                             .dataFetcher("myWork") { env ->
                                 listOf(
                                     Task(
-                                        id = "1",
+                                        key = "iunno",
                                         whatTodo = "Implement task key",
                                     ),
                                     Issue(
-                                        id = "2",
+                                        key = "HELLO",
                                         whatsTheIssue = "Nothing",
                                     ),
                                     Issue(
-                                        id = "3",
+                                        key = "BYE",
                                         whatsTheIssue = "Nothing",
                                     ),
                                     null,
@@ -95,24 +98,19 @@ class StubInterfaceFieldTest : NadelIntegrationTest(
                                 )
                             }
                             .dataFetcher("task") { env ->
-                                Issue(
-                                    id = "4",
-                                    whatsTheIssue = "Implement task key",
+                                Task(
+                                    key = "iunno",
+                                    whatTodo = "Implement task key",
                                 )
                             }
                             .dataFetcher("issue") { env ->
                                 Task(
-                                    id = "5",
+                                    key = "iunno",
                                     whatTodo = "SIKE",
                                 )
                             }
                     }
                     .type("Task") { type ->
-                        type.dataFetcher("key") {
-                            throw UnsupportedOperationException("Not implemented")
-                        }
-                    }
-                    .type("Issue") { type ->
                         type.dataFetcher("key") {
                             throw UnsupportedOperationException("Not implemented")
                         }

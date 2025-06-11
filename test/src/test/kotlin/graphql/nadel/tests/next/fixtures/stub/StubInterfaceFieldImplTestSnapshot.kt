@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubInterfaceFieldTest>()
+    graphql.nadel.tests.next.update<StubInterfaceFieldImplTest>()
 }
 
 /**
@@ -19,14 +19,19 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
+public class StubInterfaceFieldImplTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "myService",
                 query = """
                 | {
                 |   issue {
-                |     __typename__stubbed__key: __typename
+                |     ... on Issue {
+                |       key
+                |     }
+                |     ... on Task {
+                |       __typename__stubbed__key: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -48,7 +53,12 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   myWork {
-                |     __typename__stubbed__key: __typename
+                |     ... on Issue {
+                |       key
+                |     }
+                |     ... on Task {
+                |       __typename__stubbed__key: __typename
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -61,10 +71,10 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
                 |         "__typename__stubbed__key": "Task"
                 |       },
                 |       {
-                |         "__typename__stubbed__key": "Issue"
+                |         "key": "HELLO"
                 |       },
                 |       {
-                |         "__typename__stubbed__key": "Issue"
+                |         "key": "BYE"
                 |       },
                 |       null,
                 |       null,
@@ -81,7 +91,14 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   task {
-                |     __typename__stubbed__key: __typename
+                |     ... on Issue {
+                |       key
+                |       whatsTheIssue
+                |     }
+                |     ... on Task {
+                |       __typename__stubbed__key: __typename
+                |       whatTodo
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -90,7 +107,8 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "task": {
-                |       "__typename__stubbed__key": "Issue"
+                |       "__typename__stubbed__key": "Task",
+                |       "whatTodo": "Implement task key"
                 |     }
                 |   }
                 | }
@@ -109,10 +127,10 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
      *         "key": null
      *       },
      *       {
-     *         "key": null
+     *         "key": "HELLO"
      *       },
      *       {
-     *         "key": null
+     *         "key": "BYE"
      *       },
      *       null,
      *       null,
@@ -122,6 +140,7 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
      *       "key": null
      *     },
      *     "task": {
+     *       "whatTodo": "Implement task key",
      *       "key": null
      *     }
      *   }
@@ -137,10 +156,10 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
             |         "key": null
             |       },
             |       {
-            |         "key": null
+            |         "key": "HELLO"
             |       },
             |       {
-            |         "key": null
+            |         "key": "BYE"
             |       },
             |       null,
             |       null,
@@ -150,6 +169,7 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
             |       "key": null
             |     },
             |     "task": {
+            |       "whatTodo": "Implement task key",
             |       "key": null
             |     }
             |   }

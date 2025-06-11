@@ -419,6 +419,7 @@ class NadelStubbedValidationTest {
         // Then
         assertTrue(errors.isEmpty())
     }
+
     @Test
     fun `stubbed type can be used as output type for root level field`() {
         val fixture = NadelValidationTestFixture(
@@ -436,6 +437,162 @@ class NadelStubbedValidationTest {
                 "jira" to """
                     type Query {
                         echo: String
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `stubbed fields on interface type must also be stubbed on implementing types`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    interface Person {
+                        address: Address @stubbed
+                    }
+                    type Human implements Person {
+                        address: Address @stubbed
+                    }
+                    type Monkey implements Person {
+                        address: Address @stubbed
+                    }
+                    type Address {
+                        street: String
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    interface Person {
+                        name: String
+                    }
+                    type Human implements Person {
+                        name: String
+                    }
+                    type Monkey implements Person {
+                        name: String
+                    }
+                    type Address {
+                        street: String
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `error if stubbed interface field is not stubbed on an implementation`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    interface Person {
+                        address: Address @stubbed
+                    }
+                    type Human implements Person {
+                        address: Address
+                    }
+                    type Monkey implements Person {
+                        address: Address @stubbed
+                    }
+                    type Address {
+                        street: String
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    interface Person {
+                        name: String
+                    }
+                    type Human implements Person {
+                        name: String
+                        address: Address
+                    }
+                    type Monkey implements Person {
+                        name: String
+                    }
+                    type Address {
+                        street: String
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelStubbedMissingOnConcreteType>()
+        assertTrue(error.interfaceType.overall.name == "Person")
+        assertTrue(error.objectType.name == "Human")
+        assertTrue(error.objectField.name == "address")
+    }
+
+    @Test
+    fun `stubbed type can be used as output for interface field`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    interface Person {
+                        address: Address
+                    }
+                    type Human implements Person {
+                        address: Address
+                    }
+                    type Monkey implements Person {
+                        address: Address
+                    }
+                    type Address @stubbed {
+                        street: String
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    interface Person {
+                        name: String
+                    }
+                    type Human implements Person {
+                        name: String
+                    }
+                    type Monkey implements Person {
+                        name: String
+                    }
+                    type Address {
+                        street: String
                     }
                 """.trimIndent(),
             )

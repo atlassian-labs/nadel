@@ -7,6 +7,7 @@ import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.whenType
 import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 
 class NadelStubbedValidation {
@@ -30,9 +31,7 @@ class NadelStubbedValidation {
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult? {
-        return if (instructionDefinitions.isStubbed(parent, overallField)) {
-            validateStubbedField(parent, overallField)
-        } else if (isOutputTypeStubbed(overallField)) {
+        return if (isStubbed(parent, overallField)) {
             validateStubbedField(parent, overallField)
         } else {
             null
@@ -52,12 +51,34 @@ class NadelStubbedValidation {
             return NadelStubbedMustBeNullableError(parent, overallField)
         }
 
+        if (parent is NadelServiceSchemaElement.Interface) {
+            return validateInterfaceStub(parent, overallField.name)
+        }
+
         return NadelValidatedFieldResult(
             service = parent.service,
             fieldInstruction = NadelStubbedInstruction(
                 location = makeFieldCoordinates(parent.overall, overallField),
             ),
         )
+    }
+
+    context(NadelValidationContext)
+    private fun validateInterfaceStub(
+        interfaceType: NadelServiceSchemaElement.Interface,
+        fieldName: String,
+    ): NadelSchemaValidationResult {
+        return engineSchema.getImplementations(interfaceType.overall)
+            .asSequence()
+            .map { objectType ->
+                val objectField = objectType.getField(fieldName)!!
+                if (isStubbed(objectType, objectField)) {
+                    ok()
+                } else {
+                    NadelStubbedMissingOnConcreteType(interfaceType, objectType, objectField)
+                }
+            }
+            .toResult()
     }
 
     context(NadelValidationContext)
@@ -78,5 +99,21 @@ class NadelStubbedValidation {
         overallField: GraphQLFieldDefinition,
     ): Boolean {
         return instructionDefinitions.hasOtherInstructions<NadelStubbedDefinition>(parent, overallField)
+    }
+
+    context(NadelValidationContext)
+    private fun isStubbed(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        overallField: GraphQLFieldDefinition,
+    ): Boolean {
+        return isStubbed(parent.overall, overallField)
+    }
+
+    context(NadelValidationContext)
+    private fun isStubbed(
+        parent: GraphQLFieldsContainer,
+        overallField: GraphQLFieldDefinition,
+    ): Boolean {
+        return instructionDefinitions.isStubbed(parent, overallField) || isOutputTypeStubbed(overallField)
     }
 }
