@@ -178,6 +178,7 @@ internal class NadelInstructionDefinitionParser(
                             }
                         }
 
+                        type.parseStubbedOrNull()?.also(definitions::add)
                         type.parseRenamedOrNull()?.also(definitions::add)
                         type.parseDefaultHydrationOrNull()?.also(definitions::add)
                         if (type.hasVirtualTypeDefinition()) {

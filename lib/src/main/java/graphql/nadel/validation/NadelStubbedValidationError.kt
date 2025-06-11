@@ -8,7 +8,7 @@ data class NadelStubbedOnNonNullFieldError(
     val field: GraphQLFieldDefinition,
 ) : NadelSchemaValidationError {
     override val message: String =
-        "Field ${type.overall.name}.${field.name} used @stubbed so its output type must be nullable"
+        "Field ${type.overall.name}.${field.name} is @stubbed so its output type must be nullable"
     override val subject: GraphQLNamedSchemaElement = field
 }
 
@@ -17,6 +17,13 @@ data class NadelStubbedMustBeUsedExclusively(
     val field: GraphQLFieldDefinition,
 ) : NadelSchemaValidationError {
     override val message: String =
-        "Field ${type.overall.name}.${field.name} used @stubbed with an incompatible @transform"
+        "Field ${type.overall.name}.${field.name} is @stubbed with an incompatible @transform"
     override val subject: GraphQLNamedSchemaElement = field
+}
+
+data class NadelStubbedTypeMustNotImplementError(
+    val type: NadelServiceSchemaElement.StubbedType,
+) : NadelSchemaValidationError {
+    override val message: String = "Type ${type.overall.name} is @stubbed and so it cannot implement any interfaces"
+    override val subject: GraphQLNamedSchemaElement = type.overall
 }

@@ -16,6 +16,7 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLObjectType
 
 data class NadelInstructionDefinitionRegistry(
     private val definitions: Map<NadelSchemaMemberCoordinates, List<NadelInstructionDefinition>>,
@@ -85,6 +86,14 @@ data class NadelInstructionDefinitionRegistry(
         return getStubbedOrNull(coords(container, field)) != null
     }
 
+    fun isStubbed(container: NadelServiceSchemaElement.Object): Boolean {
+        return isStubbed(container.overall)
+    }
+
+    fun isStubbed(container: GraphQLObjectType): Boolean {
+        return getStubbedOrNull(container.coordinates()) != null
+    }
+
     fun getRenamedOrNull(
         container: GraphQLFieldsContainer,
         field: GraphQLFieldDefinition,
@@ -110,6 +119,15 @@ data class NadelInstructionDefinitionRegistry(
     }
 
     fun getStubbedOrNull(coords: NadelFieldCoordinates): NadelStubbedDefinition? {
+        val definitions = definitions[coords]
+            ?: return null
+
+        return definitions.asSequence()
+            .filterIsInstance<NadelStubbedDefinition>()
+            .firstOrNull()
+    }
+
+    fun getStubbedOrNull(coords: NadelObjectCoordinates): NadelStubbedDefinition? {
         val definitions = definitions[coords]
             ?: return null
 

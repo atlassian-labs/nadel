@@ -21,8 +21,6 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.GraphQLAppliedDirective
-import graphql.schema.GraphQLDirectiveContainer
 
 class NadelStubTransform : NadelTransform<StubState> {
     data class StubState(
@@ -59,7 +57,6 @@ class NadelStubTransform : NadelTransform<StubState> {
         field: ExecutableNormalizedField,
         state: StubState,
     ): NadelTransformFieldResult {
-        // Hmm, is this necessary?
         val remainingObjectTypeNames = field.objectTypeNames - state.stubByObjectTypeNames.keys
 
         return NadelTransformFieldResult(

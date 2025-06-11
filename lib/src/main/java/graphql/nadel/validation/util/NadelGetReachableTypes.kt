@@ -3,6 +3,7 @@ package graphql.nadel.validation.util
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.stubbed.hasStubbedDefinition
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelSchemaTraverser
 import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
@@ -23,6 +24,10 @@ internal sealed class NadelReferencedType {
     abstract val name: String
 
     data class OrdinaryType(
+        override val name: String,
+    ) : NadelReferencedType()
+
+    data class StubbedType(
         override val name: String,
     ) : NadelReferencedType()
 
@@ -59,6 +64,10 @@ private class NadelReferencedTypeVisitor(
 ) : NadelSchemaTraverserVisitor {
     fun onTypeReferenced(name: String) {
         onTypeReferenced(NadelReferencedType.OrdinaryType(name))
+    }
+
+    fun onStubbedTypeReferenced(stubbedType: String) {
+        onTypeReferenced(NadelReferencedType.StubbedType(stubbedType))
     }
 
     fun onVirtualTypeReferenced(virtualType: String, backingType: String) {
@@ -196,9 +205,13 @@ private class NadelReferencedTypeVisitor(
     override fun visitGraphQLObjectType(
         element: NadelSchemaTraverserElement.ObjectType,
     ): Boolean {
-        visitTypeGuard(element) { return false }
+        visitTypeGuard(element, exitOnStubbedType = false) { return false }
         val node = element.node
-        onTypeReferenced(node.name)
+        if (node.hasStubbedDefinition()) {
+            onStubbedTypeReferenced(node.name)
+        } else {
+            onTypeReferenced(node.name)
+        }
         return true
     }
 
@@ -239,10 +252,18 @@ private class NadelReferencedTypeVisitor(
      * The [onExit] lambda is not intended to return, so it is typed to [Nothing]
      * i.e. use [onExit] to actually exit the outer function to escape the lambda
      */
-    private inline fun visitTypeGuard(element: NadelSchemaTraverserElement.Type, onExit: () -> Nothing) {
+    private inline fun visitTypeGuard(
+        element: NadelSchemaTraverserElement.Type,
+        exitOnVirtualType: Boolean = true,
+        exitOnStubbedType: Boolean = true,
+        onExit: () -> Nothing,
+    ) {
         val type = element.node
         if (type is GraphQLDirectiveContainer) {
-            if (type.hasVirtualTypeDefinition()) {
+            if (exitOnVirtualType && type.hasVirtualTypeDefinition()) {
+                onExit()
+            }
+            if (exitOnStubbedType && type.hasStubbedDefinition()) {
                 onExit()
             }
         }

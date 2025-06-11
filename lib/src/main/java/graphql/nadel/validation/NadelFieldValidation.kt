@@ -8,8 +8,6 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenamePartitionedField
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
@@ -87,18 +85,21 @@ class NadelFieldValidation internal constructor(
             validateRename(parent, overallField)
         } else if (instructionDefinitions.isHydrated(parent, overallField)) {
             hydrationValidation.validate(parent, overallField)
-        } else if (instructionDefinitions.isStubbed(parent, overallField)) {
-            stubbedValidation.validate(parent, overallField)
         } else {
-            val underlyingField = parent.underlying.getField(overallField.name)
-            if (underlyingField == null) {
-                MissingUnderlyingField(parent, overallField = overallField)
+            val stub = stubbedValidation.validateOrNull(parent, overallField)
+            if (stub != null) {
+                stub
             } else {
-                validate(
-                    parent,
-                    overallField = overallField,
-                    underlyingField = underlyingField,
-                )
+                val underlyingField = parent.underlying.getField(overallField.name)
+                if (underlyingField == null) {
+                    MissingUnderlyingField(parent, overallField = overallField)
+                } else {
+                    validate(
+                        parent,
+                        overallField = overallField,
+                        underlyingField = underlyingField,
+                    )
+                }
             }
         }
     }

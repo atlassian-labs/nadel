@@ -16,7 +16,6 @@ class StubTest : NadelIntegrationTest(
         Service(
             name = "myService",
             overallSchema = """
-                directive @stubbed on FIELD_DEFINITION
                 type Query {
                   issue: Issue
                 }

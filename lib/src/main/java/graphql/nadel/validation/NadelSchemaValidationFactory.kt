@@ -17,6 +17,7 @@ abstract class NadelSchemaValidationFactory {
 
         return NadelSchemaValidation(
             typeValidation = NadelTypeValidation(
+                stubbedValidation = stubbedValidation,
                 fieldValidation = fieldValidation,
                 inputObjectValidation = inputObjectValidation,
                 unionValidation = unionValidation,

@@ -85,6 +85,14 @@ sealed class NadelServiceSchemaElement {
         override val underlying: GraphQLNamedType,
     ) : Type()
 
+    data class StubbedType(
+        override val service: Service,
+        override val overall: GraphQLNamedType,
+    ) : Type() {
+        override val underlying: GraphQLNamedType
+            get() = overall // Uh, yeah? Idk man
+    }
+
     companion object {
         fun from(
             service: Service,

@@ -21,7 +21,6 @@ class StubOneInterfaceImplementationFieldTest : NadelIntegrationTest(
         Service(
             name = "myService",
             overallSchema = """
-                directive @stubbed on FIELD_DEFINITION
                 type Query {
                   issues: [IssueLike]
                 }

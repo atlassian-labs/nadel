@@ -20,6 +20,7 @@ import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLUnionType
 
 internal class NadelTypeValidation(
+    private val stubbedValidation: NadelStubbedValidation,
     private val fieldValidation: NadelFieldValidation,
     private val inputObjectValidation: NadelInputObjectValidation,
     private val unionValidation: NadelUnionValidation,
@@ -132,6 +133,9 @@ internal class NadelTypeValidation(
             is NadelServiceSchemaElement.VirtualType -> {
                 virtualTypeValidation.validate(schemaElement)
             }
+            is NadelServiceSchemaElement.StubbedType -> {
+                stubbedValidation.validate(schemaElement)
+            }
         }
 
         return results(
@@ -197,6 +201,13 @@ internal class NadelTypeValidation(
                                 underlying = underlyingType,
                             )
                         }
+                    }
+                    is NadelReferencedType.StubbedType -> {
+                        val stubbedType = engineSchema.typeMap[referencedType.name]!!
+                        NadelServiceSchemaElement.StubbedType(
+                            service = service,
+                            overall = stubbedType,
+                        )
                     }
                     is NadelReferencedType.VirtualType -> {
                         val virtualType = engineSchema.typeMap[referencedType.name]!!
