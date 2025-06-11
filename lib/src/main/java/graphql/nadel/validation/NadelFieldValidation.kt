@@ -86,21 +86,25 @@ class NadelFieldValidation internal constructor(
         } else if (instructionDefinitions.isHydrated(parent, overallField)) {
             hydrationValidation.validate(parent, overallField)
         } else {
-            val stub = stubbedValidation.validateOrNull(parent, overallField)
-            if (stub != null) {
-                stub
-            } else {
-                val underlyingField = parent.underlying.getField(overallField.name)
-                if (underlyingField == null) {
-                    MissingUnderlyingField(parent, overallField = overallField)
-                } else {
-                    validate(
-                        parent,
-                        overallField = overallField,
-                        underlyingField = underlyingField,
-                    )
-                }
-            }
+            stubbedValidation.validateOrNull(parent, overallField)
+                ?: validatePassthroughField(parent, overallField)
+        }
+    }
+
+    context(NadelValidationContext)
+    private fun validatePassthroughField(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        overallField: GraphQLFieldDefinition,
+    ): NadelSchemaValidationResult {
+        val underlyingField = parent.underlying.getField(overallField.name)
+        return if (underlyingField == null) {
+            MissingUnderlyingField(parent, overallField = overallField)
+        } else {
+            validate(
+                parent,
+                overallField = overallField,
+                underlyingField = underlyingField,
+            )
         }
     }
 

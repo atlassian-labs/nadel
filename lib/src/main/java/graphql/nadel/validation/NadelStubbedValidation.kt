@@ -21,6 +21,9 @@ class NadelStubbedValidation {
         return ok()
     }
 
+    /**
+     * @return null if field is not stubbed, stub validation result otherwise
+     */
     context(NadelValidationContext)
     fun validateOrNull(
         parent: NadelServiceSchemaElement.FieldsContainer,
@@ -59,24 +62,12 @@ class NadelStubbedValidation {
     context(NadelValidationContext)
     private fun isOutputTypeStubbed(field: GraphQLFieldDefinition): Boolean {
         return field.type.unwrapAll().whenType(
-            enumType = {
-                false
-            },
-            inputObjectType = {
-                false
-            },
-            interfaceType = {
-                false
-            },
-            objectType = {
-                instructionDefinitions.isStubbed(it)
-            },
-            scalarType = {
-                false
-            },
-            unionType = {
-                false
-            },
+            enumType = { false },
+            inputObjectType = { false },
+            interfaceType = { false }, // Stubbed types cannot be part of hierarchies for now…
+            objectType = instructionDefinitions::isStubbed,
+            scalarType = { false },
+            unionType = { false },
         )
     }
 

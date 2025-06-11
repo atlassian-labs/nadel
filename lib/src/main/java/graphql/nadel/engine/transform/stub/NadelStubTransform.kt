@@ -24,9 +24,7 @@ import graphql.normalized.ExecutableNormalizedField
 
 class NadelStubTransform : NadelTransform<StubState> {
     data class StubState(
-        // todo: replace with other
-        val stubByObjectTypeNames: Map<String, NadelStubbedInstruction?>,
-        // val stubByObjectTypeNames: Map<String, NadelStubbedInstruction>,
+        val stubByObjectTypeNames: Map<String, NadelStubbedInstruction>,
         val aliasHelper: NadelAliasHelper,
     )
 
