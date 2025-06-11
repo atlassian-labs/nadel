@@ -22,7 +22,7 @@ import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 
-class NadelStubTransform : NadelTransform<StubState> {
+internal class NadelStubTransform : NadelTransform<StubState> {
     data class StubState(
         val stubByObjectTypeNames: Map<String, NadelStubbedInstruction>,
         val aliasHelper: NadelAliasHelper,
