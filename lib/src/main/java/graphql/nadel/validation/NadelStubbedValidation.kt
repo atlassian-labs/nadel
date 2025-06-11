@@ -24,7 +24,7 @@ internal class NadelStubbedValidation {
     }
 
     /**
-     * @return null if field is not stubbed, stub validation result otherwise
+     * @return null if field is not stubbed, otherwise return stub validation result
      */
     context(NadelValidationContext)
     fun validateOrNull(
