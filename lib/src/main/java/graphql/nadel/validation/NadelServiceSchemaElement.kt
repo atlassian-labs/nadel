@@ -90,7 +90,7 @@ sealed class NadelServiceSchemaElement {
         override val overall: GraphQLNamedType,
     ) : Type() {
         override val underlying: GraphQLNamedType
-            get() = overall // Uh, yeah? Idk man
+            get() = overall // Ok this is a bit of a hack, because there is no underlying element. It should be ok
     }
 
     companion object {

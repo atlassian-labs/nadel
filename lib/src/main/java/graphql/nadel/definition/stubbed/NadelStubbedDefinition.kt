@@ -17,7 +17,13 @@ class NadelStubbedDefinition(
         val directiveDefinition = parseDefinition<DirectiveDefinition>(
             // language=GraphQL
             """
-                "Allows you to introduce stubbed fields or types"
+                ""${'"'}
+                Allows you to introduce stubbed fields or types.
+
+                Stubbed fields or fields that return stubbed types _always_ return null.
+
+                Stubbed fields are meant to allow frontend clients consume new schema elements earlier so that they can iterate faster.
+                ""${'"'}
                 directive @stubbed on FIELD_DEFINITION | OBJECT
             """.trimIndent(),
         )

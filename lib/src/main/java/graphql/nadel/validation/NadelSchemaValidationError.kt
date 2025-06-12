@@ -342,7 +342,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            "Overall field $of must not use @renamed with other incompatible @transforms"
+            "Overall field $of must not use @renamed with other incompatible @transforms e.g. @hydrated or @partition etc."
         }
 
         override val subject = overallField
@@ -356,7 +356,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            "Overall field $of must not use @hydrated with other field @transforms"
+            "Overall field $of must not use @hydrated with other field @transforms e.g. @renamed or @partition etc."
         }
 
         override val subject = overallField
