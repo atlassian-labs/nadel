@@ -43,7 +43,7 @@ import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationMustBeUsedExclusively
 import graphql.nadel.validation.NadelSchemaValidationResult
 import graphql.nadel.validation.NadelServiceSchemaElement
 import graphql.nadel.validation.NadelValidatedFieldResult
@@ -88,8 +88,8 @@ class NadelHydrationValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (instructionDefinitions.isRenamed(parent, virtualField)) {
-            return CannotRenameHydratedField(parent, virtualField)
+        if (hasIncompatibleInstructions(parent, virtualField)) {
+            return HydrationMustBeUsedExclusively(parent, virtualField)
         }
 
         val hydrations = instructionDefinitions.getHydrationDefinitions(parent, virtualField).toList()
@@ -102,6 +102,14 @@ class NadelHydrationValidation internal constructor(
             virtualField = virtualField,
             hydrations = hydrations,
         )
+    }
+
+    context(NadelValidationContext)
+    private fun hasIncompatibleInstructions(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        virtualField: GraphQLFieldDefinition,
+    ): Boolean {
+        return instructionDefinitions.hasInstructionsOtherThan<NadelHydrationDefinition>(parent, virtualField)
     }
 
     context(NadelValidationContext)

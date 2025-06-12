@@ -7,6 +7,7 @@ import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseHydrationDefinitions
 import graphql.nadel.definition.partition.parsePartitionOrNull
 import graphql.nadel.definition.renamed.parseRenamedOrNull
+import graphql.nadel.definition.stubbed.parseStubbedOrNull
 import graphql.nadel.definition.virtualType.NadelVirtualTypeDefinition
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelSchemaTraverser
@@ -88,6 +89,11 @@ internal class NadelInstructionDefinitionParser(
                         val rename = node.parseRenamedOrNull()
                         if (rename != null) {
                             addAll(listOf(rename))
+                        }
+
+                        val stub = node.parseStubbedOrNull()
+                        if (stub != null) {
+                            addAll(listOf(stub))
                         }
 
                         val partition = node.parsePartitionOrNull()
@@ -172,6 +178,7 @@ internal class NadelInstructionDefinitionParser(
                             }
                         }
 
+                        type.parseStubbedOrNull()?.also(definitions::add)
                         type.parseRenamedOrNull()?.also(definitions::add)
                         type.parseDefaultHydrationOrNull()?.also(definitions::add)
                         if (type.hasVirtualTypeDefinition()) {

@@ -145,3 +145,7 @@ data class NadelPartitionInstruction(
     override val location: FieldCoordinates,
     val pathToPartitionArg: List<String>,
 ) : NadelFieldInstruction()
+
+data class NadelStubbedInstruction(
+    override val location: FieldCoordinates,
+) : NadelFieldInstruction()

@@ -8,13 +8,12 @@ import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenamePartitionedField
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
+import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.schema.GraphQLFieldDefinition
@@ -22,6 +21,7 @@ import graphql.schema.GraphQLNamedSchemaElement
 
 class NadelFieldValidation internal constructor(
     private val hydrationValidation: NadelHydrationValidation,
+    private val stubbedValidation: NadelStubbedValidation,
     private val partitionValidation: NadelPartitionValidation,
     private val assignableTypeValidation: NadelAssignableTypeValidation,
 ) {
@@ -81,6 +81,12 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
+        // Check stub with priority, stubbed fields cannot be anything else
+        val stub = stubbedValidation.validateOrNull(parent, overallField)
+        if (stub != null) {
+            return stub
+        }
+
         return if (instructionDefinitions.isRenamed(parent, overallField)) {
             validateRename(parent, overallField)
         } else if (instructionDefinitions.isHydrated(parent, overallField)) {
@@ -140,12 +146,8 @@ class NadelFieldValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         overallField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (instructionDefinitions.isHydrated(parent, overallField)) {
-            return CannotRenameHydratedField(parent, overallField)
-        }
-
-        if (instructionDefinitions.isPartitioned(parent, overallField)) {
-            return CannotRenamePartitionedField(parent, overallField)
+        if (instructionDefinitions.hasInstructionsOtherThan<NadelRenamedDefinition>(parent, overallField)) {
+            return RenameMustBeUsedExclusively(parent, overallField)
         }
 
         val rename = instructionDefinitions.getRenamedOrNull(parent, overallField)

@@ -17,6 +17,7 @@ import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransfo
 import graphql.nadel.engine.transform.partition.NadelPartitionTransform
 import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform
 import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.Companion.isSkipIncludeSpecialField
+import graphql.nadel.engine.transform.stub.NadelStubTransform
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
@@ -134,6 +135,7 @@ internal class NadelExecutionPlanFactory(
                     NadelSkipIncludeTransform(),
                     NadelServiceTypeFilterTransform(),
                     NadelPartitionTransform(engine, executionHooks.partitionTransformerHook()),
+                    NadelStubTransform(),
                     *transforms.toTypedArray(),
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),

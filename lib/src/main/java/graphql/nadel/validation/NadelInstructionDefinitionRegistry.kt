@@ -11,10 +11,13 @@ import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
+import graphql.nadel.definition.stubbed.NadelStubbedDefinition
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLObjectType
+import kotlin.reflect.KClass
 
 data class NadelInstructionDefinitionRegistry(
     private val definitions: Map<NadelSchemaMemberCoordinates, List<NadelInstructionDefinition>>,
@@ -77,6 +80,28 @@ data class NadelInstructionDefinitionRegistry(
         return getRenamedOrNull(coords(container, field)) != null
     }
 
+    fun isStubbed(
+        container: NadelServiceSchemaElement.FieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): Boolean {
+        return getStubbedOrNull(coords(container, field)) != null
+    }
+
+    fun isStubbed(
+        container: GraphQLFieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): Boolean {
+        return getStubbedOrNull(container.coordinates().field(field.name)) != null
+    }
+
+    fun isStubbed(container: NadelServiceSchemaElement.Object): Boolean {
+        return isStubbed(container.overall)
+    }
+
+    fun isStubbed(container: GraphQLObjectType): Boolean {
+        return getStubbedOrNull(container.coordinates()) != null
+    }
+
     fun getRenamedOrNull(
         container: GraphQLFieldsContainer,
         field: GraphQLFieldDefinition,
@@ -98,6 +123,24 @@ data class NadelInstructionDefinitionRegistry(
 
         return definitions.asSequence()
             .filterIsInstance<NadelRenamedDefinition.Field>()
+            .firstOrNull()
+    }
+
+    fun getStubbedOrNull(coords: NadelFieldCoordinates): NadelStubbedDefinition? {
+        val definitions = definitions[coords]
+            ?: return null
+
+        return definitions.asSequence()
+            .filterIsInstance<NadelStubbedDefinition>()
+            .firstOrNull()
+    }
+
+    fun getStubbedOrNull(coords: NadelObjectCoordinates): NadelStubbedDefinition? {
+        val definitions = definitions[coords]
+            ?: return null
+
+        return definitions.asSequence()
+            .filterIsInstance<NadelStubbedDefinition>()
             .firstOrNull()
     }
 
@@ -134,6 +177,21 @@ data class NadelInstructionDefinitionRegistry(
         return getPartitionedOrNull(coords(container, field)) != null
     }
 
+    inline fun <reified T : NadelInstructionDefinition> hasInstructionsOtherThan(
+        container: NadelServiceSchemaElement.FieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): Boolean {
+        return hasInstructionsOtherThan(T::class, container, field)
+    }
+
+    fun <T : NadelInstructionDefinition> hasInstructionsOtherThan(
+        instructionType: KClass<T>,
+        container: NadelServiceSchemaElement.FieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): Boolean {
+        return hasInstructionsOtherThan(instructionType, coords(container, field))
+    }
+
     fun getPartitionedOrNull(
         container: NadelServiceSchemaElement.FieldsContainer,
         field: GraphQLFieldDefinition,
@@ -158,6 +216,25 @@ data class NadelInstructionDefinitionRegistry(
         return definitions.asSequence()
             .filterIsInstance<NadelPartitionDefinition>()
             .firstOrNull()
+    }
+
+    inline fun <reified T : NadelInstructionDefinition> hasInstructionsOtherThan(
+        coords: NadelFieldCoordinates,
+    ): Boolean {
+        return hasInstructionsOtherThan(T::class, coords)
+    }
+
+    fun <T : NadelInstructionDefinition> hasInstructionsOtherThan(
+        instructionType: KClass<T>,
+        coords: NadelFieldCoordinates,
+    ): Boolean {
+        val instructions = definitions[coords] ?: return false
+        return instructions
+            .asSequence()
+            .filterNot {
+                instructionType.isInstance(it)
+            }
+            .any()
     }
 
     fun hasDefaultHydration(

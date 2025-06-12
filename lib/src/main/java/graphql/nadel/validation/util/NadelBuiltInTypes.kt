@@ -21,6 +21,7 @@ import graphql.nadel.schema.NadelDirectives.nadelHydrationResultFieldPredicateDe
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.partitionDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.stubbedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.virtualTypeDirectiveDefinition
 
 object NadelBuiltInTypes {
@@ -57,6 +58,7 @@ object NadelBuiltInTypes {
         virtualTypeDirectiveDefinition,
         defaultHydrationDirectiveDefinition,
         idHydratedDirectiveDefinition,
+        stubbedDirectiveDefinition,
     ).mapTo(LinkedHashSet()) {
         it.name
     }
