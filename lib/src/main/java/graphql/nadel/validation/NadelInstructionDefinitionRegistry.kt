@@ -16,7 +16,6 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
-import graphql.schema.GraphQLObjectType
 import kotlin.reflect.KClass
 
 data class NadelInstructionDefinitionRegistry(
@@ -98,7 +97,7 @@ data class NadelInstructionDefinitionRegistry(
         return isStubbed(container.overall)
     }
 
-    fun isStubbed(container: GraphQLObjectType): Boolean {
+    fun isStubbed(container: GraphQLNamedType): Boolean {
         return getStubbedOrNull(container.coordinates()) != null
     }
 
@@ -135,7 +134,7 @@ data class NadelInstructionDefinitionRegistry(
             .firstOrNull()
     }
 
-    fun getStubbedOrNull(coords: NadelObjectCoordinates): NadelStubbedDefinition? {
+    fun getStubbedOrNull(coords: NadelTypeCoordinates): NadelStubbedDefinition? {
         val definitions = definitions[coords]
             ?: return null
 

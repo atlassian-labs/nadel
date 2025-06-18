@@ -24,7 +24,7 @@ class NadelStubbedDefinition(
 
                 Stubbed fields are meant to allow frontend clients consume new schema elements earlier so that they can iterate faster.
                 ""${'"'}
-                directive @stubbed on FIELD_DEFINITION | OBJECT
+                directive @stubbed on FIELD_DEFINITION | OBJECT | INPUT_OBJECT
             """.trimIndent(),
         )
     }

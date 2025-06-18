@@ -29,7 +29,7 @@ class StubRootMutationFieldTest : NadelIntegrationTest(
                   success: Boolean
                   issue: Issue
                 }
-                input CreateLlmBackedIssueInput {
+                input CreateLlmBackedIssueInput @stubbed {
                   prompt: String
                 }
                 type Issue {
@@ -50,9 +50,6 @@ class StubRootMutationFieldTest : NadelIntegrationTest(
                   id: ID!
                   title: String
                   description: String
-                }
-                input CreateLlmBackedIssueInput {
-                  prompt: String
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->

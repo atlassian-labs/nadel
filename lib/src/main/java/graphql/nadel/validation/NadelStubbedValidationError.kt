@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLNamedInputType
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLObjectType
 
@@ -29,7 +30,7 @@ data class NadelStubbedTypeMustNotImplementError(
     override val subject: GraphQLNamedSchemaElement = type.overall
 }
 
-data class NadelStubbedMissingOnConcreteType(
+data class NadelStubbedMissingOnConcreteTypeError(
     val interfaceType: NadelServiceSchemaElement.Interface,
     val objectType: GraphQLObjectType,
     val objectField: GraphQLFieldDefinition,
@@ -37,4 +38,14 @@ data class NadelStubbedMissingOnConcreteType(
     override val message: String =
         "Field ${objectField.name} was @stubbed on interface ${interfaceType.overall.name} but not on object type ${objectType.name}"
     override val subject: GraphQLNamedSchemaElement = objectField
+}
+
+data class NadelStubbedInputTypeUsedByNotStubbedFieldError(
+    val parent: NadelServiceSchemaElement.FieldsContainer,
+    val field: GraphQLFieldDefinition,
+    val stubbedInputType: GraphQLNamedInputType,
+) : NadelSchemaValidationError {
+    override val message: String =
+        "Field ${parent.overall.name}.${field.name} is not @stubbed but uses @stubbed input type ${stubbedInputType.name}"
+    override val subject: GraphQLNamedSchemaElement = field
 }

@@ -7,6 +7,7 @@ import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.makeFieldCoordinates
+import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
@@ -16,7 +17,9 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingFiel
 import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
+import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLNamedInputType
 import graphql.schema.GraphQLNamedSchemaElement
 
 class NadelFieldValidation internal constructor(
@@ -113,25 +116,12 @@ class NadelFieldValidation internal constructor(
     ): NadelSchemaValidationResult {
         val argumentIssues = overallField.arguments
             .map { overallArg ->
-                val underlyingArg = underlyingField.getArgument(overallArg.name)
-                if (underlyingArg == null) {
-                    MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg)
-                } else {
-                    val isArgumentTypeAssignable = assignableTypeValidation.isInputTypeAssignable(
-                        overallType = overallArg.type,
-                        underlyingType = underlyingArg.type
-                    )
-                    if (isArgumentTypeAssignable) {
-                        ok()
-                    } else {
-                        IncompatibleArgumentInputType(
-                            parentType = parent,
-                            overallField = overallField,
-                            overallInputArg = overallArg,
-                            underlyingInputArg = underlyingArg,
-                        )
-                    }
-                }
+                validateFieldArgument(
+                    parent = parent,
+                    overallField = overallField,
+                    underlyingField = underlyingField,
+                    overallArg = overallArg,
+                )
             }
             .toResult()
 
@@ -139,6 +129,42 @@ class NadelFieldValidation internal constructor(
         val partitionDirectiveIssues = partitionValidation.validate(parent, overallField)
 
         return results(argumentIssues, outputTypeIssues, partitionDirectiveIssues)
+    }
+
+    context(NadelValidationContext)
+    private fun validateFieldArgument(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        overallField: GraphQLFieldDefinition,
+        underlyingField: GraphQLFieldDefinition,
+        overallArg: GraphQLArgument,
+    ): NadelSchemaValidationResult {
+        val underlyingArg = underlyingField.getArgument(overallArg.name)
+            ?: return MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg)
+
+        val argumentTypeAssignable = assignableTypeValidation.isInputTypeAssignable(
+            overallType = overallArg.type,
+            underlyingType = underlyingArg.type
+        )
+
+        if (!argumentTypeAssignable) {
+            return IncompatibleArgumentInputType(
+                parentType = parent,
+                overallField = overallField,
+                overallInputArg = overallArg,
+                underlyingInputArg = underlyingArg,
+            )
+        }
+
+        val overallArgType = overallArg.type.unwrapAll() as GraphQLNamedInputType
+        if (instructionDefinitions.isStubbed(overallArgType)) {
+            return NadelStubbedInputTypeUsedByNotStubbedFieldError(
+                parent = parent,
+                field = overallField,
+                stubbedInputType = overallArgType,
+            )
+        }
+
+        return ok()
     }
 
     context(NadelValidationContext)
