@@ -2,6 +2,9 @@ package graphql.nadel.tests.next.fixtures.stub
 
 import graphql.nadel.tests.next.NadelIntegrationTest
 
+/**
+ * `Issue.key` is the stubbed field.
+ */
 class StubFieldInMutationOperationTest : NadelIntegrationTest(
     query = """
         mutation {

@@ -3,7 +3,9 @@ package graphql.nadel.tests.next.fixtures.stub
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
- * Hmm this isn't great because you can't apply `@stubbed` to input objects.
+ * `Mutation.createLlmBackedIssue` is the stubbed field.
+ *
+ * Hmm, this isn't great because you can't apply `@stubbed` to input objects.
  */
 class StubRootMutationFieldTest : NadelIntegrationTest(
     query = """
