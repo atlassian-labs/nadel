@@ -549,7 +549,7 @@ class NadelStubbedValidationTest {
         // Then
         assertTrue(errors.isNotEmpty())
 
-        val error = errors.assertSingleOfType<NadelStubbedMissingOnConcreteType>()
+        val error = errors.assertSingleOfType<NadelStubbedMissingOnConcreteTypeError>()
         assertTrue(error.interfaceType.overall.name == "Person")
         assertTrue(error.objectType.name == "Human")
         assertTrue(error.objectField.name == "address")
@@ -603,5 +603,130 @@ class NadelStubbedValidationTest {
 
         // Then
         assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `can stub input types`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Mutation {
+                        stub(input: StubInput): StubPayload
+                    }
+                    input StubInput @stubbed {
+                        field: String
+                    }
+                    type StubPayload @stubbed {
+                        success: Boolean
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Mutation {
+                        _nothing: String
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `stubbed fields can use not-stubbed input types`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Mutation {
+                        stub(input: ExistingInput): StubPayload
+                    }
+                    input ExistingInput {
+                        field: String
+                    }
+                    type StubPayload @stubbed {
+                        success: Boolean
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Mutation {
+                        _nothing(input: ExistingInput): String
+                    }
+                    input ExistingInput {
+                        field: String
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `non stubbed fields cannot use stubbed input types`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Mutation {
+                        stub(input: StubInput!): StubPayload
+                    }
+                    input StubInput @stubbed {
+                        field: String
+                    }
+                    type StubPayload {
+                        success: Boolean
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Mutation {
+                        stub(input: StubInput!): StubPayload
+                    }
+                    input StubInput {
+                        field: String
+                    }
+                    type StubPayload {
+                        success: Boolean
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelStubbedInputTypeUsedByNotStubbedFieldError>()
+        assertTrue(error.parent.overall.name == "Mutation")
+        assertTrue(error.field.name == "stub")
+        assertTrue(error.stubbedInputType.name == "StubInput")
     }
 }

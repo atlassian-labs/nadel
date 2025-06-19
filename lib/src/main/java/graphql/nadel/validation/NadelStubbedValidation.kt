@@ -75,7 +75,7 @@ internal class NadelStubbedValidation {
                 if (isStubbed(objectType, objectField)) {
                     ok()
                 } else {
-                    NadelStubbedMissingOnConcreteType(interfaceType, objectType, objectField)
+                    NadelStubbedMissingOnConcreteTypeError(interfaceType, objectType, objectField)
                 }
             }
             .toResult()
