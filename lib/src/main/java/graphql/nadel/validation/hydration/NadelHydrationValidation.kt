@@ -569,13 +569,13 @@ class NadelHydrationValidation internal constructor(
             ?: return null
 
         val overallResultType = backingField.type.unwrapAll() as? GraphQLFieldsContainer
-            ?: return null
+            ?: return null // Handled elsewhere
         val underlyingSchema = backingFieldService.underlyingSchema
         val underlyingTypeName = instructionDefinitions.getUnderlyingTypeName(overallResultType)
-        val underlyingResultType = underlyingSchema.getType(underlyingTypeName) as GraphQLFieldsContainer
+        val underlyingResultType = underlyingSchema.getType(underlyingTypeName) as? GraphQLFieldsContainer
+            ?: return null // Handled elsewhere
 
         return underlyingResultType.getField(resultIdFieldName)
-            ?: return null
     }
 
     context(NadelValidationContext)
