@@ -3,7 +3,6 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
-import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
@@ -13,7 +12,6 @@ data class NadelExecutionHints(
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
     val deferSupport: NadelDeferSupportHint,
-    val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
     val virtualTypeSupport: NadelVirtualTypeSupportHint,
 ) {
@@ -33,7 +31,6 @@ data class NadelExecutionHints(
         private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
         private var deferSupport = NadelDeferSupportHint { false }
         private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
-        private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
 
         constructor()
@@ -42,7 +39,9 @@ data class NadelExecutionHints(
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
+            deferSupport = nadelExecutionHints.deferSupport
             shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
+            virtualTypeSupport = nadelExecutionHints.virtualTypeSupport
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -70,11 +69,6 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun sharedTypeRenames(flag: NadelSharedTypeRenamesHint): Builder {
-            sharedTypeRenames = flag
-            return this
-        }
-
         fun virtualTypeSupport(flag: NadelVirtualTypeSupportHint): Builder {
             virtualTypeSupport = flag
             return this
@@ -86,7 +80,6 @@ data class NadelExecutionHints(
                 allDocumentVariablesHint,
                 newResultMergerAndNamespacedTypename,
                 deferSupport,
-                sharedTypeRenames,
                 shortCircuitEmptyQuery,
                 virtualTypeSupport,
             )
