@@ -1,0 +1,30 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Network nodes representing distributed services -->
+  <circle cx="30" cy="30" r="8" fill="#2563eb" opacity="0.8"/>
+  <circle cx="90" cy="30" r="8" fill="#2563eb" opacity="0.8"/>
+  <circle cx="30" cy="90" r="8" fill="#2563eb" opacity="0.8"/>
+  <circle cx="90" cy="90" r="8" fill="#2563eb" opacity="0.8"/>
+  
+  <!-- Central gateway node -->
+  <circle cx="60" cy="60" r="12" fill="#1d4ed8"/>
+  
+  <!-- Connection lines -->
+  <line x1="30" y1="30" x2="60" y2="60" stroke="#64748b" stroke-width="2" opacity="0.6"/>
+  <line x1="90" y1="30" x2="60" y2="60" stroke="#64748b" stroke-width="2" opacity="0.6"/>
+  <line x1="30" y1="90" x2="60" y2="60" stroke="#64748b" stroke-width="2" opacity="0.6"/>
+  <line x1="90" y1="90" x2="60" y2="60" stroke="#64748b" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Data flow indicators -->
+  <circle cx="45" cy="45" r="2" fill="#3b82f6">
+    <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="75" cy="45" r="2" fill="#3b82f6">
+    <animate attributeName="opacity" values="0;1;0" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="45" cy="75" r="2" fill="#3b82f6">
+    <animate attributeName="opacity" values="0;1;0" dur="2s" begin="1s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="75" cy="75" r="2" fill="#3b82f6">
+    <animate attributeName="opacity" values="0;1;0" dur="2s" begin="1.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>
