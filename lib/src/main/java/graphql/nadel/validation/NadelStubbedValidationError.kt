@@ -49,3 +49,12 @@ data class NadelStubbedInputTypeUsedByNotStubbedFieldError(
         "Field ${parent.overall.name}.${field.name} is not @stubbed but uses @stubbed input type ${stubbedInputType.name}"
     override val subject: GraphQLNamedSchemaElement = field
 }
+
+data class NadelUnionMustNotReferenceStubbedObjectTypeError(
+    val union: NadelServiceSchemaElement.Union,
+    val stubbedObjectType: GraphQLObjectType,
+) : NadelSchemaValidationError {
+    override val message: String =
+        "Union ${union.overall.name} must not use stubbed object type ${stubbedObjectType.name}"
+    override val subject: GraphQLNamedSchemaElement = union.overall
+}

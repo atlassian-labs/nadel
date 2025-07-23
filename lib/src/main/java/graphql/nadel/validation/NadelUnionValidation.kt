@@ -21,7 +21,7 @@ class NadelUnionValidation internal constructor() {
             .map { memberOverallType ->
                 validateUnionMember(
                     parent = schemaElement,
-                    memberOverallType = memberOverallType,
+                    memberOverallType = memberOverallType as GraphQLObjectType,
                 )
             }
             .toResult()
@@ -30,8 +30,12 @@ class NadelUnionValidation internal constructor() {
     context(NadelValidationContext)
     private fun validateUnionMember(
         parent: NadelServiceSchemaElement.Union,
-        memberOverallType: GraphQLNamedOutputType,
+        memberOverallType: GraphQLObjectType,
     ): NadelSchemaValidationResult {
+        if (instructionDefinitions.isStubbed(memberOverallType)) {
+            return NadelUnionMustNotReferenceStubbedObjectTypeError(parent, memberOverallType)
+        }
+
         val memberUnderlyingType = NadelSchemaUtil.getUnderlyingType(memberOverallType, parent.service)
 
         return if (memberUnderlyingType == null) {
@@ -43,7 +47,7 @@ class NadelUnionValidation internal constructor() {
             UnionHasExtraType(
                 service = parent.service,
                 unionType = parent.overall,
-                extraType = memberOverallType as GraphQLObjectType,
+                extraType = memberOverallType,
             )
         } else {
             ok()
