@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
     id("com.bnorm.power.kotlin-power-assert")
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 dependencies {
@@ -22,6 +23,11 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.1")
     testImplementation("com.google.guava:guava:33.1.0-jre")
     testImplementation("com.squareup:kotlinpoet:1.16.0")
+    
+    // JMH dependencies
+    jmh("org.openjdk.jmh:jmh-core:1.37")
+    jmh("org.openjdk.jmh:jmh-generator-annprocess:1.37")
+    jmhAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.37")
 }
 
 tasks.withType<Test> {
@@ -44,4 +50,8 @@ tasks.withType<KotlinCompile>().configureEach {
 configure<PowerAssertGradleExtension> {
     // WARNING: do NOT touch this unless you have read https://github.com/bnorm/kotlin-power-assert/issues/55
     functions = listOf("kotlin.assert", "kotlin.test.assertTrue", "kotlin.test.assertFalse")
+}
+
+tasks.named<Jar>("jmhJar") {
+    destinationDirectory.set(file("$rootDir/build/libs"))
 }
