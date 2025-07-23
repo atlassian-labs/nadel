@@ -2,9 +2,13 @@ package graphql.nadel.validation
 
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
+import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
 import org.junit.jupiter.api.Test
+import kotlin.test.assertTrue
 
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
@@ -348,7 +352,7 @@ class NadelHydrationValidationTest {
         val errors = validate(fixture)
         assert(errors.map { it.message }.isNotEmpty())
 
-        val error = errors.assertSingleOfType<CannotRenameHydratedField>()
+        val error = errors.assertSingleOfType<RenameMustBeUsedExclusively>()
         assert(error.parentType.overall.name == "JiraIssue")
         assert(error.parentType.underlying.name == "Issue")
         assert(error.overallField.name == "creator")
@@ -1275,5 +1279,61 @@ class NadelHydrationValidationTest {
 
         val errors = validate(fixture)
         assert(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `can handle case where backing field type does not exist`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "issues" to """
+                    type Query {
+                        issues(ids: [ID!]!): [JiraIssue]
+                    }
+                    type JiraIssue @defaultHydration(field: "issues", idArgument: "ids") {
+                        id: ID!
+                        key: String!
+                    }
+                """.trimIndent(),
+                "users" to """
+                    type Query {
+                        me: User
+                    }
+                    type User {
+                        issueIds: [ID!]!
+                        issues: [JiraIssue] @idHydrated(idField: "issueIds")
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "issues" to """
+                    type Query {
+                        issues(ids: [ID!]!): [Issue]
+                    }
+                    type Issue {
+                        id: ID!
+                        key: String!
+                    }
+                """.trimIndent(),
+                "users" to """
+                    type Query {
+                        me: User
+                    }
+                    type User {
+                        issueIds: [ID!]!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+
+        assert(errors.map { it.message }.isNotEmpty())
+        assert(errors.map { it.message }.size == 2)
+
+        val missingUnderlyingType = errors.assertSingleOfType<MissingUnderlyingType>()
+        assertTrue(missingUnderlyingType.overallType.name == "JiraIssue")
+
+        val incompatibleFieldOutputType = errors.assertSingleOfType<IncompatibleFieldOutputType>()
+        assertTrue(incompatibleFieldOutputType.overallField.name == "issues")
     }
 }

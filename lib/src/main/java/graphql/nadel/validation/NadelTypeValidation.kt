@@ -20,6 +20,7 @@ import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLUnionType
 
 internal class NadelTypeValidation(
+    private val stubbedValidation: NadelStubbedValidation,
     private val fieldValidation: NadelFieldValidation,
     private val inputObjectValidation: NadelInputObjectValidation,
     private val unionValidation: NadelUnionValidation,
@@ -80,6 +81,12 @@ internal class NadelTypeValidation(
             return ok()
         }
 
+        val implementsResult = if (schemaElement is NadelServiceSchemaElement.ImplementingType) {
+            interfaceValidation.validateImplements(schemaElement)
+        } else {
+            ok()
+        }
+
         val fieldsContainerResult = if (schemaElement is NadelServiceSchemaElement.FieldsContainer) {
             fieldValidation.validate(schemaElement)
         } else {
@@ -126,9 +133,13 @@ internal class NadelTypeValidation(
             is NadelServiceSchemaElement.VirtualType -> {
                 virtualTypeValidation.validate(schemaElement)
             }
+            is NadelServiceSchemaElement.StubbedType -> {
+                stubbedValidation.validate(schemaElement)
+            }
         }
 
         return results(
+            implementsResult,
             fieldsContainerResult,
             renameResult,
             defaultHydrationResult,
@@ -190,6 +201,13 @@ internal class NadelTypeValidation(
                                 underlying = underlyingType,
                             )
                         }
+                    }
+                    is NadelReferencedType.StubbedType -> {
+                        val stubbedType = engineSchema.typeMap[referencedType.name]!!
+                        NadelServiceSchemaElement.StubbedType(
+                            service = service,
+                            overall = stubbedType,
+                        )
                     }
                     is NadelReferencedType.VirtualType -> {
                         val virtualType = engineSchema.typeMap[referencedType.name]!!

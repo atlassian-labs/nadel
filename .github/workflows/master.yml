@@ -11,11 +11,12 @@ jobs:
 
     permissions:
       checks: write
-      contents: read
+      contents: write
       id-token: write
     env:
       SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      RELEASE_VERSION: 0.${{ github.run_id }}
 
     steps:
       - uses: actions/checkout@v1
@@ -32,8 +33,18 @@ jobs:
         with:
           output-modes: environment
 
-      - name: build test and publish
-        run: ./gradlew assemble && ./gradlew check --info && ./gradlew artifactoryPublish -x check --info
+      - name: Build and Test
+        run: ./gradlew assemble && ./gradlew check --info
+      - name: Publish
+        run: ./gradlew artifactoryPublish -x check --info
+      - uses: actions/checkout@v4
+      - name: Tag commit with release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${RELEASE_VERSION}" -m "Tag release ${RELEASE_VERSION}"
+          git push origin ${RELEASE_VERSION}
+
       - uses: actions/upload-artifact@v4
         with:
           name: my-artifact

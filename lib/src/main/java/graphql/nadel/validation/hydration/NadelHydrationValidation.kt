@@ -43,7 +43,7 @@ import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationMustBeUsedExclusively
 import graphql.nadel.validation.NadelSchemaValidationResult
 import graphql.nadel.validation.NadelServiceSchemaElement
 import graphql.nadel.validation.NadelValidatedFieldResult
@@ -88,8 +88,8 @@ class NadelHydrationValidation internal constructor(
         parent: NadelServiceSchemaElement.FieldsContainer,
         virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
-        if (instructionDefinitions.isRenamed(parent, virtualField)) {
-            return CannotRenameHydratedField(parent, virtualField)
+        if (hasIncompatibleInstructions(parent, virtualField)) {
+            return HydrationMustBeUsedExclusively(parent, virtualField)
         }
 
         val hydrations = instructionDefinitions.getHydrationDefinitions(parent, virtualField).toList()
@@ -102,6 +102,14 @@ class NadelHydrationValidation internal constructor(
             virtualField = virtualField,
             hydrations = hydrations,
         )
+    }
+
+    context(NadelValidationContext)
+    private fun hasIncompatibleInstructions(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        virtualField: GraphQLFieldDefinition,
+    ): Boolean {
+        return instructionDefinitions.hasInstructionsOtherThan<NadelHydrationDefinition>(parent, virtualField)
     }
 
     context(NadelValidationContext)
@@ -561,13 +569,13 @@ class NadelHydrationValidation internal constructor(
             ?: return null
 
         val overallResultType = backingField.type.unwrapAll() as? GraphQLFieldsContainer
-            ?: return null
+            ?: return null // Handled elsewhere
         val underlyingSchema = backingFieldService.underlyingSchema
         val underlyingTypeName = instructionDefinitions.getUnderlyingTypeName(overallResultType)
-        val underlyingResultType = underlyingSchema.getType(underlyingTypeName) as GraphQLFieldsContainer
+        val underlyingResultType = underlyingSchema.getType(underlyingTypeName) as? GraphQLFieldsContainer
+            ?: return null // Handled elsewhere
 
         return underlyingResultType.getField(resultIdFieldName)
-            ?: return null
     }
 
     context(NadelValidationContext)

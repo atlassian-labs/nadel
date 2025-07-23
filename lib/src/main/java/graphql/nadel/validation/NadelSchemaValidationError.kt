@@ -334,6 +334,34 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         override val subject = overallField
     }
 
+    data class RenameMustBeUsedExclusively(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Overall field $of must not use @renamed with other incompatible @transforms e.g. @hydrated or @partition etc."
+        }
+
+        override val subject = overallField
+    }
+
+    data class HydrationMustBeUsedExclusively(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Overall field $of must not use @hydrated with other field @transforms e.g. @renamed or @partition etc."
+        }
+
+        override val subject = overallField
+    }
+
     data class PartitionAppliedToUnsupportedField(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,

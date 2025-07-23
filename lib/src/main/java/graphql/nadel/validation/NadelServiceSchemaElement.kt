@@ -3,6 +3,7 @@ package graphql.nadel.validation
 import graphql.nadel.Service
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedSchemaElement
@@ -28,17 +29,22 @@ sealed class NadelServiceSchemaElement {
         abstract override val underlying: GraphQLFieldsContainer
     }
 
+    sealed class ImplementingType : FieldsContainer() {
+        abstract override val overall: GraphQLImplementingType
+        abstract override val underlying: GraphQLImplementingType
+    }
+
     data class Interface(
         override val service: Service,
         override val overall: GraphQLInterfaceType,
         override val underlying: GraphQLInterfaceType,
-    ) : FieldsContainer()
+    ) : ImplementingType()
 
     data class Object(
         override val service: Service,
         override val overall: GraphQLObjectType,
         override val underlying: GraphQLObjectType,
-    ) : FieldsContainer()
+    ) : ImplementingType()
 
     data class Union(
         override val service: Service,
@@ -78,6 +84,14 @@ sealed class NadelServiceSchemaElement {
          */
         override val underlying: GraphQLNamedType,
     ) : Type()
+
+    data class StubbedType(
+        override val service: Service,
+        override val overall: GraphQLNamedType,
+    ) : Type() {
+        override val underlying: GraphQLNamedType
+            get() = overall // Ok this is a bit of a hack, because there is no underlying element. It should be ok
+    }
 
     companion object {
         fun from(

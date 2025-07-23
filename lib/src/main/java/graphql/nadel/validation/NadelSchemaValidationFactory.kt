@@ -17,6 +17,7 @@ abstract class NadelSchemaValidationFactory {
 
         return NadelSchemaValidation(
             typeValidation = NadelTypeValidation(
+                stubbedValidation = stubbedValidation,
                 fieldValidation = fieldValidation,
                 inputObjectValidation = inputObjectValidation,
                 unionValidation = unionValidation,
@@ -32,6 +33,8 @@ abstract class NadelSchemaValidationFactory {
     }
 
     private val idHydrationDefinitionParser = NadelIdHydrationDefinitionParser()
+
+    private val stubbedValidation = NadelStubbedValidation()
 
     private val partitionValidation = NadelPartitionValidation()
 
@@ -59,6 +62,7 @@ abstract class NadelSchemaValidationFactory {
     private val fieldValidation = NadelFieldValidation(
         hydrationValidation = hydrationValidation,
         partitionValidation = partitionValidation,
+        stubbedValidation = stubbedValidation,
         assignableTypeValidation = assignableTypeValidation,
     )
 
