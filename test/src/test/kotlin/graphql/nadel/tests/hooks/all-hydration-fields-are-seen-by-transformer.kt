@@ -9,6 +9,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -33,6 +34,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Unit? {
                     isApplicable.add("${service.name}.${overallField.resultKey}")
@@ -47,6 +49,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Unit,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     transformField.add("${service.name}.${field.resultKey}")
                     return NadelTransformFieldResult.unmodified(field)
@@ -62,6 +65,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Unit,
                     nodes: JsonNodes,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     getResultInstructions.add("${service.name}.${overallField.resultKey}")
                     return emptyList()

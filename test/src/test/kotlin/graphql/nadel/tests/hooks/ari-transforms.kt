@@ -9,6 +9,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -30,6 +31,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Set<String>? {
         // Let's not bother with abstract types in a test
@@ -57,6 +59,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         service: Service,
         field: ExecutableNormalizedField,
         state: Set<String>,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         val fieldsArgsToInterpret = state
 
@@ -94,6 +97,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         result: ServiceExecutionResult,
         state: Set<String>,
         nodes: JsonNodes,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

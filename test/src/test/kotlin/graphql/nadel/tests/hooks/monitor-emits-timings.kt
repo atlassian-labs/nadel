@@ -12,6 +12,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -43,6 +44,7 @@ private class MonitorEmitsTimingsTransform(
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Unit? {
         delay(128)
@@ -57,6 +59,7 @@ private class MonitorEmitsTimingsTransform(
         service: Service,
         field: ExecutableNormalizedField,
         state: Unit,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         delay(256)
         return NadelTransformFieldResult.unmodified(field)
@@ -72,13 +75,14 @@ private class MonitorEmitsTimingsTransform(
         result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         delay(32)
         return listOf()
     }
 }
 
-private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
+private class JavaTimingTransform : NadelTransformJavaCompat<Unit, NadelTransformServiceExecutionContext> {
     override fun isApplicable(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,

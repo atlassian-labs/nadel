@@ -11,6 +11,7 @@ import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
@@ -62,13 +63,15 @@ internal class NadelExecutionPlanFactory(
         rootField: ExecutableNormalizedField,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
-        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
+        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any, NadelTransformServiceExecutionContext>>> =
             mutableMapOf()
-
+        val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
+            mutableMapOf()
         executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
+                    val executionTransformContext = transformContexts.getOrPut(transform) { transform.buildContext() }
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
                     // See NadelSkipIncludeTransform.isApplicable for more details
@@ -83,6 +86,7 @@ internal class NadelExecutionPlanFactory(
                                 services,
                                 service,
                                 field,
+                                executionTransformContext,
                                 serviceHydrationDetails,
                             )
                         }
@@ -97,6 +101,7 @@ internal class NadelExecutionPlanFactory(
                                 queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
                                 resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
                                 state = state,
+                                executionTransformContext
                             )
                         }
                     }

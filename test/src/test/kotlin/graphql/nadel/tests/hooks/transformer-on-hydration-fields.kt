@@ -9,6 +9,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -44,6 +45,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
                     return if (overallField.name == "barById") {
@@ -66,6 +68,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
                     return transformer.transform(field.children)
@@ -91,6 +94,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return emptyList()
                 }

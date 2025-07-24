@@ -88,6 +88,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         val deepRenameInstructions = executionBlueprint
@@ -161,6 +162,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
 
@@ -299,6 +301,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,

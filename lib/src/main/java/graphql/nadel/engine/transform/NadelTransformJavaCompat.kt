@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture
 /**
  * See [NadelTransform]
  */
-interface NadelTransformJavaCompat<State : Any> {
+interface NadelTransformJavaCompat<State : Any, ServiceExecutionTransformContext : NadelTransformServiceExecutionContext> {
     val name: String
         get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
 
@@ -66,23 +66,25 @@ interface NadelTransformJavaCompat<State : Any> {
     ): CompletableFuture<List<NadelResultInstruction>>
 
     /**
-     * See [NadelTransform.finalizeTransform]
+     * See [NadelTransform.onComplete]
      */
-    fun finalizeTransform(
+    fun onComplete(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         result: ServiceExecutionResult,
-        states: List<State>,
         nodes: JsonNodes,
+        context: ServiceExecutionTransformContext? = null,
     ): CompletableFuture<Void> {
         return CompletableFuture.completedFuture(null)
     }
 
     companion object {
         @JvmStatic
-        fun <State : Any> create(compat: NadelTransformJavaCompat<State>): NadelTransform<State> {
+        fun <State : Any, ServiceExecutionTransformContext : NadelTransformServiceExecutionContext> create(
+            compat: NadelTransformJavaCompat<State, ServiceExecutionTransformContext>,
+        ): NadelTransform<State> {
             return object : NadelTransform<State> {
                 override val name: String
                     get() = compat.name
@@ -94,6 +96,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): State? {
                     return compat.isApplicable(
@@ -115,6 +118,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: State,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     return coroutineScope {
                         val scope = this@coroutineScope
@@ -141,6 +145,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     result: ServiceExecutionResult,
                     state: State,
                     nodes: JsonNodes,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return compat.getResultInstructions(
                         executionContext = executionContext,
@@ -155,23 +160,22 @@ interface NadelTransformJavaCompat<State : Any> {
                     ).asDeferred().await()
                 }
 
-                override suspend fun finalizeTransform(
+                override suspend fun onComplete(
                     executionContext: NadelExecutionContext,
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     result: ServiceExecutionResult,
-                    states: List<State>,
                     nodes: JsonNodes,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ) {
-                    compat.finalizeTransform(
+                    compat.onComplete(
                         executionContext = executionContext,
                         serviceExecutionContext = serviceExecutionContext,
                         executionBlueprint = executionBlueprint,
                         service = service,
                         result = result,
-                        states = states,
-                        nodes = nodes,
+                        nodes = nodes
                     ).asDeferred().await()
                 }
             }

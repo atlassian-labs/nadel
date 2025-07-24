@@ -11,6 +11,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -102,7 +103,6 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         val isApplicable = Collections.synchronizedList(mutableListOf<String>())
         val transformField = Collections.synchronizedList(mutableListOf<String>())
         val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
-        val getFinaliseStates = Collections.synchronizedList(mutableListOf<String>())
 
         override fun toString(): String {
             return "ServiceExecutionContext(isApplicable=$isApplicable, transformField=$transformField, getResultInstructions=$getResultInstructions)"
@@ -146,6 +146,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             services: Map<String, graphql.nadel.Service>,
                             service: graphql.nadel.Service,
                             overallField: ExecutableNormalizedField,
+                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
                         ): ExecutableNormalizedField? {
                             (serviceExecutionContext as TestServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
@@ -160,6 +161,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             service: graphql.nadel.Service,
                             field: ExecutableNormalizedField,
                             state: ExecutableNormalizedField,
+                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                         ): NadelTransformFieldResult {
                             (serviceExecutionContext as TestServiceExecutionContext).transformField.add(field.toExecutionString())
                             return NadelTransformFieldResult.unmodified(field)
@@ -175,6 +177,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             result: ServiceExecutionResult,
                             state: ExecutableNormalizedField,
                             nodes: JsonNodes,
+                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                         ): List<NadelResultInstruction> {
                             (serviceExecutionContext as TestServiceExecutionContext).getResultInstructions.add(
                                 overallField.toExecutionString()
@@ -182,18 +185,16 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             return emptyList()
                         }
 
-                        override suspend fun finalizeTransform(
+                        override suspend fun onComplete(
                             executionContext: NadelExecutionContext,
                             serviceExecutionContext: NadelServiceExecutionContext,
                             executionBlueprint: NadelOverallExecutionBlueprint,
                             service: graphql.nadel.Service,
                             result: ServiceExecutionResult,
-                            states: List<ExecutableNormalizedField>,
                             nodes: JsonNodes,
+                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                         ) {
-                            (serviceExecutionContext as TestServiceExecutionContext).getFinaliseStates.addAll(
-                                states.map { it.toExecutionString() }
-                            )
+                            //todo
                         }
                     }
                 )
@@ -224,7 +225,6 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(me.isApplicable == expectedMeExecutions)
         assertTrue(me.transformField == expectedMeExecutions.dropLast(1)) // dropLast as child is removed due to hydration
         assertTrue(me.getResultInstructions.sorted() == expectedMeExecutions.dropLast(1).sorted())
-        assertTrue(me.getFinaliseStates == expectedMeExecutions.dropLast(1).sorted())
 
         val bug = serviceExecutionContexts.single {
             it.isApplicable.first().contains("bug")
@@ -236,7 +236,6 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(bug.isApplicable == expectedBugExecutions)
         assertTrue(bug.transformField == expectedBugExecutions)
         assertTrue(bug.getResultInstructions.sorted() == expectedBugExecutions.sorted())
-        assertTrue(bug.getFinaliseStates.sorted() == expectedBugExecutions.sorted())
 
         val hydration = serviceExecutionContexts.single {
             it.isApplicable.first().contains("9")
@@ -248,6 +247,5 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(hydration.isApplicable == expectedHydrationExecutions)
         assertTrue(hydration.transformField == expectedHydrationExecutions)
         assertTrue(hydration.getResultInstructions.sorted() == expectedHydrationExecutions.sorted())
-        assertTrue(hydration.getFinaliseStates.sorted() == expectedHydrationExecutions.sorted())
     }
 }

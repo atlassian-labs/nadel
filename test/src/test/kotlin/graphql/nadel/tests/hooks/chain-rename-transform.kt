@@ -10,6 +10,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -27,6 +28,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Any? {
         return overallField.takeIf { it.name == "test" || it.name == "cities" }
@@ -40,6 +42,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: Any,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         if (field.normalizedArguments["arg"] != null) {
             return NadelTransformFieldResult(
@@ -74,6 +77,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         result: ServiceExecutionResult,
         state: Any,
         nodes: JsonNodes,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

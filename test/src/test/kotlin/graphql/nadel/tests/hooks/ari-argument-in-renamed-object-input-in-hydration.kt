@@ -14,6 +14,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -43,6 +44,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
                     // Transforms arguments in IssueInput
@@ -61,6 +63,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     fun newInputObjectValue(projectId: String, issueId: String): ObjectValue {
                         return newObjectValue()
@@ -108,6 +111,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return emptyList()
                 }
@@ -121,6 +125,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): GraphQLAppliedDirective? {
                     return overallField
@@ -137,6 +142,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: GraphQLAppliedDirective,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult.unmodified(field)
                 }
@@ -151,6 +157,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: GraphQLAppliedDirective,
                     nodes: JsonNodes,
+                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     val parentNodes = nodes.getNodesAt(
                         underlyingParentField?.queryPath ?: NadelQueryPath.root,

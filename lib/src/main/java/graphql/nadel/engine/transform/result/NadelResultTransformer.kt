@@ -104,7 +104,8 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                                         underlyingFields.first().parent,
                                         result,
                                         step.state,
-                                        nodes
+                                        nodes,
+                                        step.context
                                     )
                                 }
                             }
@@ -130,16 +131,15 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                     transformToStates.getOrPut(step.transform) { mutableListOf() }.add(step.state)
                 }
             }
-            val finalizeJobs = transformToStates.map { (transform, states) ->
+            val finalizeJobs = transformToStates.map { (transform, _) ->
                 async {
-                    transform.finalizeTransform(
+                    transform.onComplete(
                         executionContext,
                         serviceExecutionContext,
                         executionBlueprint,
                         service,
                         result,
-                        states,
-                        nodes
+                        nodes,
                     )
                 }
             }

@@ -8,6 +8,7 @@ import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 
@@ -86,17 +87,18 @@ class NadelQueryTransformer private constructor(
     suspend fun transform(
         field: ExecutableNormalizedField,
     ): List<ExecutableNormalizedField> {
-        val transformationSteps: List<NadelExecutionPlan.Step<Any>> = executionPlan.transformationSteps[field]
-            ?: return listOf(
-                transformPlain(field)
-            )
+        val transformationSteps: List<NadelExecutionPlan.Step<Any, NadelTransformServiceExecutionContext>> =
+            executionPlan.transformationSteps[field]
+                ?: return listOf(
+                    transformPlain(field)
+                )
 
         return transform(field, transformationSteps)
     }
 
     private suspend fun transform(
         field: ExecutableNormalizedField,
-        transformationSteps: List<NadelExecutionPlan.Step<Any>>,
+        transformationSteps: List<NadelExecutionPlan.Step<Any, NadelTransformServiceExecutionContext>>,
     ): List<ExecutableNormalizedField> {
         val transformResult = applyTransformationSteps(field, transformationSteps)
 
@@ -159,7 +161,7 @@ class NadelQueryTransformer private constructor(
 
     private suspend fun applyTransformationSteps(
         field: ExecutableNormalizedField,
-        transformationSteps: List<NadelExecutionPlan.Step<Any>>,
+        transformationSteps: List<NadelExecutionPlan.Step<Any, NadelTransformServiceExecutionContext>>,
     ): NadelTransformFieldResult {
         var newField: ExecutableNormalizedField = field
         val artificialFields = mutableListOf<ExecutableNormalizedField>()
@@ -174,6 +176,7 @@ class NadelQueryTransformer private constructor(
                     service,
                     newField,
                     transformStep.state,
+                    transformStep.context
                 )
             }
             artificialFields.addAll(transformResultForStep.artificialFields)

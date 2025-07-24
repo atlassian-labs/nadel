@@ -12,12 +12,28 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.normalized.ExecutableNormalizedField
 
-interface NadelTransform<State : Any> {
+//todo pull out into its own file and add some fields to this thing???
+abstract class NadelTransformServiceExecutionContext
+
+typealias NadelTransform<State> = NadelTransformWithContext<State, NadelTransformServiceExecutionContext>
+
+interface NadelTransformWithContext<State : Any, TransformServiceExecutionContext : NadelTransformServiceExecutionContext?> {
     /**
      * The name of the transform. Used for metrics purposes. Should be short and contain no special characters.
      */
     val name: String
         get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
+
+    /**
+     * This method is called once before execution of the transform starts.
+     * Override it to create a common object that is shared between all invocations of all other methods
+     * of the transform on all the fields.
+     */
+    suspend fun buildContext(
+        //todo need to pass some useful params here
+    ): TransformServiceExecutionContext? {
+        return null
+    }
 
     /**
      * Determines whether the [NadelTransform] should run. If it should run return a [State].
@@ -48,6 +64,7 @@ interface NadelTransform<State : Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        serviceExecutionTransformContext: TransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): State?
 
@@ -66,6 +83,7 @@ interface NadelTransform<State : Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
+        serviceExecutionTransformContext: TransformServiceExecutionContext?,
     ): NadelTransformFieldResult
 
     /**
@@ -84,23 +102,22 @@ interface NadelTransform<State : Any> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
+        serviceExecutionTransformContext: TransformServiceExecutionContext?,
     ): List<NadelResultInstruction>
 
     /**
      * Called once after all other functions of a transform ran on all fields in the query.
      * Override this function to perform cleanup or finalization tasks.
      * This method is optional for implementing classes.
-     *
-     * @param states - list with all [State] objects created during the transform execution
      */
-    suspend fun finalizeTransform(
+    suspend fun onComplete(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         result: ServiceExecutionResult,
-        states: List<State>,
         nodes: JsonNodes,
+        serviceExecutionTransformContext: TransformServiceExecutionContext? = null,
     ) {
     }
 }

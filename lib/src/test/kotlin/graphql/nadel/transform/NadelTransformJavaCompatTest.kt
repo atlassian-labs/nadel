@@ -25,6 +25,9 @@ import java.util.concurrent.CompletableFuture
 
 class NadelTransformJavaCompatTest : DescribeSpec({
     describe("create compat") {
+
+        //todo `delegates ...` tests here
+
         it("delegates name to compat") {
             // given
             val compat = spy(object : NadelTransformJavaCompatAdapter {
@@ -81,7 +84,8 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 services,
                 service,
                 overallField,
-                hydrationDetails,
+                serviceExecutionTransformContext = null,
+                hydrationDetails = hydrationDetails,
             )
 
             // then
@@ -141,6 +145,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 service,
                 field,
                 state,
+                serviceExecutionTransformContext = null
             )
 
             // then
@@ -213,6 +218,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 result,
                 state,
                 nodes,
+                serviceExecutionTransformContext = null,
             )
 
             // then
