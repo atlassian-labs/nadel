@@ -65,6 +65,21 @@ interface NadelTransformJavaCompat<State : Any> {
         nodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>>
 
+    /**
+     * See [NadelTransform.finalize]
+     */
+    fun finalize(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
+        result: ServiceExecutionResult,
+        states: List<State>,
+        nodes: JsonNodes,
+    ): CompletableFuture<Void> {
+        return CompletableFuture.completedFuture(null)
+    }
+
     companion object {
         @JvmStatic
         fun <State : Any> create(compat: NadelTransformJavaCompat<State>): NadelTransform<State> {
@@ -136,6 +151,26 @@ interface NadelTransformJavaCompat<State : Any> {
                         underlyingParentField = underlyingParentField,
                         result = result,
                         state = state,
+                        nodes = nodes,
+                    ).asDeferred().await()
+                }
+
+                override suspend fun finalize(
+                    executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
+                    executionBlueprint: NadelOverallExecutionBlueprint,
+                    service: Service,
+                    result: ServiceExecutionResult,
+                    states: List<State>,
+                    nodes: JsonNodes,
+                ) {
+                    compat.finalize(
+                        executionContext = executionContext,
+                        serviceExecutionContext = serviceExecutionContext,
+                        executionBlueprint = executionBlueprint,
+                        service = service,
+                        result = result,
+                        states = states,
                         nodes = nodes,
                     ).asDeferred().await()
                 }

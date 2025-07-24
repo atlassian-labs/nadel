@@ -85,6 +85,24 @@ interface NadelTransform<State : Any> {
         state: State,
         nodes: JsonNodes,
     ): List<NadelResultInstruction>
+
+    /**
+     * Called once after all other functions of a transform ran on all fields in the query.
+     * Override this function to perform cleanup or finalization tasks.
+     * This method is optional for implementing classes.
+     *
+     * @param states - list with all [State] objects created during the transform execution
+     */
+    suspend fun finalize(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
+        result: ServiceExecutionResult,
+        states: List<State>,
+        nodes: JsonNodes,
+    ) {
+    }
 }
 
 data class NadelTransformFieldResult(
