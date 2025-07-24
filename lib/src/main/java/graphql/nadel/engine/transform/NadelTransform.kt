@@ -93,7 +93,7 @@ interface NadelTransform<State : Any> {
      *
      * @param states - list with all [State] objects created during the transform execution
      */
-    suspend fun finalize(
+    suspend fun finalizeTransform(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

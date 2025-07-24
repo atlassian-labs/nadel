@@ -132,7 +132,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             }
             val finalizeJobs = transformToStates.map { (transform, states) ->
                 async {
-                    transform.finalize(
+                    transform.finalizeTransform(
                         executionContext,
                         serviceExecutionContext,
                         executionBlueprint,

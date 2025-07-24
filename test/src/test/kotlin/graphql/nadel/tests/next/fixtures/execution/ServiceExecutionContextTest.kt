@@ -182,7 +182,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             return emptyList()
                         }
 
-                        override suspend fun finalize(
+                        override suspend fun finalizeTransform(
                             executionContext: NadelExecutionContext,
                             serviceExecutionContext: NadelServiceExecutionContext,
                             executionBlueprint: NadelOverallExecutionBlueprint,
