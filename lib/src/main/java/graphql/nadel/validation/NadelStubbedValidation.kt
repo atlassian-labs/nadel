@@ -9,18 +9,33 @@ import graphql.nadel.engine.util.whenType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLUnionType
 
 internal class NadelStubbedValidation {
     context(NadelValidationContext)
     fun validate(
         type: NadelServiceSchemaElement.StubbedType,
     ): NadelSchemaValidationResult {
-        val objectType = type.overall as GraphQLObjectType // Must be object type
-        if (objectType.interfaces.isNotEmpty()) {
-            return NadelStubbedTypeMustNotImplementError(type)
-        }
-
-        return ok()
+        return type.overall.whenType(
+            enumType = {
+                throw UnsupportedOperationException("Cannot stub EnumType")
+            },
+            inputObjectType = {
+                throw UnsupportedOperationException("Cannot stub InputObjectType")
+            },
+            interfaceType = {
+                throw UnsupportedOperationException("Cannot stub InterfaceType")
+            },
+            objectType = {
+                validateStubbedObjectType(type, it)
+            },
+            scalarType = {
+                throw UnsupportedOperationException("Cannot stub ScalarType")
+            },
+            unionType = {
+                validateStubbedUnionType(type, it)
+            },
+        )
     }
 
     /**
@@ -36,6 +51,26 @@ internal class NadelStubbedValidation {
         } else {
             null
         }
+    }
+
+    context(NadelValidationContext)
+    private fun validateStubbedUnionType(
+        type: NadelServiceSchemaElement.StubbedType,
+        objectType: GraphQLUnionType,
+    ): NadelSchemaValidationResult {
+        return ok()
+    }
+
+    context(NadelValidationContext)
+    private fun validateStubbedObjectType(
+        type: NadelServiceSchemaElement.StubbedType,
+        objectType: GraphQLObjectType,
+    ): NadelSchemaValidationResult {
+        if (objectType.interfaces.isNotEmpty()) {
+            return NadelStubbedTypeMustNotImplementError(type)
+        }
+
+        return ok()
     }
 
     context(NadelValidationContext)
@@ -89,7 +124,7 @@ internal class NadelStubbedValidation {
             interfaceType = { false }, // Stubbed types cannot be part of hierarchies for now…
             objectType = instructionDefinitions::isStubbed,
             scalarType = { false },
-            unionType = { false },
+            unionType = instructionDefinitions::isStubbed,
         )
     }
 

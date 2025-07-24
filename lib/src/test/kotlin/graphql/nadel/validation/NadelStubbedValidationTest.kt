@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
@@ -40,6 +41,202 @@ class NadelStubbedValidationTest {
 
         // Then
         assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `can stub union type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        location: Location
+                    }
+                    union Location @stubbed = Address | Street
+                    type Address {
+                        number: Int
+                        street: String
+                        suburb: String
+                    }
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    type Address {
+                        number: Int
+                        street: String
+                        suburb: String
+                    }
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `stubbed union type can use stubbed type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        location: Location
+                    }
+                    union Location @stubbed = Address | Street
+                    type Address @stubbed {
+                        number: Int
+                        street: String
+                        suburb: String
+                    }
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `real union type can not use stubbed type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        location: Location
+                    }
+                    union Location = Address | Street
+                    type Address @stubbed {
+                        number: Int
+                        street: String
+                        suburb: String
+                    }
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    union Location = Street
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelUnionMustNotReferenceStubbedObjectTypeError>()
+        assertTrue(error.union.overall.name == "Location")
+        assertTrue(error.stubbedObjectType.name == "Address")
+    }
+
+    @Test
+    fun `real union type can not use stubbed type even if it exists`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        location: Location
+                    }
+                    union Location = Address | Street
+                    type Address @stubbed {
+                        number: Int
+                        street: String
+                        suburb: String
+                    }
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    union Location = Address | Street
+                    type Address {
+                        number: Int
+                        street: String
+                        suburb: String
+                    }
+                    type Street {
+                        street: String!
+                    }
+                """.trimIndent(),
+            )
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelUnionMustNotReferenceStubbedObjectTypeError>()
+        assertTrue(error.union.overall.name == "Location")
+        assertTrue(error.stubbedObjectType.name == "Address")
     }
 
     @Test
