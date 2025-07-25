@@ -71,17 +71,16 @@ internal class NadelExecutionPlanFactory(
             traverseQuery(rootField) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
-                    val executionTransformContext = transformContexts.getOrPut(transform) {
-                        transform.buildContext(
-                            executionContext,
-                            serviceExecutionContext,
-                            executionBlueprint,
-                            services,
-                            service,
-                            rootField,
-                            serviceHydrationDetails,
-                        )
-                    }
+                    val executionTransformContext = getExecutionTransformContext(
+                        transformContexts,
+                        transform,
+                        executionContext,
+                        serviceExecutionContext,
+                        services,
+                        service,
+                        rootField,
+                        serviceHydrationDetails
+                    )
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
                     // See NadelSkipIncludeTransform.isApplicable for more details
@@ -124,6 +123,32 @@ internal class NadelExecutionPlanFactory(
         }
 
         return NadelExecutionPlan(executionSteps)
+    }
+
+    private suspend fun getExecutionTransformContext(
+        transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?>,
+        transform: NadelTransform<Any>,
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        services: Map<String, Service>,
+        service: Service,
+        rootField: ExecutableNormalizedField,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails?,
+    ): NadelTransformServiceExecutionContext? {
+        if (transformContexts.keys.contains(transform) && transformContexts[transform] == null) {
+            return null
+        }
+        return transformContexts.getOrPut(transform) {
+            transform.buildContext(
+                executionContext,
+                serviceExecutionContext,
+                executionBlueprint,
+                services,
+                service,
+                rootField,
+                serviceHydrationDetails,
+            )
+        }
     }
 
     private inline fun traverseQuery(
