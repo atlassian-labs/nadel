@@ -63,7 +63,7 @@ internal class NadelExecutionPlanFactory(
         rootField: ExecutableNormalizedField,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
-        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any, NadelTransformServiceExecutionContext>>> =
+        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
             mutableMapOf()
         val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
             mutableMapOf()
@@ -71,7 +71,17 @@ internal class NadelExecutionPlanFactory(
             traverseQuery(rootField) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
-                    val executionTransformContext = transformContexts.getOrPut(transform) { transform.buildContext() }
+                    val executionTransformContext = transformContexts.getOrPut(transform) {
+                        transform.buildContext(
+                            executionContext,
+                            serviceExecutionContext,
+                            executionBlueprint,
+                            services,
+                            service,
+                            rootField,
+                            serviceHydrationDetails,
+                        )
+                    }
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
                     // See NadelSkipIncludeTransform.isApplicable for more details

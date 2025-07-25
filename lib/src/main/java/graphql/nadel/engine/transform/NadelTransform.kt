@@ -12,12 +12,7 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.normalized.ExecutableNormalizedField
 
-//todo pull out into its own file and add some fields to this thing???
-abstract class NadelTransformServiceExecutionContext
-
-typealias NadelTransform<State> = NadelTransformWithContext<State, NadelTransformServiceExecutionContext>
-
-interface NadelTransformWithContext<State : Any, TransformServiceExecutionContext : NadelTransformServiceExecutionContext?> {
+interface NadelTransform<State : Any> {
     /**
      * The name of the transform. Used for metrics purposes. Should be short and contain no special characters.
      */
@@ -28,10 +23,25 @@ interface NadelTransformWithContext<State : Any, TransformServiceExecutionContex
      * This method is called once before execution of the transform starts.
      * Override it to create a common object that is shared between all invocations of all other methods
      * of the transform on all the fields.
+     *
+     * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
+     * @param rootField the root [ExecutableNormalizedField] of the operation this [NadelTransform] runs on
+     * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
+     * hydrations, `null` otherwise
+     *
+     * @return a common [NadelTransformServiceExecutionContext] that will be fed into all other methods of this transform
+     * when they run or [null] if you don't need such functionality
+     *
      */
     suspend fun buildContext(
-        //todo need to pass some useful params here
-    ): TransformServiceExecutionContext? {
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        services: Map<String, Service>,
+        service: Service,
+        rootField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
+    ): NadelTransformServiceExecutionContext? {
         return null
     }
 
@@ -64,7 +74,7 @@ interface NadelTransformWithContext<State : Any, TransformServiceExecutionContex
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: TransformServiceExecutionContext?,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): State?
 
@@ -83,7 +93,7 @@ interface NadelTransformWithContext<State : Any, TransformServiceExecutionContex
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
-        serviceExecutionTransformContext: TransformServiceExecutionContext?,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult
 
     /**
@@ -102,7 +112,7 @@ interface NadelTransformWithContext<State : Any, TransformServiceExecutionContex
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: TransformServiceExecutionContext?,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction>
 
     /**
@@ -117,7 +127,7 @@ interface NadelTransformWithContext<State : Any, TransformServiceExecutionContex
         service: Service,
         result: ServiceExecutionResult,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: TransformServiceExecutionContext? = null,
+        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
     ) {
     }
 }

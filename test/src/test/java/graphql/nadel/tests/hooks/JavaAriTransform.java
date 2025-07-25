@@ -7,10 +7,9 @@ import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.engine.NadelExecutionContext;
 import graphql.nadel.engine.NadelServiceExecutionContext;
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint;
+import graphql.nadel.engine.transform.NadelTransform;
 import graphql.nadel.engine.transform.NadelTransformFieldResult;
 import graphql.nadel.engine.transform.NadelTransformJavaCompat;
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext;
-import graphql.nadel.engine.transform.NadelTransformWithContext;
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat;
 import graphql.nadel.engine.transform.result.NadelResultInstruction;
 import graphql.nadel.engine.transform.result.json.JsonNodes;
@@ -37,8 +36,8 @@ import java.util.stream.Collectors;
 import static graphql.nadel.engine.util.GraphQLUtilKt.makeFieldCoordinates;
 import static java.util.Collections.emptyList;
 
-public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>, NadelTransformServiceExecutionContext> {
-    public static NadelTransformWithContext<Set<String>, NadelTransformServiceExecutionContext> create() {
+public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
+    public static NadelTransform<Set<String>> create() {
         return NadelTransformJavaCompat.create(new JavaAriTransform());
     }
 

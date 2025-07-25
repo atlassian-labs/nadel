@@ -22,6 +22,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.normalized.ExecutableNormalizedField
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ServiceExecutionContextTest : NadelIntegrationTest(
@@ -98,6 +99,8 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
     ),
 ) {
     private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<TestServiceExecutionContext>())
+    private val transformServiceExecutionContexts =
+        Collections.synchronizedList(mutableListOf<TestTransformServiceExecutionContext>())
 
     private class TestServiceExecutionContext : NadelServiceExecutionContext() {
         val isApplicable = Collections.synchronizedList(mutableListOf<String>())
@@ -107,6 +110,16 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         override fun toString(): String {
             return "ServiceExecutionContext(isApplicable=$isApplicable, transformField=$transformField, getResultInstructions=$getResultInstructions)"
         }
+    }
+
+    private data class TestTransformServiceExecutionContext(
+        val rootField: String,
+        var onCompleteRan: Boolean = false,
+    ) :
+        NadelTransformServiceExecutionContext() {
+        val isApplicable = Collections.synchronizedList(mutableListOf<String>())
+        val transformField = Collections.synchronizedList(mutableListOf<String>())
+        val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
     }
 
     fun ExecutableNormalizedField.toExecutionString(): String {
@@ -139,6 +152,22 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
             .transforms(
                 listOf(
                     object : NadelTransform<ExecutableNormalizedField> {
+
+                        override suspend fun buildContext(
+                            executionContext: NadelExecutionContext,
+                            serviceExecutionContext: NadelServiceExecutionContext,
+                            executionBlueprint: NadelOverallExecutionBlueprint,
+                            services: Map<String, graphql.nadel.Service>,
+                            service: graphql.nadel.Service,
+                            rootField: ExecutableNormalizedField,
+                            hydrationDetails: ServiceExecutionHydrationDetails?,
+                        ): NadelTransformServiceExecutionContext? {
+                            val testTransformServiceExecutionContext =
+                                TestTransformServiceExecutionContext(rootField.toExecutionString())
+                            transformServiceExecutionContexts.add(testTransformServiceExecutionContext)
+                            return testTransformServiceExecutionContext
+                        }
+
                         override suspend fun isApplicable(
                             executionContext: NadelExecutionContext,
                             serviceExecutionContext: NadelServiceExecutionContext,
@@ -150,6 +179,8 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             hydrationDetails: ServiceExecutionHydrationDetails?,
                         ): ExecutableNormalizedField? {
                             (serviceExecutionContext as TestServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
+                            (serviceExecutionTransformContext as TestTransformServiceExecutionContext).isApplicable
+                                .add(overallField.toExecutionString())
                             return overallField
                         }
 
@@ -164,6 +195,9 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                         ): NadelTransformFieldResult {
                             (serviceExecutionContext as TestServiceExecutionContext).transformField.add(field.toExecutionString())
+                            (serviceExecutionTransformContext as TestTransformServiceExecutionContext).transformField.add(
+                                field.toExecutionString()
+                            )
                             return NadelTransformFieldResult.unmodified(field)
                         }
 
@@ -182,6 +216,9 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             (serviceExecutionContext as TestServiceExecutionContext).getResultInstructions.add(
                                 overallField.toExecutionString()
                             )
+                            (serviceExecutionTransformContext as TestTransformServiceExecutionContext).getResultInstructions.add(
+                                overallField.toExecutionString()
+                            )
                             return emptyList()
                         }
 
@@ -194,7 +231,9 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             nodes: JsonNodes,
                             serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
                         ) {
-                            //todo
+                            val context = serviceExecutionTransformContext as TestTransformServiceExecutionContext
+                            assertFalse(context.onCompleteRan, "on complete is supposed to run only once")
+                            context.onCompleteRan = true
                         }
                     }
                 )
@@ -213,6 +252,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
     override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
         // Three separate executions, two for top level fields, and one for hydration
         assertTrue(serviceExecutionContexts.size == 3)
+        assertTrue(transformServiceExecutionContexts.size == 3)
 
         val me = serviceExecutionContexts.single {
             it.isApplicable.first().contains("me()")

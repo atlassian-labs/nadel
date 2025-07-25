@@ -82,7 +82,7 @@ private class MonitorEmitsTimingsTransform(
     }
 }
 
-private class JavaTimingTransform : NadelTransformJavaCompat<Unit, NadelTransformServiceExecutionContext> {
+private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
     override fun isApplicable(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
