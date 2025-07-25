@@ -11,6 +11,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -29,6 +30,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): GraphQLError? {
         val objectType = overallField.objectTypeNames.asSequence()
@@ -57,6 +59,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         service: Service,
         field: ExecutableNormalizedField,
         state: GraphQLError,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
@@ -82,6 +85,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         result: ServiceExecutionResult,
         state: GraphQLError,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,

@@ -11,6 +11,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -33,6 +34,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
                     return if (overallField.normalizedArguments.isNotEmpty()) {
@@ -50,6 +52,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult(
                         newField = field.toBuilder()
@@ -65,10 +68,14 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                                                 "boardId" to NormalizedInputValue("ID!", StringValue("123")),
                                                 "sprintId" to NormalizedInputValue("ID!", StringValue("456")),
                                                 "name" to NormalizedInputValue("String!", StringValue("Test Input")),
-                                                "goal" to NormalizedInputValue("String",
-                                                    NullValue.newNullValue().build()),
-                                                "startDate" to NormalizedInputValue("String!",
-                                                    StringValue("2022-03-22")),
+                                                "goal" to NormalizedInputValue(
+                                                    "String",
+                                                    NullValue.newNullValue().build()
+                                                ),
+                                                "startDate" to NormalizedInputValue(
+                                                    "String!",
+                                                    StringValue("2022-03-22")
+                                                ),
                                                 "endDate" to NormalizedInputValue("String!", StringValue("2022-04-02")),
                                             ),
                                         )
@@ -88,6 +95,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return emptyList()
                 }

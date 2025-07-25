@@ -8,6 +8,8 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
+import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
@@ -83,7 +85,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
-
+        val contextByTransform = mutableMapOf<NadelTransform<Any>, NadelTransformServiceExecutionContext?>()
         coroutineScope {
             executionContext.timer.batch { timer ->
                 for ((field, steps) in executionPlan.transformationSteps) {
@@ -91,6 +93,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                     if (underlyingFields.isNullOrEmpty()) continue
 
                     for (step in steps) {
+                        contextByTransform.putIfAbsent(step.transform, step.transformServiceExecutionContext)
                         asyncInstructions.add(
                             async {
                                 timer.time(step.resultTransformTimingStep) {
@@ -103,7 +106,8 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                                         underlyingFields.first().parent,
                                         result,
                                         step.state,
-                                        nodes
+                                        nodes,
+                                        step.transformServiceExecutionContext
                                     )
                                 }
                             }
@@ -118,8 +122,26 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 }
             )
         }
+        val instructions = asyncInstructions.awaitAll().flatten()
 
-        return asyncInstructions.awaitAll().flatten()
+        coroutineScope {
+            val finalizeJobs = contextByTransform.map { (transform, transformServiceExecutionContext) ->
+                async {
+                    transform.onComplete(
+                        executionContext,
+                        serviceExecutionContext,
+                        executionBlueprint,
+                        service,
+                        result,
+                        nodes,
+                        transformServiceExecutionContext
+                    )
+                }
+            }
+            finalizeJobs.awaitAll()
+        }
+
+        return instructions
     }
 
     private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {

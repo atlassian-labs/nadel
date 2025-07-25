@@ -20,6 +20,32 @@ interface NadelTransform<State : Any> {
         get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
 
     /**
+     * This method is called once before execution of the transform starts.
+     * Override it to create a common object that is shared between all invocations of all other methods
+     * of the transform on all the fields.
+     *
+     * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
+     * @param rootField the root [ExecutableNormalizedField] of the operation this [NadelTransform] runs on
+     * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
+     * hydrations, `null` otherwise
+     *
+     * @return a common [NadelTransformServiceExecutionContext] that will be fed into all other methods of this transform
+     * when they run or [null] if you don't need such functionality
+     *
+     */
+    suspend fun buildContext(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        services: Map<String, Service>,
+        service: Service,
+        rootField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
+    ): NadelTransformServiceExecutionContext? {
+        return null
+    }
+
+    /**
      * Determines whether the [NadelTransform] should run. If it should run return a [State].
      *
      * The returned [State] is then fed into [transformField] and [getResultInstructions].
@@ -48,6 +74,7 @@ interface NadelTransform<State : Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): State?
 
@@ -66,6 +93,7 @@ interface NadelTransform<State : Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult
 
     /**
@@ -84,7 +112,24 @@ interface NadelTransform<State : Any> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction>
+
+    /**
+     * Called once after all other functions of a transform ran on all fields in the query.
+     * Override this function to perform cleanup or finalization tasks.
+     * This method is optional for implementing classes.
+     */
+    suspend fun onComplete(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
+        result: ServiceExecutionResult,
+        nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+    ) {
+    }
 }
 
 data class NadelTransformFieldResult(

@@ -10,6 +10,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelPartitionInstruction
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.partition.NadelPartitionMutationPayloadMerger.isMutationPayloadLike
 import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -46,6 +47,7 @@ internal class NadelPartitionTransform(
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         if (executionContext.isPartitionedCall) {
@@ -119,6 +121,7 @@ internal class NadelPartitionTransform(
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
 
         if (state.error != null) {
@@ -166,6 +169,7 @@ internal class NadelPartitionTransform(
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNode = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,

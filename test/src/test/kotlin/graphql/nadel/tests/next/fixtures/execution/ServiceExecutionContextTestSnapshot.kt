@@ -5,9 +5,6 @@ import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
 import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
-import kotlin.Suppress
-import kotlin.collections.List
-import kotlin.collections.listOf
 
 private suspend fun main() {
     graphql.nadel.tests.next.update<ServiceExecutionContextTest>()
@@ -16,10 +13,9 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
-@Suppress("unused")
-public class ServiceExecutionContextTestSnapshot : TestSnapshot() {
+@Suppress("unused") class ServiceExecutionContextTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "monolith",
@@ -70,8 +66,8 @@ public class ServiceExecutionContextTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   me {
-                |     hydration__lastWorkedOn__lastWorkedOnId: lastWorkedOnId
                 |     __typename__hydration__lastWorkedOn: __typename
+                |     hydration__lastWorkedOn__lastWorkedOnId: lastWorkedOnId
                 |   }
                 | }
                 """.trimMargin(),

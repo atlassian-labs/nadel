@@ -11,6 +11,7 @@ import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
@@ -64,7 +65,8 @@ internal class NadelExecutionPlanFactory(
     ): NadelExecutionPlan {
         val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
             mutableMapOf()
-
+        val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
+            mutableMapOf()
         executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
@@ -75,6 +77,21 @@ internal class NadelExecutionPlanFactory(
                     if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*>) !is NadelSkipIncludeTransform)) {
                         null
                     } else {
+                        val executionTransformContext = if (transformContexts.containsKey(transform)) {
+                            transformContexts[transform]
+                        } else {
+                            transformContexts.getOrPut(transform) {
+                                transform.buildContext(
+                                    executionContext,
+                                    serviceExecutionContext,
+                                    executionBlueprint,
+                                    services,
+                                    service,
+                                    rootField,
+                                    serviceHydrationDetails
+                                )
+                            }
+                        }
                         val state = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
                             transform.isApplicable(
                                 executionContext,
@@ -83,6 +100,7 @@ internal class NadelExecutionPlanFactory(
                                 services,
                                 service,
                                 field,
+                                executionTransformContext,
                                 serviceHydrationDetails,
                             )
                         }
@@ -97,6 +115,7 @@ internal class NadelExecutionPlanFactory(
                                 queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
                                 resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
                                 state = state,
+                                executionTransformContext
                             )
                         }
                     }

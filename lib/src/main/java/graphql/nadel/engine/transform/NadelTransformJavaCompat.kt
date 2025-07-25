@@ -23,6 +23,21 @@ interface NadelTransformJavaCompat<State : Any> {
         get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
 
     /**
+     * See [NadelTransform.buildContext]
+     */
+    fun buildContext(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        services: Map<String, Service>,
+        service: Service,
+        rootField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
+    ): NadelTransformServiceExecutionContext? {
+        return null
+    }
+
+    /**
      * See [NadelTransform.isApplicable]
      *
      * Note: a transform is applied to all fields recursively
@@ -34,6 +49,7 @@ interface NadelTransformJavaCompat<State : Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<State?>
 
@@ -48,6 +64,7 @@ interface NadelTransformJavaCompat<State : Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult>
 
     /**
@@ -63,14 +80,52 @@ interface NadelTransformJavaCompat<State : Any> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<List<NadelResultInstruction>>
+
+    /**
+     * See [NadelTransform.onComplete]
+     */
+    fun onComplete(
+        executionContext: NadelExecutionContext,
+        serviceExecutionContext: NadelServiceExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
+        result: ServiceExecutionResult,
+        nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+    ): CompletableFuture<Void> {
+        return CompletableFuture.completedFuture(null)
+    }
 
     companion object {
         @JvmStatic
-        fun <State : Any> create(compat: NadelTransformJavaCompat<State>): NadelTransform<State> {
+        fun <State : Any> create(
+            compat: NadelTransformJavaCompat<State>,
+        ): NadelTransform<State> {
             return object : NadelTransform<State> {
                 override val name: String
                     get() = compat.name
+
+                override suspend fun buildContext(
+                    executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
+                    executionBlueprint: NadelOverallExecutionBlueprint,
+                    services: Map<String, Service>,
+                    service: Service,
+                    rootField: ExecutableNormalizedField,
+                    hydrationDetails: ServiceExecutionHydrationDetails?,
+                ): NadelTransformServiceExecutionContext? {
+                    return compat.buildContext(
+                        executionContext,
+                        serviceExecutionContext,
+                        executionBlueprint,
+                        services,
+                        service,
+                        rootField,
+                        hydrationDetails
+                    )
+                }
 
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
@@ -79,6 +134,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): State? {
                     return compat.isApplicable(
@@ -88,6 +144,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         services = services,
                         service = service,
                         overallField = overallField,
+                        transformServiceExecutionContext = transformServiceExecutionContext,
                         hydrationDetails = hydrationDetails,
                     ).asDeferred().await()
                 }
@@ -100,6 +157,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: State,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     return coroutineScope {
                         val scope = this@coroutineScope
@@ -112,6 +170,7 @@ interface NadelTransformJavaCompat<State : Any> {
                             service = service,
                             field = field,
                             state = state,
+                            transformServiceExecutionContext = transformServiceExecutionContext
                         ).asDeferred().await()
                     }
                 }
@@ -126,6 +185,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     result: ServiceExecutionResult,
                     state: State,
                     nodes: JsonNodes,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return compat.getResultInstructions(
                         executionContext = executionContext,
@@ -137,6 +197,27 @@ interface NadelTransformJavaCompat<State : Any> {
                         result = result,
                         state = state,
                         nodes = nodes,
+                        transformServiceExecutionContext = transformServiceExecutionContext,
+                    ).asDeferred().await()
+                }
+
+                override suspend fun onComplete(
+                    executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
+                    executionBlueprint: NadelOverallExecutionBlueprint,
+                    service: Service,
+                    result: ServiceExecutionResult,
+                    nodes: JsonNodes,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+                ) {
+                    compat.onComplete(
+                        executionContext = executionContext,
+                        serviceExecutionContext = serviceExecutionContext,
+                        executionBlueprint = executionBlueprint,
+                        service = service,
+                        result = result,
+                        nodes = nodes,
+                        transformServiceExecutionContext = transformServiceExecutionContext,
                     ).asDeferred().await()
                 }
             }

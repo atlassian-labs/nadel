@@ -2,6 +2,7 @@ package graphql.nadel.engine.plan
 
 import graphql.nadel.Service
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.normalized.ExecutableNormalizedField
 
@@ -18,6 +19,7 @@ data class NadelExecutionPlan(
         val queryTransformTimingStep: NadelInstrumentationTimingParameters.Step,
         val resultTransformTimingStep: NadelInstrumentationTimingParameters.Step,
         val state: T,
+        val transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     )
 
     /**

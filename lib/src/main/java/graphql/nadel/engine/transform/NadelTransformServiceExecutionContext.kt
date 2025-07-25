@@ -1,0 +1,3 @@
+package graphql.nadel.engine.transform
+
+abstract class NadelTransformServiceExecutionContext

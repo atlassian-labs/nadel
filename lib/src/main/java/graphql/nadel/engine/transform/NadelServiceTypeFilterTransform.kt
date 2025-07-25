@@ -77,6 +77,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         when {
@@ -100,7 +101,9 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             .all { objectTypeName ->
                 objectTypeName in typeNamesOwnedByService
                     || objectTypeName in underlyingTypeNamesOwnedByService
-                    || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService)
+                    || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(
+                    objectTypeName
+                ) in underlyingTypeNamesOwnedByService)
             }
 
         if (noForeignTypes) {
@@ -110,7 +113,9 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames.filter { objectTypeName ->
             objectTypeName in typeNamesOwnedByService
                 || objectTypeName in underlyingTypeNamesOwnedByService
-                || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService)
+                || (executionContext.hints.sharedTypeRenames(service) && executionBlueprint.getUnderlyingTypeName(
+                objectTypeName
+            ) in underlyingTypeNamesOwnedByService)
         }
 
         return State(
@@ -132,6 +137,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         // Nothing to query if there are no fields, we need to add selection
         if (state.fieldObjectTypeNamesOwnedByService.isEmpty()) {
@@ -190,6 +196,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

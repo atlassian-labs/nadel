@@ -10,6 +10,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint;
 import graphql.nadel.engine.transform.NadelTransform;
 import graphql.nadel.engine.transform.NadelTransformFieldResult;
 import graphql.nadel.engine.transform.NadelTransformJavaCompat;
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext;
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat;
 import graphql.nadel.engine.transform.result.NadelResultInstruction;
 import graphql.nadel.engine.transform.result.json.JsonNodes;
@@ -37,7 +38,7 @@ import static graphql.nadel.engine.util.GraphQLUtilKt.makeFieldCoordinates;
 import static java.util.Collections.emptyList;
 
 public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
-    public static NadelTransform create() {
+    public static NadelTransform<Set<String>> create() {
         return NadelTransformJavaCompat.create(new JavaAriTransform());
     }
 
@@ -54,6 +55,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                        @NotNull Map<String, ? extends Service> services,
                                                        @NotNull Service service,
                                                        @NotNull ExecutableNormalizedField overallField,
+                                                       @Nullable NadelTransformServiceExecutionContext transformServiceExecutionContext,
                                                        @Nullable ServiceExecutionHydrationDetails hydrationDetails) {
 
         String singleObjectTypeName = getSingleObjectTypeName(overallField);
@@ -85,7 +87,8 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                        @NotNull Service service,
                                                                        @NotNull ExecutableNormalizedField field,
-                                                                       @NotNull Set<String> fieldsArgsToInterpret) {
+                                                                       @NotNull Set<String> fieldsArgsToInterpret,
+                                                                       @Nullable NadelTransformServiceExecutionContext transformServiceExecutionContext) {
         return CompletableFuture.completedFuture(
             new NadelTransformFieldResult(
                 field.transform((builder) -> {
@@ -134,7 +137,8 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                                  @Nullable ExecutableNormalizedField underlyingParentField,
                                                                                  @NotNull ServiceExecutionResult result,
                                                                                  @NotNull Set<String> strings,
-                                                                                 @NotNull JsonNodes nodes) {
+                                                                                 @NotNull JsonNodes nodes,
+                                                                                 @Nullable NadelTransformServiceExecutionContext transformServiceExecutionContext) {
         return CompletableFuture.completedFuture(emptyList());
     }
 }

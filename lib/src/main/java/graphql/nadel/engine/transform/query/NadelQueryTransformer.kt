@@ -86,10 +86,11 @@ class NadelQueryTransformer private constructor(
     suspend fun transform(
         field: ExecutableNormalizedField,
     ): List<ExecutableNormalizedField> {
-        val transformationSteps: List<NadelExecutionPlan.Step<Any>> = executionPlan.transformationSteps[field]
-            ?: return listOf(
-                transformPlain(field)
-            )
+        val transformationSteps: List<NadelExecutionPlan.Step<Any>> =
+            executionPlan.transformationSteps[field]
+                ?: return listOf(
+                    transformPlain(field)
+                )
 
         return transform(field, transformationSteps)
     }
@@ -174,6 +175,7 @@ class NadelQueryTransformer private constructor(
                     service,
                     newField,
                     transformStep.state,
+                    transformStep.transformServiceExecutionContext
                 )
             }
             artificialFields.addAll(transformResultForStep.artificialFields)
