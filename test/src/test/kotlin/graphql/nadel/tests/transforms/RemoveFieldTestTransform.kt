@@ -30,7 +30,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): GraphQLError? {
         val objectType = overallField.objectTypeNames.asSequence()
@@ -59,7 +59,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         service: Service,
         field: ExecutableNormalizedField,
         state: GraphQLError,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
@@ -85,7 +85,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         result: ServiceExecutionResult,
         state: GraphQLError,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,

@@ -74,7 +74,7 @@ interface NadelTransform<State : Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): State?
 
@@ -93,7 +93,7 @@ interface NadelTransform<State : Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult
 
     /**
@@ -112,7 +112,7 @@ interface NadelTransform<State : Any> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction>
 
     /**
@@ -127,7 +127,7 @@ interface NadelTransform<State : Any> {
         service: Service,
         result: ServiceExecutionResult,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ) {
     }
 }

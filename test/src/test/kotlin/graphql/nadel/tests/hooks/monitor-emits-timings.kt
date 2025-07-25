@@ -44,7 +44,7 @@ private class MonitorEmitsTimingsTransform(
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Unit? {
         delay(128)
@@ -59,7 +59,7 @@ private class MonitorEmitsTimingsTransform(
         service: Service,
         field: ExecutableNormalizedField,
         state: Unit,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         delay(256)
         return NadelTransformFieldResult.unmodified(field)
@@ -75,7 +75,7 @@ private class MonitorEmitsTimingsTransform(
         result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         delay(32)
         return listOf()
@@ -90,6 +90,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<Unit?> {
         return CompletableFuture.completedFuture(Unit)
@@ -103,6 +104,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         service: Service,
         field: ExecutableNormalizedField,
         state: Unit,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
@@ -117,6 +119,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())
     }

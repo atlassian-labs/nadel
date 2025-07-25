@@ -115,8 +115,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
     private data class TestTransformServiceExecutionContext(
         val rootField: String,
         var onCompleteRan: Boolean = false,
-    ) :
-        NadelTransformServiceExecutionContext() {
+    ) : NadelTransformServiceExecutionContext() {
         val isApplicable = Collections.synchronizedList(mutableListOf<String>())
         val transformField = Collections.synchronizedList(mutableListOf<String>())
         val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
@@ -175,11 +174,11 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             services: Map<String, graphql.nadel.Service>,
                             service: graphql.nadel.Service,
                             overallField: ExecutableNormalizedField,
-                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
                         ): ExecutableNormalizedField? {
                             (serviceExecutionContext as TestServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
-                            (serviceExecutionTransformContext as TestTransformServiceExecutionContext).isApplicable
+                            (transformServiceExecutionContext as TestTransformServiceExecutionContext).isApplicable
                                 .add(overallField.toExecutionString())
                             return overallField
                         }
@@ -192,10 +191,10 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             service: graphql.nadel.Service,
                             field: ExecutableNormalizedField,
                             state: ExecutableNormalizedField,
-                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                         ): NadelTransformFieldResult {
                             (serviceExecutionContext as TestServiceExecutionContext).transformField.add(field.toExecutionString())
-                            (serviceExecutionTransformContext as TestTransformServiceExecutionContext).transformField.add(
+                            (transformServiceExecutionContext as TestTransformServiceExecutionContext).transformField.add(
                                 field.toExecutionString()
                             )
                             return NadelTransformFieldResult.unmodified(field)
@@ -211,12 +210,12 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             result: ServiceExecutionResult,
                             state: ExecutableNormalizedField,
                             nodes: JsonNodes,
-                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                         ): List<NadelResultInstruction> {
                             (serviceExecutionContext as TestServiceExecutionContext).getResultInstructions.add(
                                 overallField.toExecutionString()
                             )
-                            (serviceExecutionTransformContext as TestTransformServiceExecutionContext).getResultInstructions.add(
+                            (transformServiceExecutionContext as TestTransformServiceExecutionContext).getResultInstructions.add(
                                 overallField.toExecutionString()
                             )
                             return emptyList()
@@ -229,9 +228,9 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             service: graphql.nadel.Service,
                             result: ServiceExecutionResult,
                             nodes: JsonNodes,
-                            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                         ) {
-                            val context = serviceExecutionTransformContext as TestTransformServiceExecutionContext
+                            val context = transformServiceExecutionContext as TestTransformServiceExecutionContext
                             assertFalse(context.onCompleteRan, "on complete is supposed to run only once")
                             context.onCompleteRan = true
                         }
@@ -250,9 +249,13 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
     }
 
     override fun assert(result: ExecutionResult, incrementalResults: List<DelayedIncrementalPartialResult>?) {
+        assertServiceExecutionContexts()
+        assertTransformServiceExecutionContexts()
+    }
+
+    private fun assertServiceExecutionContexts() {
         // Three separate executions, two for top level fields, and one for hydration
         assertTrue(serviceExecutionContexts.size == 3)
-        assertTrue(transformServiceExecutionContexts.size == 3)
 
         val me = serviceExecutionContexts.single {
             it.isApplicable.first().contains("me()")
@@ -287,5 +290,49 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(hydration.isApplicable == expectedHydrationExecutions)
         assertTrue(hydration.transformField == expectedHydrationExecutions)
         assertTrue(hydration.getResultInstructions.sorted() == expectedHydrationExecutions.sorted())
+    }
+
+    private fun assertTransformServiceExecutionContexts() {
+        // Three separate executions, two for top level fields, and one for hydration
+        assertTrue(transformServiceExecutionContexts.size == 3)
+
+        val me = transformServiceExecutionContexts.single {
+            it.isApplicable.first().contains("me()")
+        }
+        val expectedMeExecutions = listOf(
+            "[Query].me()",
+            "[User].lastWorkedOn()",
+            "[Issue].title()",
+        )
+        assertTrue(me.isApplicable == expectedMeExecutions)
+        assertTrue(me.transformField == expectedMeExecutions.dropLast(1)) // dropLast as child is removed due to hydration
+        assertTrue(me.getResultInstructions.sorted() == expectedMeExecutions.dropLast(1).sorted())
+        assertTrue(me.rootField == "[Query].me()")
+
+        val bug = transformServiceExecutionContexts.single {
+            it.isApplicable.first().contains("bug")
+        }
+        val expectedBugExecutions = listOf(
+            "bug: [Query].issue(id = NormalizedInputValue{typeName='ID!', value=IntValue{value=6}})",
+            "[Issue].title()",
+        )
+        assertTrue(bug.isApplicable == expectedBugExecutions)
+        assertTrue(bug.transformField == expectedBugExecutions)
+        assertTrue(bug.getResultInstructions.sorted() == expectedBugExecutions.sorted())
+        assertTrue(bug.rootField == "bug: [Query].issue(id = NormalizedInputValue{typeName='ID!', value=IntValue{value=6}})")
+
+        val hydration = transformServiceExecutionContexts.single {
+            it.isApplicable.first().contains("9")
+        }
+        val expectedHydrationExecutions = listOf(
+            "[Query].issue(id = NormalizedInputValue{typeName='ID!', value=StringValue{value='9'}})",
+            "[Issue].title()",
+        )
+        assertTrue(hydration.isApplicable == expectedHydrationExecutions)
+        assertTrue(hydration.transformField == expectedHydrationExecutions)
+        assertTrue(hydration.getResultInstructions.sorted() == expectedHydrationExecutions.sorted())
+        assertTrue(hydration.rootField == "[Query].issue(id = NormalizedInputValue{typeName='ID!', value=StringValue{value='9'}})")
+
+        assertTrue(transformServiceExecutionContexts.all { it.onCompleteRan })
     }
 }

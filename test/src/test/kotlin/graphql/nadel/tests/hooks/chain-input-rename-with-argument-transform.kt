@@ -34,7 +34,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
                     return if (overallField.normalizedArguments.isNotEmpty()) {
@@ -52,7 +52,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     return NadelTransformFieldResult(
                         newField = field.toBuilder()
@@ -95,7 +95,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return emptyList()
                 }

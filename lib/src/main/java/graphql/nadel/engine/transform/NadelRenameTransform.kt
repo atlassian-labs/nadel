@@ -43,7 +43,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         val renameInstructions = executionBlueprint
@@ -74,7 +74,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = if (state.objectTypesWithoutRename.isNotEmpty()) {
@@ -187,7 +187,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,

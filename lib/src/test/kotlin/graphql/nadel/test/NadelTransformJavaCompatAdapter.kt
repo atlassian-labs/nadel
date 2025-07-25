@@ -8,6 +8,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -22,6 +23,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<Any?> {
         return CompletableFuture.completedFuture(Unit)
@@ -35,6 +37,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: Any,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
@@ -49,6 +52,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         result: ServiceExecutionResult,
         state: Any,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())
     }

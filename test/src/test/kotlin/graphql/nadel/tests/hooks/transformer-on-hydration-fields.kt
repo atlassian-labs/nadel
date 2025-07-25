@@ -45,7 +45,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
                     return if (overallField.name == "barById") {
@@ -68,7 +68,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
                     return transformer.transform(field.children)
@@ -94,7 +94,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return emptyList()
                 }

@@ -8,6 +8,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
+import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -47,6 +48,66 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             confirmVerified(compat)
         }
 
+        it("delegates buildContext to compat") {
+            class Prop(val prop: String) : NadelTransformServiceExecutionContext()
+
+            // given
+            val compat = spy(object : NadelTransformJavaCompatAdapter {
+                override val name: String
+                    get() = "Test"
+
+                override fun buildContext(
+                    executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
+                    executionBlueprint: NadelOverallExecutionBlueprint,
+                    services: Map<String, Service>,
+                    service: Service,
+                    rootField: ExecutableNormalizedField,
+                    hydrationDetails: ServiceExecutionHydrationDetails?,
+                ): NadelTransformServiceExecutionContext? {
+                    return Prop("something")
+                }
+            })
+
+            val transformer = NadelTransformJavaCompat.create(compat)
+
+            val executionContext = mock<NadelExecutionContext>()
+            val serviceExecutionContext = mock<NadelServiceExecutionContext>()
+            val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
+            val services = mock<Map<String, Service>>()
+            val service = mock<Service>()
+            val overallField = mock<ExecutableNormalizedField>()
+            val hydrationDetails = mock<ServiceExecutionHydrationDetails>()
+
+            // when
+            val transformServiceExecutionContext = transformer.buildContext(
+                executionContext,
+                serviceExecutionContext,
+                executionBlueprint,
+                services,
+                service,
+                overallField,
+                hydrationDetails = hydrationDetails,
+            )
+
+            // then
+            assert((transformServiceExecutionContext as Prop).prop == "something")
+
+            verify(exactly = 1) {
+                compat.buildContext(
+                    executionContext,
+                    serviceExecutionContext,
+                    executionBlueprint,
+                    services,
+                    service,
+                    overallField,
+                    hydrationDetails,
+                )
+            }
+
+            confirmVerified(compat)
+        }
+
         it("delegates isApplicable to compat") {
             // given
             val compat = spy(object : NadelTransformJavaCompatAdapter {
@@ -60,6 +121,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): CompletableFuture<Any?> {
                     return CompletableFuture.completedFuture(123)
@@ -75,6 +137,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val service = mock<Service>()
             val overallField = mock<ExecutableNormalizedField>()
             val hydrationDetails = mock<ServiceExecutionHydrationDetails>()
+            val transformServiceExecutionContext = mock<NadelTransformServiceExecutionContext>()
 
             // when
             val isApplicable = transformer.isApplicable(
@@ -84,7 +147,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 services,
                 service,
                 overallField,
-                serviceExecutionTransformContext = null,
+                transformServiceExecutionContext,
                 hydrationDetails = hydrationDetails,
             )
 
@@ -99,6 +162,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     services,
                     service,
                     overallField,
+                    transformServiceExecutionContext,
                     hydrationDetails,
                 )
             }
@@ -121,6 +185,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): CompletableFuture<NadelTransformFieldResult> {
                     return CompletableFuture.completedFuture(expectedResult)
                 }
@@ -135,6 +200,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val service = mock<Service>()
             val field = mock<ExecutableNormalizedField>()
             val state = mock<Any>()
+            val transformServiceExecutionContext = mock<NadelTransformServiceExecutionContext>()
 
             // when
             val transformField = transformer.transformField(
@@ -145,7 +211,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 service,
                 field,
                 state,
-                serviceExecutionTransformContext = null
+                transformServiceExecutionContext
             )
 
             // then
@@ -161,6 +227,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     service,
                     field,
                     state,
+                    transformServiceExecutionContext,
                 )
             }
 
@@ -190,6 +257,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): CompletableFuture<List<NadelResultInstruction>> {
                     return CompletableFuture.completedFuture(expectedResult)
                 }
@@ -206,6 +274,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val result = mock<ServiceExecutionResult>()
             val state = mock<Any>()
             val nodes = mock<JsonNodes>()
+            val transformServiceExecutionContext = mock<NadelTransformServiceExecutionContext>()
 
             // when
             val getResultInstructions = transformer.getResultInstructions(
@@ -218,7 +287,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 result,
                 state,
                 nodes,
-                serviceExecutionTransformContext = null,
+                transformServiceExecutionContext,
             )
 
             // then
@@ -235,6 +304,65 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     result,
                     state,
                     nodes,
+                    transformServiceExecutionContext,
+                )
+            }
+
+            confirmVerified(compat)
+        }
+
+        it("delegates onComplete to compat") {
+            // given
+            val compat = spy(object : NadelTransformJavaCompatAdapter {
+                override val name: String
+                    get() = "Test"
+
+                override fun onComplete(
+                    executionContext: NadelExecutionContext,
+                    serviceExecutionContext: NadelServiceExecutionContext,
+                    executionBlueprint: NadelOverallExecutionBlueprint,
+                    service: Service,
+                    result: ServiceExecutionResult,
+                    nodes: JsonNodes,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+                ): CompletableFuture<Void> {
+                    return CompletableFuture.completedFuture(null)
+                }
+            })
+
+            val transformer = NadelTransformJavaCompat.create(compat)
+
+            val executionContext = mock<NadelExecutionContext>()
+            val serviceExecutionContext = mock<NadelServiceExecutionContext>()
+            val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
+            val service = mock<Service>()
+            val result = mock<ServiceExecutionResult>()
+            val nodes = mock<JsonNodes>()
+            val transformServiceExecutionContext = mock<NadelTransformServiceExecutionContext>()
+
+            // when
+            val onComplete = transformer.onComplete(
+                executionContext,
+                serviceExecutionContext,
+                executionBlueprint,
+                service,
+                result,
+                nodes,
+                transformServiceExecutionContext,
+            )
+
+            // then
+            assert(onComplete === Unit)
+
+            verify(exactly = 1) {
+                compat.onComplete(
+                    executionContext,
+                    serviceExecutionContext,
+                    executionBlueprint,
+                    service,
+                    result,
+                    nodes,
+                    transformServiceExecutionContext,
                 )
             }
 

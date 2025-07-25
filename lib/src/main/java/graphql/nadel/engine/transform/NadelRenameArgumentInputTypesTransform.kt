@@ -35,7 +35,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         // Transform if there's any arguments at all
@@ -56,7 +56,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = field
@@ -76,7 +76,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

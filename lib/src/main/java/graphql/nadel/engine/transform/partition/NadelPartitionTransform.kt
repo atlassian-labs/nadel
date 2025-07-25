@@ -47,7 +47,7 @@ internal class NadelPartitionTransform(
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         if (executionContext.isPartitionedCall) {
@@ -121,7 +121,7 @@ internal class NadelPartitionTransform(
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
 
         if (state.error != null) {
@@ -169,7 +169,7 @@ internal class NadelPartitionTransform(
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNode = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,

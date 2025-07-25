@@ -31,7 +31,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Set<String>? {
         // Let's not bother with abstract types in a test
@@ -59,7 +59,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         service: Service,
         field: ExecutableNormalizedField,
         state: Set<String>,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         val fieldsArgsToInterpret = state
 
@@ -97,7 +97,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         result: ServiceExecutionResult,
         state: Set<String>,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

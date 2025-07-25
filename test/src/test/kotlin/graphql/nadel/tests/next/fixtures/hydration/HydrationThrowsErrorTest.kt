@@ -105,7 +105,7 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             services: Map<String, graphql.nadel.Service>,
             service: graphql.nadel.Service,
             overallField: ExecutableNormalizedField,
-            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
             hydrationDetails: ServiceExecutionHydrationDetails?,
         ): Any? {
             if (overallField.name == "userById") {
@@ -125,7 +125,7 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             result: ServiceExecutionResult,
             state: Any,
             nodes: JsonNodes,
-            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         ): List<NadelResultInstruction> {
             throw UnsupportedOperationException()
         }
@@ -138,7 +138,7 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             service: graphql.nadel.Service,
             field: ExecutableNormalizedField,
             state: Any,
-            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         ): NadelTransformFieldResult {
             throw UnsupportedOperationException()
         }

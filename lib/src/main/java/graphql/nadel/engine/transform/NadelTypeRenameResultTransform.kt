@@ -33,7 +33,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
@@ -57,7 +57,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
     }
@@ -72,7 +72,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
             underlyingParentField?.queryPath ?: NadelQueryPath.root,

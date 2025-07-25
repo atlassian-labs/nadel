@@ -231,7 +231,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             services: Map<String, graphql.nadel.Service>,
             service: graphql.nadel.Service,
             overallField: ExecutableNormalizedField,
-            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
             hydrationDetails: ServiceExecutionHydrationDetails?,
         ): Any? {
             if (overallField.name == "issuesByIds") {
@@ -249,7 +249,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             service: graphql.nadel.Service,
             field: ExecutableNormalizedField,
             state: Any,
-            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         ): NadelTransformFieldResult {
             return NadelTransformFieldResult.unmodified(field)
         }
@@ -264,7 +264,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             result: ServiceExecutionResult,
             state: Any,
             nodes: JsonNodes,
-            serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         ): List<NadelResultInstruction> {
             return emptyList()
         }

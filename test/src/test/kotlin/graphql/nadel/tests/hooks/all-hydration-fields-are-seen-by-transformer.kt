@@ -34,7 +34,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Unit? {
                     isApplicable.add("${service.name}.${overallField.resultKey}")
@@ -49,7 +49,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Unit,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     transformField.add("${service.name}.${field.resultKey}")
                     return NadelTransformFieldResult.unmodified(field)
@@ -65,7 +65,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Unit,
                     nodes: JsonNodes,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     getResultInstructions.add("${service.name}.${overallField.resultKey}")
                     return emptyList()

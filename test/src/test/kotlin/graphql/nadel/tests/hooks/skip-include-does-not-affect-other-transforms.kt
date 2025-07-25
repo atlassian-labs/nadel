@@ -28,7 +28,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
                     // All fields exist, no __skip field from NadelSkipIncludeTransform
@@ -46,7 +46,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     assert(field.name != "__skip")
 
@@ -63,7 +63,7 @@ class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     assert(overallField.name != "__skip")
 

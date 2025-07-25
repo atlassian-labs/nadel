@@ -36,7 +36,7 @@ internal class NadelStubTransform : NadelTransform<StubState> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): StubState? {
         val instructions = executionBlueprint.getTypeNameToInstructionMap<NadelStubbedInstruction>(overallField)
@@ -56,7 +56,7 @@ internal class NadelStubTransform : NadelTransform<StubState> {
         service: Service,
         field: ExecutableNormalizedField,
         state: StubState,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         // When stubbing interface fields, we allow some implementations to be stubbed, other fields can be real impls
         val objectTypesWithRealFieldImplementations = field.objectTypeNames - state.stubByObjectTypeNames.keys
@@ -86,7 +86,7 @@ internal class NadelStubTransform : NadelTransform<StubState> {
         result: ServiceExecutionResult,
         state: StubState,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,

@@ -77,7 +77,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         when {
@@ -137,7 +137,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         // Nothing to query if there are no fields, we need to add selection
         if (state.fieldObjectTypeNamesOwnedByService.isEmpty()) {
@@ -196,7 +196,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

@@ -28,7 +28,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Any? {
         return overallField.takeIf { it.name == "test" || it.name == "cities" }
@@ -42,7 +42,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: Any,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         if (field.normalizedArguments["arg"] != null) {
             return NadelTransformFieldResult(
@@ -77,7 +77,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         result: ServiceExecutionResult,
         state: Any,
         nodes: JsonNodes,
-        serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

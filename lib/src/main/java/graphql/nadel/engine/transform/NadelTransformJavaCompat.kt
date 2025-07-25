@@ -49,6 +49,7 @@ interface NadelTransformJavaCompat<State : Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<State?>
 
@@ -63,6 +64,7 @@ interface NadelTransformJavaCompat<State : Any> {
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult>
 
     /**
@@ -78,6 +80,7 @@ interface NadelTransformJavaCompat<State : Any> {
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<List<NadelResultInstruction>>
 
     /**
@@ -90,7 +93,7 @@ interface NadelTransformJavaCompat<State : Any> {
         service: Service,
         result: ServiceExecutionResult,
         nodes: JsonNodes,
-        context: NadelTransformServiceExecutionContext? = null,
+        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<Void> {
         return CompletableFuture.completedFuture(null)
     }
@@ -131,7 +134,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): State? {
                     return compat.isApplicable(
@@ -141,6 +144,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         services = services,
                         service = service,
                         overallField = overallField,
+                        transformServiceExecutionContext = transformServiceExecutionContext,
                         hydrationDetails = hydrationDetails,
                     ).asDeferred().await()
                 }
@@ -153,7 +157,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: State,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     return coroutineScope {
                         val scope = this@coroutineScope
@@ -166,6 +170,7 @@ interface NadelTransformJavaCompat<State : Any> {
                             service = service,
                             field = field,
                             state = state,
+                            transformServiceExecutionContext = transformServiceExecutionContext
                         ).asDeferred().await()
                     }
                 }
@@ -180,7 +185,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     result: ServiceExecutionResult,
                     state: State,
                     nodes: JsonNodes,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): List<NadelResultInstruction> {
                     return compat.getResultInstructions(
                         executionContext = executionContext,
@@ -192,6 +197,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         result = result,
                         state = state,
                         nodes = nodes,
+                        transformServiceExecutionContext = transformServiceExecutionContext,
                     ).asDeferred().await()
                 }
 
@@ -202,7 +208,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     service: Service,
                     result: ServiceExecutionResult,
                     nodes: JsonNodes,
-                    serviceExecutionTransformContext: NadelTransformServiceExecutionContext?,
+                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ) {
                     compat.onComplete(
                         executionContext = executionContext,
@@ -210,7 +216,8 @@ interface NadelTransformJavaCompat<State : Any> {
                         executionBlueprint = executionBlueprint,
                         service = service,
                         result = result,
-                        nodes = nodes
+                        nodes = nodes,
+                        transformServiceExecutionContext = transformServiceExecutionContext,
                     ).asDeferred().await()
                 }
             }
