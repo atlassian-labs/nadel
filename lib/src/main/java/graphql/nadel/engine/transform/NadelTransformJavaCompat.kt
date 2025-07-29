@@ -33,8 +33,8 @@ interface NadelTransformJavaCompat<State : Any> {
         service: Service,
         rootField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): NadelTransformServiceExecutionContext? {
-        return null
+    ): CompletableFuture<NadelTransformServiceExecutionContext?> {
+        return CompletableFuture.completedFuture(null)
     }
 
     /**
@@ -124,7 +124,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         service,
                         rootField,
                         hydrationDetails
-                    )
+                    ).asDeferred().await()
                 }
 
                 override suspend fun isApplicable(

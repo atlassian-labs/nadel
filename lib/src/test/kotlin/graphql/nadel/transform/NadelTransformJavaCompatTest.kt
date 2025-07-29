@@ -64,8 +64,8 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     service: Service,
                     rootField: ExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): NadelTransformServiceExecutionContext? {
-                    return Prop("something")
+                ): CompletableFuture<NadelTransformServiceExecutionContext?> {
+                    return CompletableFuture.completedFuture(Prop("something"))
                 }
             })
 

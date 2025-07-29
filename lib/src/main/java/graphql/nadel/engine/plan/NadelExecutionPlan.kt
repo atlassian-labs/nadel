@@ -11,6 +11,7 @@ internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
 data class NadelExecutionPlan(
     // this is a map for overall Fields
     val transformationSteps: Map<ExecutableNormalizedField, List<AnyNadelExecutionPlanStep>>,
+    val transformContexts: Map<NadelTransform<Any>, NadelTransformServiceExecutionContext?>,
 ) {
     data class Step<T : Any>(
         val service: Service,
@@ -19,21 +20,5 @@ data class NadelExecutionPlan(
         val queryTransformTimingStep: NadelInstrumentationTimingParameters.Step,
         val resultTransformTimingStep: NadelInstrumentationTimingParameters.Step,
         val state: T,
-        val transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     )
-
-    /**
-     * Creates and returns a new [NadelExecutionPlan] that is a merging of `this` plan
-     * and the [other] plan.
-     */
-    fun merge(other: NadelExecutionPlan): NadelExecutionPlan {
-        val newSteps = transformationSteps.toMutableMap()
-        other.transformationSteps.forEach { (field, steps) ->
-            newSteps.compute(field) { _, oldSteps ->
-                oldSteps?.let { it + steps } ?: steps
-            }
-        }
-
-        return copy(transformationSteps = newSteps)
-    }
 }
