@@ -115,7 +115,6 @@ internal class NadelExecutionPlanFactory(
                                 queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
                                 resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
                                 state = state,
-                                executionTransformContext
                             )
                         }
                     }
@@ -127,7 +126,10 @@ internal class NadelExecutionPlanFactory(
             }
         }
 
-        return NadelExecutionPlan(executionSteps)
+        return NadelExecutionPlan(
+            executionSteps,
+            transformContexts
+        )
     }
 
     private inline fun traverseQuery(

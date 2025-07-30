@@ -166,6 +166,7 @@ class NadelQueryTransformer private constructor(
         val artificialFields = mutableListOf<ExecutableNormalizedField>()
 
         for (transformStep in transformationSteps) {
+            val transformServiceExecutionContext = executionPlan.transformContexts[transformStep.transform]
             val transformResultForStep = timer.time(transformStep.queryTransformTimingStep) {
                 transformStep.transform.transformField(
                     executionContext,
@@ -175,7 +176,7 @@ class NadelQueryTransformer private constructor(
                     service,
                     newField,
                     transformStep.state,
-                    transformStep.transformServiceExecutionContext
+                    transformServiceExecutionContext
                 )
             }
             artificialFields.addAll(transformResultForStep.artificialFields)
