@@ -75,12 +75,12 @@ subprojects {
 
     task sourcesJar(type: Jar) {
         dependsOn classes
-        classifier "sources"
+        archiveClassifier = "sources"
         from sourceSets.main.allSource
     }
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier "javadoc"
+        archiveClassifier = "javadoc"
         from javadoc.destinationDir
     }
 
@@ -90,10 +90,10 @@ subprojects {
                 from components.java
 
                 artifact sourcesJar {
-                    classifier "sources"
+                    archiveClassifier = "sources"
                 }
                 artifact javadocJar {
-                    classifier "javadoc"
+                    archiveClassifier = "javadoc"
                 }
 
                 // This used to be in settings.gradle but it seems that Kotlin gets angry when you rename the project name
