@@ -29,6 +29,7 @@ import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
+import graphql.nadel.engine.util.getFieldDefinitionSequence
 import graphql.nadel.engine.util.getOperationDefinitionOrNull
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
@@ -51,6 +52,8 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.time.NadelInternalLatencyTracker
+import graphql.nadel.util.NamespacedUtil
+import graphql.nadel.util.NamespacedUtil.isNamespacedFieldLike
 import graphql.nadel.util.OperationNameUtil
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
@@ -479,16 +482,13 @@ internal class NextgenEngine(
     ): Boolean {
         val topLevelField = topLevelFields.singleOrNull() ?: return false
 
-        if (topLevelField.fieldName == TypeNameMetaFieldDef.name) {
+        if (topLevelField.name == TypeNameMetaFieldDef.name) {
             return true
         }
-        val operationType = service.underlyingSchema.getTypeAs<GraphQLObjectType>(topLevelField.singleObjectTypeName)
-        val topLevelFieldDefinition = operationType.getField(topLevelField.name)
-        val isNamespacedLike = topLevelFieldDefinition?.arguments?.isEmpty() == true
-            && topLevelFieldDefinition.type is GraphQLObjectType
-        return isNamespacedLike &&
-            topLevelField.hasChildren() &&
-            topLevelField.children.all { it.name == TypeNameMetaFieldDef.name }
+
+        return isNamespacedFieldLike(service, topLevelField)
+            && topLevelField.hasChildren()
+            && topLevelField.children.all { it.name == TypeNameMetaFieldDef.name }
     }
 
     private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {

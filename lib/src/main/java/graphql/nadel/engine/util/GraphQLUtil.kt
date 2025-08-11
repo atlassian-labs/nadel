@@ -61,6 +61,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
@@ -685,4 +686,8 @@ internal inline fun <reified T : SDLDefinition<*>> parseDefinition(
     sdl: String,
 ): T {
     return Parser.parse(sdl).definitions.singleOfType()
+}
+
+fun GraphQLSchema.isOperationType(type: GraphQLNamedType): Boolean {
+    return type === queryType || type === mutationType || type === subscriptionType
 }
