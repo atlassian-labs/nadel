@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<StubNamespacedMutationFieldTest>()
+    graphql.nadel.tests.next.update<StubNamespaceMutationFieldTest>()
 }
 
 /**
@@ -19,35 +19,17 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class StubNamespacedMutationFieldTestSnapshot : TestSnapshot() {
+public class StubNamespaceMutationFieldTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | mutation {
-                |   jira {
-                |     __typename__stubbed__createLlmBackedIssue: __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "jira": null
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-        )
+            )
 
     /**
      * ```json
      * {
      *   "data": {
-     *     "jira": null
+     *     "jira": {
+     *       "createLlmBackedIssue": null
+     *     }
      *   }
      * }
      * ```
@@ -56,7 +38,9 @@ public class StubNamespacedMutationFieldTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "jira": null
+            |     "jira": {
+            |       "createLlmBackedIssue": null
+            |     }
             |   }
             | }
             """.trimMargin(),

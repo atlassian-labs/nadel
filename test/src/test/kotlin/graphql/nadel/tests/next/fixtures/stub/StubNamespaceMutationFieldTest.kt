@@ -1,8 +1,9 @@
 package graphql.nadel.tests.next.fixtures.stub
 
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
-class StubNamespacedMutationFieldTest : NadelIntegrationTest(
+class StubNamespaceMutationFieldTest : NadelIntegrationTest(
     query = """
         mutation {
           jira {
@@ -93,4 +94,9 @@ class StubNamespacedMutationFieldTest : NadelIntegrationTest(
             },
         ),
     ),
-)
+) {
+    override fun makeExecutionHints(): NadelExecutionHints.Builder {
+        return super.makeExecutionHints()
+            .shortCircuitEmptyQuery { true }
+    }
+}
