@@ -54,7 +54,7 @@ internal class NadelExecutionPlanFactory(
      */
     suspend fun create(
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelOperationExecutionContext,
+        operationExecutionContext: NadelOperationExecutionContext,
         rootField: ExecutableNormalizedField,
     ): NadelExecutionPlan {
         val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step>> =
@@ -72,7 +72,7 @@ internal class NadelExecutionPlanFactory(
                         null
                     } else {
                         val transformOperationContext = transformContexts.getOrPut(transform) {
-                            transform.getTransformOperationContext(serviceExecutionContext)
+                            transform.getTransformOperationContext(operationExecutionContext)
                         }
 
                         val state = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {

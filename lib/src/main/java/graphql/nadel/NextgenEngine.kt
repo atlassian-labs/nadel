@@ -291,14 +291,14 @@ internal class NextgenEngine(
         service: Service,
         topLevelField: ExecutableNormalizedField,
     ): ServiceExecutionResult {
-        val serviceExecutionContext =
+        val operationExecutionContext =
             executionHooks.createOperationExecutionContext(executionContext, service, topLevelField)
 
         val timer = executionContext.timer
         val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
             executionPlanner.create(
                 executionContext = executionContext,
-                serviceExecutionContext = serviceExecutionContext,
+                operationExecutionContext = operationExecutionContext,
                 rootField = topLevelField,
             )
         }
@@ -306,7 +306,7 @@ internal class NextgenEngine(
             transformQuery(
                 service = service,
                 executionContext = executionContext,
-                serviceExecutionContext = serviceExecutionContext,
+                operationExecutionContext = operationExecutionContext,
                 executionPlan = executionPlan,
                 field = topLevelField
             )
@@ -316,7 +316,7 @@ internal class NextgenEngine(
                 service = service,
                 topLevelFields = queryTransform.result,
                 executionContext = executionContext,
-                serviceExecutionContext = serviceExecutionContext,
+                operationExecutionContext = operationExecutionContext,
                 executionHydrationDetails = executionContext.hydrationDetails,
             )
         }
@@ -332,7 +332,7 @@ internal class NextgenEngine(
                                 resultTransformer
                                     .transform(
                                         executionContext = executionContext,
-                                        serviceExecutionContext = serviceExecutionContext,
+                                        operationExecutionContext = operationExecutionContext,
                                         executionPlan = executionPlan,
                                         artificialFields = queryTransform.artificialFields,
                                         overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
@@ -349,7 +349,7 @@ internal class NextgenEngine(
             else -> timer.time(step = RootStep.ResultTransforming) {
                 resultTransformer.transform(
                     executionContext = executionContext,
-                    serviceExecutionContext = serviceExecutionContext,
+                    operationExecutionContext = operationExecutionContext,
                     executionPlan = executionPlan,
                     artificialFields = queryTransform.artificialFields,
                     overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
@@ -366,7 +366,7 @@ internal class NextgenEngine(
         service: Service,
         topLevelFields: List<ExecutableNormalizedField>,
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelOperationExecutionContext,
+        operationExecutionContext: NadelOperationExecutionContext,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
@@ -393,7 +393,7 @@ internal class NextgenEngine(
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
             variables = compileResult.variables,
             operationDefinition = compileResult.document.definitions.singleOfType(),
-            serviceExecutionContext = serviceExecutionContext,
+            operationExecutionContext = operationExecutionContext,
             hydrationDetails = executionHydrationDetails,
             // Prefer non __typename field first, otherwise we just get first
             executableNormalizedField = topLevelFields
@@ -506,7 +506,7 @@ internal class NextgenEngine(
     private suspend fun transformQuery(
         service: Service,
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelOperationExecutionContext,
+        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         field: ExecutableNormalizedField,
     ): NadelQueryTransformer.TransformResult {
@@ -514,7 +514,6 @@ internal class NextgenEngine(
             overallExecutionBlueprint,
             service,
             executionContext,
-            serviceExecutionContext,
             executionPlan,
             field,
         )

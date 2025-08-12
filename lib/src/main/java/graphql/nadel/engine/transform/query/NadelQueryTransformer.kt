@@ -2,7 +2,6 @@ package graphql.nadel.engine.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
@@ -15,7 +14,6 @@ class NadelQueryTransformer private constructor(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val service: Service,
     private val executionContext: NadelExecutionContext,
-    private val serviceExecutionContext: NadelOperationExecutionContext,
     private val executionPlan: NadelExecutionPlan,
     private val transformContext: TransformContext,
     private val timer: NadelInstrumentationTimer.BatchTimer,
@@ -25,7 +23,6 @@ class NadelQueryTransformer private constructor(
             executionBlueprint: NadelOverallExecutionBlueprint,
             service: Service,
             executionContext: NadelExecutionContext,
-            serviceExecutionContext: NadelOperationExecutionContext,
             executionPlan: NadelExecutionPlan,
             field: ExecutableNormalizedField,
         ): TransformResult {
@@ -36,7 +33,6 @@ class NadelQueryTransformer private constructor(
                     executionBlueprint,
                     service,
                     executionContext,
-                    serviceExecutionContext,
                     executionPlan,
                     transformContext,
                     timer,

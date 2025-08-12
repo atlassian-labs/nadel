@@ -1,8 +1,5 @@
 package graphql.nadel.transform
 
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
@@ -67,12 +64,11 @@ class NadelTransformJavaCompatTest {
 
         val transformer = NadelTransformJavaCompat.create(compat)
 
-        val serviceExecutionContext = mock<NadelOperationExecutionContext>()
-        val services = mock<Map<String, Service>>()
+        val operationExecutionContext = mock<NadelOperationExecutionContext>()
 
         // When
         val transformServiceExecutionContext = transformer.getTransformOperationContext(
-            serviceExecutionContext,
+            operationExecutionContext,
         )
 
         // Then
@@ -81,7 +77,7 @@ class NadelTransformJavaCompatTest {
 
         verify(exactly = 1) {
             compat.getTransformOperationContext(
-                serviceExecutionContext,
+                operationExecutionContext,
             )
         }
 
@@ -205,7 +201,6 @@ class NadelTransformJavaCompatTest {
         val transformer = NadelTransformJavaCompat.create(compat)
 
         val underlyingParentField = mock<ExecutableNormalizedField>()
-        val result = mock<ServiceExecutionResult>()
         val resultNodes = mock<JsonNodes>()
         val transformFieldContext = mock<TransformFieldContext>()
 

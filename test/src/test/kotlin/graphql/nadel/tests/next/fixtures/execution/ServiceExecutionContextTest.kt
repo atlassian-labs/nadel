@@ -96,7 +96,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
     ),
 ) {
-    private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<TestOperationExecutionContext>())
+    private val operationExecutionContexts = Collections.synchronizedList(mutableListOf<TestOperationExecutionContext>())
     private val transformServiceExecutionContexts =
         Collections.synchronizedList(mutableListOf<TestTransformOperationContext>())
 
@@ -228,7 +228,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         val impl = super.makeServiceExecution(service)
 
         return ServiceExecution {
-            serviceExecutionContexts.add(it.serviceExecutionContext as TestOperationExecutionContext)
+            operationExecutionContexts.add(it.operationExecutionContext as TestOperationExecutionContext)
             impl.execute(it)
         }
     }
@@ -240,9 +240,9 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
 
     private fun assertServiceExecutionContexts() {
         // Three separate executions, two for top level fields, and one for hydration
-        assertTrue(serviceExecutionContexts.size == 3)
+        assertTrue(operationExecutionContexts.size == 3)
 
-        val me = serviceExecutionContexts.single {
+        val me = operationExecutionContexts.single {
             it.getTransformFieldContext.first().contains("me()")
         }
         val expectedMeExecutions = listOf(
@@ -254,7 +254,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(me.transformField == expectedMeExecutions.dropLast(1)) // dropLast as child is removed due to hydration
         assertTrue(me.transformResult.sorted() == expectedMeExecutions.dropLast(1).sorted())
 
-        val bug = serviceExecutionContexts.single {
+        val bug = operationExecutionContexts.single {
             it.getTransformFieldContext.first().contains("bug")
         }
         val expectedBugExecutions = listOf(
@@ -265,7 +265,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(bug.transformField == expectedBugExecutions)
         assertTrue(bug.transformResult.sorted() == expectedBugExecutions.sorted())
 
-        val hydration = serviceExecutionContexts.single {
+        val hydration = operationExecutionContexts.single {
             it.getTransformFieldContext.first().contains("9")
         }
         val expectedHydrationExecutions = listOf(

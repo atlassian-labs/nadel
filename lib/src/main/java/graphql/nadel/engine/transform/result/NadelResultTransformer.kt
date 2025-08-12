@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
     suspend fun transform(
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelOperationExecutionContext,
+        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
@@ -33,7 +33,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         val nodes = JsonNodes(result.data)
         val instructions = getMutationInstructions(
             executionContext,
-            serviceExecutionContext,
+            operationExecutionContext,
             executionPlan,
             artificialFields,
             overallToUnderlyingFields,
@@ -47,7 +47,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
     suspend fun transform(
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelOperationExecutionContext,
+        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
@@ -61,7 +61,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         )
         val instructions = getMutationInstructions(
             executionContext,
-            serviceExecutionContext,
+            operationExecutionContext,
             executionPlan,
             artificialFields,
             overallToUnderlyingFields,
@@ -75,7 +75,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
     private suspend fun getMutationInstructions(
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelOperationExecutionContext,
+        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,

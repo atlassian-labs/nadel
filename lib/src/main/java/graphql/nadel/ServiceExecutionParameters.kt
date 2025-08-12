@@ -14,7 +14,7 @@ class ServiceExecutionParameters internal constructor(
     val variables: Map<String, Any>,
     val operationDefinition: OperationDefinition,
     val executionId: ExecutionId,
-    val serviceExecutionContext: NadelOperationExecutionContext,
+    val operationExecutionContext: NadelOperationExecutionContext,
     /**
      * @return details abut this service hydration or null if it's not a hydration call
      */
