@@ -111,9 +111,6 @@ class NadelTransformJavaCompatTest {
 
         val transformer = NadelTransformJavaCompat.create(compat)
 
-        val executionContext = mock<NadelExecutionContext>()
-        val serviceExecutionContext = mock<NadelOperationExecutionContext>()
-        val services = mock<Map<String, Service>>()
         val transformOperationContext = mock<TransformOperationContext>()
         val overallField = mock<ExecutableNormalizedField>()
 
@@ -250,13 +247,12 @@ class NadelTransformJavaCompatTest {
 
         val transformer = NadelTransformJavaCompat.create(compat)
 
-        val result = mock<ServiceExecutionResult>()
         val resultNodes = mock<JsonNodes>()
-        val transformServiceExecutionContext = mock<TransformOperationContext>()
+        val transformOperationContext = mock<TransformOperationContext>()
 
         // When
         val onComplete = transformer.onComplete(
-            transformServiceExecutionContext,
+            transformOperationContext,
             resultNodes,
         )
 
@@ -265,7 +261,7 @@ class NadelTransformJavaCompatTest {
 
         verify(exactly = 1) {
             compat.onComplete(
-                transformServiceExecutionContext,
+                transformOperationContext,
                 resultNodes,
             )
         }
