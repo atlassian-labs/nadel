@@ -14,7 +14,7 @@ import graphql.language.Document
 import graphql.language.OperationDefinition
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelIncrementalResultSupport
-import graphql.nadel.engine.NadelServiceExecutionContext
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.document.DocumentPredicates
@@ -29,7 +29,6 @@ import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
-import graphql.nadel.engine.util.getFieldDefinitionSequence
 import graphql.nadel.engine.util.getOperationDefinitionOrNull
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
@@ -40,7 +39,7 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.NadelExecutionHooks
-import graphql.nadel.hooks.createServiceExecutionContext
+import graphql.nadel.hooks.createOperationExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.ErrorData
 import graphql.nadel.instrumentation.parameters.ErrorType.ServiceExecutionError
@@ -52,14 +51,12 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.time.NadelInternalLatencyTracker
-import graphql.nadel.util.NamespacedUtil
 import graphql.nadel.util.NamespacedUtil.isNamespacedFieldLike
 import graphql.nadel.util.OperationNameUtil
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
-import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -88,7 +85,7 @@ internal class NextgenEngine(
     maxQueryDepth: Int,
     maxFieldCount: Int,
     services: List<Service>,
-    transforms: List<NadelTransform<out Any>>,
+    transforms: List<NadelTransform<*, *>>,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     nadelValidation: NadelSchemaValidation,
 ) {
@@ -98,7 +95,6 @@ internal class NextgenEngine(
     private val overallExecutionBlueprint = nadelValidation
         .validateAndGenerateBlueprint(NadelSchemas(engineSchema, services))
     private val executionPlanner = NadelExecutionPlanFactory.create(
-        executionBlueprint = overallExecutionBlueprint,
         engine = this,
         transforms = transforms,
         executionHooks = executionHooks,
@@ -175,6 +171,7 @@ internal class NextgenEngine(
             val incrementalResultSupport = NadelIncrementalResultSupport(operation)
             val resultTracker = NadelResultTracker()
             val executionContext = NadelExecutionContext(
+                overallExecutionBlueprint,
                 executionInput,
                 operation,
                 executionHooks,
@@ -183,7 +180,7 @@ internal class NextgenEngine(
                 timer,
                 incrementalResultSupport,
                 resultTracker,
-                executionCoroutine = this
+                executionCoroutine = this@supervisorScope,
             )
 
             val beginExecuteContext = instrumentation.beginExecute(
@@ -204,9 +201,9 @@ internal class NextgenEngine(
                                 try {
                                     val resolvedService = fieldToService.resolveDynamicService(field, service)
                                     executeTopLevelField(
-                                        topLevelField = field,
-                                        service = resolvedService,
                                         executionContext = executionContext,
+                                        service = resolvedService,
+                                        topLevelField = field,
                                     )
                                 } catch (e: Throwable) {
                                     when (e) {
@@ -258,11 +255,11 @@ internal class NextgenEngine(
     ): ServiceExecutionResult {
         return try {
             executeTopLevelField(
-                topLevelField = topLevelField,
-                service = service,
                 executionContext = executionContext.copy(
                     hydrationDetails = hydrationDetails,
                 ),
+                service = service,
+                topLevelField = topLevelField,
             )
         } catch (e: Exception) {
             when (e) {
@@ -281,30 +278,28 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
         return executeTopLevelField(
-            topLevelField = topLevelField,
-            service = service,
             executionContext = executionContext.copy(
                 isPartitionedCall = true,
             ),
+            service = service,
+            topLevelField = topLevelField,
         )
     }
 
     private suspend fun executeTopLevelField(
-        topLevelField: ExecutableNormalizedField,
-        service: Service,
         executionContext: NadelExecutionContext,
+        service: Service,
+        topLevelField: ExecutableNormalizedField,
     ): ServiceExecutionResult {
-        val serviceExecutionContext = executionHooks.createServiceExecutionContext(service)
+        val serviceExecutionContext =
+            executionHooks.createOperationExecutionContext(executionContext, service, topLevelField)
 
         val timer = executionContext.timer
         val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
             executionPlanner.create(
                 executionContext = executionContext,
                 serviceExecutionContext = serviceExecutionContext,
-                services = services,
-                service = service,
                 rootField = topLevelField,
-                serviceHydrationDetails = executionContext.hydrationDetails,
             )
         }
         val queryTransform = timer.time(step = RootStep.QueryTransforming) {
@@ -371,7 +366,7 @@ internal class NextgenEngine(
         service: Service,
         topLevelFields: List<ExecutableNormalizedField>,
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        serviceExecutionContext: NadelOperationExecutionContext,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
@@ -511,7 +506,7 @@ internal class NextgenEngine(
     private suspend fun transformQuery(
         service: Service,
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        serviceExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         field: ExecutableNormalizedField,
     ): NadelQueryTransformer.TransformResult {

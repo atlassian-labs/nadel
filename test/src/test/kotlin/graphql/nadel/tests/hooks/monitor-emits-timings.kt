@@ -3,16 +3,12 @@ package graphql.nadel.tests.hooks
 import graphql.ExecutionResult
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -36,90 +32,90 @@ import java.util.concurrent.CompletableFuture
 
 private class MonitorEmitsTimingsTransform(
     private val delay: (Long) -> Unit,
-) : NadelTransform<Unit> {
-    override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
-        service: Service,
+) : NadelTransform<
+    MonitorEmitsTimingsTransform.TransformOperationContext,
+    MonitorEmitsTimingsTransform.TransformFieldContext,
+    > {
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    override suspend fun getTransformOperationContext(
+        operationExecutionContext: NadelOperationExecutionContext,
+    ): TransformOperationContext {
+        return TransformOperationContext(operationExecutionContext)
+    }
+
+    override suspend fun getTransformFieldContext(
+        transformContext: TransformOperationContext,
         overallField: ExecutableNormalizedField,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): Unit? {
+    ): TransformFieldContext? {
         delay(128)
-        return Unit
+        return TransformFieldContext(transformContext, overallField)
     }
 
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        transformContext: TransformFieldContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
-        state: Unit,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         delay(256)
         return NadelTransformFieldResult.unmodified(field)
     }
 
-    override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallField: ExecutableNormalizedField,
+    override suspend fun transformResult(
+        transformContext: TransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        state: Unit,
-        nodes: JsonNodes,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+        resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
         delay(32)
         return listOf()
     }
 }
 
-private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
-    override fun isApplicable(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
-        service: Service,
+private class JavaTimingTransform : NadelTransformJavaCompat<
+    JavaTimingTransform.TransformOperationContext,
+    JavaTimingTransform.TransformFieldContext,
+    > {
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    override fun getTransformOperationContext(
+        operationExecutionContext: NadelOperationExecutionContext,
+    ): CompletableFuture<TransformOperationContext> {
+        return CompletableFuture.completedFuture(TransformOperationContext(operationExecutionContext))
+    }
+
+    override fun getTransformFieldContext(
+        transformContext: TransformOperationContext,
         overallField: ExecutableNormalizedField,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): CompletableFuture<Unit?> {
-        return CompletableFuture.completedFuture(Unit)
+    ): CompletableFuture<TransformFieldContext?> {
+        return CompletableFuture.completedFuture(TransformFieldContext(transformContext, overallField))
     }
 
     override fun transformField(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        transformContext: TransformFieldContext,
         transformer: NadelQueryTransformerJavaCompat,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
-        state: Unit,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
 
-    override fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallField: ExecutableNormalizedField,
+    override fun transformResult(
+        transformContext: TransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        state: Unit,
-        nodes: JsonNodes,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+        resultNodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())
     }
@@ -133,7 +129,7 @@ class `monitor-emits-timings` : EngineTestHook {
 
     private val stepsWitnessed = mutableSetOf<Step>()
 
-    override val customTransforms: List<NadelTransform<out Any>>
+    override val customTransforms: List<NadelTransform<*, *>>
         get() = listOf(
             MonitorEmitsTimingsTransform(::passTime),
             NadelTransformJavaCompat.create(JavaTimingTransform()),

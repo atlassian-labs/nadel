@@ -5,15 +5,15 @@ import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.result.NadelResultTracker
 import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.CoroutineScope
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 
 data class NadelExecutionContext internal constructor(
+    val executionBlueprint: NadelOverallExecutionBlueprint,
     val executionInput: ExecutionInput,
     val query: ExecutableNormalizedOperation,
     internal val hooks: NadelExecutionHooks,
@@ -26,8 +26,6 @@ data class NadelExecutionContext internal constructor(
     internal val isPartitionedCall: Boolean = false,
     internal val executionCoroutine: CoroutineScope,
 ) {
-    private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
-
     val userContext: Any?
         get() {
             return executionInput.context

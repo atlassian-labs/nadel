@@ -1,17 +1,16 @@
 package graphql.nadel.engine.transform.partition
 
 import graphql.nadel.NextgenEngine
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelPartitionInstruction
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.partition.NadelPartitionMutationPayloadMerger.isMutationPayloadLike
+import graphql.nadel.engine.transform.partition.NadelPartitionTransform.TransformFieldContext
+import graphql.nadel.engine.transform.partition.NadelPartitionTransform.TransformOperationContext
 import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -31,31 +30,37 @@ import kotlinx.coroutines.awaitAll
 internal class NadelPartitionTransform(
     private val engine: NextgenEngine,
     private val partitionTransformHook: NadelPartitionTransformHook,
-) : NadelTransform<NadelPartitionTransform.State> {
-    data class State(
-        val executionContext: NadelExecutionContext,
-        val fieldPartitionContext: Any,
-        val fieldPartitions: Map<String, ExecutableNormalizedField>? = null,
-        val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf(),
-        val error: Throwable? = null,
-    )
+) : NadelTransform<TransformOperationContext, TransformFieldContext> {
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
 
-    override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
-        service: Service,
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+        val userPartitionContext: NadelPartitionFieldContext,
+        val fieldPartitions: Map<String, ExecutableNormalizedField>?,
+        val error: Throwable?,
+    ) : NadelTransformFieldContext<TransformOperationContext>() {
+        val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf()
+    }
+
+    override suspend fun getTransformOperationContext(
+        operationExecutionContext: NadelOperationExecutionContext,
+    ): TransformOperationContext {
+        return TransformOperationContext(operationExecutionContext)
+    }
+
+    override suspend fun getTransformFieldContext(
+        transformContext: TransformOperationContext,
         overallField: ExecutableNormalizedField,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
-        if (executionContext.isPartitionedCall) {
+    ): TransformFieldContext? {
+        if (transformContext.executionContext.isPartitionedCall) {
             // We don't want to partition a call that is already partitioned
             return null
         }
 
-        val partitionInstructions = executionBlueprint
+        val partitionInstructions = transformContext.executionBlueprint
             .getTypeNameToInstructionMap<NadelPartitionInstruction>(overallField)
 
         // We can't partition a field that has multiple partition instructions in different types. But, since
@@ -67,35 +72,32 @@ internal class NadelPartitionTransform(
 
         val pathToPartitionArg = partitionInstructions.values.single().pathToPartitionArg
 
-        val fieldPartitionContext = partitionTransformHook.getFieldPartitionContext(
-            executionContext,
-            serviceExecutionContext,
-            executionBlueprint,
-            services,
-            service,
+        val userPartitionContext = partitionTransformHook.getFieldPartitionContext(
+            transformContext.operationExecutionContext,
             overallField,
-            hydrationDetails,
         )
 
-        if (fieldPartitionContext == null) {
+        if (userPartitionContext == null) {
             // A field without a partition context can't be partitioned
             return null
         }
 
         val fieldPartition = NadelFieldPartition(
             pathToPartitionArg = pathToPartitionArg,
-            fieldPartitionContext = fieldPartitionContext,
-            engineSchema = executionBlueprint.engineSchema,
+            userPartitionContext = userPartitionContext,
+            engineSchema = transformContext.engineSchema,
             partitionKeyExtractor = partitionTransformHook.getPartitionKeyExtractor()
         )
 
         val fieldPartitions = try {
             fieldPartition.createFieldPartitions(field = overallField)
         } catch (exception: Exception) {
-            return State(
-                executionContext = executionContext,
-                fieldPartitionContext = fieldPartitionContext,
-                error = exception
+            return TransformFieldContext(
+                parentContext = transformContext,
+                overallField = overallField,
+                userPartitionContext = userPartitionContext,
+                fieldPartitions = null,
+                error = exception,
             )
         }
 
@@ -104,45 +106,42 @@ internal class NadelPartitionTransform(
             return null
         }
 
-        partitionTransformHook.onPartition(executionContext, fieldPartitions)
+        partitionTransformHook.onPartition(transformContext.operationExecutionContext, fieldPartitions)
 
-        return State(
-            executionContext = executionContext,
-            fieldPartitionContext = fieldPartitionContext,
-            fieldPartitions = fieldPartitions
+        return TransformFieldContext(
+            parentContext = transformContext,
+            overallField = overallField,
+            userPartitionContext = userPartitionContext,
+            fieldPartitions = fieldPartitions,
+            error = null,
         )
     }
 
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        transformContext: TransformFieldContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
-        state: State,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
-
-        if (state.error != null) {
+        if (transformContext.error != null) {
             throw NadelPartitionGraphQLErrorException(
-                "The call for field '${field.resultKey}' was not partitioned due to the following error: '${state.error.message}'",
+                "The call for field '${field.resultKey}' was not partitioned due to the following error: '${transformContext.error.message}'",
                 path = field.queryPath.segments,
             )
         }
 
-        val fieldPartitions = checkNotNull(state.fieldPartitions) { "Expected fieldPartitions to be set" }
+        val executionContext = transformContext.executionContext
+        val fieldPartitions = transformContext.fieldPartitions!!
 
         val primaryPartition = fieldPartitions.values.first()
         val otherPartitions = fieldPartitions.values.drop(1)
 
         // TODO: throw error if operation is Subscription?
-        val rootType = executionContext.query.operation.getType(executionBlueprint.engineSchema)
+        val rootType = executionContext.query.operation.getType(transformContext.engineSchema)
 
         val partitionCalls = otherPartitions.map {
             executionContext.executionCoroutine.async {
                 val topLevelField = NFUtil.createField(
-                    schema = executionBlueprint.engineSchema,
+                    schema = transformContext.engineSchema,
                     parentType = rootType,
                     queryPathToField = field.fieldPath,
                     aliasedPath = it.queryPath,
@@ -150,31 +149,27 @@ internal class NadelPartitionTransform(
                     fieldChildren = it.children
                 )
 
-                engine.executePartitionedCall(topLevelField, service, state.executionContext)
+                engine.executePartitionedCall(topLevelField, transformContext.service, executionContext)
             }
         }
 
-        state.partitionCalls.addAll(partitionCalls)
+        transformContext.partitionCalls.addAll(partitionCalls)
 
         return NadelTransformFieldResult(newField = primaryPartition)
     }
 
-    override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallField: ExecutableNormalizedField,
+    override suspend fun transformResult(
+        transformContext: TransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        state: State,
-        nodes: JsonNodes,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+        resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val parentNode = nodes.getNodesAt(
+        val parentNode = resultNodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         ).singleOrNull() ?: return emptyList()
+
+        val overallField = transformContext.overallField
+        val executionBlueprint = transformContext.executionBlueprint
 
         val nullifyField = NadelResultInstruction.Set(
             subject = parentNode,
@@ -183,9 +178,9 @@ internal class NadelPartitionTransform(
         )
 
         // TODO: handle HTTP errors
-        val resultFromPartitionCalls = state.partitionCalls.awaitAll()
+        val resultFromPartitionCalls = transformContext.partitionCalls.awaitAll()
 
-        val thisNodesData = nodes.getNodesAt(queryPath = overallField.queryPath, flatten = false).let {
+        val thisNodesData = resultNodes.getNodesAt(queryPath = overallField.queryPath, flatten = false).let {
             check(it.size == 1) { "Expected exactly one node at ${overallField.queryPath}, but found ${it.size}" }
             it.first().value
         }

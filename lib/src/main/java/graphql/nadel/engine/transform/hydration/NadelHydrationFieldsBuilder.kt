@@ -7,7 +7,6 @@ import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
-import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationObjectIdFieldBuilder.makeObjectIdFields
 import graphql.nadel.engine.transform.query.NFUtil
@@ -27,7 +26,6 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: NadelAliasHelper,
         virtualField: ExecutableNormalizedField,
         parentNode: JsonNode,
-        executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
         return NadelHydrationInputBuilder
             .getInputValues(
@@ -41,7 +39,7 @@ internal object NadelHydrationFieldsBuilder {
                     instruction = instruction,
                     fieldArguments = args,
                     fieldChildren = deepClone(virtualField.children),
-                    executionBlueprint = executionBlueprint,
+                    executionBlueprint = executionContext.executionBlueprint,
                 )
             }
             // Fix types for virtual fields
@@ -114,7 +112,7 @@ internal object NadelHydrationFieldsBuilder {
         service: Service,
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
-        objectTypeName: GraphQLObjectTypeName,
+        objectTypeName: String,
         instructions: List<NadelGenericHydrationInstruction>,
     ): List<ExecutableNormalizedField> {
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)

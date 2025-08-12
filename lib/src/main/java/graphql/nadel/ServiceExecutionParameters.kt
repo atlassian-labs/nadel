@@ -4,7 +4,7 @@ import graphql.GraphQLContext
 import graphql.execution.ExecutionId
 import graphql.language.Document
 import graphql.language.OperationDefinition
-import graphql.nadel.engine.NadelServiceExecutionContext
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.normalized.ExecutableNormalizedField
 
 class ServiceExecutionParameters internal constructor(
@@ -14,7 +14,7 @@ class ServiceExecutionParameters internal constructor(
     val variables: Map<String, Any>,
     val operationDefinition: OperationDefinition,
     val executionId: ExecutionId,
-    val serviceExecutionContext: NadelServiceExecutionContext,
+    val serviceExecutionContext: NadelOperationExecutionContext,
     /**
      * @return details abut this service hydration or null if it's not a hydration call
      */

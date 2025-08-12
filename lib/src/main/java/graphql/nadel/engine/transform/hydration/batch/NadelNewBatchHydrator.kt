@@ -15,8 +15,7 @@ import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
 import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
-import graphql.nadel.engine.transform.hydration.batch.NadelNewBatchHydrator.SourceObjectMetadata
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformFieldContext
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexBasedIndexer
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexKey
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexer
@@ -185,17 +184,16 @@ internal class NadelNewBatchHydrator(
      * todo: add validation that repeated directives must use the same $source object unless there is only one input
      */
     suspend fun hydrate(
-        state: State,
-        executionBlueprint: NadelOverallExecutionBlueprint,
+        transformContext: TransformFieldContext,
         sourceObjects: List<JsonNode>,
     ): List<NadelResultInstruction> {
         val context = NadelBatchHydratorContext(
-            instructionsByObjectTypeNames = state.instructionsByObjectTypeNames,
-            executionContext = state.executionContext,
-            sourceField = state.virtualField,
-            sourceFieldService = state.virtualFieldService,
-            aliasHelper = state.aliasHelper,
-            executionBlueprint = executionBlueprint,
+            instructionsByObjectTypeNames = transformContext.instructionsByObjectTypeNames,
+            executionContext = transformContext.executionContext,
+            sourceField = transformContext.virtualField,
+            sourceFieldService = transformContext.virtualFieldService,
+            aliasHelper = transformContext.aliasHelper,
+            executionBlueprint = transformContext.executionBlueprint,
         )
 
         return with(context) {
@@ -698,7 +696,7 @@ internal class NadelNewBatchHydrator(
  *
  * Used as a context receiver to pass around common info.
  */
-private class NadelBatchHydratorContext(
+internal class NadelBatchHydratorContext(
     val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
     val executionContext: NadelExecutionContext,
     val sourceField: ExecutableNormalizedField,

@@ -1,14 +1,11 @@
 package graphql.nadel.tests.next.fixtures.hydration
 
 import graphql.nadel.Nadel
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -97,17 +94,26 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             )
     }
 
-    private class ThrowErrorTransform : NadelTransform<Any> {
-        override suspend fun isApplicable(
-            executionContext: NadelExecutionContext,
-            serviceExecutionContext: NadelServiceExecutionContext,
-            executionBlueprint: NadelOverallExecutionBlueprint,
-            services: Map<String, graphql.nadel.Service>,
-            service: graphql.nadel.Service,
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    private class ThrowErrorTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
+        override suspend fun getTransformOperationContext(
+            operationExecutionContext: NadelOperationExecutionContext,
+        ): TransformOperationContext {
+            return TransformOperationContext(operationExecutionContext)
+        }
+
+        override suspend fun getTransformFieldContext(
+            transformContext: TransformOperationContext,
             overallField: ExecutableNormalizedField,
-            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-            hydrationDetails: ServiceExecutionHydrationDetails?,
-        ): Any? {
+        ): TransformFieldContext? {
             if (overallField.name == "userById") {
                 throw Bye()
             }
@@ -115,31 +121,19 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
             return null
         }
 
-        override suspend fun getResultInstructions(
-            executionContext: NadelExecutionContext,
-            serviceExecutionContext: NadelServiceExecutionContext,
-            executionBlueprint: NadelOverallExecutionBlueprint,
-            service: graphql.nadel.Service,
-            overallField: ExecutableNormalizedField,
-            underlyingParentField: ExecutableNormalizedField?,
-            result: ServiceExecutionResult,
-            state: Any,
-            nodes: JsonNodes,
-            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        ): List<NadelResultInstruction> {
+        override suspend fun transformField(
+            transformContext: TransformFieldContext,
+            transformer: NadelQueryTransformer,
+            field: ExecutableNormalizedField,
+        ): NadelTransformFieldResult {
             throw UnsupportedOperationException()
         }
 
-        override suspend fun transformField(
-            executionContext: NadelExecutionContext,
-            serviceExecutionContext: NadelServiceExecutionContext,
-            transformer: NadelQueryTransformer,
-            executionBlueprint: NadelOverallExecutionBlueprint,
-            service: graphql.nadel.Service,
-            field: ExecutableNormalizedField,
-            state: Any,
-            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        ): NadelTransformFieldResult {
+        override suspend fun transformResult(
+            transformContext: TransformFieldContext,
+            underlyingParentField: ExecutableNormalizedField?,
+            resultNodes: JsonNodes,
+        ): List<NadelResultInstruction> {
             throw UnsupportedOperationException()
         }
     }

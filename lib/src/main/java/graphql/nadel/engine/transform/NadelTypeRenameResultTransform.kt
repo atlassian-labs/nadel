@@ -1,15 +1,11 @@
 package graphql.nadel.engine.transform
 
 import graphql.introspection.Introspection
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
-import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.State
+import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.TransformFieldContext
+import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.TransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -20,29 +16,37 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 
-internal class NadelTypeRenameResultTransform : NadelTransform<State> {
-    data class State(
+internal class NadelTypeRenameResultTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
         val typeRenamePath: NadelQueryPath,
         val virtualTypeContext: NadelVirtualTypeContext?,
-    )
+    ) : NadelTransformFieldContext<TransformOperationContext>()
 
-    override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
-        service: Service,
+    override suspend fun getTransformOperationContext(
+        operationExecutionContext: NadelOperationExecutionContext,
+    ): TransformOperationContext {
+        return TransformOperationContext(operationExecutionContext)
+    }
+
+    override suspend fun getTransformFieldContext(
+        transformContext: TransformOperationContext,
         overallField: ExecutableNormalizedField,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): TransformFieldContext? {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
             val virtualTypeContext =
-                (hydrationDetails?.instruction as? NadelHydrationFieldInstruction)?.virtualTypeContext
+                (transformContext.operationExecutionContext.hydrationDetails?.instruction as? NadelHydrationFieldInstruction)?.virtualTypeContext
 
-            State(
+            TransformFieldContext(
+                parentContext = transformContext,
+                overallField = overallField,
                 typeRenamePath = overallField.queryPath,
-                virtualTypeContext,
+                virtualTypeContext = virtualTypeContext,
             )
         } else {
             null
@@ -50,31 +54,22 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
     }
 
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        transformContext: TransformFieldContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
-        state: State,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
     }
 
-    override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallField: ExecutableNormalizedField,
+    override suspend fun transformResult(
+        transformContext: TransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        state: State,
-        nodes: JsonNodes,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+        resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val parentNodes = nodes.getNodesAt(
+        val service = transformContext.service
+        val executionBlueprint = transformContext.executionBlueprint
+        val overallField = transformContext.overallField
+        val parentNodes = resultNodes.getNodesAt(
             underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
@@ -91,11 +86,11 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
                 underlyingTypeName = underlyingTypeName,
             ).let { overallTypeName ->
                 // Try to map it to a virtual typename
-                state.virtualTypeContext?.backingTypeToVirtualType?.get(overallTypeName)
+                transformContext.virtualTypeContext?.backingTypeToVirtualType?.get(overallTypeName)
                     ?: overallTypeName
             }
 
-            val typeName: String = if (executionContext.hints.sharedTypeRenames(service)) {
+            val typeName: String = if (transformContext.executionContext.hints.sharedTypeRenames(service)) {
                 if (overallField.objectTypeNames.contains(overallTypeName)) {
                     overallTypeName
                 } else {

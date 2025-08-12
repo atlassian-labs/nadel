@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
@@ -15,7 +15,7 @@ class NadelQueryTransformer private constructor(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val service: Service,
     private val executionContext: NadelExecutionContext,
-    private val serviceExecutionContext: NadelServiceExecutionContext,
+    private val serviceExecutionContext: NadelOperationExecutionContext,
     private val executionPlan: NadelExecutionPlan,
     private val transformContext: TransformContext,
     private val timer: NadelInstrumentationTimer.BatchTimer,
@@ -25,7 +25,7 @@ class NadelQueryTransformer private constructor(
             executionBlueprint: NadelOverallExecutionBlueprint,
             service: Service,
             executionContext: NadelExecutionContext,
-            serviceExecutionContext: NadelServiceExecutionContext,
+            serviceExecutionContext: NadelOperationExecutionContext,
             executionPlan: NadelExecutionPlan,
             field: ExecutableNormalizedField,
         ): TransformResult {
@@ -86,7 +86,7 @@ class NadelQueryTransformer private constructor(
     suspend fun transform(
         field: ExecutableNormalizedField,
     ): List<ExecutableNormalizedField> {
-        val transformationSteps: List<NadelExecutionPlan.Step<Any>> =
+        val transformationSteps: List<NadelExecutionPlan.Step> =
             executionPlan.transformationSteps[field]
                 ?: return listOf(
                     transformPlain(field)
@@ -97,7 +97,7 @@ class NadelQueryTransformer private constructor(
 
     private suspend fun transform(
         field: ExecutableNormalizedField,
-        transformationSteps: List<NadelExecutionPlan.Step<Any>>,
+        transformationSteps: List<NadelExecutionPlan.Step>,
     ): List<ExecutableNormalizedField> {
         val transformResult = applyTransformationSteps(field, transformationSteps)
 
@@ -160,23 +160,17 @@ class NadelQueryTransformer private constructor(
 
     private suspend fun applyTransformationSteps(
         field: ExecutableNormalizedField,
-        transformationSteps: List<NadelExecutionPlan.Step<Any>>,
+        transformationSteps: List<NadelExecutionPlan.Step>,
     ): NadelTransformFieldResult {
         var newField: ExecutableNormalizedField = field
         val artificialFields = mutableListOf<ExecutableNormalizedField>()
 
         for (transformStep in transformationSteps) {
-            val transformServiceExecutionContext = executionPlan.transformContexts[transformStep.transform]
             val transformResultForStep = timer.time(transformStep.queryTransformTimingStep) {
                 transformStep.transform.transformField(
-                    executionContext,
-                    serviceExecutionContext,
-                    this,
-                    executionBlueprint,
-                    service,
-                    newField,
-                    transformStep.state,
-                    transformServiceExecutionContext
+                    transformContext = transformStep.transformContext,
+                    transformer = this,
+                    field = newField,
                 )
             }
             artificialFields.addAll(transformResultForStep.artificialFields)

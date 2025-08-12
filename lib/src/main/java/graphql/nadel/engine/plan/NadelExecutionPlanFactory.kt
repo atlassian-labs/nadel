@@ -1,17 +1,15 @@
 package graphql.nadel.engine.plan
 
 import graphql.nadel.NextgenEngine
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
+import graphql.nadel.engine.transform.GenericNadelTransform
 import graphql.nadel.engine.transform.NadelDeepRenameTransform
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
@@ -28,14 +26,13 @@ import graphql.nadel.util.dfs
 import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
-    private val executionBlueprint: NadelOverallExecutionBlueprint,
-    transforms: List<NadelTransform<Any>>,
+    transforms: List<GenericNadelTransform>,
 ) {
     /**
      * This creates the [ChildStep] objects upfront to avoid constantly recreating them.
      */
     private data class TransformWithTimingInfo(
-        val transform: NadelTransform<Any>,
+        val transform: GenericNadelTransform,
         val executionPlanTimingStep: ChildStep,
         val queryTransformTimingStep: ChildStep,
         val resultTransformTimingStep: ChildStep,
@@ -57,15 +54,12 @@ internal class NadelExecutionPlanFactory(
      */
     suspend fun create(
         executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        services: Map<String, Service>,
-        service: Service,
+        serviceExecutionContext: NadelOperationExecutionContext,
         rootField: ExecutableNormalizedField,
-        serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
-        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
+        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step>> =
             mutableMapOf()
-        val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
+        val transformContexts: MutableMap<GenericNadelTransform, NadelTransformOperationContext> =
             mutableMapOf()
         executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
@@ -74,34 +68,17 @@ internal class NadelExecutionPlanFactory(
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
                     // See NadelSkipIncludeTransform.isApplicable for more details
-                    if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*>) !is NadelSkipIncludeTransform)) {
+                    if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*, *>) !is NadelSkipIncludeTransform)) {
                         null
                     } else {
-                        val executionTransformContext = if (transformContexts.containsKey(transform)) {
-                            transformContexts[transform]
-                        } else {
-                            transformContexts.getOrPut(transform) {
-                                transform.buildContext(
-                                    executionContext,
-                                    serviceExecutionContext,
-                                    executionBlueprint,
-                                    services,
-                                    service,
-                                    rootField,
-                                    serviceHydrationDetails
-                                )
-                            }
+                        val transformOperationContext = transformContexts.getOrPut(transform) {
+                            transform.getTransformOperationContext(serviceExecutionContext)
                         }
+
                         val state = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
-                            transform.isApplicable(
-                                executionContext,
-                                serviceExecutionContext,
-                                executionBlueprint,
-                                services,
-                                service,
+                            transform.getTransformFieldContext(
+                                transformOperationContext,
                                 field,
-                                executionTransformContext,
-                                serviceHydrationDetails,
                             )
                         }
 
@@ -109,12 +86,10 @@ internal class NadelExecutionPlanFactory(
                             null
                         } else {
                             NadelExecutionPlan.Step(
-                                service = service,
-                                field = field,
                                 transform = transform,
+                                transformContext = state,
                                 queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
                                 resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
-                                state = state,
                             )
                         }
                     }
@@ -128,7 +103,7 @@ internal class NadelExecutionPlanFactory(
 
         return NadelExecutionPlan(
             executionSteps,
-            transformContexts
+            transformContexts,
         )
     }
 
@@ -145,14 +120,12 @@ internal class NadelExecutionPlanFactory(
 
     companion object {
         fun create(
-            executionBlueprint: NadelOverallExecutionBlueprint,
-            transforms: List<NadelTransform<out Any>>,
             engine: NextgenEngine,
+            transforms: List<NadelTransform<*, *>>,
             executionHooks: NadelExecutionHooks,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
-                executionBlueprint,
-                transforms = listOfTransforms(
+                transforms = transforms(
                     NadelSkipIncludeTransform(),
                     NadelServiceTypeFilterTransform(),
                     NadelPartitionTransform(engine, executionHooks.partitionTransformerHook()),
@@ -168,10 +141,10 @@ internal class NadelExecutionPlanFactory(
             )
         }
 
-        private fun listOfTransforms(vararg elements: NadelTransform<out Any>): List<NadelTransform<Any>> {
+        private fun transforms(vararg elements: NadelTransform<*, *>): List<GenericNadelTransform> {
             return elements.map {
                 @Suppress("UNCHECKED_CAST") // Ssh it's okay
-                it as NadelTransform<Any>
+                it as GenericNadelTransform
             }
         }
     }

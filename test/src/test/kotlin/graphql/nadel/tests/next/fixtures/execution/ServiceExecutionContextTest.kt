@@ -4,19 +4,17 @@ import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.strictAssociateBy
-import graphql.nadel.hooks.NadelCreateServiceExecutionContextParams
+import graphql.nadel.hooks.NadelCreateOperationExecutionContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.normalized.ExecutableNormalizedField
@@ -98,27 +96,32 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
     ),
 ) {
-    private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<TestServiceExecutionContext>())
+    private val serviceExecutionContexts = Collections.synchronizedList(mutableListOf<TestOperationExecutionContext>())
     private val transformServiceExecutionContexts =
-        Collections.synchronizedList(mutableListOf<TestTransformServiceExecutionContext>())
+        Collections.synchronizedList(mutableListOf<TestTransformOperationContext>())
 
-    private class TestServiceExecutionContext : NadelServiceExecutionContext() {
-        val isApplicable = Collections.synchronizedList(mutableListOf<String>())
+    private class TestOperationExecutionContext(
+        override val parentContext: NadelExecutionContext,
+        override val service: graphql.nadel.Service,
+        override val topLevelField: ExecutableNormalizedField,
+    ) : NadelOperationExecutionContext() {
+        val getTransformFieldContext = Collections.synchronizedList(mutableListOf<String>())
         val transformField = Collections.synchronizedList(mutableListOf<String>())
-        val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
+        val transformResult = Collections.synchronizedList(mutableListOf<String>())
 
         override fun toString(): String {
-            return "ServiceExecutionContext(isApplicable=$isApplicable, transformField=$transformField, getResultInstructions=$getResultInstructions)"
+            return "ServiceExecutionContext(getTransformFieldContext=$getTransformFieldContext, transformField=$transformField, transformResult=$transformResult)"
         }
     }
 
-    private data class TestTransformServiceExecutionContext(
+    private data class TestTransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
         val rootField: String,
         var onCompleteRan: Boolean = false,
-    ) : NadelTransformServiceExecutionContext() {
-        val isApplicable = Collections.synchronizedList(mutableListOf<String>())
+    ) : NadelTransformOperationContext() {
+        val getTransformFieldContext = Collections.synchronizedList(mutableListOf<String>())
         val transformField = Collections.synchronizedList(mutableListOf<String>())
-        val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
+        val transformResult = Collections.synchronizedList(mutableListOf<String>())
     }
 
     fun ExecutableNormalizedField.toExecutionString(): String {
@@ -137,100 +140,82 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         return str
     }
 
+    private data class TransformFieldContext(
+        override val parentContext: TestTransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TestTransformOperationContext>()
+
     override fun makeNadel(): Nadel.Builder {
         return super.makeNadel()
             .executionHooks(
                 object : NadelExecutionHooks {
-                    override fun createServiceExecutionContext(
-                        params: NadelCreateServiceExecutionContextParams,
-                    ): CompletableFuture<NadelServiceExecutionContext> {
-                        return CompletableFuture.completedFuture(TestServiceExecutionContext())
+                    override fun createOperationExecutionContext(
+                        params: NadelCreateOperationExecutionContextParams,
+                    ): CompletableFuture<NadelOperationExecutionContext> {
+                        return CompletableFuture.completedFuture(
+                            TestOperationExecutionContext(
+                                parentContext = params.executionContext,
+                                service = params.service,
+                                topLevelField = params.topLevelField,
+                            )
+                        )
                     }
                 },
             )
             .transforms(
                 listOf(
-                    object : NadelTransform<ExecutableNormalizedField> {
-
-                        override suspend fun buildContext(
-                            executionContext: NadelExecutionContext,
-                            serviceExecutionContext: NadelServiceExecutionContext,
-                            executionBlueprint: NadelOverallExecutionBlueprint,
-                            services: Map<String, graphql.nadel.Service>,
-                            service: graphql.nadel.Service,
-                            rootField: ExecutableNormalizedField,
-                            hydrationDetails: ServiceExecutionHydrationDetails?,
-                        ): NadelTransformServiceExecutionContext? {
-                            val testTransformServiceExecutionContext =
-                                TestTransformServiceExecutionContext(rootField.toExecutionString())
+                    object : NadelTransform<TestTransformOperationContext, TransformFieldContext> {
+                        override suspend fun getTransformOperationContext(
+                            operationExecutionContext: NadelOperationExecutionContext,
+                        ): TestTransformOperationContext {
+                            val testTransformServiceExecutionContext = TestTransformOperationContext(
+                                parentContext = operationExecutionContext,
+                                rootField = operationExecutionContext.topLevelField.toExecutionString(),
+                            )
                             transformServiceExecutionContexts.add(testTransformServiceExecutionContext)
                             return testTransformServiceExecutionContext
                         }
 
-                        override suspend fun isApplicable(
-                            executionContext: NadelExecutionContext,
-                            serviceExecutionContext: NadelServiceExecutionContext,
-                            executionBlueprint: NadelOverallExecutionBlueprint,
-                            services: Map<String, graphql.nadel.Service>,
-                            service: graphql.nadel.Service,
+                        override suspend fun getTransformFieldContext(
+                            transformContext: TestTransformOperationContext,
                             overallField: ExecutableNormalizedField,
-                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-                            hydrationDetails: ServiceExecutionHydrationDetails?,
-                        ): ExecutableNormalizedField? {
-                            (serviceExecutionContext as TestServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
-                            (transformServiceExecutionContext as TestTransformServiceExecutionContext).isApplicable
-                                .add(overallField.toExecutionString())
-                            return overallField
+                        ): TransformFieldContext? {
+                            val f = overallField.toExecutionString()
+                            transformContext.getTransformFieldContext.add(f)
+                            (transformContext.operationExecutionContext as TestOperationExecutionContext)
+                                .getTransformFieldContext.add(f)
+                            return TransformFieldContext(transformContext, overallField)
                         }
 
                         override suspend fun transformField(
-                            executionContext: NadelExecutionContext,
-                            serviceExecutionContext: NadelServiceExecutionContext,
+                            transformContext: TransformFieldContext,
                             transformer: NadelQueryTransformer,
-                            executionBlueprint: NadelOverallExecutionBlueprint,
-                            service: graphql.nadel.Service,
                             field: ExecutableNormalizedField,
-                            state: ExecutableNormalizedField,
-                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                         ): NadelTransformFieldResult {
-                            (serviceExecutionContext as TestServiceExecutionContext).transformField.add(field.toExecutionString())
-                            (transformServiceExecutionContext as TestTransformServiceExecutionContext).transformField.add(
-                                field.toExecutionString()
-                            )
+                            val f = field.toExecutionString()
+                            transformContext.transformOperationContext.transformField.add(f)
+                            (transformContext.operationExecutionContext as TestOperationExecutionContext)
+                                .transformField.add(f)
                             return NadelTransformFieldResult.unmodified(field)
                         }
 
-                        override suspend fun getResultInstructions(
-                            executionContext: NadelExecutionContext,
-                            serviceExecutionContext: NadelServiceExecutionContext,
-                            executionBlueprint: NadelOverallExecutionBlueprint,
-                            service: graphql.nadel.Service,
-                            overallField: ExecutableNormalizedField,
+                        override suspend fun transformResult(
+                            transformContext: TransformFieldContext,
                             underlyingParentField: ExecutableNormalizedField?,
-                            result: ServiceExecutionResult,
-                            state: ExecutableNormalizedField,
-                            nodes: JsonNodes,
-                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+                            resultNodes: JsonNodes,
                         ): List<NadelResultInstruction> {
-                            (serviceExecutionContext as TestServiceExecutionContext).getResultInstructions.add(
-                                overallField.toExecutionString()
-                            )
-                            (transformServiceExecutionContext as TestTransformServiceExecutionContext).getResultInstructions.add(
-                                overallField.toExecutionString()
-                            )
+                            val f = transformContext.overallField.toExecutionString()
+                            transformContext.transformOperationContext.transformResult.add(f)
+                            (transformContext.operationExecutionContext as TestOperationExecutionContext)
+                                .transformResult.add(f)
                             return emptyList()
                         }
 
                         override suspend fun onComplete(
-                            executionContext: NadelExecutionContext,
-                            serviceExecutionContext: NadelServiceExecutionContext,
-                            executionBlueprint: NadelOverallExecutionBlueprint,
-                            service: graphql.nadel.Service,
-                            result: ServiceExecutionResult,
-                            nodes: JsonNodes,
-                            transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+                            transformContext: TestTransformOperationContext,
+                            resultNodes: JsonNodes,
                         ) {
-                            val context = transformServiceExecutionContext as TestTransformServiceExecutionContext
+                            val context = transformContext
                             assertFalse(context.onCompleteRan, "on complete is supposed to run only once")
                             context.onCompleteRan = true
                         }
@@ -243,7 +228,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         val impl = super.makeServiceExecution(service)
 
         return ServiceExecution {
-            serviceExecutionContexts.add(it.serviceExecutionContext as TestServiceExecutionContext)
+            serviceExecutionContexts.add(it.serviceExecutionContext as TestOperationExecutionContext)
             impl.execute(it)
         }
     }
@@ -258,38 +243,38 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(serviceExecutionContexts.size == 3)
 
         val me = serviceExecutionContexts.single {
-            it.isApplicable.first().contains("me()")
+            it.getTransformFieldContext.first().contains("me()")
         }
         val expectedMeExecutions = listOf(
             "[Query].me()",
             "[User].lastWorkedOn()",
             "[Issue].title()",
         )
-        assertTrue(me.isApplicable == expectedMeExecutions)
+        assertTrue(me.getTransformFieldContext == expectedMeExecutions)
         assertTrue(me.transformField == expectedMeExecutions.dropLast(1)) // dropLast as child is removed due to hydration
-        assertTrue(me.getResultInstructions.sorted() == expectedMeExecutions.dropLast(1).sorted())
+        assertTrue(me.transformResult.sorted() == expectedMeExecutions.dropLast(1).sorted())
 
         val bug = serviceExecutionContexts.single {
-            it.isApplicable.first().contains("bug")
+            it.getTransformFieldContext.first().contains("bug")
         }
         val expectedBugExecutions = listOf(
             "bug: [Query].issue(id = NormalizedInputValue{typeName='ID!', value=IntValue{value=6}})",
             "[Issue].title()",
         )
-        assertTrue(bug.isApplicable == expectedBugExecutions)
+        assertTrue(bug.getTransformFieldContext == expectedBugExecutions)
         assertTrue(bug.transformField == expectedBugExecutions)
-        assertTrue(bug.getResultInstructions.sorted() == expectedBugExecutions.sorted())
+        assertTrue(bug.transformResult.sorted() == expectedBugExecutions.sorted())
 
         val hydration = serviceExecutionContexts.single {
-            it.isApplicable.first().contains("9")
+            it.getTransformFieldContext.first().contains("9")
         }
         val expectedHydrationExecutions = listOf(
             "[Query].issue(id = NormalizedInputValue{typeName='ID!', value=StringValue{value='9'}})",
             "[Issue].title()",
         )
-        assertTrue(hydration.isApplicable == expectedHydrationExecutions)
+        assertTrue(hydration.getTransformFieldContext == expectedHydrationExecutions)
         assertTrue(hydration.transformField == expectedHydrationExecutions)
-        assertTrue(hydration.getResultInstructions.sorted() == expectedHydrationExecutions.sorted())
+        assertTrue(hydration.transformResult.sorted() == expectedHydrationExecutions.sorted())
     }
 
     private fun assertTransformServiceExecutionContexts() {
@@ -297,40 +282,40 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         assertTrue(transformServiceExecutionContexts.size == 3)
 
         val me = transformServiceExecutionContexts.single {
-            it.isApplicable.first().contains("me()")
+            it.getTransformFieldContext.first().contains("me()")
         }
         val expectedMeExecutions = listOf(
             "[Query].me()",
             "[User].lastWorkedOn()",
             "[Issue].title()",
         )
-        assertTrue(me.isApplicable == expectedMeExecutions)
+        assertTrue(me.getTransformFieldContext == expectedMeExecutions)
         assertTrue(me.transformField == expectedMeExecutions.dropLast(1)) // dropLast as child is removed due to hydration
-        assertTrue(me.getResultInstructions.sorted() == expectedMeExecutions.dropLast(1).sorted())
+        assertTrue(me.transformResult.sorted() == expectedMeExecutions.dropLast(1).sorted())
         assertTrue(me.rootField == "[Query].me()")
 
         val bug = transformServiceExecutionContexts.single {
-            it.isApplicable.first().contains("bug")
+            it.getTransformFieldContext.first().contains("bug")
         }
         val expectedBugExecutions = listOf(
             "bug: [Query].issue(id = NormalizedInputValue{typeName='ID!', value=IntValue{value=6}})",
             "[Issue].title()",
         )
-        assertTrue(bug.isApplicable == expectedBugExecutions)
+        assertTrue(bug.getTransformFieldContext == expectedBugExecutions)
         assertTrue(bug.transformField == expectedBugExecutions)
-        assertTrue(bug.getResultInstructions.sorted() == expectedBugExecutions.sorted())
+        assertTrue(bug.transformResult.sorted() == expectedBugExecutions.sorted())
         assertTrue(bug.rootField == "bug: [Query].issue(id = NormalizedInputValue{typeName='ID!', value=IntValue{value=6}})")
 
         val hydration = transformServiceExecutionContexts.single {
-            it.isApplicable.first().contains("9")
+            it.getTransformFieldContext.first().contains("9")
         }
         val expectedHydrationExecutions = listOf(
             "[Query].issue(id = NormalizedInputValue{typeName='ID!', value=StringValue{value='9'}})",
             "[Issue].title()",
         )
-        assertTrue(hydration.isApplicable == expectedHydrationExecutions)
+        assertTrue(hydration.getTransformFieldContext == expectedHydrationExecutions)
         assertTrue(hydration.transformField == expectedHydrationExecutions)
-        assertTrue(hydration.getResultInstructions.sorted() == expectedHydrationExecutions.sorted())
+        assertTrue(hydration.transformResult.sorted() == expectedHydrationExecutions.sorted())
         assertTrue(hydration.rootField == "[Query].issue(id = NormalizedInputValue{typeName='ID!', value=StringValue{value='9'}})")
 
         assertTrue(transformServiceExecutionContexts.all { it.onCompleteRan })
