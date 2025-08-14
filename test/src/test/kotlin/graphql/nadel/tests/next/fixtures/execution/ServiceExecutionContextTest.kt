@@ -3,6 +3,7 @@ package graphql.nadel.tests.next.fixtures.execution
 import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.Nadel
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelOperationExecutionContext
@@ -96,7 +97,8 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         )
     ),
 ) {
-    private val operationExecutionContexts = Collections.synchronizedList(mutableListOf<TestOperationExecutionContext>())
+    private val operationExecutionContexts =
+        Collections.synchronizedList(mutableListOf<TestOperationExecutionContext>())
     private val transformServiceExecutionContexts =
         Collections.synchronizedList(mutableListOf<TestTransformOperationContext>())
 
@@ -104,6 +106,8 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         override val parentContext: NadelExecutionContext,
         override val service: graphql.nadel.Service,
         override val topLevelField: ExecutableNormalizedField,
+        override val hydrationDetails: NadelOperationExecutionHydrationDetails?,
+        override val isPartitionedCall: Boolean,
     ) : NadelOperationExecutionContext() {
         val getTransformFieldContext = Collections.synchronizedList(mutableListOf<String>())
         val transformField = Collections.synchronizedList(mutableListOf<String>())
@@ -157,6 +161,8 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                                 parentContext = params.executionContext,
                                 service = params.service,
                                 topLevelField = params.topLevelField,
+                                hydrationDetails = params.hydrationDetails,
+                                isPartitionedCall = params.isPartitionedCall,
                             )
                         )
                     }

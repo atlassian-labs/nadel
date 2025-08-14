@@ -164,7 +164,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<JavaAriTransfo
     }
 
     @Override
-    public @NotNull CompletableFuture<@NotNull List<? extends @NotNull NadelResultInstruction>> transformResult(
+    public @NotNull CompletableFuture<@NotNull List<@NotNull NadelResultInstruction>> transformResult(
         @NotNull TransformFieldContext transformContext,
         @Nullable ExecutableNormalizedField underlyingParentField,
         @NotNull JsonNodes resultNodes

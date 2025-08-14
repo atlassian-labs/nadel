@@ -275,13 +275,12 @@ internal class NextgenEngine(
     }
 
     internal suspend fun executePartitionedCall(
-        topLevelField: ExecutableNormalizedField,
-        service: Service,
         parentContext: NadelOperationExecutionContext,
+        topLevelField: ExecutableNormalizedField,
     ): ServiceExecutionResult {
         return executeTopLevelField(
             executionContext = parentContext.executionContext,
-            service = service,
+            service = parentContext.service,
             topLevelField = topLevelField,
             hydrationDetails = parentContext.hydrationDetails,
             isPartitionedCall = true,

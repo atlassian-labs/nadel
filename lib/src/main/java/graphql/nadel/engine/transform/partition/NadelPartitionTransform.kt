@@ -55,7 +55,7 @@ internal class NadelPartitionTransform(
         transformContext: TransformOperationContext,
         overallField: ExecutableNormalizedField,
     ): TransformFieldContext? {
-        if (transformContext.executionContext.isPartitionedCall) {
+        if (transformContext.operationExecutionContext.isPartitionedCall) {
             // We don't want to partition a call that is already partitioned
             return null
         }
@@ -149,7 +149,7 @@ internal class NadelPartitionTransform(
                     fieldChildren = it.children
                 )
 
-                engine.executePartitionedCall(topLevelField, transformContext.service, executionContext)
+                engine.executePartitionedCall(transformContext.operationExecutionContext, topLevelField)
             }
         }
 
