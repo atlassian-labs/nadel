@@ -6,16 +6,16 @@ import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.normalized.ExecutableNormalizedField
 
-data class NadelExecutionPlan(
+internal data class NadelExecutionPlan(
     /**
      * This is [Map] stores overall fields
      */
-    val transformationSteps: Map<ExecutableNormalizedField, List<Step>>,
+    val transformFieldSteps: Map<ExecutableNormalizedField, List<TransformFieldStep>>,
     val transformContexts: Map<GenericNadelTransform, NadelTransformOperationContext>,
 ) {
-    data class Step(
+    internal data class TransformFieldStep(
         val transform: GenericNadelTransform,
-        val transformContext: NadelTransformFieldContext<NadelTransformOperationContext>,
+        val transformFieldContext: NadelTransformFieldContext<NadelTransformOperationContext>,
         val queryTransformTimingStep: NadelInstrumentationTimingParameters.Step,
         val resultTransformTimingStep: NadelInstrumentationTimingParameters.Step,
     )

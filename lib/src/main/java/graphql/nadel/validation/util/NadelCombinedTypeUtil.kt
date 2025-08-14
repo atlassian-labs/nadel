@@ -3,6 +3,7 @@ package graphql.nadel.validation.util
 import graphql.nadel.Service
 import graphql.nadel.engine.util.AnyImplementingTypeDefinition
 import graphql.nadel.validation.NadelServiceSchemaElement
+import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.schema.GraphQLNamedSchemaElement
 
 object NadelCombinedTypeUtil {

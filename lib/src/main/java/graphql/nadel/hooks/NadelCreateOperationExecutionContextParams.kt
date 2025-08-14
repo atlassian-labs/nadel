@@ -1,7 +1,7 @@
 package graphql.nadel.hooks
 
-import graphql.nadel.Service
 import graphql.nadel.NadelOperationExecutionHydrationDetails
+import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.normalized.ExecutableNormalizedField
 

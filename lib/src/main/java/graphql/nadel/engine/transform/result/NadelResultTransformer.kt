@@ -86,7 +86,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
         coroutineScope {
             executionContext.timer.batch { timer ->
-                for ((field, steps) in executionPlan.transformationSteps) {
+                for ((field, steps) in executionPlan.transformFieldSteps) {
                     val underlyingFields = overallToUnderlyingFields[field]
                     if (underlyingFields.isNullOrEmpty()) continue
 
@@ -95,7 +95,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                             async {
                                 timer.time(step.resultTransformTimingStep) {
                                     step.transform.transformResult(
-                                        transformContext = step.transformContext,
+                                        transformContext = step.transformFieldContext,
                                         underlyingParentField = underlyingFields.first().parent,
                                         resultNodes = nodes,
                                     )

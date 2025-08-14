@@ -1,7 +1,7 @@
 package graphql.nadel.engine.blueprint
 
-import graphql.nadel.Service
 import graphql.nadel.NadelOperationExecutionHydrationDetails
+import graphql.nadel.Service
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeFieldCoordinates

@@ -57,13 +57,13 @@ internal class NadelExecutionPlanFactory(
         operationExecutionContext: NadelOperationExecutionContext,
         rootField: ExecutableNormalizedField,
     ): NadelExecutionPlan {
-        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step>> =
+        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.TransformFieldStep>> =
             mutableMapOf()
         val transformContexts: MutableMap<GenericNadelTransform, NadelTransformOperationContext> =
             mutableMapOf()
         executionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
-                val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
+                val transformFieldSteps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
@@ -75,19 +75,19 @@ internal class NadelExecutionPlanFactory(
                             transform.getTransformOperationContext(operationExecutionContext)
                         }
 
-                        val state = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
+                        val transformFieldContext = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
                             transform.getTransformFieldContext(
                                 transformOperationContext,
                                 field,
                             )
                         }
 
-                        if (state == null) {
+                        if (transformFieldContext == null) {
                             null
                         } else {
-                            NadelExecutionPlan.Step(
+                            NadelExecutionPlan.TransformFieldStep(
                                 transform = transform,
-                                transformContext = state,
+                                transformFieldContext = transformFieldContext,
                                 queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
                                 resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
                             )
@@ -95,8 +95,8 @@ internal class NadelExecutionPlanFactory(
                     }
                 }
 
-                if (steps.isNotEmpty()) {
-                    executionSteps[field] = steps
+                if (transformFieldSteps.isNotEmpty()) {
+                    executionSteps[field] = transformFieldSteps
                 }
             }
         }

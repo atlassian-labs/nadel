@@ -2,9 +2,9 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResultImpl
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
-import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint

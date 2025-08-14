@@ -78,20 +78,20 @@ class NadelQueryTransformer private constructor(
     suspend fun transform(
         field: ExecutableNormalizedField,
     ): List<ExecutableNormalizedField> {
-        val transformationSteps: List<NadelExecutionPlan.Step> =
-            executionPlan.transformationSteps[field]
+        val transformationTransformFieldSteps: List<NadelExecutionPlan.TransformFieldStep> =
+            executionPlan.transformFieldSteps[field]
                 ?: return listOf(
                     transformPlain(field)
                 )
 
-        return transform(field, transformationSteps)
+        return transform(field, transformationTransformFieldSteps)
     }
 
     private suspend fun transform(
         field: ExecutableNormalizedField,
-        transformationSteps: List<NadelExecutionPlan.Step>,
+        transformationTransformFieldSteps: List<NadelExecutionPlan.TransformFieldStep>,
     ): List<ExecutableNormalizedField> {
-        val transformResult = applyTransformationSteps(field, transformationSteps)
+        val transformResult = applyTransformationSteps(field, transformationTransformFieldSteps)
 
         val artificialFields = transformResult.artificialFields.map {
             it.toBuilder()
@@ -152,15 +152,15 @@ class NadelQueryTransformer private constructor(
 
     private suspend fun applyTransformationSteps(
         field: ExecutableNormalizedField,
-        transformationSteps: List<NadelExecutionPlan.Step>,
+        transformationTransformFieldSteps: List<NadelExecutionPlan.TransformFieldStep>,
     ): NadelTransformFieldResult {
         var newField: ExecutableNormalizedField = field
         val artificialFields = mutableListOf<ExecutableNormalizedField>()
 
-        for (transformStep in transformationSteps) {
+        for (transformStep in transformationTransformFieldSteps) {
             val transformResultForStep = timer.time(transformStep.queryTransformTimingStep) {
                 transformStep.transform.transformField(
-                    transformContext = transformStep.transformContext,
+                    transformContext = transformStep.transformFieldContext,
                     transformer = this,
                     field = newField,
                 )

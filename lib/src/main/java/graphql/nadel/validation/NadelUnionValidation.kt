@@ -2,7 +2,6 @@ package graphql.nadel.validation
 
 import graphql.nadel.validation.NadelSchemaValidationError.UnionHasExtraType
 import graphql.nadel.validation.util.NadelSchemaUtil
-import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLObjectType
 
 class NadelUnionValidation internal constructor() {

@@ -5,8 +5,6 @@ import com.tngtech.archunit.core.domain.JavaClass
 import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
-import graphql.nadel.NextgenEngine
-import graphql.util.DefaultTraverserContext.simple
 import org.junit.jupiter.api.Test
 
 class NadelPrefixTest {
