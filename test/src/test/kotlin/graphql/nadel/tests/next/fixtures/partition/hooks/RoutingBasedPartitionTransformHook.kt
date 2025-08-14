@@ -10,7 +10,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLInputValueDefinition
 
 class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
-    override fun getFieldPartitionContext(
+    override fun getPartitionFieldContext(
         operationExecutionContext: NadelOperationExecutionContext,
         overallField: ExecutableNormalizedField,
     ): NadelPartitionFieldContext {

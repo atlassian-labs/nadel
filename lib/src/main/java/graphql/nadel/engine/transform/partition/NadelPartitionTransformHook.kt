@@ -18,7 +18,7 @@ interface NadelPartitionTransformHook {
      * If `null` is returned, the field will not be partitioned.
      *
      */
-    fun getFieldPartitionContext(
+    fun getPartitionFieldContext(
         operationExecutionContext: NadelOperationExecutionContext,
         overallField: ExecutableNormalizedField,
     ): NadelPartitionFieldContext?

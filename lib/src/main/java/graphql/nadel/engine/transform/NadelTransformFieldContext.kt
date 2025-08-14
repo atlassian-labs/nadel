@@ -9,8 +9,8 @@ abstract class NadelTransformFieldContext<TransformOperationContext : NadelTrans
     abstract val parentContext: TransformOperationContext
     abstract val overallField: ExecutableNormalizedField
 
-    override val operationExecutionContext: NadelOperationExecutionContext = parentContext.parentContext
-    override val executionContext: NadelExecutionContext = parentContext.parentContext.parentContext
+    override val operationExecutionContext: NadelOperationExecutionContext get() = parentContext.parentContext
+    override val executionContext: NadelExecutionContext get() = parentContext.parentContext.parentContext
 
-    val transformOperationContext: TransformOperationContext get() = parentContext
+    open val transformOperationContext: TransformOperationContext get() = parentContext
 }

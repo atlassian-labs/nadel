@@ -72,7 +72,7 @@ internal class NadelPartitionTransform(
 
         val pathToPartitionArg = partitionInstructions.values.single().pathToPartitionArg
 
-        val userPartitionContext = partitionTransformHook.getFieldPartitionContext(
+        val userPartitionContext = partitionTransformHook.getPartitionFieldContext(
             transformContext.operationExecutionContext,
             overallField,
         )

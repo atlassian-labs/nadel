@@ -96,7 +96,7 @@ interface NadelExecutionHooks {
 
     fun partitionTransformerHook(): NadelPartitionTransformHook {
         return object : NadelPartitionTransformHook {
-            override fun getFieldPartitionContext(
+            override fun getPartitionFieldContext(
                 operationExecutionContext: NadelOperationExecutionContext,
                 overallField: ExecutableNormalizedField,
             ): NadelPartitionFieldContext? {

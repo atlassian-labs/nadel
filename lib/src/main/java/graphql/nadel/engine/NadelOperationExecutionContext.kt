@@ -19,9 +19,7 @@ abstract class NadelOperationExecutionContext {
 
     val executionContext: NadelExecutionContext get() = parentContext
     val userContext: Any? get() = executionContext.userContext
-
-    val hydrationDetails: ServiceExecutionHydrationDetails?
-        get() = executionContext.hydrationDetails
+    val hydrationDetails: ServiceExecutionHydrationDetails? get() = executionContext.hydrationDetails
 
     internal class Default(
         override val parentContext: NadelExecutionContext,

@@ -6,6 +6,6 @@ import graphql.nadel.engine.NadelOperationExecutionContext
 abstract class NadelTransformOperationContext : NadelTransformContext {
     abstract val parentContext: NadelOperationExecutionContext
 
-    override val operationExecutionContext: NadelOperationExecutionContext = parentContext
-    override val executionContext: NadelExecutionContext = parentContext.parentContext
+    override val operationExecutionContext: NadelOperationExecutionContext get() = parentContext
+    override val executionContext: NadelExecutionContext get() = parentContext.parentContext
 }
