@@ -5,6 +5,8 @@ import com.tngtech.archunit.core.domain.JavaClass
 import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
+import graphql.nadel.NextgenEngine
+import graphql.util.DefaultTraverserContext.simple
 import org.junit.jupiter.api.Test
 
 class NadelPrefixTest {
@@ -51,13 +53,7 @@ class NadelPrefixTest {
                 "graphql.nadel.ServiceExecutionHydrationDetails",
                 "graphql.nadel.ServiceExecutionParameters",
                 "graphql.nadel.ServiceExecutionResult",
-                "graphql.nadel.dsl.FieldMappingDefinition",
-                "graphql.nadel.dsl.RemoteArgumentDefinition",
-                "graphql.nadel.dsl.RemoteArgumentSource",
-                "graphql.nadel.dsl.TypeMappingDefinition",
-                "graphql.nadel.engine.blueprint.Factory",
                 "graphql.nadel.engine.blueprint.IntrospectionService",
-                "graphql.nadel.engine.blueprint.SharedTypesAnalysis",
                 "graphql.nadel.engine.document.DocumentPredicates",
                 "graphql.nadel.engine.transform.hydration.batch.BatchedArgumentValue",
                 "graphql.nadel.engine.transform.query.DynamicServiceResolution",
@@ -69,9 +65,7 @@ class NadelPrefixTest {
                 "graphql.nadel.engine.util.AliasesKt",
                 "graphql.nadel.hints.AllDocumentVariablesHint",
                 "graphql.nadel.hints.LegacyOperationNamesHint",
-                "graphql.nadel.hints.NewBatchHydrationGroupingHint",
                 "graphql.nadel.hints.NewResultMergerAndNamespacedTypename",
-                "graphql.nadel.hooks.CreateServiceContextParams",
                 "graphql.nadel.hooks.ServiceOrError",
                 "graphql.nadel.instrumentation.ChainedNadelInstrumentation",
                 "graphql.nadel.instrumentation.parameters.ErrorData",
@@ -82,7 +76,6 @@ class NadelPrefixTest {
                 "graphql.nadel.schema.SchemaTransformationHook",
                 "graphql.nadel.schema.ServiceSchemaProblem",
                 "graphql.nadel.schema.UnderlyingSchemaGenerator",
-                "graphql.nadel.util.LogKit",
             )
 
             override fun test(t: JavaClass): Boolean {
