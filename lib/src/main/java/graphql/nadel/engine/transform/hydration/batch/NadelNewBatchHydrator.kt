@@ -4,8 +4,9 @@ import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -189,11 +190,10 @@ internal class NadelNewBatchHydrator(
     ): List<NadelResultInstruction> {
         val context = NadelBatchHydratorContext(
             instructionsByObjectTypeNames = transformContext.instructionsByObjectTypeNames,
-            executionContext = transformContext.executionContext,
+            executionOperationContext = transformContext.executionOperationContext,
             sourceField = transformContext.virtualField,
             sourceFieldService = transformContext.virtualFieldService,
             aliasHelper = transformContext.aliasHelper,
-            executionBlueprint = transformContext.executionBlueprint,
         )
 
         return with(context) {
@@ -457,7 +457,7 @@ internal class NadelNewBatchHydrator(
                         val hydrationBackingField =
                             FieldCoordinates.coordinates(instruction.backingFieldContainer, instruction.backingFieldDef)
 
-                        val serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                        val serviceHydrationDetails = NadelOperationExecutionHydrationDetails(
                             instruction = instruction,
                             timeout = instruction.timeout,
                             batchSize = instruction.batchSize,
@@ -698,17 +698,16 @@ internal class NadelNewBatchHydrator(
  */
 internal class NadelBatchHydratorContext(
     val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
-    val executionContext: NadelExecutionContext,
+    val executionOperationContext: NadelOperationExecutionContext,
     val sourceField: ExecutableNormalizedField,
     val sourceFieldService: Service,
     val aliasHelper: NadelAliasHelper,
-    val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     val isSourceFieldListOutput: Boolean by lazy {
         // In regard to the field output type, the abstract types must all define the same list wrapping
         // So here, it does not matter which object type we inspect
         val instruction = instructionsByObjectTypeNames.values.first().first()
-        executionBlueprint.engineSchema.getField(instruction.location)!!.type.unwrapNonNull().isList
+        executionOperationContext.executionContext.engineSchema.getField(instruction.location)!!.type.unwrapNonNull().isList
     }
 
     val isSourceInputFieldListOutput: Boolean by lazy {

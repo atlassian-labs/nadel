@@ -3,7 +3,7 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 
@@ -17,12 +17,12 @@ abstract class HydrationDetailsHook : EngineTestHook {
         }
     }
 
-    abstract fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails)
+    abstract fun assertHydrationDetails(actualHydrationDetails: NadelOperationExecutionHydrationDetails)
 }
 
 @UseHook
 class `basic-hydration` : HydrationDetailsHook() {
-    override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {
+    override fun assertHydrationDetails(actualHydrationDetails: NadelOperationExecutionHydrationDetails) {
         assert(actualHydrationDetails.hydrationBackingField.toString() == "Query.barById")
         assert(actualHydrationDetails.hydrationVirtualField.toString() == "Foo.bar")
         assert(actualHydrationDetails.hydrationSourceService.name == "service1")
@@ -32,7 +32,7 @@ class `basic-hydration` : HydrationDetailsHook() {
 
 @UseHook
 class `batch-hydration-with-renamed-actor-field` : HydrationDetailsHook() {
-    override fun assertHydrationDetails(actualHydrationDetails: ServiceExecutionHydrationDetails) {
+    override fun assertHydrationDetails(actualHydrationDetails: NadelOperationExecutionHydrationDetails) {
         assert(actualHydrationDetails.hydrationBackingField.toString() == "Query.barsByIdOverall")
         assert(actualHydrationDetails.hydrationVirtualField.toString() == "Foo.bar")
         assert(actualHydrationDetails.hydrationSourceService.name == "service1")

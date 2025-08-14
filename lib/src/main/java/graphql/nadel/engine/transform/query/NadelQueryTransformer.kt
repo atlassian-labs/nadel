@@ -2,7 +2,6 @@ package graphql.nadel.engine.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
@@ -11,7 +10,6 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 
 class NadelQueryTransformer private constructor(
-    private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val service: Service,
     private val executionContext: NadelExecutionContext,
     private val executionPlan: NadelExecutionPlan,
@@ -20,7 +18,6 @@ class NadelQueryTransformer private constructor(
 ) {
     companion object {
         suspend fun transformQuery(
-            executionBlueprint: NadelOverallExecutionBlueprint,
             service: Service,
             executionContext: NadelExecutionContext,
             executionPlan: NadelExecutionPlan,
@@ -30,7 +27,6 @@ class NadelQueryTransformer private constructor(
 
             executionContext.timer.batch().use { timer ->
                 val transformer = NadelQueryTransformer(
-                    executionBlueprint,
                     service,
                     executionContext,
                     executionPlan,
@@ -183,11 +179,11 @@ class NadelQueryTransformer private constructor(
     private fun getUnderlyingTypeNames(objectTypeNames: Collection<String>): List<String> {
         return if (executionContext.hints.sharedTypeRenames(service)) {
             objectTypeNames.map {
-                executionBlueprint.getUnderlyingTypeName(overallTypeName = it)
+                executionContext.executionBlueprint.getUnderlyingTypeName(overallTypeName = it)
             }
         } else {
             objectTypeNames.map {
-                executionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
+                executionContext.executionBlueprint.getUnderlyingTypeName(service, overallTypeName = it)
             }
         }
     }

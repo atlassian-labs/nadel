@@ -1,7 +1,7 @@
 package graphql.nadel.engine.blueprint
 
 import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeFieldCoordinates
@@ -105,7 +105,7 @@ data class NadelOverallExecutionBlueprint(
     }
 
     inline fun <reified T : NadelFieldInstruction> getInstructionInsideVirtualType(
-        hydrationDetails: ServiceExecutionHydrationDetails?,
+        hydrationDetails: NadelOperationExecutionHydrationDetails?,
         backingField: ExecutableNormalizedField,
     ): Map<GraphQLObjectTypeName, List<T>> {
         hydrationDetails ?: return emptyMap() // Need hydration to provide virtual hydration context

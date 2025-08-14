@@ -204,6 +204,8 @@ internal class NextgenEngine(
                                         executionContext = executionContext,
                                         service = resolvedService,
                                         topLevelField = field,
+                                        hydrationDetails = null,
+                                        isPartitionedCall = false,
                                     )
                                 } catch (e: Throwable) {
                                     when (e) {
@@ -251,15 +253,15 @@ internal class NextgenEngine(
         topLevelField: ExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
-        hydrationDetails: ServiceExecutionHydrationDetails,
+        hydrationDetails: NadelOperationExecutionHydrationDetails,
     ): ServiceExecutionResult {
         return try {
             executeTopLevelField(
-                executionContext = executionContext.copy(
-                    hydrationDetails = hydrationDetails,
-                ),
+                executionContext = executionContext,
                 service = service,
                 topLevelField = topLevelField,
+                hydrationDetails = hydrationDetails,
+                isPartitionedCall = false,
             )
         } catch (e: Exception) {
             when (e) {
@@ -275,14 +277,14 @@ internal class NextgenEngine(
     internal suspend fun executePartitionedCall(
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionContext: NadelExecutionContext,
+        parentContext: NadelOperationExecutionContext,
     ): ServiceExecutionResult {
         return executeTopLevelField(
-            executionContext = executionContext.copy(
-                isPartitionedCall = true,
-            ),
+            executionContext = parentContext.executionContext,
             service = service,
             topLevelField = topLevelField,
+            hydrationDetails = parentContext.hydrationDetails,
+            isPartitionedCall = true,
         )
     }
 
@@ -290,9 +292,16 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         service: Service,
         topLevelField: ExecutableNormalizedField,
+        hydrationDetails: NadelOperationExecutionHydrationDetails?,
+        isPartitionedCall: Boolean,
     ): ServiceExecutionResult {
-        val operationExecutionContext =
-            executionHooks.createOperationExecutionContext(executionContext, service, topLevelField)
+        val operationExecutionContext = executionHooks.createOperationExecutionContext(
+            executionContext = executionContext,
+            service = service,
+            topLevelField = topLevelField,
+            hydrationDetails = hydrationDetails,
+            isPartitionedCall = isPartitionedCall,
+        )
 
         val timer = executionContext.timer
         val executionPlan = timer.time(step = RootStep.ExecutionPlanning) {
@@ -306,7 +315,6 @@ internal class NextgenEngine(
             transformQuery(
                 service = service,
                 executionContext = executionContext,
-                operationExecutionContext = operationExecutionContext,
                 executionPlan = executionPlan,
                 field = topLevelField
             )
@@ -317,7 +325,6 @@ internal class NextgenEngine(
                 topLevelFields = queryTransform.result,
                 executionContext = executionContext,
                 operationExecutionContext = operationExecutionContext,
-                executionHydrationDetails = executionContext.hydrationDetails,
             )
         }
         if (result is NadelIncrementalServiceExecutionResult) {
@@ -367,7 +374,6 @@ internal class NextgenEngine(
         topLevelFields: List<ExecutableNormalizedField>,
         executionContext: NadelExecutionContext,
         operationExecutionContext: NadelOperationExecutionContext,
-        executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val timer = executionContext.timer
 
@@ -394,7 +400,6 @@ internal class NextgenEngine(
             variables = compileResult.variables,
             operationDefinition = compileResult.document.definitions.singleOfType(),
             operationExecutionContext = operationExecutionContext,
-            hydrationDetails = executionHydrationDetails,
             // Prefer non __typename field first, otherwise we just get first
             executableNormalizedField = topLevelFields
                 .asSequence()
@@ -506,12 +511,10 @@ internal class NextgenEngine(
     private suspend fun transformQuery(
         service: Service,
         executionContext: NadelExecutionContext,
-        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         field: ExecutableNormalizedField,
     ): NadelQueryTransformer.TransformResult {
         return NadelQueryTransformer.transformQuery(
-            overallExecutionBlueprint,
             service,
             executionContext,
             executionPlan,

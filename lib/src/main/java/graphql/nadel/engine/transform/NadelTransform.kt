@@ -1,7 +1,7 @@
 package graphql.nadel.engine.transform
 
 import graphql.language.Directive
-import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -36,7 +36,7 @@ interface NadelTransform<
      *
      * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
      * @param rootField the root [ExecutableNormalizedField] of the operation this [NadelTransform] runs on
-     * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
+     * @param hydrationDetails the [NadelOperationExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
      * hydrations, `null` otherwise
      *
      * @return a common [NadelTransformOperationContext] that will be fed into all other methods of this transform

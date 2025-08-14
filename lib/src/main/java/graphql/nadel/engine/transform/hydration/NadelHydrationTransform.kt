@@ -4,7 +4,7 @@ import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResultImpl
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
@@ -331,7 +331,7 @@ internal class NadelHydrationTransform(
                                     instruction.backingFieldContainer,
                                     instruction.backingFieldDef
                                 )
-                            val serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                            val serviceHydrationDetails = NadelOperationExecutionHydrationDetails(
                                 instruction = instruction,
                                 timeout = instruction.timeout,
                                 batchSize = 1,

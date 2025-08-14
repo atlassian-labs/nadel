@@ -50,7 +50,6 @@ class NadelPrefixTest {
                 "graphql.nadel.Service",
                 "graphql.nadel.ServiceExecution",
                 "graphql.nadel.ServiceExecutionFactory",
-                "graphql.nadel.ServiceExecutionHydrationDetails",
                 "graphql.nadel.ServiceExecutionParameters",
                 "graphql.nadel.ServiceExecutionResult",
                 "graphql.nadel.engine.blueprint.IntrospectionService",

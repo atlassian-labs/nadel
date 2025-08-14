@@ -1,5 +1,6 @@
 package graphql.nadel.hooks
 
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelOperationExecutionContext
@@ -117,12 +118,16 @@ internal suspend fun NadelExecutionHooks.createOperationExecutionContext(
     executionContext: NadelExecutionContext,
     service: Service,
     topLevelField: ExecutableNormalizedField,
+    hydrationDetails: NadelOperationExecutionHydrationDetails?,
+    isPartitionedCall: Boolean,
 ): NadelOperationExecutionContext {
     return createOperationExecutionContext(
         NadelCreateOperationExecutionContextParams(
             executionContext = executionContext,
             service = service,
             topLevelField = topLevelField,
+            hydrationDetails = hydrationDetails,
+            isPartitionedCall = isPartitionedCall,
         ),
     ).await()
 }
