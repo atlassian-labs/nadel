@@ -1,6 +1,5 @@
 package graphql.nadel.validation
 
-import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.util.assertSingleOfType
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue

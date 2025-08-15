@@ -78,7 +78,7 @@ data class NadelInstrumentationTimingParameters(
     ) : Step {
         constructor(
             parent: Step,
-            transform: NadelTransform<*>,
+            transform: NadelTransform<*, *>,
         ) : this(
             parent = parent,
             name = transform.name,

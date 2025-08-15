@@ -2,11 +2,7 @@ package graphql.nadel.engine.transform.result
 
 import graphql.GraphQLError
 import graphql.incremental.DeferPayload
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -20,39 +16,28 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
+internal class NadelResultTransformer {
     suspend fun transform(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
         val nodes = JsonNodes(result.data)
         val instructions = getMutationInstructions(
-            executionContext,
-            serviceExecutionContext,
             executionPlan,
             artificialFields,
             overallToUnderlyingFields,
-            service,
-            result,
-            nodes
+            nodes,
         )
         mutate(result, instructions)
         return result
     }
 
     suspend fun transform(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
-        result: ServiceExecutionResult,
         deferPayload: DeferPayload,
     ): DeferPayload {
         val nodes = JsonNodes(
@@ -60,53 +45,36 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>())
         )
         val instructions = getMutationInstructions(
-            executionContext,
-            serviceExecutionContext,
             executionPlan,
             artificialFields,
             overallToUnderlyingFields,
-            service,
-            result,
-            nodes
+            nodes,
         )
         mutate(deferPayload, instructions)
         return deferPayload
     }
 
     private suspend fun getMutationInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
-        result: ServiceExecutionResult,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
-        val contextByTransform = executionPlan.transformContexts
         coroutineScope {
-            executionContext.timer.batch { timer ->
-                for ((field, steps) in executionPlan.transformationSteps) {
+            executionPlan.operationExecutionContext.timer.batch { timer ->
+                for ((field, steps) in executionPlan.transformFieldSteps) {
                     val underlyingFields = overallToUnderlyingFields[field]
                     if (underlyingFields.isNullOrEmpty()) continue
 
                     for (step in steps) {
-                        val transformServiceExecutionContext = contextByTransform[step.transform]
                         asyncInstructions.add(
                             async {
-                                timer.time(step.resultTransformTimingStep) {
-                                    step.transform.getResultInstructions(
-                                        executionContext,
-                                        serviceExecutionContext,
-                                        executionBlueprint,
-                                        service,
-                                        field,
-                                        underlyingFields.first().parent,
-                                        result,
-                                        step.state,
-                                        nodes,
-                                        transformServiceExecutionContext
+                                timer.time(step.timingSteps.resultTransform) {
+                                    step.transform.transformResult(
+                                        transformContext = step.transformFieldContext,
+                                        underlyingParentField = underlyingFields.first().parent,
+                                        resultNodes = nodes,
                                     )
                                 }
                             }
@@ -124,20 +92,16 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         val instructions = asyncInstructions.awaitAll().flatten()
 
         coroutineScope {
-            contextByTransform.forEach { (transform, transformServiceExecutionContext) ->
+            executionPlan.transformOperationContexts.forEach { (transform, transformOperationContext) ->
                 launch {
                     transform.onComplete(
-                        executionContext,
-                        serviceExecutionContext,
-                        executionBlueprint,
-                        service,
-                        result,
+                        transformOperationContext,
                         nodes,
-                        transformServiceExecutionContext
                     )
                 }
             }
         }
+
         return instructions
     }
 

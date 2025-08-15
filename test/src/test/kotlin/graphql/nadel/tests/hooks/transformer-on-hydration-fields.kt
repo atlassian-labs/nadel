@@ -1,15 +1,11 @@
 package graphql.nadel.tests.hooks
 
 import graphql.language.StringValue
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -18,6 +14,7 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
+import kotlin.test.assertTrue
 
 @UseHook
 class `transformer-on-hydration-fields` : EngineTestHook {
@@ -29,7 +26,16 @@ class `transformer-on-hydration-fields` : EngineTestHook {
         } else hasParentWithName(field.parent, parentName)
     }
 
-    override val customTransforms: List<NadelTransform<out Any>>
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    override val customTransforms: List<NadelTransform<*, *>>
         get() = listOf(
             /**
              * This transform will modify the arguments of the "barById" field.
@@ -37,38 +43,33 @@ class `transformer-on-hydration-fields` : EngineTestHook {
              * It will force a new value for the "id" argument, so we can assert that the transform was
              * executed in the test fixture.
              */
-            object : NadelTransform<Any> {
-                override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
-                    service: Service,
+            object : NadelTransform<TransformOperationContext, TransformFieldContext> {
+                override suspend fun getTransformOperationContext(
+                    operationExecutionContext: NadelOperationExecutionContext,
+                ): TransformOperationContext {
+                    return TransformOperationContext(operationExecutionContext)
+                }
+
+                override suspend fun getTransformFieldContext(
+                    transformContext: TransformOperationContext,
                     overallField: ExecutableNormalizedField,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-                    hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Any? {
+                ): TransformFieldContext? {
                     return if (overallField.name == "barById") {
-                        assert(hydrationDetails != null)
-                        overallField
+                        assert(transformContext.operationExecutionContext.hydrationDetails != null)
+                        return TransformFieldContext(transformContext, overallField)
                     } else if (hasParentWithName(overallField, "barById")) {
-                        assert(hydrationDetails != null)
+                        assert(transformContext.operationExecutionContext.hydrationDetails != null)
                         null
                     } else {
-                        assert(hydrationDetails == null)
+                        assert(transformContext.operationExecutionContext.hydrationDetails == null)
                         null
                     }
                 }
 
                 override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
+                    transformContext: TransformFieldContext,
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
                     field: ExecutableNormalizedField,
-                    state: Any,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
                     val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
                     return transformer.transform(field.children)
@@ -84,18 +85,13 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                         }
                 }
 
-                override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
-                    overallField: ExecutableNormalizedField,
+                override suspend fun transformResult(
+                    transformContext: TransformFieldContext,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
-                    state: Any,
-                    nodes: JsonNodes,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+                    resultNodes: JsonNodes,
                 ): List<NadelResultInstruction> {
+                    assertTrue(transformContext.overallField.name != "__skip")
+
                     return emptyList()
                 }
             }

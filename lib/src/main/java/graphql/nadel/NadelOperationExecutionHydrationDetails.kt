@@ -6,7 +6,7 @@ import graphql.schema.FieldCoordinates
 /**
  * This contains details about a service hydration call when a [ServiceExecution] is invoked.
  */
-data class ServiceExecutionHydrationDetails(
+data class NadelOperationExecutionHydrationDetails(
     internal val instruction: NadelGenericHydrationInstruction,
     val timeout: Int,
     val batchSize: Int,

@@ -236,7 +236,7 @@ class Nadel private constructor(
         private var executionHooks: NadelExecutionHooks = object : NadelExecutionHooks {}
         private var preparsedDocumentProvider: PreparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE
         private var executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER
-        private var transforms = emptyList<NadelTransform<out Any>>()
+        private var transforms = emptyList<NadelTransform<*, *>>()
         private var introspectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner)
 
         private var schemas: NadelSchemas? = null
@@ -347,7 +347,7 @@ class Nadel private constructor(
             return this
         }
 
-        fun transforms(transforms: List<NadelTransform<out Any>>): Builder {
+        fun transforms(transforms: List<NadelTransform<*, *>>): Builder {
             this.transforms = transforms
             return this
         }

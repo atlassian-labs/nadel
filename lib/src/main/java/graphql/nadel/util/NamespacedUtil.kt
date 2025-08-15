@@ -10,7 +10,6 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
-import javax.swing.text.html.HTML.Tag.U
 
 object NamespacedUtil {
     fun serviceOwnsNamespacedField(namespacedObjectTypeName: String, service: Service): Boolean {

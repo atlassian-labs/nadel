@@ -1,7 +1,6 @@
 package graphql.nadel.validation
 
 import graphql.nadel.engine.util.singleOfType
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively

@@ -1,59 +1,61 @@
 package graphql.nadel.test
 
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformJavaCompat
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.test.NadelTransformJavaCompatAdapter.TransformFieldContext
+import graphql.nadel.test.NadelTransformJavaCompatAdapter.TransformOperationContext
 import graphql.normalized.ExecutableNormalizedField
 import java.util.concurrent.CompletableFuture
 
-interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
-    override fun isApplicable(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
-        service: Service,
+interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<TransformOperationContext, TransformFieldContext> {
+    open class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    open class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    override fun getTransformOperationContext(
+        operationExecutionContext: NadelOperationExecutionContext,
+    ): CompletableFuture<TransformOperationContext> {
+        return CompletableFuture.completedFuture(TransformOperationContext(operationExecutionContext))
+    }
+
+    override fun getTransformFieldContext(
+        transformContext: TransformOperationContext,
         overallField: ExecutableNormalizedField,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): CompletableFuture<Any?> {
-        return CompletableFuture.completedFuture(Unit)
+    ): CompletableFuture<TransformFieldContext?> {
+        return CompletableFuture.completedFuture(TransformFieldContext(transformContext, overallField))
     }
 
     override fun transformField(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        transformContext: TransformFieldContext,
         transformer: NadelQueryTransformerJavaCompat,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
-        state: Any,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult> {
         return CompletableFuture.completedFuture(NadelTransformFieldResult.unmodified(field))
     }
 
-    override fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallField: ExecutableNormalizedField,
+    override fun transformResult(
+        transformContext: TransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        state: Any,
-        nodes: JsonNodes,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+        resultNodes: JsonNodes,
     ): CompletableFuture<List<NadelResultInstruction>> {
         return CompletableFuture.completedFuture(emptyList())
+    }
+
+    override fun onComplete(
+        transformContext: TransformOperationContext,
+        resultNodes: JsonNodes,
+    ): CompletableFuture<Void> {
+        return CompletableFuture.completedFuture(null)
     }
 }

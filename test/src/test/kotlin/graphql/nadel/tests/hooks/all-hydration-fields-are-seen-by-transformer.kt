@@ -1,15 +1,11 @@
 package graphql.nadel.tests.hooks
 
 import graphql.ExecutionResult
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -24,50 +20,47 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
     private val transformField = synchronizedSet(mutableSetOf<String>())
     private val getResultInstructions = synchronizedSet(mutableSetOf<String>())
 
-    override val customTransforms: List<NadelTransform<out Any>>
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    override val customTransforms: List<NadelTransform<*, *>>
         get() = listOf(
-            object : NadelTransform<Unit> {
-                override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
-                    service: Service,
+            object : NadelTransform<TransformOperationContext, TransformFieldContext> {
+                override suspend fun getTransformOperationContext(
+                    operationExecutionContext: NadelOperationExecutionContext,
+                ): TransformOperationContext {
+                    return TransformOperationContext(operationExecutionContext)
+                }
+
+                override suspend fun getTransformFieldContext(
+                    transformContext: TransformOperationContext,
                     overallField: ExecutableNormalizedField,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-                    hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Unit? {
-                    isApplicable.add("${service.name}.${overallField.resultKey}")
-                    return Unit
+                ): TransformFieldContext? {
+                    isApplicable.add("${transformContext.service.name}.${overallField.resultKey}")
+                    return TransformFieldContext(transformContext, overallField)
                 }
 
                 override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
+                    transformContext: TransformFieldContext,
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
                     field: ExecutableNormalizedField,
-                    state: Unit,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
-                    transformField.add("${service.name}.${field.resultKey}")
+                    transformField.add("${transformContext.service.name}.${field.resultKey}")
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
-                override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
-                    overallField: ExecutableNormalizedField,
+                override suspend fun transformResult(
+                    transformContext: TransformFieldContext,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
-                    state: Unit,
-                    nodes: JsonNodes,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+                    resultNodes: JsonNodes,
                 ): List<NadelResultInstruction> {
-                    getResultInstructions.add("${service.name}.${overallField.resultKey}")
+                    getResultInstructions.add("${transformContext.service.name}.${transformContext.overallField.resultKey}")
                     return emptyList()
                 }
             },

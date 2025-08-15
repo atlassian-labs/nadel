@@ -3,11 +3,8 @@ package graphql.nadel.tests.next.fixtures.partition
 import graphql.language.ScalarValue
 import graphql.language.StringValue
 import graphql.nadel.Nadel
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
+import graphql.nadel.engine.NadelOperationExecutionContext
+import graphql.nadel.engine.transform.partition.NadelPartitionFieldContext
 import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
@@ -98,16 +95,11 @@ type Thing {
                 object : NadelExecutionHooks {
                     override fun partitionTransformerHook(): NadelPartitionTransformHook {
                         return object : NadelPartitionTransformHook {
-                            override fun getFieldPartitionContext(
-                                executionContext: NadelExecutionContext,
-                                serviceExecutionContext: NadelServiceExecutionContext,
-                                executionBlueprint: NadelOverallExecutionBlueprint,
-                                services: Map<String, graphql.nadel.Service>,
-                                service: graphql.nadel.Service,
+                            override fun getPartitionFieldContext(
+                                operationExecutionContext: NadelOperationExecutionContext,
                                 overallField: ExecutableNormalizedField,
-                                hydrationDetails: ServiceExecutionHydrationDetails?,
-                            ): NadelFieldPartitionContext {
-                                return TestPartitionContext
+                            ): NadelPartitionFieldContext {
+                                return TestPartitionFieldContext
                             }
 
                             override fun getPartitionKeyExtractor(): NadelPartitionKeyExtractor {
@@ -115,14 +107,14 @@ type Thing {
                                     override fun getPartitionKey(
                                         scalarValue: ScalarValue<*>,
                                         inputValueDef: GraphQLInputValueDefinition,
-                                        context: NadelFieldPartitionContext
+                                        context: NadelPartitionFieldContext
                                     ): String? {
                                         return if (scalarValue !is StringValue) {
                                             null
                                         } else {
                                             if (scalarValue.value.contains(":").not()) {
                                                 null
-                                            } else if ((context as TestPartitionContext).getPredicate().test(scalarValue.value as String)
+                                            } else if ((context as TestPartitionFieldContext).getPredicate().test(scalarValue.value as String)
                                                     .not()
                                             ) {
                                                 null
@@ -140,7 +132,7 @@ type Thing {
     }
 }
 
-object TestPartitionContext: NadelFieldPartitionContext() {
+object TestPartitionFieldContext: NadelPartitionFieldContext() {
     fun getPredicate(): Predicate<String> {
         return Predicate { partitionValue ->
             partitionValue.contains("primary")
