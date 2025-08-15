@@ -2,11 +2,7 @@ package graphql.nadel.engine.transform.result
 
 import graphql.GraphQLError
 import graphql.incremental.DeferPayload
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelOperationExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -20,39 +16,28 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
+internal class NadelResultTransformer {
     suspend fun transform(
-        executionContext: NadelExecutionContext,
-        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
         val nodes = JsonNodes(result.data)
         val instructions = getMutationInstructions(
-            executionContext,
-            operationExecutionContext,
             executionPlan,
             artificialFields,
             overallToUnderlyingFields,
-            service,
-            result,
-            nodes
+            nodes,
         )
         mutate(result, instructions)
         return result
     }
 
     suspend fun transform(
-        executionContext: NadelExecutionContext,
-        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
-        result: ServiceExecutionResult,
         deferPayload: DeferPayload,
     ): DeferPayload {
         val nodes = JsonNodes(
@@ -60,32 +45,24 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>())
         )
         val instructions = getMutationInstructions(
-            executionContext,
-            operationExecutionContext,
             executionPlan,
             artificialFields,
             overallToUnderlyingFields,
-            service,
-            result,
-            nodes
+            nodes,
         )
         mutate(deferPayload, instructions)
         return deferPayload
     }
 
     private suspend fun getMutationInstructions(
-        executionContext: NadelExecutionContext,
-        operationExecutionContext: NadelOperationExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<ExecutableNormalizedField>,
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
-        service: Service,
-        result: ServiceExecutionResult,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
         coroutineScope {
-            executionContext.timer.batch { timer ->
+            executionPlan.operationExecutionContext.timer.batch { timer ->
                 for ((field, steps) in executionPlan.transformFieldSteps) {
                     val underlyingFields = overallToUnderlyingFields[field]
                     if (underlyingFields.isNullOrEmpty()) continue
@@ -93,7 +70,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                     for (step in steps) {
                         asyncInstructions.add(
                             async {
-                                timer.time(step.resultTransformTimingStep) {
+                                timer.time(step.timingSteps.resultTransform) {
                                     step.transform.transformResult(
                                         transformContext = step.transformFieldContext,
                                         underlyingParentField = underlyingFields.first().parent,
@@ -115,7 +92,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         val instructions = asyncInstructions.awaitAll().flatten()
 
         coroutineScope {
-            executionPlan.transformContexts.forEach { (transform, transformOperationContext) ->
+            executionPlan.transformOperationContexts.forEach { (transform, transformOperationContext) ->
                 launch {
                     transform.onComplete(
                         transformOperationContext,

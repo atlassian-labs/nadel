@@ -1,7 +1,5 @@
 package graphql.nadel.engine.transform.query
 
-import graphql.nadel.Service
-import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
@@ -10,27 +8,17 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 
 class NadelQueryTransformer private constructor(
-    private val service: Service,
-    private val executionContext: NadelExecutionContext,
     private val executionPlan: NadelExecutionPlan,
-    private val transformContext: TransformContext,
     private val timer: NadelInstrumentationTimer.BatchTimer,
 ) {
     companion object {
         internal suspend fun transformQuery(
-            service: Service,
-            executionContext: NadelExecutionContext,
             executionPlan: NadelExecutionPlan,
             field: ExecutableNormalizedField,
         ): TransformResult {
-            val transformContext = TransformContext()
-
-            executionContext.timer.batch().use { timer ->
+            executionPlan.operationExecutionContext.timer.batch().use { timer ->
                 val transformer = NadelQueryTransformer(
-                    service,
-                    executionContext,
                     executionPlan,
-                    transformContext,
                     timer,
                 )
                 val result = transformer.transform(field)
@@ -40,17 +28,16 @@ class NadelQueryTransformer private constructor(
 
                 return TransformResult(
                     result = result,
-                    artificialFields = transformContext.artificialFields,
-                    overallToUnderlyingFields = transformContext.overallToUnderlyingFields,
+                    artificialFields = transformer.artificialFields,
+                    overallToUnderlyingFields = transformer.overallToUnderlyingFields,
                 )
             }
         }
     }
 
-    private data class TransformContext(
-        val artificialFields: MutableList<ExecutableNormalizedField> = mutableListOf(),
-        val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, MutableList<ExecutableNormalizedField>> = mutableMapOf(),
-    )
+    private val artificialFields: MutableList<ExecutableNormalizedField> = mutableListOf()
+    private val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, MutableList<ExecutableNormalizedField>> =
+        mutableMapOf()
 
     data class TransformResult(
         /**
@@ -89,9 +76,9 @@ class NadelQueryTransformer private constructor(
 
     private suspend fun transform(
         field: ExecutableNormalizedField,
-        transformationTransformFieldSteps: List<NadelExecutionPlan.TransformFieldStep>,
+        transformFieldSteps: List<NadelExecutionPlan.TransformFieldStep>,
     ): List<ExecutableNormalizedField> {
-        val transformResult = applyTransformationSteps(field, transformationTransformFieldSteps)
+        val transformResult = applyTransformationSteps(field, transformFieldSteps)
 
         val artificialFields = transformResult.artificialFields.map {
             it.toBuilder()
@@ -110,10 +97,10 @@ class NadelQueryTransformer private constructor(
             },
         )
 
-        transformContext.artificialFields.addAll(artificialFields)
+        this.artificialFields.addAll(artificialFields)
 
         // Track overall -> underlying fields
-        transformContext.overallToUnderlyingFields
+        this.overallToUnderlyingFields
             .computeIfAbsent(field) {
                 mutableListOf()
             }
@@ -140,7 +127,7 @@ class NadelQueryTransformer private constructor(
             .build()
             .also { newField ->
                 // Track overall -> underlying fields
-                transformContext.overallToUnderlyingFields
+                this.overallToUnderlyingFields
                     .computeIfAbsent(field) {
                         mutableListOf()
                     }
@@ -152,15 +139,15 @@ class NadelQueryTransformer private constructor(
 
     private suspend fun applyTransformationSteps(
         field: ExecutableNormalizedField,
-        transformationTransformFieldSteps: List<NadelExecutionPlan.TransformFieldStep>,
+        transformFieldSteps: List<NadelExecutionPlan.TransformFieldStep>,
     ): NadelTransformFieldResult {
         var newField: ExecutableNormalizedField = field
         val artificialFields = mutableListOf<ExecutableNormalizedField>()
 
-        for (transformStep in transformationTransformFieldSteps) {
-            val transformResultForStep = timer.time(transformStep.queryTransformTimingStep) {
-                transformStep.transform.transformField(
-                    transformContext = transformStep.transformFieldContext,
+        for (step in transformFieldSteps) {
+            val transformResultForStep = timer.time(step.timingSteps.queryTransform) {
+                step.transform.transformField(
+                    transformContext = step.transformFieldContext,
                     transformer = this,
                     field = newField,
                 )
@@ -177,6 +164,9 @@ class NadelQueryTransformer private constructor(
     }
 
     private fun getUnderlyingTypeNames(objectTypeNames: Collection<String>): List<String> {
+        val executionContext = executionPlan.operationExecutionContext.executionContext
+        val service = executionPlan.operationExecutionContext.service
+
         return if (executionContext.hints.sharedTypeRenames(service)) {
             objectTypeNames.map {
                 executionContext.executionBlueprint.getUnderlyingTypeName(overallTypeName = it)

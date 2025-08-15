@@ -2,6 +2,7 @@ package graphql.nadel.engine
 
 import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.Service
+import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.NadelCreateOperationExecutionContextParams
 import graphql.normalized.ExecutableNormalizedField
 
@@ -20,6 +21,8 @@ abstract class NadelOperationExecutionContext {
 
     val executionContext: NadelExecutionContext get() = parentContext
     val userContext: Any? get() = executionContext.userContext
+
+    internal val timer: NadelInstrumentationTimer get() = executionContext.timer
 
     internal class Default(
         override val parentContext: NadelExecutionContext,

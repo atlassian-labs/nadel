@@ -9,7 +9,7 @@ import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform
 import graphql.nadel.engine.transform.NadelTransform
-import graphql.nadel.engine.transform.NadelTransformOperationContext
+import graphql.nadel.engine.transform.NadelTransformTimingSteps
 import graphql.nadel.engine.transform.NadelTypeRenameResultTransform
 import graphql.nadel.engine.transform.hydration.NadelHydrationTransform
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform
@@ -31,20 +31,20 @@ internal class NadelExecutionPlanFactory(
     /**
      * This creates the [ChildStep] objects upfront to avoid constantly recreating them.
      */
-    private data class TransformWithTimingInfo(
+    private data class Transform(
         val transform: GenericNadelTransform,
-        val executionPlanTimingStep: ChildStep,
-        val queryTransformTimingStep: ChildStep,
-        val resultTransformTimingStep: ChildStep,
+        val timingSteps: NadelTransformTimingSteps,
     )
 
-    private val transformsWithTimingStepInfo = transforms
+    private val transforms = transforms
         .map { transform ->
-            TransformWithTimingInfo(
+            Transform(
                 transform = transform,
-                executionPlanTimingStep = ChildStep(parent = ExecutionPlanning, transform = transform),
-                queryTransformTimingStep = ChildStep(parent = QueryTransforming, transform = transform),
-                resultTransformTimingStep = ChildStep(parent = ResultTransforming, transform = transform),
+                timingSteps = NadelTransformTimingSteps(
+                    executionPlan = ChildStep(parent = ExecutionPlanning, transform = transform),
+                    queryTransform = ChildStep(parent = QueryTransforming, transform = transform),
+                    resultTransform = ChildStep(parent = ResultTransforming, transform = transform),
+                ),
             )
         }
 
@@ -53,31 +53,27 @@ internal class NadelExecutionPlanFactory(
      * [rootField] and [executionBlueprint].
      */
     suspend fun create(
-        executionContext: NadelExecutionContext,
         operationExecutionContext: NadelOperationExecutionContext,
         rootField: ExecutableNormalizedField,
     ): NadelExecutionPlan {
+        val transformOperationContexts = transforms.associate { (transform) ->
+            transform to transform.getTransformOperationContext(operationExecutionContext)
+        }
+
         val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.TransformFieldStep>> =
             mutableMapOf()
-        val transformContexts: MutableMap<GenericNadelTransform, NadelTransformOperationContext> =
-            mutableMapOf()
-        executionContext.timer.batch { timer ->
+        operationExecutionContext.timer.batch { timer ->
             traverseQuery(rootField) { field ->
-                val transformFieldSteps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
-                    val transform = transformWithTimingInfo.transform
+                val transformFieldSteps = transforms.mapNotNull { (transform, timingSteps) ->
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
-                    // See NadelSkipIncludeTransform.isApplicable for more details
-                    if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*, *>) !is NadelSkipIncludeTransform)) {
+                    // See NadelSkipIncludeTransform.getTransformFieldContext for more details
+                    if (isSkipIncludeSpecialField(field) && (transform !is NadelSkipIncludeTransform)) {
                         null
                     } else {
-                        val transformOperationContext = transformContexts.getOrPut(transform) {
-                            transform.getTransformOperationContext(operationExecutionContext)
-                        }
-
-                        val transformFieldContext = timer.time(step = transformWithTimingInfo.executionPlanTimingStep) {
+                        val transformFieldContext = timer.time(step = timingSteps.executionPlan) {
                             transform.getTransformFieldContext(
-                                transformOperationContext,
+                                transformOperationContexts[transform]!!,
                                 field,
                             )
                         }
@@ -88,8 +84,7 @@ internal class NadelExecutionPlanFactory(
                             NadelExecutionPlan.TransformFieldStep(
                                 transform = transform,
                                 transformFieldContext = transformFieldContext,
-                                queryTransformTimingStep = transformWithTimingInfo.queryTransformTimingStep,
-                                resultTransformTimingStep = transformWithTimingInfo.resultTransformTimingStep,
+                                timingSteps = timingSteps,
                             )
                         }
                     }
@@ -102,8 +97,9 @@ internal class NadelExecutionPlanFactory(
         }
 
         return NadelExecutionPlan(
-            executionSteps,
-            transformContexts,
+            operationExecutionContext = operationExecutionContext,
+            transformFieldSteps = executionSteps,
+            transformOperationContexts = transformOperationContexts,
         )
     }
 
