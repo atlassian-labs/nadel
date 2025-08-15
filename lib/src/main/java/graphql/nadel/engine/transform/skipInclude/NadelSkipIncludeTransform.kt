@@ -12,13 +12,21 @@ import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.TransformFieldContext
-import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.TransformOperationContext
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLSchema
+
+internal data class NadelSkipIncludeTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
+
+internal data class NadelSkipIncludeTransformFieldContext(
+    override val parentContext: NadelSkipIncludeTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    val aliasHelper: NadelAliasHelper,
+) : NadelTransformFieldContext<NadelSkipIncludeTransformOperationContext>()
 
 /**
  * So the way `@skip` and `@include` work is that in the [graphql.normalized.ExecutableNormalizedOperationFactory]
@@ -32,7 +40,7 @@ import graphql.schema.GraphQLSchema
  * This should probably be a more generic "if no subselections add an empty one for removed fields".
  * But we'll deal with that separately.
  */
-internal class NadelSkipIncludeTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
+internal class NadelSkipIncludeTransform : NadelTransform<NadelSkipIncludeTransformOperationContext, NadelSkipIncludeTransformFieldContext> {
     companion object {
         private const val skipFieldName = "__skip"
 
@@ -41,20 +49,10 @@ internal class NadelSkipIncludeTransform : NadelTransform<TransformOperationCont
         }
     }
 
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
-
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformFieldContext<TransformOperationContext>()
-
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelSkipIncludeTransformOperationContext {
+        return NadelSkipIncludeTransformOperationContext(operationExecutionContext)
     }
 
     /**
@@ -69,9 +67,9 @@ internal class NadelSkipIncludeTransform : NadelTransform<TransformOperationCont
      * field and to fix [transformResult] to include `underlyingField` and not just `underlyingParentField`.
      */
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelSkipIncludeTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelSkipIncludeTransformFieldContext? {
         // This hacks together a child that will pass through here
         if (overallField.children.isEmpty()) {
             val mergedField = transformContext.executionContext.query.getMergedField(overallField)
@@ -82,7 +80,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<TransformOperationCont
         }
 
         return if (overallField.name == skipFieldName) {
-            TransformFieldContext(
+            NadelSkipIncludeTransformFieldContext(
                 parentContext = transformContext,
                 overallField = overallField,
                 aliasHelper = NadelAliasHelper.forField(
@@ -96,7 +94,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<TransformOperationCont
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelSkipIncludeTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -112,7 +110,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<TransformOperationCont
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelSkipIncludeTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {

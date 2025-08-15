@@ -2,8 +2,6 @@ package graphql.nadel.engine.transform
 
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
-import graphql.nadel.engine.transform.NadelRenameTransform.TransformFieldContext
-import graphql.nadel.engine.transform.NadelRenameTransform.TransformOperationContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NFUtil.createField
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -23,29 +21,32 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 
-internal class NadelRenameTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
-    internal data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
+internal data class NadelRenameTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
 
-    internal data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        val instructionsByObjectTypeNames: Map<String, NadelRenameFieldInstruction>,
-        val objectTypesWithoutRename: Set<String>,
-        val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformFieldContext<TransformOperationContext>()
+internal data class NadelRenameTransformFieldContext(
+    override val parentContext: NadelRenameTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    val instructionsByObjectTypeNames: Map<String, NadelRenameFieldInstruction>,
+    val objectTypesWithoutRename: Set<String>,
+    val aliasHelper: NadelAliasHelper,
+) : NadelTransformFieldContext<NadelRenameTransformOperationContext>()
 
+internal class NadelRenameTransform : NadelTransform<
+    NadelRenameTransformOperationContext,
+    NadelRenameTransformFieldContext
+    > {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelRenameTransformOperationContext {
+        return NadelRenameTransformOperationContext(operationExecutionContext)
     }
 
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelRenameTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelRenameTransformFieldContext? {
         val renameInstructions = transformContext.executionBlueprint
             .getTypeNameToInstructionMap<NadelRenameFieldInstruction>(overallField)
         if (renameInstructions.isEmpty()) {
@@ -57,7 +58,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
             .filterNot { it in renameInstructions }
             .toHashSet()
 
-        return TransformFieldContext(
+        return NadelRenameTransformFieldContext(
             transformContext,
             overallField,
             renameInstructions,
@@ -67,7 +68,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -90,7 +91,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
     }
 
     /**
-     * Read [TransformFieldContext.instructionsByObjectTypeNames]
+     * Read [NadelRenameTransformFieldContext.instructionsByObjectTypeNames]
      *
      * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
@@ -99,7 +100,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
      * This detail is omitted from most examples in this file for simplicity.
      */
     private fun makeTypeNameField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameTransformFieldContext,
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
         // No need for typename on top level field
@@ -121,7 +122,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
     }
 
     private suspend fun makeRenamedFields(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): List<ExecutableNormalizedField> {
@@ -146,7 +147,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
     }
 
     private suspend fun makeRenamedField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
         overallTypeName: String,
@@ -169,7 +170,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
@@ -203,7 +204,7 @@ internal class NadelRenameTransform : NadelTransform<TransformOperationContext, 
     }
 
     private fun getInstructionForNode(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameTransformFieldContext,
         parentNode: JsonNode,
     ): NadelRenameFieldInstruction? {
         // There can't be multiple instructions for a top level field

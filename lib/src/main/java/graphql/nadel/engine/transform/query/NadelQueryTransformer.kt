@@ -17,7 +17,7 @@ class NadelQueryTransformer private constructor(
     private val timer: NadelInstrumentationTimer.BatchTimer,
 ) {
     companion object {
-        suspend fun transformQuery(
+        internal suspend fun transformQuery(
             service: Service,
             executionContext: NadelExecutionContext,
             executionPlan: NadelExecutionPlan,

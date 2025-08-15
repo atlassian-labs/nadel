@@ -2,8 +2,6 @@ package graphql.nadel.engine.transform
 
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelDeepRenameFieldInstruction
-import graphql.nadel.engine.transform.NadelDeepRenameTransform.TransformFieldContext
-import graphql.nadel.engine.transform.NadelDeepRenameTransform.TransformOperationContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -17,6 +15,44 @@ import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
+
+internal data class NadelDeepRenameTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
+
+internal data class NadelDeepRenameTransformFieldContext(
+    override val parentContext: NadelDeepRenameTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    /**
+     * The instructions for the a [ExecutableNormalizedField].
+     *
+     * Note that we can have multiple transform instructions for one [ExecutableNormalizedField]
+     * due to the multiple [ExecutableNormalizedField.objectTypeNames] e.g.
+     *
+     * ```graphql
+     * type Query {
+     *   pets: [Pet]
+     * }
+     *
+     * interface Pet {
+     *   name: String
+     * }
+     *
+     * type Dog implements Pet {
+     *   name: String @renamed(from: ["collar", "name"])
+     * }
+     *
+     * type Cat implements Pet {
+     *   name: String @renamed(from: ["tag", "name"])
+     * }
+     * ```
+     */
+    val instructionsByObjectTypeNames: Map<String, NadelDeepRenameFieldInstruction>,
+    /**
+     * See [NadelAliasHelper]
+     */
+    val aliasHelper: NadelAliasHelper,
+) : NadelTransformFieldContext<NadelDeepRenameTransformOperationContext>()
 
 @Deprecated("Should be changed to a value class")
 internal typealias GraphQLObjectTypeName = String
@@ -36,49 +72,11 @@ internal typealias GraphQLObjectTypeName = String
  * }
  * ```
  */
-internal class NadelDeepRenameTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
-
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        /**
-         * The instructions for the a [ExecutableNormalizedField].
-         *
-         * Note that we can have multiple transform instructions for one [ExecutableNormalizedField]
-         * due to the multiple [ExecutableNormalizedField.objectTypeNames] e.g.
-         *
-         * ```graphql
-         * type Query {
-         *   pets: [Pet]
-         * }
-         *
-         * interface Pet {
-         *   name: String
-         * }
-         *
-         * type Dog implements Pet {
-         *   name: String @renamed(from: ["collar", "name"])
-         * }
-         *
-         * type Cat implements Pet {
-         *   name: String @renamed(from: ["tag", "name"])
-         * }
-         * ```
-         */
-        val instructionsByObjectTypeNames: Map<String, NadelDeepRenameFieldInstruction>,
-        /**
-         * See [NadelAliasHelper]
-         */
-        val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformFieldContext<TransformOperationContext>()
-
+internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransformOperationContext, NadelDeepRenameTransformFieldContext> {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelDeepRenameTransformOperationContext {
+        return NadelDeepRenameTransformOperationContext(operationExecutionContext)
     }
 
     /**
@@ -87,16 +85,16 @@ internal class NadelDeepRenameTransform : NadelTransform<TransformOperationConte
      * Creates a state with the deep rename instructions and the transform alias.
      */
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelDeepRenameTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelDeepRenameTransformFieldContext? {
         val deepRenameInstructions = transformContext.executionBlueprint
             .getTypeNameToInstructionMap<NadelDeepRenameFieldInstruction>(overallField)
         if (deepRenameInstructions.isEmpty()) {
             return null
         }
 
-        return TransformFieldContext(
+        return NadelDeepRenameTransformFieldContext(
             transformContext,
             overallField,
             deepRenameInstructions,
@@ -155,7 +153,7 @@ internal class NadelDeepRenameTransform : NadelTransform<TransformOperationConte
      * ```
      */
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelDeepRenameTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -191,7 +189,7 @@ internal class NadelDeepRenameTransform : NadelTransform<TransformOperationConte
     }
 
     /**
-     * Read [TransformFieldContext.instructionsByObjectTypeNames]
+     * Read [NadelDeepRenameTransformFieldContext.instructionsByObjectTypeNames]
      *
      * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
@@ -200,7 +198,7 @@ internal class NadelDeepRenameTransform : NadelTransform<TransformOperationConte
      * This detail is omitted from most examples in this file for simplicity.
      */
     private fun makeTypeNameField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelDeepRenameTransformFieldContext,
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
         val typeNamesWithInstructions = transformContext.instructionsByObjectTypeNames.keys
@@ -234,7 +232,7 @@ internal class NadelDeepRenameTransform : NadelTransform<TransformOperationConte
      * ```
      */
     private suspend fun makeDeepField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelDeepRenameTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
         overallObjectTypeName: String,
@@ -286,7 +284,7 @@ internal class NadelDeepRenameTransform : NadelTransform<TransformOperationConte
      * ```
      */
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelDeepRenameTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {

@@ -3,8 +3,6 @@ package graphql.nadel.engine.transform
 import graphql.introspection.Introspection
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
-import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform.TransformFieldContext
-import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform.TransformOperationContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -13,6 +11,18 @@ import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
+
+data class NadelServiceTypeFilterTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
+
+data class NadelServiceTypeFilterTransformFieldContext(
+    override val parentContext: NadelServiceTypeFilterTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    val aliasHelper: NadelAliasHelper,
+    val typeNamesOwnedByService: Set<String>,
+    val fieldObjectTypeNamesOwnedByService: List<String>,
+) : NadelTransformFieldContext<NadelServiceTypeFilterTransformOperationContext>()
 
 /**
  * Nadel ends up building a complex schema from multiple different services. This class
@@ -58,29 +68,20 @@ import graphql.normalized.ExecutableNormalizedField.newNormalizedField
  * - service-types-are-filtered.yml
  * - service-types-are-completely-filtered.yml
  */
-class NadelServiceTypeFilterTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
-
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        val aliasHelper: NadelAliasHelper,
-        val typeNamesOwnedByService: Set<String>,
-        val fieldObjectTypeNamesOwnedByService: List<String>,
-    ) : NadelTransformFieldContext<TransformOperationContext>()
-
+class NadelServiceTypeFilterTransform : NadelTransform<
+    NadelServiceTypeFilterTransformOperationContext,
+    NadelServiceTypeFilterTransformFieldContext
+    > {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelServiceTypeFilterTransformOperationContext {
+        return NadelServiceTypeFilterTransformOperationContext(operationExecutionContext)
     }
 
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelServiceTypeFilterTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelServiceTypeFilterTransformFieldContext? {
         val service = transformContext.service
         val executionBlueprint = transformContext.executionBlueprint
         val executionContext = transformContext.executionContext
@@ -123,7 +124,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<TransformOperationContext
             ) in underlyingTypeNamesOwnedByService)
         }
 
-        return TransformFieldContext(
+        return NadelServiceTypeFilterTransformFieldContext(
             parentContext = transformContext,
             overallField = overallField,
             aliasHelper = NadelAliasHelper.forField(
@@ -136,7 +137,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<TransformOperationContext
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelServiceTypeFilterTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -190,7 +191,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<TransformOperationContext
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelServiceTypeFilterTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {

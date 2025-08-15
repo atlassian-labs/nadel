@@ -4,8 +4,6 @@ import graphql.introspection.Introspection
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
-import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.TransformFieldContext
-import graphql.nadel.engine.transform.NadelTypeRenameResultTransform.TransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -16,33 +14,36 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 
-internal class NadelTypeRenameResultTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
+internal data class NadelTypeRenameResultTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
 
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        val typeRenamePath: NadelQueryPath,
-        val virtualTypeContext: NadelVirtualTypeContext?,
-    ) : NadelTransformFieldContext<TransformOperationContext>()
+internal data class NadelTypeRenameResultTransformFieldContext(
+    override val parentContext: NadelTypeRenameResultTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    val typeRenamePath: NadelQueryPath,
+    val virtualTypeContext: NadelVirtualTypeContext?,
+) : NadelTransformFieldContext<NadelTypeRenameResultTransformOperationContext>()
 
+internal class NadelTypeRenameResultTransform : NadelTransform<
+    NadelTypeRenameResultTransformOperationContext,
+    NadelTypeRenameResultTransformFieldContext
+    > {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelTypeRenameResultTransformOperationContext {
+        return NadelTypeRenameResultTransformOperationContext(operationExecutionContext)
     }
 
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelTypeRenameResultTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelTypeRenameResultTransformFieldContext? {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
             val virtualTypeContext =
                 (transformContext.operationExecutionContext.hydrationDetails?.instruction as? NadelHydrationFieldInstruction)?.virtualTypeContext
 
-            TransformFieldContext(
+            NadelTypeRenameResultTransformFieldContext(
                 parentContext = transformContext,
                 overallField = overallField,
                 typeRenamePath = overallField.queryPath,
@@ -54,7 +55,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<TransformOperatio
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelTypeRenameResultTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -62,7 +63,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<TransformOperatio
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelTypeRenameResultTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {

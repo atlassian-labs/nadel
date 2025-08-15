@@ -15,7 +15,6 @@ import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
 import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
-import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.TransformFieldContext
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexBasedIndexer
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexKey
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexer
@@ -184,7 +183,7 @@ internal class NadelNewBatchHydrator(
      * todo: add validation that repeated directives must use the same $source object unless there is only one input
      */
     suspend fun hydrate(
-        transformContext: TransformFieldContext,
+        transformContext: NadelBatchHydrationTransformFieldContext,
         sourceObjects: List<JsonNode>,
     ): List<NadelResultInstruction> {
         val context = NadelBatchHydratorContext(

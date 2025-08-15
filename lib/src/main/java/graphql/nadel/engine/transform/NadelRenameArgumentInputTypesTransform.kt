@@ -1,8 +1,6 @@
 package graphql.nadel.engine.transform
 
 import graphql.nadel.engine.NadelOperationExecutionContext
-import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform.TransformFieldContext
-import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform.TransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -10,6 +8,15 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.withNewUnwrappedTypeName
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
+
+data class NadelRenameArgumentInputTypesTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
+
+data class NadelRenameArgumentInputTypesTransformFieldContext(
+    override val parentContext: NadelRenameArgumentInputTypesTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+) : NadelTransformFieldContext<NadelRenameArgumentInputTypesTransformOperationContext>()
 
 /**
  * This will rename a fields input arguments types.  This is especially important
@@ -21,39 +28,32 @@ import graphql.normalized.NormalizedInputValue
  * query x($var : UnderlyingTypeName!) { ... }
  * ```
  */
-internal class NadelRenameArgumentInputTypesTransform :
-    NadelTransform<TransformOperationContext, TransformFieldContext> {
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
-
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-    ) : NadelTransformFieldContext<TransformOperationContext>()
-
+internal class NadelRenameArgumentInputTypesTransform : NadelTransform<
+    NadelRenameArgumentInputTypesTransformOperationContext,
+    NadelRenameArgumentInputTypesTransformFieldContext
+    > {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelRenameArgumentInputTypesTransformOperationContext {
+        return NadelRenameArgumentInputTypesTransformOperationContext(operationExecutionContext)
     }
 
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelRenameArgumentInputTypesTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelRenameArgumentInputTypesTransformFieldContext? {
         // Transform if there's any arguments at all
         // todo: this won't account for cases where a transform before this injected new arguments…
         // But that's not a big deal right now anyway…
         return if (overallField.normalizedArguments.isNotEmpty()) {
-            TransformFieldContext(transformContext, overallField)
+            NadelRenameArgumentInputTypesTransformFieldContext(transformContext, overallField)
         } else {
             null
         }
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameArgumentInputTypesTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -66,7 +66,7 @@ internal class NadelRenameArgumentInputTypesTransform :
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameArgumentInputTypesTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
@@ -74,7 +74,7 @@ internal class NadelRenameArgumentInputTypesTransform :
     }
 
     private fun getRenamedArguments(
-        transformContext: TransformFieldContext,
+        transformContext: NadelRenameArgumentInputTypesTransformFieldContext,
         field: ExecutableNormalizedField,
     ): Map<String, NormalizedInputValue> {
         return field.normalizedArguments

@@ -9,8 +9,6 @@ import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.partition.NadelPartitionMutationPayloadMerger.isMutationPayloadLike
-import graphql.nadel.engine.transform.partition.NadelPartitionTransform.TransformFieldContext
-import graphql.nadel.engine.transform.partition.NadelPartitionTransform.TransformOperationContext
 import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -27,34 +25,34 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 
+internal data class NadelPartitionTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
+
+internal data class NadelPartitionTransformFieldContext(
+    override val parentContext: NadelPartitionTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    val userPartitionContext: NadelPartitionFieldContext,
+    val fieldPartitions: Map<String, ExecutableNormalizedField>?,
+    val error: Throwable?,
+) : NadelTransformFieldContext<NadelPartitionTransformOperationContext>() {
+    val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf()
+}
+
 internal class NadelPartitionTransform(
     private val engine: NextgenEngine,
     private val partitionTransformHook: NadelPartitionTransformHook,
-) : NadelTransform<TransformOperationContext, TransformFieldContext> {
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
-
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        val userPartitionContext: NadelPartitionFieldContext,
-        val fieldPartitions: Map<String, ExecutableNormalizedField>?,
-        val error: Throwable?,
-    ) : NadelTransformFieldContext<TransformOperationContext>() {
-        val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf()
-    }
-
+) : NadelTransform<NadelPartitionTransformOperationContext, NadelPartitionTransformFieldContext> {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelPartitionTransformOperationContext {
+        return NadelPartitionTransformOperationContext(operationExecutionContext)
     }
 
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelPartitionTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelPartitionTransformFieldContext? {
         if (transformContext.operationExecutionContext.isPartitionedCall) {
             // We don't want to partition a call that is already partitioned
             return null
@@ -92,7 +90,7 @@ internal class NadelPartitionTransform(
         val fieldPartitions = try {
             fieldPartition.createFieldPartitions(field = overallField)
         } catch (exception: Exception) {
-            return TransformFieldContext(
+            return NadelPartitionTransformFieldContext(
                 parentContext = transformContext,
                 overallField = overallField,
                 userPartitionContext = userPartitionContext,
@@ -108,7 +106,7 @@ internal class NadelPartitionTransform(
 
         partitionTransformHook.onPartition(transformContext.operationExecutionContext, fieldPartitions)
 
-        return TransformFieldContext(
+        return NadelPartitionTransformFieldContext(
             parentContext = transformContext,
             overallField = overallField,
             userPartitionContext = userPartitionContext,
@@ -118,7 +116,7 @@ internal class NadelPartitionTransform(
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelPartitionTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -159,7 +157,7 @@ internal class NadelPartitionTransform(
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelPartitionTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {

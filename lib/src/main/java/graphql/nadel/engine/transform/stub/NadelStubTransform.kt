@@ -13,40 +13,41 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.transform.stub.NadelStubTransform.TransformFieldContext
-import graphql.nadel.engine.transform.stub.NadelStubTransform.TransformOperationContext
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 
-internal class NadelStubTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
+internal data class NadelStubTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
 
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        val stubByObjectTypeNames: Map<String, NadelStubbedInstruction>,
-        val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformFieldContext<TransformOperationContext>()
+internal data class NadelStubTransformFieldContext(
+    override val parentContext: NadelStubTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    val stubByObjectTypeNames: Map<String, NadelStubbedInstruction>,
+    val aliasHelper: NadelAliasHelper,
+) : NadelTransformFieldContext<NadelStubTransformOperationContext>()
 
+internal class NadelStubTransform : NadelTransform<
+    NadelStubTransformOperationContext,
+    NadelStubTransformFieldContext
+    > {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelStubTransformOperationContext {
+        return NadelStubTransformOperationContext(operationExecutionContext)
     }
 
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelStubTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelStubTransformFieldContext? {
         val instructions =
             transformContext.executionBlueprint.getTypeNameToInstructionMap<NadelStubbedInstruction>(overallField)
                 .ifEmpty { return null }
 
-        return TransformFieldContext(
+        return NadelStubTransformFieldContext(
             parentContext = transformContext,
             overallField = overallField,
             stubByObjectTypeNames = instructions,
@@ -55,7 +56,7 @@ internal class NadelStubTransform : NadelTransform<TransformOperationContext, Tr
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelStubTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -79,7 +80,7 @@ internal class NadelStubTransform : NadelTransform<TransformOperationContext, Tr
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelStubTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
@@ -115,7 +116,7 @@ internal class NadelStubTransform : NadelTransform<TransformOperationContext, Tr
     }
 
     private fun makeTypeNameField(
-        state: TransformFieldContext,
+        state: NadelStubTransformFieldContext,
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
         val typeNamesWithInstructions = state.stubByObjectTypeNames.keys

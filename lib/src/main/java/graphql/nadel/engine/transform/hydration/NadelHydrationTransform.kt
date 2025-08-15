@@ -16,8 +16,6 @@ import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.getInstructionsForNode
-import graphql.nadel.engine.transform.hydration.NadelHydrationTransform.TransformFieldContext
-import graphql.nadel.engine.transform.hydration.NadelHydrationTransform.TransformOperationContext
 import graphql.nadel.engine.transform.makeTypeNameField
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -36,43 +34,43 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
+internal data class NadelHydrationTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
+
+internal data class NadelHydrationTransformFieldContext(
+    override val parentContext: NadelHydrationTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    /**
+     * The hydration instructions for the [virtualField]. There can be multiple instructions
+     * as a [ExecutableNormalizedField] can have multiple [ExecutableNormalizedField.objectTypeNames].
+     *
+     * The [Map.Entry.key] of [FieldCoordinates] denotes a specific object type and
+     * its associated instruction.
+     */
+    val instructionsByObjectTypeNames: Map<String, List<NadelHydrationFieldInstruction>>,
+    val aliasHelper: NadelAliasHelper,
+) : NadelTransformFieldContext<NadelHydrationTransformOperationContext>() {
+    val virtualFieldService: Service get() = service
+    val virtualField: ExecutableNormalizedField get() = overallField
+}
+
 /**
  * Would recommend a read of [NadelGenericHydrationInstruction] for more context.
  */
 internal class NadelHydrationTransform(
     private val engine: NextgenEngine,
-) : NadelTransform<TransformOperationContext, TransformFieldContext> {
-    data class TransformOperationContext(
-        override val parentContext: NadelOperationExecutionContext,
-    ) : NadelTransformOperationContext()
-
-    data class TransformFieldContext(
-        override val parentContext: TransformOperationContext,
-        override val overallField: ExecutableNormalizedField,
-        /**
-         * The hydration instructions for the [virtualField]. There can be multiple instructions
-         * as a [ExecutableNormalizedField] can have multiple [ExecutableNormalizedField.objectTypeNames].
-         *
-         * The [Map.Entry.key] of [FieldCoordinates] denotes a specific object type and
-         * its associated instruction.
-         */
-        val instructionsByObjectTypeNames: Map<String, List<NadelHydrationFieldInstruction>>,
-        val aliasHelper: NadelAliasHelper,
-    ) : NadelTransformFieldContext<TransformOperationContext>() {
-        val virtualFieldService: Service get() = service
-        val virtualField: ExecutableNormalizedField get() = overallField
-    }
-
+) : NadelTransform<NadelHydrationTransformOperationContext, NadelHydrationTransformFieldContext> {
     override suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
-    ): TransformOperationContext {
-        return TransformOperationContext(operationExecutionContext)
+    ): NadelHydrationTransformOperationContext {
+        return NadelHydrationTransformOperationContext(operationExecutionContext)
     }
 
     override suspend fun getTransformFieldContext(
-        transformContext: TransformOperationContext,
+        transformContext: NadelHydrationTransformOperationContext,
         overallField: ExecutableNormalizedField,
-    ): TransformFieldContext? {
+    ): NadelHydrationTransformFieldContext? {
         val executionBlueprint = transformContext.executionBlueprint
         val hydrationDetails = transformContext.operationExecutionContext.hydrationDetails
 
@@ -86,7 +84,7 @@ internal class NadelHydrationTransform(
         return if (instructionsByObjectTypeName.isEmpty()) {
             null
         } else {
-            TransformFieldContext(
+            NadelHydrationTransformFieldContext(
                 parentContext = transformContext,
                 overallField = overallField,
                 instructionsByObjectTypeNames = instructionsByObjectTypeName,
@@ -96,7 +94,7 @@ internal class NadelHydrationTransform(
     }
 
     override suspend fun transformField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
         transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
     ): NadelTransformFieldResult {
@@ -132,7 +130,7 @@ internal class NadelHydrationTransform(
     }
 
     private fun makeTypeNameField(
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
         field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
         val typeNamesWithInstructions = transformContext.instructionsByObjectTypeNames.keys
@@ -149,7 +147,7 @@ internal class NadelHydrationTransform(
     }
 
     override suspend fun transformResult(
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
         resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
@@ -168,7 +166,7 @@ internal class NadelHydrationTransform(
 
     private suspend fun getResultInstructions(
         parentNodes: List<JsonNode>,
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
     ): List<NadelResultInstruction> {
         val overallField = transformContext.overallField
 
@@ -211,7 +209,7 @@ internal class NadelHydrationTransform(
 
     private fun deferHydration(
         parentNodes: List<JsonNode>,
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
     ) {
         val overallField = transformContext.overallField
         val executionContext = transformContext.executionContext
@@ -284,7 +282,7 @@ internal class NadelHydrationTransform(
 
     private fun prepareHydration(
         parentNode: JsonNode,
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
     ): NadelPreparedHydration? {
         val executionBlueprint = transformContext.executionBlueprint
         val virtualField = transformContext.virtualField
@@ -388,7 +386,7 @@ internal class NadelHydrationTransform(
     }
 
     private fun getHydrationFieldInstruction(
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
         instructions: List<NadelHydrationFieldInstruction>,
         parentNode: JsonNode,
     ): NadelHydrationFieldInstruction? {
@@ -413,7 +411,7 @@ internal class NadelHydrationTransform(
     }
 
     private fun isDeferred(
-        transformContext: TransformFieldContext,
+        transformContext: NadelHydrationTransformFieldContext,
     ): Boolean {
         // Disable defer in nested hydration
         if (transformContext.operationExecutionContext.hydrationDetails != null) {
