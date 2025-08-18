@@ -3,15 +3,11 @@ package graphql.nadel.tests.transforms
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.introspection.Introspection
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -19,32 +15,48 @@ import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.newGraphQLError
 import graphql.nadel.engine.util.queryPath
+import graphql.nadel.tests.transforms.RemoveFieldTestTransform.TransformFieldContext
+import graphql.nadel.tests.transforms.RemoveFieldTestTransform.TransformOperationContext
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLObjectType
 
-class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
-    override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
-        service: Service,
+class RemoveFieldTestTransform : NadelTransform<TransformOperationContext, TransformFieldContext> {
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
+
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+        val error: GraphQLError,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    override suspend fun getTransformOperationContext(
+        operationExecutionContext: NadelOperationExecutionContext,
+    ): TransformOperationContext {
+        return TransformOperationContext(operationExecutionContext)
+    }
+
+    override suspend fun getTransformFieldContext(
+        transformContext: TransformOperationContext,
         overallField: ExecutableNormalizedField,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): GraphQLError? {
+    ): TransformFieldContext? {
         val objectType = overallField.objectTypeNames.asSequence()
             .map {
-                executionBlueprint.engineSchema.getType(it) as GraphQLObjectType?
+                transformContext.executionBlueprint.engineSchema.getType(it) as GraphQLObjectType?
             }
             .filterNotNull()
             .firstOrNull()
             ?: return null
 
         if (objectType.getField(overallField.name)?.getDirective("toBeDeleted") != null) {
-            return newGraphQLError(
-                "field `${objectType.name}.${overallField.name}` has been removed by RemoveFieldTestTransform",
-                ErrorType.DataFetchingException,
+            return TransformFieldContext(
+                parentContext = transformContext,
+                overallField = overallField,
+                error = newGraphQLError(
+                    "field `${objectType.name}.${overallField.name}` has been removed by RemoveFieldTestTransform",
+                    ErrorType.DataFetchingException,
+                ),
             )
         }
 
@@ -52,14 +64,9 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
     }
 
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        transformContext: TransformFieldContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
-        state: GraphQLError,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
@@ -75,28 +82,23 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         )
     }
 
-    override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallField: ExecutableNormalizedField,
+    override suspend fun transformResult(
+        transformContext: TransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        state: GraphQLError,
-        nodes: JsonNodes,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+        resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val parentNodes = nodes.getNodesAt(
+        val overallField = transformContext.overallField
+        val parentNodes = resultNodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
+
         return parentNodes.map { parentNode ->
             NadelResultInstruction.Set(
                 subject = parentNode,
                 key = NadelResultKey(overallField.resultKey),
                 newValue = null,
             )
-        } + NadelResultInstruction.AddError(state)
+        } + NadelResultInstruction.AddError(transformContext.error)
     }
 }

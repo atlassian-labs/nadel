@@ -7,7 +7,7 @@ import graphql.nadel.time.NadelInternalLatencyTrackerImpl
 import graphql.nadel.time.NadelStopwatch
 import java.util.function.Consumer
 
-data class NadelExecutionInput private constructor(
+data class NadelExecutionInput(
     val query: String,
     val operationName: String?,
     val context: Any?,

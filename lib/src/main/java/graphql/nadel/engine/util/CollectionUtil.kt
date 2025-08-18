@@ -1,9 +1,6 @@
 package graphql.nadel.engine.util
 
 import java.util.Collections
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 internal typealias PairList<A, B> = List<Pair<A, B>>
 

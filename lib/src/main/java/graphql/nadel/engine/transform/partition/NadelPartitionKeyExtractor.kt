@@ -15,7 +15,7 @@ interface NadelPartitionKeyExtractor {
     fun getPartitionKey(
         scalarValue: ScalarValue<*>,
         inputValueDef: GraphQLInputValueDefinition,
-        context: NadelFieldPartitionContext,
+        context: NadelPartitionFieldContext,
     ): String?
 
     companion object {
@@ -23,7 +23,7 @@ interface NadelPartitionKeyExtractor {
             override fun getPartitionKey(
                 scalarValue: ScalarValue<*>,
                 inputValueDef: GraphQLInputValueDefinition,
-                context: NadelFieldPartitionContext,
+                context: NadelPartitionFieldContext,
             ): String? {
                 return null
             }

@@ -1,71 +1,65 @@
 package graphql.nadel.tests.hooks
 
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
+import kotlin.test.assertTrue
 
 @UseHook
 class `skip-include-does-not-affect-other-transforms` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out Any>>
-        get() = listOf(
-            object : NadelTransform<Any> {
-                override suspend fun isApplicable(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    services: Map<String, Service>,
-                    service: Service,
-                    overallField: ExecutableNormalizedField,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-                    hydrationDetails: ServiceExecutionHydrationDetails?,
-                ): Any? {
-                    // All fields exist, no __skip field from NadelSkipIncludeTransform
-                    assert(overallField.name != "__skip")
-                    assert(overallField.getFieldDefinitions(executionBlueprint.engineSchema).isNotEmpty())
+    data class TransformOperationContext(
+        override val parentContext: NadelOperationExecutionContext,
+    ) : NadelTransformOperationContext()
 
-                    return null
+    data class TransformFieldContext(
+        override val parentContext: TransformOperationContext,
+        override val overallField: ExecutableNormalizedField,
+    ) : NadelTransformFieldContext<TransformOperationContext>()
+
+    override val customTransforms: List<NadelTransform<*, *>>
+        get() = listOf(
+            object : NadelTransform<TransformOperationContext, TransformFieldContext> {
+                override suspend fun getTransformOperationContext(
+                    operationExecutionContext: NadelOperationExecutionContext,
+                ): TransformOperationContext {
+                    return TransformOperationContext(operationExecutionContext)
+                }
+
+                override suspend fun getTransformFieldContext(
+                    transformContext: TransformOperationContext,
+                    overallField: ExecutableNormalizedField,
+                ): TransformFieldContext? {
+                    // All fields exist, no __skip field from NadelSkipIncludeTransform
+                    assertTrue(overallField.name != "__skip")
+                    assertTrue(overallField.getFieldDefinitions(transformContext.engineSchema).isNotEmpty())
+
+                    return TransformFieldContext(transformContext, overallField)
                 }
 
                 override suspend fun transformField(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
+                    transformContext: TransformFieldContext,
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
                     field: ExecutableNormalizedField,
-                    state: Any,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
-                    assert(field.name != "__skip")
+                    assertTrue(field.name != "__skip")
 
                     return NadelTransformFieldResult.unmodified(field)
                 }
 
-                override suspend fun getResultInstructions(
-                    executionContext: NadelExecutionContext,
-                    serviceExecutionContext: NadelServiceExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
-                    service: Service,
-                    overallField: ExecutableNormalizedField,
+                override suspend fun transformResult(
+                    transformContext: TransformFieldContext,
                     underlyingParentField: ExecutableNormalizedField?,
-                    result: ServiceExecutionResult,
-                    state: Any,
-                    nodes: JsonNodes,
-                    transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+                    resultNodes: JsonNodes,
                 ): List<NadelResultInstruction> {
-                    assert(overallField.name != "__skip")
+                    assertTrue(transformContext.overallField.name != "__skip")
 
                     return emptyList()
                 }

@@ -31,7 +31,7 @@ import graphql.schema.GraphQLTypeUtil
  */
 internal class NadelFieldPartition(
     private val pathToPartitionArg: List<String>,
-    private val fieldPartitionContext: NadelFieldPartitionContext,
+    private val userPartitionContext: NadelPartitionFieldContext,
     private val engineSchema: GraphQLSchema,
     private val partitionKeyExtractor: NadelPartitionKeyExtractor,
 ) {
@@ -72,7 +72,6 @@ internal class NadelFieldPartition(
         value: Any?,
         inputValueDefinition: GraphQLInputValueDefinition,
     ): List<String> {
-
         when (value) {
             is Map<*, *> -> {
                 val inputObjectType = GraphQLTypeUtil.unwrapAll(inputValueDefinition.getType())
@@ -92,7 +91,7 @@ internal class NadelFieldPartition(
             }
             is ScalarValue<*> -> {
                 val partitionKey =
-                    partitionKeyExtractor.getPartitionKey(value, inputValueDefinition, fieldPartitionContext)
+                    partitionKeyExtractor.getPartitionKey(value, inputValueDefinition, userPartitionContext)
 
                 return if (partitionKey != null) {
                     listOf(partitionKey)
@@ -138,7 +137,6 @@ internal class NadelFieldPartition(
     fun extractPartitionInstructions(
         field: ExecutableNormalizedField,
     ): PartitionInstructions? {
-
         if (pathToPartitionArg.isEmpty()) {
             throw NadelCannotPartitionFieldException("Expected path to partitioning argument to be non-empty for field ${field.name}")
         }
@@ -176,7 +174,7 @@ internal class NadelFieldPartition(
             }
         } else {
             // if the value is null then we can't partition
-            return null
+            null
         }
     }
 

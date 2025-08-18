@@ -1,5 +1,7 @@
 package graphql.nadel.util
 
+import graphql.nadel.util.NadelFieldMap.Companion.from
+import graphql.nadel.util.NadelFieldMap.Companion.groupBy
 import graphql.schema.FieldCoordinates
 
 /**

@@ -1,6 +1,5 @@
 package graphql.nadel.validation
 
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenamePartitionedField
 import graphql.nadel.validation.NadelSchemaValidationError.InvalidPartitionArgument
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToFieldWithUnsupportedOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.PartitionAppliedToSubscriptionField
