@@ -30,35 +30,28 @@ interface NadelTransform<
         get() = javaClass.simpleName.ifBlank { "UnknownTransform" }
 
     /**
-     * This method is called once before execution of the transform starts.
-     * Override it to create a common object that is shared between all invocations of all other methods
+     * This function is called once before execution of the transform starts.
+     *
+     * Use it to create a common object that is shared between all invocations of all other methods
      * of the transform on all the fields.
      *
-     * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
-     * @param rootField the root [ExecutableNormalizedField] of the operation this [NadelTransform] runs on
-     * @param hydrationDetails the [NadelOperationExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
-     * hydrations, `null` otherwise
-     *
      * @return a common [NadelTransformOperationContext] that will be fed into all other methods of this transform
-     * when they run or `null` if you don't need such functionality
      */
     suspend fun getTransformOperationContext(
         operationExecutionContext: NadelOperationExecutionContext,
     ): TransformOperationContext
 
     /**
-     * Determines whether the [NadelTransform] should run. If it should run return a [State].
+     * Determines whether the [NadelTransform] should run. If it should run return a [NadelTransformFieldContext].
      *
-     * The returned [State] is then fed into [transformField] and [transformResult].
+     * The returned [NadelTransformFieldContext] is passed onto [transformField] and [transformResult].
      *
      * So here you will want to check whether the [overallField] has a specific [Directive] or
      * if the field has an instruction inside [NadelOverallExecutionBlueprint] etc.
      *
      * The state should hold data that is shared between [transformField] and [transformResult]
-     * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
-     * to you. You can make it mutable if that makes your life easier etc.
-     *
-     * Note: a transform is applied to all fields recursively
+     * e.g. the names of fields that will be added etc. The implementation of [NadelTransformFieldContext]
+     * is completely up to you.
      *
      * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [getTransformFieldContext] for transforms
      * hydrations, `null` otherwise
