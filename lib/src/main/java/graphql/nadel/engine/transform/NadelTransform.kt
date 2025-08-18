@@ -1,7 +1,6 @@
 package graphql.nadel.engine.transform
 
 import graphql.language.Directive
-import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
