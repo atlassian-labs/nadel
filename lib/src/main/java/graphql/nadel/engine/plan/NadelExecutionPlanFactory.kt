@@ -68,7 +68,7 @@ internal class NadelExecutionPlanFactory(
                     // This is a patch to prevent errors
                     // Ideally this should not happen but the proper fix requires more refactoring
                     // See NadelSkipIncludeTransform.getTransformFieldContext for more details
-                    if (isSkipIncludeSpecialField(field) && (transform !is NadelSkipIncludeTransform)) {
+                    if (isSkipIncludeSpecialField(field) && ((transform as NadelTransform<*, *>) !is NadelSkipIncludeTransform)) {
                         null
                     } else {
                         val transformFieldContext = timer.time(step = timingSteps.executionPlan) {

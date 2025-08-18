@@ -489,8 +489,10 @@ internal class NextgenEngine(
     }
 
     private fun getOperationName(operationExecutionContext: NadelOperationExecutionContext): String? {
-        val originalOperationName = operationExecutionContext.executionContext.query.operationName
-        return if (executionContext.hints.legacyOperationNames(operationExecutionContext.service)) {
+        val service = operationExecutionContext.service
+        val executionContext = operationExecutionContext.executionContext
+        val originalOperationName = executionContext.query.operationName
+        return if (executionContext.hints.legacyOperationNames(service)) {
             return OperationNameUtil.getLegacyOperationName(service.name, originalOperationName)
         } else {
             originalOperationName
