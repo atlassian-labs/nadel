@@ -1,0 +1,121 @@
+name: "spec how it works example"
+enabled: true
+# language=GraphQL
+overallSchema:
+  issues: |
+    type Query {
+      issueById(id: ID!): Issue
+    }
+    type Issue {
+      id: ID!
+      title: String
+      
+      assigneeId: ID!
+      assignee: User
+      @hydrated(
+        service: "users"
+        field: "userById"
+        arguments: [{name: "id" value: "$source.assigneeId"}]
+      )
+    }
+  users: |
+    type Query {
+      userById(id: ID!): User
+    }
+    type User {
+      id: ID!
+      name: String
+      email: String
+    }
+# language=GraphQL
+underlyingSchema:
+  issues: |
+    type Query {
+      issueById(id: ID!): Issue
+    }
+    type Issue {
+      id: ID!
+      title: String
+
+      assigneeId: ID!
+    }
+  users: |
+    type Query {
+      userById(id: ID!): User
+    }
+    type User {
+      id: ID!
+      name: String
+      email: String
+    }
+# language=GraphQL
+query: |
+  query {
+    issueById(id: 1) {
+      id
+      title
+      assignee {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "issues"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          issueById(id: 1) {
+            __typename__hydration__assignee: __typename
+            hydration__assignee__assigneeId: assigneeId
+            id
+            title
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issueById": {
+            "id": "1",
+            "title": "Write Hydration Docs",
+            "__typename__hydration__assignee": "Issue",
+            "hydration__assignee__assigneeId": "user-256"
+          }
+        }
+      }
+  - serviceName: "users"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          userById(id: "user-256") {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "name": "2^8"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issueById": {
+        "id": "1",
+        "title": "Write Hydration Docs",
+        "assignee": {
+          "name": "2^8"
+        }
+      }
+    }
+  }
