@@ -1,0 +1,18 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Multiple service layers (bottom) -->
+  <rect x="20" y="70" width="25" height="25" rx="4" fill="#36B37E" opacity="0.8"/>
+  <rect x="50" y="75" width="25" height="25" rx="4" fill="#36B37E" opacity="0.8"/>
+  <rect x="75" y="70" width="25" height="25" rx="4" fill="#36B37E" opacity="0.8"/>
+  
+  <!-- Transformation arrows -->
+  <path d="M35 65 L45 55 L55 65" stroke="#0052CC" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M65 65 L75 55 L85 65" stroke="#0052CC" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Unified layer (top) -->
+  <rect x="30" y="25" width="60" height="25" rx="6" fill="#0052CC"/>
+  
+  <!-- Connection lines -->
+  <line x1="32" y1="70" x2="45" y2="50" stroke="#0052CC" stroke-width="1.5" opacity="0.6"/>
+  <line x1="62" y1="75" x2="60" y2="50" stroke="#0052CC" stroke-width="1.5" opacity="0.6"/>
+  <line x1="87" y1="70" x2="75" y2="50" stroke="#0052CC" stroke-width="1.5" opacity="0.6"/>
+</svg>
