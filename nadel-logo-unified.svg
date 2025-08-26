@@ -1,0 +1,24 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Multiple service layers (bottom) -->
+  <rect x="15" y="70" width="25" height="25" rx="4" fill="#FFAB00" opacity="0.8"/>
+  <rect x="47" y="70" width="25" height="25" rx="4" fill="#FFAB00" opacity="0.8"/>
+  <rect x="79" y="70" width="25" height="25" rx="4" fill="#FFAB00" opacity="0.8"/>
+  
+  <!-- Intermediate transformation layer -->
+  <rect x="30" y="50" width="60" height="8" rx="4" fill="#0052CC" opacity="0.6"/>
+  
+  <!-- Unified API layer (top) -->
+  <rect x="20" y="25" width="80" height="20" rx="6" fill="#0052CC"/>
+  
+  <!-- Connection arrows -->
+  <path d="M27 70 L45 58" stroke="#36B37E" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M60 70 L60 58" stroke="#36B37E" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M92 70 L75 58" stroke="#36B37E" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#36B37E"/>
+    </marker>
+  </defs>
+</svg>
