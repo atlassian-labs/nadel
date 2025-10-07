@@ -1,0 +1,29 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Central hub with connecting nodes representing distributed GraphQL services -->
+  <defs>
+    <linearGradient id="centralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4285F4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0F52BA;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer service nodes -->
+  <circle cx="60" cy="20" r="8" fill="#34A853" opacity="0.8"/>
+  <circle cx="100" cy="40" r="8" fill="#34A853" opacity="0.8"/>
+  <circle cx="100" cy="80" r="8" fill="#34A853" opacity="0.8"/>
+  <circle cx="60" cy="100" r="8" fill="#34A853" opacity="0.8"/>
+  <circle cx="20" cy="80" r="8" fill="#34A853" opacity="0.8"/>
+  <circle cx="20" cy="40" r="8" fill="#34A853" opacity="0.8"/>
+  
+  <!-- Connection lines -->
+  <line x1="60" y1="28" x2="60" y2="44" stroke="#E8EAED" stroke-width="2" opacity="0.6"/>
+  <line x1="92" y1="47" x2="76" y2="54" stroke="#E8EAED" stroke-width="2" opacity="0.6"/>
+  <line x1="92" y1="73" x2="76" y2="66" stroke="#E8EAED" stroke-width="2" opacity="0.6"/>
+  <line x1="60" y1="92" x2="60" y2="76" stroke="#E8EAED" stroke-width="2" opacity="0.6"/>
+  <line x1="28" y1="73" x2="44" y2="66" stroke="#E8EAED" stroke-width="2" opacity="0.6"/>
+  <line x1="28" y1="47" x2="44" y2="54" stroke="#E8EAED" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Central gateway node -->
+  <circle cx="60" cy="60" r="16" fill="url(#centralGradient)"/>
+  <circle cx="60" cy="60" r="6" fill="#FFFFFF" opacity="0.9"/>
+</svg>

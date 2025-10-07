@@ -1,0 +1,22 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Interlocking hexagons representing schema unification -->
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4285F4;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#1A73E8;stop-opacity:0.9" />
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#34A853;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#137333;stop-opacity:0.8" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Left hexagon (service 1) -->
+  <polygon points="30,45 45,37 60,37 75,45 60,53 45,53" fill="url(#greenGrad)" stroke="#FFFFFF" stroke-width="1"/>
+  
+  <!-- Right hexagon (service 2) -->
+  <polygon points="45,67 60,59 75,59 90,67 75,75 60,75" fill="url(#greenGrad)" stroke="#FFFFFF" stroke-width="1"/>
+  
+  <!-- Central overlapping hexagon (unified schema) -->
+  <polygon points="45,52 60,44 75,44 90,52 75,60 60,60" fill="url(#blueGrad)" stroke="#FFFFFF" stroke-width="2"/>
+</svg>
