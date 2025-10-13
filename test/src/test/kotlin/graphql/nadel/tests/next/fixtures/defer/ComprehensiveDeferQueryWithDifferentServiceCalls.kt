@@ -100,9 +100,6 @@ open class ComprehensiveDeferQueryWithDifferentServiceCalls : NadelIntegrationTe
                                 "Awesome Product"
                             }
                             .dataFetcher("profilePicture") { env ->
-                                "https://examplesite.com/product/product_image.jpg"
-                            }
-                            .dataFetcher("profilePicture") { env ->
                                 "This is a really awesome product with really awesome features."
                             }
                     }
