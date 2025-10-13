@@ -1,14 +1,13 @@
 package graphql.nadel.hooks
 
+import graphql.nadel.NadelOperationExecutionHydrationDetails
 import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
-import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
+import graphql.nadel.engine.transform.partition.NadelPartitionFieldContext
 import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -20,8 +19,8 @@ import java.util.concurrent.CompletableFuture
  * These hooks allow you to change the way service execution happens
  */
 interface NadelExecutionHooks {
-    fun createServiceExecutionContext(params: NadelCreateServiceExecutionContextParams): CompletableFuture<NadelServiceExecutionContext> {
-        return CompletableFuture.completedFuture(NadelServiceExecutionContext.None)
+    fun createOperationExecutionContext(params: NadelCreateOperationExecutionContextParams): CompletableFuture<NadelOperationExecutionContext> {
+        return CompletableFuture.completedFuture(NadelOperationExecutionContext.from(params))
     }
 
     /**
@@ -97,16 +96,11 @@ interface NadelExecutionHooks {
     }
 
     fun partitionTransformerHook(): NadelPartitionTransformHook {
-        return object: NadelPartitionTransformHook {
-            override fun getFieldPartitionContext(
-                executionContext: NadelExecutionContext,
-                serviceExecutionContext: NadelServiceExecutionContext,
-                executionBlueprint: NadelOverallExecutionBlueprint,
-                services: Map<String, Service>,
-                service: Service,
+        return object : NadelPartitionTransformHook {
+            override fun getPartitionFieldContext(
+                operationExecutionContext: NadelOperationExecutionContext,
                 overallField: ExecutableNormalizedField,
-                hydrationDetails: ServiceExecutionHydrationDetails?,
-            ): NadelFieldPartitionContext? {
+            ): NadelPartitionFieldContext? {
                 return null
             }
 
@@ -120,10 +114,20 @@ interface NadelExecutionHooks {
 /**
  * Util function for internal use.
  */
-internal suspend fun NadelExecutionHooks.createServiceExecutionContext(service: Service): NadelServiceExecutionContext {
-    return createServiceExecutionContext(
-        NadelCreateServiceExecutionContextParams(
+internal suspend fun NadelExecutionHooks.createOperationExecutionContext(
+    executionContext: NadelExecutionContext,
+    service: Service,
+    topLevelField: ExecutableNormalizedField,
+    hydrationDetails: NadelOperationExecutionHydrationDetails?,
+    isPartitionedCall: Boolean,
+): NadelOperationExecutionContext {
+    return createOperationExecutionContext(
+        NadelCreateOperationExecutionContextParams(
+            executionContext = executionContext,
             service = service,
+            topLevelField = topLevelField,
+            hydrationDetails = hydrationDetails,
+            isPartitionedCall = isPartitionedCall,
         ),
     ).await()
 }

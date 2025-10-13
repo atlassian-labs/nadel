@@ -14,7 +14,6 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toBuilderWithoutTypes
-import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.nadel.util.NamespacedUtil.isNamespacedFieldLike
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.FieldCoordinates

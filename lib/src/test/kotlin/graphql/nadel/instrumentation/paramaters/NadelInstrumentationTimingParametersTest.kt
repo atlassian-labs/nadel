@@ -1,10 +1,18 @@
 package graphql.nadel.instrumentation.paramaters
 
+import graphql.nadel.engine.NadelOperationExecutionContext
+import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
+import graphql.nadel.engine.transform.NadelTransformFieldResult
+import graphql.nadel.engine.transform.NadelTransformOperationContext
+import graphql.nadel.engine.transform.query.NadelQueryTransformer
+import graphql.nadel.engine.transform.result.NadelResultInstruction
+import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ExecutionPlanning
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.QueryTransforming
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ResultTransforming
-import graphql.nadel.test.NadelTransformAdapter
+import graphql.normalized.ExecutableNormalizedField
 import io.kotest.core.spec.style.DescribeSpec
 
 class NadelInstrumentationTimingParametersTest : DescribeSpec({
@@ -12,9 +20,41 @@ class NadelInstrumentationTimingParametersTest : DescribeSpec({
         describe("NadelTransform constructor") {
             it("gets the name from the transform") {
                 // given
-                val transform = object : NadelTransformAdapter {
+                val transform = object : NadelTransform<
+                    NadelTransformOperationContext,
+                    NadelTransformFieldContext<NadelTransformOperationContext>
+                    > {
                     override val name: String
                         get() = "Thing"
+
+                    override suspend fun getTransformOperationContext(
+                        operationExecutionContext: NadelOperationExecutionContext,
+                    ): NadelTransformOperationContext {
+                        throw UnsupportedOperationException()
+                    }
+
+                    override suspend fun getTransformFieldContext(
+                        transformContext: NadelTransformOperationContext,
+                        overallField: ExecutableNormalizedField,
+                    ): NadelTransformFieldContext<NadelTransformOperationContext>? {
+                        throw UnsupportedOperationException()
+                    }
+
+                    override suspend fun transformField(
+                        transformContext: NadelTransformFieldContext<NadelTransformOperationContext>,
+                        transformer: NadelQueryTransformer,
+                        field: ExecutableNormalizedField,
+                    ): NadelTransformFieldResult {
+                        throw UnsupportedOperationException()
+                    }
+
+                    override suspend fun transformResult(
+                        transformContext: NadelTransformFieldContext<NadelTransformOperationContext>,
+                        underlyingParentField: ExecutableNormalizedField?,
+                        resultNodes: JsonNodes,
+                    ): List<NadelResultInstruction> {
+                        throw UnsupportedOperationException()
+                    }
                 }
 
                 // when

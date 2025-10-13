@@ -3,25 +3,30 @@ package graphql.nadel.engine.transform.skipInclude
 import graphql.execution.MergedField
 import graphql.introspection.Introspection
 import graphql.language.Field
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.NadelOperationExecutionContext
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransformFieldContext
 import graphql.nadel.engine.transform.NadelTransformFieldResult
-import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
+import graphql.nadel.engine.transform.NadelTransformOperationContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.State
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLSchema
+
+internal data class NadelSkipIncludeTransformOperationContext(
+    override val parentContext: NadelOperationExecutionContext,
+) : NadelTransformOperationContext()
+
+internal data class NadelSkipIncludeTransformFieldContext(
+    override val parentContext: NadelSkipIncludeTransformOperationContext,
+    override val overallField: ExecutableNormalizedField,
+    val aliasHelper: NadelAliasHelper,
+) : NadelTransformFieldContext<NadelSkipIncludeTransformOperationContext>()
 
 /**
  * So the way `@skip` and `@include` work is that in the [graphql.normalized.ExecutableNormalizedOperationFactory]
@@ -35,7 +40,7 @@ import graphql.schema.GraphQLSchema
  * This should probably be a more generic "if no subselections add an empty one for removed fields".
  * But we'll deal with that separately.
  */
-internal class NadelSkipIncludeTransform : NadelTransform<State> {
+internal class NadelSkipIncludeTransform : NadelTransform<NadelSkipIncludeTransformOperationContext, NadelSkipIncludeTransformFieldContext> {
     companion object {
         private const val skipFieldName = "__skip"
 
@@ -44,9 +49,11 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         }
     }
 
-    class State(
-        val aliasHelper: NadelAliasHelper,
-    )
+    override suspend fun getTransformOperationContext(
+        operationExecutionContext: NadelOperationExecutionContext,
+    ): NadelSkipIncludeTransformOperationContext {
+        return NadelSkipIncludeTransformOperationContext(operationExecutionContext)
+    }
 
     /**
      * So this transform is a bit odd. Normally transform operate on a specific field.
@@ -57,29 +64,25 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
      * the transform API to pick up on.
      *
      * This should really not happen. The real fix is to execute on the parent of the deleted
-     * field and to fix [getResultInstructions] to include `underlyingField` and not just `underlyingParentField`.
+     * field and to fix [transformResult] to include `underlyingField` and not just `underlyingParentField`.
      */
-    override suspend fun isApplicable(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        services: Map<String, Service>,
-        service: Service,
+    override suspend fun getTransformFieldContext(
+        transformContext: NadelSkipIncludeTransformOperationContext,
         overallField: ExecutableNormalizedField,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
-        hydrationDetails: ServiceExecutionHydrationDetails?,
-    ): State? {
+    ): NadelSkipIncludeTransformFieldContext? {
         // This hacks together a child that will pass through here
         if (overallField.children.isEmpty()) {
-            val mergedField = executionContext.query.getMergedField(overallField)
+            val mergedField = transformContext.executionContext.query.getMergedField(overallField)
             if (hasAnyChildren(mergedField)) {
                 // Adds a field so we can transform it
-                overallField.children.add(createSkipField(executionBlueprint.engineSchema, overallField))
+                overallField.children.add(createSkipField(transformContext.engineSchema, overallField))
             }
         }
 
         return if (overallField.name == skipFieldName) {
-            State(
+            NadelSkipIncludeTransformFieldContext(
+                parentContext = transformContext,
+                overallField = overallField,
                 aliasHelper = NadelAliasHelper.forField(
                     tag = "skip_include",
                     field = overallField,
@@ -91,37 +94,25 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
     }
 
     override suspend fun transformField(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
+        transformContext: NadelSkipIncludeTransformFieldContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
         field: ExecutableNormalizedField,
-        state: State,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
             artificialFields = listOf(
                 field.toBuilder()
-                    .alias(state.aliasHelper.typeNameResultKey)
+                    .alias(transformContext.aliasHelper.typeNameResultKey)
                     .fieldName(Introspection.TypeNameMetaFieldDef.name)
                     .build(),
             ),
         )
     }
 
-    override suspend fun getResultInstructions(
-        executionContext: NadelExecutionContext,
-        serviceExecutionContext: NadelServiceExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallField: ExecutableNormalizedField,
+    override suspend fun transformResult(
+        transformContext: NadelSkipIncludeTransformFieldContext,
         underlyingParentField: ExecutableNormalizedField?,
-        result: ServiceExecutionResult,
-        state: State,
-        nodes: JsonNodes,
-        transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
+        resultNodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

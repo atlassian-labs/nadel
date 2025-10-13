@@ -7,7 +7,7 @@ import graphql.nadel.tests.transforms.RemoveFieldTestTransform
 
 @UseHook
 class `two-transforms-on-a-field` : EngineTestHook {
-    override val customTransforms: List<NadelTransform<out Any>>
+    override val customTransforms: List<NadelTransform<*, *>>
         get() = listOf(
             RemoveFieldTestTransform()
         )

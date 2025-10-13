@@ -2,7 +2,9 @@ package graphql.nadel.schema
 
 import graphql.GraphQLException
 import graphql.nadel.NadelOperationKind
-import graphql.nadel.NadelOperationKind.*
+import graphql.nadel.NadelOperationKind.Mutation
+import graphql.nadel.NadelOperationKind.Query
+import graphql.nadel.NadelOperationKind.Subscription
 import graphql.nadel.NadelSchemas
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLObjectType
