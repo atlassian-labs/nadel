@@ -74,11 +74,6 @@ class `simple synthetic hydration with one service and type renaming` : NadelLeg
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
-                    type.dataFetcher("tests") {
-                        Unit
-                    }
-                }
-                wiring.type("Query") { type ->
                     type.dataFetcher("tests") { env ->
                         Testing_TestQuery(
                             testing = Testing_Testing(
