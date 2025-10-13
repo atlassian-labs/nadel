@@ -74,11 +74,6 @@ class `synthetic hydration call over itself within renamed types` : NadelLegacyI
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
-                    type.dataFetcher("tests") {
-                        Unit
-                    }
-                }
-                wiring.type("Query") { type ->
                     type.dataFetcher("tests") { env ->
                         Testing_TestQuery(
                             testing = Testing_Testing(
