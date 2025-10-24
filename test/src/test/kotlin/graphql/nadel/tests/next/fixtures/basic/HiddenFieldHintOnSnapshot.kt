@@ -7,7 +7,7 @@ import graphql.nadel.tests.next.TestSnapshot
 import graphql.nadel.tests.next.listOfJsonStrings
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<EchoTest>()
+    graphql.nadel.tests.next.update<HiddenFieldHintOn>()
 }
 
 /**
@@ -15,20 +15,24 @@ private suspend fun main() {
  *
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
-@Suppress("unused") class EchoTestSnapshot : TestSnapshot() {
+@Suppress("unused") class HiddenFieldHintOnSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "hello",
+                service = "test",
                 query = """
                 | {
-                |   echo
+                |   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
+                |     id
+                |   }
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 result = """
                 | {
                 |   "data": {
-                |     "echo": "Hello World"
+                |     "issueById": {
+                |       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -41,7 +45,9 @@ private suspend fun main() {
      * ```json
      * {
      *   "data": {
-     *     "echo": "Hello World"
+     *     "issueById": {
+     *       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+     *     }
      *   }
      * }
      * ```
@@ -50,7 +56,9 @@ private suspend fun main() {
             result = """
             | {
             |   "data": {
-            |     "echo": "Hello World"
+            |     "issueById": {
+            |       "id": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+            |     }
             |   }
             | }
             """.trimMargin(),
