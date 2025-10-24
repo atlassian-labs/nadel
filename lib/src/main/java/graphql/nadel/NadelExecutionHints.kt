@@ -3,6 +3,7 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
+import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
@@ -16,6 +17,7 @@ data class NadelExecutionHints(
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
     val virtualTypeSupport: NadelVirtualTypeSupportHint,
+    val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -35,6 +37,7 @@ data class NadelExecutionHints(
         private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
+        private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
 
         constructor()
 
@@ -43,6 +46,7 @@ data class NadelExecutionHints(
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
             shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
+            executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -80,6 +84,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun executeOnEngineSchema(flag: NadelExecuteOnEngineSchemaHint): Builder {
+            executeOnEngineSchema = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -89,6 +98,7 @@ data class NadelExecutionHints(
                 sharedTypeRenames,
                 shortCircuitEmptyQuery,
                 virtualTypeSupport,
+                executeOnEngineSchema
             )
         }
     }

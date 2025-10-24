@@ -80,8 +80,12 @@ class Nadel private constructor(
 
         return try {
             val executionInstrumentation = instrumentation.beginQueryExecution(instrumentationParameters)
-
-            parseValidateAndExecute(executionInput, querySchema, instrumentationState, nadelExecutionParams)
+            val schema = if (nadelExecutionInput.executionHints.executeOnEngineSchema()) {
+                engineSchema
+            } else {
+                querySchema
+            }
+            parseValidateAndExecute(executionInput, schema, instrumentationState, nadelExecutionParams)
                 // finish up instrumentation
                 .whenComplete { result: ExecutionResult?, t: Throwable? ->
                     executionInstrumentation.onCompleted(result, t)
@@ -412,7 +416,7 @@ class Nadel private constructor(
 
         @Deprecated("Use overallSchemas instead", replaceWith = ReplaceWith("overallSchemas(serviceDSLs)"))
         fun dsl(serviceDSLs: Map<String, String>): Builder {
-            return serviceDSLs(serviceDSLs.mapValues { (k, v) -> StringReader(v) })
+            return serviceDSLs(serviceDSLs.mapValues { (_, v) -> StringReader(v) })
         }
 
         @Deprecated("Use overallSchemas instead", replaceWith = ReplaceWith("overallSchemas(serviceDSLs)"))

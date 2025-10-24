@@ -29,7 +29,6 @@ import graphql.nadel.engine.transform.result.NadelResultTransformer
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
-import graphql.nadel.engine.util.getFieldDefinitionSequence
 import graphql.nadel.engine.util.getOperationDefinitionOrNull
 import graphql.nadel.engine.util.getOperationKind
 import graphql.nadel.engine.util.newExecutionResult
@@ -52,14 +51,12 @@ import graphql.nadel.instrumentation.parameters.child
 import graphql.nadel.result.NadelResultMerger
 import graphql.nadel.result.NadelResultTracker
 import graphql.nadel.time.NadelInternalLatencyTracker
-import graphql.nadel.util.NamespacedUtil
 import graphql.nadel.util.NamespacedUtil.isNamespacedFieldLike
 import graphql.nadel.util.OperationNameUtil
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
-import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -162,8 +159,13 @@ internal class NextgenEngine(
                 .deferSupport(executionHints.deferSupport.invoke())
 
             val operation = timer.time(step = RootStep.ExecutableOperationParsing) {
+                val schema = if (executionHints.executeOnEngineSchema()) {
+                    engineSchema
+                } else {
+                    querySchema
+                }
                 createExecutableNormalizedOperationWithRawVariables(
-                    querySchema,
+                    schema,
                     queryDocument,
                     executionInput.operationName,
                     executionInput.rawVariables,
