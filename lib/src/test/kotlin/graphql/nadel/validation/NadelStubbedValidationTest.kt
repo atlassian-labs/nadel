@@ -1000,7 +1000,7 @@ class NadelStubbedValidationTest {
     }
 
     @Test
-    fun `cannot use stubbed enum in non stubbed field`() {
+    fun `cannot use stubbed enum as input in non stubbed field`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "jira" to """
@@ -1037,6 +1037,129 @@ class NadelStubbedValidationTest {
         val error = errors.assertSingleOfType<MissingArgumentOnUnderlying>()
         assertTrue(error.overallField.name == "person")
         assertTrue(error.argument.name == "alphabet")
+    }
+
+    @Test
+    fun `can use stubbed enum as input on stubbed field`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                        person(alphabet: Alphabet): Person @stubbed
+                    }
+                    type Person {
+                        name: String
+                    }
+                    enum Alphabet @stubbed {
+                        Abc
+                        Def
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Person {
+                        name: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `can use stubbed enum in stubbed input type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                        person(filter: PersonFilter): Person @stubbed
+                    }
+                    type Person {
+                        name: String
+                    }
+                    input PersonFilter @stubbed {
+                        alphabet: Alphabet
+                    }
+                    enum Alphabet @stubbed {
+                        Abc
+                        Def
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                    type Person {
+                        name: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `cannot use stubbed enum in non stubbed input type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(filter: PersonFilter): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    input PersonFilter {
+                        alphabet: Alphabet
+                    }
+                    enum Alphabet @stubbed {
+                        Abc
+                        Def
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(filter: PersonFilter): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    input PersonFilter {
+                        secret: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelSchemaValidationError.MissingUnderlyingInputField>()
+        assertTrue(error.parentType.overall.name == "PersonFilter")
+        assertTrue(error.overallField.name == "alphabet")
     }
 
     @Test
