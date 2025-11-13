@@ -6,6 +6,7 @@ import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.whenType
+import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
@@ -18,7 +19,7 @@ internal class NadelStubbedValidation {
     ): NadelSchemaValidationResult {
         return type.overall.whenType(
             enumType = {
-                throw UnsupportedOperationException("Cannot stub EnumType")
+                validateStubbedEnumType(type, it)
             },
             inputObjectType = {
                 throw UnsupportedOperationException("Cannot stub InputObjectType")
@@ -51,6 +52,14 @@ internal class NadelStubbedValidation {
         } else {
             null
         }
+    }
+
+    context(NadelValidationContext)
+    private fun validateStubbedEnumType(
+        type: NadelServiceSchemaElement.StubbedType,
+        enumType: GraphQLEnumType,
+    ): NadelSchemaValidationResult {
+        return ok()
     }
 
     context(NadelValidationContext)
@@ -119,7 +128,7 @@ internal class NadelStubbedValidation {
     context(NadelValidationContext)
     private fun isOutputTypeStubbed(field: GraphQLFieldDefinition): Boolean {
         return field.type.unwrapAll().whenType(
-            enumType = { false },
+            enumType = instructionDefinitions::isStubbed,
             inputObjectType = { false },
             interfaceType = { false }, // Stubbed types cannot be part of hierarchies for now…
             objectType = instructionDefinitions::isStubbed,
