@@ -1,6 +1,6 @@
 package graphql.nadel.validation
 
-import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
+import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.util.assertSingleOfType
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
@@ -9,7 +9,7 @@ class NadelStubbedValidationTest {
     private val source = "$" + "source"
 
     @Test
-    fun `can stub type`() {
+    fun `can stub object type`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
                 "jira" to """
@@ -925,5 +925,151 @@ class NadelStubbedValidationTest {
         assertTrue(error.parent.overall.name == "Mutation")
         assertTrue(error.field.name == "stub")
         assertTrue(error.stubbedInputType.name == "StubInput")
+    }
+
+    @Test
+    fun `can stub enum type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    enum Alphabet @stubbed {
+                        Abc
+                        Def
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `can reference stubbed enum type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        alphabet: Alphabet
+                    }
+                    enum Alphabet @stubbed {
+                        Abc
+                        Def
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
+    fun `cannot use stubbed enum in non stubbed field`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(alphabet: Alphabet): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                    enum Alphabet @stubbed {
+                        Abc
+                        Def
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person(id: ID!): Person
+                    }
+                    type Person {
+                        name: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isNotEmpty())
+
+        val error = errors.assertSingleOfType<MissingArgumentOnUnderlying>()
+        assertTrue(error.overallField.name == "person")
+        assertTrue(error.argument.name == "alphabet")
+    }
+
+    @Test
+    fun `can use stubbed enum in stubbed type`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        person: Person
+                    }
+                    type Person @stubbed {
+                        id: ID!
+                        alphabet: Alphabet
+                    }
+                    enum Alphabet @stubbed {
+                        Abc
+                        Def
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "jira" to """
+                    type Query {
+                        echo: String
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
     }
 }

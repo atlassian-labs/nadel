@@ -114,7 +114,11 @@ private class NadelReferencedTypeVisitor(
     ): Boolean {
         visitTypeGuard(element) { return false }
         val node = element.node
-        onTypeReferenced(node.name)
+        if (node.hasStubbedDefinition()) {
+            onStubbedTypeReferenced(node.name)
+        } else {
+            onTypeReferenced(node.name)
+        }
         return true
     }
 
