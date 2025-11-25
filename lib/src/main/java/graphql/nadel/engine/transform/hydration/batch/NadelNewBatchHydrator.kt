@@ -16,7 +16,6 @@ import graphql.nadel.engine.transform.getInstructionsForNode
 import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.engine.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationTransform.State
-import graphql.nadel.engine.transform.hydration.batch.NadelNewBatchHydrator.SourceObjectMetadata
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexBasedIndexer
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexKey
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexer
@@ -444,6 +443,7 @@ internal class NadelNewBatchHydrator(
 
         val queries = NadelHydrationFieldsBuilder
             .makeBatchBackingQueries(
+                executionHints = executionContext.hints,
                 executionBlueprint = executionBlueprint,
                 instruction = instruction,
                 aliasHelper = aliasHelper,

@@ -64,8 +64,6 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
                 | {
                 |   humanById(id: "HUMAN-0") {
                 |     __typename
-                |     __typename__type_filter__id: __typename
-                |     __typename__type_filter__breed: __typename
                 |     id
                 |     name
                 |   }
@@ -77,9 +75,7 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
                 |   "data": {
                 |     "humanById": {
                 |       "__typename": "Human",
-                |       "__typename__type_filter__id": "Human",
                 |       "id": "HUMAN-0",
-                |       "__typename__type_filter__breed": "Human",
                 |       "name": "Fanny Longbottom"
                 |     }
                 |   }
@@ -94,8 +90,6 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
                 | {
                 |   petById(id: "PET-0") {
                 |     __typename
-                |     __typename__type_filter__id: __typename
-                |     __typename__type_filter__name: __typename
                 |     breed
                 |     id
                 |   }
@@ -108,9 +102,7 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
                 |     "petById": {
                 |       "__typename": "Pet",
                 |       "id": "PET-0",
-                |       "__typename__type_filter__id": "Pet",
-                |       "breed": "Akita",
-                |       "__typename__type_filter__name": "Pet"
+                |       "breed": "Akita"
                 |     }
                 |   }
                 | }

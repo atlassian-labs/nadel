@@ -64,8 +64,6 @@ public class `solitary polymorphic hydration when hook returns null snapshot` : 
                 | {
                 |   humanById(id: "HUMAN-0") {
                 |     __typename
-                |     __typename__type_filter__id: __typename
-                |     __typename__type_filter__breed: __typename
                 |     id
                 |     name
                 |   }
@@ -77,9 +75,7 @@ public class `solitary polymorphic hydration when hook returns null snapshot` : 
                 |   "data": {
                 |     "humanById": {
                 |       "__typename": "Human",
-                |       "__typename__type_filter__id": "Human",
                 |       "id": "HUMAN-0",
-                |       "__typename__type_filter__breed": "Human",
                 |       "name": "Fanny Longbottom"
                 |     }
                 |   }

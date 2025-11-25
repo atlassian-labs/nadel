@@ -187,6 +187,7 @@ abstract class NadelIntegrationTest(
 
     open fun makeExecutionHints(): NadelExecutionHints.Builder {
         return NadelExecutionHints.Builder()
+            .hydrationFilterObjectTypes { true }
     }
 
     open fun makeNadelSchemaValidation(): NadelSchemaValidation {

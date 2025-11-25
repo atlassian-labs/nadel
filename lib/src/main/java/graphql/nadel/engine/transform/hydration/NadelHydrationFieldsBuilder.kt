@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transform.hydration
 
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
@@ -40,7 +41,13 @@ internal object NadelHydrationFieldsBuilder {
                 makeBackingQueries(
                     instruction = instruction,
                     fieldArguments = args,
-                    fieldChildren = deepClone(virtualField.children),
+                    fieldChildren = deepClone(
+                        if (executionContext.hints.hydrationFilterObjectTypes()) {
+                            filterChildren(instruction, virtualField.children)
+                        } else {
+                            virtualField.children
+                        }
+                    ),
                     executionBlueprint = executionBlueprint,
                 )
             }
@@ -56,30 +63,37 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     fun makeBatchBackingQueries(
+        executionHints: NadelExecutionHints,
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         virtualField: ExecutableNormalizedField,
         argBatches: List<Map<NadelHydrationArgument, NormalizedInputValue>>,
     ): List<ExecutableNormalizedField> {
-        val backingFieldOverallObjectTypeNames = getBackingFieldOverallObjectTypenames(instruction, executionBlueprint)
-        val fieldChildren = deepClone(fields = virtualField.children)
-            .mapNotNull { childField ->
-                val objectTypesAreNotReturnedByBackingField =
-                    backingFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
+        val fieldChildren = if (executionHints.hydrationFilterObjectTypes()) {
+            deepClone(fields = filterChildren(instruction, virtualField.children)) +
+                makeObjectIdFields(executionBlueprint, aliasHelper, instruction)
+        } else {
+            val backingFieldOverallObjectTypeNames =
+                getBackingFieldOverallObjectTypenames(instruction, executionBlueprint)
+            deepClone(fields = virtualField.children)
+                .mapNotNull { childField ->
+                    val objectTypesAreNotReturnedByBackingField =
+                        backingFieldOverallObjectTypeNames.none { it in childField.objectTypeNames }
 
-                if (objectTypesAreNotReturnedByBackingField) {
-                    null
-                } else {
-                    childField.toBuilder()
-                        .clearObjectTypesNames()
-                        .objectTypeNames(childField.objectTypeNames.filter { it in backingFieldOverallObjectTypeNames })
-                        .build()
+                    if (objectTypesAreNotReturnedByBackingField) {
+                        null
+                    } else {
+                        childField.toBuilder()
+                            .clearObjectTypesNames()
+                            .objectTypeNames(childField.objectTypeNames.filter { it in backingFieldOverallObjectTypeNames })
+                            .build()
+                    }
                 }
-            }
-            .let { children ->
-                children + makeObjectIdFields(executionBlueprint, aliasHelper, instruction)
-            }
+                .let { children ->
+                    children + makeObjectIdFields(executionBlueprint, aliasHelper, instruction)
+                }
+        }
 
         return argBatches.map { argBatch ->
             makeBackingQueries(
@@ -91,6 +105,29 @@ internal object NadelHydrationFieldsBuilder {
         }
     }
 
+    private fun filterChildren(
+        instruction: NadelGenericHydrationInstruction,
+        children: List<ExecutableNormalizedField>,
+    ): List<ExecutableNormalizedField> {
+        return children
+            .mapNotNull { childField ->
+                val legalObjectTypeNames =
+                    childField.objectTypeNames.intersect(instruction.backingFieldReturnsObjectTypeNames)
+
+                if (legalObjectTypeNames.isEmpty()) {
+                    null
+                } else if (legalObjectTypeNames == childField.objectTypeNames) {
+                    childField
+                } else {
+                    childField.toBuilder()
+                        .clearObjectTypesNames()
+                        .objectTypeNames(legalObjectTypeNames.toList())
+                        .build()
+                }
+            }
+    }
+
+    @Deprecated("Will be removed once NadelHydrationFilterObjectTypesHint is rolled out")
     private fun getBackingFieldOverallObjectTypenames(
         instruction: NadelBatchHydrationFieldInstruction,
         executionBlueprint: NadelOverallExecutionBlueprint,

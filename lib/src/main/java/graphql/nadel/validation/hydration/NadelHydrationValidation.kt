@@ -9,6 +9,7 @@ import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
+import graphql.nadel.engine.blueprint.NadelVirtualTypeContext
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
@@ -25,6 +26,7 @@ import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.partitionCount
+import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.singleOfTypeOrNull
 import graphql.nadel.engine.util.startsWith
 import graphql.nadel.engine.util.unwrapAll
@@ -279,6 +281,7 @@ class NadelHydrationValidation internal constructor(
                 timeout = hydrationDefinition.timeout,
                 sourceFields = sourceFields,
                 backingFieldDef = backingField,
+                backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, virtualTypeContext),
                 backingFieldContainer = backingFieldContainer,
                 condition = hydrationCondition,
                 virtualTypeContext = virtualTypeContext,
@@ -356,6 +359,7 @@ class NadelHydrationValidation internal constructor(
                 sourceFields = sourceFields,
                 backingFieldDef = backingField,
                 backingFieldContainer = backingFieldContainer,
+                backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, null),
                 condition = hydrationCondition,
                 batchSize = hydrationDefinition.batchSize,
                 batchHydrationMatchStrategy = matchStrategy,
@@ -743,5 +747,22 @@ class NadelHydrationValidation internal constructor(
             return rhs.interfaces.contains(lhs)
         }
         return false
+    }
+
+    context(NadelValidationContext)
+    private fun getReturnsObjectTypeNames(
+        backingField: GraphQLFieldDefinition,
+        virtualTypeContext: NadelVirtualTypeContext?,
+    ): Set<String> {
+        val returnsObjectTypes = resolveObjectTypes(engineSchema, backingField.type) { return emptySet() }
+            .mapTo(mutableSetOf()) { it.name }
+
+        return if (virtualTypeContext == null) {
+            returnsObjectTypes
+        } else {
+            returnsObjectTypes.mapTo(mutableSetOf()) {
+                virtualTypeContext.backingTypeToVirtualType[it] ?: it
+            }
+        }
     }
 }
