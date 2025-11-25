@@ -80,6 +80,15 @@ interface NadelGenericHydrationInstruction {
     val backingFieldDef: GraphQLFieldDefinition
 
     /**
+     * The names of the object types the backing field returns.
+     *
+     * Note: when virtual types are involved these are the virtual types.
+     *
+     * Could be empty if there are no object types involved e.g. returns scalar, enum etc.
+     */
+    val backingFieldReturnsObjectTypeNames: Set<String>
+
+    /**
      * The container of the backing field in the overall schema referenced by [queryPathToBackingField].
      */
     val backingFieldContainer: GraphQLFieldsContainer
@@ -101,6 +110,7 @@ data class NadelHydrationFieldInstruction(
     override val sourceFields: List<NadelQueryPath>,
     override val backingFieldDef: GraphQLFieldDefinition,
     override val backingFieldContainer: GraphQLFieldsContainer,
+    override val backingFieldReturnsObjectTypeNames: Set<String>,
     override val condition: NadelHydrationCondition?,
     /**
      * Hydration can bring about virtual types.
@@ -124,6 +134,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val sourceFields: List<NadelQueryPath>,
     override val backingFieldDef: GraphQLFieldDefinition,
     override val backingFieldContainer: GraphQLFieldsContainer,
+    override val backingFieldReturnsObjectTypeNames: Set<String>,
     override val condition: NadelHydrationCondition?,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,

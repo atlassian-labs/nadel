@@ -60,13 +60,11 @@ import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputType
-import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
-import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
@@ -525,20 +523,31 @@ internal suspend fun NadelInstrumentation.beginExecute(
  * Turns GraphQL types to object types when possible e.g. finds concrete implementations
  * for interfaces, gets object types inside unions, and returns objects as is.
  */
-fun resolveObjectTypes(
+inline fun resolveObjectTypes(
     schema: GraphQLSchema,
     type: GraphQLType,
     onNotObjectType: (GraphQLType) -> Nothing,
 ): List<GraphQLObjectType> {
-    return when (val unwrappedType = type.unwrapAll()) {
-        is GraphQLObjectType -> listOf(unwrappedType)
-        is GraphQLUnionType -> unwrappedType.types.flatMap {
-            resolveObjectTypes(schema, type = it, onNotObjectType)
-        }
-
-        is GraphQLInterfaceType -> schema.getImplementations(unwrappedType)
-        else -> onNotObjectType(unwrappedType)
-    }
+    return type.unwrapAll()
+        .whenType(
+            enumType = onNotObjectType,
+            inputObjectType = onNotObjectType,
+            interfaceType = { interfaceType ->
+                schema.getImplementations(interfaceType)
+                    .map { objectImpl -> objectImpl }
+            },
+            objectType = {
+                listOf(it)
+            },
+            scalarType = onNotObjectType,
+            unionType = { unionType ->
+                unionType.types
+                    .map { memberType ->
+                        memberType as? GraphQLObjectType
+                            ?: throw IllegalArgumentException("Member type must be object but found ${memberType?.javaClass?.name}")
+                    }
+            },
+        )
 }
 
 /**

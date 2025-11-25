@@ -10,8 +10,6 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.result.NadelResultTracker
 import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.CoroutineScope
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 
 data class NadelExecutionContext internal constructor(
     val executionInput: ExecutionInput,
@@ -26,8 +24,6 @@ data class NadelExecutionContext internal constructor(
     internal val isPartitionedCall: Boolean = false,
     internal val executionCoroutine: CoroutineScope,
 ) {
-    private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
-
     val userContext: Any?
         get() {
             return executionInput.context
