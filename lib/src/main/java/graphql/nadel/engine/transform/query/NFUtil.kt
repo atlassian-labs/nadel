@@ -106,7 +106,7 @@ object NFUtil {
         pathToFieldIndex: Int,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
     ): ExecutableNormalizedField {
-        if(aliasedPath != null && aliasedPath.size != queryPathToField.size) {
+        if (aliasedPath != null && aliasedPath.size != queryPathToField.size) {
             error("Aliased path must have the same length as the query path")
         }
 

@@ -93,6 +93,7 @@ internal class NadelBatchHydrationTransform(
             artificialFields = state.instructionsByObjectTypeNames
                 .flatMap { (objectTypeName, instructions) ->
                     NadelHydrationFieldsBuilder.makeRequiredSourceFields(
+                        hints = executionContext.hints,
                         service = service,
                         executionBlueprint = executionBlueprint,
                         aliasHelper = state.aliasHelper,

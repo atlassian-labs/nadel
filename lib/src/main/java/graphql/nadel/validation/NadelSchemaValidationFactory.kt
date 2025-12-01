@@ -5,6 +5,7 @@ import graphql.nadel.validation.hydration.NadelHydrationArgumentTypeValidation
 import graphql.nadel.validation.hydration.NadelHydrationArgumentValidation
 import graphql.nadel.validation.hydration.NadelHydrationConditionValidation
 import graphql.nadel.validation.hydration.NadelHydrationSourceFieldValidation
+import graphql.nadel.validation.hydration.NadelHydrationSourceFieldValidation2
 import graphql.nadel.validation.hydration.NadelHydrationValidation
 import graphql.nadel.validation.hydration.NadelHydrationVirtualTypeValidation
 
@@ -48,6 +49,7 @@ abstract class NadelSchemaValidationFactory {
     private val hydrationArgumentValidation = NadelHydrationArgumentValidation(hydrationArgumentTypeValidation)
     private val hydrationConditionValidation = NadelHydrationConditionValidation()
     private val hydrationSourceFieldValidation = NadelHydrationSourceFieldValidation()
+    private val hydrationSourceFieldValidation2 = NadelHydrationSourceFieldValidation2()
     private val hydrationVirtualTypeValidation = NadelHydrationVirtualTypeValidation()
 
     private val defaultHydrationDefinitionValidation = NadelDefaultHydrationDefinitionValidation()
@@ -56,6 +58,7 @@ abstract class NadelSchemaValidationFactory {
         argumentValidation = hydrationArgumentValidation,
         conditionValidation = hydrationConditionValidation,
         sourceFieldValidation = hydrationSourceFieldValidation,
+        sourceFieldValidation2 = hydrationSourceFieldValidation2,
         virtualTypeValidation = hydrationVirtualTypeValidation,
     )
 

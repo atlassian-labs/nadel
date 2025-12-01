@@ -6,6 +6,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
+import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -74,6 +75,8 @@ interface NadelGenericHydrationInstruction {
      */
     val sourceFields: List<NadelQueryPath>
 
+    val executableSourceFields: List<ExecutableNormalizedField>
+
     /**
      * The field definition in the overall schema referenced by [queryPathToBackingField].
      */
@@ -108,6 +111,7 @@ data class NadelHydrationFieldInstruction(
     override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
+    override val executableSourceFields: List<ExecutableNormalizedField>,
     override val backingFieldDef: GraphQLFieldDefinition,
     override val backingFieldContainer: GraphQLFieldsContainer,
     override val backingFieldReturnsObjectTypeNames: Set<String>,
@@ -132,6 +136,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
+    override val executableSourceFields: List<ExecutableNormalizedField>,
     override val backingFieldDef: GraphQLFieldDefinition,
     override val backingFieldContainer: GraphQLFieldsContainer,
     override val backingFieldReturnsObjectTypeNames: Set<String>,
