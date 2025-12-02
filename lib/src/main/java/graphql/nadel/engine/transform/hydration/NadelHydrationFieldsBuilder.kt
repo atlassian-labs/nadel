@@ -165,27 +165,27 @@ internal object NadelHydrationFieldsBuilder {
                     aliasHelper.toArtificial(it)
                 }
                 .toList()
-        } else {
-            val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
-            val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
-                ?: error("No underlying object type")
-
-            return instructions
-                .asSequence()
-                .flatMap { it.sourceFields }
-                .map {
-                    aliasHelper.toArtificial(
-                        NFUtil.createField(
-                            schema = service.underlyingSchema,
-                            parentType = underlyingObjectType,
-                            queryPathToField = it,
-                            fieldArguments = emptyMap(),
-                            fieldChildren = emptyList(), // This must be a leaf node
-                        ),
-                    )
-                }
-                .toList()
         }
+
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
+        val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
+            ?: error("No underlying object type")
+
+        return instructions
+            .asSequence()
+            .flatMap { it.sourceFields }
+            .map {
+                aliasHelper.toArtificial(
+                    NFUtil.createField(
+                        schema = service.underlyingSchema,
+                        parentType = underlyingObjectType,
+                        queryPathToField = it,
+                        fieldArguments = emptyMap(),
+                        fieldChildren = emptyList(), // This must be a leaf node
+                    ),
+                )
+            }
+            .toList()
     }
 
     private fun makeBackingQueries(
