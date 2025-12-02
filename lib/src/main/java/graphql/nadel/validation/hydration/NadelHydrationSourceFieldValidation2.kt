@@ -31,6 +31,7 @@ internal class NadelHydrationSourceFieldValidation2 {
         val conditionSourceFields = listOfNotNull(hydrationCondition?.fieldPath).map { makeLeafField(it) }
 
         return (argumentSourceFields + conditionSourceFields)
+            .dedupSourceFields()
             .asInterimSuccess()
     }
 
@@ -45,6 +46,7 @@ internal class NadelHydrationSourceFieldValidation2 {
         val conditionSourceFields = listOfNotNull(hydrationCondition?.fieldPath).map { makeLeafField(it) }
 
         return (argumentSourceFields + conditionSourceFields)
+            .dedupSourceFields()
             .asInterimSuccess()
     }
 
@@ -85,14 +87,25 @@ internal class NadelHydrationSourceFieldValidation2 {
         val parentObjectType =
             parent.underlying.getFieldContainerFor(hydrationValueSource.queryPathToField.segments) as GraphQLObjectType
 
-        // todo: need to handle parents
         // todo: should probably check cardinality here too
-        return makeObjectField(
+        val field = makeObjectField(
             parentObjectType = parentObjectType,
             fieldName = hydrationValueSource.fieldDefinition.name,
             inputObjectType = argument.backingArgumentDef.type.unwrapAll() as GraphQLInputObjectType,
             outputObjectType = hydrationValueSource.fieldDefinition.type.unwrapAll() as GraphQLObjectType,
-        ).asInterimSuccess()
+        )
+
+        return if (hydrationValueSource.queryPathToField.size > 1) {
+            NFUtil.createField(
+                schema = backingService.underlyingSchema,
+                parentType = parent.underlying as GraphQLObjectType,
+                queryPathToField = hydrationValueSource.queryPathToField.dropLast(1),
+                fieldArguments = emptyMap(),
+                fieldChildren = listOf(field),
+            )
+        } else {
+            field
+        }.asInterimSuccess()
     }
 
     private fun makeObjectField(
@@ -106,9 +119,9 @@ internal class NadelHydrationSourceFieldValidation2 {
                 val equivalentOutputField = outputObjectType.getField(inputField.name)
                 if (equivalentOutputField == null) {
                     if (inputField.type.isNonNull) { // i.e. required
-                        null
-                    } else {
                         error("Required input field is missed") // todo: proper error here
+                    } else {
+                        null
                     }
                 } else {
                     val parentObjectType = parentObjectType.getField(fieldName).type.unwrapAll() as GraphQLObjectType
@@ -144,11 +157,23 @@ internal class NadelHydrationSourceFieldValidation2 {
     ): ExecutableNormalizedField {
         // todo: should do some validation here?? e.g. arg is a scalar value, type validation? maybe type validation is done elsewhere already
         return NFUtil.createField(
-            schema = backingService.underlyingSchema,
+            schema = parent.service.underlyingSchema,
             parentType = parent.underlying as GraphQLObjectType,
             queryPathToField = path,
             fieldArguments = emptyMap(),
             fieldChildren = emptyList(), // This must be a leaf node
         )
+    }
+}
+
+private fun List<ExecutableNormalizedField>.dedupSourceFields(): List<ExecutableNormalizedField> {
+    return groupBy {
+        listOf(it.objectTypeNames, it.resultKey, it.name, it.normalizedArguments.size)
+    }.flatMap { (_, fields) ->
+        if (fields.all { it.normalizedArguments.isEmpty() }) {
+            listOf(fields.first())
+        } else {
+            fields
+        }
     }
 }

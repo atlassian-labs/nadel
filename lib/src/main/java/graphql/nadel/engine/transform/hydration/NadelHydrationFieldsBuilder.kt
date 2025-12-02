@@ -155,7 +155,7 @@ internal object NadelHydrationFieldsBuilder {
         objectTypeName: GraphQLObjectTypeName,
         instructions: List<NadelGenericHydrationInstruction>,
     ): List<ExecutableNormalizedField> {
-        if (hints.hydrationExecutableSourceFields()) {
+        if (hints.hydrationExecutableSourceFields(service)) {
             return instructions
                 .asSequence()
                 .flatMap {
