@@ -4,16 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.GraphQLError
 import graphql.language.AstPrinter
+import graphql.language.StringValue
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NadelSchemas
 import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
+import graphql.nadel.hooks.NadelExecutionHooks
+import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationFactory
+import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
@@ -82,6 +87,18 @@ suspend fun main() {
         }
 
     val nadel = Nadel.newNadel()
+        .executionHooks(
+            object : NadelExecutionHooks {
+                override fun resolveServiceForField(
+                    services: List<Service>,
+                    executableNormalizedField: ExecutableNormalizedField,
+                ): ServiceOrError? {
+                    require(executableNormalizedField.name == "node")
+                    val id = (executableNormalizedField.normalizedArguments["id"]!!.value as StringValue).value
+                    return ServiceOrError(services.first { it.name == id }, null)
+                }
+            }
+        )
         .overallSchemas(overallSchemas)
         .underlyingSchemas(underlyingSchemas)
         .serviceExecutionFactory(object : ServiceExecutionFactory {
@@ -127,20 +144,375 @@ suspend fun main() {
         return
     }
 
-    nadel
-        .execute(
-            newNadelExecutionInput()
-                .query(query)
-                .build(),
-        )
-        .asDeferred()
-        .await()
-        .also {
-            println(it)
+    listOf(
+        "agent",
+        "automation_playbook",
+        "bitbucket",
+        "canned_response",
+        "cc_graphql",
+        "ccp",
+        "compass",
+        "customer360_server",
+        "data_depot_external",
+        "devai",
+        "gira",
+        "graph_integrations",
+        "help_center",
+        "help_layout",
+        "help_object_store",
+        "intent_management",
+        "jcs_barista",
+        "jira_align_twg_pipeline",
+        "jsm_channel_orchestrator",
+        "jsw",
+        "kitsune",
+        "knowledge_discovery",
+        "learner_transcript_service",
+        "loom",
+        "mercury",
+        "org_policy",
+        "passionfruit",
+        "radar",
+        "shepherd",
+        "teams",
+        "teamsV2",
+        "townsquare",
+        "trello",
+        "virtual_agent",
+        "virtual_agent_conversation",
+    )
+        .forEach { service ->
+            println(service)
+            nadel
+                .execute(
+                    newNadelExecutionInput()
+                        .query(query)
+                        .variables(mapOf("var1" to service))
+                        .build(),
+                )
+                .asDeferred()
+                .await()
+                .also {
+                    println(it)
+                }
         }
 }
 
-const val query = ""
+const val query = """query hydrate(${'$'}var1: ID!) {
+  node(id: ${'$'}var1) {
+    __typename
+    ...DataFields
+  }
+}
+
+fragment DataFields on GraphStoreCypherQueryV2AriNodeUnion {
+  __typename
+  ... on AtlassianAccountUser {
+    id
+    uname: name
+  }
+  ... on ConfluenceBlogPost {
+    author {
+      user {
+        accountId
+        name
+      }
+    }
+    id
+    links {
+      base
+      webUi
+    }
+    title
+  }
+  ... on ConfluencePage {
+    author {
+      user {
+        accountId
+        name
+      }
+    }
+    id
+    links {
+      base
+      webUi
+    }
+    title
+  }
+  ... on ExternalOrganisation {
+    displayName
+    id
+  }
+  ... on ExternalPullRequest {
+    author {
+      linkedUsers @optIn(to: "") {
+        edges {
+          node {
+            __typename
+            ... on AtlassianAccountUser {
+              name
+            }
+          }
+        }
+      }
+      thirdPartyUser {
+        name
+      }
+      userId
+    }
+    commentCount
+    destinationBranch {
+      name
+      url
+    }
+    id
+    lastUpdate
+    repositoryId
+    reviewers {
+      approvalStatus
+      user {
+        linkedUsers @optIn(to: "") {
+          edges {
+            node {
+              __typename
+              ... on AtlassianAccountUser {
+                name
+              }
+            }
+          }
+        }
+        thirdPartyUser {
+          name
+        }
+        userId
+      }
+    }
+    s: status
+    title
+    u: url
+  }
+  ... on ExternalRepository {
+    id
+    lastUpdated
+    a: name
+    b: url
+  }
+  ... on JiraIssue {
+    assigneeField {
+      user {
+        accountId
+        name
+      }
+    }
+    id
+    key
+    c: status {
+      name
+    }
+    summary
+    webUrl
+  }
+  ... on JiraWebRemoteIssueLink {
+    href
+    iconUrl
+    id
+    summary
+    title
+  }
+  ... on LoomVideo {
+    d: description
+    id
+    isMeeting
+    name
+    owner {
+      id
+      name
+    }
+    playableDuration
+    sourceDuration
+    e: url
+  }
+  ... on MercuryFocusArea {
+    aboutContent {
+      editorAdfContent
+    }
+    aggregatedFocusAreaStatusCount {
+      current {
+        atRisk
+        completed
+        inProgress
+        offTrack
+        onTrack
+        paused
+        pending
+        total
+      }
+    }
+    createdDate
+    focusAreaStatusUpdates(first: 0) {
+      edges {
+        node {
+          ari
+          createdBy {
+            id
+            name
+          }
+          createdDate
+          id
+          newHealth {
+            displayName
+          }
+          newStatus {
+            displayName
+          }
+          newTargetDate {
+            targetDate
+            targetDateType
+          }
+          previousHealth {
+            displayName
+          }
+          previousStatus {
+            displayName
+          }
+          previousTargetDate {
+            targetDate
+            targetDateType
+          }
+          summary
+          updatedBy {
+            id
+            name
+          }
+          updatedDate
+        }
+      }
+    }
+    focusAreaType {
+      name
+    }
+    health {
+      displayName
+    }
+    id
+    name
+    owner {
+      id
+      name
+    }
+    parent {
+      id
+      name
+      url
+    }
+    f: status {
+      displayName
+    }
+    subFocusAreas(first: 0) {
+      edges {
+        node {
+          id
+          name
+          owner {
+            id
+            name
+          }
+          url
+        }
+      }
+      totalCount
+    }
+    targetDate {
+      targetDate
+      targetDateType
+    }
+    updatedDate
+    url
+    watchers {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+      totalCount
+    }
+  }
+  ... on TeamV2 {
+    creator {
+      id
+      name
+    }
+    g: description
+    displayName
+    id
+    members(state: FULL_MEMBER) {
+      nodes {
+        member {
+          accountStatus
+          id
+          name
+        }
+      }
+    }
+    membershipSettings
+    h: state
+  }
+  ... on TownsquareGoal {
+    creationDate
+    i: description
+    id
+    key
+    name
+    owner {
+      id
+      name
+    }
+    parentGoal {
+      id
+    }
+    status {
+      score
+      value
+    }
+    targetDate {
+      confidence
+      dateRange {
+        end
+        start
+      }
+      label
+    }
+    url
+  }
+  ... on TownsquareProject {
+    description {
+      measurement
+      what
+      why
+    }
+    dueDate {
+      confidence
+      dateRange {
+        end
+        start
+      }
+      label
+    }
+    id
+    key
+    name
+    owner {
+      id
+      name
+    }
+    state {
+      label
+      value
+    }
+    url
+  }
+}"""
 
 private fun getServiceName(file: File): String? {
     val parts: List<File> = splitFileParts(file)

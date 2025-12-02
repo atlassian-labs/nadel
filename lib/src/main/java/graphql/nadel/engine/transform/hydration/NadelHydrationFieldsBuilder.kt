@@ -148,12 +148,25 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     fun makeRequiredSourceFields(
+        hints: NadelExecutionHints,
         service: Service,
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         objectTypeName: GraphQLObjectTypeName,
         instructions: List<NadelGenericHydrationInstruction>,
     ): List<ExecutableNormalizedField> {
+        if (hints.hydrationExecutableSourceFields(service)) {
+            return instructions
+                .asSequence()
+                .flatMap {
+                    it.executableSourceFields
+                }
+                .map {
+                    aliasHelper.toArtificial(it)
+                }
+                .toList()
+        }
+
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")

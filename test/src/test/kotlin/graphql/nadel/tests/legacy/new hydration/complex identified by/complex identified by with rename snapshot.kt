@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class `complex identified by with rename snapshot` : TestSnapshot() {
@@ -28,10 +28,8 @@ public class `complex identified by with rename snapshot` : TestSnapshot() {
                 |   issues {
                 |     __typename__batch_hydration__author: __typename
                 |     batch_hydration__author__authorId: authorId {
-                |       userId
-                |     }
-                |     batch_hydration__author__authorId: authorId {
                 |       site
+                |       userId
                 |     }
                 |     id
                 |   }

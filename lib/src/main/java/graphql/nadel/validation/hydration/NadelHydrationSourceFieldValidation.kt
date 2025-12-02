@@ -11,6 +11,7 @@ import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.a
 import graphql.nadel.validation.onError
 import graphql.schema.GraphQLObjectType
 
+@Deprecated("To be replaced by NadelHydrationSourceFieldValidation2")
 internal class NadelHydrationSourceFieldValidation {
     context(NadelValidationContext)
     fun getSourceFields(

@@ -69,6 +69,7 @@ import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 
 internal data class NadelHydrationValidationContext(
+    val backingService: Service,
     val hasMoreThanOneHydration: Boolean,
     val parent: NadelServiceSchemaElement.FieldsContainer,
     val virtualField: GraphQLFieldDefinition,
@@ -82,12 +83,13 @@ class NadelHydrationValidation internal constructor(
     private val argumentValidation: NadelHydrationArgumentValidation,
     private val conditionValidation: NadelHydrationConditionValidation,
     private val sourceFieldValidation: NadelHydrationSourceFieldValidation,
+    private val sourceFieldValidation2: NadelHydrationSourceFieldValidation2,
     private val virtualTypeValidation: NadelHydrationVirtualTypeValidation,
 ) {
 
     context(NadelValidationContext)
     fun validate(
-        parent: NadelServiceSchemaElement.FieldsContainer,
+        parent: NadelServiceSchemaElement.FieldsContainer, // todo: I think we need to change this to .Object
         virtualField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
         if (hasIncompatibleInstructions(parent, virtualField)) {
@@ -202,7 +204,11 @@ class NadelHydrationValidation internal constructor(
 
         val isBatchHydration = isBatchHydration(hydrationDefinition)
 
+        val backingService =
+            fieldContributor[makeFieldCoordinates(backingFieldContainer.name, backingFieldDef.name)]!!
+
         val context = NadelHydrationValidationContext(
+            backingService = backingService,
             hasMoreThanOneHydration = hasMoreThanOneHydration,
             parent = parent,
             virtualField = virtualField,
@@ -225,9 +231,6 @@ class NadelHydrationValidation internal constructor(
         val arguments = argumentValidation.validateArguments(isBatchHydration)
             .onError { return it }
 
-        val backingService =
-            fieldContributor[makeFieldCoordinates(backingFieldContainer.name, backingField.name)]!!
-
         val hydrationCondition = hydrationDefinition.condition?.let { conditionDefinition ->
             conditionValidation.validateCondition(
                 parent = parent,
@@ -244,13 +247,11 @@ class NadelHydrationValidation internal constructor(
 
         return if (isBatchHydration) {
             validateBatchHydration(
-                backingService = backingService,
                 arguments = arguments,
                 hydrationCondition = hydrationCondition,
             )
         } else {
             validateNonBatchHydration(
-                backingService = backingService,
                 arguments = arguments,
                 hydrationCondition = hydrationCondition,
             )
@@ -259,7 +260,6 @@ class NadelHydrationValidation internal constructor(
 
     context(NadelValidationContext, NadelHydrationValidationContext)
     private fun validateNonBatchHydration(
-        backingService: Service,
         arguments: List<NadelHydrationArgument>,
         hydrationCondition: NadelHydrationCondition?,
     ): NadelSchemaValidationResult {
@@ -267,6 +267,9 @@ class NadelHydrationValidation internal constructor(
             .onError { return it }
         val sourceFields = sourceFieldValidation.getSourceFields(arguments, hydrationCondition)
             .onError { return it }
+        val executableSourceFields =
+            sourceFieldValidation2.getSourceFields(arguments, hydrationCondition)
+                .onError { return it }
         val virtualTypeContext = virtualTypeValidation.getVirtualTypeContext()
             .onError { return it }
 
@@ -280,6 +283,7 @@ class NadelHydrationValidation internal constructor(
                 backingFieldArguments = arguments,
                 timeout = hydrationDefinition.timeout,
                 sourceFields = sourceFields,
+                executableSourceFields = executableSourceFields,
                 backingFieldDef = backingField,
                 backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, virtualTypeContext),
                 backingFieldContainer = backingFieldContainer,
@@ -336,7 +340,6 @@ class NadelHydrationValidation internal constructor(
 
     context(NadelValidationContext, NadelHydrationValidationContext)
     private fun validateBatchHydration(
-        backingService: Service,
         arguments: List<NadelHydrationArgument>,
         hydrationCondition: NadelHydrationCondition?,
     ): NadelSchemaValidationResult {
@@ -345,6 +348,10 @@ class NadelHydrationValidation internal constructor(
 
         val sourceFields =
             sourceFieldValidation.getBatchHydrationSourceFields(arguments, matchStrategy, hydrationCondition)
+                .onError { return it }
+
+        val executableSourceFields =
+            sourceFieldValidation2.getBatchHydrationSourceFields(arguments, matchStrategy, hydrationCondition)
                 .onError { return it }
 
         return NadelValidatedFieldResult(
@@ -357,6 +364,7 @@ class NadelHydrationValidation internal constructor(
                 backingFieldArguments = arguments,
                 timeout = hydrationDefinition.timeout,
                 sourceFields = sourceFields,
+                executableSourceFields = executableSourceFields,
                 backingFieldDef = backingField,
                 backingFieldContainer = backingFieldContainer,
                 backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, null),

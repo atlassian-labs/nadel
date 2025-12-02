@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class `complex input object with indexed hydration snapshot` : TestSnapshot() {
@@ -30,10 +30,6 @@ public class `complex input object with indexed hydration snapshot` : TestSnapsh
                 |     batch_hydration__issue__context: context {
                 |       issueHydrationInput {
                 |         id
-                |       }
-                |     }
-                |     batch_hydration__issue__context: context {
-                |       issueHydrationInput {
                 |         site
                 |       }
                 |     }

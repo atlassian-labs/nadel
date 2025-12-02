@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class `polymorphic hydration instructions use different inputs snapshot` : TestSnapshot() {
@@ -58,13 +58,9 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
                 |     batch_hydration__animal__animalId: animalId
                 |     batch_hydration__animal__animalId: animalId
                 |     batch_hydration__animal__giraffeInput: giraffeInput {
-                |       nickname
-                |     }
-                |     batch_hydration__animal__giraffeInput: giraffeInput {
                 |       birthday
-                |     }
-                |     batch_hydration__animal__giraffeInput: giraffeInput {
                 |       height
+                |       nickname
                 |     }
                 |   }
                 | }

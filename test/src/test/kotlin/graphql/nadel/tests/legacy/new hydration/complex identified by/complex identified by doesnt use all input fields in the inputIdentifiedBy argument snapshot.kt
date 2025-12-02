@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class
@@ -32,10 +32,6 @@ public class
                 |     batch_hydration__issue__context: context {
                 |       issueHydrationInput {
                 |         id
-                |       }
-                |     }
-                |     batch_hydration__issue__context: context {
-                |       issueHydrationInput {
                 |         site
                 |       }
                 |     }

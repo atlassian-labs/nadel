@@ -4,6 +4,7 @@ import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
+import graphql.nadel.hints.NadelHydrationExecutableSourceFields
 import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
@@ -20,6 +21,7 @@ data class NadelExecutionHints(
     val virtualTypeSupport: NadelVirtualTypeSupportHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
     val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
+    val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -41,6 +43,7 @@ data class NadelExecutionHints(
         private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
         private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
+        private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
 
         constructor()
 
@@ -48,9 +51,13 @@ data class NadelExecutionHints(
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
+            deferSupport = nadelExecutionHints.deferSupport
             shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
+            sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
+            virtualTypeSupport = nadelExecutionHints.virtualTypeSupport
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
             hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
+            hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -98,6 +105,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun hydrationExecutableSourceFields(flag: NadelHydrationExecutableSourceFields): Builder {
+            hydrationExecutableSourceFields = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -109,6 +121,7 @@ data class NadelExecutionHints(
                 virtualTypeSupport,
                 executeOnEngineSchema,
                 hydrationFilterObjectTypes,
+                hydrationExecutableSourceFields,
             )
         }
     }

@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class `ari argument in renamed object input in hydration snapshot` : TestSnapshot() {
@@ -28,10 +28,8 @@ public class `ari argument in renamed object input in hydration snapshot` : Test
                 |   issue(id: ${'$'}v0) {
                 |     __typename__batch_hydration__related: __typename
                 |     batch_hydration__related__relatedIds: relatedIds {
-                |       projectId
-                |     }
-                |     batch_hydration__related__relatedIds: relatedIds {
                 |       issueId
+                |       projectId
                 |     }
                 |   }
                 | }
