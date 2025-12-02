@@ -73,8 +73,14 @@ interface NadelGenericHydrationInstruction {
      * This can be the fields described in [NadelHydrationArgument.ValueSource.FieldResultValue.queryPathToField]
      * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
      */
+    @Deprecated("To be replaced by executableSourceFields")
     val sourceFields: List<NadelQueryPath>
 
+    /**
+     * The fields required to be queried on the source object in order to complete the hydration.
+     * This can be the fields described in [NadelHydrationArgument.ValueSource.FieldResultValue.queryPathToField]
+     * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
+     */
     val executableSourceFields: List<ExecutableNormalizedField>
 
     /**
@@ -110,6 +116,7 @@ data class NadelHydrationFieldInstruction(
     override val queryPathToBackingField: NadelQueryPath,
     override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
+    @Deprecated("To be replaced by executableSourceFields")
     override val sourceFields: List<NadelQueryPath>,
     override val executableSourceFields: List<ExecutableNormalizedField>,
     override val backingFieldDef: GraphQLFieldDefinition,
@@ -135,6 +142,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val queryPathToBackingField: NadelQueryPath,
     override val backingFieldArguments: List<NadelHydrationArgument>,
     override val timeout: Int,
+    @Deprecated("To be replaced by executableSourceFields")
     override val sourceFields: List<NadelQueryPath>,
     override val executableSourceFields: List<ExecutableNormalizedField>,
     override val backingFieldDef: GraphQLFieldDefinition,
