@@ -7,6 +7,7 @@ import graphql.nadel.engine.transform.query.NFUtil
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.getFieldContainerFor
 import graphql.nadel.engine.util.isNonNull
+import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.NadelValidationInterimResult
@@ -171,7 +172,12 @@ private fun List<ExecutableNormalizedField>.dedupSourceFields(): List<Executable
         listOf(it.objectTypeNames, it.resultKey, it.name, it.normalizedArguments.size)
     }.flatMap { (_, fields) ->
         if (fields.all { it.normalizedArguments.isEmpty() }) {
-            listOf(fields.first())
+            listOf(
+                fields.first()
+                    .toBuilder()
+                    .children(fields.flatMap { it.children }.dedupSourceFields())
+                    .build()
+            )
         } else {
             fields
         }
