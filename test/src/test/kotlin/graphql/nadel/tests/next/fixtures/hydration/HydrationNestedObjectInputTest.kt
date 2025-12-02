@@ -3,6 +3,28 @@ package graphql.nadel.tests.next.fixtures.hydration
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
+/**
+ * Tests that we can hydrate using a `IssueUserSearchInput` output object feeding into `UserSearchInput` input object.
+ *
+ * These objects have nested objects e.g. `IssueUserSearchInput.filters` references object `IssueUserSearchFilterInput`
+ *
+ * We need to test that we create the appropriate selection set on the source object i.e.
+ *
+ * ```graphql
+ * arguments: [{name: "filter", value: "$source.assigneeFilter"}]
+ * ```
+ *
+ * Turns into
+ *
+ * ```graphql
+ * assigneeFilter {
+ *   filter {
+ *     parentId
+ *     subEntityTypes
+ *   }
+ * }
+ * ```
+ */
 class HydrationNestedObjectInputTest : NadelIntegrationTest(
     query = """
         query {
