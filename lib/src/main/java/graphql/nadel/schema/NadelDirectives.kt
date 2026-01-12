@@ -10,6 +10,7 @@ import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationResultConditionDefinition
 import graphql.nadel.definition.hydration.NadelHydrationResultFieldPredicateDefinition
 import graphql.nadel.definition.hydration.NadelIdHydrationDefinition
+import graphql.nadel.definition.hydration.NadelMaxBatchSizeDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.definition.stubbed.NadelStubbedDefinition
@@ -47,6 +48,8 @@ object NadelDirectives {
     val idHydratedDirectiveDefinition = NadelIdHydrationDefinition.directiveDefinition
 
     val stubbedDirectiveDefinition = NadelStubbedDefinition.directiveDefinition
+
+    val maxBatchSizeDirectiveDefinition = NadelMaxBatchSizeDefinition.directiveDefinition
 
     val nadelHydrationRemainingArguments = parseDefinition<DirectiveDefinition>(
         // language=GraphQL

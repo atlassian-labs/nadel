@@ -70,6 +70,7 @@ internal class OverallSchemaGenerator {
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.defaultHydrationDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.idHydratedDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.stubbedDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.maxBatchSizeDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.renamedDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hiddenDirectiveDefinition)
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelBatchObjectIdentifiedByDefinition)
