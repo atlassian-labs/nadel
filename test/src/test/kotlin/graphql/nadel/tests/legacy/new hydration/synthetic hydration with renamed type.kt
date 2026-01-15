@@ -42,7 +42,6 @@ class `synthetic hydration with renamed type` : NadelLegacyIntegrationTest(
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("bars") {
-                        Unit
                     }
                 }
                 wiring.type("BarQuery") { type ->
@@ -66,7 +65,6 @@ class `synthetic hydration with renamed type` : NadelLegacyIntegrationTest(
                   id: ID!
                   fooBar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "bars.barById"
                     arguments: [{name: "id" value: "${'$'}source.fooBarId"}]
                   )

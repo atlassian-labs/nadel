@@ -20,14 +20,12 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         creator: Person
                         @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
                             ]
                         )
                         @hydrated(
-                            service: "users"
                             field: "account"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -95,14 +93,12 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         data: [ActivityContent]
                         @hydrated(
-                            service: "users"
                             field: "usersByIds"
                             arguments: [
                                 {name: "ids", value: "$source.userIds"}
                             ]
                         )
                         @hydrated(
-                            service: "issues"
                             field: "issuesByIds"
                             arguments: [
                                 {name: "ids", value: "$source.issueIds"}
@@ -183,14 +179,12 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         data: [ActivityContent]
                         @hydrated(
-                            service: "users"
                             field: "usersByIds"
                             arguments: [
                                 {name: "ids", value: "$source.contexts.userId"}
                             ]
                         )
                         @hydrated(
-                            service: "issues"
                             field: "issuesByIds"
                             arguments: [
                                 {name: "ids", value: "$source.contexts.issueId"}
@@ -274,14 +268,12 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         data: [ActivityContent]
                         @hydrated(
-                            service: "users"
                             field: "usersByIds"
                             arguments: [
                                 {name: "ids", value: "$source.userIds"}
                             ]
                         )
                         @hydrated(
-                            service: "issues"
                             field: "issuesByIds"
                             arguments: [
                                 {name: "ids", value: "$source.issueId"}
@@ -362,14 +354,12 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         data: ActivityContent
                         @hydrated(
-                            service: "users"
                             field: "usersByIds"
                             arguments: [
                                 {name: "ids", value: "$source.userId"}
                             ]
                         )
                         @hydrated(
-                            service: "issues"
                             field: "issuesByIds"
                             arguments: [
                                 {name: "ids", value: "$source.issueId"}
@@ -448,14 +438,12 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         data: ActivityContent
                         @hydrated(
-                            service: "users"
                             field: "userById"
                             arguments: [
                                 {name: "id", value: "$source.userId"}
                             ]
                         )
                         @hydrated(
-                            service: "issues"
                             field: "issueById"
                             arguments: [
                                 {name: "id", value: "$source.issueId"}
@@ -534,7 +522,6 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         data: ActivityContent
                         @hydrated(
-                            service: "issues"
                             field: "comments"
                             arguments: [
                                 {name: "queries", value: "$source.jiraComment"}
@@ -545,7 +532,6 @@ class NadelHydrationValidationTest2 {
                             ]
                         )
                         @hydrated(
-                            service: "pages"
                             field: "pages"
                             arguments: [
                                 {name: "queries", value: "$source.confluencePage"}
@@ -661,7 +647,6 @@ class NadelHydrationValidationTest2 {
                         id: ID!
                         data: ActivityContent
                         @hydrated(
-                            service: "issues"
                             field: "comments"
                             arguments: [
                                 {name: "queries", value: "$source.jiraComment"}
@@ -672,7 +657,6 @@ class NadelHydrationValidationTest2 {
                             ]
                         )
                         @hydrated(
-                            service: "pages"
                             field: "pages"
                             arguments: [
                                 {name: "queries", value: "$source.confluencePage"}

@@ -14,7 +14,6 @@ overallSchema:
       id: ID
       assignee: User
       @hydrated(
-        service: "Users"
         field: "users"
         arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}]
         identifiedBy: "accountId"

@@ -114,19 +114,16 @@ abstract class BaseHydrationDeferInRenamedFieldTest(
                 assigneeId: ID @hidden
                 self: Issue
                   @hydrated(
-                    service: "issues"
                     field: "issueById"
                     arguments: [{name: "id", value: "$source.id"}]
                   )
                 assignee: User
                   @hydrated(
-                    service: "users"
                     field: "userById"
                     arguments: [{name: "id", value: "$source.assigneeId"}]
                   )
                 assigneeV2: User
                   @hydrated(
-                    service: "users"
                     field: "quickUser"
                     arguments: [{name: "id", value: "$source.assigneeId"}]
                   )

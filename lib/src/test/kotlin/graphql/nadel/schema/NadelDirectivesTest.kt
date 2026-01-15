@@ -15,6 +15,8 @@ import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import io.kotest.core.spec.style.DescribeSpec
+import kotlin.test.assertContains
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 private const val source = "$" + "source"
@@ -54,7 +56,6 @@ class NadelDirectivesTest : DescribeSpec({
                 type Query {
                     field: String
                         @hydrated(
-                            service: "IssueService"
                             field: "jira.issueById"
                             batchSize: 50
                             timeout: 100
@@ -93,6 +94,27 @@ class NadelDirectivesTest : DescribeSpec({
             val secondArgumentSource = hydration.arguments[1]
             assertTrue(secondArgumentSource is NadelHydrationArgumentDefinition.FieldArgument)
             assertTrue(secondArgumentSource.argumentName == "cloudId")
+        }
+
+        it("rejects removed legacy `service` argument") {
+            // given
+            val schemaText = """
+                type Query {
+                    field: String
+                        @hydrated(
+                            service: "IssueService"
+                            field: "jira.issueById"
+                            arguments: []
+                        )
+                }
+                """.trimIndent()
+
+            // when
+            val exception = runCatching { getSchema(schemaText) }.exceptionOrNull()
+
+            // then
+            assertTrue(exception != null, "Expected schema parsing to fail due to unknown 'service' argument")
+            assertContains(exception.message!!, "unknown argument 'service' on directive 'hydrated'")
         }
     }
 })

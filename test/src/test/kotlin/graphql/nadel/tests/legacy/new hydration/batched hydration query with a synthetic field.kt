@@ -46,7 +46,6 @@ class `batched hydration query with a synthetic field` : NadelLegacyIntegrationT
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("users") {
-                        Unit
                     }
                 }
                 wiring.type("UsersQuery") { type ->
@@ -74,7 +73,6 @@ class `batched hydration query with a synthetic field` : NadelLegacyIntegrationT
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "service2"
                     field: "users.usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authorIds"}]
                     identifiedBy: "id"

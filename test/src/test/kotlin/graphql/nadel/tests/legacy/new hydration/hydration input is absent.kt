@@ -47,7 +47,6 @@ class `hydration input is absent` : NadelLegacyIntegrationTest(
                 type Issue {
                   id: ID
                   authors: [User] @hydrated(
-                    service: "UserService"
                     field: "userById"
                     arguments: [
                       {name: "id" value: "${'$'}source.authors.id"}

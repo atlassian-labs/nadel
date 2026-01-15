@@ -38,7 +38,6 @@ class HydrationMultipleNestedSourceArgumentsTest : NadelIntegrationTest(
                   assigneeCriteria: IssueUserCriteria @hidden
                   assignee: User
                     @hydrated(
-                      service: "identity"
                       field: "issueUser"
                       arguments: [
                         {name: "siteId", value: "$source.assigneeCriteria.siteId"}

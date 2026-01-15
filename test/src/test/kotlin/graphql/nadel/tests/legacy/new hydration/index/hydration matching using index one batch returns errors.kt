@@ -78,7 +78,6 @@ class `hydration matching using index one batch returns errors` : NadelLegacyInt
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "ids" value: "${'$'}source.authorIds"}]
                     indexed: true

@@ -100,7 +100,6 @@ class `batch polymorphic hydration with lots of renames` : NadelLegacyIntegratio
                   dataId: ID
                   data: Data
                   @hydrated(
-                    service: "bar"
                     field: "petById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}
@@ -108,7 +107,6 @@ class `batch polymorphic hydration with lots of renames` : NadelLegacyIntegratio
                     identifiedBy: "hiddenId"
                   )
                   @hydrated(
-                    service: "bar"
                     field: "humanById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}

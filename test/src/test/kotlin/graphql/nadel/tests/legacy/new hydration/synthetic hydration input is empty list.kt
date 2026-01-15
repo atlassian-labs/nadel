@@ -54,7 +54,6 @@ class `synthetic hydration input is empty list` : NadelLegacyIntegrationTest(
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersQuery.usersByIds"
                     arguments: [{name: "ids" value: "${'$'}source.authorIds"}]
                     identifiedBy: "id"

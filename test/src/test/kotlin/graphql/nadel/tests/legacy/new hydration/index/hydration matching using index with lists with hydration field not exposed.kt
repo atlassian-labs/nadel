@@ -65,7 +65,6 @@ class `hydration matching using index with lists with hydration field not expose
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIssueIds"
                     arguments: [{name: "issueIds" value: "${'$'}source.id"}]
                     indexed: true

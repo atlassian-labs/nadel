@@ -51,7 +51,6 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                   lastWorkedOnId: ID! @hidden
                   lastWorkedOn: Issue
                     @hydrated(
-                      service: "monolith"
                       field: "issue"
                       arguments: [
                         {name: "id", value: "$source.lastWorkedOnId"}
@@ -160,7 +159,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             service: graphql.nadel.Service,
                             rootField: ExecutableNormalizedField,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
-                        ): NadelTransformServiceExecutionContext? {
+                        ): NadelTransformServiceExecutionContext {
                             val testTransformServiceExecutionContext =
                                 TestTransformServiceExecutionContext(rootField.toExecutionString())
                             transformServiceExecutionContexts.add(testTransformServiceExecutionContext)
@@ -176,7 +175,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             overallField: ExecutableNormalizedField,
                             transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
-                        ): ExecutableNormalizedField? {
+                        ): ExecutableNormalizedField {
                             (serviceExecutionContext as TestServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
                             (transformServiceExecutionContext as TestTransformServiceExecutionContext).isApplicable
                                 .add(overallField.toExecutionString())

@@ -63,7 +63,6 @@ class `top level field is null in batched synthetic hydration` : NadelLegacyInte
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "service2"
                     field: "users.usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authorIds"}]
                     identifiedBy: "id"

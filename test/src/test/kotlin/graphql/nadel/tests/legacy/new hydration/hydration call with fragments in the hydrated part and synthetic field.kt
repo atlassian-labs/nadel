@@ -62,7 +62,6 @@ class `hydration call with fragments in the hydrated part and synthetic field` :
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("userQuery") {
-                        Unit
                     }
                 }
                 wiring.type("UserQuery") { type ->
@@ -88,7 +87,6 @@ class `hydration call with fragments in the hydrated part and synthetic field` :
                   authorDetails: [AuthorDetail]
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "userQuery.usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authorDetails.authorId"}]
                     identifiedBy: "id"

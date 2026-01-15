@@ -19,7 +19,6 @@ overallSchema:
       type: String
       bar: [Bars] 
         @hydrated(
-          service: "service2"
           field: "barsById"
           arguments: [
             {
@@ -35,7 +34,6 @@ overallSchema:
           }
         )
         @hydrated(
-          service: "service2"
           field: "othersById"
           arguments: [
             {
@@ -104,7 +102,9 @@ serviceCalls:
         "data": {
           "foo": {
             "__typename__batch_hydration__bar": "Foo",
-            "batch_hydration__bar__barIds": ["barId1", "barId2"],
+            "batch_hydration__bar__barIds": [
+              "barId1",
+              "barId2"],
             "batch_hydration__bar__type": "thisType"
           }
         },
@@ -124,13 +124,15 @@ serviceCalls:
     response: |-
       {
         "data": {
-          "othersById": [{
-            "batch_hydration__bar__id": "barId1",
-            "name": "Bar1"
-          }, {
-            "batch_hydration__bar__id": "barId2",
-            "name": "Bar2"
-          }]
+          "othersById": [
+            {
+              "batch_hydration__bar__id": "barId1",
+              "name": "Bar1"
+            },
+            {
+              "batch_hydration__bar__id": "barId2",
+              "name": "Bar2"
+            }]
         },
         "extensions": {}
       }
@@ -141,10 +143,10 @@ response: |-
       "foo": {
         "bar": [
           {
-            "name":"Bar1"
+            "name": "Bar1"
           },
           {
-            "name":"Bar2"
+            "name": "Bar2"
           }
         ]
       }

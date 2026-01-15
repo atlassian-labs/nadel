@@ -27,7 +27,6 @@ class `hydration within hydration with variables` : NadelLegacyIntegrationTest(
                   title: String
                   issue: Issue
                   @hydrated(
-                    service: "issues"
                     field: "issue"
                     arguments: [{name: "id" value: "${'$'}source.issueId"}]
                   )
@@ -62,7 +61,6 @@ class `hydration within hydration with variables` : NadelLegacyIntegrationTest(
                   cloudId: ID!
                   comments(first: Int = 20): CommentConnection
                   @hydrated(
-                    service: "comments"
                     field: "comments"
                     arguments: [
                       {name: "cloudId" value: "${'$'}source.cloudId"}

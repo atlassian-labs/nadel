@@ -29,7 +29,6 @@ overallSchema:
       dataId: ID
       data: Data
       @hydrated(
-        service: "bar"
         field: "petById"
         arguments: [
           {name: "ids" value: "$source.dataId"}
@@ -37,7 +36,6 @@ overallSchema:
         identifiedBy: "hiddenId"
       )
       @hydrated(
-        service: "bar"
         field: "humanById"
         arguments: [
           {name: "ids" value: "$source.dataId"}

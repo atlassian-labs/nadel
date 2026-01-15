@@ -29,7 +29,6 @@ class `repeated hydrated fields on the same level overlapping fields in the quer
                 type Foo {
                   issue: Issue
                   @hydrated(
-                    service: "Foo"
                     field: "issue"
                     arguments: [{name: "issueId" value: "${'$'}source.issueId"}]
                   )

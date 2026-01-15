@@ -32,7 +32,6 @@ class `query with three nested hydrations` : NadelLegacyIntegrationTest(
                   name: String
                   nestedBar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barsById"
                     arguments: [{name: "id" value: "${'$'}source.nestedBarId"}]
                     identifiedBy: "barId"
@@ -95,7 +94,6 @@ class `query with three nested hydrations` : NadelLegacyIntegrationTest(
                   name: String
                   bar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barsById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                     identifiedBy: "barId"

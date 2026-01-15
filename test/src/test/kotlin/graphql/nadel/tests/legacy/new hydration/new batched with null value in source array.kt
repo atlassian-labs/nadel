@@ -27,7 +27,6 @@ class `new batched with null value in source array` : NadelLegacyIntegrationTest
                   key: String
                   collaborators: [User]
                   @hydrated(
-                    service: "Users"
                     field: "usersByIds"
                     arguments: [
                       {name: "ids", value: "${'$'}source.collaboratorIds"}

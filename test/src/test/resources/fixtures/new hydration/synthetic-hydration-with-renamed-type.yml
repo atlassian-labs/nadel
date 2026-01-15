@@ -20,7 +20,6 @@ overallSchema:
       id: ID!
       fooBar: Bar
       @hydrated(
-        service: "Bar"
         field: "bars.barById"
         arguments: [{name: "id" value: "$source.fooBarId"}]
       )

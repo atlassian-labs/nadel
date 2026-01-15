@@ -30,13 +30,11 @@ class `same source for  nested hydrations and a rename` : NadelLegacyIntegration
                   renamedField: String @renamed(from: "issue.field")
                   issue: Issue
                   @hydrated(
-                    service: "Foo"
                     field: "issue"
                     arguments: [{name: "issueId" value: "${'$'}source.issue.fooId"}]
                   )
                   detail: Detail
                   @hydrated(
-                    service: "Foo"
                     field: "detail"
                     arguments: [{name: "detailId" value: "${'$'}source.issue.fooId"}]
                   )

@@ -63,7 +63,6 @@ class `batching conditional hydration accepts true condition after a false condi
                       type: String
                       bar: [Bars] 
                         @hydrated(
-                          service: "service2"
                           field: "barsById"
                           arguments: [
                             {
@@ -79,7 +78,6 @@ class `batching conditional hydration accepts true condition after a false condi
                           }
                         )
                         @hydrated(
-                          service: "service2"
                           field: "othersById"
                           arguments: [
                             {

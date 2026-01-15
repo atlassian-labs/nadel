@@ -110,14 +110,12 @@ class `batch polymorphic hydration return top level null and error` : NadelLegac
                   dataId: ID
                   data: Data
                   @hydrated(
-                    service: "pets"
                     field: "petById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}
                     ]
                   )
                   @hydrated(
-                    service: "people"
                     field: "humanById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}
@@ -149,17 +147,17 @@ class `batch polymorphic hydration return top level null and error` : NadelLegac
     )
 ) {
     private data class Pets_Pet(
-        public val id: String? = null,
-        public val breed: String? = null,
+        val id: String? = null,
+        val breed: String? = null,
     )
 
     private data class People_Human(
-        public val id: String? = null,
-        public val name: String? = null,
+        val id: String? = null,
+        val name: String? = null,
     )
 
     private data class Foo_Foo(
-        public val id: String? = null,
-        public val dataId: String? = null,
+        val id: String? = null,
+        val dataId: String? = null,
     )
 }

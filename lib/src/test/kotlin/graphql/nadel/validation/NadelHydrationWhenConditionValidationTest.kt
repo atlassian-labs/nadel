@@ -31,7 +31,6 @@ class NadelHydrationWhenConditionValidationTest {
                         extend type JiraIssue {
                             type: String
                             collaborators: [User] @hydrated(
-                                service: "users"
                                 field: "users"
                                 arguments: [
                                     {name: "id", value: "$source.collaboratorIds"}
@@ -99,7 +98,6 @@ class NadelHydrationWhenConditionValidationTest {
                         extend type JiraIssue {
                             type: String
                             collaborators: [User] @hydrated(
-                                service: "users"
                                 field: "users"
                                 arguments: [
                                     {name: "id", value: "$source.collaboratorIds"}

@@ -24,7 +24,6 @@ class `handles include directive field with hydrated parent` : NadelLegacyIntegr
                 type Foo {
                   id: String
                   water: Foo @hydrated(
-                    service: "service"
                     field: "fooById"
                     arguments: [
                       {name: "id" value: "${'$'}source.id"}

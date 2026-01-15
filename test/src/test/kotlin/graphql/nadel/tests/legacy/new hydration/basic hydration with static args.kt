@@ -56,7 +56,6 @@ class `basic hydration with static args` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [{name: "id" value: "barId"}]
                   )

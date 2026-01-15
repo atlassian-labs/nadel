@@ -50,7 +50,6 @@ class `batching conditional hydration works when equals condition field is null`
                   type: String
                   bar: [Bars] 
                     @hydrated(
-                      service: "service2"
                       field: "barsById"
                       arguments: [
                         {
@@ -66,7 +65,6 @@ class `batching conditional hydration works when equals condition field is null`
                       }
                     )
                     @hydrated(
-                      service: "service2"
                       field: "barsById"
                       arguments: [
                         {

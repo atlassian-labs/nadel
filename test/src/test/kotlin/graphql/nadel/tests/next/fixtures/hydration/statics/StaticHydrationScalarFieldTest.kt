@@ -40,7 +40,6 @@ class StaticHydrationScalarFieldTest : NadelIntegrationTest(
                     id: ID!
                   ): String
                     @hydrated(
-                      service: "graph_store",
                       field: "backingField"
                       arguments: [
                         {

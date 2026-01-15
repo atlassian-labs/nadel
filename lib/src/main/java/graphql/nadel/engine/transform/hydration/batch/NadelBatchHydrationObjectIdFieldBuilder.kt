@@ -24,7 +24,6 @@ import graphql.schema.GraphQLOutputType
  *   key: String
  *
  *   relatedIssues: [Issue] @hydrated(
- *      service: "IssueService"
  *      field: "issues"
  *      arguments : [{ name: "ids" value: "$source.relatedIssueIds" }]
  *      identifiedBy: "id"
