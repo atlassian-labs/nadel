@@ -1,0 +1,121 @@
+name: "spec batch hydration example one issue one assignee"
+enabled: true
+# language=GraphQL
+overallSchema:
+  issues: |
+    type Query {
+      topIssue: Issue
+    }
+    type Issue {
+      title: String
+      assigneeId: ID
+      assignee: User
+      @hydrated(
+        service: "users"
+        field: "usersByIds"
+        arguments: [{name: "ids" value: "$source.assigneeId"}]
+        inputIdentifiedBy: [{sourceId: "assigneeId", resultId: "id"}]
+      )
+    }
+  users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+      email: String
+    }
+# language=GraphQL
+underlyingSchema:
+  issues: |
+    type Query {
+      topIssue: Issue
+      myIssues(n: Int! = 10): [Issue]
+    }
+    type Issue {
+      title: String
+      assigneeId: ID
+      collaboratorIds: [ID!]
+    }
+  users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+      email: String
+    }
+# language=GraphQL
+query: |
+  query {
+    topIssue {
+      title
+      assignee {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "issues"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          topIssue {
+            __typename__batch_hydration__assignee: __typename
+            batch_hydration__assignee__assigneeId: assigneeId 
+            title
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "topIssue": {
+            "__typename__batch_hydration__assignee": "Issue",
+            "batch_hydration__assignee__assigneeId": "user-8",
+            "title": "Popular"
+          }
+        }
+      }
+  - serviceName: "users"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          usersByIds(ids: ["user-8"]) {
+            batch_hydration__assignee__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIds": [
+            {
+              "batch_hydration__assignee__id": "user-8",
+              "name": "2^3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "topIssue": {
+        "title": "Popular",
+        "assignee": {
+          "name": "2^3"
+        }
+      }
+    },
+    "extensions": {}
+  }
