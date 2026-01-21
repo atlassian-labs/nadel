@@ -12,6 +12,7 @@ import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hiddenDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.idHydratedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.maxBatchSizeDirectiveDefinition
 import graphql.nadel.schema.NadelDirectives.nadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
 import graphql.nadel.schema.NadelDirectives.nadelHydrationConditionDefinition
@@ -59,6 +60,7 @@ object NadelBuiltInTypes {
         defaultHydrationDirectiveDefinition,
         idHydratedDirectiveDefinition,
         stubbedDirectiveDefinition,
+        maxBatchSizeDirectiveDefinition,
     ).mapTo(LinkedHashSet()) {
         it.name
     }

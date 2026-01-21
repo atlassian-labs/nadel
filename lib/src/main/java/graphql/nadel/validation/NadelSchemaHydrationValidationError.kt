@@ -496,6 +496,25 @@ data class NadelHydrationReferencesNonExistentBackingFieldError(
     override val subject = virtualField
 }
 
+data class NadelHydrationExceedsMaxBatchSizeError(
+    val parentType: NadelServiceSchemaElement,
+    val virtualField: GraphQLFieldDefinition,
+    val hydration: NadelHydrationDefinition,
+    val requestedBatchSize: Int,
+    val maxBatchSize: Int,
+) : NadelSchemaValidationError {
+    val service: Service get() = parentType.service
+
+    override val message = getHydrationErrorMessage(
+        parentType = parentType,
+        virtualField = virtualField,
+        hydration = hydration,
+        reason = "its requested batch size $requestedBatchSize exceeds specified maximum $maxBatchSize",
+    )
+
+    override val subject = virtualField
+}
+
 data class NadelHydrationResultConditionReferencesNonExistentFieldError(
     val parentType: NadelServiceSchemaElement,
     val virtualField: GraphQLFieldDefinition,
@@ -610,6 +629,22 @@ data class NadelDefaultHydrationFieldNotFoundError(
         val typeName = type.overall.name
         val field = defaultHydration.backingField.joinToString(".")
         "Type $typeName declares @defaultHydration which references field $field that does not exist"
+    }
+
+    override val subject = type.overall
+}
+
+data class NadelDefaultHydrationExceedsMaxBatchSizeError(
+    val type: NadelServiceSchemaElement.Type,
+    val defaultHydration: NadelDefaultHydrationDefinition,
+    val backingField: GraphQLFieldDefinition,
+    val requestedBatchSize: Int,
+    val maxBatchSize: Int,
+) : NadelSchemaValidationError {
+    override val message = run {
+        val typeName = type.overall.name
+        val field = defaultHydration.backingField.joinToString(".")
+        "Type $typeName declares @defaultHydration backed by $field but its batch size $requestedBatchSize exceeds specified maximum $maxBatchSize"
     }
 
     override val subject = type.overall
