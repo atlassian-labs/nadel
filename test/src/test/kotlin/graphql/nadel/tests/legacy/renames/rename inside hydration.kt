@@ -55,14 +55,12 @@ class `rename inside hydration` : NadelLegacyIntegrationTest(
                 type Foo {
                   id: ID
                   bar: Bar @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {name: "id" value: "${'$'}source.barId"}
                     ]
                   )
                   barLongerInput: Bar @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {name: "id" value: "${'$'}source.fooDetails.externalBarId"}

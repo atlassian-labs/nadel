@@ -34,14 +34,12 @@ class `batching multiple source ids going to different services` : NadelLegacyIn
                   contentIds: [ID!]!
                   content: [ActivityContent]
                   @hydrated(
-                    service: "comments"
                     field: "commentsByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.contentIds"}
                     ]
                   )
                   @hydrated(
-                    service: "issues"
                     field: "issuesByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.contentIds"}

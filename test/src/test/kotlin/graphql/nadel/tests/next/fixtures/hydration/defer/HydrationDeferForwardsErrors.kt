@@ -71,13 +71,11 @@ abstract class HydrationDeferForwardsErrors(
                 assigneeId: ID!
                 self: Issue
                   @hydrated(
-                    service: "issues"
                     field: "issueByKey"
                     arguments: [{name: "key", value: "$source.key"}]
                   )
                 assignee: User
                   @hydrated(
-                    service: "users"
                     field: "userById"
                     arguments: [{name: "id", value: "$source.assigneeId"}]
                   )

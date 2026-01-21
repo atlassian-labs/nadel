@@ -27,7 +27,6 @@ class `batch hydration instruction hook returns null` : NadelLegacyIntegrationTe
                   key: String
                   collaborators: [User]
                   @hydrated(
-                    service: "Users"
                     field: "usersByIds"
                     arguments: [
                       {name: "ids", value: "${'$'}source.collaboratorIds"}

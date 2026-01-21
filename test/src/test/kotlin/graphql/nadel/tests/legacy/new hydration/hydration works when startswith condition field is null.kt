@@ -60,7 +60,6 @@ class `hydration works when startswith condition field is null` : NadelLegacyInt
                   type: String
                   bar: Bars
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {

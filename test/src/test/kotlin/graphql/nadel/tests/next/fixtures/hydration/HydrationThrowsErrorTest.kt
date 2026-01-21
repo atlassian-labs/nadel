@@ -43,7 +43,6 @@ class HydrationThrowsErrorTest : NadelIntegrationTest(
                   assigneeId: ID @hidden
                   assignee: User
                     @hydrated(
-                      service: "identity"
                       field: "userById"
                       arguments: [{name: "id", value: "$source.assigneeId"}]
                     )

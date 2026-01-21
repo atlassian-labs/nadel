@@ -21,7 +21,6 @@ overallSchema:
       id: ID
       bar: [Bar]
       @hydrated(
-        service: "service2"
         field: "barsQuery.barsById"
         arguments: [{name: "id" value: "$source.barId"}]
       )

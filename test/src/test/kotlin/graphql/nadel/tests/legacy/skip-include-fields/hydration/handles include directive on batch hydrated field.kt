@@ -23,7 +23,6 @@ class `handles include directive on batch hydrated field` : NadelLegacyIntegrati
                 }
                 type Foo {
                   test: Test @hydrated(
-                    service: "service"
                     field: "tests"
                     arguments: [
                       {name: "ids" value: "${'$'}source.id"}

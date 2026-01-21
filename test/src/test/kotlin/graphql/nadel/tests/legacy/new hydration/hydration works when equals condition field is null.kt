@@ -60,7 +60,6 @@ class `hydration works when equals condition field is null` : NadelLegacyIntegra
                   type: String
                   bar: Bars
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {
@@ -76,7 +75,6 @@ class `hydration works when equals condition field is null` : NadelLegacyIntegra
                     }
                   )
                   @hydrated(
-                    service: "service2" 
                     field: "barById" 
                     arguments: [
                       {

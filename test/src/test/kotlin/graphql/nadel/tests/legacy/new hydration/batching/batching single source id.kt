@@ -34,14 +34,12 @@ class `batching single source id` : NadelLegacyIntegrationTest(
                   contentId: ID!
                   content: ActivityContent
                   @hydrated(
-                    service: "comments"
                     field: "commentsByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.contentId"}
                     ]
                   )
                   @hydrated(
-                    service: "issues"
                     field: "issuesByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.contentId"}

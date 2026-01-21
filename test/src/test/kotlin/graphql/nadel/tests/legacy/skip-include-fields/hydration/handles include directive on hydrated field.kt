@@ -21,7 +21,6 @@ class `handles include directive on hydrated field` : NadelLegacyIntegrationTest
                 }
                 type Foo {
                   name: String @hydrated(
-                    service: "service"
                     field: "test"
                     arguments: [
                       {name: "id" value: "${'$'}source.id"}

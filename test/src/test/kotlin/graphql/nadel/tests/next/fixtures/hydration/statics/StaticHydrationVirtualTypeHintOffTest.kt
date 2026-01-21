@@ -150,7 +150,6 @@ class StaticHydrationVirtualTypeHintOffTest : NadelIntegrationTest(
                     after: String
                   ): WorkConnection
                     @hydrated(
-                      service: "graph_store",
                       field: "graphStore_query"
                       arguments: [
                         {
@@ -176,7 +175,6 @@ class StaticHydrationVirtualTypeHintOffTest : NadelIntegrationTest(
                   nodeId: ID @hidden
                   node: WorkNode
                     @hydrated(
-                      service: "jira"
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )

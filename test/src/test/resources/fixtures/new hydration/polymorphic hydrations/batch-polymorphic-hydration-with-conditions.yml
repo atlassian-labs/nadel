@@ -30,7 +30,6 @@ overallSchema:
       dataId: ID
       data: Data
       @hydrated(
-        service: "pets"
         field: "petById"
         arguments: [
           {name: "ids" value: "$source.dataId"}
@@ -43,7 +42,6 @@ overallSchema:
         }
       )
       @hydrated(
-        service: "people"
         field: "humanById"
         arguments: [
           {name: "ids" value: "$source.dataId"}
@@ -155,7 +153,7 @@ serviceCalls:
               "batch_hydration__data__dataId": "HUMAN-1",
               "batch_hydration__data__dataId": "HUMAN-1",
               "id": "FOO-3"
-            } ]
+            }]
         },
         "extensions": {}
       }

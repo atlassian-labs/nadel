@@ -12,7 +12,6 @@ overallSchema:
       name: String
       owners: [Owner]
       @hydrated(
-        service: "OwnerService"
         field: "ownerById"
         arguments: [{name: "id" value: "$source.ownerIds"}]
       )
@@ -24,7 +23,6 @@ overallSchema:
       wearsBell: Boolean
       owners: [Owner]
       @hydrated(
-        service: "OwnerService"
         field: "ownerById"
         arguments: [{name: "id" value: "$source.ownerIds"}]
       )
@@ -36,7 +34,6 @@ overallSchema:
       wearsCollar: Boolean
       owners: [Owner]
       @hydrated(
-        service: "OwnerService"
         field: "ownerById"
         arguments: [{name: "id" value: "$source.ownerIds"}]
       )

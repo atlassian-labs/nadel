@@ -104,7 +104,6 @@ class `batch polymorphic hydration with conditions` : NadelLegacyIntegrationTest
                   dataId: ID
                   data: Data
                   @hydrated(
-                    service: "pets"
                     field: "petById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}
@@ -117,7 +116,6 @@ class `batch polymorphic hydration with conditions` : NadelLegacyIntegrationTest
                     }
                   )
                   @hydrated(
-                    service: "people"
                     field: "humanById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}

@@ -27,7 +27,6 @@ class `no object fields in the result are backed a hydration` : NadelLegacyInteg
                   id: ID!
                   user: User
                   @hydrated(
-                    service: "users"
                     field: "userById"
                     arguments: [{name: "id" value: "${'$'}source.userId"}]
                   )

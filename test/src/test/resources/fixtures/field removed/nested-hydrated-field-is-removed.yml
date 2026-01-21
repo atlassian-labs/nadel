@@ -15,13 +15,11 @@ overallSchema:
       epic: Epic
       reporter: User
       @hydrated(
-        service: "UserService"
         field: "userById"
         arguments: [{name: "id" value: "$source.reporterId"}]
       )
       comments: [Comment]
       @hydrated(
-        service: "CommentService"
         field: "commentById"
         arguments: [{name: "id" value: "$source.commentIds"}]
       )
@@ -52,7 +50,6 @@ overallSchema:
       created: String
       author: User
       @hydrated(
-        service: "UserService"
         field: "userById"
         arguments: [{name: "id" value: "$source.authorId"}]
       )

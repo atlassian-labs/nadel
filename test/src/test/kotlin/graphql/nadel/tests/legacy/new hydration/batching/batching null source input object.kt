@@ -28,7 +28,6 @@ class `batching null source input object` : NadelLegacyIntegrationTest(
                   id: ID!
                   content: Issue
                     @hydrated(
-                      service: "issues"
                       field: "issuesByIds"
                       arguments: [
                         {name: "ids" value: "${'$'}source.reference.issueId"}

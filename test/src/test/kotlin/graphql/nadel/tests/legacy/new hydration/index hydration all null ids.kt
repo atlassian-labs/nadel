@@ -27,7 +27,6 @@ class `index hydration all null ids` : NadelLegacyIntegrationTest(
                   key: String
                   collaborators: [User]
                   @hydrated(
-                    service: "Users"
                     field: "usersByIds"
                     arguments: [
                       {name: "ids", value: "${'$'}source.collaboratorIds"}

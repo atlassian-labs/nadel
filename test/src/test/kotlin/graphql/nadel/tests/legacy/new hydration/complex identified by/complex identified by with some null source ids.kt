@@ -82,7 +82,6 @@ class `complex identified by with some null source ids` : NadelLegacyIntegration
                 type Issue {
                   id: ID
                   authors: [User] @hydrated(
-                    service: "UserService"
                     field: "users"
                     arguments: [{name: "id" value: "${'$'}source.authorIds"}]
                     inputIdentifiedBy: [

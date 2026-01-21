@@ -33,7 +33,6 @@ class DeferGroupingTest : NadelIntegrationTest(
                   assigneeId: ID @hidden
                   assignee: User
                     @hydrated(
-                      service: "monolith"
                       field: "user"
                       arguments: [{name: "id", value: "$source.assigneeId"}]
                     )

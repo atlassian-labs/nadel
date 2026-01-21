@@ -69,7 +69,6 @@ class `conditional hydration equals predicate works with integer type` : NadelLe
                   type: Int
                   bar: Bars
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {
@@ -85,7 +84,6 @@ class `conditional hydration equals predicate works with integer type` : NadelLe
                     }
                   )
                   @hydrated(
-                    service: "service2" 
                     field: "barById" 
                     arguments: [
                       {

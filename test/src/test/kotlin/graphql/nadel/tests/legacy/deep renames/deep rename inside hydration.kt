@@ -56,7 +56,6 @@ class `deep rename inside hydration` : NadelLegacyIntegrationTest(
                 type User {
                   issueId: ID
                   issue: Issue @hydrated(
-                    service: "IssueService"
                     field: "issueById"
                     arguments: [
                       {name: "id" value: "${'$'}source.issueId"}

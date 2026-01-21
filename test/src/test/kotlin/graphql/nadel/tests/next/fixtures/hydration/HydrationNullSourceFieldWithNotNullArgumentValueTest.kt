@@ -27,7 +27,6 @@ class HydrationNullSourceFieldWithNotNullArgumentValueTest : NadelIntegrationTes
                   userId: ID
                   user(referer: String): User
                     @hydrated(
-                      service: "monolith"
                       field: "userById"
                       arguments: [{name: "id", value: "$source.userId"}, {name: "referer", value: "$argument.referer"}]
                     )
