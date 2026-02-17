@@ -1,11 +1,13 @@
 package graphql.nadel.validation
 
+import graphql.introspection.Introspection
 import graphql.language.UnionTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.NadelTypeRenameInstruction
 import graphql.nadel.engine.util.AnyNamedNode
 import graphql.nadel.engine.util.isExtensionDef
 import graphql.nadel.engine.util.operationTypes
+import graphql.nadel.engine.util.whenType
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
@@ -16,8 +18,10 @@ import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.getReferencedTypeNames
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLImplementingType
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLUnionType
+import graphql.schema.idl.ScalarInfo
 
 internal class NadelTypeValidation(
     private val stubbedValidation: NadelStubbedValidation,
@@ -62,14 +66,57 @@ internal class NadelTypeValidation(
         val reachableOverallTypeNames = serviceTypes
             .mapTo(mutableSetOf()) { it.overall.name }
         val reachableUnderlyingTypeNames = serviceTypes
-            .map { it.underlying.name }
+            .mapTo(mutableSetOf()) { it.underlying.name }
+
+        fun underlyingTypeInheritsFromExposedInterface(implementingType: GraphQLImplementingType): Boolean {
+            return implementingType.interfaces.any { underlyingInterface ->
+                underlyingInterface.name in reachableUnderlyingTypeNames
+            }
+        }
 
         val definedUnderlyingTypeNames = service.underlyingSchema.typeMap.keys
+        val definedUnderlyingTypeNamesReachableByExposedInterface = definedUnderlyingTypeNames
+            .filter { typeName ->
+                // Ignore these types
+                if (
+                    ScalarInfo.isGraphqlSpecifiedScalar(typeName)
+                    || Introspection.isIntrospectionTypes(typeName)
+                    || typeName in reachableUnderlyingTypeNames
+                ) {
+                    false
+                } else {
+                    val type = service.underlyingSchema.typeMap[typeName]!!
+                    type.whenType(
+                        enumType = {
+                            false
+                        },
+                        inputObjectType = {
+                            false
+                        },
+                        interfaceType = {
+                            underlyingTypeInheritsFromExposedInterface(it)
+                        },
+                        objectType = {
+                            underlyingTypeInheritsFromExposedInterface(it)
+                        },
+                        scalarType = {
+                            false
+                        },
+                        unionType = {
+                            false
+                        },
+                    )
+                }
+            }
 
         return NadelReachableServiceTypesResult(
             service = service,
             overallTypeNames = reachableOverallTypeNames,
             underlyingTypeNames = (reachableUnderlyingTypeNames + definedUnderlyingTypeNames).toSet(),
+            // Experimental. Trying to fix service type ownership problem.
+            reachableUnderlyingTypeNames = reachableUnderlyingTypeNames,
+            // Experimental. Trying to fix service type ownership problem.
+            reducedUnderlyingTypeNames = reachableUnderlyingTypeNames + definedUnderlyingTypeNamesReachableByExposedInterface,
         )
     }
 
