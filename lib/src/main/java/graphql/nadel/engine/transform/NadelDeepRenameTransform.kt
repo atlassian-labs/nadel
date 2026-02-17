@@ -164,17 +164,17 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
-        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
+        val objectTypeNamesWithoutRename = field.objectTypeNames.filter { it !in state.instructionsByObjectTypeNames }
 
         return NadelTransformFieldResult(
-            newField = objectTypesNoRenames
-                .takeIf(List<GraphQLObjectTypeName>::isNotEmpty)
-                ?.let {
-                    field.toBuilder()
-                        .clearObjectTypesNames()
-                        .objectTypeNames(it)
-                        .build()
-                },
+            newField = if (objectTypeNamesWithoutRename.isNotEmpty()) {
+                field.toBuilder()
+                    .clearObjectTypesNames()
+                    .objectTypeNames(objectTypeNamesWithoutRename)
+                    .build()
+            } else {
+                null
+            },
             artificialFields = state.instructionsByObjectTypeNames
                 .map { (objectTypeWithRename, instruction) ->
                     makeDeepField(
@@ -336,4 +336,3 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         }
     }
 }
-
