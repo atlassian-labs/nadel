@@ -97,7 +97,7 @@ interface NadelExecutionHooks {
     }
 
     fun partitionTransformerHook(): NadelPartitionTransformHook {
-        return object: NadelPartitionTransformHook {
+        return object : NadelPartitionTransformHook {
             override fun getFieldPartitionContext(
                 executionContext: NadelExecutionContext,
                 serviceExecutionContext: NadelServiceExecutionContext,
@@ -114,6 +114,27 @@ interface NadelExecutionHooks {
                 return NadelPartitionKeyExtractor.noop
             }
         }
+    }
+
+    fun reportSharedTypeDecisionImpact(
+        executionContext: NadelExecutionContext,
+        service: Service,
+        objectTypeName: String,
+    ) {
+    }
+
+    fun reportReachableTypeDecisionInconsistency(
+        executionContext: NadelExecutionContext,
+        service: Service,
+        objectTypeName: String,
+    ) {
+    }
+
+    fun reportReducedTypeDecisionInconsistency(
+        executionContext: NadelExecutionContext,
+        service: Service,
+        objectTypeName: String,
+    ) {
     }
 }
 

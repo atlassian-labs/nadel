@@ -142,6 +142,8 @@ class NadelSchemaValidation internal constructor(
             ),
             underlyingTypeNamesByService = typenamesForService.associate { it.service to it.underlyingTypeNames },
             overallTypeNamesByService = typenamesForService.associate { it.service to it.overallTypeNames },
+            reachableUnderlyingTypeNamesByService = typenamesForService.associate { it.service to it.reachableUnderlyingTypeNames },
+            reducedUnderlyingTypeNamesByService = typenamesForService.associate { it.service to it.reducedUnderlyingTypeNames },
             underlyingBlueprints = schemas.services.associate { service -> // Blank map to ensure that all services are represented
                 service.name to NadelUnderlyingExecutionBlueprint(
                     service = service,

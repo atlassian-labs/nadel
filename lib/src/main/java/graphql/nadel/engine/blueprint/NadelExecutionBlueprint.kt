@@ -18,24 +18,43 @@ data class NadelOverallExecutionBlueprint(
     val engineSchema: GraphQLSchema,
     val fieldInstructions: NadelFieldMap<List<NadelFieldInstruction>>,
     private val underlyingTypeNamesByService: Map<Service, Set<String>>,
+    /**
+     * Experimental. Trying to fix service type ownership problem.
+     */
+    private val reachableUnderlyingTypeNamesByService: Map<Service, Set<String>>,
+    /**
+     * Experimental. Trying to fix service type ownership problem.
+     */
+    private val reducedUnderlyingTypeNamesByService: Map<Service, Set<String>>,
     private val overallTypeNamesByService: Map<Service, Set<String>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,
     private val typeRenamesByOverallTypeName: Map<String, NadelTypeRenameInstruction>,
 ) {
-    private fun setOfServiceTypes(
-        map: Map<Service, Set<String>>,
-        service: Service,
-    ): Set<String> {
-        return (map[service] ?: error("Could not find service: ${service.name}"))
+    fun getUnderlyingTypeNamesForService(service: Service): Set<String> {
+        return underlyingTypeNamesByService[service]
+            ?: throw IllegalArgumentException("How could service ${service.name} not exist?")
     }
 
-    fun getUnderlyingTypeNamesForService(service: Service): Set<String> {
-        return setOfServiceTypes(underlyingTypeNamesByService, service)
+    /**
+     * Experimental. Trying to fix service type ownership problem.
+     */
+    fun getReachableUnderlyingTypeNamesForService(service: Service): Set<String> {
+        return reachableUnderlyingTypeNamesByService[service]
+            ?: throw IllegalArgumentException("How could service ${service.name} not exist?")
+    }
+
+    /**
+     * Experimental. Trying to fix service type ownership problem.
+     */
+    fun getReducedUnderlyingTypeNamesForService(service: Service): Set<String> {
+        return reducedUnderlyingTypeNamesByService[service]
+            ?: throw IllegalArgumentException("How could service ${service.name} not exist?")
     }
 
     fun getOverAllTypeNamesForService(service: Service): Set<String> {
-        return setOfServiceTypes(overallTypeNamesByService, service)
+        return overallTypeNamesByService[service]
+            ?: throw IllegalArgumentException("How could service ${service.name} not exist?")
     }
 
     fun getUnderlyingTypeName(

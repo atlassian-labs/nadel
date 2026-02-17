@@ -81,6 +81,14 @@ internal class NadelValidatedTypeResult(
 internal class NadelReachableServiceTypesResult(
     override val service: Service,
     val underlyingTypeNames: Set<String>,
+    /**
+     * Experimental. Trying to fix service type ownership problem.
+     */
+    val reachableUnderlyingTypeNames: Set<String>,
+    /**
+     * Experimental. Trying to fix service type ownership problem.
+     */
+    val reducedUnderlyingTypeNames: Set<String>,
     val overallTypeNames: Set<String>,
 ) : NadelSchemaValidationResult, NadelServiceValidationResult {
     override val isError: Boolean = false

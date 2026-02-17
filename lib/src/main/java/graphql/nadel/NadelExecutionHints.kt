@@ -6,6 +6,7 @@ import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelHydrationExecutableSourceFields
 import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
+import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
@@ -22,6 +23,7 @@ data class NadelExecutionHints(
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
     val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
+    val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -44,6 +46,7 @@ data class NadelExecutionHints(
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
         private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
         private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
+        private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
 
         constructor()
 
@@ -58,6 +61,7 @@ data class NadelExecutionHints(
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
             hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
             hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
+            shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -110,6 +114,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun shadowUnderlyingTypeNameInvestigation(flag: NadelShadowUnderlyingTypeNameInvestigation): Builder {
+            shadowUnderlyingTypeNameInvestigation = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -122,6 +131,7 @@ data class NadelExecutionHints(
                 executeOnEngineSchema,
                 hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,
+                shadowUnderlyingTypeNameInvestigation,
             )
         }
     }
