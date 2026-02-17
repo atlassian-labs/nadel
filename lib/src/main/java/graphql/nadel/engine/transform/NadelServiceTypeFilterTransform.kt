@@ -98,7 +98,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
 
         val shadow = executionContext.hints.shadowUnderlyingTypeNameInvestigation(executionContext)
 
-        // Assume for most cases there aren't foreign types so there is no point filtering to a new List
         fun checkSharedTypes(objectTypeName: String): Boolean {
             val result = executionContext.hints.sharedTypeRenames(service)
                 && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService
@@ -127,6 +126,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             return result
         }
 
+        // Assume for most cases there aren't foreign types so there is no point filtering to a new List
         val noForeignTypes = overallField.objectTypeNames
             .all { objectTypeName ->
                 objectTypeName in typeNamesOwnedByService
