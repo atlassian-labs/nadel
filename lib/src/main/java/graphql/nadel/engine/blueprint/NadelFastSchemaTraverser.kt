@@ -18,19 +18,18 @@ internal class NadelSchemaTraverser {
         visitor: NadelSchemaTraverserVisitor,
     ) {
         val typeRoots = schema.typeMap.asSequence()
+            .filterNot { (typeName) ->
+                Introspection.isIntrospectionTypes(typeName) || ScalarInfo.isGraphqlSpecifiedScalar(typeName)
+            }
             .map { (_, type) ->
                 NadelSchemaTraverserElement.from(type)
             }
-            .filterNot {
-                val nodeName = it.node.name
-                Introspection.isIntrospectionTypes(nodeName) || ScalarInfo.isGraphqlSpecifiedScalar(nodeName)
-            }
         val directiveRoots = schema.directives.asSequence()
+            .filterNot { directive ->
+                DirectiveInfo.isGraphqlSpecifiedDirective(directive.name)
+            }
             .map { directive ->
                 NadelSchemaTraverserElement.from(directive)
-            }
-            .filterNot {
-                DirectiveInfo.isGraphqlSpecifiedDirective(it.node.name)
             }
 
         return traverse((typeRoots + directiveRoots).asIterable(), visitor)
