@@ -72,7 +72,7 @@ internal class NadelInstructionDefinitionParser(
                     override fun visitGraphQLFieldDefinition(
                         element: NadelSchemaTraverserElement.FieldDefinition,
                     ): Boolean {
-                        val parent = element.parent
+                        val parent = element.parent.node
                         val node = element.node
 
                         val coords by lazy {

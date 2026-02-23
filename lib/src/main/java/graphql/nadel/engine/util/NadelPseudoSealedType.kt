@@ -11,6 +11,8 @@ import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLList
+import graphql.schema.GraphQLNamedInputType
+import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLNonNull
 import graphql.schema.GraphQLObjectType
@@ -27,6 +29,36 @@ inline fun <T> GraphQLFieldsContainer.whenType(
     return when (this) {
         is GraphQLInterfaceType -> interfaceType(this)
         is GraphQLObjectType -> objectType(this)
+        else -> throw IllegalStateException("Should never happen")
+    }
+}
+
+inline fun <T> GraphQLNamedInputType.whenType(
+    enumType: (GraphQLEnumType) -> T,
+    inputObjectType: (GraphQLInputObjectType) -> T,
+    scalarType: (GraphQLScalarType) -> T,
+): T {
+    return when (this) {
+        is GraphQLEnumType -> enumType(this)
+        is GraphQLInputObjectType -> inputObjectType(this)
+        is GraphQLScalarType -> scalarType(this)
+        else -> throw IllegalStateException("Should never happen")
+    }
+}
+
+inline fun <T> GraphQLNamedOutputType.whenType(
+    enumType: (GraphQLEnumType) -> T,
+    interfaceType: (GraphQLInterfaceType) -> T,
+    objectType: (GraphQLObjectType) -> T,
+    scalarType: (GraphQLScalarType) -> T,
+    unionType: (GraphQLUnionType) -> T,
+): T {
+    return when (this) {
+        is GraphQLEnumType -> enumType(this)
+        is GraphQLInterfaceType -> interfaceType(this)
+        is GraphQLObjectType -> objectType(this)
+        is GraphQLScalarType -> scalarType(this)
+        is GraphQLUnionType -> unionType(this)
         else -> throw IllegalStateException("Should never happen")
     }
 }
