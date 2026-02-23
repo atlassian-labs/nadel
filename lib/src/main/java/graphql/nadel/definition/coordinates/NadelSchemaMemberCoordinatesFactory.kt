@@ -3,7 +3,7 @@ package graphql.nadel.definition.coordinates
 import graphql.nadel.engine.blueprint.NadelSchemaTraverser
 import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
 import graphql.nadel.engine.blueprint.NadelSchemaTraverserVisitor
-import graphql.schema.GraphQLNamedSchemaElement
+import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.DirectiveInfo
@@ -14,47 +14,52 @@ class NadelSchemaMemberCoordinatesFactory {
         schema: GraphQLSchema,
     ): Set<NadelSchemaMemberCoordinates> {
         val roots = buildList {
-            add(schema.queryType.name)
-            val mutationType = schema.mutationType
-            if (mutationType != null) {
-                add(mutationType.name)
+            fun addGraphQLType(type: GraphQLNamedType?) {
+                if (type != null) {
+                    add(NadelSchemaTraverserElement.from(type))
+                }
             }
-            val subscriptionType = schema.subscriptionType
-            if (subscriptionType != null) {
-                add(subscriptionType.name)
+
+            fun addGraphQLDirective(directive: GraphQLDirective?) {
+                if (directive != null) {
+                    add(NadelSchemaTraverserElement.from(directive))
+                }
             }
+
+            addGraphQLType(schema.queryType)
+            addGraphQLType(schema.mutationType)
+            addGraphQLType(schema.subscriptionType)
+
             schema.additionalTypes.forEach { type ->
                 if (type is GraphQLNamedType) {
-                    add(type.name)
+                    addGraphQLType(type)
                 }
             }
             schema.directives.forEach { directive ->
-                add(directive.name)
+                addGraphQLDirective(directive)
             }
         }
 
-        return createImpl(schema, roots)
+        return createImpl(roots)
     }
 
     fun create(
-        schema: GraphQLSchema,
-        roots: List<GraphQLNamedSchemaElement>,
+        roots: List<GraphQLNamedType>,
     ): Set<NadelSchemaMemberCoordinates> {
         return createImpl(
-            schema,
-            roots = roots.map { it.name },
+            roots = roots.map {
+                NadelSchemaTraverserElement.from(it)
+            },
         )
     }
 
     private fun createImpl(
-        schema: GraphQLSchema,
-        roots: List<String>,
+        roots: List<NadelSchemaTraverserElement>,
     ): Set<NadelSchemaMemberCoordinates> {
         val coordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
 
         NadelSchemaTraverser()
             .traverse(
-                schema,
                 roots,
                 object : NadelSchemaTraverserVisitor {
                     override fun visitGraphQLArgument(
