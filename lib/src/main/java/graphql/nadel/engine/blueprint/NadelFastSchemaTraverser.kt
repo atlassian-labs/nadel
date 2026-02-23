@@ -1,6 +1,9 @@
 package graphql.nadel.engine.blueprint
 
+import graphql.introspection.Introspection
 import graphql.schema.GraphQLSchema
+import graphql.schema.idl.DirectiveInfo
+import graphql.schema.idl.ScalarInfo
 
 /**
  * Significantly faster than normal [graphql.schema.SchemaTraverser] as it's simpler.
@@ -10,6 +13,29 @@ import graphql.schema.GraphQLSchema
  * That's 4x faster.
  */
 internal class NadelSchemaTraverser {
+    fun traverse(
+        schema: GraphQLSchema,
+        visitor: NadelSchemaTraverserVisitor,
+    ) {
+        val typeRoots = schema.typeMap.asSequence()
+            .map { (_, type) ->
+                NadelSchemaTraverserElement.from(type)
+            }
+            .filterNot {
+                val nodeName = it.node.name
+                Introspection.isIntrospectionTypes(nodeName) || ScalarInfo.isGraphqlSpecifiedScalar(nodeName)
+            }
+        val directiveRoots = schema.directives.asSequence()
+            .map { directive ->
+                NadelSchemaTraverserElement.from(directive)
+            }
+            .filterNot {
+                DirectiveInfo.isGraphqlSpecifiedDirective(it.node.name)
+            }
+
+        return traverse((typeRoots + directiveRoots).asIterable(), visitor)
+    }
+
     fun traverse(
         schema: GraphQLSchema,
         roots: Iterable<String>,
