@@ -87,6 +87,7 @@ class NadelSchemaMemberCoordinatesFactoryTest {
             }
             type Query {
                 me: AuthenticationContext!
+                authContext: AuthenticationContext @deprecated(reason: "Hello world")
                 user(accountId: ID!): User
                 users(accountIds: [ID!]!): [User!]
                 thirdPartyUsers(ids: [ID!]!): [ThirdPartyUser!]
@@ -96,6 +97,8 @@ class NadelSchemaMemberCoordinatesFactoryTest {
         val expectedSet = setOf(
             NadelObjectCoordinates("Query"),
             NadelObjectCoordinates("Query").field("me"),
+            NadelObjectCoordinates("Query").field("authContext"),
+            NadelObjectCoordinates("Query").field("authContext").appliedDirective("deprecated"),
             NadelObjectCoordinates("AuthenticationContext"),
             NadelObjectCoordinates("AuthenticationContext").field("user"),
             NadelInterfaceCoordinates("User"),

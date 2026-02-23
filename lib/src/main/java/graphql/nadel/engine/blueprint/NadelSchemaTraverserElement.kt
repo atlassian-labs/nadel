@@ -71,7 +71,7 @@ internal sealed interface NadelSchemaTraverserElement {
         override fun coordinates(): NadelArgumentParentCoordinates
     }
 
-    sealed interface Argument : NadelSchemaTraverserElement {
+    sealed interface Argument : NadelSchemaTraverserElement, AppliedDirectiveParent {
         override val parent: ArgumentParent
 
         override val node: GraphQLArgument
@@ -82,6 +82,10 @@ internal sealed interface NadelSchemaTraverserElement {
 
         override fun forEachChild(onElement: (NadelSchemaTraverserElement) -> Unit) {
             onElement(InputType.from(node.type))
+
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
@@ -144,7 +148,7 @@ internal sealed interface NadelSchemaTraverserElement {
 
     data class UnionType(
         override val node: GraphQLUnionType,
-    ) : NadelSchemaTraverserElement, Type, OutputType {
+    ) : NadelSchemaTraverserElement, Type, OutputType, AppliedDirectiveParent {
         override val parent: NadelSchemaTraverserElement? = null
 
         override fun coordinates(): NadelUnionCoordinates {
@@ -154,6 +158,10 @@ internal sealed interface NadelSchemaTraverserElement {
         override fun forEachChild(onElement: (NadelSchemaTraverserElement) -> Unit) {
             node.types.forEach { member ->
                 onElement(UnionMemberType(this, member as GraphQLObjectType))
+            }
+
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
             }
         }
     }
@@ -179,7 +187,7 @@ internal sealed interface NadelSchemaTraverserElement {
 
     data class InterfaceType(
         override val node: GraphQLInterfaceType,
-    ) : NadelSchemaTraverserElement, Type, OutputType, FieldsContainer {
+    ) : NadelSchemaTraverserElement, Type, OutputType, FieldsContainer, AppliedDirectiveParent {
         override val parent: NadelSchemaTraverserElement? = null
 
         override fun coordinates(): NadelInterfaceCoordinates {
@@ -193,12 +201,15 @@ internal sealed interface NadelSchemaTraverserElement {
             node.interfaces.forEach { parentType ->
                 onElement(InterfaceType(parentType as GraphQLInterfaceType))
             }
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
     data class EnumType(
         override val node: GraphQLEnumType,
-    ) : NadelSchemaTraverserElement, Type, InputType, OutputType {
+    ) : NadelSchemaTraverserElement, Type, InputType, OutputType, AppliedDirectiveParent {
         override val parent: NadelSchemaTraverserElement? = null
 
         override fun coordinates(): NadelEnumCoordinates {
@@ -209,25 +220,32 @@ internal sealed interface NadelSchemaTraverserElement {
             node.values.forEach { value ->
                 onElement(EnumValueDefinition(this, value))
             }
+
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
     data class EnumValueDefinition(
         override val parent: EnumType,
         override val node: GraphQLEnumValueDefinition,
-    ) : NadelSchemaTraverserElement {
+    ) : NadelSchemaTraverserElement, AppliedDirectiveParent {
         override fun coordinates(): NadelEnumValueCoordinates {
             return parent.coordinates().enumValue(node.name)
         }
 
         override fun forEachChild(onElement: (NadelSchemaTraverserElement) -> Unit) {
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
     data class FieldDefinition(
         override val parent: FieldsContainer,
         override val node: GraphQLFieldDefinition,
-    ) : NadelSchemaTraverserElement, ArgumentParent {
+    ) : NadelSchemaTraverserElement, ArgumentParent, AppliedDirectiveParent {
         override fun coordinates(): NadelFieldCoordinates {
             return parent.coordinates().field(node.name)
         }
@@ -238,25 +256,33 @@ internal sealed interface NadelSchemaTraverserElement {
             node.arguments.forEach { arg ->
                 onElement(FieldArgument(this, arg))
             }
+
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
     data class InputObjectField(
         override val parent: InputObjectType,
         override val node: GraphQLInputObjectField,
-    ) : NadelSchemaTraverserElement {
+    ) : NadelSchemaTraverserElement, AppliedDirectiveParent {
         override fun coordinates(): NadelInputObjectFieldCoordinates {
             return parent.coordinates().field(node.name)
         }
 
         override fun forEachChild(onElement: (NadelSchemaTraverserElement) -> Unit) {
             onElement(InputType.from(node.type))
+
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
     data class InputObjectType(
         override val node: GraphQLInputObjectType,
-    ) : NadelSchemaTraverserElement, Type, InputType {
+    ) : NadelSchemaTraverserElement, Type, InputType, AppliedDirectiveParent {
         override val parent: NadelSchemaTraverserElement? = null
 
         override fun coordinates(): NadelInputObjectCoordinates {
@@ -267,12 +293,16 @@ internal sealed interface NadelSchemaTraverserElement {
             node.fields.forEach { field ->
                 onElement(InputObjectField(this, field))
             }
+
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
     data class ObjectType(
         override val node: GraphQLObjectType,
-    ) : NadelSchemaTraverserElement, Type, OutputType, FieldsContainer {
+    ) : NadelSchemaTraverserElement, Type, OutputType, FieldsContainer, AppliedDirectiveParent {
         override val parent: NadelSchemaTraverserElement? = null
 
         override fun coordinates(): NadelObjectCoordinates {
@@ -287,12 +317,16 @@ internal sealed interface NadelSchemaTraverserElement {
             node.interfaces.forEach { parentType ->
                 onElement(InterfaceType(parentType as GraphQLInterfaceType))
             }
+
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
     data class ScalarType(
         override val node: GraphQLScalarType,
-    ) : NadelSchemaTraverserElement, Type, InputType, OutputType {
+    ) : NadelSchemaTraverserElement, Type, InputType, OutputType , AppliedDirectiveParent{
         override val parent: NadelSchemaTraverserElement? = null
 
         override fun coordinates(): NadelScalarCoordinates {
@@ -300,6 +334,9 @@ internal sealed interface NadelSchemaTraverserElement {
         }
 
         override fun forEachChild(onElement: (NadelSchemaTraverserElement) -> Unit) {
+            node.appliedDirectives.forEach {
+                onElement(AppliedDirective(this, it))
+            }
         }
     }
 
@@ -323,14 +360,14 @@ internal sealed interface NadelSchemaTraverserElement {
         override val parent: AppliedDirectiveParent,
         override val node: GraphQLAppliedDirective,
     ) : NadelSchemaTraverserElement {
+        override fun coordinates(): NadelAppliedDirectiveCoordinates {
+            return parent.coordinates().appliedDirective(node.name)
+        }
+
         override fun forEachChild(onElement: (NadelSchemaTraverserElement) -> Unit) {
             node.arguments.forEach { arg ->
                 onElement(AppliedDirectiveArgument(this, arg))
             }
-        }
-
-        override fun coordinates(): NadelAppliedDirectiveCoordinates {
-            return parent.coordinates().appliedDirective(node.name)
         }
     }
 

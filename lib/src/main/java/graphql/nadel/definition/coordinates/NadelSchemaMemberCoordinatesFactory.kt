@@ -160,7 +160,7 @@ class NadelSchemaMemberCoordinatesFactory {
                         element: NadelSchemaTraverserElement.AppliedDirective,
                     ): Boolean {
                         coordinates.add(element.coordinates())
-                        return true
+                        return false // Don't traverse argument further
                     }
 
                     override fun visitGraphQLAppliedDirectiveArgument(
