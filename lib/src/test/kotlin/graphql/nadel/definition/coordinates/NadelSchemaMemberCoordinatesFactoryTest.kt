@@ -188,4 +188,125 @@ class NadelSchemaMemberCoordinatesFactoryTest {
 
         assertTrue(coordinates.size == expectedSet.size)
     }
+
+    @Test
+    fun `generates coordinates for minimal schema with single query field`() {
+        val schema = SchemaGenerator.createdMockedSchema(
+            """
+                type Query {
+                    hello: String
+                }
+            """.trimIndent()
+        )
+
+        val expectedSet = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("hello"),
+        )
+
+        // When
+        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
+
+        // Then
+        for (expected in expectedSet) {
+            assertTrue(coordinates.contains(expected))
+        }
+        for (actual in coordinates) {
+            assertTrue(expectedSet.contains(actual))
+        }
+        assertTrue(coordinates.size == expectedSet.size)
+    }
+
+    @Test
+    fun `generates coordinates for schema with union type`() {
+        val schema = SchemaGenerator.createdMockedSchema(
+            """
+                type Query {
+                    result: SearchResult
+                }
+                union SearchResult = User | Product
+                type User {
+                    id: ID!
+                    name: String
+                }
+                type Product {
+                    id: ID!
+                    title: String
+                }
+            """.trimIndent()
+        )
+
+        val expectedSet = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("result"),
+            NadelUnionCoordinates("SearchResult"),
+            NadelObjectCoordinates("User"),
+            NadelObjectCoordinates("User").field("id"),
+            NadelObjectCoordinates("User").field("name"),
+            NadelObjectCoordinates("Product"),
+            NadelObjectCoordinates("Product").field("id"),
+            NadelObjectCoordinates("Product").field("title"),
+        )
+
+        // When
+        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
+
+        // Then
+        for (expected in expectedSet) {
+            assertTrue(coordinates.contains(expected))
+        }
+        for (actual in coordinates) {
+            assertTrue(expectedSet.contains(actual))
+        }
+        assertTrue(coordinates.size == expectedSet.size)
+    }
+
+    @Test
+    fun `generates coordinates for schema with input type and mutation`() {
+        val schema = SchemaGenerator.createdMockedSchema(
+            """
+                type Query {
+                    user(id: ID!): User
+                }
+                type Mutation {
+                    createUser(input: CreateUserInput!): User
+                }
+                input CreateUserInput {
+                    name: String!
+                    email: String
+                }
+                type User {
+                    id: ID!
+                    name: String
+                }
+            """.trimIndent()
+        )
+
+        val expectedSet = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("user"),
+            NadelObjectCoordinates("Query").field("user").argument("id"),
+            NadelObjectCoordinates("Mutation"),
+            NadelObjectCoordinates("Mutation").field("createUser"),
+            NadelObjectCoordinates("Mutation").field("createUser").argument("input"),
+            NadelInputObjectCoordinates("CreateUserInput"),
+            NadelInputObjectCoordinates("CreateUserInput").field("name"),
+            NadelInputObjectCoordinates("CreateUserInput").field("email"),
+            NadelObjectCoordinates("User"),
+            NadelObjectCoordinates("User").field("id"),
+            NadelObjectCoordinates("User").field("name"),
+        )
+
+        // When
+        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
+
+        // Then
+        for (expected in expectedSet) {
+            assertTrue(coordinates.contains(expected))
+        }
+        for (actual in coordinates) {
+            assertTrue(expectedSet.contains(actual))
+        }
+        assertTrue(coordinates.size == expectedSet.size)
+    }
 }

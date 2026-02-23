@@ -7,9 +7,9 @@ import graphql.nadel.definition.coordinates.NadelInterfaceCoordinates
 import graphql.nadel.definition.coordinates.NadelObjectCoordinates
 import graphql.nadel.definition.coordinates.NadelScalarCoordinates
 import graphql.nadel.definition.coordinates.NadelSchemaMemberCoordinates
+import graphql.nadel.definition.coordinates.NadelUnionCoordinates
 import graphql.schema.idl.SchemaGenerator
 import org.junit.jupiter.api.Test
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NadelSchemaTraverserTest {
@@ -29,9 +29,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelObjectCoordinates("Query"),
@@ -45,6 +42,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -68,9 +69,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelObjectCoordinates("Query"),
@@ -87,6 +85,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -105,9 +107,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelObjectCoordinates("Query"),
@@ -123,6 +122,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("Int"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -138,9 +141,8 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
 
-        NadelSchemaTraverser().traverse(schema, visitor)
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
 
         val deprecatedOnOldField = NadelObjectCoordinates("Query").field("oldField").appliedDirective("deprecated")
         assertTrue(deprecatedOnOldField in traversedCoordinates)
@@ -168,9 +170,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelObjectCoordinates("Query"),
@@ -180,6 +179,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -202,9 +205,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelObjectCoordinates("Query"),
@@ -220,6 +220,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -239,9 +243,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelObjectCoordinates("Query"),
@@ -252,6 +253,10 @@ class NadelSchemaTraverserTest {
             NadelEnumCoordinates("Status").enumValue("PENDING"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -269,9 +274,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelScalarCoordinates("DateTime"),
@@ -281,6 +283,10 @@ class NadelSchemaTraverserTest {
             NadelObjectCoordinates("Query").field("metadata"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -296,9 +302,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelDirectiveCoordinates("custom"),
@@ -310,6 +313,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -325,9 +332,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelDirectiveCoordinates("auth"),
@@ -339,6 +343,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -371,9 +379,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-        val visitor = AccumulatingVisitor(traversedCoordinates)
-
-        NadelSchemaTraverser().traverse(schema, visitor)
 
         val expectedCoordinates = setOf(
             NadelDirectiveCoordinates("custom"),
@@ -400,6 +405,135 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
+        assertTrue(traversedCoordinates == expectedCoordinates)
+    }
+
+    @Test
+    fun `traverse visits union type and its member types`() {
+        val schema = SchemaGenerator.createdMockedSchema(
+            """
+                type Query {
+                    node: Node
+                }
+                union Node = User | Post
+                type User {
+                    id: ID!
+                    name: String
+                }
+                type Post {
+                    id: ID!
+                    title: String
+                }
+            """.trimIndent()
+        )
+
+        val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
+
+        val expectedCoordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("node"),
+            NadelUnionCoordinates("Node"),
+            NadelObjectCoordinates("User"),
+            NadelObjectCoordinates("User").field("id"),
+            NadelObjectCoordinates("User").field("name"),
+            NadelObjectCoordinates("Post"),
+            NadelObjectCoordinates("Post").field("id"),
+            NadelObjectCoordinates("Post").field("title"),
+            NadelScalarCoordinates("ID"),
+            NadelScalarCoordinates("String"),
+        )
+
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
+        assertTrue(traversedCoordinates == expectedCoordinates)
+    }
+
+    @Test
+    fun `traverse with explicit roots only traverses from specified roots`() {
+        val schema = SchemaGenerator.createdMockedSchema(
+            """
+                type Query {
+                    user(id: ID!): User
+                }
+                type User {
+                    id: ID!
+                    name: String
+                }
+                type Orphan {
+                    x: Int
+                }
+            """.trimIndent()
+        )
+
+        val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
+        val expectedCoordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("user"),
+            NadelObjectCoordinates("Query").field("user").argument("id"),
+            NadelObjectCoordinates("User"),
+            NadelObjectCoordinates("User").field("id"),
+            NadelObjectCoordinates("User").field("name"),
+            NadelScalarCoordinates("ID"),
+            NadelScalarCoordinates("String"),
+        )
+
+        // When
+        NadelSchemaTraverser().traverse(
+            schema = schema,
+            roots = listOf("Query"),
+            visitor = AccumulatingVisitor(traversedCoordinates),
+        )
+
+        // Then
+        assertTrue(traversedCoordinates == expectedCoordinates)
+    }
+
+    @Test
+    fun `traverse visits object type with multiple interfaces`() {
+        val schema = SchemaGenerator.createdMockedSchema(
+            """
+                type Query {
+                    item: Item
+                }
+                interface Identifiable {
+                    id: ID!
+                }
+                interface Named {
+                    name: String
+                }
+                type Item implements Identifiable & Named {
+                    id: ID!
+                    name: String
+                }
+            """.trimIndent()
+        )
+
+        val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
+
+        val expectedCoordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("item"),
+            NadelInterfaceCoordinates("Identifiable"),
+            NadelInterfaceCoordinates("Identifiable").field("id"),
+            NadelInterfaceCoordinates("Named"),
+            NadelInterfaceCoordinates("Named").field("name"),
+            NadelObjectCoordinates("Item"),
+            NadelObjectCoordinates("Item").field("id"),
+            NadelObjectCoordinates("Item").field("name"),
+            NadelScalarCoordinates("ID"),
+            NadelScalarCoordinates("String"),
+        )
+
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -418,7 +552,15 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
+        val expectedCoordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("user"),
+            NadelObjectCoordinates("Query").field("user").argument("id"),
+            NadelObjectCoordinates("User"),
+            NadelScalarCoordinates("ID"),
+        )
 
+        // When
         NadelSchemaTraverser().traverse(
             schema,
             object : AccumulatingVisitor(traversedCoordinates) {
@@ -429,18 +571,7 @@ class NadelSchemaTraverserTest {
             },
         )
 
-        assertTrue(NadelObjectCoordinates("User") in traversedCoordinates)
-        assertFalse(NadelObjectCoordinates("User").field("id") in traversedCoordinates)
-        assertFalse(NadelObjectCoordinates("User").field("name") in traversedCoordinates)
-
-        val expectedCoordinates = setOf(
-            NadelObjectCoordinates("Query"),
-            NadelObjectCoordinates("Query").field("user"),
-            NadelObjectCoordinates("Query").field("user").argument("id"),
-            NadelObjectCoordinates("User"),
-            NadelScalarCoordinates("ID"),
-        )
-
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -458,6 +589,15 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
+        val expectedCoordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("user"),
+            NadelObjectCoordinates("User"),
+            NadelObjectCoordinates("User").field("id"),
+            NadelScalarCoordinates("ID"),
+        )
+
+        // When
         NadelSchemaTraverser().traverse(
             schema,
             object : AccumulatingVisitor(traversedCoordinates) {
@@ -468,14 +608,7 @@ class NadelSchemaTraverserTest {
             },
         )
 
-        val expectedCoordinates = setOf(
-            NadelObjectCoordinates("Query"),
-            NadelObjectCoordinates("Query").field("user"),
-            NadelObjectCoordinates("User"),
-            NadelObjectCoordinates("User").field("id"),
-            NadelScalarCoordinates("ID"),
-        )
-
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
@@ -490,6 +623,14 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
+        val expectedCoordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("oldField"),
+            NadelObjectCoordinates("Query").field("oldField").appliedDirective("deprecated"),
+            NadelScalarCoordinates("String")
+        )
+
+        // When
         NadelSchemaTraverser().traverse(
             schema,
             object : AccumulatingVisitor(traversedCoordinates) {
@@ -498,13 +639,6 @@ class NadelSchemaTraverserTest {
                     return false
                 }
             },
-        )
-
-        val expectedCoordinates = setOf(
-            NadelObjectCoordinates("Query"),
-            NadelObjectCoordinates("Query").field("oldField"),
-            NadelObjectCoordinates("Query").field("oldField").appliedDirective("deprecated"),
-            NadelScalarCoordinates("String")
         )
 
         assertTrue(traversedCoordinates == expectedCoordinates)
