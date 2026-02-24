@@ -94,7 +94,7 @@ private class NadelReferencedTypeVisitor(
     }
 
     override fun visitGraphQLUnionMemberType(element: NadelSchemaTraverserElement.UnionMemberType): Boolean {
-        val union = element.parent
+        val union = element.parent.node
         val memberType = element.node
         // Don't look at union members defined by external services
         return !isUnionMemberExempt(service, union, memberType)
@@ -132,7 +132,7 @@ private class NadelReferencedTypeVisitor(
     override fun visitGraphQLFieldDefinition(
         element: NadelSchemaTraverserElement.FieldDefinition,
     ): Boolean {
-        val parent = element.parent
+        val parent = element.parent.node
         val node = element.node
 
         // Don't look at fields contributed by other services

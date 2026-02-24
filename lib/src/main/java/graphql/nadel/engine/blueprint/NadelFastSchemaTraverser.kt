@@ -1,6 +1,9 @@
 package graphql.nadel.engine.blueprint
 
+import graphql.introspection.Introspection
 import graphql.schema.GraphQLSchema
+import graphql.schema.idl.DirectiveInfo
+import graphql.schema.idl.ScalarInfo
 
 /**
  * Significantly faster than normal [graphql.schema.SchemaTraverser] as it's simpler.
@@ -12,10 +15,32 @@ import graphql.schema.GraphQLSchema
 internal class NadelSchemaTraverser {
     fun traverse(
         schema: GraphQLSchema,
+        visitor: NadelSchemaTraverserVisitor,
+    ) {
+        val typeRoots = schema.typeMap.asSequence()
+            .filterNot { (typeName) ->
+                Introspection.isIntrospectionTypes(typeName) || ScalarInfo.isGraphqlSpecifiedScalar(typeName)
+            }
+            .map { (_, type) ->
+                NadelSchemaTraverserElement.from(type)
+            }
+        val directiveRoots = schema.directives.asSequence()
+            .filterNot { directive ->
+                DirectiveInfo.isGraphqlSpecifiedDirective(directive.name)
+            }
+            .map { directive ->
+                NadelSchemaTraverserElement.from(directive)
+            }
+
+        return traverse((typeRoots + directiveRoots).asIterable(), visitor)
+    }
+
+    fun traverse(
+        schema: GraphQLSchema,
         roots: Iterable<String>,
         visitor: NadelSchemaTraverserVisitor,
     ) {
-        val queue: MutableList<NadelSchemaTraverserElement> = roots
+        val rootsResolved: MutableList<NadelSchemaTraverserElement> = roots
             .mapNotNullTo(mutableListOf()) { typeName ->
                 val type = schema.typeMap[typeName]
                 // Types can be deleted by transformer, so they may not exist in end schema
@@ -31,11 +56,27 @@ internal class NadelSchemaTraverser {
                 }
             }
 
-        val visitedTypes: MutableSet<String> = roots.toMutableSet()
+        return traverse(rootsResolved, visitor)
+    }
+
+    fun traverse(
+        roots: Iterable<NadelSchemaTraverserElement>,
+        visitor: NadelSchemaTraverserVisitor,
+    ) {
+        val queue: MutableList<NadelSchemaTraverserElement> = roots.toMutableList()
+
+        val visitedRoots: MutableSet<String> = roots
+            .mapNotNullTo(mutableSetOf()) {
+                if (it is NadelSchemaTraverserElement.Type) {
+                    it.node.name
+                } else {
+                    null
+                }
+            }
 
         val addToQueue = fun(element: NadelSchemaTraverserElement) {
             if (element is NadelSchemaTraverserElement.Type) {
-                if (visitedTypes.add(element.node.name)) {
+                if (visitedRoots.add(element.node.name)) {
                     queue.add(element)
                 }
             } else {

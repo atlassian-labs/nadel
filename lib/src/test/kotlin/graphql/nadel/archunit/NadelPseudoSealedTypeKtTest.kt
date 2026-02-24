@@ -8,6 +8,8 @@ import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLNamedInputType
+import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
@@ -35,6 +37,42 @@ class NadelPseudoSealedTypeKtTest {
             .equalsExactly(
                 GraphQLInterfaceType::class,
                 GraphQLObjectType::class,
+            )
+            .check(schemaClasses)
+    }
+
+    @Test
+    fun `whenType(GraphQLNamedInputType)`() {
+        classes()
+            .that()
+            .areAssignableTo(GraphQLNamedInputType::class.java)
+            .and()
+            .areNotInterfaces()
+            .equalsExactly(
+                GraphQLEnumType::class,
+                GraphQLInputObjectType::class,
+                GraphQLScalarType::class,
+                // Should almost never be used though
+                GraphQLTypeReference::class,
+            )
+            .check(schemaClasses)
+    }
+
+    @Test
+    fun `whenType(GraphQLNamedOutputType)`() {
+        classes()
+            .that()
+            .areAssignableTo(GraphQLNamedOutputType::class.java)
+            .and()
+            .areNotInterfaces()
+            .equalsExactly(
+                GraphQLEnumType::class,
+                GraphQLInterfaceType::class,
+                GraphQLObjectType::class,
+                GraphQLScalarType::class,
+                GraphQLUnionType::class,
+                // Should almost never be used though
+                GraphQLTypeReference::class,
             )
             .check(schemaClasses)
     }
