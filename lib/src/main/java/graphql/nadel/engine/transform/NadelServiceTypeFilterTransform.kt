@@ -4,6 +4,7 @@ import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition.Keyword.result
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
@@ -97,33 +98,43 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         val underlyingTypeNamesOwnedByService = executionBlueprint.getUnderlyingTypeNamesForService(service)
 
         val shadow = executionContext.hints.shadowUnderlyingTypeNameInvestigation(executionContext)
+        val useReachableUnderlyingServiceTypes = executionContext.hints.useReachableUnderlyingServiceTypes(service)
+        val disableSharedTypes = executionContext.hints.disableSharedTypes(service)
 
         fun checkSharedTypes(objectTypeName: String): Boolean {
-            val result = executionContext.hints.sharedTypeRenames(service)
-                && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService
-            if (result && shadow) {
-                executionContext.hooks.reportSharedTypeDecisionImpact(executionContext, service, objectTypeName)
+            return if (disableSharedTypes) {
+                false
+            } else {
+                val result = executionContext.hints.sharedTypeRenames(service)
+                    && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService
+                if (result && shadow) {
+                    executionContext.hooks.reportSharedTypeDecisionImpact(executionContext, service, objectTypeName)
+                }
+                result
             }
-            return result
         }
 
         fun checkUnderlyingType(objectTypeName: String): Boolean {
-            val result = objectTypeName in underlyingTypeNamesOwnedByService
-            if (shadow) {
-                val reachableUnderlyingTypeNameCheck =
-                    objectTypeName in executionBlueprint.getReachableUnderlyingTypeNamesForService(service)
-                val reducedUnderlyingTypeNameCheck =
-                    objectTypeName in executionBlueprint.getReducedUnderlyingTypeNamesForService(service)
-                if (result != reachableUnderlyingTypeNameCheck) {
-                    executionContext.hooks
-                        .reportReachableTypeDecisionInconsistency(executionContext, service, objectTypeName)
+            return if (useReachableUnderlyingServiceTypes) {
+                objectTypeName in executionBlueprint.getReachableUnderlyingTypeNamesForService(service)
+            } else {
+                val result = objectTypeName in underlyingTypeNamesOwnedByService
+                if (shadow) {
+                    val reachableUnderlyingTypeNameCheck =
+                        objectTypeName in executionBlueprint.getReachableUnderlyingTypeNamesForService(service)
+                    val reducedUnderlyingTypeNameCheck =
+                        objectTypeName in executionBlueprint.getReducedUnderlyingTypeNamesForService(service)
+                    if (result != reachableUnderlyingTypeNameCheck) {
+                        executionContext.hooks
+                            .reportReachableTypeDecisionInconsistency(executionContext, service, objectTypeName)
+                    }
+                    if (result != reducedUnderlyingTypeNameCheck) {
+                        executionContext.hooks
+                            .reportReducedTypeDecisionInconsistency(executionContext, service, objectTypeName)
+                    }
                 }
-                if (result != reducedUnderlyingTypeNameCheck) {
-                    executionContext.hooks
-                        .reportReducedTypeDecisionInconsistency(executionContext, service, objectTypeName)
-                }
+                result
             }
-            return result
         }
 
         // Assume for most cases there aren't foreign types so there is no point filtering to a new List
