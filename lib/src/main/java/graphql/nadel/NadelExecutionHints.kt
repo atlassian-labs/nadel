@@ -3,9 +3,11 @@ package graphql.nadel
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelDeferSupportHint
+import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelHydrationExecutableSourceFields
 import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
+import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
 import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
@@ -24,6 +26,8 @@ data class NadelExecutionHints(
     val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
     val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
+    val disableSharedTypes: NadelDisableSharedTypesHint,
+    val useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -47,6 +51,8 @@ data class NadelExecutionHints(
         private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
         private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
         private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
+        private var disableSharedTypes = NadelDisableSharedTypesHint { false }
+        private var useReachableUnderlyingServiceTypes = NadelReachableUnderlyingServiceTypesHint { false }
 
         constructor()
 
@@ -62,6 +68,8 @@ data class NadelExecutionHints(
             hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
             hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
             shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
+            disableSharedTypes = nadelExecutionHints.disableSharedTypes
+            useReachableUnderlyingServiceTypes = nadelExecutionHints.useReachableUnderlyingServiceTypes
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -119,6 +127,16 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun disableSharedTypes(flag: NadelDisableSharedTypesHint): Builder {
+            disableSharedTypes = flag
+            return this
+        }
+
+        fun useReachableUnderlyingServiceTypes(flag: NadelReachableUnderlyingServiceTypesHint): Builder {
+            useReachableUnderlyingServiceTypes = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -132,6 +150,8 @@ data class NadelExecutionHints(
                 hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,
                 shadowUnderlyingTypeNameInvestigation,
+                disableSharedTypes,
+                useReachableUnderlyingServiceTypes,
             )
         }
     }
