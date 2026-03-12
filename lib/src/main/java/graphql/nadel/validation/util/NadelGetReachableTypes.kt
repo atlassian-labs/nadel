@@ -5,12 +5,12 @@ import graphql.nadel.Service
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.stubbed.hasStubbedDefinition
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
-import graphql.nadel.engine.blueprint.NadelSchemaTraverser
-import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
-import graphql.nadel.engine.blueprint.NadelSchemaTraverserVisitor
 import graphql.nadel.engine.util.getFieldAt
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.schema.NadelSchemaTraverser
+import graphql.nadel.schema.NadelSchemaTraverserElement
+import graphql.nadel.schema.NadelSchemaTraverserVisitor
 import graphql.nadel.validation.NadelValidationContext
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.schema.GraphQLDirectiveContainer

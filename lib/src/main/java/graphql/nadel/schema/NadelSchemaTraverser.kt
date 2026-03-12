@@ -1,4 +1,4 @@
-package graphql.nadel.engine.blueprint
+package graphql.nadel.schema
 
 import graphql.introspection.Introspection
 import graphql.schema.GraphQLSchema

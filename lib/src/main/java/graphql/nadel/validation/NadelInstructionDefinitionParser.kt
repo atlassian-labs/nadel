@@ -10,9 +10,9 @@ import graphql.nadel.definition.renamed.parseRenamedOrNull
 import graphql.nadel.definition.stubbed.parseStubbedOrNull
 import graphql.nadel.definition.virtualType.NadelVirtualTypeDefinition
 import graphql.nadel.definition.virtualType.hasVirtualTypeDefinition
-import graphql.nadel.engine.blueprint.NadelSchemaTraverser
-import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
-import graphql.nadel.engine.blueprint.NadelSchemaTraverserVisitor
+import graphql.nadel.schema.NadelSchemaTraverser
+import graphql.nadel.schema.NadelSchemaTraverserElement
+import graphql.nadel.schema.NadelSchemaTraverserVisitor
 import graphql.schema.GraphQLSchema
 
 internal class NadelInstructionDefinitionParser(

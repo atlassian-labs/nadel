@@ -1,4 +1,4 @@
-package graphql.nadel.engine.blueprint
+package graphql.nadel.schema
 
 import graphql.nadel.definition.coordinates.NadelAppliedDirectiveArgumentCoordinates
 import graphql.nadel.definition.coordinates.NadelAppliedDirectiveCoordinates
