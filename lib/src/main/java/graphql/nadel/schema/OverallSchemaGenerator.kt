@@ -24,25 +24,30 @@ internal class OverallSchemaGenerator {
     fun buildOverallSchema(
         serviceRegistries: List<NadelTypeDefinitionRegistry>,
         wiringFactory: WiringFactory,
+        schemaDefinitionTransformationHook: NadelSchemaDefinitionTransformationHook,
     ): GraphQLSchema {
         val schemaGenerator = SchemaGenerator()
         val runtimeWiring = RuntimeWiring.newRuntimeWiring()
             .wiringFactory(wiringFactory)
-            .codeRegistry(
-                NeverWiringFactory.NEVER_CODE_REGISTRY
-            )
+            .codeRegistry(NeverWiringFactory.NEVER_CODE_REGISTRY)
             .build()
 
-        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring)
+        val definitions = getDefinitions(serviceRegistries)
+            .let {
+                schemaDefinitionTransformationHook.apply(it)
+            }
+
+        val typeRegistry = createTypeRegistry(definitions)
+
+        return schemaGenerator.makeExecutableSchema(typeRegistry, runtimeWiring)
     }
 
-    private fun createTypeRegistry(serviceRegistries: List<NadelTypeDefinitionRegistry>): TypeDefinitionRegistry {
+    private fun getDefinitions(serviceRegistries: List<NadelTypeDefinitionRegistry>): List<AnySDLDefinition> {
         val topLevelFields = NadelOperationKind.entries
             .associateWith {
                 mutableListOf<FieldDefinition>()
             }
 
-        val overallRegistry = TypeDefinitionRegistry()
         val allDefinitions = ArrayList<AnySDLDefinition>()
 
         for (definitionRegistry in serviceRegistries) {
@@ -53,7 +58,7 @@ internal class OverallSchemaGenerator {
         topLevelFields.keys.forEach { operationKind ->
             val fields = topLevelFields[operationKind]
             if (fields?.isNotEmpty() == true) {
-                overallRegistry.add(
+                allDefinitions.add(
                     newObjectTypeDefinition()
                         .name(operationKind.defaultTypeName)
                         .sourceLocation(SourceLocation(-1, -1, "Generated"))
@@ -64,30 +69,36 @@ internal class OverallSchemaGenerator {
         }
 
         // add our custom directives if they are not present
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationArgumentDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.virtualTypeDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.defaultHydrationDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.idHydratedDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.stubbedDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.renamedDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hiddenDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelBatchObjectIdentifiedByDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationResultFieldPredicateDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationResultConditionDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationConditionDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationRemainingArguments)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.deferDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.namespacedDirectiveDefinition)
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.partitionDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.nadelHydrationArgumentDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.hydratedDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.virtualTypeDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.defaultHydrationDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.idHydratedDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.stubbedDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.renamedDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.hiddenDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.nadelBatchObjectIdentifiedByDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.nadelHydrationResultFieldPredicateDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.nadelHydrationResultConditionDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.nadelHydrationConditionDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.nadelHydrationRemainingArguments)
+        addIfNotPresent(allDefinitions, NadelDirectives.deferDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.namespacedDirectiveDefinition)
+        addIfNotPresent(allDefinitions, NadelDirectives.partitionDirectiveDefinition)
 
         addIfNotPresent(
-            overallRegistry, allDefinitions, newScalarTypeDefinition()
+            allDefinitions, newScalarTypeDefinition()
                 .name(ExtendedScalars.Json.name)
                 .build()
         )
 
-        for (definition in allDefinitions) {
+        return allDefinitions
+    }
+
+    private fun createTypeRegistry(definitions: List<AnySDLDefinition>): TypeDefinitionRegistry {
+        val overallRegistry = TypeDefinitionRegistry()
+
+        for (definition in definitions) {
             val error = overallRegistry.add(definition)
             if (error.isPresent) {
                 throw GraphQLException("Unable to add definition to overall registry: " + error.get().message)
@@ -98,12 +109,11 @@ internal class OverallSchemaGenerator {
     }
 
     private inline fun <reified T : AnySDLNamedDefinition> addIfNotPresent(
-        overallRegistry: TypeDefinitionRegistry,
-        allDefinitions: List<AnySDLDefinition>,
+        allDefinitions: MutableList<AnySDLDefinition>,
         namedDefinition: T,
     ) {
         if (!containsElement(allDefinitions, namedDefinition)) {
-            overallRegistry.add(namedDefinition)
+            allDefinitions.add(namedDefinition)
         }
     }
 
@@ -115,7 +125,7 @@ internal class OverallSchemaGenerator {
             .asSequence()
             .filterIsInstance<AnyNamedNode>()
             .filter { it.name == def.name }
-            // if it's an `extent type Foo` then it does not count since we need an actual `type Foo` defined
+            // if it's an `extend type Foo` then it does not count since we need an actual `type Foo` defined
             .filterNot { it.isExtensionDef }
             .any { element ->
                 require(element is T) {
