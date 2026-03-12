@@ -43,18 +43,8 @@ class NadelFieldDefinitionVisibilityTransformation(
                 }
             }
 
-        // val observedBeforeTransform = getStronglyReferencedTypes(definitions)
-        // val observedAfterTransform = getStronglyReferencedTypes(newDefinitions)
-
         val observedBeforeTransform = getStronglyReferencedTypes(definitions)
         val observedAfterTransform = getStronglyReferencedTypes(newDefinitions)
-
-        // if (observedBeforeTransform != observedBeforeTransform2) {
-        //     println("observedBeforeTransform mismatch")
-        // }
-        // if (observedAfterTransform != observedAfterTransform2) {
-        //     println("observedAfterTransform mismatch")
-        // }
 
         return newDefinitions
             .filter { definition ->
