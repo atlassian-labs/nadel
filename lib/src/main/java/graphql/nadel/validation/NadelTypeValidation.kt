@@ -203,7 +203,7 @@ internal class NadelTypeValidation(
         }
 
         // Ignore scalar renames, refer to test "let jsw do jsw things"
-        if (type is NadelServiceSchemaElement.Scalar) {
+        if (type is NadelServiceSchemaElement.Scalar && type.service.name == "jsw") {
             return ok()
         }
 

@@ -3,7 +3,7 @@ name: "let jsw do jsw things"
 enabled: true
 # language=GraphQL
 overallSchema:
-  service: |
+  jsw: |
     type Query {
       foo: A
     }
@@ -15,7 +15,7 @@ overallSchema:
     scalar D @renamed(from: "Y")
 # language=GraphQL
 underlyingSchema:
-  service: |
+  jsw: |
     type Query {
       foo: X
     }
@@ -30,7 +30,7 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: "service"
+  - serviceName: "jsw"
     request:
       # language=GraphQL
       query: |
