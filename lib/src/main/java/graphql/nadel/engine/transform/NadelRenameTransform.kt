@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.toList
 internal class NadelRenameTransform : NadelTransform<State> {
     data class State(
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelRenameFieldInstruction>,
-        val objectTypesWithoutRename: Set<String>,
         val aliasHelper: NadelAliasHelper,
         val overallField: ExecutableNormalizedField,
         val service: Service,
@@ -52,14 +51,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
             return null
         }
 
-        val objectsWithoutRename = overallField.objectTypeNames
-            .asSequence()
-            .filterNot { it in renameInstructions }
-            .toHashSet()
-
         return State(
             renameInstructions,
-            objectsWithoutRename,
             NadelAliasHelper.forField(tag = "rename", overallField),
             overallField,
             service,
@@ -76,11 +69,13 @@ internal class NadelRenameTransform : NadelTransform<State> {
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
+        val objectTypeNamesWithoutRename = field.objectTypeNames.filter { it !in state.instructionsByObjectTypeNames }
+
         return NadelTransformFieldResult(
-            newField = if (state.objectTypesWithoutRename.isNotEmpty()) {
+            newField = if (objectTypeNamesWithoutRename.isNotEmpty()) {
                 field.toBuilder()
                     .clearObjectTypesNames()
-                    .objectTypeNames(field.objectTypeNames.filter { it in state.objectTypesWithoutRename })
+                    .objectTypeNames(objectTypeNamesWithoutRename)
                     .build()
             } else {
                 null
@@ -131,13 +126,12 @@ internal class NadelRenameTransform : NadelTransform<State> {
         field: ExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
-        val setOfFieldObjectTypeNames = field.objectTypeNames.toSet()
         return state.instructionsByObjectTypeNames
             .asSequence()
             .asFlow() // For coroutines
             .filter { (typeName) ->
                 // Don't insert type renames for fields that were never asked for
-                typeName in setOfFieldObjectTypeNames
+                typeName in field.objectTypeNames
             }
             .map { (typeName, instruction) ->
                 makeRenamedField(
@@ -235,4 +229,3 @@ internal class NadelRenameTransform : NadelTransform<State> {
         )
     }
 }
-

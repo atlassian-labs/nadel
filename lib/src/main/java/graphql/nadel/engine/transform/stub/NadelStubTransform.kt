@@ -59,16 +59,16 @@ internal class NadelStubTransform : NadelTransform<StubState> {
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         // When stubbing interface fields, we allow some implementations to be stubbed, other fields can be real impls
-        val objectTypesWithRealFieldImplementations = field.objectTypeNames - state.stubByObjectTypeNames.keys
+        val objectTypesNamesWithoutStubbed = field.objectTypeNames.filter { it !in state.stubByObjectTypeNames }
 
         return NadelTransformFieldResult(
-            newField = if (objectTypesWithRealFieldImplementations.isEmpty()) {
-                null
-            } else {
+            newField = if (objectTypesNamesWithoutStubbed.isNotEmpty()) {
                 field.toBuilder()
                     .clearObjectTypesNames()
-                    .objectTypeNames(objectTypesWithRealFieldImplementations.toList())
+                    .objectTypeNames(objectTypesNamesWithoutStubbed)
                     .build()
+            } else {
+                null
             },
             artificialFields = listOfNotNull(
                 makeTypeNameField(state, field),

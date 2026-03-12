@@ -109,17 +109,18 @@ internal class NadelHydrationTransform(
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
-        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
+        val objectTypesNamesWithoutHydration =
+            field.objectTypeNames.filter { it !in state.instructionsByObjectTypeNames }
 
         return NadelTransformFieldResult(
-            newField = objectTypesNoRenames
-                .takeIf(List<GraphQLObjectTypeName>::isNotEmpty)
-                ?.let {
-                    field.toBuilder()
-                        .clearObjectTypesNames()
-                        .objectTypeNames(it)
-                        .build()
-                },
+            newField = if (objectTypesNamesWithoutHydration.isNotEmpty()) {
+                field.toBuilder()
+                    .clearObjectTypesNames()
+                    .objectTypeNames(objectTypesNamesWithoutHydration)
+                    .build()
+            } else {
+                null
+            },
             artificialFields = state.instructionsByObjectTypeNames
                 .flatMap { (typeName, instruction) ->
                     NadelHydrationFieldsBuilder.makeRequiredSourceFields(
