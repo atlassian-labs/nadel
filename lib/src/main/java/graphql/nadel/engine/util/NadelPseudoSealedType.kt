@@ -5,6 +5,28 @@
  */
 package graphql.nadel.engine.util
 
+import graphql.language.DirectiveDefinition
+import graphql.language.EnumTypeDefinition
+import graphql.language.EnumTypeExtensionDefinition
+import graphql.language.ImplementingTypeDefinition
+import graphql.language.InputObjectTypeDefinition
+import graphql.language.InputObjectTypeExtensionDefinition
+import graphql.language.InterfaceTypeDefinition
+import graphql.language.InterfaceTypeExtensionDefinition
+import graphql.language.ListType
+import graphql.language.NonNullType
+import graphql.language.ObjectTypeDefinition
+import graphql.language.ObjectTypeExtensionDefinition
+import graphql.language.SDLNamedDefinition
+import graphql.language.ScalarTypeDefinition
+import graphql.language.ScalarTypeExtensionDefinition
+import graphql.language.SchemaDefinition
+import graphql.language.SchemaExtensionDefinition
+import graphql.language.Type
+import graphql.language.TypeDefinition
+import graphql.language.TypeName
+import graphql.language.UnionTypeDefinition
+import graphql.language.UnionTypeExtensionDefinition
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputObjectType
@@ -121,6 +143,56 @@ inline fun <T> GraphQLType.whenType(
         is GraphQLList -> listType(this)
         is GraphQLNonNull -> nonNull(this)
         is GraphQLUnmodifiedType -> unmodifiedType(this)
+        else -> throw IllegalStateException("Should never happen")
+    }
+}
+
+inline fun <T> Type<*>.whenType(
+    listType: (ListType) -> T,
+    nonNull: (NonNullType) -> T,
+    unmodifiedType: (TypeName) -> T,
+): T {
+    return when (this) {
+        is ListType -> listType(this)
+        is NonNullType -> nonNull(this)
+        is TypeName -> unmodifiedType(this)
+        else -> throw IllegalStateException("Should never happen")
+    }
+}
+
+inline fun <T> AnySDLDefinition.whenType(
+    directiveDefinition: (DirectiveDefinition) -> T,
+    enumTypeDefinition: (EnumTypeDefinition) -> T,
+    enumTypeExtensionDefinition: (EnumTypeExtensionDefinition) -> T,
+    inputObjectTypeDefinition: (InputObjectTypeDefinition) -> T,
+    inputObjectTypeExtensionDefinition: (InputObjectTypeExtensionDefinition) -> T,
+    interfaceTypeDefinition: (InterfaceTypeDefinition) -> T,
+    interfaceTypeExtensionDefinition: (InterfaceTypeExtensionDefinition) -> T,
+    objectTypeDefinition: (ObjectTypeDefinition) -> T,
+    objectTypeExtensionDefinition: (ObjectTypeExtensionDefinition) -> T,
+    scalarTypeDefinition: (ScalarTypeDefinition) -> T,
+    scalarTypeExtensionDefinition: (ScalarTypeExtensionDefinition) -> T,
+    schemaDefinition: (SchemaDefinition) -> T,
+    schemaExtensionDefinition: (SchemaExtensionDefinition) -> T,
+    unionTypeDefinition: (UnionTypeDefinition) -> T,
+    unionTypeExtensionDefinition: (UnionTypeExtensionDefinition) -> T,
+): T {
+    return when (this) {
+        is DirectiveDefinition -> directiveDefinition(this)
+        is EnumTypeExtensionDefinition -> enumTypeExtensionDefinition(this)
+        is EnumTypeDefinition -> enumTypeDefinition(this)
+        is InputObjectTypeExtensionDefinition -> inputObjectTypeExtensionDefinition(this)
+        is InputObjectTypeDefinition -> inputObjectTypeDefinition(this)
+        is InterfaceTypeExtensionDefinition -> interfaceTypeExtensionDefinition(this)
+        is InterfaceTypeDefinition -> interfaceTypeDefinition(this)
+        is ObjectTypeExtensionDefinition -> objectTypeExtensionDefinition(this)
+        is ObjectTypeDefinition -> objectTypeDefinition(this)
+        is ScalarTypeExtensionDefinition -> scalarTypeExtensionDefinition(this)
+        is ScalarTypeDefinition -> scalarTypeDefinition(this)
+        is SchemaExtensionDefinition -> schemaExtensionDefinition(this)
+        is SchemaDefinition -> schemaDefinition(this)
+        is UnionTypeExtensionDefinition -> unionTypeExtensionDefinition(this)
+        is UnionTypeDefinition -> unionTypeDefinition(this)
         else -> throw IllegalStateException("Should never happen")
     }
 }

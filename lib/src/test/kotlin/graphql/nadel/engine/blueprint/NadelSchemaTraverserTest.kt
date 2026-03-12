@@ -141,12 +141,6 @@ class NadelSchemaTraverserTest {
         )
 
         val traversedCoordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
-
-        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
-
-        val deprecatedOnOldField = NadelObjectCoordinates("Query").field("oldField").appliedDirective("deprecated")
-        assertTrue(deprecatedOnOldField in traversedCoordinates)
-
         val expectedCoordinates = setOf(
             NadelObjectCoordinates("Query"),
             NadelObjectCoordinates("Query").field("oldField"),
@@ -156,6 +150,10 @@ class NadelSchemaTraverserTest {
             NadelScalarCoordinates("String"),
         )
 
+        // When
+        NadelSchemaTraverser().traverse(schema, AccumulatingVisitor(traversedCoordinates))
+
+        // Then
         assertTrue(traversedCoordinates == expectedCoordinates)
     }
 
