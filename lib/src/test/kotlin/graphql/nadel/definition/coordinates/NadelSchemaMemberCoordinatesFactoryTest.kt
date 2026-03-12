@@ -1,10 +1,25 @@
 package graphql.nadel.definition.coordinates
 
+import graphql.parser.Parser
 import graphql.schema.idl.SchemaGenerator
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-class NadelSchemaMemberCoordinatesFactoryTest {
+abstract class NadelSchemaMemberCoordinatesFactoryTest {
+    abstract fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates>
+
+    class GraphQLSchemaExtractorTest : NadelSchemaMemberCoordinatesFactoryTest() {
+        override fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates> {
+            return NadelSchemaMemberCoordinatesFactory().create(SchemaGenerator.createdMockedSchema(schema))
+        }
+    }
+
+    class DocumentDefinitionExtractorTest : NadelSchemaMemberCoordinatesFactoryTest() {
+        override fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates> {
+            return NadelSchemaMemberCoordinatesFactory().create(Parser().parseDocument(schema))
+        }
+    }
+
     @Test
     fun `generates schema map`() {
         // language=GraphQL
@@ -175,29 +190,25 @@ class NadelSchemaMemberCoordinatesFactoryTest {
         )
 
         // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(SchemaGenerator.createdMockedSchema(schema))
+        val coordinates = extractCoordinates(schema)
 
         // Then
         for (expected in expectedSet) {
             assertTrue(coordinates.contains(expected))
         }
-
         for (actual in coordinates) {
             assertTrue(expectedSet.contains(actual))
         }
-
         assertTrue(coordinates.size == expectedSet.size)
     }
 
     @Test
     fun `generates coordinates for minimal schema with single query field`() {
-        val schema = SchemaGenerator.createdMockedSchema(
-            """
-                type Query {
-                    hello: String
-                }
-            """.trimIndent()
-        )
+        val schema = """
+            type Query {
+                hello: String
+            }
+        """.trimIndent()
 
         val expectedSet = setOf(
             NadelObjectCoordinates("Query"),
@@ -205,7 +216,7 @@ class NadelSchemaMemberCoordinatesFactoryTest {
         )
 
         // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
+        val coordinates = extractCoordinates(schema)
 
         // Then
         for (expected in expectedSet) {
@@ -219,22 +230,20 @@ class NadelSchemaMemberCoordinatesFactoryTest {
 
     @Test
     fun `generates coordinates for schema with union type`() {
-        val schema = SchemaGenerator.createdMockedSchema(
-            """
-                type Query {
-                    result: SearchResult
-                }
-                union SearchResult = User | Product
-                type User {
-                    id: ID!
-                    name: String
-                }
-                type Product {
-                    id: ID!
-                    title: String
-                }
-            """.trimIndent()
-        )
+        val schema = """
+            type Query {
+                result: SearchResult
+            }
+            union SearchResult = User | Product
+            type User {
+                id: ID!
+                name: String
+            }
+            type Product {
+                id: ID!
+                title: String
+            }
+        """.trimIndent()
 
         val expectedSet = setOf(
             NadelObjectCoordinates("Query"),
@@ -249,7 +258,7 @@ class NadelSchemaMemberCoordinatesFactoryTest {
         )
 
         // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
+        val coordinates = extractCoordinates(schema)
 
         // Then
         for (expected in expectedSet) {
@@ -263,24 +272,22 @@ class NadelSchemaMemberCoordinatesFactoryTest {
 
     @Test
     fun `generates coordinates for schema with input type and mutation`() {
-        val schema = SchemaGenerator.createdMockedSchema(
-            """
-                type Query {
-                    user(id: ID!): User
-                }
-                type Mutation {
-                    createUser(input: CreateUserInput!): User
-                }
-                input CreateUserInput {
-                    name: String!
-                    email: String
-                }
-                type User {
-                    id: ID!
-                    name: String
-                }
-            """.trimIndent()
-        )
+        val schema = """
+            type Query {
+                user(id: ID!): User
+            }
+            type Mutation {
+                createUser(input: CreateUserInput!): User
+            }
+            input CreateUserInput {
+                name: String!
+                email: String
+            }
+            type User {
+                id: ID!
+                name: String
+            }
+        """.trimIndent()
 
         val expectedSet = setOf(
             NadelObjectCoordinates("Query"),
@@ -298,7 +305,7 @@ class NadelSchemaMemberCoordinatesFactoryTest {
         )
 
         // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
+        val coordinates = extractCoordinates(schema)
 
         // Then
         for (expected in expectedSet) {
