@@ -3,6 +3,26 @@ package graphql.nadel.archunit
 import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
+import graphql.language.DirectiveDefinition
+import graphql.language.EnumTypeDefinition
+import graphql.language.EnumTypeExtensionDefinition
+import graphql.language.InputObjectTypeDefinition
+import graphql.language.InputObjectTypeExtensionDefinition
+import graphql.language.InterfaceTypeDefinition
+import graphql.language.InterfaceTypeExtensionDefinition
+import graphql.language.ListType
+import graphql.language.NonNullType
+import graphql.language.ObjectTypeDefinition
+import graphql.language.ObjectTypeExtensionDefinition
+import graphql.language.SDLDefinition
+import graphql.language.ScalarTypeDefinition
+import graphql.language.ScalarTypeExtensionDefinition
+import graphql.language.SchemaDefinition
+import graphql.language.SchemaExtensionDefinition
+import graphql.language.Type
+import graphql.language.TypeName
+import graphql.language.UnionTypeDefinition
+import graphql.language.UnionTypeExtensionDefinition
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputObjectType
@@ -25,7 +45,7 @@ import kotlin.test.Test
 class NadelPseudoSealedTypeKtTest {
     private val schemaClasses = ClassFileImporter()
         .withImportOption(ImportOption.DoNotIncludeTests())
-        .importPackages("graphql.schema")
+        .importPackages("graphql.schema", "graphql.language")
 
     @Test
     fun `whenType(GraphQLFieldsContainer)`() {
@@ -129,6 +149,48 @@ class NadelPseudoSealedTypeKtTest {
                 GraphQLEnumType::class,
                 GraphQLInputObjectType::class,
                 GraphQLScalarType::class,
+            )
+            .check(schemaClasses)
+    }
+
+    @Test
+    fun `whenType(Type)`() {
+        classes()
+            .that()
+            .areAssignableTo(Type::class.java)
+            .and()
+            .areNotInterfaces()
+            .equalsExactly(
+                ListType::class,
+                NonNullType::class,
+                TypeName::class,
+            )
+            .check(schemaClasses)
+    }
+
+    @Test
+    fun `whenType(AnySDLDefinition)`() {
+        classes()
+            .that()
+            .areAssignableTo(SDLDefinition::class.java)
+            .and()
+            .areNotInterfaces()
+            .equalsExactly(
+                DirectiveDefinition::class,
+                EnumTypeDefinition::class,
+                EnumTypeExtensionDefinition::class,
+                InputObjectTypeDefinition::class,
+                InputObjectTypeExtensionDefinition::class,
+                InterfaceTypeDefinition::class,
+                InterfaceTypeExtensionDefinition::class,
+                ObjectTypeDefinition::class,
+                ObjectTypeExtensionDefinition::class,
+                ScalarTypeDefinition::class,
+                ScalarTypeExtensionDefinition::class,
+                SchemaDefinition::class,
+                SchemaExtensionDefinition::class,
+                UnionTypeDefinition::class,
+                UnionTypeExtensionDefinition::class,
             )
             .check(schemaClasses)
     }

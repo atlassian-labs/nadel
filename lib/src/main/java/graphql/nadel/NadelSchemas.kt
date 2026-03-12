@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import graphql.nadel.schema.NadelSchemaDefinitionTransformationHook
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.OverallSchemaGenerator
 import graphql.nadel.schema.SchemaTransformationHook
@@ -23,10 +24,11 @@ data class NadelSchemas(
 
     class Builder {
         internal var schemaTransformationHook: SchemaTransformationHook = SchemaTransformationHook.Identity
+        internal var schemaDefinitionTransformationHook: NadelSchemaDefinitionTransformationHook =
+            NadelSchemaDefinitionTransformationHook.Identity
 
         internal var overallWiringFactory: WiringFactory = NeverWiringFactory()
         internal var underlyingWiringFactory: WiringFactory = NeverWiringFactory()
-
 
         internal var serviceExecutionFactory: ServiceExecutionFactory? = null
 
@@ -45,6 +47,10 @@ data class NadelSchemas(
 
         fun schemaTransformationHook(value: SchemaTransformationHook): Builder = also {
             schemaTransformationHook = value
+        }
+
+        fun schemaDefinitionTransformationHook(value: NadelSchemaDefinitionTransformationHook): Builder = also {
+            schemaDefinitionTransformationHook = value
         }
 
         fun overallWiringFactory(value: WiringFactory): Builder = also {
@@ -162,10 +168,12 @@ data class NadelSchemas(
             // Combine readers & type defs
             val readersToTypeDefs = underlyingSchemaReaders
                 .mapValues { (_, reader) ->
-                    SchemaUtil.parseTypeDefinitionRegistry(
-                        reader,
-                        captureSourceLocation = captureSourceLocation,
-                    )
+                    reader.use {
+                        SchemaUtil.parseTypeDefinitionRegistry(
+                            reader,
+                            captureSourceLocation = captureSourceLocation,
+                        )
+                    }
                 }
             val resolvedUnderlyingTypeDefs = readersToTypeDefs + underlyingTypeDefs
 
@@ -203,10 +211,12 @@ data class NadelSchemas(
             val underlyingSchemaGenerator = UnderlyingSchemaGenerator()
 
             return builder.overallSchemaReaders.map { (serviceName, reader) ->
-                val schemaDefinitions = SchemaUtil.parseSchemaDefinitions(
-                    reader,
-                    captureSourceLocation = captureSourceLocation,
-                )
+                val schemaDefinitions = reader.use {
+                    SchemaUtil.parseSchemaDefinitions(
+                        reader,
+                        captureSourceLocation = captureSourceLocation,
+                    )
+                }
                 val typeDefinitionRegistry = NadelTypeDefinitionRegistry.from(schemaDefinitions)
 
                 // Builder should enforce non-null entry
@@ -227,7 +237,8 @@ data class NadelSchemas(
             val serviceRegistries = services.map(Service::definitionRegistry)
             val schema = overallSchemaGenerator.buildOverallSchema(
                 serviceRegistries,
-                builder.overallWiringFactory
+                builder.overallWiringFactory,
+                builder.schemaDefinitionTransformationHook,
             )
             val newSchema = builder.schemaTransformationHook.apply(schema, services)
 
@@ -240,4 +251,3 @@ data class NadelSchemas(
         }
     }
 }
-

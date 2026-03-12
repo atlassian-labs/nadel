@@ -1,8 +1,8 @@
 package graphql.nadel.definition.coordinates
 
-import graphql.nadel.engine.blueprint.NadelSchemaTraverser
-import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
-import graphql.nadel.engine.blueprint.NadelSchemaTraverserVisitor
+import graphql.nadel.schema.NadelSchemaTraverser
+import graphql.nadel.schema.NadelSchemaTraverserElement
+import graphql.nadel.schema.NadelSchemaTraverserVisitor
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema

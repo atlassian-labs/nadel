@@ -1,4 +1,4 @@
-package graphql.nadel.engine.blueprint
+package graphql.nadel.schema
 
 internal interface NadelSchemaTraverserVisitor {
     fun visitGraphQLArgument(
