@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.legacy.renames
+package graphql.nadel.tests.next.fixtures.rename
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,29 +10,41 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<`let jsw do jsw things`>()
+    graphql.nadel.tests.next.update<RenamedScalarInputTypeTest>()
 }
 
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class `let jsw do jsw things snapshot` : TestSnapshot() {
+public class RenamedScalarInputTypeTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "jsw",
+                service = "confluence_legacy",
                 query = """
-                | {
-                |   foo
+                | query (${'$'}v0: PathType!) {
+                |   me {
+                |     profilePicture {
+                |       path(type: ${'$'}v0)
+                |     }
+                |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ABSOLUTE"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
-                |     "foo": "Custom Scalar"
+                |     "me": {
+                |       "profilePicture": {
+                |         "path": "https://atlassian.net/wiki/aa-avatar/5ee0a4ef55749e0ab6e0fb70"
+                |       }
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -45,7 +57,11 @@ public class `let jsw do jsw things snapshot` : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "foo": "Custom Scalar"
+     *     "me": {
+     *       "profilePicture": {
+     *         "path": "https://atlassian.net/wiki/aa-avatar/5ee0a4ef55749e0ab6e0fb70"
+     *       }
+     *     }
      *   }
      * }
      * ```
@@ -54,7 +70,11 @@ public class `let jsw do jsw things snapshot` : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "foo": "Custom Scalar"
+            |     "me": {
+            |       "profilePicture": {
+            |         "path": "https://atlassian.net/wiki/aa-avatar/5ee0a4ef55749e0ab6e0fb70"
+            |       }
+            |     }
             |   }
             | }
             """.trimMargin(),

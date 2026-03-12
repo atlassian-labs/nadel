@@ -13,7 +13,7 @@ class `let jsw do jsw things` : NadelLegacyIntegrationTest(
     variables = emptyMap(),
     services = listOf(
         Service(
-            name = "service",
+            name = "jsw",
             overallSchema = """
                 type Query {
                   foo: A
