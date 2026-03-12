@@ -11,6 +11,20 @@ import graphql.language.ObjectTypeDefinition
 import graphql.language.ScalarTypeDefinition
 import graphql.language.TypeDefinition
 import graphql.language.UnionTypeDefinition
+import graphql.nadel.definition.coordinates.NadelArgumentCoordinates
+import graphql.nadel.definition.coordinates.NadelArgumentParentCoordinates
+import graphql.nadel.definition.coordinates.NadelDirectiveCoordinates
+import graphql.nadel.definition.coordinates.NadelEnumCoordinates
+import graphql.nadel.definition.coordinates.NadelEnumValueCoordinates
+import graphql.nadel.definition.coordinates.NadelFieldContainerCoordinates
+import graphql.nadel.definition.coordinates.NadelFieldCoordinates
+import graphql.nadel.definition.coordinates.NadelInputObjectCoordinates
+import graphql.nadel.definition.coordinates.NadelInputObjectFieldCoordinates
+import graphql.nadel.definition.coordinates.NadelInterfaceCoordinates
+import graphql.nadel.definition.coordinates.NadelObjectCoordinates
+import graphql.nadel.definition.coordinates.NadelScalarCoordinates
+import graphql.nadel.definition.coordinates.NadelTypeCoordinates
+import graphql.nadel.definition.coordinates.NadelUnionCoordinates
 import graphql.nadel.engine.util.AnySDLDefinition
 import graphql.nadel.engine.util.whenType
 
@@ -23,15 +37,21 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
 
     sealed interface Type : NadelSchemaDefinitionTraverserElement {
         override val node: TypeDefinition<*>
+
+        fun coordinates(): NadelTypeCoordinates
     }
 
     sealed interface FieldsContainer : NadelSchemaDefinitionTraverserElement {
         override val node: ImplementingTypeDefinition<*>
+
+        fun coordinates(): NadelFieldContainerCoordinates
     }
 
     sealed interface AppliedDirectiveParent : NadelSchemaDefinitionTraverserElement
 
-    sealed interface ArgumentParent : NadelSchemaDefinitionTraverserElement
+    sealed interface ArgumentParent : NadelSchemaDefinitionTraverserElement {
+        fun coordinates(): NadelArgumentParentCoordinates
+    }
 
     data class TypeReference(
         override val parent: NadelSchemaDefinitionTraverserElement,
@@ -52,6 +72,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
             node.directives.forEach { directive ->
                 onElement(AppliedDirective(this, directive))
             }
+        }
+
+        fun coordinates(): NadelArgumentCoordinates {
+            return parent.coordinates().argument(node.name)
         }
     }
 
@@ -91,6 +115,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
                 onElement(AppliedDirective(this, directive))
             }
         }
+
+        override fun coordinates(): NadelUnionCoordinates {
+            return NadelUnionCoordinates(node.name)
+        }
     }
 
     data class InterfaceType(
@@ -109,6 +137,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
                 onElement(AppliedDirective(this, directive))
             }
         }
+
+        override fun coordinates(): NadelInterfaceCoordinates {
+            return NadelInterfaceCoordinates(node.name)
+        }
     }
 
     data class EnumType(
@@ -125,6 +157,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
                 onElement(AppliedDirective(this, directive))
             }
         }
+
+        override fun coordinates(): NadelEnumCoordinates {
+            return NadelEnumCoordinates(node.name)
+        }
     }
 
     data class EnumValueDefinition(
@@ -135,6 +171,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
             node.directives.forEach { directive ->
                 onElement(AppliedDirective(this, directive))
             }
+        }
+
+        fun coordinates(): NadelEnumValueCoordinates {
+            return parent.coordinates().enumValue(node.name)
         }
     }
 
@@ -153,6 +193,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
                 onElement(AppliedDirective(this, directive))
             }
         }
+
+        override fun coordinates(): NadelFieldCoordinates {
+            return parent.coordinates().field(node.name)
+        }
     }
 
     data class InputObjectField(
@@ -165,6 +209,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
             node.directives.forEach { directive ->
                 onElement(AppliedDirective(this, directive))
             }
+        }
+
+        fun coordinates(): NadelInputObjectFieldCoordinates {
+            return parent.coordinates().field(node.name)
         }
     }
 
@@ -181,6 +229,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
             node.directives.forEach { directive ->
                 onElement(AppliedDirective(this, directive))
             }
+        }
+
+        override fun coordinates(): NadelInputObjectCoordinates {
+            return NadelInputObjectCoordinates(node.name)
         }
     }
 
@@ -201,6 +253,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
             node.directives.forEach { directive ->
                 onElement(AppliedDirective(this, directive))
             }
+        }
+
+        override fun coordinates(): NadelObjectCoordinates {
+            return NadelObjectCoordinates(node.name)
         }
     }
 
@@ -230,6 +286,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
                 onElement(AppliedDirective(this, directive))
             }
         }
+
+        override fun coordinates(): NadelScalarCoordinates {
+            return NadelScalarCoordinates(node.name)
+        }
     }
 
     data class Directive(
@@ -241,6 +301,10 @@ internal sealed interface NadelSchemaDefinitionTraverserElement {
             node.inputValueDefinitions.forEach { arg ->
                 onElement(DirectiveArgument(this, arg))
             }
+        }
+
+        override fun coordinates(): NadelDirectiveCoordinates {
+            return NadelDirectiveCoordinates(node.name)
         }
     }
 
