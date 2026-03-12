@@ -4,7 +4,6 @@ import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition.Keyword.result
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
@@ -97,43 +96,11 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         // elements from the underlying schema
         val underlyingTypeNamesOwnedByService = executionBlueprint.getUnderlyingTypeNamesForService(service)
 
-        val shadow = executionContext.hints.shadowUnderlyingTypeNameInvestigation(executionContext)
-        val useReachableUnderlyingServiceTypes = executionContext.hints.useReachableUnderlyingServiceTypes(service)
-        val disableSharedTypes = executionContext.hints.disableSharedTypes(service)
-
-        fun checkSharedTypes(objectTypeName: String): Boolean {
-            return if (disableSharedTypes) {
-                false
-            } else {
-                val result = executionContext.hints.sharedTypeRenames(service)
-                    && executionBlueprint.getUnderlyingTypeName(objectTypeName) in underlyingTypeNamesOwnedByService
-                if (result && shadow) {
-                    executionContext.hooks.reportSharedTypeDecisionImpact(executionContext, service, objectTypeName)
-                }
-                result
-            }
-        }
-
         fun checkUnderlyingType(objectTypeName: String): Boolean {
-            return if (useReachableUnderlyingServiceTypes) {
+            return if (executionContext.hints.useReachableUnderlyingServiceTypes(service)) {
                 objectTypeName in executionBlueprint.getReachableUnderlyingTypeNamesForService(service)
             } else {
-                val result = objectTypeName in underlyingTypeNamesOwnedByService
-                if (shadow) {
-                    val reachableUnderlyingTypeNameCheck =
-                        objectTypeName in executionBlueprint.getReachableUnderlyingTypeNamesForService(service)
-                    val reducedUnderlyingTypeNameCheck =
-                        objectTypeName in executionBlueprint.getReducedUnderlyingTypeNamesForService(service)
-                    if (result != reachableUnderlyingTypeNameCheck) {
-                        executionContext.hooks
-                            .reportReachableTypeDecisionInconsistency(executionContext, service, objectTypeName)
-                    }
-                    if (result != reducedUnderlyingTypeNameCheck) {
-                        executionContext.hooks
-                            .reportReducedTypeDecisionInconsistency(executionContext, service, objectTypeName)
-                    }
-                }
-                result
+                objectTypeName in underlyingTypeNamesOwnedByService
             }
         }
 
@@ -142,7 +109,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             .all { objectTypeName ->
                 objectTypeName in typeNamesOwnedByService
                     || checkUnderlyingType(objectTypeName)
-                    || checkSharedTypes(objectTypeName) // Keep this last so we know if it's the one making a decision difference
             }
 
         if (noForeignTypes) {
@@ -152,7 +118,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames.filter { objectTypeName ->
             objectTypeName in typeNamesOwnedByService
                 || checkUnderlyingType(objectTypeName)
-                || checkSharedTypes(objectTypeName) // Keep this last so we know if it's the one making a decision difference
         }
 
         return State(
