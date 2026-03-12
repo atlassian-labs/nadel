@@ -1,6 +1,7 @@
 package graphql.nadel.schema
 
 import graphql.GraphQLException
+import graphql.language.EnumValue
 import graphql.language.FieldDefinition
 import graphql.language.ObjectTypeDefinition
 import graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
@@ -14,11 +15,43 @@ import graphql.nadel.util.AnySDLDefinition
 import graphql.nadel.util.AnySDLNamedDefinition
 import graphql.nadel.util.isExtensionDef
 import graphql.scalars.ExtendedScalars
+import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
+import graphql.schema.idl.SchemaPrinter
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.WiringFactory
+import graphql.schema.transform.FieldVisibilitySchemaTransformation
+import graphql.schema.transform.VisibleFieldPredicate
+import graphql.schema.transform.VisibleFieldPredicateEnvironment
+import java.io.File
+import kotlin.time.measureTimedValue
+
+object HideFieldsInEnvironmentTypeSupport {
+    fun apply(originalSchema: GraphQLSchema): GraphQLSchema {
+        return FieldVisibilitySchemaTransformation(HideFieldInEnvironmentType()).apply(originalSchema)
+    }
+}
+
+class HideFieldInEnvironmentType : VisibleFieldPredicate {
+    private val stageToHide: String = "STAGING"
+
+    /**
+     * A field is considered as not visible when it has the @lifecycle directive
+     * with the `stage` argument equals to LifecycleStage passed in.
+     */
+    override fun isVisible(environment: VisibleFieldPredicateEnvironment): Boolean {
+        if (environment.schemaElement !is GraphQLDirectiveContainer) {
+            return true
+        }
+
+        val directiveContainer = (environment.schemaElement as GraphQLDirectiveContainer)
+        val lifecycleDirective = directiveContainer.getAppliedDirective("lifecycle") ?: return true
+        val stageArgument = lifecycleDirective.getArgument("stage") ?: return true
+        return stageArgument.getValue<String>() != stageToHide
+    }
+}
 
 internal class OverallSchemaGenerator {
     fun buildOverallSchema(
@@ -36,10 +69,38 @@ internal class OverallSchemaGenerator {
             .let {
                 schemaDefinitionTransformationHook.apply(it)
             }
+            .also {
+                val (newDefs, newDefsTime) = measureTimedValue {
+                    NadelFieldDefinitionVisibilityTransformation { parent, field ->
+                        val lifecycle = field.getDirectives("lifecycle").singleOrNull()
+                        if (lifecycle == null) {
+                            true
+                        } else {
+                            (lifecycle.getArgument("stage").value as EnumValue).name != "STAGING"
+                        }
+                    }.apply(it)
+                }
+                println("Took ${newDefsTime.inWholeMilliseconds}ms to transform DEFINITIONS to hide lifecycle fields")
 
+                val typeRegistry = createTypeRegistry(newDefs)
+                File("hidden-faster.graphqls").writeText(
+                    SchemaPrinter().print(
+                        schemaGenerator.makeExecutableSchema(typeRegistry, runtimeWiring)
+                    )
+                )
+            }
         val typeRegistry = createTypeRegistry(definitions)
 
         return schemaGenerator.makeExecutableSchema(typeRegistry, runtimeWiring)
+            .also { schema ->
+                val (newSchema, newSchemaTime) = measureTimedValue {
+                    HideFieldsInEnvironmentTypeSupport.apply(schema)
+                }
+                println("Took ${newSchemaTime.inWholeMilliseconds}ms to transform SCHEMA to hide lifecycle fields")
+                File("hidden-reference.graphqls").writeText(
+                    SchemaPrinter().print(newSchema)
+                )
+            }
     }
 
     private fun getDefinitions(serviceRegistries: List<NadelTypeDefinitionRegistry>): List<AnySDLDefinition> {
