@@ -1,10 +1,226 @@
 package graphql.nadel.definition.coordinates
 
+import graphql.parser.Parser
 import graphql.schema.idl.SchemaGenerator
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-class NadelSchemaMemberCoordinatesFactoryTest {
+abstract class NadelSchemaMemberCoordinatesFactoryTest {
+    abstract fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates>
+
+    fun runTest(schema: String, expectedSet: Set<NadelSchemaMemberCoordinates>) {
+        // When
+        val coordinates = extractCoordinates(schema)
+
+        // Then
+        for (expected in expectedSet) {
+            assertTrue(coordinates.contains(expected))
+        }
+        for (actual in coordinates) {
+            assertTrue(expectedSet.contains(actual))
+        }
+        assertTrue(coordinates.size == expectedSet.size)
+    }
+
+    class GraphQLSchemaExtractorTest : NadelSchemaMemberCoordinatesFactoryTest() {
+        override fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates> {
+            return NadelSchemaMemberCoordinatesFactory().create(SchemaGenerator.createdMockedSchema(schema))
+        }
+    }
+
+    class DocumentDefinitionExtractorTest : NadelSchemaMemberCoordinatesFactoryTest() {
+        override fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates> {
+            return NadelSchemaMemberCoordinatesFactory().create(Parser().parseDocument(schema))
+        }
+
+        @Test
+        fun `can generate coordinates for semantically invalid schema`() {
+            val schema = """
+                type Query {
+                  search: Searchable
+                }
+
+                interface Searchable
+
+                type Article implements Searchable {
+                  body: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelInterfaceCoordinates("Searchable"),
+                NadelObjectCoordinates("Article"),
+                NadelObjectCoordinates("Article").field("body"),
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("search"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with duplicate type definitions`() {
+            val schema = """
+                type Query {
+                  user: User
+                }
+
+                type User {
+                  id: ID!
+                  name: String
+                }
+
+                type User {
+                  id: ID!
+                  email: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("user"),
+                NadelObjectCoordinates("User"),
+                NadelObjectCoordinates("User").field("id"),
+                NadelObjectCoordinates("User").field("name"),
+                NadelObjectCoordinates("User").field("email"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with interface implementing another interface without fields`() {
+            val schema = """
+                type Query {
+                  entity: Entity
+                }
+
+                interface Node {
+                  id: ID!
+                }
+
+                interface Entity implements Node
+
+                type Product implements Entity {
+                  id: ID!
+                  name: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("entity"),
+                NadelInterfaceCoordinates("Node"),
+                NadelInterfaceCoordinates("Node").field("id"),
+                NadelInterfaceCoordinates("Entity"),
+                NadelObjectCoordinates("Product"),
+                NadelObjectCoordinates("Product").field("id"),
+                NadelObjectCoordinates("Product").field("name"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with enum with no values`() {
+            val schema = """
+                type Query {
+                  status: Status
+                }
+
+                enum Status
+
+                type Placeholder {
+                  value: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("status"),
+                NadelEnumCoordinates("Status"),
+                NadelObjectCoordinates("Placeholder"),
+                NadelObjectCoordinates("Placeholder").field("value"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with type missing interface field`() {
+            val schema = """
+                type Query {
+                  node: Node
+                }
+
+                interface Node {
+                  id: ID!
+                  name: String!
+                }
+
+                type User implements Node {
+                  id: ID!
+                }
+
+                type Product {
+                  id: ID!
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("node"),
+                NadelInterfaceCoordinates("Node"),
+                NadelInterfaceCoordinates("Node").field("id"),
+                NadelInterfaceCoordinates("Node").field("name"),
+                NadelObjectCoordinates("User"),
+                NadelObjectCoordinates("User").field("id"),
+                NadelObjectCoordinates("Product"),
+                NadelObjectCoordinates("Product").field("id"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with interface field with incompatible nullability`() {
+            val schema = """
+                type Query {
+                  node: Node
+                }
+
+                interface Node {
+                  id: ID!
+                  name: String!
+                }
+
+                type User implements Node {
+                  id: ID!
+                  name: String
+                }
+
+                type Product {
+                  id: ID!
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("node"),
+                NadelInterfaceCoordinates("Node"),
+                NadelInterfaceCoordinates("Node").field("id"),
+                NadelInterfaceCoordinates("Node").field("name"),
+                NadelObjectCoordinates("User"),
+                NadelObjectCoordinates("User").field("id"),
+                NadelObjectCoordinates("User").field("name"),
+                NadelObjectCoordinates("Product"),
+                NadelObjectCoordinates("Product").field("id"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+    }
+
     @Test
     fun `generates schema map`() {
         // language=GraphQL
@@ -174,67 +390,41 @@ class NadelSchemaMemberCoordinatesFactoryTest {
             NadelUnionCoordinates("UserUnion"),
         )
 
-        // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(SchemaGenerator.createdMockedSchema(schema))
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 
     @Test
     fun `generates coordinates for minimal schema with single query field`() {
-        val schema = SchemaGenerator.createdMockedSchema(
-            """
-                type Query {
-                    hello: String
-                }
-            """.trimIndent()
-        )
+        val schema = """
+            type Query {
+                hello: String
+            }
+        """.trimIndent()
 
         val expectedSet = setOf(
             NadelObjectCoordinates("Query"),
             NadelObjectCoordinates("Query").field("hello"),
         )
 
-        // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 
     @Test
     fun `generates coordinates for schema with union type`() {
-        val schema = SchemaGenerator.createdMockedSchema(
-            """
-                type Query {
-                    result: SearchResult
-                }
-                union SearchResult = User | Product
-                type User {
-                    id: ID!
-                    name: String
-                }
-                type Product {
-                    id: ID!
-                    title: String
-                }
-            """.trimIndent()
-        )
+        val schema = """
+            type Query {
+                result: SearchResult
+            }
+            union SearchResult = User | Product
+            type User {
+                id: ID!
+                name: String
+            }
+            type Product {
+                id: ID!
+                title: String
+            }
+        """.trimIndent()
 
         val expectedSet = setOf(
             NadelObjectCoordinates("Query"),
@@ -248,39 +438,27 @@ class NadelSchemaMemberCoordinatesFactoryTest {
             NadelObjectCoordinates("Product").field("title"),
         )
 
-        // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 
     @Test
     fun `generates coordinates for schema with input type and mutation`() {
-        val schema = SchemaGenerator.createdMockedSchema(
-            """
-                type Query {
-                    user(id: ID!): User
-                }
-                type Mutation {
-                    createUser(input: CreateUserInput!): User
-                }
-                input CreateUserInput {
-                    name: String!
-                    email: String
-                }
-                type User {
-                    id: ID!
-                    name: String
-                }
-            """.trimIndent()
-        )
+        val schema = """
+            type Query {
+                user(id: ID!): User
+            }
+            type Mutation {
+                createUser(input: CreateUserInput!): User
+            }
+            input CreateUserInput {
+                name: String!
+                email: String
+            }
+            type User {
+                id: ID!
+                name: String
+            }
+        """.trimIndent()
 
         val expectedSet = setOf(
             NadelObjectCoordinates("Query"),
@@ -297,16 +475,6 @@ class NadelSchemaMemberCoordinatesFactoryTest {
             NadelObjectCoordinates("User").field("name"),
         )
 
-        // When
-        val coordinates = NadelSchemaMemberCoordinatesFactory().create(schema)
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 }
