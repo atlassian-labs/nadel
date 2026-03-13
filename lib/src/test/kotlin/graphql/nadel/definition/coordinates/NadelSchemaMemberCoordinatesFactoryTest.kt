@@ -3,10 +3,25 @@ package graphql.nadel.definition.coordinates
 import graphql.parser.Parser
 import graphql.schema.idl.SchemaGenerator
 import org.junit.jupiter.api.Test
+import kotlin.collections.contains
 import kotlin.test.assertTrue
 
 abstract class NadelSchemaMemberCoordinatesFactoryTest {
     abstract fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates>
+
+    fun runTest(schema: String, expectedSet: Set<NadelSchemaMemberCoordinates>) {
+        // When
+        val coordinates = extractCoordinates(schema)
+
+        // Then
+        for (expected in expectedSet) {
+            assertTrue(coordinates.contains(expected))
+        }
+        for (actual in coordinates) {
+            assertTrue(expectedSet.contains(actual))
+        }
+        assertTrue(coordinates.size == expectedSet.size)
+    }
 
     class GraphQLSchemaExtractorTest : NadelSchemaMemberCoordinatesFactoryTest() {
         override fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates> {
@@ -17,6 +32,31 @@ abstract class NadelSchemaMemberCoordinatesFactoryTest {
     class DocumentDefinitionExtractorTest : NadelSchemaMemberCoordinatesFactoryTest() {
         override fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates> {
             return NadelSchemaMemberCoordinatesFactory().create(Parser().parseDocument(schema))
+        }
+
+        @Test
+        fun `can generate coordinates for semantically invalid schema`() {
+            val schema = """
+                type Query {
+                  search: Searchable
+                }
+
+                interface Searchable
+
+                type Article implements Searchable {
+                  body: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelInterfaceCoordinates("Searchable"),
+                NadelObjectCoordinates("Article"),
+                NadelObjectCoordinates("Article").field("body"),
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("search"),
+            )
+
+            runTest(schema, expectedSet)
         }
     }
 
@@ -189,17 +229,7 @@ abstract class NadelSchemaMemberCoordinatesFactoryTest {
             NadelUnionCoordinates("UserUnion"),
         )
 
-        // When
-        val coordinates = extractCoordinates(schema)
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 
     @Test
@@ -215,17 +245,7 @@ abstract class NadelSchemaMemberCoordinatesFactoryTest {
             NadelObjectCoordinates("Query").field("hello"),
         )
 
-        // When
-        val coordinates = extractCoordinates(schema)
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 
     @Test
@@ -257,17 +277,7 @@ abstract class NadelSchemaMemberCoordinatesFactoryTest {
             NadelObjectCoordinates("Product").field("title"),
         )
 
-        // When
-        val coordinates = extractCoordinates(schema)
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 
     @Test
@@ -304,16 +314,6 @@ abstract class NadelSchemaMemberCoordinatesFactoryTest {
             NadelObjectCoordinates("User").field("name"),
         )
 
-        // When
-        val coordinates = extractCoordinates(schema)
-
-        // Then
-        for (expected in expectedSet) {
-            assertTrue(coordinates.contains(expected))
-        }
-        for (actual in coordinates) {
-            assertTrue(expectedSet.contains(actual))
-        }
-        assertTrue(coordinates.size == expectedSet.size)
+        runTest(schema, expectedSet)
     }
 }
