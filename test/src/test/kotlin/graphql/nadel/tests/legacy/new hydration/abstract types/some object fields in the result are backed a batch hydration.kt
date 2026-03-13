@@ -27,7 +27,6 @@ class `some object fields in the result are backed a batch hydration` : NadelLeg
                   id: ID!
                   user: User
                   @hydrated(
-                    service: "users"
                     field: "usersByIds"
                     arguments: [{name: "ids" value: "${'$'}source.userId"}]
                     inputIdentifiedBy: [{sourceId: "userId" resultId: "id"}]

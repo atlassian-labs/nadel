@@ -25,7 +25,6 @@ class `namespaced hydration top level field is removed` : NadelLegacyIntegration
                 type Issue {
                   id: ID
                   comment: Comment @hydrated(
-                    service: "CommentService"
                     field: "commentApi.commentById"
                     arguments: [
                       {name: "id", value: "${'$'}source.commentId"}

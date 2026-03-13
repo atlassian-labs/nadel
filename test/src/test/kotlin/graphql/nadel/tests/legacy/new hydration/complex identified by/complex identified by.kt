@@ -94,7 +94,6 @@ class `complex identified by` : NadelLegacyIntegrationTest(
                 type Issue {
                   id: ID
                   author: User @hydrated(
-                    service: "UserService"
                     field: "users"
                     arguments: [{name: "id" value: "${'$'}source.authorId"}]
                     inputIdentifiedBy: [

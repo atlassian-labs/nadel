@@ -23,7 +23,6 @@ overallSchema:
       name: String
       characters: [TestingCharacter]
       @hydrated(
-        service: "testing"
         field: "tests.characters"
         arguments: [{name: "ids" value: "$source.characterIds"}]
         identifiedBy: "id"

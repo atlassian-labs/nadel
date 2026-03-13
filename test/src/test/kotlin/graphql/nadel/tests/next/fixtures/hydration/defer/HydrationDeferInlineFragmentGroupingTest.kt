@@ -35,7 +35,6 @@ class HydrationDeferInlineFragmentGroupingTest : NadelIntegrationTest(
                   assigneeId: ID @hidden
                   assignee: User
                     @hydrated(
-                      service: "monolith"
                       field: "user"
                       arguments: [{name: "id", value: "$source.assigneeId"}]
                     )
@@ -46,7 +45,6 @@ class HydrationDeferInlineFragmentGroupingTest : NadelIntegrationTest(
                   laptopId: ID
                   laptop: Issue
                     @hydrated(
-                      service: "monolith"
                       field: "issue"
                       arguments: [{name: "id", value: "$source.laptopId"}]
                     )

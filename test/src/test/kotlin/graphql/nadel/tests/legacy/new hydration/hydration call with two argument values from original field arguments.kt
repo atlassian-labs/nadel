@@ -60,7 +60,6 @@ class `hydration call with two argument values from original field arguments` : 
                 type Issue {
                   id: ID
                   author(extraArg1: String, extraArg2: Int): User @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [
                       {name: "extraArg1" value: "${'$'}argument.extraArg1"}

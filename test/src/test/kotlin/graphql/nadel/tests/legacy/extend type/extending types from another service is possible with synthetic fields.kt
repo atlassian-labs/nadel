@@ -30,7 +30,6 @@ class `extending types from another service is possible with synthetic fields` :
                 extend type Root {
                   extension: Extension
                   @hydrated(
-                    service: "Service2"
                     field: "lookUpQuery.lookup"
                     arguments: [{name: "id" value: "${'$'}source.id"}]
                     identifiedBy: "id"
@@ -56,7 +55,6 @@ class `extending types from another service is possible with synthetic fields` :
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("lookUpQuery") {
-                        Unit
                     }
                 }
                 wiring.type("LookUpQuery") { type ->

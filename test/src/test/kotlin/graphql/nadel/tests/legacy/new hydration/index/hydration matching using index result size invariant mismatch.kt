@@ -57,7 +57,6 @@ class `hydration matching using index result size invariant mismatch` : NadelLeg
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "ids" value: "${'$'}source.authorIds"}]
                     indexed: true

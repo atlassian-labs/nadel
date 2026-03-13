@@ -28,7 +28,6 @@ class `hydrating using date time as arg` : NadelLegacyIntegrationTest(
                   createdAt: DateTime
                   successor: Foo
                   @hydrated(
-                    service: "service"
                     field: "successor"
                     arguments: [{ name: "after" value: "${'$'}source.createdAt" }]
                   )

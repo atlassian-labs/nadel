@@ -45,7 +45,6 @@ class `synthetic hydration call with two argument values from original field arg
                 runtimeWiring = { wiring ->
                     wiring.type("Query") { type ->
                         type.dataFetcher("usersQuery") {
-                            Unit
                         }
                     }
                     wiring.type("UsersQuery") { type ->
@@ -75,7 +74,6 @@ class `synthetic hydration call with two argument values from original field arg
                     type Issue {
                       id: ID
                       author(extraArg1: String, extraArg2: Int): User @hydrated(
-                        service: "UserService"
                         field: "usersQuery.usersByIds"
                         arguments: [
                           {name: "extraArg1" value: "${'$'}argument.extraArg1"}

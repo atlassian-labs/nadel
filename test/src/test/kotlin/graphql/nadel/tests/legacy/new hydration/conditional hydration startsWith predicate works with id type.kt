@@ -69,7 +69,6 @@ class `conditional hydration startsWith predicate works with id type` : NadelLeg
                   type: ID
                   bar: Bars
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {
@@ -85,7 +84,6 @@ class `conditional hydration startsWith predicate works with id type` : NadelLeg
                     }
                   )
                   @hydrated(
-                    service: "service2" 
                     field: "barById" 
                     arguments: [
                       {

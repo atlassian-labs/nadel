@@ -28,7 +28,6 @@ class `hydration with interfaces no source id` : NadelLegacyIntegrationTest(
                 type User implements Node {
                   id: ID
                   @hydrated(
-                    service: "Issues"
                     field: "idByAri"
                     arguments: [{name: "id" value: "${'$'}source.ari"}]
                   )

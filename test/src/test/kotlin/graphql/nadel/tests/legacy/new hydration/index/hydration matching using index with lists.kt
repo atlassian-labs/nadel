@@ -63,7 +63,6 @@ class `hydration matching using index with lists` : NadelLegacyIntegrationTest(
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIssueIds"
                     arguments: [{name: "issueIds" value: "${'$'}source.id"}]
                     indexed: true

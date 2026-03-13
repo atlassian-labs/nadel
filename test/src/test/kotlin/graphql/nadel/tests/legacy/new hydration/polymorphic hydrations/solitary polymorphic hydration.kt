@@ -100,14 +100,12 @@ class `solitary polymorphic hydration` : NadelLegacyIntegrationTest(
                   dataId: ID
                   data: Data
                   @hydrated(
-                    service: "pets"
                     field: "petById"
                     arguments: [
                       {name: "id" value: "${'$'}source.dataId"}
                     ]
                   )
                   @hydrated(
-                    service: "people"
                     field: "humanById"
                     arguments: [
                       {name: "id" value: "${'$'}source.dataId"}

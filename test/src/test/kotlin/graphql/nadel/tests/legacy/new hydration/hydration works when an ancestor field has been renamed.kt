@@ -25,7 +25,6 @@ class `hydration works when an ancestor field has been renamed` : NadelLegacyInt
                 type DevOpsRelationship @renamed(from: "Relationship") {
                   devOpsIssue: DevOpsIssue
                   @hydrated(
-                    service: "IssueService"
                     field: "issue"
                     arguments: [{name: "id" value: "${'$'}source.issueId"}]
                   )

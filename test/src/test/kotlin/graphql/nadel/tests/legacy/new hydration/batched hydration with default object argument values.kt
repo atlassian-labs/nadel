@@ -83,7 +83,6 @@ class `batched hydration with default object argument values` : NadelLegacyInteg
                 type Issue {
                   id: ID
                   authors(test: Test = {echo: "Hello World"}): [User] @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [
                       {name: "id" value: "${'$'}source.authorIds"}

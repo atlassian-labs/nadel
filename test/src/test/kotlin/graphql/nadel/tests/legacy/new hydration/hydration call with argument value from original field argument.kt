@@ -60,7 +60,6 @@ class `hydration call with argument value from original field argument` : NadelL
                 type Issue {
                   id: ID
                   author(extraArg: String): User @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [
                       {name: "extraArg" value: "${'$'}argument.extraArg"}

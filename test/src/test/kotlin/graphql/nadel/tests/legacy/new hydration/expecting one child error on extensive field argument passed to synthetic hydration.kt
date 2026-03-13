@@ -32,7 +32,6 @@ class `expecting one child error on extensive field argument passed to synthetic
                       id: ID
                       assignee: User
                       @hydrated(
-                        service: "Users"
                         field: "usersQuery.users"
                         arguments: [{name: "accountIds" value: "${'$'}source.issue.assignee.accountId"}]
                         identifiedBy: "accountId"
@@ -118,7 +117,6 @@ class `expecting one child error on extensive field argument passed to synthetic
                 runtimeWiring = { wiring ->
                     wiring.type("Query") { type ->
                         type.dataFetcher("usersQuery") {
-                            Unit
                         }
                     }
                     wiring.type("UserQuery") { type ->

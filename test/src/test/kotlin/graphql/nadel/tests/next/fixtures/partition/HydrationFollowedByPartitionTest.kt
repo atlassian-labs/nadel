@@ -30,7 +30,6 @@ type ActivityItem {
   type: String
   data: Video
   @hydrated(
-    service: "videos_service"
     field: "videos"
     arguments: [{name: "ids", value: "$source.dataId"}]
   )

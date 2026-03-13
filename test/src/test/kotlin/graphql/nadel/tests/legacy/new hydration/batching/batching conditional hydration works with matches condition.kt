@@ -62,7 +62,6 @@ class `batching conditional hydration works with matches condition` : NadelLegac
                   type: String
                   bar: [Bars] 
                     @hydrated(
-                      service: "service2"
                       field: "barsById"
                       arguments: [
                         {
@@ -78,7 +77,6 @@ class `batching conditional hydration works with matches condition` : NadelLegac
                       }
                     )
                     @hydrated(
-                      service: "service2"
                       field: "othersById"
                       arguments: [
                         {

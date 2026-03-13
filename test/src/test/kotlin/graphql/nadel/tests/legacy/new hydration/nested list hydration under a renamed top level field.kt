@@ -30,7 +30,6 @@ class `nested list hydration under a renamed top level field` : NadelLegacyInteg
                 type FooService @renamed(from: "Service") {
                   otherServices: Connection
                   @hydrated(
-                    service: "Foo"
                     field: "connection"
                     arguments: [{name: "id" value: "${'$'}source.id"}]
                   )
@@ -39,7 +38,6 @@ class `nested list hydration under a renamed top level field` : NadelLegacyInteg
                   edges: [Edge]
                   nodes: [Node]
                   @hydrated(
-                    service: "Foo"
                     field: "node"
                     arguments: [{name: "id" value: "${'$'}source.edges.node"}]
                   )
@@ -47,7 +45,6 @@ class `nested list hydration under a renamed top level field` : NadelLegacyInteg
                 type Node {
                   space: Space
                   @hydrated(
-                    service: "Foo"
                     field: "space"
                     arguments: [{name: "id" value: "${'$'}source.id"}]
                   )
@@ -60,7 +57,6 @@ class `nested list hydration under a renamed top level field` : NadelLegacyInteg
                 type Edge {
                   node: Node
                   @hydrated(
-                    service: "Foo"
                     field: "node"
                     arguments: [{name: "id" value: "${'$'}source.node"}]
                   )

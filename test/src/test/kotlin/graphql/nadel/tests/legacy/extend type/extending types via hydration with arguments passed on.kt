@@ -56,7 +56,6 @@ class `extending types via hydration with arguments passed on` : NadelLegacyInte
                 extend type Issue {
                   association(filter: Filter): Association
                   @hydrated(
-                    service: "Association"
                     field: "association"
                     arguments: [{name: "id" value: "${'$'}source.id"} {name: "filter" value: "${'$'}argument.filter"}]
                   )

@@ -21,7 +21,6 @@ overallSchema:
       class: String @hidden
       bar: Bars
       @hydrated(
-        service: "service2"
         field: "barById"
         arguments: [
           {
@@ -37,7 +36,6 @@ overallSchema:
         }
       )
       @hydrated(
-        service: "service2" 
         field: "barById" 
         arguments: [
           {

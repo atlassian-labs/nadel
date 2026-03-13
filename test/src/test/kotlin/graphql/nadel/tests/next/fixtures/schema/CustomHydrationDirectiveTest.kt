@@ -240,12 +240,10 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
                   nodeId: ID @hidden
                   node: WorkNode
                     @hydrated(
-                      service: "jira"
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )
                     @hydrated(
-                      service: "bitbucket"
                       field: "pullRequestsByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )

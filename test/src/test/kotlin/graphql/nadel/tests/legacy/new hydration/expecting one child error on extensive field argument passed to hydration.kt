@@ -32,7 +32,6 @@ class `expecting one child error on extensive field argument passed to hydration
                   id: ID
                   assignee: User
                   @hydrated(
-                    service: "Users"
                     field: "users"
                     arguments: [{name: "accountIds" value: "${'$'}source.issue.assignee.accountId"}]
                     identifiedBy: "accountId"

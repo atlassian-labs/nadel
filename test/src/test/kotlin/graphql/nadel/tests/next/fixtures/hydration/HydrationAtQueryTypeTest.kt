@@ -20,7 +20,6 @@ class HydrationAtQueryTypeTest : NadelIntegrationTest(
                   myIssueKey: ID! @hidden
                   myIssue: Issue
                     @hydrated(
-                      service: "issues"
                       field: "issueById"
                       arguments: [{name: "id", value: "$source.myIssueKey"}]
                     )

@@ -43,7 +43,6 @@ class `simple synthetic hydration with one service and type renaming` : NadelLeg
                   name: String
                   character: TestingCharacter
                   @hydrated(
-                    service: "testing"
                     field: "tests.character"
                     arguments: [{name: "id" value: "${'$'}source.characterId"}]
                     identifiedBy: "id"

@@ -109,14 +109,12 @@ class `batch polymorphic hydration return null in array` : NadelLegacyIntegratio
                   dataId: ID
                   data: Data
                   @hydrated(
-                    service: "pets"
                     field: "petById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}
                     ]
                   )
                   @hydrated(
-                    service: "people"
                     field: "humanById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}

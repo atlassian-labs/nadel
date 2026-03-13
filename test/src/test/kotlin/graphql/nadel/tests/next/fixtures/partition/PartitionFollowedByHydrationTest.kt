@@ -36,7 +36,6 @@ type Thing {
   name: String
   owner: User 
   @hydrated(
-    service: "users_service"
     field: "users"
     arguments: [{name: "ids", value: "$source.ownerId"}]
   )

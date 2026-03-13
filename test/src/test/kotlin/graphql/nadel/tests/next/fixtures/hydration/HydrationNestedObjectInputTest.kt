@@ -52,7 +52,6 @@ class HydrationNestedObjectInputTest : NadelIntegrationTest(
                   assigneeFilter: IssueUserSearchInput
                   assignee: User
                     @hydrated(
-                      service: "identity"
                       field: "userByFilter"
                       arguments: [{name: "filter", value: "$source.assigneeFilter"}]
                     )

@@ -42,7 +42,6 @@ class `hydration call over itself with renamed types` : NadelLegacyIntegrationTe
                   name: String
                   characters: [TestingCharacter]
                   @hydrated(
-                    service: "testing"
                     field: "characters"
                     arguments: [{name: "ids" value: "${'$'}source.characterIds"}]
                     identifiedBy: "id"

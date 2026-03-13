@@ -55,7 +55,6 @@ class `hydration inside a renamed field` : NadelLegacyIntegrationTest(
                   id: ID!
                   fooBar: RenamedBar
                   @hydrated(
-                    service: "Bar"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.fooBarId"}]
                   )

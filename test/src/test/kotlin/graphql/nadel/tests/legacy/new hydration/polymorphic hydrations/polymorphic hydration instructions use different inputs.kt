@@ -35,21 +35,18 @@ class `polymorphic hydration instructions use different inputs` : NadelLegacyInt
                 type Pet {
                   animal: Animal
                   @hydrated(
-                    service: "Dogs"
                     field: "dogsByIds"
                     arguments: [{ name: "ids", value: "${'$'}source.animalId"}]
                     identifiedBy: "id"
                     batchSize: 90
                   )
                   @hydrated(
-                    service: "Cats"
                     field: "cats.catsByIds"
                     arguments: [{ name: "ids", value: "${'$'}source.animalId"}]
                     identifiedBy: "id"
                     batchSize: 90
                   )
                   @hydrated(
-                    service: "Zoo"
                     field: "giraffes"
                     arguments: [{ name: "filters", value: "${'$'}source.giraffeInput"}]
                     inputIdentifiedBy: [
