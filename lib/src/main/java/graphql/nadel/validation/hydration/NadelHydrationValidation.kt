@@ -354,6 +354,9 @@ class NadelHydrationValidation internal constructor(
             sourceFieldValidation2.getBatchHydrationSourceFields(arguments, matchStrategy, hydrationCondition)
                 .onError { return it }
 
+        val pathToPartitionArgError = validatePathToPartitionArg()
+        if (pathToPartitionArgError != null) return pathToPartitionArgError
+
         return NadelValidatedFieldResult(
             service = parent.service,
             fieldInstruction = NadelBatchHydrationFieldInstruction(
@@ -371,8 +374,45 @@ class NadelHydrationValidation internal constructor(
                 condition = hydrationCondition,
                 batchSize = hydrationDefinition.batchSize,
                 batchHydrationMatchStrategy = matchStrategy,
+                pathToPartitionArg = hydrationDefinition.pathToPartitionArg,
             )
         )
+    }
+
+    context(NadelValidationContext, NadelHydrationValidationContext)
+    private fun validatePathToPartitionArg(): NadelSchemaValidationResult? {
+        val path = hydrationDefinition.pathToPartitionArg ?: return null
+
+        val argNames = hydrationDefinition.arguments.map { it.name }
+        if (path !in argNames) {
+            return NadelSchemaValidationError.InvalidPathToPartitionArg(
+                parentType = parent,
+                overallField = virtualField,
+                path = path,
+                validArgs = argNames,
+            )
+        }
+
+        // The referenced argument must be a source field value (not static) and must be a list
+        val arg = hydrationDefinition.arguments.find { it.name == path }!!
+        if (arg !is NadelHydrationArgumentDefinition.ObjectField) {
+            return NadelSchemaValidationError.PathToPartitionArgMustBeSourceField(
+                parentType = parent,
+                overallField = virtualField,
+                path = path,
+            )
+        }
+
+        val backingArgDef = backingField.getArgument(path)
+        if (backingArgDef != null && !backingArgDef.type.isList) {
+            return NadelSchemaValidationError.PathToPartitionArgNotList(
+                parentType = parent,
+                overallField = virtualField,
+                path = path,
+            )
+        }
+
+        return null
     }
 
     context(NadelValidationContext)

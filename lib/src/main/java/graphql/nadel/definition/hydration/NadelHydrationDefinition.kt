@@ -49,6 +49,8 @@ interface NadelHydrationDefinition : NadelInstructionDefinition {
                     arguments: [NadelHydrationArgument!]!
                     "Specify a condition for the hydration to activate"
                     when: NadelHydrationCondition
+                    "The name of the argument to partition by. When specified, hydration calls are grouped by partition key extracted from values of this argument."
+                    pathToPartitionArg: String
                 ) repeatable on FIELD_DEFINITION
             """.trimIndent(),
         )
@@ -70,6 +72,8 @@ interface NadelHydrationDefinition : NadelInstructionDefinition {
 
     val inputIdentifiedBy: List<NadelBatchObjectIdentifiedByDefinition>?
 
+    val pathToPartitionArg: String?
+
     object Keyword {
         const val hydrated = "hydrated"
         const val field = "field"
@@ -81,6 +85,7 @@ interface NadelHydrationDefinition : NadelInstructionDefinition {
         const val timeout = "timeout"
         const val `when` = "when"
         const val inputIdentifiedBy = "inputIdentifiedBy"
+        const val pathToPartitionArg = "pathToPartitionArg"
     }
 }
 
@@ -121,4 +126,7 @@ private class NadelHydrationDefinitionImpl(
             ?.map {
                 NadelBatchObjectIdentifiedByDefinition(it as ObjectValue)
             }
+
+    override val pathToPartitionArg: String?
+        get() = appliedDirective.getArgument(Keyword.pathToPartitionArg).getValue()
 }

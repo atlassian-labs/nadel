@@ -151,6 +151,11 @@ data class NadelBatchHydrationFieldInstruction(
     override val condition: NadelHydrationCondition?,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
+    /**
+     * The name of the argument to partition by. When specified, the [graphql.nadel.hooks.NadelExecutionHooks.partitionBatchHydrationArgumentList]
+     * hook will be called and hydration calls will be grouped by partition key.
+     */
+    val pathToPartitionArg: String?,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelDeepRenameFieldInstruction(
