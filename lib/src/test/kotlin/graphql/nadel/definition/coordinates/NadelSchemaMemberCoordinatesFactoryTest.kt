@@ -3,7 +3,6 @@ package graphql.nadel.definition.coordinates
 import graphql.parser.Parser
 import graphql.schema.idl.SchemaGenerator
 import org.junit.jupiter.api.Test
-import kotlin.collections.contains
 import kotlin.test.assertTrue
 
 abstract class NadelSchemaMemberCoordinatesFactoryTest {
