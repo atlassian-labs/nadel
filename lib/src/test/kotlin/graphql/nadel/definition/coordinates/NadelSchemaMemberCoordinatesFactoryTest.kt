@@ -58,6 +58,168 @@ abstract class NadelSchemaMemberCoordinatesFactoryTest {
 
             runTest(schema, expectedSet)
         }
+
+        @Test
+        fun `can generate coordinates for schema with duplicate type definitions`() {
+            val schema = """
+                type Query {
+                  user: User
+                }
+
+                type User {
+                  id: ID!
+                  name: String
+                }
+
+                type User {
+                  id: ID!
+                  email: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("user"),
+                NadelObjectCoordinates("User"),
+                NadelObjectCoordinates("User").field("id"),
+                NadelObjectCoordinates("User").field("name"),
+                NadelObjectCoordinates("User").field("email"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with interface implementing another interface without fields`() {
+            val schema = """
+                type Query {
+                  entity: Entity
+                }
+
+                interface Node {
+                  id: ID!
+                }
+
+                interface Entity implements Node
+
+                type Product implements Entity {
+                  id: ID!
+                  name: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("entity"),
+                NadelInterfaceCoordinates("Node"),
+                NadelInterfaceCoordinates("Node").field("id"),
+                NadelInterfaceCoordinates("Entity"),
+                NadelObjectCoordinates("Product"),
+                NadelObjectCoordinates("Product").field("id"),
+                NadelObjectCoordinates("Product").field("name"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with enum with no values`() {
+            val schema = """
+                type Query {
+                  status: Status
+                }
+
+                enum Status
+
+                type Placeholder {
+                  value: String
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("status"),
+                NadelEnumCoordinates("Status"),
+                NadelObjectCoordinates("Placeholder"),
+                NadelObjectCoordinates("Placeholder").field("value"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with type missing interface field`() {
+            val schema = """
+                type Query {
+                  node: Node
+                }
+
+                interface Node {
+                  id: ID!
+                  name: String!
+                }
+
+                type User implements Node {
+                  id: ID!
+                }
+
+                type Product {
+                  id: ID!
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("node"),
+                NadelInterfaceCoordinates("Node"),
+                NadelInterfaceCoordinates("Node").field("id"),
+                NadelInterfaceCoordinates("Node").field("name"),
+                NadelObjectCoordinates("User"),
+                NadelObjectCoordinates("User").field("id"),
+                NadelObjectCoordinates("Product"),
+                NadelObjectCoordinates("Product").field("id"),
+            )
+
+            runTest(schema, expectedSet)
+        }
+
+        @Test
+        fun `can generate coordinates for schema with interface field with incompatible nullability`() {
+            val schema = """
+                type Query {
+                  node: Node
+                }
+
+                interface Node {
+                  id: ID!
+                  name: String!
+                }
+
+                type User implements Node {
+                  id: ID!
+                  name: String
+                }
+
+                type Product {
+                  id: ID!
+                }
+            """.trimIndent()
+
+            val expectedSet = setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("node"),
+                NadelInterfaceCoordinates("Node"),
+                NadelInterfaceCoordinates("Node").field("id"),
+                NadelInterfaceCoordinates("Node").field("name"),
+                NadelObjectCoordinates("User"),
+                NadelObjectCoordinates("User").field("id"),
+                NadelObjectCoordinates("User").field("name"),
+                NadelObjectCoordinates("Product"),
+                NadelObjectCoordinates("Product").field("id"),
+            )
+
+            runTest(schema, expectedSet)
+        }
     }
 
     @Test
