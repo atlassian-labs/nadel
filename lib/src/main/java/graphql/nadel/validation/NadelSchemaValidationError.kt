@@ -448,6 +448,52 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
 
         override val subject = parentType.overall
     }
+
+    data class InvalidPathToPartitionArg(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val path: String,
+        val validArgs: List<String>,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Field $of has pathToPartitionArg '$path' that does not reference a valid hydration argument. Valid arguments are: ${validArgs.joinToString()}"
+        }
+
+        override val subject = overallField
+    }
+
+    data class PathToPartitionArgNotList(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val path: String,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Field $of has pathToPartitionArg '$path' but that argument does not have a list type. Only list arguments can be used for partitioning"
+        }
+
+        override val subject = overallField
+    }
+
+    data class PathToPartitionArgMustBeSourceField(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val path: String,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Field $of has pathToPartitionArg '$path' but that argument must use a source field value (e.g. \$source.someField), not a static value"
+        }
+
+        override val subject = overallField
+    }
 }
 
 private fun toString(element: GraphQLNamedSchemaElement): String {
