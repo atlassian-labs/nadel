@@ -1,0 +1,187 @@
+name: "hydration partitioning with renamed field"
+enabled: true
+# language=GraphQL
+overallSchema:
+  # language=GraphQL
+  UserService: |
+    type Query {
+      usersQuery(id: [ID]): [User] @renamed(from: "usersByIds")
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  # language=GraphQL
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [User]
+      @hydrated(
+        service: "UserService"
+        field: "usersQuery"
+        arguments: [{name: "id" value: "$source.authorIds"}]
+        identifiedBy: "id"
+        batchSize: 3
+        pathToPartitionArg: "id"
+      )
+    }
+# language=GraphQL
+underlyingSchema:
+  # language=GraphQL
+  UserService: |
+    type Query {
+      usersByIds(id: [ID]): [User]
+    }
+    type User {
+      id: ID
+      name: String
+    }
+  # language=GraphQL
+  Issues: |
+    type Issue {
+      authorIds: [ID]
+      id: ID
+    }
+    type Query {
+      issues: [Issue]
+    }
+# language=GraphQL
+query: |
+  query {
+    issues {
+      id
+      authors {
+        id
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "Issues"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            batch_hydration__authors__authorIds: authorIds
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "CLOUD-1/USER-1",
+                "CLOUD-2/USER-2"
+              ],
+              "id": "ISSUE-1"
+            },
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "CLOUD-1/USER-3"
+              ],
+              "id": "ISSUE-2"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          rename__usersQuery__usersByIds: usersByIds(id: ["CLOUD-1/USER-1", "CLOUD-1/USER-3"]) {
+            id
+            batch_hydration__authors__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__usersQuery__usersByIds": [
+            {
+              "id": "CLOUD-1/USER-1",
+              "batch_hydration__authors__id": "CLOUD-1/USER-1",
+              "name": "User One"
+            },
+            {
+              "id": "CLOUD-1/USER-3",
+              "batch_hydration__authors__id": "CLOUD-1/USER-3",
+              "name": "User Three"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: "UserService"
+    request:
+      # language=GraphQL
+      query: |
+        query {
+          rename__usersQuery__usersByIds: usersByIds(id: ["CLOUD-2/USER-2"]) {
+            id
+            batch_hydration__authors__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__usersQuery__usersByIds": [
+            {
+              "id": "CLOUD-2/USER-2",
+              "batch_hydration__authors__id": "CLOUD-2/USER-2",
+              "name": "User Two"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "id": "CLOUD-1/USER-1",
+              "name": "User One"
+            },
+            {
+              "id": "CLOUD-2/USER-2",
+              "name": "User Two"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            {
+              "id": "CLOUD-1/USER-3",
+              "name": "User Three"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }
