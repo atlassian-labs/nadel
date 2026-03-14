@@ -9,7 +9,6 @@ import graphql.nadel.definition.hydration.NadelIdHydrationDefinition
 import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseIdHydrationOrNull
 import graphql.nadel.engine.util.unwrapAll
-import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asInterimError
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType

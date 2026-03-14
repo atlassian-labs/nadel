@@ -37,6 +37,7 @@ import graphql.nadel.validation.NadelBatchHydrationMatchingStrategyInvalidSource
 import graphql.nadel.validation.NadelBatchHydrationMatchingStrategyReferencesNonExistentSourceFieldError
 import graphql.nadel.validation.NadelBatchHydrationMissingIdentifiedByError
 import graphql.nadel.validation.NadelHydrationCannotSqueezeSourceListError
+import graphql.nadel.validation.NadelHydrationExceedsMaxBatchSizeError
 import graphql.nadel.validation.NadelHydrationIncompatibleOutputTypeError
 import graphql.nadel.validation.NadelHydrationMustUseIndexExclusivelyError
 import graphql.nadel.validation.NadelHydrationReferencesNonExistentBackingFieldError
@@ -354,6 +355,9 @@ class NadelHydrationValidation internal constructor(
             sourceFieldValidation2.getBatchHydrationSourceFields(arguments, matchStrategy, hydrationCondition)
                 .onError { return it }
 
+        val batchSize = getBatchSize()
+            .onError { return it }
+
         return NadelValidatedFieldResult(
             service = parent.service,
             fieldInstruction = NadelBatchHydrationFieldInstruction(
@@ -369,10 +373,30 @@ class NadelHydrationValidation internal constructor(
                 backingFieldContainer = backingFieldContainer,
                 backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, null),
                 condition = hydrationCondition,
-                batchSize = hydrationDefinition.batchSize,
+                batchSize = batchSize,
                 batchHydrationMatchStrategy = matchStrategy,
             )
         )
+    }
+
+    context(NadelValidationContext, NadelHydrationValidationContext)
+    private fun getBatchSize(): NadelValidationInterimResult<Int> {
+        val requestedBatchSize = hydrationDefinition.batchSize
+
+        val maxBatchSize = instructionDefinitions.getMaxBatchSizeOrNull(backingFieldContainer, backingField)?.size
+            ?: return requestedBatchSize.asInterimSuccess() // No limit
+
+        if (requestedBatchSize > maxBatchSize) {
+            return NadelHydrationExceedsMaxBatchSizeError(
+                parentType = parent,
+                virtualField = virtualField,
+                hydration = hydrationDefinition,
+                requestedBatchSize = requestedBatchSize,
+                maxBatchSize = maxBatchSize,
+            ).asInterimError()
+        }
+
+        return requestedBatchSize.asInterimSuccess()
     }
 
     context(NadelValidationContext)
