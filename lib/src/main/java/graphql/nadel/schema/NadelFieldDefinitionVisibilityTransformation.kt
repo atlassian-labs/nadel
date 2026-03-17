@@ -15,6 +15,9 @@ import graphql.schema.idl.DirectiveInfo
 import graphql.schema.idl.ScalarInfo
 
 fun interface NadelFieldDefinitionVisibilityTransformationPredicate {
+    /**
+     * @return `true` to keep field and `false` to delete
+     */
     operator fun invoke(
         parent: ImplementingTypeDefinition<*>,
         field: FieldDefinition,
