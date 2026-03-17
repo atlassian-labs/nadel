@@ -34,7 +34,7 @@ internal class OverallSchemaGenerator {
 
         val definitions = getDefinitions(serviceRegistries)
             .let {
-                schemaDefinitionTransformationHook.apply(it)
+                schemaDefinitionTransformationHook.invoke(it)
             }
 
         val typeRegistry = createTypeRegistry(definitions)

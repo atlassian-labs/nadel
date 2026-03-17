@@ -24,11 +24,11 @@ fun interface NadelFieldDefinitionVisibilityTransformationPredicate {
 class NadelFieldDefinitionVisibilityTransformation(
     val fieldPredicate: NadelFieldDefinitionVisibilityTransformationPredicate,
 ) : NadelSchemaDefinitionTransformationHook {
-    override fun apply(definitions: List<AnySDLDefinition>): List<AnySDLDefinition> {
+    override fun invoke(definitions: List<AnySDLDefinition>): List<AnySDLDefinition> {
         return deleteFields(definitions)
     }
 
-    fun deleteFields(definitions: List<AnySDLDefinition>): List<AnySDLDefinition> {
+    private fun deleteFields(definitions: List<AnySDLDefinition>): List<AnySDLDefinition> {
         val newDefinitions = definitions
             .map { definition ->
                 when (definition) {
@@ -57,7 +57,7 @@ class NadelFieldDefinitionVisibilityTransformation(
             }
     }
 
-    fun transformExtensionType(definition: InterfaceTypeExtensionDefinition): InterfaceTypeExtensionDefinition {
+    private fun transformExtensionType(definition: InterfaceTypeExtensionDefinition): InterfaceTypeExtensionDefinition {
         val newFields = filterFields(definition)
         if (newFields.size == definition.fieldDefinitions.size) {
             return definition
@@ -68,7 +68,7 @@ class NadelFieldDefinitionVisibilityTransformation(
         }
     }
 
-    fun transformType(definition: InterfaceTypeDefinition): InterfaceTypeDefinition {
+    private fun transformType(definition: InterfaceTypeDefinition): InterfaceTypeDefinition {
         val newFields = filterFields(definition)
         if (newFields.size == definition.fieldDefinitions.size) {
             return definition
@@ -79,7 +79,7 @@ class NadelFieldDefinitionVisibilityTransformation(
         }
     }
 
-    fun transformExtensionType(definition: ObjectTypeExtensionDefinition): ObjectTypeExtensionDefinition {
+    private fun transformExtensionType(definition: ObjectTypeExtensionDefinition): ObjectTypeExtensionDefinition {
         val newFields = filterFields(definition)
         if (newFields.size == definition.fieldDefinitions.size) {
             return definition
@@ -90,7 +90,7 @@ class NadelFieldDefinitionVisibilityTransformation(
         }
     }
 
-    fun transformType(definition: ObjectTypeDefinition): ObjectTypeDefinition {
+    private fun transformType(definition: ObjectTypeDefinition): ObjectTypeDefinition {
         val newFields = filterFields(definition)
         if (newFields.size == definition.fieldDefinitions.size) {
             return definition
@@ -101,7 +101,7 @@ class NadelFieldDefinitionVisibilityTransformation(
         }
     }
 
-    fun filterFields(
+    private fun filterFields(
         parent: ImplementingTypeDefinition<*>,
     ): List<FieldDefinition> {
         return parent.fieldDefinitions
@@ -110,7 +110,7 @@ class NadelFieldDefinitionVisibilityTransformation(
             }
     }
 
-    fun getStronglyReferencedTypes(types: List<AnySDLDefinition>): Set<String> {
+    private fun getStronglyReferencedTypes(types: List<AnySDLDefinition>): Set<String> {
         val typesByName = types
             .groupBy {
                 (it as AnyNamedNode).name
