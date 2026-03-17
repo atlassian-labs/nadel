@@ -1,7 +1,7 @@
 package graphql.nadel.definition.coordinates
 
-import graphql.nadel.engine.blueprint.NadelSchemaTraverserElement
 import graphql.nadel.engine.util.whenType
+import graphql.nadel.schema.NadelSchemaTraverserElement
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldsContainer
