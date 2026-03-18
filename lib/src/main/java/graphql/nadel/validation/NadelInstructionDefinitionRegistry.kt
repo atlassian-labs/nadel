@@ -9,6 +9,7 @@ import graphql.nadel.definition.coordinates.NadelTypeCoordinates
 import graphql.nadel.definition.coordinates.coordinates
 import graphql.nadel.definition.hydration.NadelDefaultHydrationDefinition
 import graphql.nadel.definition.hydration.NadelHydrationDefinition
+import graphql.nadel.definition.hydration.NadelMaxBatchSizeDefinition
 import graphql.nadel.definition.partition.NadelPartitionDefinition
 import graphql.nadel.definition.renamed.NadelRenamedDefinition
 import graphql.nadel.definition.stubbed.NadelStubbedDefinition
@@ -101,6 +102,10 @@ data class NadelInstructionDefinitionRegistry(
         return getStubbedOrNull(container.coordinates()) != null
     }
 
+    fun hasMaxBatchSize(container: GraphQLFieldsContainer, field: GraphQLFieldDefinition): Boolean {
+        return getMaxBatchSizeOrNull(container.coordinates().field(field.name)) != null
+    }
+
     fun getRenamedOrNull(
         container: GraphQLFieldsContainer,
         field: GraphQLFieldDefinition,
@@ -140,6 +145,22 @@ data class NadelInstructionDefinitionRegistry(
 
         return definitions.asSequence()
             .filterIsInstance<NadelStubbedDefinition>()
+            .firstOrNull()
+    }
+
+    fun getMaxBatchSizeOrNull(
+        parent: GraphQLFieldsContainer,
+        field: GraphQLFieldDefinition,
+    ): NadelMaxBatchSizeDefinition? {
+        return getMaxBatchSizeOrNull(parent.coordinates().field(field.name))
+    }
+
+    fun getMaxBatchSizeOrNull(coords: NadelFieldCoordinates): NadelMaxBatchSizeDefinition? {
+        val definitions = definitions[coords]
+            ?: return null
+
+        return definitions.asSequence()
+            .filterIsInstance<NadelMaxBatchSizeDefinition>()
             .firstOrNull()
     }
 

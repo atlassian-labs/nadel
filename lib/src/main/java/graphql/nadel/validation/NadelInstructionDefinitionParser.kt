@@ -5,6 +5,7 @@ import graphql.nadel.definition.coordinates.NadelSchemaMemberCoordinates
 import graphql.nadel.definition.coordinates.coordinates
 import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseHydrationDefinitions
+import graphql.nadel.definition.hydration.parseMaxBatchSizeOrNull
 import graphql.nadel.definition.partition.parsePartitionOrNull
 import graphql.nadel.definition.renamed.parseRenamedOrNull
 import graphql.nadel.definition.stubbed.parseStubbedOrNull
@@ -104,6 +105,11 @@ internal class NadelInstructionDefinitionParser(
                         val hydrations = node.parseHydrationDefinitions()
                         if (hydrations.isNotEmpty()) {
                             addAll(hydrations)
+                        }
+
+                        val maxBatchSize = node.parseMaxBatchSizeOrNull()
+                        if (maxBatchSize != null) {
+                            addAll(listOf(maxBatchSize))
                         }
 
                         val customDefinitions = hook.parseDefinitions(engineSchema, parent, node)
