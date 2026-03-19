@@ -1,5 +1,6 @@
 package graphql.nadel.definition.coordinates
 
+import graphql.Directives
 import graphql.language.Document
 import graphql.language.NamedNode
 import graphql.nadel.engine.util.AnySDLDefinition
@@ -13,7 +14,6 @@ import graphql.nadel.schema.NadelSchemaTraverserVisitor
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.DirectiveInfo
 import graphql.schema.idl.ScalarInfo
 
 class NadelSchemaMemberCoordinatesFactory {
@@ -199,7 +199,7 @@ internal class NadelSchemaCoordinateCollectorTraverserVisitor(
         element: NadelSchemaTraverserElement.Directive,
     ): Boolean {
         // Ignore built in directives
-        if (DirectiveInfo.isGraphqlSpecifiedDirective(element.node.name)) {
+        if (Directives.isBuiltInDirective(element.node.name)) {
             return false
         }
 
@@ -243,7 +243,7 @@ internal class NadelSchemaDefinitionCoordinateCollectorTraverserVisitor(
 
     override fun visitGraphQLDirective(element: NadelSchemaDefinitionTraverserElement.Directive): Boolean {
         // Ignore built in directives
-        if (DirectiveInfo.isGraphqlSpecifiedDirective(element.node.name)) {
+        if (Directives.isBuiltInDirective(element.node.name)) {
             return false
         }
 
@@ -306,7 +306,7 @@ internal class NadelSchemaDefinitionCoordinateCollectorTraverserVisitor(
         val typeName = element.node.unwrapAll().name
 
         // Can't resolve built in scalars
-        if (ScalarInfo.isGraphqlSpecifiedScalar(typeName) || DirectiveInfo.isGraphqlSpecifiedDirective(typeName)) {
+        if (ScalarInfo.isGraphqlSpecifiedScalar(typeName) || Directives.isBuiltInDirective(typeName)) {
             return false
         }
 
