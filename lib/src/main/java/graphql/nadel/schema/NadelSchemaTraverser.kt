@@ -1,8 +1,8 @@
 package graphql.nadel.schema
 
+import graphql.Directives
 import graphql.introspection.Introspection
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.DirectiveInfo
 import graphql.schema.idl.ScalarInfo
 
 /**
@@ -26,7 +26,7 @@ internal class NadelSchemaTraverser {
             }
         val directiveRoots = schema.directives.asSequence()
             .filterNot { directive ->
-                DirectiveInfo.isGraphqlSpecifiedDirective(directive.name)
+                Directives.isBuiltInDirective(directive.name)
             }
             .map { directive ->
                 NadelSchemaTraverserElement.from(directive)
