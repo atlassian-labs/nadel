@@ -27,7 +27,6 @@ class `repeated hydrated fields on the same level when using batch hydration` : 
                 type Foo {
                   issue: Issue
                   @hydrated(
-                    service: "Foo"
                     field: "issues"
                     arguments: [{name: "issueIds" value: "${'$'}source.issueId"}]
                   )

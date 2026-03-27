@@ -69,7 +69,6 @@ class `hydration with multiple conditions ignores false conditions` : NadelLegac
                   type: String
                   bar: Bars
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {
@@ -85,7 +84,6 @@ class `hydration with multiple conditions ignores false conditions` : NadelLegac
                     }
                   )
                   @hydrated(
-                    service: "service2" 
                     field: "barById" 
                     arguments: [
                       {

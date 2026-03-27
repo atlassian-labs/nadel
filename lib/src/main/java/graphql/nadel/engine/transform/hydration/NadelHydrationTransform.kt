@@ -487,7 +487,6 @@ internal class NadelHydrationTransform(
  * type Issue {
  *   assignee: User
  *     @hydrated(
- *       service: "users"
  *       field: "user"
  *       arguments: [{name: "id", value: "$source.assigneeId"}]
  *     )

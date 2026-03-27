@@ -68,7 +68,6 @@ class `deep rename inside batch hydration null object` : NadelLegacyIntegrationT
                 type User {
                   issueId: ID
                   issue: Issue @hydrated(
-                    service: "IssueService"
                     field: "issuesByIds"
                     arguments: [
                       {name: "id" value: "${'$'}source.issueId"}

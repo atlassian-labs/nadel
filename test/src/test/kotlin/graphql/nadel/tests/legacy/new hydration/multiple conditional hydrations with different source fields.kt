@@ -73,7 +73,6 @@ class `multiple conditional hydrations with different source fields` : NadelLega
                   class: String @hidden
                   bar: Bars
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {
@@ -89,7 +88,6 @@ class `multiple conditional hydrations with different source fields` : NadelLega
                     }
                   )
                   @hydrated(
-                    service: "service2" 
                     field: "barById" 
                     arguments: [
                       {

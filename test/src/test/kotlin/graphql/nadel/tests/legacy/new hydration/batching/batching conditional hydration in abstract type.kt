@@ -38,14 +38,12 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                   id: ID!
                   content: [ActivityContent]
                   @hydrated(
-                    service: "monolith"
                     field: "commentsByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.contentIds"}
                     ]
                   )
                   @hydrated(
-                    service: "monolith"
                     field: "issuesByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.contentIds"}
@@ -56,14 +54,12 @@ class `batching conditional hydration in abstract type` : NadelLegacyIntegration
                   id: ID!
                   content: [ActivityContent]
                   @hydrated(
-                    service: "monolith"
                     field: "issuesByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.contentId"}
                     ]
                   )
                   @hydrated(
-                    service: "monolith"
                     field: "commentsByIds"
                     arguments: [
                       {name: "ids" value: "$source.contentId"}

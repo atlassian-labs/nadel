@@ -46,7 +46,6 @@ class `one synthetic hydration call with longer path arguments and merged fields
                 runtimeWiring = { wiring ->
                     wiring.type("Query") { type ->
                         type.dataFetcher("usersQuery") {
-                            Unit
                         }
                     }
                     wiring.type("UserQuery") { type ->
@@ -71,7 +70,6 @@ class `one synthetic hydration call with longer path arguments and merged fields
                       id: ID
                       authors: [RenamedUser]
                       @hydrated(
-                        service: "UserService"
                         field: "usersQuery.usersByIds"
                         arguments: [{name: "id" value: "${'$'}source.authors.authorId"}]
                         identifiedBy: "id"

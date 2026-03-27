@@ -58,7 +58,6 @@ class `hydration matching using index with null input nodes` : NadelLegacyIntegr
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "ids" value: "${'$'}source.authorIds"}]
                     indexed: true

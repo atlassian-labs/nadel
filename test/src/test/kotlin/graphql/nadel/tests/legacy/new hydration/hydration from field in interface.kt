@@ -26,7 +26,6 @@ class `hydration from field in interface` : NadelLegacyIntegrationTest(
                   title: String
                   issueAuthor: User
                   @hydrated(
-                    service: "users"
                     field: "user"
                     arguments: [{name: "id" value: "${'$'}source.author.userId"}]
                   )

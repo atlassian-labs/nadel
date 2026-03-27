@@ -58,7 +58,6 @@ class `basic conditional hydration with true equals condition` : NadelLegacyInte
                   id: ID
                   type: String
                   bar: Bar @hydrated(
-                    service: "service2" 
                     field: "barById" 
                     arguments: [
                       {

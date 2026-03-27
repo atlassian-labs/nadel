@@ -1,7 +1,6 @@
 package graphql.nadel.validation
 
 import graphql.nadel.engine.util.singleOfType
-import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
@@ -25,7 +24,6 @@ class NadelHydrationValidationTest {
                     type JiraIssue @renamed(from: "Issue") {
                         id: ID!
                         creator: User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -80,7 +78,6 @@ class NadelHydrationValidationTest {
                     type JiraIssue @renamed(from: "Issue") {
                         id: ID!
                         creator: User @hydrated(
-                            service: "users"
                             field: "users"
                             arguments: [
                                 {name: "ids", value: "$source.creator"}
@@ -138,7 +135,6 @@ class NadelHydrationValidationTest {
                     type JiraIssue @renamed(from: "Issue") {
                         id: ID!
                         creator(siteId: ID!): User @hydrated(
-                            service: "users"
                             field: "users"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -194,7 +190,6 @@ class NadelHydrationValidationTest {
                     type Issue {
                         id: ID!
                         creator: User @hydrated(
-                            service: "users"
                             field: "fakeField.user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -251,7 +246,6 @@ class NadelHydrationValidationTest {
                     type Issue {
                         id: ID!
                         creator: User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -309,7 +303,6 @@ class NadelHydrationValidationTest {
                         id: ID!
                         # Rename doesn't make sense but we're testing that the directives cannot coexist
                         creator: User @renamed(from: "id") @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -380,7 +373,6 @@ class NadelHydrationValidationTest {
                     }
                     extend type JiraIssue {
                         creator: User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -425,7 +417,6 @@ class NadelHydrationValidationTest {
                     }
                     type JiraIssue @renamed(from: "Issue") {
                         creator: User! @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -483,7 +474,6 @@ class NadelHydrationValidationTest {
                     }
                     type Issue {
                         creator: User @hydrated(
-                            service: "users"
                             field: "userById"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -540,7 +530,6 @@ class NadelHydrationValidationTest {
                     }
                     type Issue {
                         creator: User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creatorId"}
@@ -612,7 +601,6 @@ class NadelHydrationValidationTest {
                     }
                     extend type Issue {
                         creator(someArg: Boolean): User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -677,7 +665,6 @@ class NadelHydrationValidationTest {
                     }
                     extend type Issue {
                         creator(someArg: Boolean): User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -742,7 +729,6 @@ class NadelHydrationValidationTest {
                     }
                     extend type Issue {
                         creator(someArg: ID!, other: Boolean): User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -808,7 +794,6 @@ class NadelHydrationValidationTest {
                     }
                     extend type Issue {
                         creator(someArg: ID!, other: Boolean): User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$argument.creator"}
@@ -871,7 +856,6 @@ class NadelHydrationValidationTest {
                     }
                     extend type Issue {
                         creator(someArg: ID!, other: Boolean): User @hydrated(
-                            service: "users"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$argument.someArg"}
@@ -925,7 +909,6 @@ class NadelHydrationValidationTest {
                     }
                     extend type Issue {
                         creator(someArg: ID!, other: Boolean): User @hydrated(
-                            service: "accounts"
                             field: "user"
                             arguments: [
                                 {name: "id", value: "$source.creator"}
@@ -1072,7 +1055,6 @@ class NadelHydrationValidationTest {
                         id: ID!
                         creator: AbstractUser
                         @hydrated(
-                            service: "users"
                             field: "externalUser"
                             arguments: [
                                 {name: "id", value: "$source.creatorId"}
@@ -1148,7 +1130,6 @@ class NadelHydrationValidationTest {
                         id: ID!
                         creator: AbstractUser
                         @hydrated(
-                            service: "users"
                             field: "externalUser"
                             arguments: [
                                 {name: "id", value: "$source.creatorId"}

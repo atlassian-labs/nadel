@@ -20,7 +20,6 @@ class BatchHydrationAtQueryTypeTest : NadelIntegrationTest(
                   myIssueKeys(limit: Int! = 25): [ID!] @hidden
                   myIssues: [Issue]
                     @hydrated(
-                      service: "issues"
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.myIssueKeys"}]
                       identifiedBy: "id"

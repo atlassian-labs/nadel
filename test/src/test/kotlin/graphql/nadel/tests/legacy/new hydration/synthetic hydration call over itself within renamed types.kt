@@ -43,7 +43,6 @@ class `synthetic hydration call over itself within renamed types` : NadelLegacyI
                   name: String
                   characters: [TestingCharacter]
                   @hydrated(
-                    service: "testing"
                     field: "tests.characters"
                     arguments: [{name: "ids" value: "${'$'}source.characterIds"}]
                     identifiedBy: "id"

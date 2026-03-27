@@ -9,13 +9,12 @@ overallSchema:
     type Activity {
       id: ID!
       content: Issue
-        @hydrated(
-          service: "issues"
-          field: "issuesByIds"
-          arguments: [
-            {name: "ids" value: "$source.reference.issueId"}
-          ]
-        )
+      @hydrated(
+        field: "issuesByIds"
+        arguments: [
+          {name: "ids" value: "$source.reference.issueId"}
+        ]
+      )
     }
   # language=GraphQL
   issues: |

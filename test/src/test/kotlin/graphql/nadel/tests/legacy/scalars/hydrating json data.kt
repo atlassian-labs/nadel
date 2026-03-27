@@ -24,7 +24,6 @@ class `hydrating json data` : NadelLegacyIntegrationTest(
                 type Foo {
                   id: ID!
                   foo: Foo @hydrated(
-                    service: "Baz"
                     field: "otherFoo"
                     arguments: [{ name: "id" value: "${'$'}source.id" }]
                   )

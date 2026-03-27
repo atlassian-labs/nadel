@@ -69,7 +69,6 @@ class `hydration with multiple true conditions takes first` : NadelLegacyIntegra
                   type: String
                   bar: Bars
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {
@@ -85,7 +84,6 @@ class `hydration with multiple true conditions takes first` : NadelLegacyIntegra
                     }
                   )
                   @hydrated(
-                    service: "service2" 
                     field: "barById" 
                     arguments: [
                       {

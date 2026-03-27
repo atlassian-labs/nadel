@@ -58,7 +58,6 @@ class `basic hydration with static arg boolean` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barWithSomeAttribute"
                     arguments: [{name: "someAttribute" value: true}]
                   )

@@ -27,7 +27,6 @@ class `ari argument in renamed object input in hydration` : NadelLegacyIntegrati
                   projectId: ID! @ARI(type: "project", owner: "jira-software", interpreted: true)
                   key: String!
                   related: [Issue] @hydrated(
-                    service: "MyService"
                     field: "issues"
                     arguments: [{name: "input" value: "${'$'}source.relatedIds"}]
                     inputIdentifiedBy: [

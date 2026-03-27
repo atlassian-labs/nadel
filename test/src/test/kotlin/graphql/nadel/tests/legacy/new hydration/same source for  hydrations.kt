@@ -28,13 +28,11 @@ class `same source for  hydrations` : NadelLegacyIntegrationTest(
                 type Foo {
                   issue: Issue
                   @hydrated(
-                    service: "Foo"
                     field: "issue"
                     arguments: [{name: "issueId" value: "${'$'}source.fooId"}]
                   )
                   detail: Detail
                   @hydrated(
-                    service: "Foo"
                     field: "detail"
                     arguments: [{name: "detailId" value: "${'$'}source.fooId"}]
                   )

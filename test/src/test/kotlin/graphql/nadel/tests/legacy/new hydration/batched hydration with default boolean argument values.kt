@@ -62,7 +62,6 @@ class `batched hydration with default boolean argument values` : NadelLegacyInte
                 type Issue {
                   id: ID
                   authors(test: Boolean = true): [User] @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [
                       {name: "id" value: "${'$'}source.authorIds"}

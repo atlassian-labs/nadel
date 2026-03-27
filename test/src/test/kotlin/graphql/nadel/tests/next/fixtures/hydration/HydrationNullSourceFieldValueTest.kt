@@ -27,7 +27,6 @@ class HydrationNullSourceFieldValueTest : NadelIntegrationTest(
                   userId: ID
                   user: User
                     @hydrated(
-                      service: "monolith"
                       field: "userById"
                       arguments: [{name: "id", value: "$source.userId"}]
                     )

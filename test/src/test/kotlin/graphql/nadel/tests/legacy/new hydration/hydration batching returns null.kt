@@ -52,7 +52,6 @@ class `hydration batching returns null` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: [Bar]
                   @hydrated(
-                    service: "service2"
                     field: "barsById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )

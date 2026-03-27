@@ -13,7 +13,6 @@ overallSchema:
     type FooService @renamed(from: "Service") {
       otherServices: Connection
       @hydrated(
-        service: "Foo"
         field: "connection"
         arguments: [{name: "id" value: "$source.id"}]
       )
@@ -22,7 +21,6 @@ overallSchema:
       edges: [Edge]
       nodes: [Node]
       @hydrated(
-        service: "Foo"
         field: "node"
         arguments: [{name: "id" value: "$source.edges.node"}]
       )
@@ -30,7 +28,6 @@ overallSchema:
     type Node {
       space: Space
       @hydrated(
-        service: "Foo"
         field: "space"
         arguments: [{name: "id" value: "$source.id"}]
       )
@@ -43,7 +40,6 @@ overallSchema:
     type Edge {
       node: Node
       @hydrated(
-        service: "Foo"
         field: "node"
         arguments: [{name: "id" value: "$source.node"}]
       )

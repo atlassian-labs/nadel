@@ -26,7 +26,6 @@ class `hydration with more interfaces` : NadelLegacyIntegrationTest(
                 type Troll implements Node {
                   id: ID
                   @hydrated(
-                    service: "Issues"
                     field: "trollName"
                     arguments: [{name: "id" value: "${'$'}source.id"}]
                   )
@@ -37,7 +36,6 @@ class `hydration with more interfaces` : NadelLegacyIntegrationTest(
                 type User implements Node {
                   id: ID
                   @hydrated(
-                    service: "Issues"
                     field: "ariById"
                     arguments: [{name: "id" value: "${'$'}source.id"}]
                   )

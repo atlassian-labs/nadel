@@ -20,7 +20,6 @@ overallSchema:
       type: String
       bar: Bars
       @hydrated(
-        service: "service2"
         field: "barById"
         arguments: [
           {

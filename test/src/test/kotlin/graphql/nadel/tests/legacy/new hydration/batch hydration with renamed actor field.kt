@@ -58,7 +58,6 @@ class `batch hydration with renamed actor field` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: [Bar]
                   @hydrated(
-                    service: "service2"
                     field: "barsByIdOverall"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                     identifiedBy: "id"

@@ -43,7 +43,6 @@ class `simple hydration query with a synthetic field` : NadelLegacyIntegrationTe
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("projects") {
-                        Unit
                     }
                 }
                 wiring.type("ProjectsQuery") { type ->
@@ -67,7 +66,6 @@ class `simple hydration query with a synthetic field` : NadelLegacyIntegrationTe
                   id: ID
                   project: Project
                   @hydrated(
-                    service: "service2"
                     field: "projects.project"
                     arguments: [{name: "id" value: "${'$'}source.projectId"}]
                   )

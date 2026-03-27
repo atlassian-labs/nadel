@@ -43,7 +43,6 @@ class `all hydration fields are seen by transformer` : NadelLegacyIntegrationTes
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("bars") {
-                        Unit
                     }
                 }
                 wiring.type("BarQuery") { type ->
@@ -67,7 +66,6 @@ class `all hydration fields are seen by transformer` : NadelLegacyIntegrationTes
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "bars.barById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )

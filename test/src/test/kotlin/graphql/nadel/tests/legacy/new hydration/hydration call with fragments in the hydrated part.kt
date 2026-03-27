@@ -75,7 +75,6 @@ class `hydration call with fragments in the hydrated part` : NadelLegacyIntegrat
                   authorDetails: [AuthorDetail]
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authorDetails.authorId"}]
                     identifiedBy: "id"

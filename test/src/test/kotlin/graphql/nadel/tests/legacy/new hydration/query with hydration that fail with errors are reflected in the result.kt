@@ -33,7 +33,6 @@ class `query with hydration that fail with errors are reflected in the result` :
                   name: String
                   nestedBar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.nestedBarId"}]
                   )
@@ -83,7 +82,6 @@ class `query with hydration that fail with errors are reflected in the result` :
                   name: String
                   bar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )

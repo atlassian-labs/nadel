@@ -51,7 +51,6 @@ class `complex identified by hydration batching returns null batch` : NadelLegac
                 type Foo {
                   id: ID
                   bar: [Bar] @hydrated(
-                    service: "service2"
                     field: "barsById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                     inputIdentifiedBy: [{sourceId: "barId" resultId: "id"}]

@@ -19,7 +19,6 @@ overallSchema:
       authorDetails: [AuthorDetail]
       authors: [User]
       @hydrated(
-        service: "UserService"
         field: "usersByIds"
         arguments: [{name: "id" value: "$source.authorDetails.authorId"}]
         identifiedBy: "id"
