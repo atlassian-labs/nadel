@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.validation.util.assertSingleOfType
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -979,5 +980,304 @@ class NadelHydrationValidationTest2 {
 
         val errors = validate(fixture)
         assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `fails if requested absent batch size argument exceeds maximum`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                        data: Page
+                          @hydrated(
+                            field: "pages",
+                            arguments: [{name: "ids", value: "$source.id"}]
+                          )
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page] @maxBatchSize(size: 25)
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        assertTrue(errors.singleOrNull() is NadelHydrationExceedsMaxBatchSizeError)
+        val error = errors.single() as NadelHydrationExceedsMaxBatchSizeError
+        assertTrue(error.virtualField.name == "data")
+        assertTrue(error.requestedBatchSize == 200)
+        assertTrue(error.maxBatchSize == 25)
+    }
+
+    @Test
+    fun `fails if explicit batch size argument exceeds default`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                        data: Page
+                          @hydrated(
+                            field: "pages",
+                            arguments: [{name: "ids", value: "$source.id"}]
+                            batchSize: 50
+                          )
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page] @maxBatchSize(size: 25)
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        assertTrue(errors.singleOrNull() is NadelHydrationExceedsMaxBatchSizeError)
+        val error = errors.single() as NadelHydrationExceedsMaxBatchSizeError
+        assertTrue(error.virtualField.name == "data")
+        assertTrue(error.requestedBatchSize == 50)
+        assertTrue(error.maxBatchSize == 25)
+    }
+
+    @Test
+    fun `max batch size limit works with idHydrated`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                        data: Page @idHydrated(idField: "id")
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page] @maxBatchSize(size: 25)
+                    }
+                    type Page @defaultHydration(field: "pages", idArgument: "ids", batchSize: 30) {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        val hydratedError = errors.assertSingleOfType<NadelHydrationExceedsMaxBatchSizeError>()
+        assertTrue(hydratedError.parentType.overall.name == "Activity")
+        assertTrue(hydratedError.virtualField.name == "data")
+        assertTrue(hydratedError.requestedBatchSize == 30)
+        assertTrue(hydratedError.maxBatchSize == 25)
+
+        val defaultHydrationError = errors.assertSingleOfType<NadelDefaultHydrationExceedsMaxBatchSizeError>()
+        assertTrue(defaultHydrationError.type.overall.name == "Page")
+        assertTrue(defaultHydrationError.backingField.name == "pages")
+        assertTrue(defaultHydrationError.requestedBatchSize == 30)
+        assertTrue(defaultHydrationError.maxBatchSize == 25)
+    }
+
+    @Test
+    fun `max batch size limit works with absent batchSize on idHydrated`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                        data: Page @idHydrated(idField: "id")
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page] @maxBatchSize(size: 25)
+                    }
+                    type Page @defaultHydration(field: "pages", idArgument: "ids") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "activity" to /* language=GraphQL*/ """
+                    type Query {
+                        myActivity: [Activity]
+                    }
+                    type Activity {
+                        id: ID!
+                    }
+                """.trimIndent(),
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        val hydratedError = errors.assertSingleOfType<NadelHydrationExceedsMaxBatchSizeError>()
+        assertTrue(hydratedError.parentType.overall.name == "Activity")
+        assertTrue(hydratedError.virtualField.name == "data")
+        assertTrue(hydratedError.requestedBatchSize == 200)
+        assertTrue(hydratedError.maxBatchSize == 25)
+
+        val defaultHydrationError = errors.assertSingleOfType<NadelDefaultHydrationExceedsMaxBatchSizeError>()
+        assertTrue(defaultHydrationError.type.overall.name == "Page")
+        assertTrue(defaultHydrationError.backingField.name == "pages")
+        assertTrue(defaultHydrationError.requestedBatchSize == 200)
+        assertTrue(defaultHydrationError.maxBatchSize == 25)
+    }
+
+    @Test
+    fun `max batch size limit works with defaultHydration`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page] @maxBatchSize(size: 25)
+                    }
+                    type Page @defaultHydration(field: "pages", idArgument: "ids", batchSize: 40) {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        val defaultHydrationError = errors.assertSingleOfType<NadelDefaultHydrationExceedsMaxBatchSizeError>()
+        assertTrue(defaultHydrationError.type.overall.name == "Page")
+        assertTrue(defaultHydrationError.backingField.name == "pages")
+        assertTrue(defaultHydrationError.requestedBatchSize == 40)
+        assertTrue(defaultHydrationError.maxBatchSize == 25)
+    }
+
+    @Test
+    fun `max batch size limit works with absent batchSize on defaultHydration`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page] @maxBatchSize(size: 25)
+                    }
+                    type Page @defaultHydration(field: "pages", idArgument: "ids") {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "pages" to /* language=GraphQL*/ """
+                    type Query {
+                        pages(ids: [ID!]!): [Page]
+                    }
+                    type Page {
+                        id: ID!
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        val errors = validate(fixture)
+        assertTrue(errors.map { it.message }.isNotEmpty())
+
+        val defaultHydrationError = errors.assertSingleOfType<NadelDefaultHydrationExceedsMaxBatchSizeError>()
+        assertTrue(defaultHydrationError.type.overall.name == "Page")
+        assertTrue(defaultHydrationError.backingField.name == "pages")
+        assertTrue(defaultHydrationError.requestedBatchSize == 200)
+        assertTrue(defaultHydrationError.maxBatchSize == 25)
     }
 }
