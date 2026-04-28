@@ -15,6 +15,7 @@ import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.validation.NadelHydrationConditionIncompatibleValueError
+import graphql.nadel.validation.NadelHydrationConditionInvalidEnumValueError
 import graphql.nadel.validation.NadelHydrationConditionInvalidRegexError
 import graphql.nadel.validation.NadelHydrationConditionMatchesPredicateRequiresStringFieldError
 import graphql.nadel.validation.NadelHydrationConditionStartsWithPredicateRequiresStringFieldError
@@ -29,8 +30,9 @@ import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asI
 import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.asInterimSuccess
 import graphql.nadel.validation.ok
 import graphql.nadel.validation.onErrorCast
+import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLScalarType
+import graphql.schema.GraphQLType
 import java.math.BigInteger
 
 private data class NadelHydrationConditionValidationContext(
@@ -39,6 +41,28 @@ private data class NadelHydrationConditionValidationContext(
     val hydration: NadelHydrationDefinition,
     val condition: NadelHydrationConditionDefinition,
 )
+
+private sealed class NadelConditionFieldType {
+    abstract val graphQLType: GraphQLType
+
+    object StringType : NadelConditionFieldType() {
+        override val graphQLType = GraphQLString
+    }
+
+    object IntType : NadelConditionFieldType() {
+        override val graphQLType = GraphQLInt
+    }
+
+    object IdType : NadelConditionFieldType() {
+        override val graphQLType = GraphQLID
+    }
+
+    data class EnumType(
+        val enumType: GraphQLEnumType,
+    ) : NadelConditionFieldType() {
+        override val graphQLType = enumType
+    }
+}
 
 internal class NadelHydrationConditionValidation {
     context(NadelValidationContext)
@@ -93,40 +117,34 @@ internal class NadelHydrationConditionValidation {
     }
 
     /**
-     * The result field used in a condition must be a scalar.
+     * The result field used in a condition must have a type supported by [NadelHydrationCondition].
      */
     context(NadelValidationContext, NadelHydrationConditionValidationContext)
     private fun getResultFieldType(
         pathToConditionField: List<String>,
         conditionField: GraphQLFieldDefinition,
-    ): NadelValidationInterimResult<GraphQLScalarType> {
+    ): NadelValidationInterimResult<NadelConditionFieldType> {
         val conditionFieldOutputType = if (isConditionFieldSameAsBatchId(pathToConditionField)) {
             conditionField.type.unwrapAll() // Accept list if it's the batch ID, so that each batch ID can have its own instruction
         } else {
             conditionField.type.unwrapNonNull()  // We do not accept list, hence not unwrapAll
         }
 
-        val scalarType = conditionFieldOutputType as? GraphQLScalarType
-            ?: return NadelHydrationResultConditionUnsupportedFieldTypeError(
-                parentType = parent,
-                virtualField = virtualField,
-                hydration = hydration,
-                pathToConditionField = pathToConditionField,
-                conditionField = conditionField,
-            ).asInterimError()
+        val conditionFieldType = when (conditionFieldOutputType) {
+            GraphQLString -> NadelConditionFieldType.StringType
+            GraphQLInt -> NadelConditionFieldType.IntType
+            GraphQLID -> NadelConditionFieldType.IdType
+            is GraphQLEnumType -> NadelConditionFieldType.EnumType(conditionFieldOutputType)
+            else -> null
+        } ?: return NadelHydrationResultConditionUnsupportedFieldTypeError(
+            parentType = parent,
+            virtualField = virtualField,
+            hydration = hydration,
+            pathToConditionField = pathToConditionField,
+            conditionField = conditionField,
+        ).asInterimError()
 
-        // Limit sourceField to simple values like String, Boolean, Int etc.
-        if (!(scalarType == GraphQLString || scalarType == GraphQLInt || scalarType == GraphQLID)) {
-            return NadelHydrationResultConditionUnsupportedFieldTypeError(
-                parentType = parent,
-                virtualField = virtualField,
-                hydration = hydration,
-                pathToConditionField = pathToConditionField,
-                conditionField = conditionField,
-            ).asInterimError()
-        }
-
-        return scalarType.asInterimSuccess()
+        return conditionFieldType.asInterimSuccess()
     }
 
     /**
@@ -171,7 +189,7 @@ internal class NadelHydrationConditionValidation {
     context(NadelValidationContext, NadelHydrationConditionValidationContext)
     private fun validateResultCondition(
         resultCondition: NadelHydrationResultConditionDefinition,
-        conditionFieldType: GraphQLScalarType,
+        conditionFieldType: NadelConditionFieldType,
         predicateDefinition: NadelHydrationResultFieldPredicateDefinition,
     ): NadelValidationInterimResult<NadelHydrationCondition> {
         if (predicateDefinition.equals != null) {
@@ -203,11 +221,11 @@ internal class NadelHydrationConditionValidation {
 
     context(NadelValidationContext, NadelHydrationConditionValidationContext)
     private fun validateStartsWithCondition(
-        conditionFieldType: GraphQLScalarType,
+        conditionFieldType: NadelConditionFieldType,
         resultCondition: NadelHydrationResultConditionDefinition,
         startsWith: String,
     ): NadelValidationInterimResult<NadelHydrationCondition> {
-        return if (conditionFieldType == GraphQLString || conditionFieldType == GraphQLID) {
+        return if (conditionFieldType == NadelConditionFieldType.StringType || conditionFieldType == NadelConditionFieldType.IdType) {
             NadelHydrationCondition.StringResultStartsWith(
                 fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
                 prefix = startsWith,
@@ -224,11 +242,11 @@ internal class NadelHydrationConditionValidation {
 
     context(NadelValidationContext, NadelHydrationConditionValidationContext)
     private fun validateMatchesCondition(
-        conditionFieldType: GraphQLScalarType,
+        conditionFieldType: NadelConditionFieldType,
         resultCondition: NadelHydrationResultConditionDefinition,
         matches: String,
     ): NadelValidationInterimResult<NadelHydrationCondition> {
-        return if (conditionFieldType == GraphQLString || conditionFieldType == GraphQLID) {
+        return if (conditionFieldType == NadelConditionFieldType.StringType || conditionFieldType == NadelConditionFieldType.IdType) {
             val regex = try {
                 matches.toRegex()
             } catch (e: Exception) {
@@ -256,16 +274,32 @@ internal class NadelHydrationConditionValidation {
 
     context(NadelValidationContext, NadelHydrationConditionValidationContext)
     private fun validateEqualsCondition(
-        conditionFieldType: GraphQLScalarType,
+        conditionFieldType: NadelConditionFieldType,
         resultCondition: NadelHydrationResultConditionDefinition,
         expectedValue: Any,
     ): NadelValidationInterimResult<NadelHydrationCondition> {
-        if (expectedValue is String && (conditionFieldType == GraphQLString || conditionFieldType == GraphQLID)) {
+        if (expectedValue is String && (conditionFieldType == NadelConditionFieldType.StringType || conditionFieldType == NadelConditionFieldType.IdType)) {
             return NadelHydrationCondition.StringResultEquals(
                 fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
                 value = expectedValue,
             ).asInterimSuccess()
-        } else if (expectedValue is BigInteger && (conditionFieldType == GraphQLInt || conditionFieldType == GraphQLID)) {
+        } else if (expectedValue is String && conditionFieldType is NadelConditionFieldType.EnumType) {
+            if (conditionFieldType.enumType.getValue(expectedValue) == null) {
+                return NadelHydrationConditionInvalidEnumValueError(
+                    parentType = parent,
+                    virtualField = virtualField,
+                    hydration = hydration,
+                    pathToConditionField = resultCondition.pathToSourceField,
+                    enumType = conditionFieldType.enumType,
+                    suppliedValue = expectedValue,
+                ).asInterimError()
+            }
+
+            return NadelHydrationCondition.StringResultEquals(
+                fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
+                value = expectedValue,
+            ).asInterimSuccess()
+        } else if (expectedValue is BigInteger && (conditionFieldType == NadelConditionFieldType.IntType || conditionFieldType == NadelConditionFieldType.IdType)) {
             return NadelHydrationCondition.LongResultEquals(
                 fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
                 value = expectedValue.toLong(),
@@ -276,7 +310,7 @@ internal class NadelHydrationConditionValidation {
                 virtualField = virtualField,
                 hydration = hydration,
                 pathToConditionField = resultCondition.pathToSourceField,
-                requiredType = conditionFieldType,
+                requiredType = conditionFieldType.graphQLType,
                 suppliedValue = expectedValue,
             ).asInterimError()
         }
