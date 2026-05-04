@@ -10,6 +10,7 @@ import graphql.nadel.definition.hydration.NadelIdHydrationDefinition
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.schema.GraphQLArgument
+import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInputFieldsContainer
@@ -304,6 +305,29 @@ data class NadelHydrationConditionIncompatibleValueError(
     override val subject = virtualField
 }
 
+data class NadelHydrationConditionInvalidEnumValueError(
+    val parentType: NadelServiceSchemaElement,
+    val virtualField: GraphQLFieldDefinition,
+    val hydration: NadelHydrationDefinition,
+    val pathToConditionField: List<String>,
+    val enumType: GraphQLEnumType,
+    val suppliedValue: String,
+) : NadelSchemaValidationError {
+    override val message = run {
+        val parentTypeName = parentType.overall.name
+        val conditionField = pathToConditionField.joinToString(separator = ".")
+        val enumValues = enumType.values.joinToString(separator = ", ") { it.name }
+        getHydrationErrorMessage(
+            parentType,
+            virtualField,
+            hydration,
+            reason = "condition field $parentTypeName.$conditionField must equal one of enum values [$enumValues] but was \"$suppliedValue\"",
+        )
+    }
+
+    override val subject = virtualField
+}
+
 data class NadelHydrationConditionInvalidRegexError(
     val parentType: NadelServiceSchemaElement,
     val virtualField: GraphQLFieldDefinition,
@@ -535,7 +559,7 @@ data class NadelHydrationResultConditionUnsupportedFieldTypeError(
             parentType,
             virtualField,
             hydration,
-            reason = "condition field $parentTypeName.$conditionField must to be of type $str, $int or $id but is $conditionFieldType",
+            reason = "condition field $parentTypeName.$conditionField must be of type $str, $int, $id or enum but is $conditionFieldType",
         )
     }
 
