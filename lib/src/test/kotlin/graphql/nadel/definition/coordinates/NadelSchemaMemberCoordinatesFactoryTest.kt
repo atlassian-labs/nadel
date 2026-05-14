@@ -30,7 +30,10 @@ abstract class NadelSchemaMemberCoordinatesFactoryTest {
 
     class DocumentDefinitionExtractorTest : NadelSchemaMemberCoordinatesFactoryTest() {
         override fun extractCoordinates(schema: String): Set<NadelSchemaMemberCoordinates> {
-            return NadelSchemaMemberCoordinatesFactory().create(Parser().parseDocument(schema))
+            return NadelSchemaMemberCoordinatesFactory().create(
+                Parser().parseDocument(schema),
+                resolveTypeReferences = true,
+            )
         }
 
         @Test

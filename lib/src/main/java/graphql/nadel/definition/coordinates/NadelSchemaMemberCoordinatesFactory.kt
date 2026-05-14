@@ -3,8 +3,6 @@ package graphql.nadel.definition.coordinates
 import graphql.Directives
 import graphql.language.Definition
 import graphql.language.Document
-import graphql.language.NamedNode
-import graphql.language.SDLNamedDefinition
 import graphql.nadel.engine.util.AnySDLDefinition
 import graphql.nadel.engine.util.AnySDLNamedDefinition
 import graphql.nadel.engine.util.unwrapAll
