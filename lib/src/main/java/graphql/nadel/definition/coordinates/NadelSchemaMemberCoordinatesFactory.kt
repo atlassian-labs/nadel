@@ -1,9 +1,10 @@
 package graphql.nadel.definition.coordinates
 
 import graphql.Directives
+import graphql.language.Definition
 import graphql.language.Document
-import graphql.language.NamedNode
 import graphql.nadel.engine.util.AnySDLDefinition
+import graphql.nadel.engine.util.AnySDLNamedDefinition
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelSchemaDefinitionTraverser
 import graphql.nadel.schema.NadelSchemaDefinitionTraverserElement
@@ -62,22 +63,33 @@ class NadelSchemaMemberCoordinatesFactory {
 
     fun create(
         schema: Document,
+        resolveTypeReferences: Boolean,
     ): Set<NadelSchemaMemberCoordinates> {
-        val definitions = schema.definitions
+        return create(
+            schema = schema.definitions,
+            resolveTypeReferences = resolveTypeReferences,
+        )
+    }
+
+    fun create(
+        schema: Iterable<Definition<*>>,
+        resolveTypeReferences: Boolean,
+    ): Set<NadelSchemaMemberCoordinates> {
+        val definitions = schema
             .asSequence()
-            .filterIsInstance<AnySDLDefinition>()
+            .filterIsInstance<AnySDLNamedDefinition>()
 
         // There can be multiple definitions per name, but in this scenario we don't care
         val definitionByName = definitions
             .associateBy {
-                (it as NamedNode<*>).name
+                it.name
             }
 
         val roots = definitions
             .mapNotNull(NadelSchemaDefinitionTraverserElement::from)
             .toList()
 
-        return createImpl(roots, definitionByName)
+        return createImpl(roots, definitionByName, resolveTypeReferences)
     }
 
     private fun createImpl(
@@ -97,13 +109,18 @@ class NadelSchemaMemberCoordinatesFactory {
     private fun createImpl(
         roots: List<NadelSchemaDefinitionTraverserElement>,
         definitionByName: Map<String, AnySDLDefinition>,
+        resolveTypeReferences: Boolean,
     ): Set<NadelSchemaMemberCoordinates> {
         val coordinates = mutableSetOf<NadelSchemaMemberCoordinates>()
 
         NadelSchemaDefinitionTraverser()
             .traverse(
                 roots,
-                NadelSchemaDefinitionCoordinateCollectorTraverserVisitor(coordinates, definitionByName),
+                NadelSchemaDefinitionCoordinateCollectorTraverserVisitor(
+                    coordinates,
+                    definitionByName,
+                    resolveTypeReferences,
+                ),
             )
 
         return coordinates
@@ -225,6 +242,7 @@ internal class NadelSchemaCoordinateCollectorTraverserVisitor(
 internal class NadelSchemaDefinitionCoordinateCollectorTraverserVisitor(
     private val coordinates: MutableCollection<NadelSchemaMemberCoordinates>,
     private val definitionByName: Map<String, AnySDLDefinition>,
+    private val resolveTypeReferences: Boolean,
 ) : NadelSchemaDefinitionTraverserVisitor {
     override fun visitGraphQLAppliedDirective(element: NadelSchemaDefinitionTraverserElement.AppliedDirective): Boolean {
         coordinates.add(element.coordinates())
@@ -302,6 +320,14 @@ internal class NadelSchemaDefinitionCoordinateCollectorTraverserVisitor(
     }
 
     override fun visitTypeReference(element: NadelSchemaDefinitionTraverserElement.TypeReference): Boolean {
+        return if (resolveTypeReferences) {
+            resolveTypeReference(element)
+        } else {
+            false
+        }
+    }
+
+    private fun resolveTypeReference(element: NadelSchemaDefinitionTraverserElement.TypeReference): Boolean {
         // Resolve definition then traverse
         val typeName = element.node.unwrapAll().name
 
