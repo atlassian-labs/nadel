@@ -15,11 +15,13 @@ import graphql.language.NonNullType
 import graphql.language.ObjectTypeDefinition
 import graphql.language.ObjectTypeExtensionDefinition
 import graphql.language.SDLDefinition
+import graphql.language.SDLNamedDefinition
 import graphql.language.ScalarTypeDefinition
 import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaDefinition
 import graphql.language.SchemaExtensionDefinition
 import graphql.language.Type
+import graphql.language.TypeDefinition
 import graphql.language.TypeName
 import graphql.language.UnionTypeDefinition
 import graphql.language.UnionTypeExtensionDefinition
@@ -189,6 +191,55 @@ class NadelPseudoSealedTypeKtTest {
                 ScalarTypeExtensionDefinition::class,
                 SchemaDefinition::class,
                 SchemaExtensionDefinition::class,
+                UnionTypeDefinition::class,
+                UnionTypeExtensionDefinition::class,
+            )
+            .check(schemaClasses)
+    }
+
+    @Test
+    fun `whenType(AnySDLNamedDefinition)`() {
+        classes()
+            .that()
+            .areAssignableTo(SDLNamedDefinition::class.java)
+            .and()
+            .areNotInterfaces()
+            .equalsExactly(
+                DirectiveDefinition::class,
+                EnumTypeDefinition::class,
+                EnumTypeExtensionDefinition::class,
+                InputObjectTypeDefinition::class,
+                InputObjectTypeExtensionDefinition::class,
+                InterfaceTypeDefinition::class,
+                InterfaceTypeExtensionDefinition::class,
+                ObjectTypeDefinition::class,
+                ObjectTypeExtensionDefinition::class,
+                ScalarTypeDefinition::class,
+                ScalarTypeExtensionDefinition::class,
+                UnionTypeDefinition::class,
+                UnionTypeExtensionDefinition::class,
+            )
+            .check(schemaClasses)
+    }
+
+    @Test
+    fun `whenType(TypeDefinition)`() {
+        classes()
+            .that()
+            .areAssignableTo(TypeDefinition::class.java)
+            .and()
+            .areNotInterfaces()
+            .equalsExactly(
+                EnumTypeDefinition::class,
+                EnumTypeExtensionDefinition::class,
+                InputObjectTypeDefinition::class,
+                InputObjectTypeExtensionDefinition::class,
+                InterfaceTypeDefinition::class,
+                InterfaceTypeExtensionDefinition::class,
+                ObjectTypeDefinition::class,
+                ObjectTypeExtensionDefinition::class,
+                ScalarTypeDefinition::class,
+                ScalarTypeExtensionDefinition::class,
                 UnionTypeDefinition::class,
                 UnionTypeExtensionDefinition::class,
             )

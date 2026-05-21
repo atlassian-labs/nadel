@@ -21,6 +21,7 @@ import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaDefinition
 import graphql.language.SchemaExtensionDefinition
 import graphql.language.Type
+import graphql.language.TypeDefinition
 import graphql.language.TypeName
 import graphql.language.UnionTypeDefinition
 import graphql.language.UnionTypeExtensionDefinition
@@ -48,7 +49,7 @@ inline fun <T> GraphQLFieldsContainer.whenType(
     return when (this) {
         is GraphQLInterfaceType -> interfaceType(this)
         is GraphQLObjectType -> objectType(this)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -61,7 +62,7 @@ inline fun <T> GraphQLNamedInputType.whenType(
         is GraphQLEnumType -> enumType(this)
         is GraphQLInputObjectType -> inputObjectType(this)
         is GraphQLScalarType -> scalarType(this)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -78,7 +79,7 @@ inline fun <T> GraphQLNamedOutputType.whenType(
         is GraphQLObjectType -> objectType(this)
         is GraphQLScalarType -> scalarType(this)
         is GraphQLUnionType -> unionType(this)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -97,7 +98,7 @@ inline fun <T> GraphQLNamedType.whenType(
         is GraphQLObjectType -> objectType(this)
         is GraphQLScalarType -> scalarType(this)
         is GraphQLUnionType -> unionType(this)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -114,7 +115,7 @@ inline fun <T> GraphQLOutputType.whenUnmodifiedType(
         is GraphQLObjectType -> objectType(unmodifiedType)
         is GraphQLScalarType -> scalarType(unmodifiedType)
         is GraphQLUnionType -> unionType(unmodifiedType)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -127,7 +128,7 @@ inline fun <T> GraphQLInputType.whenUnmodifiedType(
         is GraphQLEnumType -> enumType(unmodifiedType)
         is GraphQLInputObjectType -> inputObjectType(unmodifiedType)
         is GraphQLScalarType -> scalarType(unmodifiedType)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -140,7 +141,7 @@ inline fun <T> GraphQLType.whenType(
         is GraphQLList -> listType(this)
         is GraphQLNonNull -> nonNull(this)
         is GraphQLUnmodifiedType -> unmodifiedType(this)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -153,7 +154,7 @@ inline fun <T> Type<*>.whenType(
         is ListType -> listType(this)
         is NonNullType -> nonNull(this)
         is TypeName -> unmodifiedType(this)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
 
@@ -190,6 +191,70 @@ inline fun <T> AnySDLDefinition.whenType(
         is SchemaDefinition -> schemaDefinition(this)
         is UnionTypeExtensionDefinition -> unionTypeExtensionDefinition(this)
         is UnionTypeDefinition -> unionTypeDefinition(this)
-        else -> throw IllegalStateException("Should never happen")
+        else -> throw IllegalStateException(javaClass.name)
+    }
+}
+
+inline fun <T> AnySDLNamedDefinition.whenType(
+    directiveDefinition: (DirectiveDefinition) -> T,
+    enumTypeDefinition: (EnumTypeDefinition) -> T,
+    enumTypeExtensionDefinition: (EnumTypeExtensionDefinition) -> T,
+    inputObjectTypeDefinition: (InputObjectTypeDefinition) -> T,
+    inputObjectTypeExtensionDefinition: (InputObjectTypeExtensionDefinition) -> T,
+    interfaceTypeDefinition: (InterfaceTypeDefinition) -> T,
+    interfaceTypeExtensionDefinition: (InterfaceTypeExtensionDefinition) -> T,
+    objectTypeDefinition: (ObjectTypeDefinition) -> T,
+    objectTypeExtensionDefinition: (ObjectTypeExtensionDefinition) -> T,
+    scalarTypeDefinition: (ScalarTypeDefinition) -> T,
+    scalarTypeExtensionDefinition: (ScalarTypeExtensionDefinition) -> T,
+    unionTypeDefinition: (UnionTypeDefinition) -> T,
+    unionTypeExtensionDefinition: (UnionTypeExtensionDefinition) -> T,
+): T {
+    return when (this) {
+        is DirectiveDefinition -> directiveDefinition(this)
+        is EnumTypeExtensionDefinition -> enumTypeExtensionDefinition(this)
+        is EnumTypeDefinition -> enumTypeDefinition(this)
+        is InputObjectTypeExtensionDefinition -> inputObjectTypeExtensionDefinition(this)
+        is InputObjectTypeDefinition -> inputObjectTypeDefinition(this)
+        is InterfaceTypeExtensionDefinition -> interfaceTypeExtensionDefinition(this)
+        is InterfaceTypeDefinition -> interfaceTypeDefinition(this)
+        is ObjectTypeExtensionDefinition -> objectTypeExtensionDefinition(this)
+        is ObjectTypeDefinition -> objectTypeDefinition(this)
+        is ScalarTypeExtensionDefinition -> scalarTypeExtensionDefinition(this)
+        is ScalarTypeDefinition -> scalarTypeDefinition(this)
+        is UnionTypeExtensionDefinition -> unionTypeExtensionDefinition(this)
+        is UnionTypeDefinition -> unionTypeDefinition(this)
+        else -> throw IllegalStateException(javaClass.name)
+    }
+}
+
+inline fun <T> TypeDefinition<*>.whenType(
+    enumTypeDefinition: (EnumTypeDefinition) -> T,
+    enumTypeExtensionDefinition: (EnumTypeExtensionDefinition) -> T,
+    inputObjectTypeDefinition: (InputObjectTypeDefinition) -> T,
+    inputObjectTypeExtensionDefinition: (InputObjectTypeExtensionDefinition) -> T,
+    interfaceTypeDefinition: (InterfaceTypeDefinition) -> T,
+    interfaceTypeExtensionDefinition: (InterfaceTypeExtensionDefinition) -> T,
+    objectTypeDefinition: (ObjectTypeDefinition) -> T,
+    objectTypeExtensionDefinition: (ObjectTypeExtensionDefinition) -> T,
+    scalarTypeDefinition: (ScalarTypeDefinition) -> T,
+    scalarTypeExtensionDefinition: (ScalarTypeExtensionDefinition) -> T,
+    unionTypeDefinition: (UnionTypeDefinition) -> T,
+    unionTypeExtensionDefinition: (UnionTypeExtensionDefinition) -> T,
+): T {
+    return when (this) {
+        is EnumTypeExtensionDefinition -> enumTypeExtensionDefinition(this)
+        is EnumTypeDefinition -> enumTypeDefinition(this)
+        is InputObjectTypeExtensionDefinition -> inputObjectTypeExtensionDefinition(this)
+        is InputObjectTypeDefinition -> inputObjectTypeDefinition(this)
+        is InterfaceTypeExtensionDefinition -> interfaceTypeExtensionDefinition(this)
+        is InterfaceTypeDefinition -> interfaceTypeDefinition(this)
+        is ObjectTypeExtensionDefinition -> objectTypeExtensionDefinition(this)
+        is ObjectTypeDefinition -> objectTypeDefinition(this)
+        is ScalarTypeExtensionDefinition -> scalarTypeExtensionDefinition(this)
+        is ScalarTypeDefinition -> scalarTypeDefinition(this)
+        is UnionTypeExtensionDefinition -> unionTypeExtensionDefinition(this)
+        is UnionTypeDefinition -> unionTypeDefinition(this)
+        else -> throw IllegalStateException(javaClass.name)
     }
 }
