@@ -9,28 +9,28 @@ import graphql.schema.GraphQLSchema
  *
  *
  * Example usage, to delete a field:
- * `
+ * ```
  * SchemaTransformation transformation = originalSchema -> {
- * @Override
- * GraphQLSchema apply(GraphQLSchema originalSchema) {
- * return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
- * @Override
- * TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
- * if (node.getName() == "secretField") {
- * return TreeTransformerUtil.deleteNode(node);
+ *   @Override
+ *   GraphQLSchema apply(GraphQLSchema originalSchema) {
+ *     return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
+ *       @Override
+ *       TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
+ *         if (node.getName() == "secretField") {
+ *           return TreeTransformerUtil.deleteNode(node);
+ *         }
+ *         return TraversalControl.CONTINUE;
+ *       }
+ *     }
+ *   }
  * }
- *
- * return TraversalControl.CONTINUE;
- * }
- * }
- * }
- * }
-` *
+ * ```
  *
  * @see graphql.schema.SchemaTransformer
  *
  * @see graphql.schema.GraphQLTypeVisitorStub
  */
+@Deprecated(message = "Performance is not good enough")
 fun interface SchemaTransformationHook {
     /**
      * Apply a transformation to a schema object, returning the new schema.
