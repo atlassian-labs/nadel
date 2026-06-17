@@ -12,7 +12,6 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.util.AnyImplementingTypeDefinition
 import graphql.nadel.util.AnyNamedNode
 import graphql.nadel.util.AnySDLDefinition
-import graphql.schema.idl.DirectiveInfo
 import graphql.schema.idl.ScalarInfo
 
 fun interface NadelFieldDefinitionVisibilityTransformationPredicate {
