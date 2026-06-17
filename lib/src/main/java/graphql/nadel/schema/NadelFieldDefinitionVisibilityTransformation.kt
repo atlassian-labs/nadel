@@ -1,5 +1,6 @@
 package graphql.nadel.schema
 
+import graphql.Directives
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.language.InterfaceTypeDefinition
@@ -130,7 +131,7 @@ class NadelFieldDefinitionVisibilityTransformation(
             // Exhaust queue
             while (typeQueue.isNotEmpty()) {
                 val typeName = typeQueue.removeLast()
-                if (ScalarInfo.isGraphqlSpecifiedScalar(typeName) || DirectiveInfo.isGraphqlSpecifiedDirective(typeName)) {
+                if (ScalarInfo.isGraphqlSpecifiedScalar(typeName) || Directives.isBuiltInDirective(typeName)) {
                     continue
                 }
 
