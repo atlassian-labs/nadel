@@ -1,5 +1,6 @@
 package graphql.nadel.schema
 
+import graphql.Directives
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.language.InterfaceTypeDefinition
@@ -11,7 +12,6 @@ import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.util.AnyImplementingTypeDefinition
 import graphql.nadel.util.AnyNamedNode
 import graphql.nadel.util.AnySDLDefinition
-import graphql.schema.idl.DirectiveInfo
 import graphql.schema.idl.ScalarInfo
 
 fun interface NadelFieldDefinitionVisibilityTransformationPredicate {
@@ -130,7 +130,7 @@ class NadelFieldDefinitionVisibilityTransformation(
             // Exhaust queue
             while (typeQueue.isNotEmpty()) {
                 val typeName = typeQueue.removeLast()
-                if (ScalarInfo.isGraphqlSpecifiedScalar(typeName) || DirectiveInfo.isGraphqlSpecifiedDirective(typeName)) {
+                if (ScalarInfo.isGraphqlSpecifiedScalar(typeName) || Directives.isBuiltInDirective(typeName)) {
                     continue
                 }
 
