@@ -411,7 +411,7 @@ internal class NextgenEngine(
                 .firstOrNull() ?: topLevelFields.first(),
         )
 
-        val serviceExecution = getServiceExecution(service, topLevelFields, executionContext.hints)
+        val serviceExecution = getServiceExecution(service, topLevelFields)
         val serviceExecResult = try {
             serviceExecution.execute(serviceExecParams)
                 .asDeferred()
@@ -469,9 +469,8 @@ internal class NextgenEngine(
     private fun getServiceExecution(
         service: Service,
         topLevelFields: List<ExecutableNormalizedField>,
-        hints: NadelExecutionHints,
     ): ServiceExecution {
-        if (hints.shortCircuitEmptyQuery(service) && isOnlyTopLevelFieldTypename(topLevelFields, service)) {
+        if (isOnlyTopLevelFieldTypename(topLevelFields, service)) {
             return engineSchemaIntrospectionService.serviceExecution
         }
 
