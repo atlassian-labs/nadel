@@ -160,10 +160,11 @@ abstract class NadelIntegrationTest(
         val nadel = makeNadel()
             .build()
 
+        val executionInput = makeExecutionInput().build()
         val result = nadel
-            .execute(makeExecutionInput().build())
+            .execute(executionInput)
             .let {
-                executionCapture.capture(it.await())
+                executionCapture.capture(executionInput, it.await())
             }
 
         if (result is IncrementalExecutionResult) {

@@ -38,14 +38,22 @@ private suspend fun main(vararg args: String) {
     val sourceRoot = File("test/src/test/kotlin/")
     require(sourceRoot.exists() && sourceRoot.isDirectory)
 
+    // Each arg targets tests to (re)generate. An arg can be an exact test class FQN, or a
+    // package/folder prefix that matches every test in that package and its subpackages
+    // (recursively). Filesystem-style paths are accepted and converted to a package prefix.
+    val targets = args.map(::toPackagePrefix)
+
     getTestClassSequence()
-        .filter {
-            args.isEmpty() || args.contains(it.qualifiedName)
-        }
-        // Only process non-existent by default
+        // Keep tests matching one of the targets, by exact FQN or package prefix.
         .filter { klass ->
-            classForNameOrNull(getSnapshotClassName(klass.asClassName()).reflectionName()) == null
-                || (args.isNotEmpty() && klass.qualifiedName in args)
+            if (targets.isEmpty()) return@filter true
+            val fqn = klass.qualifiedName ?: return@filter false
+            targets.any { fqn == it || fqn.startsWith("$it.") }
+        }
+        // With no targets, only generate snapshots that don't exist yet; targeted tests always regenerate.
+        .filter { klass ->
+            targets.isNotEmpty()
+                || classForNameOrNull(getSnapshotClassName(klass.asClassName()).reflectionName()) == null
         }
         .onEach { klass ->
             println("Loading ${klass.qualifiedName}")
@@ -150,8 +158,14 @@ private fun makeServiceCallsProperty(captured: TestExecutionCapture): PropertySp
     val callsType = List::class.asClassName().parameterizedBy(ExpectedServiceCall::class.asTypeName())
 
     // override val calls: List<ExpectedServiceCall> = listOf(…)
+    val executionInput = captured.executionInput!!
     return PropertySpec.builder(TestSnapshot::calls.name, callsType)
         .addModifiers(KModifier.OVERRIDE)
+        .addKdoc(
+            "Query\n\n```graphql\n%L\n```\n\nVariables\n\n```json\n%L\n```",
+            executionInput.query,
+            jsonObjectMapper.withPrettierPrinter().writeValueAsString(executionInput.variables),
+        )
         .initializer(
             buildCodeBlock {
                 add("%M", listOf)
@@ -266,6 +280,23 @@ private fun writeResultJson(result: ExecutionResult): String {
 
 private fun writeResultJson(result: DelayedIncrementalPartialResult): String {
     return writeResultJson(result.toSpecification())
+}
+
+/**
+ * Normalizes a target arg into a package prefix.
+ *
+ * Accepts either a dotted FQN/package (used as-is) or a filesystem path (e.g. copied from the
+ * IDE, absolute or relative) which is stripped to below the source root and dotted.
+ */
+private fun toPackagePrefix(arg: String): String {
+    if ('/' !in arg) {
+        return arg
+    }
+
+    return arg
+        .substringAfter("test/src/test/kotlin/")
+        .trim('/')
+        .replace('/', '.')
 }
 
 private fun classForNameOrNull(name: String): Class<*>? {

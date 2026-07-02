@@ -5,6 +5,7 @@ import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.incremental.IncrementalExecutionResultImpl
+import graphql.nadel.NadelExecutionInput
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.engine.util.JsonMap
@@ -19,6 +20,9 @@ class TestExecutionCapture {
     private val _calls = synchronizedMutableListOf<Call>()
     val calls: List<Call>
         get() = _calls
+
+    var executionInput: NadelExecutionInput? = null
+        private set
 
     var result: ExecutionResult? = null
         private set
@@ -62,6 +66,11 @@ class TestExecutionCapture {
         return spyOnIncrementalResults(result) {
             delayedResults.add(deepClone(it))
         }
+    }
+
+    fun capture(executionInput: NadelExecutionInput, result: ExecutionResult): ExecutionResult {
+        this.executionInput = executionInput
+        return capture(result)
     }
 
     fun capture(result: ExecutionResult): ExecutionResult {

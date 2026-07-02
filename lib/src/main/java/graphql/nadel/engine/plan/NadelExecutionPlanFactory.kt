@@ -7,6 +7,7 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelDeepRenameTransform
+import graphql.nadel.engine.transform.NadelNoInterfaceToObjectFragmentExpansionTransform
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
 import graphql.nadel.engine.transform.NadelServiceTypeFilterTransform
@@ -164,6 +165,9 @@ internal class NadelExecutionPlanFactory(
                     NadelBatchHydrationTransform(engine),
                     NadelRenameArgumentInputTypesTransform(),
                     NadelRenameTransform(),
+                    // Must run last: no other transform should see the widened objectTypeNames, and its
+                    // result-side hiding must apply after any type-rename.
+                    NadelNoInterfaceToObjectFragmentExpansionTransform(),
                 ),
             )
         }
