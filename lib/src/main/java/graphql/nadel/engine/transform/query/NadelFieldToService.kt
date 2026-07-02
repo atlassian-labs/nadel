@@ -61,7 +61,7 @@ internal class NadelFieldToService(
             }
             .map { (service, childTopLevelFields) ->
                 NadelFieldAndService(
-                    field = topLevelField.copyWithChildren(childTopLevelFields),
+                    fields = listOf(topLevelField.copyWithChildren(childTopLevelFields)),
                     service = service,
                 )
             }
@@ -69,7 +69,7 @@ internal class NadelFieldToService(
 
     private fun getServicePairFor(field: ExecutableNormalizedField): NadelFieldAndService {
         return NadelFieldAndService(
-            field = field,
+            fields = listOf(field),
             service = getService(field),
         )
     }
@@ -110,7 +110,14 @@ internal class NadelFieldToService(
 }
 
 data class NadelFieldAndService(
-    val field: ExecutableNormalizedField,
+    /**
+     * The top level fields that are to be executed together against the [service].
+     *
+     * For now this list always contains exactly one field, so behaviour is unchanged.
+     * The list type exists to support batching of root fields in the future, where
+     * multiple root fields destined for the same service can be sent in a single call.
+     */
+    val fields: List<ExecutableNormalizedField>,
     val service: Service,
 )
 

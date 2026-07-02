@@ -56,8 +56,8 @@ internal object NadelResultMerger {
         for ((topLevelResultKey, children) in requiredFieldMap) {
             val topLevelFieldDef by lazy {
                 fields
-                    .first { (field) -> field.resultKey == topLevelResultKey.value }
-                    .field
+                    .flatMap { it.fields }
+                    .first { field -> field.resultKey == topLevelResultKey.value }
                     .getFieldDefinitions(engineSchema)
                     .single() // This is under Query, Mutation etc. so there is only one field
             }
@@ -122,7 +122,7 @@ internal object NadelResultMerger {
 
         // NOTE: please ensure all fields are from object types and will NOT have multiple field defs
         // Other code in this file relies on this contract
-        for ((field) in fields) {
+        for (field in fields.flatMap { it.fields }) {
             val requiredChildFields = requiredFields
                 .computeIfAbsent(NadelResultKey(field.resultKey)) {
                     mutableListOf()

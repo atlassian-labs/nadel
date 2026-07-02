@@ -201,19 +201,24 @@ internal class NextgenEngine(
                 val fields = fieldToService.getServicesForTopLevelFields(operation, executionHints)
                 val results = coroutineScope {
                     fields
-                        .map { (field, service) ->
-                            async {
-                                try {
-                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
-                                    executeTopLevelField(
-                                        topLevelField = field,
-                                        service = resolvedService,
-                                        executionContext = executionContext,
-                                    )
-                                } catch (e: Throwable) {
-                                    when (e) {
-                                        is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
-                                        else -> throw e
+                        // Each NadelFieldAndService may carry multiple top level fields destined
+                        // for the same service. For now the list always contains exactly one field,
+                        // so this preserves the existing one-field-per-call behaviour.
+                        .flatMap { (topLevelFields, service) ->
+                            topLevelFields.map { field ->
+                                async {
+                                    try {
+                                        val resolvedService = fieldToService.resolveDynamicService(field, service)
+                                        executeTopLevelField(
+                                            topLevelField = field,
+                                            service = resolvedService,
+                                            executionContext = executionContext,
+                                        )
+                                    } catch (e: Throwable) {
+                                        when (e) {
+                                            is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
+                                            else -> throw e
+                                        }
                                     }
                                 }
                             }
