@@ -60,7 +60,7 @@ internal class NadelExecutionPlanFactory(
         serviceExecutionContext: NadelServiceExecutionContext,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootField: List<ExecutableNormalizedField>,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
         val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
@@ -68,7 +68,8 @@ internal class NadelExecutionPlanFactory(
         val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
             mutableMapOf()
         executionContext.timer.batch { timer ->
-            traverseQuery(rootField) { field ->
+            // TODO(batch-root-fields): plan every root field once a list can hold >1 root field
+            traverseQuery(rootField.first()) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
                     // This is a patch to prevent errors
@@ -87,7 +88,8 @@ internal class NadelExecutionPlanFactory(
                                     executionBlueprint,
                                     services,
                                     service,
-                                    rootField,
+                                    // TODO(batch-root-fields): pass all root fields when batching >1 root field
+                                    rootField.first(),
                                     serviceHydrationDetails
                                 )
                             }

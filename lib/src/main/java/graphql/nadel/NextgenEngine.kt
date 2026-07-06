@@ -201,18 +201,18 @@ internal class NextgenEngine(
                 val fields = fieldToService.getServicesForTopLevelFields(operation, executionHints)
                 val results = coroutineScope {
                     fields
-                        .map { (field, service) ->
+                        .map { (fields, service) ->
                             async {
                                 try {
-                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
+                                    val resolvedService = fieldToService.resolveDynamicService(fields, service)
                                     executeTopLevelField(
-                                        topLevelField = field,
+                                        topLevelField = fields,
                                         service = resolvedService,
                                         executionContext = executionContext,
                                     )
                                 } catch (e: Throwable) {
                                     when (e) {
-                                        is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
+                                        is GraphQLError -> newServiceExecutionErrorResult(fields.first(), error = e)
                                         else -> throw e
                                     }
                                 }
@@ -260,7 +260,7 @@ internal class NextgenEngine(
     ): ServiceExecutionResult {
         return try {
             executeTopLevelField(
-                topLevelField = topLevelField,
+                topLevelField = listOf(topLevelField),
                 service = service,
                 executionContext = executionContext.copy(
                     hydrationDetails = hydrationDetails,
@@ -283,7 +283,7 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
         return executeTopLevelField(
-            topLevelField = topLevelField,
+            topLevelField = listOf(topLevelField),
             service = service,
             executionContext = executionContext.copy(
                 isPartitionedCall = true,
@@ -292,7 +292,7 @@ internal class NextgenEngine(
     }
 
     private suspend fun executeTopLevelField(
-        topLevelField: ExecutableNormalizedField,
+        topLevelField: List<ExecutableNormalizedField>,
         service: Service,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
@@ -315,7 +315,8 @@ internal class NextgenEngine(
                 executionContext = executionContext,
                 serviceExecutionContext = serviceExecutionContext,
                 executionPlan = executionPlan,
-                field = topLevelField
+                // TODO(batch-root-fields): transform every field once a list can hold >1 root field
+                field = topLevelField.first()
             )
         }
         val result: ServiceExecutionResult = timer.time(step = RootStep.ServiceExecution.child(service.name)) {
@@ -352,7 +353,8 @@ internal class NextgenEngine(
             )
         }
         val transformedResult: ServiceExecutionResult = when {
-            topLevelField.name.startsWith("__") -> result
+            // TODO(batch-root-fields): assumes a single root field; revisit when batching >1 root field
+            topLevelField.first().name.startsWith("__") -> result
             else -> timer.time(step = RootStep.ResultTransforming) {
                 resultTransformer.transform(
                     executionContext = executionContext,

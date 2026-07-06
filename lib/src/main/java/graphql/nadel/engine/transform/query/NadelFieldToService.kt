@@ -41,11 +41,11 @@ internal class NadelFieldToService(
      * otherwise returns the originalService.
      */
     fun resolveDynamicService(
-        field: ExecutableNormalizedField,
+        field: List<ExecutableNormalizedField>,
         originalService: Service,
     ): Service {
-        return if (dynamicServiceResolution.needsDynamicServiceResolution(field)) {
-            dynamicServiceResolution.resolveServiceForField(field)
+        return if (dynamicServiceResolution.needsDynamicServiceResolution(field.first())) {
+            dynamicServiceResolution.resolveServiceForField(field.first())
         } else {
             originalService
         }
@@ -61,7 +61,7 @@ internal class NadelFieldToService(
             }
             .map { (service, childTopLevelFields) ->
                 NadelFieldAndService(
-                    field = topLevelField.copyWithChildren(childTopLevelFields),
+                    field = listOf(topLevelField.copyWithChildren(childTopLevelFields)),
                     service = service,
                 )
             }
@@ -69,7 +69,7 @@ internal class NadelFieldToService(
 
     private fun getServicePairFor(field: ExecutableNormalizedField): NadelFieldAndService {
         return NadelFieldAndService(
-            field = field,
+            field = listOf(field),
             service = getService(field),
         )
     }
@@ -110,7 +110,7 @@ internal class NadelFieldToService(
 }
 
 data class NadelFieldAndService(
-    val field: ExecutableNormalizedField,
+    val field: List<ExecutableNormalizedField>,
     val service: Service,
 )
 
