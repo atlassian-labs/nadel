@@ -40,7 +40,7 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
     data class State(
         val aliasHelper: NadelAliasHelper,
         val exposedOverallImplNames: Set<String>,
-        val widenToOverallNames: List<String>,
+        val allUnderlyingMembersAsOverallNames: List<String>,
         val relaxedFieldResultKey: String,
     )
 
@@ -80,7 +80,7 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         return State(
             aliasHelper = NadelAliasHelper.forField(tag = "abstract_member", field = parent),
             exposedOverallImplNames = relaxationContext.exposedOverallImplNames,
-            widenToOverallNames = relaxationContext.widenToOverallNames,
+            allUnderlyingMembersAsOverallNames = relaxationContext.allUnderlyingMembersAsOverallNames,
             relaxedFieldResultKey = overallField.resultKey,
         )
     }
@@ -95,15 +95,15 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
-        // Widen to all members so graphql-java prints the field bare.
+        // Widen objectTypeNames to cover every underlying member so graphql-java prints the field bare.
         val bareField = field.toBuilder()
             .clearObjectTypesNames()
-            .objectTypeNames(state.widenToOverallNames)
+            .objectTypeNames(state.allUnderlyingMembersAsOverallNames)
             .build()
 
         // Aliased __typename (also bare) so the result side can tell each node's concrete type.
         val typeNameField = newNormalizedField()
-            .objectTypeNames(state.widenToOverallNames)
+            .objectTypeNames(state.allUnderlyingMembersAsOverallNames)
             .alias(state.aliasHelper.typeNameResultKey)
             .fieldName(Introspection.TypeNameMetaFieldDef.name)
             .build()
@@ -217,15 +217,16 @@ private fun computeAbstractTypeRelaxationContext(
         return null
     }
 
-    val widenToOverallNames = underlyingMemberNames.map { executionBlueprint.getOverallTypeName(service, it) }
+    // Every underlying member (incl. hidden ones), named in overall terms so it can go on the overall ENF;
+    val allUnderlyingMembersAsOverallNames = underlyingMemberNames.map { executionBlueprint.getOverallTypeName(service, it) }
 
     return NadelAbstractTypeRelaxationContext(
         exposedOverallImplNames = exposedOverallImplNames,
-        widenToOverallNames = widenToOverallNames,
+        allUnderlyingMembersAsOverallNames = allUnderlyingMembersAsOverallNames,
     )
 }
 
 private data class NadelAbstractTypeRelaxationContext(
     val exposedOverallImplNames: Set<String>,
-    val widenToOverallNames: List<String>,
+    val allUnderlyingMembersAsOverallNames: List<String>,
 )
