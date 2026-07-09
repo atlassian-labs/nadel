@@ -9,6 +9,7 @@ import graphql.language.SchemaDefinition
 import graphql.language.SourceLocation
 import graphql.nadel.NadelOperationKind
 import graphql.nadel.NadelTypeDefinitionRegistry
+import graphql.nadel.Service
 import graphql.nadel.util.AnyNamedNode
 import graphql.nadel.util.AnySDLDefinition
 import graphql.nadel.util.AnySDLNamedDefinition
@@ -22,10 +23,11 @@ import graphql.schema.idl.WiringFactory
 
 internal class OverallSchemaGenerator {
     fun buildOverallSchema(
-        serviceRegistries: List<NadelTypeDefinitionRegistry>,
+        services: List<Service>,
         wiringFactory: WiringFactory,
         schemaDefinitionTransformationHook: NadelSchemaDefinitionTransformationHook,
     ): GraphQLSchema {
+        val serviceRegistries = services.map(Service::definitionRegistry)
         val schemaGenerator = SchemaGenerator()
         val runtimeWiring = RuntimeWiring.newRuntimeWiring()
             .wiringFactory(wiringFactory)
@@ -34,7 +36,7 @@ internal class OverallSchemaGenerator {
 
         val definitions = getDefinitions(serviceRegistries)
             .let {
-                schemaDefinitionTransformationHook.invoke(it)
+                schemaDefinitionTransformationHook.invoke(services, it)
             }
 
         val typeRegistry = createTypeRegistry(definitions)
