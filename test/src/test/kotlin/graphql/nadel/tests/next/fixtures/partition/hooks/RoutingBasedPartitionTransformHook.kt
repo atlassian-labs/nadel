@@ -9,7 +9,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
 import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLInputValueDefinition
 
 class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
@@ -19,7 +19,7 @@ class RoutingBasedPartitionTransformHook : NadelPartitionTransformHook {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, graphql.nadel.Service>,
         service: graphql.nadel.Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelFieldPartitionContext {
         return object : NadelFieldPartitionContext() {}

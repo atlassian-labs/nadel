@@ -16,12 +16,12 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 @UseHook
 class `transformer-on-hydration-fields` : EngineTestHook {
-    private fun hasParentWithName(field: ExecutableNormalizedField, parentName: String): Boolean {
+    private fun hasParentWithName(field: NadelExecutableNormalizedField, parentName: String): Boolean {
         return if (field.parent == null) {
             false
         } else if (field.parent.name == parentName) {
@@ -44,7 +44,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
+                    overallField: NadelExecutableNormalizedField,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
@@ -66,7 +66,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    field: ExecutableNormalizedField,
+                    field: NadelExecutableNormalizedField,
                     state: Any,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
@@ -89,8 +89,8 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
-                    underlyingParentField: ExecutableNormalizedField?,
+                    overallField: NadelExecutableNormalizedField,
+                    underlyingParentField: NadelExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,

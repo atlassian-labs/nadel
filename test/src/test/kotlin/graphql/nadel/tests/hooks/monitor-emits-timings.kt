@@ -30,7 +30,7 @@ import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.NadelTransformAdapter
 import graphql.nadel.time.NadelInternalLatencyTrackerImpl
 import graphql.nadel.time.NadelStopwatch
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
@@ -43,7 +43,7 @@ private class MonitorEmitsTimingsTransform(
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Unit? {
@@ -57,7 +57,7 @@ private class MonitorEmitsTimingsTransform(
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: Unit,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -70,8 +70,8 @@ private class MonitorEmitsTimingsTransform(
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,
@@ -89,7 +89,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<Unit?> {
@@ -102,7 +102,7 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: Unit,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult> {
@@ -114,8 +114,8 @@ private class JavaTimingTransform : NadelTransformJavaCompat<Unit> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: Unit,
         nodes: JsonNodes,

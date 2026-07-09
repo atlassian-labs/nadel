@@ -15,7 +15,7 @@ import graphql.nadel.engine.util.asMutableJsonMap
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLSchema
 
 internal object NadelResultMerger {
@@ -117,8 +117,8 @@ internal object NadelResultMerger {
     private fun buildRequiredFieldMap(
         fields: List<NadelFieldAndService>,
         engineSchema: GraphQLSchema,
-    ): MutableMap<NadelResultKey, MutableList<ExecutableNormalizedField>> {
-        val requiredFields = mutableMapOf<NadelResultKey, MutableList<ExecutableNormalizedField>>()
+    ): MutableMap<NadelResultKey, MutableList<NadelExecutableNormalizedField>> {
+        val requiredFields = mutableMapOf<NadelResultKey, MutableList<NadelExecutableNormalizedField>>()
 
         // NOTE: please ensure all fields are from object types and will NOT have multiple field defs
         // Other code in this file relies on this contract

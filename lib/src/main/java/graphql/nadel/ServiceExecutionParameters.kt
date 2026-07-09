@@ -5,7 +5,7 @@ import graphql.execution.ExecutionId
 import graphql.language.Document
 import graphql.language.OperationDefinition
 import graphql.nadel.engine.NadelServiceExecutionContext
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 class ServiceExecutionParameters internal constructor(
     val query: Document,
@@ -19,7 +19,7 @@ class ServiceExecutionParameters internal constructor(
      * @return details abut this service hydration or null if it's not a hydration call
      */
     val hydrationDetails: ServiceExecutionHydrationDetails?,
-    val executableNormalizedField: ExecutableNormalizedField,
+    val executableNormalizedField: NadelExecutableNormalizedField,
 ) {
     val isHydrationCall: Boolean
         get() = hydrationDetails != null

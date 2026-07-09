@@ -19,7 +19,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.nadel.validation.NadelSchemaValidationHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLFieldDefinition
@@ -268,7 +268,7 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-                        virtualField: ExecutableNormalizedField,
+                        virtualField: NadelExecutableNormalizedField,
                         instructions: List<T>,
                         parentNode: JsonNode,
                         aliasHelper: NadelAliasHelper,

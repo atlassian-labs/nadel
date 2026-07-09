@@ -9,7 +9,7 @@ import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.util.toBuilder
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 class NadelQueryTransformer private constructor(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
@@ -27,7 +27,7 @@ class NadelQueryTransformer private constructor(
             executionContext: NadelExecutionContext,
             serviceExecutionContext: NadelServiceExecutionContext,
             executionPlan: NadelExecutionPlan,
-            field: ExecutableNormalizedField,
+            field: NadelExecutableNormalizedField,
         ): TransformResult {
             val transformContext = TransformContext()
 
@@ -56,36 +56,36 @@ class NadelQueryTransformer private constructor(
     }
 
     private data class TransformContext(
-        val artificialFields: MutableList<ExecutableNormalizedField> = mutableListOf(),
-        val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, MutableList<ExecutableNormalizedField>> = mutableMapOf(),
+        val artificialFields: MutableList<NadelExecutableNormalizedField> = mutableListOf(),
+        val overallToUnderlyingFields: MutableMap<NadelExecutableNormalizedField, MutableList<NadelExecutableNormalizedField>> = mutableMapOf(),
     )
 
     data class TransformResult(
         /**
          * The transformed fields.
          */
-        val result: List<ExecutableNormalizedField>,
+        val result: List<NadelExecutableNormalizedField>,
         /**
          * A list of fields that were added to the query that do not belong in the overall result.
          */
-        val artificialFields: List<ExecutableNormalizedField>,
-        val overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        val artificialFields: List<NadelExecutableNormalizedField>,
+        val overallToUnderlyingFields: Map<NadelExecutableNormalizedField, List<NadelExecutableNormalizedField>>,
     )
 
     /**
      * Helper for calling [transform] for all the given [fields].
      */
     suspend fun transform(
-        fields: List<ExecutableNormalizedField>,
-    ): List<ExecutableNormalizedField> {
+        fields: List<NadelExecutableNormalizedField>,
+    ): List<NadelExecutableNormalizedField> {
         return fields.flatMap {
             transform(it)
         }
     }
 
     suspend fun transform(
-        field: ExecutableNormalizedField,
-    ): List<ExecutableNormalizedField> {
+        field: NadelExecutableNormalizedField,
+    ): List<NadelExecutableNormalizedField> {
         val transformationSteps: List<NadelExecutionPlan.Step<Any>> =
             executionPlan.transformationSteps[field]
                 ?: return listOf(
@@ -96,11 +96,14 @@ class NadelQueryTransformer private constructor(
     }
 
     private suspend fun transform(
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         transformationSteps: List<NadelExecutionPlan.Step<Any>>,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         val transformResult = applyTransformationSteps(field, transformationSteps)
 
+        // A transform sets forcePrintAsUnconditional directly on the fields it returns; toBuilder() copies the
+        // flag, so it survives this rebuild onto the exact instances that flow to the forked compiler. No
+        // external signal is threaded through the engine.
         val artificialFields = transformResult.artificialFields.map {
             it.toBuilder()
                 .clearObjectTypesNames()
@@ -140,7 +143,7 @@ class NadelQueryTransformer private constructor(
     /**
      * Transforms a field with no [NadelTransform]s associated with it.
      */
-    private suspend fun transformPlain(field: ExecutableNormalizedField): ExecutableNormalizedField {
+    private suspend fun transformPlain(field: NadelExecutableNormalizedField): NadelExecutableNormalizedField {
         return field.toBuilder()
             .clearObjectTypesNames()
             .objectTypeNames(getUnderlyingTypeNames(field.objectTypeNames))
@@ -159,11 +162,11 @@ class NadelQueryTransformer private constructor(
     }
 
     private suspend fun applyTransformationSteps(
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         transformationSteps: List<NadelExecutionPlan.Step<Any>>,
     ): NadelTransformFieldResult {
-        var newField: ExecutableNormalizedField = field
-        val artificialFields = mutableListOf<ExecutableNormalizedField>()
+        var newField: NadelExecutableNormalizedField = field
+        val artificialFields = mutableListOf<NadelExecutableNormalizedField>()
 
         for (transformStep in transformationSteps) {
             val transformServiceExecutionContext = executionPlan.transformContexts[transformStep.transform]
@@ -203,8 +206,8 @@ class NadelQueryTransformer private constructor(
     }
 
     private fun fixParentRefs(
-        parent: ExecutableNormalizedField?,
-        transformFields: List<ExecutableNormalizedField>,
+        parent: NadelExecutableNormalizedField?,
+        transformFields: List<NadelExecutableNormalizedField>,
     ) {
         transformFields.forEach {
             it.replaceParent(parent)

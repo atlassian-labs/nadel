@@ -3,7 +3,7 @@ package graphql.nadel.engine.transform.partition
 import graphql.VisibleForTesting
 import graphql.language.ArrayValue
 import graphql.language.ScalarValue
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
@@ -36,8 +36,8 @@ internal class NadelFieldPartition(
     private val partitionKeyExtractor: NadelPartitionKeyExtractor,
 ) {
     fun createFieldPartitions(
-        field: ExecutableNormalizedField,
-    ): Map<String, ExecutableNormalizedField> {
+        field: NadelExecutableNormalizedField,
+    ): Map<String, NadelExecutableNormalizedField> {
         val partitionInstructions = extractPartitionInstructions(field)
 
         checkNotNull(partitionInstructions) { "Expected values to be partitioned but got null" }
@@ -136,7 +136,7 @@ internal class NadelFieldPartition(
 
     @VisibleForTesting
     fun extractPartitionInstructions(
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
     ): PartitionInstructions? {
 
         if (pathToPartitionArg.isEmpty()) {

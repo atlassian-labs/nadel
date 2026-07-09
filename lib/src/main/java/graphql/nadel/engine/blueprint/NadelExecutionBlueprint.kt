@@ -7,7 +7,7 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.util.NadelFieldMap
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 
@@ -92,7 +92,7 @@ data class NadelOverallExecutionBlueprint(
     }
 
     inline fun <reified T : NadelFieldInstruction> getTypeNameToInstructionMap(
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
     ): Map<GraphQLObjectTypeName, T> {
         val map: MutableMap<GraphQLObjectTypeName, T> = mutableMapOf()
 
@@ -108,7 +108,7 @@ data class NadelOverallExecutionBlueprint(
     }
 
     inline fun <reified T : NadelFieldInstruction> getTypeNameToInstructionsMap(
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
     ): Map<GraphQLObjectTypeName, List<T>> {
         val map: MutableMap<GraphQLObjectTypeName, List<T>> = mutableMapOf()
 
@@ -125,7 +125,7 @@ data class NadelOverallExecutionBlueprint(
 
     inline fun <reified T : NadelFieldInstruction> getInstructionInsideVirtualType(
         hydrationDetails: ServiceExecutionHydrationDetails?,
-        backingField: ExecutableNormalizedField,
+        backingField: NadelExecutableNormalizedField,
     ): Map<GraphQLObjectTypeName, List<T>> {
         hydrationDetails ?: return emptyMap() // Need hydration to provide virtual hydration context
 

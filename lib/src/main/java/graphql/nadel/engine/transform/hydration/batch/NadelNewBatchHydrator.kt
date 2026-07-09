@@ -31,7 +31,7 @@ import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.engine.util.zipOrThrow
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -701,7 +701,7 @@ internal class NadelNewBatchHydrator(
 private class NadelBatchHydratorContext(
     val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
     val executionContext: NadelExecutionContext,
-    val sourceField: ExecutableNormalizedField,
+    val sourceField: NadelExecutableNormalizedField,
     val sourceFieldService: Service,
     val aliasHelper: NadelAliasHelper,
     val executionBlueprint: NadelOverallExecutionBlueprint,

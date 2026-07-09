@@ -18,7 +18,7 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 @UseHook
@@ -33,7 +33,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
+                    overallField: NadelExecutableNormalizedField,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
@@ -50,7 +50,7 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    field: ExecutableNormalizedField,
+                    field: NadelExecutableNormalizedField,
                     state: Any,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
@@ -90,8 +90,8 @@ class `ari-argument-in-renamed-input` : EngineTestHook {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
-                    underlyingParentField: ExecutableNormalizedField?,
+                    overallField: NadelExecutableNormalizedField,
+                    underlyingParentField: NadelExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,

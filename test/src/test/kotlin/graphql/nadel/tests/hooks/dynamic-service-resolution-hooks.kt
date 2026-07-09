@@ -9,7 +9,7 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 class Hooks : NadelExecutionHooks {
 
@@ -45,7 +45,7 @@ class Hooks : NadelExecutionHooks {
 
     override fun resolveServiceForField(
         services: List<Service>,
-        executableNormalizedField: ExecutableNormalizedField
+        executableNormalizedField: NadelExecutableNormalizedField
     ): ServiceOrError {
         return resolveServiceGeneric(
             services,

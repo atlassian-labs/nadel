@@ -19,7 +19,7 @@ import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.newGraphQLError
 import graphql.nadel.engine.util.queryPath
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLObjectType
 
 class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
@@ -29,7 +29,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): GraphQLError? {
@@ -57,14 +57,14 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: GraphQLError,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
             artificialFields = listOf(
-                ExecutableNormalizedField.newNormalizedField()
+                NadelExecutableNormalizedField.newNormalizedField()
                     .level(field.level)
                     .objectTypeNames(field.objectTypeNames.toList())
                     .fieldName(Introspection.TypeNameMetaFieldDef.name)
@@ -80,8 +80,8 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: GraphQLError,
         nodes: JsonNodes,

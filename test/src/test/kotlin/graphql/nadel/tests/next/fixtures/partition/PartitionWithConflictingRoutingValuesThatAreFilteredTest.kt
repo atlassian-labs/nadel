@@ -12,7 +12,7 @@ import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLInputValueDefinition
 import java.util.function.Predicate
 
@@ -104,7 +104,7 @@ type Thing {
                                 executionBlueprint: NadelOverallExecutionBlueprint,
                                 services: Map<String, graphql.nadel.Service>,
                                 service: graphql.nadel.Service,
-                                overallField: ExecutableNormalizedField,
+                                overallField: NadelExecutableNormalizedField,
                                 hydrationDetails: ServiceExecutionHydrationDetails?,
                             ): NadelFieldPartitionContext {
                                 return TestPartitionContext

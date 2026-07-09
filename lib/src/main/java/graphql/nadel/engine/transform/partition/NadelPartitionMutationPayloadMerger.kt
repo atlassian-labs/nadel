@@ -3,7 +3,7 @@ package graphql.nadel.engine.transform.partition
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.unwrapNonNull
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLList
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
@@ -15,7 +15,7 @@ internal object NadelPartitionMutationPayloadMerger {
         dataFromPartitionCalls: List<Any?>,
         thisNodesData: Any?,
         parentNode: JsonNode,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
     ): List<NadelResultInstruction.Set> {
 
         // TODO: I'm not sure what's the best way to handle non-successful calls

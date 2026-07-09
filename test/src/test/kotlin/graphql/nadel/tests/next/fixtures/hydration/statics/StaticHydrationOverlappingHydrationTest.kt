@@ -9,7 +9,7 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 /**
  * Tests when the backing type itself declares a hydration.
@@ -266,7 +266,7 @@ class StaticHydrationOverlappingHydrationTest : NadelIntegrationTest(
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-                        virtualField: ExecutableNormalizedField,
+                        virtualField: NadelExecutableNormalizedField,
                         instructions: List<T>,
                         sourceInput: JsonNode,
                         userContext: Any?,
@@ -275,7 +275,7 @@ class StaticHydrationOverlappingHydrationTest : NadelIntegrationTest(
                     }
 
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-                        virtualField: ExecutableNormalizedField,
+                        virtualField: NadelExecutableNormalizedField,
                         instructions: List<T>,
                         parentNode: JsonNode,
                         aliasHelper: NadelAliasHelper,

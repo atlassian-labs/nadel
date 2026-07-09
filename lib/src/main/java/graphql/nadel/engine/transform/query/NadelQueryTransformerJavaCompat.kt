@@ -1,6 +1,6 @@
 package graphql.nadel.engine.transform.query
 
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import java.util.concurrent.CompletableFuture
@@ -10,16 +10,16 @@ class NadelQueryTransformerJavaCompat(
     private val coroutineScope: CoroutineScope,
 ) {
     fun transform(
-        fields: List<ExecutableNormalizedField>,
-    ): CompletableFuture<List<ExecutableNormalizedField>> {
+        fields: List<NadelExecutableNormalizedField>,
+    ): CompletableFuture<List<NadelExecutableNormalizedField>> {
         return coroutineScope.future {
             queryTransformer.transform(fields)
         }
     }
 
     fun transform(
-        field: ExecutableNormalizedField,
-    ): CompletableFuture<List<ExecutableNormalizedField>> {
+        field: NadelExecutableNormalizedField,
+    ): CompletableFuture<List<NadelExecutableNormalizedField>> {
         return coroutineScope.future {
             queryTransformer.transform(field)
         }

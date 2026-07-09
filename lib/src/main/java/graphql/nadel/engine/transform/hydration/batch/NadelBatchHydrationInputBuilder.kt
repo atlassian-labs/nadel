@@ -7,7 +7,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.mapFrom
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
 
@@ -20,7 +20,7 @@ import graphql.schema.GraphQLTypeUtil
 internal object NadelBatchHydrationInputBuilder {
     internal fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
     ): Map<NadelHydrationArgument, NormalizedInputValue> {
         return mapFrom(
             instruction.backingFieldArguments.mapNotNull { argument ->

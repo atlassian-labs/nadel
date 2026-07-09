@@ -19,8 +19,8 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.State
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
-import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedField.newNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLSchema
 
 /**
@@ -39,7 +39,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
     companion object {
         private const val skipFieldName = "__skip"
 
-        fun isSkipIncludeSpecialField(enf: ExecutableNormalizedField): Boolean {
+        fun isSkipIncludeSpecialField(enf: NadelExecutableNormalizedField): Boolean {
             return enf.name == skipFieldName
         }
     }
@@ -65,13 +65,14 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         // This hacks together a child that will pass through here
         if (overallField.children.isEmpty()) {
-            val mergedField = executionContext.query.getMergedField(overallField)
+            // getMergedField is keyed by the original graphql-java field; use the source back-reference.
+            val mergedField = overallField.sourceField?.let(executionContext.query::getMergedField)
             if (hasAnyChildren(mergedField)) {
                 // Adds a field so we can transform it
                 overallField.children.add(createSkipField(executionBlueprint.engineSchema, overallField))
@@ -96,7 +97,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -116,8 +117,8 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
@@ -136,8 +137,8 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
 
     private fun createSkipField(
         overallSchema: GraphQLSchema,
-        parent: ExecutableNormalizedField,
-    ): ExecutableNormalizedField {
+        parent: NadelExecutableNormalizedField,
+    ): NadelExecutableNormalizedField {
         val objectTypeNames = parent.getFieldDefinitions(overallSchema)
             .asSequence()
             .map {

@@ -9,11 +9,11 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 private class PolymorphicHydrationHooks : NadelExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,

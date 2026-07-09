@@ -16,7 +16,7 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.tests.next.NadelIntegrationTest
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 class StaticHydrationNestedErrorTest : NadelIntegrationTest(
     query = """
@@ -230,7 +230,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             executionBlueprint: NadelOverallExecutionBlueprint,
             services: Map<String, graphql.nadel.Service>,
             service: graphql.nadel.Service,
-            overallField: ExecutableNormalizedField,
+            overallField: NadelExecutableNormalizedField,
             transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
             hydrationDetails: ServiceExecutionHydrationDetails?,
         ): Any? {
@@ -247,7 +247,7 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             transformer: NadelQueryTransformer,
             executionBlueprint: NadelOverallExecutionBlueprint,
             service: graphql.nadel.Service,
-            field: ExecutableNormalizedField,
+            field: NadelExecutableNormalizedField,
             state: Any,
             transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         ): NadelTransformFieldResult {
@@ -259,8 +259,8 @@ class StaticHydrationNestedErrorTest : NadelIntegrationTest(
             serviceExecutionContext: NadelServiceExecutionContext,
             executionBlueprint: NadelOverallExecutionBlueprint,
             service: graphql.nadel.Service,
-            overallField: ExecutableNormalizedField,
-            underlyingParentField: ExecutableNormalizedField?,
+            overallField: NadelExecutableNormalizedField,
+            underlyingParentField: NadelExecutableNormalizedField?,
             result: ServiceExecutionResult,
             state: Any,
             nodes: JsonNodes,

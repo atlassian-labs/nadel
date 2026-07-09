@@ -47,10 +47,10 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedOperationToAstCompiler
 import graphql.nadel.util.ErrorUtil.createGraphQLErrorsFromRawErrors
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult
 import graphql.normalized.NormalizedInputValue
 import graphql.normalized.VariablePredicate
@@ -206,8 +206,8 @@ private fun GraphQLFieldsContainer.getFieldContainerFor(
     }
 }
 
-private val ExecutableNormalizedFieldConstructor = ExecutableNormalizedField.Builder::class.java
-    .getDeclaredConstructor(ExecutableNormalizedField::class.java)
+private val ExecutableNormalizedFieldConstructor = NadelExecutableNormalizedField.Builder::class.java
+    .getDeclaredConstructor(NadelExecutableNormalizedField::class.java)
     .also {
         it.trySetAccessible()
     }
@@ -215,8 +215,8 @@ private val ExecutableNormalizedFieldConstructor = ExecutableNormalizedField.Bui
         MethodHandles.lookup().unreflectConstructor(it)
     }
 
-fun ExecutableNormalizedField.toBuilder(): ExecutableNormalizedField.Builder {
-    return ExecutableNormalizedFieldConstructor.invokeExact(this) as ExecutableNormalizedField.Builder
+fun NadelExecutableNormalizedField.toBuilder(): NadelExecutableNormalizedField.Builder {
+    return ExecutableNormalizedFieldConstructor.invokeExact(this) as NadelExecutableNormalizedField.Builder
 }
 
 fun GraphQLCodeRegistry.toBuilder(): GraphQLCodeRegistry.Builder {
@@ -242,8 +242,8 @@ fun GraphQLSchema.toBuilderWithoutTypes(): GraphQLSchema.BuilderWithoutTypes {
     return GraphQLSchemaBuilderWithoutTypesConstructor.invokeExact(this) as GraphQLSchema.BuilderWithoutTypes
 }
 
-fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormalizedField>): ExecutableNormalizedField {
-    fun fixParents(old: ExecutableNormalizedField?, new: ExecutableNormalizedField?) {
+fun NadelExecutableNormalizedField.copyWithChildren(children: List<NadelExecutableNormalizedField>): NadelExecutableNormalizedField {
+    fun fixParents(old: NadelExecutableNormalizedField?, new: NadelExecutableNormalizedField?) {
         if (old == null || new == null || new.parent == null) {
             return
         }
@@ -267,23 +267,23 @@ fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormaliz
         }
 }
 
-val ExecutableNormalizedField.queryPath: NadelQueryPath
+val NadelExecutableNormalizedField.queryPath: NadelQueryPath
     get() = NadelQueryPath(
-        getPath(ExecutableNormalizedField::getResultKey)
+        getPath(NadelExecutableNormalizedField::getResultKey)
     )
 
-val ExecutableNormalizedField.fieldPath: NadelQueryPath
+val NadelExecutableNormalizedField.fieldPath: NadelQueryPath
     get() = NadelQueryPath(
-        getPath(ExecutableNormalizedField::getFieldName)
+        getPath(NadelExecutableNormalizedField::getFieldName)
     )
 
-private inline fun ExecutableNormalizedField.getPath(
-    pathSegmentExtractor: (ExecutableNormalizedField) -> String,
+private inline fun NadelExecutableNormalizedField.getPath(
+    pathSegmentExtractor: (NadelExecutableNormalizedField) -> String,
 ): List<String> {
     var count = 0
 
     run {
-        var cursor: ExecutableNormalizedField = this
+        var cursor: NadelExecutableNormalizedField = this
         while (true) {
             count++
             cursor = cursor.parent ?: break
@@ -292,7 +292,7 @@ private inline fun ExecutableNormalizedField.getPath(
 
     val array = arrayOfNulls<String>(count)
     run {
-        var cursor: ExecutableNormalizedField = this
+        var cursor: NadelExecutableNormalizedField = this
         var index = count - 1
         while (true) {
             array[index] = pathSegmentExtractor(cursor)
@@ -310,8 +310,8 @@ inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<
 }
 
 fun deepClone(
-    fields: List<ExecutableNormalizedField>,
-): List<ExecutableNormalizedField> {
+    fields: List<NadelExecutableNormalizedField>,
+): List<NadelExecutableNormalizedField> {
     return fields.map { field ->
         field.toBuilder()
             .children(deepClone(fields = field.children))
@@ -433,7 +433,7 @@ fun newExecutionResult(
 }
 
 fun newExecutionErrorResult(
-    field: ExecutableNormalizedField,
+    field: NadelExecutableNormalizedField,
     error: GraphQLError,
 ): ExecutionResult {
     return newExecutionResult(
@@ -445,7 +445,7 @@ fun newExecutionErrorResult(
 }
 
 fun newServiceExecutionErrorResult(
-    field: ExecutableNormalizedField,
+    field: NadelExecutableNormalizedField,
     error: GraphQLError,
 ): ServiceExecutionResult {
     return NadelServiceExecutionResultImpl(
@@ -458,7 +458,7 @@ fun newServiceExecutionErrorResult(
     )
 }
 
-fun ExecutableNormalizedField.getOperationKind(
+fun NadelExecutableNormalizedField.getOperationKind(
     schema: GraphQLSchema,
 ): Operation {
     val objectTypeName = objectTypeNames.singleOrNull()
@@ -645,12 +645,12 @@ fun compileToDocument(
     schema: GraphQLSchema,
     operationKind: Operation,
     operationName: String?,
-    topLevelFields: List<ExecutableNormalizedField>,
+    topLevelFields: List<NadelExecutableNormalizedField>,
     variablePredicate: VariablePredicate?,
     deferSupport: Boolean = false,
 ): CompilerResult {
     if (deferSupport) {
-        return ExecutableNormalizedOperationToAstCompiler.compileToDocumentWithDeferSupport(
+        return NadelExecutableNormalizedOperationToAstCompiler.compileToDocumentWithDeferSupport(
             schema,
             operationKind,
             operationName,
@@ -658,7 +658,7 @@ fun compileToDocument(
             variablePredicate,
         )
     } else {
-        return ExecutableNormalizedOperationToAstCompiler.compileToDocument(
+        return NadelExecutableNormalizedOperationToAstCompiler.compileToDocument(
             schema,
             operationKind,
             operationName,
@@ -680,7 +680,7 @@ fun DelayedIncrementalPartialResult.copy(
         .build()
 }
 
-internal fun ExecutableNormalizedField.getFieldDefinitionSequence(
+internal fun NadelExecutableNormalizedField.getFieldDefinitionSequence(
     schema: GraphQLSchema,
 ): Sequence<GraphQLFieldDefinition> {
     return objectTypeNames

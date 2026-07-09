@@ -14,7 +14,7 @@ import graphql.nadel.validation.NadelValidationInterimResult
 import graphql.nadel.validation.NadelValidationInterimResult.Success.Companion.asInterimSuccess
 import graphql.nadel.validation.onError
 import graphql.nadel.validation.onErrorCast
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLObjectType
 
@@ -26,7 +26,7 @@ internal class NadelHydrationSourceFieldValidation2 {
     fun getSourceFields(
         arguments: List<NadelHydrationArgument>,
         hydrationCondition: NadelHydrationCondition?,
-    ): NadelValidationInterimResult<List<ExecutableNormalizedField>> {
+    ): NadelValidationInterimResult<List<NadelExecutableNormalizedField>> {
         val argumentSourceFields = arguments.getSourceFields()
             .onError { return it }
         val conditionSourceFields = listOfNotNull(hydrationCondition?.fieldPath).map { makeLeafField(it) }
@@ -41,7 +41,7 @@ internal class NadelHydrationSourceFieldValidation2 {
         arguments: List<NadelHydrationArgument>,
         matchStrategy: NadelBatchHydrationMatchStrategy,
         hydrationCondition: NadelHydrationCondition?,
-    ): NadelValidationInterimResult<List<ExecutableNormalizedField>> {
+    ): NadelValidationInterimResult<List<NadelExecutableNormalizedField>> {
         val argumentSourceFields = arguments.getSourceFields()
             .onError { return it }
         val conditionSourceFields = listOfNotNull(hydrationCondition?.fieldPath).map { makeLeafField(it) }
@@ -52,7 +52,7 @@ internal class NadelHydrationSourceFieldValidation2 {
     }
 
     context(NadelValidationContext, NadelHydrationValidationContext)
-    private fun List<NadelHydrationArgument>.getSourceFields(): NadelValidationInterimResult<List<ExecutableNormalizedField>> {
+    private fun List<NadelHydrationArgument>.getSourceFields(): NadelValidationInterimResult<List<NadelExecutableNormalizedField>> {
         return mapNotNull { argument ->
             when (argument.valueSource) {
                 is NadelHydrationArgument.ValueSource.ArgumentValue -> null
@@ -69,7 +69,7 @@ internal class NadelHydrationSourceFieldValidation2 {
     private fun getSourceFieldQueryPaths(
         argument: NadelHydrationArgument,
         hydrationValueSource: NadelHydrationArgument.ValueSource.FieldResultValue,
-    ): NadelValidationInterimResult<ExecutableNormalizedField> {
+    ): NadelValidationInterimResult<NadelExecutableNormalizedField> {
         val hydrationSourceType = hydrationValueSource.fieldDefinition.type.unwrapAll()
 
         if (hydrationSourceType is GraphQLObjectType) {
@@ -84,7 +84,7 @@ internal class NadelHydrationSourceFieldValidation2 {
     private fun createObjectField(
         argument: NadelHydrationArgument,
         hydrationValueSource: NadelHydrationArgument.ValueSource.FieldResultValue,
-    ): NadelValidationInterimResult<ExecutableNormalizedField> {
+    ): NadelValidationInterimResult<NadelExecutableNormalizedField> {
         val parentObjectType =
             parent.underlying.getFieldContainerFor(hydrationValueSource.queryPathToField.segments) as GraphQLObjectType
 
@@ -114,7 +114,7 @@ internal class NadelHydrationSourceFieldValidation2 {
         fieldName: String,
         inputObjectType: GraphQLInputObjectType,
         outputObjectType: GraphQLObjectType,
-    ): ExecutableNormalizedField {
+    ): NadelExecutableNormalizedField {
         val children = inputObjectType.fields
             .mapNotNull { inputField ->
                 val equivalentOutputField = outputObjectType.getField(inputField.name)
@@ -137,7 +137,7 @@ internal class NadelHydrationSourceFieldValidation2 {
                             outputObjectType = equivalentOutputField.type.unwrapAll() as GraphQLObjectType,
                         )
                     } else {
-                        ExecutableNormalizedField.newNormalizedField()
+                        NadelExecutableNormalizedField.newNormalizedField()
                             .objectTypeNames(listOf(parentObjectType.name))
                             .fieldName(inputField.name)
                             .build()
@@ -145,7 +145,7 @@ internal class NadelHydrationSourceFieldValidation2 {
                 }
             }
 
-        return ExecutableNormalizedField.newNormalizedField()
+        return NadelExecutableNormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentObjectType.name))
             .fieldName(fieldName)
             .children(children)
@@ -155,7 +155,7 @@ internal class NadelHydrationSourceFieldValidation2 {
     context(NadelValidationContext, NadelHydrationValidationContext)
     private fun makeLeafField(
         path: NadelQueryPath,
-    ): ExecutableNormalizedField {
+    ): NadelExecutableNormalizedField {
         // todo: should do some validation here?? e.g. arg is a scalar value, type validation? maybe type validation is done elsewhere already
         return NFUtil.createField(
             schema = parent.service.underlyingSchema,
@@ -167,7 +167,7 @@ internal class NadelHydrationSourceFieldValidation2 {
     }
 }
 
-private fun List<ExecutableNormalizedField>.dedupSourceFields(): List<ExecutableNormalizedField> {
+private fun List<NadelExecutableNormalizedField>.dedupSourceFields(): List<NadelExecutableNormalizedField> {
     return groupBy {
         listOf(it.objectTypeNames, it.resultKey, it.name, it.normalizedArguments.size)
     }.flatMap { (_, fields) ->

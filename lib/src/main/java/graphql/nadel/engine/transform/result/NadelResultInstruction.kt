@@ -2,7 +2,7 @@ package graphql.nadel.engine.transform.result
 
 import graphql.GraphQLError
 import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 // todo: should be a value class one day… can't because of Java interop
 data class NadelResultKey(val value: String)
@@ -15,7 +15,7 @@ sealed class NadelResultInstruction {
     ) : NadelResultInstruction() {
         constructor(
             subject: JsonNode,
-            field: ExecutableNormalizedField,
+            field: NadelExecutableNormalizedField,
             newValue: JsonNode?,
         ) : this(
             subject = subject,

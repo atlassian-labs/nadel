@@ -20,7 +20,7 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toMapStrictly
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 private class AriTestTransform : NadelTransform<Set<String>> {
@@ -30,7 +30,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Set<String>? {
@@ -57,7 +57,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: Set<String>,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -92,8 +92,8 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: Set<String>,
         nodes: JsonNodes,

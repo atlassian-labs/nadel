@@ -18,7 +18,7 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.test.NadelTransformJavaCompatAdapter
 import graphql.nadel.test.mock
 import graphql.nadel.test.spy
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.confirmVerified
 import io.mockk.verify
@@ -62,7 +62,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    rootField: ExecutableNormalizedField,
+                    rootField: NadelExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): CompletableFuture<NadelTransformServiceExecutionContext?> {
                     return CompletableFuture.completedFuture(Prop("something"))
@@ -76,7 +76,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val services = mock<Map<String, Service>>()
             val service = mock<Service>()
-            val overallField = mock<ExecutableNormalizedField>()
+            val overallField = mock<NadelExecutableNormalizedField>()
             val hydrationDetails = mock<ServiceExecutionHydrationDetails>()
 
             // when
@@ -120,7 +120,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
+                    overallField: NadelExecutableNormalizedField,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): CompletableFuture<Any?> {
@@ -135,7 +135,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val services = mock<Map<String, Service>>()
             val service = mock<Service>()
-            val overallField = mock<ExecutableNormalizedField>()
+            val overallField = mock<NadelExecutableNormalizedField>()
             val hydrationDetails = mock<ServiceExecutionHydrationDetails>()
             val transformServiceExecutionContext = mock<NadelTransformServiceExecutionContext>()
 
@@ -183,7 +183,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     transformer: NadelQueryTransformerJavaCompat,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    field: ExecutableNormalizedField,
+                    field: NadelExecutableNormalizedField,
                     state: Any,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): CompletableFuture<NadelTransformFieldResult> {
@@ -198,7 +198,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val queryTransformer = mock<NadelQueryTransformer>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val service = mock<Service>()
-            val field = mock<ExecutableNormalizedField>()
+            val field = mock<NadelExecutableNormalizedField>()
             val state = mock<Any>()
             val transformServiceExecutionContext = mock<NadelTransformServiceExecutionContext>()
 
@@ -252,8 +252,8 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
-                    underlyingParentField: ExecutableNormalizedField?,
+                    overallField: NadelExecutableNormalizedField,
+                    underlyingParentField: NadelExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
@@ -269,8 +269,8 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val service = mock<Service>()
-            val overallField = mock<ExecutableNormalizedField>()
-            val underlyingParentField = mock<ExecutableNormalizedField>()
+            val overallField = mock<NadelExecutableNormalizedField>()
+            val underlyingParentField = mock<NadelExecutableNormalizedField>()
             val result = mock<ServiceExecutionResult>()
             val state = mock<Any>()
             val nodes = mock<JsonNodes>()

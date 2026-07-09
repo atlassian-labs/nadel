@@ -13,7 +13,7 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.queryPath
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -25,8 +25,8 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
-        artificialFields: List<ExecutableNormalizedField>,
-        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        artificialFields: List<NadelExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<NadelExecutableNormalizedField, List<NadelExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
@@ -49,8 +49,8 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
-        artificialFields: List<ExecutableNormalizedField>,
-        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        artificialFields: List<NadelExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<NadelExecutableNormalizedField, List<NadelExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
         deferPayload: DeferPayload,
@@ -77,8 +77,8 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
-        artificialFields: List<ExecutableNormalizedField>,
-        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        artificialFields: List<NadelExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<NadelExecutableNormalizedField, List<NadelExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
         nodes: JsonNodes,
@@ -196,7 +196,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     }
 
     private fun getRemoveArtificialFieldInstructions(
-        artificialFields: List<ExecutableNormalizedField>,
+        artificialFields: List<NadelExecutableNormalizedField>,
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return artificialFields

@@ -16,8 +16,8 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
-import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedField.newNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField.newNormalizedField
 
 /**
  * Nadel ends up building a complex schema from multiple different services. This class
@@ -68,7 +68,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         val aliasHelper: NadelAliasHelper,
         val typeNamesOwnedByService: Set<String>,
         val fieldObjectTypeNamesOwnedByService: List<String>,
-        val overallField: ExecutableNormalizedField,
+        val overallField: NadelExecutableNormalizedField,
     )
 
     override suspend fun isApplicable(
@@ -77,7 +77,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
@@ -172,7 +172,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -228,8 +228,8 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,

@@ -18,7 +18,7 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationFactory
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
@@ -91,7 +91,7 @@ suspend fun main() {
             object : NadelExecutionHooks {
                 override fun resolveServiceForField(
                     services: List<Service>,
-                    executableNormalizedField: ExecutableNormalizedField,
+                    executableNormalizedField: NadelExecutableNormalizedField,
                 ): ServiceOrError? {
                     require(executableNormalizedField.name == "node")
                     val id = (executableNormalizedField.normalizedArguments["id"]!!.value as StringValue).value

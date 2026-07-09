@@ -26,7 +26,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParame
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.QueryTransforming
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep.ResultTransforming
 import graphql.nadel.util.dfs
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
@@ -61,10 +61,10 @@ internal class NadelExecutionPlanFactory(
         serviceExecutionContext: NadelServiceExecutionContext,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootField: NadelExecutableNormalizedField,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
-        val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
+        val executionSteps: MutableMap<NadelExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
             mutableMapOf()
         val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
             mutableMapOf()
@@ -134,12 +134,12 @@ internal class NadelExecutionPlanFactory(
     }
 
     private inline fun traverseQuery(
-        root: ExecutableNormalizedField,
-        consumer: (ExecutableNormalizedField) -> Unit,
+        root: NadelExecutableNormalizedField,
+        consumer: (NadelExecutableNormalizedField) -> Unit,
     ) {
         dfs(
             root = root,
-            getChildren = ExecutableNormalizedField::getChildren,
+            getChildren = NadelExecutableNormalizedField::getChildren,
             consumer = consumer,
         )
     }

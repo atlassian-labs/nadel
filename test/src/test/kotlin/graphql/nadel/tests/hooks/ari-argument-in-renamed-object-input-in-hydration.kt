@@ -26,7 +26,7 @@ import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLAppliedDirective
 
@@ -43,7 +43,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
+                    overallField: NadelExecutableNormalizedField,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
@@ -61,7 +61,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    field: ExecutableNormalizedField,
+                    field: NadelExecutableNormalizedField,
                     state: Any,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
@@ -106,8 +106,8 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
-                    underlyingParentField: ExecutableNormalizedField?,
+                    overallField: NadelExecutableNormalizedField,
+                    underlyingParentField: NadelExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: Any,
                     nodes: JsonNodes,
@@ -124,7 +124,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
+                    overallField: NadelExecutableNormalizedField,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): GraphQLAppliedDirective? {
@@ -140,7 +140,7 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    field: ExecutableNormalizedField,
+                    field: NadelExecutableNormalizedField,
                     state: GraphQLAppliedDirective,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
@@ -152,8 +152,8 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
-                    underlyingParentField: ExecutableNormalizedField?,
+                    overallField: NadelExecutableNormalizedField,
+                    underlyingParentField: NadelExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: GraphQLAppliedDirective,
                     nodes: JsonNodes,

@@ -12,7 +12,7 @@ import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import java.util.concurrent.CompletableFuture
 
 interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
@@ -22,7 +22,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<Any?> {
@@ -35,7 +35,7 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: Any,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult> {
@@ -47,8 +47,8 @@ interface NadelTransformJavaCompatAdapter : NadelTransformJavaCompat<Any> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: Any,
         nodes: JsonNodes,

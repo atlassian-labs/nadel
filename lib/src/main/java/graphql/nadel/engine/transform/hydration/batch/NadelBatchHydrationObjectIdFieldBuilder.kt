@@ -6,8 +6,8 @@ import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.unwrapAll
-import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedField.newNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLOutputType
 
 /**
@@ -53,7 +53,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> makeObjectIdFields(
                 executionBlueprint,
@@ -76,7 +76,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         return makeObjectIdFields(
             executionBlueprint,
             aliasHelper,
@@ -90,7 +90,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         objectIds: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         val objectTypeNames = getObjectTypeNamesForIdField(
             executionBlueprint = executionBlueprint,
             overallParentTypeOfIdField = batchHydrationInstruction.backingFieldDef.type,

@@ -17,7 +17,7 @@ import graphql.nadel.engine.util.deepClone
 import graphql.nadel.engine.util.resolveObjectTypes
 import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.unwrapAll
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
 internal object NadelHydrationFieldsBuilder {
@@ -26,10 +26,10 @@ internal object NadelHydrationFieldsBuilder {
         service: Service,
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
         parentNode: JsonNode,
         executionBlueprint: NadelOverallExecutionBlueprint,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         return NadelHydrationInputBuilder
             .getInputValues(
                 instruction = instruction,
@@ -67,9 +67,9 @@ internal object NadelHydrationFieldsBuilder {
         executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
         argBatches: List<Map<NadelHydrationArgument, NormalizedInputValue>>,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         val fieldChildren = if (executionHints.hydrationFilterObjectTypes()) {
             deepClone(fields = filterChildren(instruction, virtualField.children)) +
                 makeObjectIdFields(executionBlueprint, aliasHelper, instruction)
@@ -107,8 +107,8 @@ internal object NadelHydrationFieldsBuilder {
 
     private fun filterChildren(
         instruction: NadelGenericHydrationInstruction,
-        children: List<ExecutableNormalizedField>,
-    ): List<ExecutableNormalizedField> {
+        children: List<NadelExecutableNormalizedField>,
+    ): List<NadelExecutableNormalizedField> {
         return children
             .mapNotNull { childField ->
                 val legalObjectTypeNames =
@@ -154,7 +154,7 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: NadelAliasHelper,
         objectTypeName: GraphQLObjectTypeName,
         instructions: List<NadelGenericHydrationInstruction>,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         if (hints.hydrationExecutableSourceFields(service)) {
             return instructions
                 .asSequence()
@@ -191,9 +191,9 @@ internal object NadelHydrationFieldsBuilder {
     private fun makeBackingQueries(
         instruction: NadelGenericHydrationInstruction,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<ExecutableNormalizedField>,
+        fieldChildren: List<NadelExecutableNormalizedField>,
         executionBlueprint: NadelOverallExecutionBlueprint,
-    ): ExecutableNormalizedField {
+    ): NadelExecutableNormalizedField {
         return NFUtil.createField(
             schema = executionBlueprint.engineSchema,
             parentType = executionBlueprint.engineSchema.queryType,
@@ -204,12 +204,12 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     /**
-     * This converts the [ExecutableNormalizedField.objectTypeNames] from the virtual types
+     * This converts the [NadelExecutableNormalizedField.objectTypeNames] from the virtual types
      * to the backing types.
      */
     private fun setBackingObjectTypeNames(
         instruction: NadelHydrationFieldInstruction,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
     ) {
         val virtualTypeToBackingType = instruction.virtualTypeContext?.virtualTypeToBackingType
             ?: return // Nothing to do

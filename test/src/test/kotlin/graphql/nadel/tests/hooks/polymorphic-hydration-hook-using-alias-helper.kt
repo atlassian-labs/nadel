@@ -14,7 +14,7 @@ import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.serviceExecutionFactory
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private class PolymorphicHydrationHookUsingAliasHelper : NadelExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,

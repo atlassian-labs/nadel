@@ -23,7 +23,7 @@ import graphql.nadel.engine.util.getType
 import graphql.nadel.engine.util.isList
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toGraphQLError
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -35,7 +35,7 @@ internal class NadelPartitionTransform(
     data class State(
         val executionContext: NadelExecutionContext,
         val fieldPartitionContext: Any,
-        val fieldPartitions: Map<String, ExecutableNormalizedField>? = null,
+        val fieldPartitions: Map<String, NadelExecutableNormalizedField>? = null,
         val partitionCalls: MutableList<Deferred<ServiceExecutionResult>> = mutableListOf(),
         val error: Throwable? = null,
     )
@@ -46,7 +46,7 @@ internal class NadelPartitionTransform(
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
@@ -119,7 +119,7 @@ internal class NadelPartitionTransform(
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -164,8 +164,8 @@ internal class NadelPartitionTransform(
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,

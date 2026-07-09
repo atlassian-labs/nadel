@@ -1,6 +1,6 @@
 package graphql.nadel.engine.transform.query
 
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.normalized.incremental.NormalizedDeferredExecution
 import graphql.schema.GraphQLInterfaceType
@@ -19,9 +19,9 @@ object NFUtil {
         pathToField: NadelQueryPath,
         aliasedPath: NadelQueryPath? = null,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<ExecutableNormalizedField>,
+        fieldChildren: List<NadelExecutableNormalizedField>,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution> = LinkedHashSet(),
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         return createFieldRecursively(
             schema,
             parentType,
@@ -40,9 +40,9 @@ object NFUtil {
         queryPathToField: NadelQueryPath,
         aliasedPath: NadelQueryPath? = null,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<ExecutableNormalizedField>,
+        fieldChildren: List<NadelExecutableNormalizedField>,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution> = LinkedHashSet(),
-    ): ExecutableNormalizedField {
+    ): NadelExecutableNormalizedField {
         return createParticularField(
             schema,
             parentType,
@@ -61,10 +61,10 @@ object NFUtil {
         queryPathToField: NadelQueryPath,
         aliasedPath: NadelQueryPath?,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<ExecutableNormalizedField>,
+        fieldChildren: List<NadelExecutableNormalizedField>,
         pathToFieldIndex: Int,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         // Note: remember that we are creating fields that do not exist in the original NF
         // Thus, we need to handle interfaces and object types
         return when (parentType) {
@@ -102,10 +102,10 @@ object NFUtil {
         queryPathToField: NadelQueryPath,
         aliasedPath: NadelQueryPath?,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<ExecutableNormalizedField>,
+        fieldChildren: List<NadelExecutableNormalizedField>,
         pathToFieldIndex: Int,
         deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
-    ): ExecutableNormalizedField {
+    ): NadelExecutableNormalizedField {
         if (aliasedPath != null && aliasedPath.size != queryPathToField.size) {
             error("Aliased path must have the same length as the query path")
         }
@@ -117,7 +117,7 @@ object NFUtil {
         val fieldDef = parentType.getFieldDefinition(fieldName)
             ?: error("No definition for ${parentType.name}.$fieldName")
 
-        return ExecutableNormalizedField.newNormalizedField()
+        return NadelExecutableNormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
             .deferredExecutions(deferredExecutions)

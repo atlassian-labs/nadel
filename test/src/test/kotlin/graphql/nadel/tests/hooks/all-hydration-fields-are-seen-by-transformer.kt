@@ -15,7 +15,7 @@ import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import java.util.Collections.synchronizedSet
 
 @UseHook
@@ -33,7 +33,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
+                    overallField: NadelExecutableNormalizedField,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Unit? {
@@ -47,7 +47,7 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    field: ExecutableNormalizedField,
+                    field: NadelExecutableNormalizedField,
                     state: Unit,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
@@ -60,8 +60,8 @@ class `all-hydration-fields-are-seen-by-transformer` : EngineTestHook {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
-                    underlyingParentField: ExecutableNormalizedField?,
+                    overallField: NadelExecutableNormalizedField,
+                    underlyingParentField: NadelExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: Unit,
                     nodes: JsonNodes,

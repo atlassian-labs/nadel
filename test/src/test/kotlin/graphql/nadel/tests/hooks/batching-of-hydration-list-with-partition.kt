@@ -8,11 +8,11 @@ import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 private class BatchHydrationHooks : NadelExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,

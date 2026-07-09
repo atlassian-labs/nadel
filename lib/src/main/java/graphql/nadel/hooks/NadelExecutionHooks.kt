@@ -12,7 +12,7 @@ import graphql.nadel.engine.transform.partition.NadelFieldPartitionContext
 import graphql.nadel.engine.transform.partition.NadelPartitionKeyExtractor
 import graphql.nadel.engine.transform.partition.NadelPartitionTransformHook
 import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 
@@ -29,7 +29,7 @@ interface NadelExecutionHooks {
      *
      *
      * There are 2 versions of this method. One passing an [ExecutionStepInfo], which is used by the CurrentGen
-     * engine, and another passing [ExecutableNormalizedField], used by the NextGen engine. During the transition
+     * engine, and another passing [NadelExecutableNormalizedField], used by the NextGen engine. During the transition
      * between Current and NextGen, implementations of [NadelExecutionHooks] will have to implement both
      * versions of this method.
      *
@@ -39,13 +39,13 @@ interface NadelExecutionHooks {
      */
     fun resolveServiceForField(
         services: List<Service>,
-        executableNormalizedField: ExecutableNormalizedField,
+        executableNormalizedField: NadelExecutableNormalizedField,
     ): ServiceOrError? {
         return null
     }
 
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
         instructions: List<T>,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
@@ -55,7 +55,7 @@ interface NadelExecutionHooks {
     }
 
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-        virtualField: ExecutableNormalizedField,
+        virtualField: NadelExecutableNormalizedField,
         instructions: List<T>,
         sourceInput: JsonNode,
         userContext: Any?,
@@ -104,7 +104,7 @@ interface NadelExecutionHooks {
                 executionBlueprint: NadelOverallExecutionBlueprint,
                 services: Map<String, Service>,
                 service: Service,
-                overallField: ExecutableNormalizedField,
+                overallField: NadelExecutableNormalizedField,
                 hydrationDetails: ServiceExecutionHydrationDetails?,
             ): NadelFieldPartitionContext? {
                 return null

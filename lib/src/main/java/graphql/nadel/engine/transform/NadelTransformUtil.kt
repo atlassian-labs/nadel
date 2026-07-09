@@ -7,8 +7,8 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.JsonMap
-import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedField.newNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField.newNormalizedField
 import graphql.normalized.incremental.NormalizedDeferredExecution
 
 /**
@@ -39,7 +39,7 @@ fun makeTypeNameField(
     aliasHelper: NadelAliasHelper,
     objectTypeNames: List<String>,
     deferredExecutions: LinkedHashSet<NormalizedDeferredExecution>,
-): ExecutableNormalizedField {
+): NadelExecutableNormalizedField {
     return newNormalizedField()
         .alias(aliasHelper.typeNameResultKey)
         .fieldName(TypeNameMetaFieldDef.name)

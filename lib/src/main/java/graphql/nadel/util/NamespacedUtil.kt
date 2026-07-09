@@ -6,7 +6,7 @@ import graphql.nadel.engine.util.isExtensionDef
 import graphql.nadel.engine.util.isOperationType
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
@@ -23,7 +23,7 @@ object NamespacedUtil {
             .any { it.name == namespacedObjectTypeName }
     }
 
-    fun isNamespacedField(overallField: ExecutableNormalizedField, schema: GraphQLSchema): Boolean {
+    fun isNamespacedField(overallField: NadelExecutableNormalizedField, schema: GraphQLSchema): Boolean {
         return overallField
             .getFieldDefinitions(schema)
             .any {
@@ -46,7 +46,7 @@ object NamespacedUtil {
             || (field.arguments.isEmpty() && field.type.unwrapNonNull() is GraphQLObjectType)
     }
 
-    fun isNamespacedFieldLike(service: Service, rootLevelField: ExecutableNormalizedField): Boolean {
+    fun isNamespacedFieldLike(service: Service, rootLevelField: NadelExecutableNormalizedField): Boolean {
         val underlyingSchema = service.underlyingSchema
         val parentType = underlyingSchema.getTypeAs<GraphQLObjectType>(rootLevelField.singleObjectTypeName)
 

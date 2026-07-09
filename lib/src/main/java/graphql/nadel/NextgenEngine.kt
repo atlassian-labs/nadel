@@ -54,7 +54,7 @@ import graphql.nadel.time.NadelInternalLatencyTracker
 import graphql.nadel.util.NamespacedUtil.isNamespacedFieldLike
 import graphql.nadel.util.OperationNameUtil
 import graphql.nadel.validation.NadelSchemaValidation
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
@@ -253,7 +253,7 @@ internal class NextgenEngine(
     }
 
     internal suspend fun executeHydration(
-        topLevelField: ExecutableNormalizedField,
+        topLevelField: NadelExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
         hydrationDetails: ServiceExecutionHydrationDetails,
@@ -278,7 +278,7 @@ internal class NextgenEngine(
     }
 
     internal suspend fun executePartitionedCall(
-        topLevelField: ExecutableNormalizedField,
+        topLevelField: NadelExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
@@ -292,7 +292,7 @@ internal class NextgenEngine(
     }
 
     private suspend fun executeTopLevelField(
-        topLevelField: ExecutableNormalizedField,
+        topLevelField: NadelExecutableNormalizedField,
         service: Service,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
@@ -371,7 +371,7 @@ internal class NextgenEngine(
 
     private suspend fun executeService(
         service: Service,
-        topLevelFields: List<ExecutableNormalizedField>,
+        topLevelFields: List<NadelExecutableNormalizedField>,
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
@@ -468,7 +468,7 @@ internal class NextgenEngine(
 
     private fun getServiceExecution(
         service: Service,
-        topLevelFields: List<ExecutableNormalizedField>,
+        topLevelFields: List<NadelExecutableNormalizedField>,
         hints: NadelExecutionHints,
     ): ServiceExecution {
         if (hints.shortCircuitEmptyQuery(service) && isOnlyTopLevelFieldTypename(topLevelFields, service)) {
@@ -479,7 +479,7 @@ internal class NextgenEngine(
     }
 
     private fun isOnlyTopLevelFieldTypename(
-        topLevelFields: List<ExecutableNormalizedField>,
+        topLevelFields: List<NadelExecutableNormalizedField>,
         service: Service,
     ): Boolean {
         val topLevelField = topLevelFields.singleOrNull() ?: return false
@@ -515,7 +515,7 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
     ): NadelQueryTransformer.TransformResult {
         return NadelQueryTransformer.transformQuery(
             overallExecutionBlueprint,

@@ -20,7 +20,7 @@ import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
@@ -31,7 +31,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     data class State(
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelRenameFieldInstruction>,
         val aliasHelper: NadelAliasHelper,
-        val overallField: ExecutableNormalizedField,
+        val overallField: NadelExecutableNormalizedField,
         val service: Service,
     )
 
@@ -41,7 +41,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
@@ -65,7 +65,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -92,7 +92,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     /**
      * Read [State.instructionsByObjectTypeNames]
      *
-     * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
+     * In the case that there are multiple [FieldCoordinates] for a single [NadelExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
      * selection to determine the behavior on [getResultInstructions].
      *
@@ -100,8 +100,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
      */
     private fun makeTypeNameField(
         state: State,
-        field: ExecutableNormalizedField,
-    ): ExecutableNormalizedField? {
+        field: NadelExecutableNormalizedField,
+    ): NadelExecutableNormalizedField? {
         // No need for typename on top level field
         if (state.overallField.queryPath.size == 1) {
             return null
@@ -123,9 +123,9 @@ internal class NadelRenameTransform : NadelTransform<State> {
     private suspend fun makeRenamedFields(
         state: State,
         transformer: NadelQueryTransformer,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
-    ): List<ExecutableNormalizedField> {
+    ): List<NadelExecutableNormalizedField> {
         return state.instructionsByObjectTypeNames
             .asSequence()
             .asFlow() // For coroutines
@@ -152,10 +152,10 @@ internal class NadelRenameTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         typeName: GraphQLObjectTypeName,
         rename: NadelRenameFieldInstruction,
-    ): ExecutableNormalizedField {
+    ): NadelExecutableNormalizedField {
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
@@ -176,8 +176,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,

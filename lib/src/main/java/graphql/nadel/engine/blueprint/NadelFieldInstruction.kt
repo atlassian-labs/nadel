@@ -6,7 +6,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.query.NadelQueryPath
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -81,7 +81,7 @@ interface NadelGenericHydrationInstruction {
      * This can be the fields described in [NadelHydrationArgument.ValueSource.FieldResultValue.queryPathToField]
      * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
      */
-    val executableSourceFields: List<ExecutableNormalizedField>
+    val executableSourceFields: List<NadelExecutableNormalizedField>
 
     /**
      * The field definition in the overall schema referenced by [queryPathToBackingField].
@@ -118,7 +118,7 @@ data class NadelHydrationFieldInstruction(
     override val timeout: Int,
     @Deprecated("To be replaced by executableSourceFields")
     override val sourceFields: List<NadelQueryPath>,
-    override val executableSourceFields: List<ExecutableNormalizedField>,
+    override val executableSourceFields: List<NadelExecutableNormalizedField>,
     override val backingFieldDef: GraphQLFieldDefinition,
     override val backingFieldContainer: GraphQLFieldsContainer,
     override val backingFieldReturnsObjectTypeNames: Set<String>,
@@ -144,7 +144,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val timeout: Int,
     @Deprecated("To be replaced by executableSourceFields")
     override val sourceFields: List<NadelQueryPath>,
-    override val executableSourceFields: List<ExecutableNormalizedField>,
+    override val executableSourceFields: List<NadelExecutableNormalizedField>,
     override val backingFieldDef: GraphQLFieldDefinition,
     override val backingFieldContainer: GraphQLFieldsContainer,
     override val backingFieldReturnsObjectTypeNames: Set<String>,

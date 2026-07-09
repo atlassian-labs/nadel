@@ -10,7 +10,7 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
@@ -31,7 +31,7 @@ interface NadelTransformJavaCompat<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootField: NadelExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<NadelTransformServiceExecutionContext?> {
         return CompletableFuture.completedFuture(null)
@@ -48,7 +48,7 @@ interface NadelTransformJavaCompat<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<State?>
@@ -62,7 +62,7 @@ interface NadelTransformJavaCompat<State : Any> {
         transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): CompletableFuture<NadelTransformFieldResult>
@@ -75,8 +75,8 @@ interface NadelTransformJavaCompat<State : Any> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
@@ -113,7 +113,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    rootField: ExecutableNormalizedField,
+                    rootField: NadelExecutableNormalizedField,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): NadelTransformServiceExecutionContext? {
                     return compat.buildContext(
@@ -133,7 +133,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
+                    overallField: NadelExecutableNormalizedField,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): State? {
@@ -155,7 +155,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    field: ExecutableNormalizedField,
+                    field: NadelExecutableNormalizedField,
                     state: State,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
@@ -180,8 +180,8 @@ interface NadelTransformJavaCompat<State : Any> {
                     serviceExecutionContext: NadelServiceExecutionContext,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
-                    overallField: ExecutableNormalizedField,
-                    underlyingParentField: ExecutableNormalizedField?,
+                    overallField: NadelExecutableNormalizedField,
+                    underlyingParentField: NadelExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: State,
                     nodes: JsonNodes,

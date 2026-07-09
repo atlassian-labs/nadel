@@ -10,7 +10,7 @@ import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 @UseHook
 class `batching-single-source-id` : EngineTestHook {
@@ -19,7 +19,7 @@ class `batching-single-source-id` : EngineTestHook {
             .executionHooks(
                 object : NadelExecutionHooks {
                     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
-                        virtualField: ExecutableNormalizedField,
+                        virtualField: NadelExecutableNormalizedField,
                         instructions: List<T>,
                         parentNode: JsonNode,
                         aliasHelper: NadelAliasHelper,

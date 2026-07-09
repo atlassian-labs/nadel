@@ -7,7 +7,7 @@ import graphql.nadel.engine.util.toGraphQLErrorException
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLSchema
 
@@ -21,7 +21,7 @@ internal class DynamicServiceResolution(
      * Checks if the field needs to have its service dynamically resolved
      */
     fun needsDynamicServiceResolution(
-        topLevelField: ExecutableNormalizedField,
+        topLevelField: NadelExecutableNormalizedField,
     ): Boolean =
         topLevelField.getFieldDefinitions(engineSchema)
             .asSequence()
@@ -38,7 +38,7 @@ internal class DynamicServiceResolution(
     /**
      * Resolves the service for a field
      */
-    fun resolveServiceForField(field: ExecutableNormalizedField): Service {
+    fun resolveServiceForField(field: NadelExecutableNormalizedField): Service {
         val serviceOrError = executionHooks.resolveServiceForField(services, field)
             ?: throw GraphqlErrorException.newErrorException()
                 .message("Could not resolve service for field '${field.name}'")

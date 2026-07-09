@@ -10,7 +10,7 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 interface NadelTransform<State : Any> {
     /**
@@ -25,7 +25,7 @@ interface NadelTransform<State : Any> {
      * of the transform on all the fields.
      *
      * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
-     * @param rootField the root [ExecutableNormalizedField] of the operation this [NadelTransform] runs on
+     * @param rootField the root [NadelExecutableNormalizedField] of the operation this [NadelTransform] runs on
      * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
      * hydrations, `null` otherwise
      *
@@ -39,7 +39,7 @@ interface NadelTransform<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootField: NadelExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelTransformServiceExecutionContext? {
         return null
@@ -61,7 +61,7 @@ interface NadelTransform<State : Any> {
      *
      * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
      * @param service the [Service] the [overallField] belongs to
-     * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms
+     * @param overallField the [NadelExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms
      * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
      * hydrations, `null` otherwise
      *
@@ -73,7 +73,7 @@ interface NadelTransform<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): State?
@@ -91,7 +91,7 @@ interface NadelTransform<State : Any> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult
@@ -107,8 +107,8 @@ interface NadelTransform<State : Any> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
@@ -132,13 +132,13 @@ interface NadelTransform<State : Any> {
     }
 }
 
-data class NadelTransformFieldResult(
+data class NadelTransformFieldResult @JvmOverloads constructor(
     /**
      * The original field given in [NadelTransform.transformField].
      *
      * Set to null if you want to delete the field
      */
-    val newField: ExecutableNormalizedField?,
+    val newField: NadelExecutableNormalizedField?,
     /**
      * Any additional artificial fields you want to add to the query for
      * transformation purposes.
@@ -147,13 +147,13 @@ data class NadelTransformFieldResult(
      * will be automatically removed by Nadel as GraphQL only allows for
      * fields specified by the incoming query to be in the result.
      */
-    val artificialFields: List<ExecutableNormalizedField> = emptyList(),
+    val artificialFields: List<NadelExecutableNormalizedField> = emptyList(),
 ) {
     companion object {
         /**
          * Idiomatic helper for saying you didn't modify the field.
          */
-        fun unmodified(field: ExecutableNormalizedField): NadelTransformFieldResult {
+        fun unmodified(field: NadelExecutableNormalizedField): NadelTransformFieldResult {
             return NadelTransformFieldResult(newField = field)
         }
     }

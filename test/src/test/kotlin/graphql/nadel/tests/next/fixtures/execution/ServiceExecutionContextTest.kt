@@ -19,7 +19,7 @@ import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.hooks.NadelCreateServiceExecutionContextParams
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertFalse
@@ -121,7 +121,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
         val getResultInstructions = Collections.synchronizedList(mutableListOf<String>())
     }
 
-    fun ExecutableNormalizedField.toExecutionString(): String {
+    fun NadelExecutableNormalizedField.toExecutionString(): String {
         val objects = objectTypeNames.joinToString(separator = ",", prefix = "[", postfix = "]")
         val args = normalizedArguments.entries.joinToString(
             separator = ",",
@@ -150,7 +150,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
             )
             .transforms(
                 listOf(
-                    object : NadelTransform<ExecutableNormalizedField> {
+                    object : NadelTransform<NadelExecutableNormalizedField> {
 
                         override suspend fun buildContext(
                             executionContext: NadelExecutionContext,
@@ -158,7 +158,7 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             executionBlueprint: NadelOverallExecutionBlueprint,
                             services: Map<String, graphql.nadel.Service>,
                             service: graphql.nadel.Service,
-                            rootField: ExecutableNormalizedField,
+                            rootField: NadelExecutableNormalizedField,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
                         ): NadelTransformServiceExecutionContext? {
                             val testTransformServiceExecutionContext =
@@ -173,10 +173,10 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             executionBlueprint: NadelOverallExecutionBlueprint,
                             services: Map<String, graphql.nadel.Service>,
                             service: graphql.nadel.Service,
-                            overallField: ExecutableNormalizedField,
+                            overallField: NadelExecutableNormalizedField,
                             transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
-                        ): ExecutableNormalizedField? {
+                        ): NadelExecutableNormalizedField? {
                             (serviceExecutionContext as TestServiceExecutionContext).isApplicable.add(overallField.toExecutionString())
                             (transformServiceExecutionContext as TestTransformServiceExecutionContext).isApplicable
                                 .add(overallField.toExecutionString())
@@ -189,8 +189,8 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             transformer: NadelQueryTransformer,
                             executionBlueprint: NadelOverallExecutionBlueprint,
                             service: graphql.nadel.Service,
-                            field: ExecutableNormalizedField,
-                            state: ExecutableNormalizedField,
+                            field: NadelExecutableNormalizedField,
+                            state: NadelExecutableNormalizedField,
                             transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                         ): NadelTransformFieldResult {
                             (serviceExecutionContext as TestServiceExecutionContext).transformField.add(field.toExecutionString())
@@ -205,10 +205,10 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             serviceExecutionContext: NadelServiceExecutionContext,
                             executionBlueprint: NadelOverallExecutionBlueprint,
                             service: graphql.nadel.Service,
-                            overallField: ExecutableNormalizedField,
-                            underlyingParentField: ExecutableNormalizedField?,
+                            overallField: NadelExecutableNormalizedField,
+                            underlyingParentField: NadelExecutableNormalizedField?,
                             result: ServiceExecutionResult,
-                            state: ExecutableNormalizedField,
+                            state: NadelExecutableNormalizedField,
                             nodes: JsonNodes,
                             transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                         ): List<NadelResultInstruction> {

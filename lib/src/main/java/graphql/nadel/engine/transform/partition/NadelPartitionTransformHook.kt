@@ -5,7 +5,7 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 /**
  * This hook allows you to provide custom partitioning logic for fields.
@@ -28,7 +28,7 @@ interface NadelPartitionTransformHook {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelFieldPartitionContext?
 
@@ -42,7 +42,7 @@ interface NadelPartitionTransformHook {
      * This hook allows you to perform some non-side effect action on the field partitions (like logging, etc.).
      * This is called before the field partitions calls are executed, and whether the partition requests are successful or not.
      */
-    fun onPartition(executionContext: NadelExecutionContext, fieldPartitions: Map<String, ExecutableNormalizedField>) {
+    fun onPartition(executionContext: NadelExecutionContext, fieldPartitions: Map<String, NadelExecutableNormalizedField>) {
         // no-op
     }
 }

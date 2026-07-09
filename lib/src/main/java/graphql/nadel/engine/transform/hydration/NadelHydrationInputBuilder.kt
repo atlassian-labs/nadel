@@ -14,21 +14,21 @@ import graphql.nadel.engine.util.flatten
 import graphql.nadel.engine.util.javaValueToAstValue
 import graphql.nadel.engine.util.makeNormalizedInputValue
 import graphql.nadel.engine.util.toMapStrictly
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
 
 internal class NadelHydrationInputBuilder private constructor(
     private val instruction: NadelHydrationFieldInstruction,
     private val aliasHelper: NadelAliasHelper,
-    private val virtualField: ExecutableNormalizedField,
+    private val virtualField: NadelExecutableNormalizedField,
     private val parentNode: JsonNode,
 ) {
     companion object {
         fun getInputValues(
             instruction: NadelHydrationFieldInstruction,
             aliasHelper: NadelAliasHelper,
-            virtualField: ExecutableNormalizedField,
+            virtualField: NadelExecutableNormalizedField,
             parentNode: JsonNode,
         ): List<Map<String, NormalizedInputValue>> {
             return NadelHydrationInputBuilder(instruction, aliasHelper, virtualField, parentNode)

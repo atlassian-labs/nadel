@@ -21,7 +21,7 @@ import graphql.nadel.engine.transform.stub.NadelStubTransform.StubState
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 
 internal class NadelStubTransform : NadelTransform<StubState> {
     data class StubState(
@@ -35,7 +35,7 @@ internal class NadelStubTransform : NadelTransform<StubState> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): StubState? {
@@ -54,7 +54,7 @@ internal class NadelStubTransform : NadelTransform<StubState> {
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: StubState,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -81,8 +81,8 @@ internal class NadelStubTransform : NadelTransform<StubState> {
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: StubState,
         nodes: JsonNodes,
@@ -110,7 +110,7 @@ internal class NadelStubTransform : NadelTransform<StubState> {
 
     private fun stub(
         parentObject: JsonNode,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
     ): NadelResultInstruction {
         return NadelResultInstruction.Set(
             subject = parentObject,
@@ -121,8 +121,8 @@ internal class NadelStubTransform : NadelTransform<StubState> {
 
     private fun makeTypeNameField(
         state: StubState,
-        field: ExecutableNormalizedField,
-    ): ExecutableNormalizedField? {
+        field: NadelExecutableNormalizedField,
+    ): NadelExecutableNormalizedField? {
         val typeNamesWithInstructions = state.stubByObjectTypeNames.keys
         val objectTypeNames = field.objectTypeNames
             .filter { it in typeNamesWithInstructions }

@@ -8,7 +8,7 @@ import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationInputBu
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.util.javaValueToAstValue
 import graphql.nadel.hooks.NadelExecutionHooks
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
 
@@ -49,7 +49,7 @@ internal object NadelNewBatchHydrationInputBuilder {
         hooks: NadelExecutionHooks,
         userContext: Any?,
         instruction: NadelBatchHydrationFieldInstruction,
-        hydrationField: ExecutableNormalizedField,
+        hydrationField: NadelExecutableNormalizedField,
         sourceInputs: List<JsonNode>,
     ): List<NadelHydrationArgumentsBatch> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)

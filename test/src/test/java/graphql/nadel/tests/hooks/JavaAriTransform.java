@@ -15,7 +15,7 @@ import graphql.nadel.engine.transform.query.NadelQueryTransformerJavaCompat;
 import graphql.nadel.engine.transform.result.NadelResultInstruction;
 import graphql.nadel.engine.transform.result.json.JsonNodes;
 import graphql.nadel.engine.util.CollectionUtilKt;
-import graphql.normalized.ExecutableNormalizedField;
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField;
 import graphql.normalized.NormalizedInputValue;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLArgument;
@@ -42,7 +42,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
         return NadelTransformJavaCompat.create(new JavaAriTransform());
     }
 
-    public String getSingleObjectTypeName(ExecutableNormalizedField overallField) {
+    public String getSingleObjectTypeName(NadelExecutableNormalizedField overallField) {
         // This single enforces there's actually one single entry
         return CollectionsKt.single(overallField.getObjectTypeNames());
     }
@@ -54,7 +54,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                        @NotNull Map<String, ? extends Service> services,
                                                        @NotNull Service service,
-                                                       @NotNull ExecutableNormalizedField overallField,
+                                                       @NotNull NadelExecutableNormalizedField overallField,
                                                        @Nullable NadelTransformServiceExecutionContext transformServiceExecutionContext,
                                                        @Nullable ServiceExecutionHydrationDetails hydrationDetails) {
 
@@ -86,7 +86,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                        @NotNull NadelQueryTransformerJavaCompat transformer,
                                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                        @NotNull Service service,
-                                                                       @NotNull ExecutableNormalizedField field,
+                                                                       @NotNull NadelExecutableNormalizedField field,
                                                                        @NotNull Set<String> fieldsArgsToInterpret,
                                                                        @Nullable NadelTransformServiceExecutionContext transformServiceExecutionContext) {
         return CompletableFuture.completedFuture(
@@ -133,8 +133,8 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                                                  @NotNull NadelServiceExecutionContext serviceExecutionContext,
                                                                                  @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                                                  @NotNull Service service,
-                                                                                 @NotNull ExecutableNormalizedField overallField,
-                                                                                 @Nullable ExecutableNormalizedField underlyingParentField,
+                                                                                 @NotNull NadelExecutableNormalizedField overallField,
+                                                                                 @Nullable NadelExecutableNormalizedField underlyingParentField,
                                                                                  @NotNull ServiceExecutionResult result,
                                                                                  @NotNull Set<String> strings,
                                                                                  @NotNull JsonNodes nodes,

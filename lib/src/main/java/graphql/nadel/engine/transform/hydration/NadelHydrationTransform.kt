@@ -35,7 +35,7 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.toGraphQLError
 import graphql.nadel.engine.util.unwrapNonNull
 import graphql.nadel.hooks.NadelExecutionHooks
-import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.async
@@ -51,7 +51,7 @@ internal class NadelHydrationTransform(
     data class State(
         /**
          * The hydration instructions for the [virtualField]. There can be multiple instructions
-         * as a [ExecutableNormalizedField] can have multiple [ExecutableNormalizedField.objectTypeNames].
+         * as a [NadelExecutableNormalizedField] can have multiple [NadelExecutableNormalizedField.objectTypeNames].
          *
          * The [Map.Entry.key] of [FieldCoordinates] denotes a specific object type and
          * its associated instruction.
@@ -62,7 +62,7 @@ internal class NadelHydrationTransform(
          * The field in question for the transform, stored for quick access when
          * the [State] is passed around.
          */
-        val virtualField: ExecutableNormalizedField,
+        val virtualField: NadelExecutableNormalizedField,
         val aliasHelper: NadelAliasHelper,
         val executionContext: NadelExecutionContext,
         val engineSchema: GraphQLSchema,
@@ -74,7 +74,7 @@ internal class NadelHydrationTransform(
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
@@ -105,7 +105,7 @@ internal class NadelHydrationTransform(
         transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
@@ -143,8 +143,8 @@ internal class NadelHydrationTransform(
 
     private fun makeTypeNameField(
         state: State,
-        field: ExecutableNormalizedField,
-    ): ExecutableNormalizedField? {
+        field: NadelExecutableNormalizedField,
+    ): NadelExecutableNormalizedField? {
         val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
         val objectTypeNames = field.objectTypeNames
             .filter { it in typeNamesWithInstructions }
@@ -163,8 +163,8 @@ internal class NadelHydrationTransform(
         serviceExecutionContext: NadelServiceExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: ExecutableNormalizedField,
-        underlyingParentField: ExecutableNormalizedField?,
+        overallField: NadelExecutableNormalizedField,
+        underlyingParentField: NadelExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
         nodes: JsonNodes,
@@ -187,7 +187,7 @@ internal class NadelHydrationTransform(
         parentNodes: List<JsonNode>,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
         return coroutineScope {
@@ -234,7 +234,7 @@ internal class NadelHydrationTransform(
         parentNodes: List<JsonNode>,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
         executionContext: NadelExecutionContext,
     ) {
         // Prepare the hydrations before we go async
@@ -310,7 +310,7 @@ internal class NadelHydrationTransform(
         parentNode: JsonNode,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        virtualField: ExecutableNormalizedField, // Field asking for hydration from the overall query
+        virtualField: NadelExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): NadelPreparedHydration? {
         val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
@@ -440,7 +440,7 @@ internal class NadelHydrationTransform(
     private fun isDeferred(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        overallField: ExecutableNormalizedField,
+        overallField: NadelExecutableNormalizedField,
     ): Boolean {
         // Disable defer in nested hydration
         if (executionContext.hydrationDetails != null) {
@@ -451,10 +451,10 @@ internal class NadelHydrationTransform(
     }
 
     private fun areAnyParentFieldsOutputtingLists(
-        field: ExecutableNormalizedField,
+        field: NadelExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): Boolean {
-        var cursor: ExecutableNormalizedField? = field.parent
+        var cursor: NadelExecutableNormalizedField? = field.parent
 
         while (cursor != null) {
             val isList = cursor.getFieldDefinitionSequence(executionBlueprint.engineSchema)
