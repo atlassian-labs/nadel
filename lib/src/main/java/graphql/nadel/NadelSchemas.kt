@@ -234,9 +234,8 @@ data class NadelSchemas(
 
         private fun createEngineSchema(services: List<Service>): GraphQLSchema {
             val overallSchemaGenerator = OverallSchemaGenerator()
-            val serviceRegistries = services.map(Service::definitionRegistry)
             val schema = overallSchemaGenerator.buildOverallSchema(
-                serviceRegistries,
+                services,
                 builder.overallWiringFactory,
                 builder.schemaDefinitionTransformationHook,
             )
