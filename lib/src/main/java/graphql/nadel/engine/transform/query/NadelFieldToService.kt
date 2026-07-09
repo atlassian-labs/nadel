@@ -27,13 +27,64 @@ internal class NadelFieldToService(
         query: ExecutableNormalizedOperation,
         executionHints: NadelExecutionHints,
     ): List<NadelFieldAndService> {
-        return query.topLevelFields.flatMap { topLevelField ->
+        val topLevelFields = query.topLevelFields
+
+        // Resolve the owning service for each non-namespaced root field, and bucket the ones that
+        // are eligible for batching by service. LinkedHashMap preserves first-occurrence order.
+        val fieldToService = HashMap<ExecutableNormalizedField, Service>()
+        val batchedByService = LinkedHashMap<Service, MutableList<ExecutableNormalizedField>>()
+        for (topLevelField in topLevelFields) {
             if (isNamespacedField(topLevelField)) {
-                getServicePairsForNamespacedFields(topLevelField, executionHints)
-            } else {
-                listOf(getServicePairFor(field = topLevelField))
+                continue
+            }
+            val service = getService(topLevelField)
+            fieldToService[topLevelField] = service
+            if (canBatchRootField(topLevelField, service, executionHints)) {
+                batchedByService.getOrPut(service) { mutableListOf() }.add(topLevelField)
             }
         }
+
+        // Emit entries in query order. A batched service's root fields are emitted as a single
+        // entry (one service call) at the position of the service's first batchable root field;
+        // everything else keeps its own single-field entry, exactly as before.
+        val result = mutableListOf<NadelFieldAndService>()
+        val emittedBatches = HashSet<Service>()
+        for (topLevelField in topLevelFields) {
+            if (isNamespacedField(topLevelField)) {
+                result += getServicePairsForNamespacedFields(topLevelField, executionHints)
+                continue
+            }
+
+            val service = fieldToService.getValue(topLevelField)
+            val batchedFields = batchedByService[service]
+            if (batchedFields != null && topLevelField in batchedFields) {
+                if (emittedBatches.add(service)) {
+                    result += NadelFieldAndService(field = batchedFields, service = service)
+                }
+            } else {
+                result += NadelFieldAndService(field = listOf(topLevelField), service = service)
+            }
+        }
+
+        return result
+    }
+
+    /**
+     * Root fields are only batched into a single service call when the service opts in via
+     * [NadelExecutionHints.batchRootFields].
+     */
+    private fun canBatchRootField(
+        field: ExecutableNormalizedField,
+        service: Service,
+        executionHints: NadelExecutionHints,
+    ): Boolean {
+        if (!executionHints.batchRootFields(service)) {
+            return false
+        }
+        if (field.name.startsWith("__")) {
+            return false
+        }
+        return !dynamicServiceResolution.needsDynamicServiceResolution(field)
     }
 
     /**
@@ -65,13 +116,6 @@ internal class NadelFieldToService(
                     service = service,
                 )
             }
-    }
-
-    private fun getServicePairFor(field: ExecutableNormalizedField): NadelFieldAndService {
-        return NadelFieldAndService(
-            field = listOf(field),
-            service = getService(field),
-        )
     }
 
     private fun getServiceForNamespacedField(

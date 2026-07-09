@@ -2,6 +2,7 @@ package graphql.nadel
 
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
+import graphql.nadel.hints.NadelBatchRootFieldsHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
@@ -28,6 +29,7 @@ data class NadelExecutionHints(
     val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
     val disableSharedTypes: NadelDisableSharedTypesHint,
     val useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
+    val batchRootFields: NadelBatchRootFieldsHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -53,6 +55,7 @@ data class NadelExecutionHints(
         private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
         private var useReachableUnderlyingServiceTypes = NadelReachableUnderlyingServiceTypesHint { false }
+        private var batchRootFields = NadelBatchRootFieldsHint { false }
 
         constructor()
 
@@ -70,6 +73,7 @@ data class NadelExecutionHints(
             shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
             useReachableUnderlyingServiceTypes = nadelExecutionHints.useReachableUnderlyingServiceTypes
+            batchRootFields = nadelExecutionHints.batchRootFields
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -137,6 +141,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun batchRootFields(flag: NadelBatchRootFieldsHint): Builder {
+            batchRootFields = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -152,6 +161,7 @@ data class NadelExecutionHints(
                 shadowUnderlyingTypeNameInvestigation,
                 disableSharedTypes,
                 useReachableUnderlyingServiceTypes,
+                batchRootFields,
             )
         }
     }

@@ -212,7 +212,7 @@ internal class NextgenEngine(
                                     )
                                 } catch (e: Throwable) {
                                     when (e) {
-                                        is GraphQLError -> newServiceExecutionErrorResult(fields.first(), error = e)
+                                        is GraphQLError -> newServiceExecutionErrorResult(fields, error = e)
                                         else -> throw e
                                     }
                                 }
@@ -315,8 +315,7 @@ internal class NextgenEngine(
                 executionContext = executionContext,
                 serviceExecutionContext = serviceExecutionContext,
                 executionPlan = executionPlan,
-                // TODO(batch-root-fields): transform every field once a list can hold >1 root field
-                field = topLevelField.first()
+                fields = topLevelField
             )
         }
         val result: ServiceExecutionResult = timer.time(step = RootStep.ServiceExecution.child(service.name)) {
@@ -353,8 +352,9 @@ internal class NextgenEngine(
             )
         }
         val transformedResult: ServiceExecutionResult = when {
-            // TODO(batch-root-fields): assumes a single root field; revisit when batching >1 root field
-            topLevelField.first().name.startsWith("__") -> result
+            // Introspection fields are never batched with other fields (see NadelFieldToService),
+            // so an all-introspection batch needs no result transformation.
+            topLevelField.all { it.name.startsWith("__") } -> result
             else -> timer.time(step = RootStep.ResultTransforming) {
                 resultTransformer.transform(
                     executionContext = executionContext,
@@ -517,7 +517,7 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
-        field: ExecutableNormalizedField,
+        fields: List<ExecutableNormalizedField>,
     ): NadelQueryTransformer.TransformResult {
         return NadelQueryTransformer.transformQuery(
             overallExecutionBlueprint,
@@ -525,7 +525,7 @@ internal class NextgenEngine(
             executionContext,
             serviceExecutionContext,
             executionPlan,
-            field,
+            fields,
         )
     }
 

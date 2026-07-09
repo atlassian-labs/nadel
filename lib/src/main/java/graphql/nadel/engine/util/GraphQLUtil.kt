@@ -448,10 +448,19 @@ fun newServiceExecutionErrorResult(
     field: ExecutableNormalizedField,
     error: GraphQLError,
 ): ServiceExecutionResult {
+    return newServiceExecutionErrorResult(fields = listOf(field), error = error)
+}
+
+fun newServiceExecutionErrorResult(
+    fields: List<ExecutableNormalizedField>,
+    error: GraphQLError,
+): ServiceExecutionResult {
+    val data: MutableMap<String, Any?> = mutableMapOf()
+    for (field in fields) {
+        data[field.resultKey] = null
+    }
     return NadelServiceExecutionResultImpl(
-        data = mutableMapOf(
-            field.resultKey to null,
-        ),
+        data = data,
         errors = mutableListOf(
             error.toSpecification(),
         ),

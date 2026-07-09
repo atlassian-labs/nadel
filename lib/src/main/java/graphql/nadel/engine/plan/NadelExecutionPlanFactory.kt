@@ -68,8 +68,9 @@ internal class NadelExecutionPlanFactory(
         val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
             mutableMapOf()
         executionContext.timer.batch { timer ->
-            // TODO(batch-root-fields): plan every root field once a list can hold >1 root field
-            traverseQuery(rootField.first()) { field ->
+            // Plan across every root field: batched root fields (see NadelBatchRootFieldsHint) share
+            // one service call, so all their transform steps belong to this single execution plan.
+            traverseQuery(rootField) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
                     // This is a patch to prevent errors
@@ -88,7 +89,8 @@ internal class NadelExecutionPlanFactory(
                                     executionBlueprint,
                                     services,
                                     service,
-                                    // TODO(batch-root-fields): pass all root fields when batching >1 root field
+                                    // buildContext is memoized once per service call; the first root
+                                    // field is passed as the representative root field of the batch.
                                     rootField.first(),
                                     serviceHydrationDetails
                                 )
@@ -135,14 +137,16 @@ internal class NadelExecutionPlanFactory(
     }
 
     private inline fun traverseQuery(
-        root: ExecutableNormalizedField,
+        roots: List<ExecutableNormalizedField>,
         consumer: (ExecutableNormalizedField) -> Unit,
     ) {
-        dfs(
-            root = root,
-            getChildren = ExecutableNormalizedField::getChildren,
-            consumer = consumer,
-        )
+        for (root in roots) {
+            dfs(
+                root = root,
+                getChildren = ExecutableNormalizedField::getChildren,
+                consumer = consumer,
+            )
+        }
     }
 
     companion object {
