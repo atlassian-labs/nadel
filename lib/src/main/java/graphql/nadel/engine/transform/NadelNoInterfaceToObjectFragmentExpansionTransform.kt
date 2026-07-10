@@ -18,7 +18,6 @@ import graphql.nadel.engine.transform.result.NadelResultKey
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
-import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLInterfaceType
@@ -40,7 +39,6 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
     data class State(
         val aliasHelper: NadelAliasHelper,
         val exposedOverallImplNames: Set<String>,
-        val allUnderlyingMembersAsOverallNames: List<String>,
         val relaxedFieldResultKey: String,
     )
 
@@ -66,7 +64,7 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         }
         val parent = overallField.parent ?: return null
 
-        val relaxationContext = computeAbstractTypeRelaxationContext(executionBlueprint, service, overallField)
+        val exposedOverallImplNames = computeExposedImplNamesIfRelaxable(executionBlueprint, service, overallField)
             ?: return null
 
         // Do nothing for fields with instructions (rename/hydration/stub/…)
@@ -79,8 +77,7 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
 
         return State(
             aliasHelper = NadelAliasHelper.forField(tag = "abstract_member", field = parent),
-            exposedOverallImplNames = relaxationContext.exposedOverallImplNames,
-            allUnderlyingMembersAsOverallNames = relaxationContext.allUnderlyingMembersAsOverallNames,
+            exposedOverallImplNames = exposedOverallImplNames,
             relaxedFieldResultKey = overallField.resultKey,
         )
     }
@@ -95,22 +92,19 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
-        // Widen objectTypeNames to cover every underlying member so graphql-java prints the field bare.
-        val bareField = field.toBuilder()
-            .clearObjectTypesNames()
-            .objectTypeNames(state.allUnderlyingMembersAsOverallNames)
-            .build()
-
-        // Aliased __typename (also bare) so the result side can tell each node's concrete type.
+        // Keep objectTypeNames honest (only the exposed members). Rather than widen them, flag the field and
+        // the injected __typename as forcePrintBare so the forked compiler emits them without a `... on Type`
+        // fragment. See [NadelTransformFieldResult.forcePrintBare].
         val typeNameField = newNormalizedField()
-            .objectTypeNames(state.allUnderlyingMembersAsOverallNames)
+            .objectTypeNames(state.exposedOverallImplNames.toList())
             .alias(state.aliasHelper.typeNameResultKey)
             .fieldName(Introspection.TypeNameMetaFieldDef.name)
             .build()
 
         return NadelTransformFieldResult(
-            newField = bareField,
+            newField = field,
             artificialFields = listOf(typeNameField),
+            forcePrintBare = true,
         )
     }
 
@@ -150,16 +144,16 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
 }
 
 /**
- * Structural preconditions for bare emission, or `null` if [overallField] isn't a candidate: the parent is a
- * single interface/union, the field is selectable at that level (an interface field, or `__typename`), the
- * selection covers exactly the exposed members, and at least one underlying member is hidden. Doesn't consider
- * the hint or field instructions — the caller does.
+ * The exposed overall implementation names if [overallField] is relaxable, else `null`. Relaxable means: the
+ * parent is a single interface/union, the field is selectable at that level (an interface field, or
+ * `__typename`), the selection covers exactly the exposed members, and at least one underlying member is
+ * hidden. Doesn't consider the hint or field instructions - the caller does.
  */
-private fun computeAbstractTypeRelaxationContext(
+private fun computeExposedImplNamesIfRelaxable(
     executionBlueprint: NadelOverallExecutionBlueprint,
     service: Service,
     overallField: ExecutableNormalizedField,
-): NadelAbstractTypeRelaxationContext? {
+): Set<String>? {
     val parent = overallField.parent ?: return null
 
     val engineSchema = executionBlueprint.engineSchema
@@ -217,16 +211,5 @@ private fun computeAbstractTypeRelaxationContext(
         return null
     }
 
-    // Every underlying member (incl. hidden ones), named in overall terms so it can go on the overall ENF;
-    val allUnderlyingMembersAsOverallNames = underlyingMemberNames.map { executionBlueprint.getOverallTypeName(service, it) }
-
-    return NadelAbstractTypeRelaxationContext(
-        exposedOverallImplNames = exposedOverallImplNames,
-        allUnderlyingMembersAsOverallNames = allUnderlyingMembersAsOverallNames,
-    )
+    return exposedOverallImplNames
 }
-
-private data class NadelAbstractTypeRelaxationContext(
-    val exposedOverallImplNames: Set<String>,
-    val allUnderlyingMembersAsOverallNames: List<String>,
-)
