@@ -25,7 +25,8 @@ interface NadelTransform<State : Any> {
      * of the transform on all the fields.
      *
      * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
-     * @param rootField the root [ExecutableNormalizedField] of the operation this [NadelTransform] runs on
+     * @param rootFields the root [ExecutableNormalizedField]s of the operation this [NadelTransform] runs on.
+     * There is more than one when sibling root fields are batched into a single service call.
      * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
      * hydrations, `null` otherwise
      *
@@ -39,7 +40,7 @@ interface NadelTransform<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootFields: List<ExecutableNormalizedField>,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelTransformServiceExecutionContext? {
         return null

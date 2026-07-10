@@ -27,43 +27,37 @@ internal class NadelFieldToService(
         query: ExecutableNormalizedOperation,
         executionHints: NadelExecutionHints,
     ): List<NadelFieldAndService> {
-        val topLevelFields = query.topLevelFields
-
-        // Resolve the owning service for each non-namespaced root field, and bucket the ones that
-        // are eligible for batching by service. LinkedHashMap preserves first-occurrence order.
-        val fieldToService = HashMap<ExecutableNormalizedField, Service>()
-        val batchedByService = LinkedHashMap<Service, MutableList<ExecutableNormalizedField>>()
-        for (topLevelField in topLevelFields) {
-            if (isNamespacedField(topLevelField)) {
-                continue
-            }
-            val service = getService(topLevelField)
-            fieldToService[topLevelField] = service
-            if (canBatchRootField(topLevelField, service, executionHints)) {
-                batchedByService.getOrPut(service) { mutableListOf() }.add(topLevelField)
+        // Feature flag: when root-field batching is globally disabled, keep the original behaviour
+        // of one entry (i.e. one service call) per root field.
+        if (!executionHints.batchRootFields()) {
+            return query.topLevelFields.flatMap { topLevelField ->
+                if (isNamespacedField(topLevelField)) {
+                    getServicePairsForNamespacedFields(topLevelField, executionHints)
+                } else {
+                    listOf(NadelFieldAndService(field = listOf(topLevelField), service = getService(topLevelField)))
+                }
             }
         }
 
-        // Emit entries in query order. A batched service's root fields are emitted as a single
-        // entry (one service call) at the position of the service's first batchable root field;
-        // everything else keeps its own single-field entry, exactly as before.
+        // Group batch-eligible root fields per service into a single entry (one service call).
         val result = mutableListOf<NadelFieldAndService>()
-        val emittedBatches = HashSet<Service>()
-        for (topLevelField in topLevelFields) {
+        val batchedByService = LinkedHashMap<Service, MutableList<ExecutableNormalizedField>>()
+        for (topLevelField in query.topLevelFields) {
             if (isNamespacedField(topLevelField)) {
                 result += getServicePairsForNamespacedFields(topLevelField, executionHints)
                 continue
             }
 
-            val service = fieldToService.getValue(topLevelField)
-            val batchedFields = batchedByService[service]
-            if (batchedFields != null && topLevelField in batchedFields) {
-                if (emittedBatches.add(service)) {
-                    result += NadelFieldAndService(field = batchedFields, service = service)
-                }
+            val service = getService(topLevelField)
+            if (canBatchRootField(topLevelField, service, executionHints)) {
+                batchedByService.getOrPut(service) { mutableListOf() }.add(topLevelField)
             } else {
                 result += NadelFieldAndService(field = listOf(topLevelField), service = service)
             }
+        }
+
+        batchedByService.forEach { (service, batchedFields) ->
+            result += NadelFieldAndService(field = batchedFields, service = service)
         }
 
         return result

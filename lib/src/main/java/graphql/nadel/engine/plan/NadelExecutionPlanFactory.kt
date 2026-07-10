@@ -53,14 +53,14 @@ internal class NadelExecutionPlanFactory(
 
     /**
      * This derives an execution plan from with the main input parameters being the
-     * [rootField] and [executionBlueprint].
+     * [rootFields] and [executionBlueprint].
      */
     suspend fun create(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         services: Map<String, Service>,
         service: Service,
-        rootField: List<ExecutableNormalizedField>,
+        rootFields: List<ExecutableNormalizedField>,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
         val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
@@ -68,9 +68,7 @@ internal class NadelExecutionPlanFactory(
         val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
             mutableMapOf()
         executionContext.timer.batch { timer ->
-            // Plan across every root field: batched root fields (see NadelBatchRootFieldsHint) share
-            // one service call, so all their transform steps belong to this single execution plan.
-            traverseQuery(rootField) { field ->
+            traverseQuery(rootFields) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
                     // This is a patch to prevent errors
@@ -89,9 +87,7 @@ internal class NadelExecutionPlanFactory(
                                     executionBlueprint,
                                     services,
                                     service,
-                                    // buildContext is memoized once per service call; the first root
-                                    // field is passed as the representative root field of the batch.
-                                    rootField.first(),
+                                    rootFields,
                                     serviceHydrationDetails
                                 )
                             }

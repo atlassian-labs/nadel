@@ -86,7 +86,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 executionBlueprint,
                 services,
                 service,
-                overallField,
+                listOf(overallField),
                 hydrationDetails = hydrationDetails,
             )
 

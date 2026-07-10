@@ -1,6 +1,7 @@
 package graphql.nadel.tests.next.fixtures.batching
 
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.hints.NadelBatchRootFieldsHint
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
@@ -58,6 +59,9 @@ class BatchRootFieldsPerServiceTest : NadelIntegrationTest(
 ) {
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
-            .batchRootFields { service -> service.name == "batched" }
+            .batchRootFields(object : NadelBatchRootFieldsHint {
+                override fun invoke(): Boolean = true
+                override fun invoke(service: graphql.nadel.Service): Boolean = service.name == "batched"
+            })
     }
 }
