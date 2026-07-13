@@ -20,7 +20,11 @@ import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
+import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil.unwrapAll
 import graphql.schema.GraphQLUnionType
 
@@ -68,9 +72,9 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
             ?: return null
 
         // Do nothing for fields with instructions (rename/hydration/stub/…)
-        val hasFieldInstructions = runCatching {
-            executionBlueprint.getTypeNameToInstructionMap<NadelFieldInstruction>(overallField).isNotEmpty()
-        }.getOrDefault(true)
+        val hasFieldInstructions = overallField.objectTypeNames.any { objectTypeName ->
+            executionBlueprint.fieldInstructions.get(objectTypeName, overallField.name)?.isNotEmpty() == true
+        }
         if (hasFieldInstructions) {
             return null
         }
@@ -145,9 +149,10 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
 
 /**
  * The exposed overall implementation names if [overallField] is relaxable, else `null`. Relaxable means: the
- * parent is a single interface/union, the field is selectable at that level (an interface field, or
- * `__typename`), the selection covers exactly the exposed members, and at least one underlying member is
- * hidden. Doesn't consider the hint or field instructions - the caller does.
+ * parent's output is one or more interfaces (or a single union), the field is selectable at that level (an
+ * interface field present on every parent interface, or `__typename`), the selection covers exactly the exposed
+ * members, and at least one underlying member is hidden. Doesn't consider the hint or field instructions - the
+ * caller does.
  */
 private fun computeExposedImplNamesIfRelaxable(
     executionBlueprint: NadelOverallExecutionBlueprint,
@@ -155,61 +160,59 @@ private fun computeExposedImplNamesIfRelaxable(
     overallField: ExecutableNormalizedField,
 ): Set<String>? {
     val parent = overallField.parent ?: return null
-
     val engineSchema = executionBlueprint.engineSchema
     val isTypename = overallField.fieldName == TypeNameMetaFieldDef.name
 
-    // getFieldDefinitions can throw while planning a hydration backing query; any failure => not a candidate.
-    val parentOutputTypes = runCatching {
-        parent.getFieldDefinitions(engineSchema)
-            .asSequence()
-            .map { unwrapAll(it.type) }
-            .toSet()
-    }.getOrNull() ?: return null
+    val parentOutputTypes = parent.objectTypeNames.map { parentTypeName ->
+        val parentType = engineSchema.getType(parentTypeName) as? GraphQLFieldsContainer ?: return null
+        val parentFieldDef = parentType.getFieldDefinition(parent.fieldName) ?: return null
+        unwrapAll(parentFieldDef.type)
+    }.toSet()
 
-    // Exposed members, gated on the field being selectable at that level (union => __typename only).
-    val exposedOverallImplNames: Set<String>
-    val parentAbstractTypeName: String
-    when (val parentType = parentOutputTypes.singleOrNull()) {
-        is GraphQLInterfaceType -> {
-            if (!isTypename && parentType.getFieldDefinition(overallField.fieldName) == null) {
+    val parentAbstractTypes: List<GraphQLNamedType> =
+        if (parentOutputTypes.isNotEmpty() && parentOutputTypes.all { it is GraphQLInterfaceType }) {
+            val interfaces = parentOutputTypes.filterIsInstance<GraphQLInterfaceType>()
+            val fieldIsOnEveryInterface =
+                isTypename || interfaces.all { it.getFieldDefinition(overallField.fieldName) != null }
+            if (!fieldIsOnEveryInterface) {
                 return null
             }
-            exposedOverallImplNames = engineSchema.getImplementations(parentType).map { it.name }.toSet()
-            parentAbstractTypeName = parentType.name
-        }
-        is GraphQLUnionType -> {
+            interfaces
+        } else {
+            val union = parentOutputTypes.singleOrNull() as? GraphQLUnionType ?: return null
             if (!isTypename) {
                 return null
             }
-            exposedOverallImplNames = parentType.types.map { it.name }.toSet()
-            parentAbstractTypeName = parentType.name
+            listOf(union)
         }
-        else -> return null
-    }
 
+    val exposedOverallImplNames =
+        parentAbstractTypes.flatMap { abstractMemberNames(engineSchema, it) ?: return null }.toSet()
     // Means the client used fragments with explicit objects. don't relax.
     if (overallField.objectTypeNames.toSet() != exposedOverallImplNames) {
         return null
     }
 
-    val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(parentAbstractTypeName)
-    val underlyingMemberNames = when (val underlyingType = service.underlyingSchema.getType(underlyingTypeName)) {
-        is GraphQLInterfaceType -> service.underlyingSchema.getImplementations(underlyingType).map { it.name }
-        is GraphQLUnionType -> underlyingType.types.map { it.name }
-        else -> return null
+    val underlyingMemberNames = parentAbstractTypes.flatMap { abstractType ->
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(abstractType.name)
+        val underlyingType = service.underlyingSchema.getType(underlyingTypeName)
+        abstractMemberNames(service.underlyingSchema, underlyingType) ?: return null
     }
-    if (underlyingMemberNames.isEmpty()) {
-        return null
-    }
-
-    // Nothing to hide unless a member is hidden (and graphql-java already prints bare when none is).
-    val hasHiddenImpl = underlyingMemberNames.any { underlyingName ->
+    // Relax only if some underlying member is hidden from the overall (graphql-java already prints bare when none is).
+    val hasHiddenMember = underlyingMemberNames.any { underlyingName ->
         executionBlueprint.getOverallTypeName(service, underlyingName) !in exposedOverallImplNames
     }
-    if (!hasHiddenImpl) {
+    if (!hasHiddenMember) {
         return null
     }
 
     return exposedOverallImplNames
 }
+
+/** The implementation/member type names of an interface or union in [schema], or `null` if [type] is neither. */
+private fun abstractMemberNames(schema: GraphQLSchema, type: GraphQLType?): List<String>? =
+    when (type) {
+        is GraphQLInterfaceType -> schema.getImplementations(type).map { it.name }
+        is GraphQLUnionType -> type.types.map { it.name }
+        else -> null
+    }
