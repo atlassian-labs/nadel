@@ -34,7 +34,7 @@ internal class NadelFieldToService(
                 if (isNamespacedField(topLevelField)) {
                     getServicePairsForNamespacedFields(topLevelField, executionHints)
                 } else {
-                    listOf(NadelFieldAndService(field = listOf(topLevelField), service = getService(topLevelField)))
+                    listOf(NadelFieldAndService(fields = listOf(topLevelField), service = getService(topLevelField)))
                 }
             }
         }
@@ -52,12 +52,12 @@ internal class NadelFieldToService(
             if (canBatchRootField(topLevelField, service, executionHints)) {
                 batchedByService.getOrPut(service) { mutableListOf() }.add(topLevelField)
             } else {
-                result += NadelFieldAndService(field = listOf(topLevelField), service = service)
+                result += NadelFieldAndService(fields = listOf(topLevelField), service = service)
             }
         }
 
         batchedByService.forEach { (service, batchedFields) ->
-            result += NadelFieldAndService(field = batchedFields, service = service)
+            result += NadelFieldAndService(fields = batchedFields, service = service)
         }
 
         return result
@@ -86,11 +86,11 @@ internal class NadelFieldToService(
      * otherwise returns the originalService.
      */
     fun resolveDynamicService(
-        field: List<ExecutableNormalizedField>,
+        fields: List<ExecutableNormalizedField>,
         originalService: Service,
     ): Service {
-        return if (dynamicServiceResolution.needsDynamicServiceResolution(field.first())) {
-            dynamicServiceResolution.resolveServiceForField(field.first())
+        return if (dynamicServiceResolution.needsDynamicServiceResolution(fields.first())) {
+            dynamicServiceResolution.resolveServiceForField(fields.first())
         } else {
             originalService
         }
@@ -106,7 +106,7 @@ internal class NadelFieldToService(
             }
             .map { (service, childTopLevelFields) ->
                 NadelFieldAndService(
-                    field = listOf(topLevelField.copyWithChildren(childTopLevelFields)),
+                    fields = listOf(topLevelField.copyWithChildren(childTopLevelFields)),
                     service = service,
                 )
             }
@@ -148,7 +148,7 @@ internal class NadelFieldToService(
 }
 
 data class NadelFieldAndService(
-    val field: List<ExecutableNormalizedField>,
+    val fields: List<ExecutableNormalizedField>,
     val service: Service,
 )
 
