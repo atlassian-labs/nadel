@@ -47,10 +47,10 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.engine.compiler.NadelExecutableNormalizedOperationToAstCompiler
 import graphql.nadel.util.ErrorUtil.createGraphQLErrorsFromRawErrors
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult
 import graphql.normalized.NormalizedInputValue
 import graphql.normalized.VariablePredicate
@@ -657,22 +657,25 @@ fun compileToDocument(
     topLevelFields: List<ExecutableNormalizedField>,
     variablePredicate: VariablePredicate?,
     deferSupport: Boolean = false,
+    forcePrintBareFields: Set<ExecutableNormalizedField> = emptySet(),
 ): CompilerResult {
     if (deferSupport) {
-        return ExecutableNormalizedOperationToAstCompiler.compileToDocumentWithDeferSupport(
+        return NadelExecutableNormalizedOperationToAstCompiler.compileToDocumentWithDeferSupport(
             schema,
             operationKind,
             operationName,
             topLevelFields,
             variablePredicate,
+            forcePrintBareFields,
         )
     } else {
-        return ExecutableNormalizedOperationToAstCompiler.compileToDocument(
+        return NadelExecutableNormalizedOperationToAstCompiler.compileToDocument(
             schema,
             operationKind,
             operationName,
             topLevelFields,
             variablePredicate,
+            forcePrintBareFields,
         )
     }
 }

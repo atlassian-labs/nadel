@@ -133,7 +133,7 @@ interface NadelTransform<State : Any> {
     }
 }
 
-data class NadelTransformFieldResult(
+data class NadelTransformFieldResult @JvmOverloads constructor(
     /**
      * The original field given in [NadelTransform.transformField].
      *
@@ -149,6 +149,13 @@ data class NadelTransformFieldResult(
      * fields specified by the incoming query to be in the result.
      */
     val artificialFields: List<ExecutableNormalizedField> = emptyList(),
+    /**
+     * When true, [newField] and this result's [artificialFields] are sent to the underlying service "bare"
+     * (no `... on Type` inline fragment) even if their `objectTypeNames` is a strict subset of the parent's
+     * possible types. Lets a transform keep `objectTypeNames` honest while still sending an interface/union
+     * selection bare. Honoured by the forked document compiler; see GQLGW-6377.
+     */
+    val forcePrintBare: Boolean = false,
 ) {
     companion object {
         /**

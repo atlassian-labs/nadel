@@ -8,6 +8,7 @@ import graphql.language.InterfaceTypeExtensionDefinition
 import graphql.language.ObjectTypeDefinition
 import graphql.language.ObjectTypeExtensionDefinition
 import graphql.nadel.NadelOperationKind
+import graphql.nadel.Service
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.util.AnyImplementingTypeDefinition
 import graphql.nadel.util.AnyNamedNode
@@ -27,7 +28,10 @@ fun interface NadelFieldDefinitionVisibilityTransformationPredicate {
 class NadelFieldDefinitionVisibilityTransformation(
     val fieldPredicate: NadelFieldDefinitionVisibilityTransformationPredicate,
 ) : NadelSchemaDefinitionTransformationHook {
-    override fun invoke(definitions: List<AnySDLDefinition>): List<AnySDLDefinition> {
+    override fun invoke(
+        services: List<Service>,
+        definitions: List<AnySDLDefinition>,
+    ): List<AnySDLDefinition> {
         return deleteFields(definitions)
     }
 

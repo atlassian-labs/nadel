@@ -325,6 +325,7 @@ internal class NextgenEngine(
                 executionContext = executionContext,
                 serviceExecutionContext = serviceExecutionContext,
                 executionHydrationDetails = executionContext.hydrationDetails,
+                forcePrintBareFields = queryTransform.forcePrintBareFields,
             )
         }
         if (result is NadelIncrementalServiceExecutionResult) {
@@ -377,6 +378,7 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
+        forcePrintBareFields: Set<ExecutableNormalizedField> = emptySet(),
     ): ServiceExecutionResult {
         val timer = executionContext.timer
 
@@ -392,6 +394,7 @@ internal class NextgenEngine(
                 topLevelFields = topLevelFields,
                 variablePredicate = jsonPredicate,
                 deferSupport = executionContext.hints.deferSupport(),
+                forcePrintBareFields = forcePrintBareFields,
             )
         }
 

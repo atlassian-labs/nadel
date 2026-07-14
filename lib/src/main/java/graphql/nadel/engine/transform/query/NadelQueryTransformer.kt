@@ -53,6 +53,7 @@ class NadelQueryTransformer private constructor(
                     result = result,
                     artificialFields = transformContext.artificialFields,
                     overallToUnderlyingFields = transformContext.overallToUnderlyingFields,
+                    forcePrintBareFields = transformContext.forcePrintBareFields,
                 )
             }
         }
@@ -61,6 +62,8 @@ class NadelQueryTransformer private constructor(
     private data class TransformContext(
         val artificialFields: MutableList<ExecutableNormalizedField> = mutableListOf(),
         val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, MutableList<ExecutableNormalizedField>> = mutableMapOf(),
+        // Underlying fields the forked compiler must emit bare. Populated from NadelTransformFieldResult.forcePrintBare.
+        val forcePrintBareFields: MutableSet<ExecutableNormalizedField> = mutableSetOf(),
     )
 
     data class TransformResult(
@@ -73,6 +76,11 @@ class NadelQueryTransformer private constructor(
          */
         val artificialFields: List<ExecutableNormalizedField>,
         val overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+        /**
+         * Underlying fields that must be emitted bare - no `... on Type` wrapper - by the
+         * forked document compiler. See [NadelTransformFieldResult.forcePrintBare].
+         */
+        val forcePrintBareFields: Set<ExecutableNormalizedField> = emptySet(),
     )
 
     /**
@@ -121,6 +129,13 @@ class NadelQueryTransformer private constructor(
             },
         )
 
+        // Record the REBUILT underlying instances (the ones the compiler will see) so the forked compiler
+        // emits them bare. We key by identity here because these are exactly the instances that flow to compile.
+        if (transformResult.forcePrintBare) {
+            transformContext.forcePrintBareFields.addAll(newField)
+            transformContext.forcePrintBareFields.addAll(artificialFields)
+        }
+
         transformContext.artificialFields.addAll(artificialFields)
 
         // Track overall -> underlying fields
@@ -167,6 +182,7 @@ class NadelQueryTransformer private constructor(
     ): NadelTransformFieldResult {
         var newField: ExecutableNormalizedField = field
         val artificialFields = mutableListOf<ExecutableNormalizedField>()
+        var forcePrintBare = false
 
         for (transformStep in transformationSteps) {
             val transformServiceExecutionContext = executionPlan.transformContexts[transformStep.transform]
@@ -183,13 +199,15 @@ class NadelQueryTransformer private constructor(
                 )
             }
             artificialFields.addAll(transformResultForStep.artificialFields)
+            forcePrintBare = forcePrintBare || transformResultForStep.forcePrintBare
             newField = transformResultForStep.newField
-                ?: return NadelTransformFieldResult(null, artificialFields)
+                ?: return NadelTransformFieldResult(null, artificialFields, forcePrintBare)
         }
 
         return NadelTransformFieldResult(
             newField = newField,
             artificialFields = artificialFields,
+            forcePrintBare = forcePrintBare,
         )
     }
 
