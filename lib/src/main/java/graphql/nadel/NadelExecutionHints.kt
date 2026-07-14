@@ -7,6 +7,7 @@ import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelHydrationExecutableSourceFields
 import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
+import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
@@ -28,6 +29,7 @@ data class NadelExecutionHints(
     val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
     val disableSharedTypes: NadelDisableSharedTypesHint,
     val useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
+    val noInterfaceToObjectFragmentExpansion: NadelNoInterfaceToObjectFragmentExpansionHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -53,6 +55,7 @@ data class NadelExecutionHints(
         private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
         private var useReachableUnderlyingServiceTypes = NadelReachableUnderlyingServiceTypesHint { false }
+        private var noInterfaceToObjectFragmentExpansion = NadelNoInterfaceToObjectFragmentExpansionHint { false }
 
         constructor()
 
@@ -70,6 +73,7 @@ data class NadelExecutionHints(
             shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
             useReachableUnderlyingServiceTypes = nadelExecutionHints.useReachableUnderlyingServiceTypes
+            noInterfaceToObjectFragmentExpansion = nadelExecutionHints.noInterfaceToObjectFragmentExpansion
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -137,6 +141,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun noInterfaceToObjectFragmentExpansion(flag: NadelNoInterfaceToObjectFragmentExpansionHint): Builder {
+            noInterfaceToObjectFragmentExpansion = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -152,6 +161,7 @@ data class NadelExecutionHints(
                 shadowUnderlyingTypeNameInvestigation,
                 disableSharedTypes,
                 useReachableUnderlyingServiceTypes,
+                noInterfaceToObjectFragmentExpansion,
             )
         }
     }

@@ -28,6 +28,31 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// Generates/updates the *Snapshot.kt files used by NadelIntegrationTest tests.
+// This is the CLI equivalent of the "Update Test Snapshots" IntelliJ run config.
+//
+// Usage:
+//   ./gradlew :test:updateTestSnapshots                       # generate only missing snapshots
+//   ./gradlew :test:updateTestSnapshots --args="graphql.nadel.tests.next.fixtures.hydration.HydrationTest"
+//                                                             # (re)generate snapshots for the given test FQN(s)
+//   ./gradlew :test:updateTestSnapshots --args="graphql.nadel.tests.next.fixtures.execution"
+//                                                             # (re)generate every snapshot under a package/folder, recursively
+//                                                             # (a filesystem path to the folder works too)
+tasks.register<JavaExec>("updateTestSnapshots") {
+    group = "verification"
+    description = "Generates/updates test snapshots (pass test FQNs via --args to regenerate specific ones)."
+
+    mainClass.set("graphql.nadel.tests.next.UpdateTestSnapshotsKt")
+    classpath = sourceSets["test"].runtimeClasspath
+
+    // The generator resolves the source root via the relative path "test/src/test/kotlin/",
+    // so it must run from the repository root.
+    workingDir = rootProject.projectDir
+
+    // Ensure test sources are compiled before generating snapshots.
+    dependsOn(tasks.named("testClasses"))
+}
+
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.apply {
         jvmTarget = JavaVersion.VERSION_11.toString()
