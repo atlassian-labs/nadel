@@ -31,7 +31,7 @@ interface NadelTransformJavaCompat<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootFields: List<ExecutableNormalizedField>,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<NadelTransformServiceExecutionContext?> {
         return CompletableFuture.completedFuture(null)
@@ -122,8 +122,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         executionBlueprint,
                         services,
                         service,
-                        // The Java compat API predates root-field batching and takes a single root field.
-                        rootFields.first(),
+                        rootFields,
                         hydrationDetails
                     ).asDeferred().await()
                 }

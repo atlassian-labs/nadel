@@ -89,8 +89,11 @@ internal class NadelFieldToService(
         fields: List<ExecutableNormalizedField>,
         originalService: Service,
     ): Service {
-        return if (dynamicServiceResolution.needsDynamicServiceResolution(fields.first())) {
-            dynamicServiceResolution.resolveServiceForField(fields.first())
+        // Dynamically-resolved fields are never batched (see canBatchRootField), so dynamic
+        // resolution only applies to single-field entries; batched entries keep the original service.
+        val field = fields.singleOrNull() ?: return originalService
+        return if (dynamicServiceResolution.needsDynamicServiceResolution(field)) {
+            dynamicServiceResolution.resolveServiceForField(field)
         } else {
             originalService
         }
