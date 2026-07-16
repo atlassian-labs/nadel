@@ -2,14 +2,15 @@ package graphql.nadel.definition.coordinates
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 
-class NadelCoordinatesTreeTest : DescribeSpec({
-    val mapper = jacksonObjectMapper()
+class NadelCoordinatesTreeTest {
+    private val mapper = jacksonObjectMapper()
 
-    fun node(
+    private fun node(
         kind: NadelCoordinateKind,
         name: String,
         children: List<NadelCoordinatesNode> = emptyList(),
@@ -17,186 +18,217 @@ class NadelCoordinatesTreeTest : DescribeSpec({
         return NadelCoordinatesNode(kind = kind, name = name, children = children)
     }
 
-    describe("toTree") {
-        it("returns an empty list for an empty set") {
-            // When
-            val tree = NadelCoordinatesTree.toTree(emptySet())
+    @Test
+    fun `toTree returns an empty list for an empty set`() {
+        // When
+        val tree = NadelCoordinatesTree.toTree(emptySet())
 
-            // Then
-            tree shouldBe emptyList()
-        }
+        // Then
+        assertEquals(emptyList(), tree)
+    }
 
-        it("converts a single top level coordinate") {
-            // Given
-            val coordinates = setOf(NadelObjectCoordinates("Query"))
+    @Test
+    fun `toTree converts a single top level coordinate`() {
+        // Given
+        val coordinates = setOf(NadelObjectCoordinates("Query"))
 
-            // When
-            val tree = NadelCoordinatesTree.toTree(coordinates)
+        // When
+        val tree = NadelCoordinatesTree.toTree(coordinates)
 
-            // Then
-            tree shouldBe listOf(
+        // Then
+        assertEquals(
+            listOf(
                 node(NadelCoordinateKind.Object, "Query"),
-            )
-        }
+            ),
+            tree,
+        )
+    }
 
-        it("nests a child under its parent") {
-            // Given
-            val coordinates = setOf(
-                NadelObjectCoordinates("Query"),
-                NadelObjectCoordinates("Query").field("issue"),
-            )
+    @Test
+    fun `toTree nests a child under its parent`() {
+        // Given
+        val coordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("issue"),
+        )
 
-            // When
-            val tree = NadelCoordinatesTree.toTree(coordinates)
+        // When
+        val tree = NadelCoordinatesTree.toTree(coordinates)
 
-            // Then
-            tree shouldBe listOf(
+        // Then
+        assertEquals(
+            listOf(
                 node(
-                    NadelCoordinateKind.Object, "Query",
+                    NadelCoordinateKind.Object,
+                    "Query",
                     listOf(
                         node(NadelCoordinateKind.Field, "issue"),
                     ),
                 ),
-            )
-        }
+            ),
+            tree,
+        )
+    }
 
-        it("shares a parent between multiple children instead of repeating it") {
-            // Given
-            val coordinates = setOf(
-                NadelObjectCoordinates("Query"),
-                NadelObjectCoordinates("Query").field("a"),
-                NadelObjectCoordinates("Query").field("b"),
-            )
+    @Test
+    fun `toTree shares a parent between multiple children instead of repeating it`() {
+        // Given
+        val coordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("a"),
+            NadelObjectCoordinates("Query").field("b"),
+        )
 
-            // When
-            val tree = NadelCoordinatesTree.toTree(coordinates)
+        // When
+        val tree = NadelCoordinatesTree.toTree(coordinates)
 
-            // Then
-            tree shouldBe listOf(
+        // Then
+        assertEquals(
+            listOf(
                 node(
-                    NadelCoordinateKind.Object, "Query",
+                    NadelCoordinateKind.Object,
+                    "Query",
                     listOf(
                         node(NadelCoordinateKind.Field, "a"),
                         node(NadelCoordinateKind.Field, "b"),
                     ),
                 ),
-            )
-        }
+            ),
+            tree,
+        )
+    }
 
-        it("materializes missing ancestors so children are always reachable") {
-            // Given
-            val coordinates = setOf(
-                NadelObjectCoordinates("Query").field("issue").argument("id"),
-            )
+    @Test
+    fun `toTree materializes missing ancestors so children are always reachable`() {
+        // Given
+        val coordinates = setOf(
+            NadelObjectCoordinates("Query").field("issue").argument("id"),
+        )
 
-            // When
-            val tree = NadelCoordinatesTree.toTree(coordinates)
+        // When
+        val tree = NadelCoordinatesTree.toTree(coordinates)
 
-            // Then
-            tree shouldBe listOf(
+        // Then
+        assertEquals(
+            listOf(
                 node(
-                    NadelCoordinateKind.Object, "Query",
+                    NadelCoordinateKind.Object,
+                    "Query",
                     listOf(
                         node(
-                            NadelCoordinateKind.Field, "issue",
+                            NadelCoordinateKind.Field,
+                            "issue",
                             listOf(
                                 node(NadelCoordinateKind.Argument, "id"),
                             ),
                         ),
                     ),
                 ),
-            )
-        }
+            ),
+            tree,
+        )
+    }
 
-        it("sorts roots by kind then name") {
-            // Given
-            val coordinates = setOf(
-                NadelObjectCoordinates("Zebra"),
-                NadelObjectCoordinates("Apple"),
-                NadelInterfaceCoordinates("Node"),
-            )
+    @Test
+    fun `toTree sorts roots by kind then name`() {
+        // Given
+        val coordinates = setOf(
+            NadelObjectCoordinates("Zebra"),
+            NadelObjectCoordinates("Apple"),
+            NadelInterfaceCoordinates("Node"),
+        )
 
-            // When
-            val tree = NadelCoordinatesTree.toTree(coordinates)
+        // When
+        val tree = NadelCoordinatesTree.toTree(coordinates)
 
-            // Then
-            tree shouldBe listOf(
+        // Then
+        assertEquals(
+            listOf(
                 node(NadelCoordinateKind.Interface, "Node"),
                 node(NadelCoordinateKind.Object, "Apple"),
                 node(NadelCoordinateKind.Object, "Zebra"),
-            )
-        }
+            ),
+            tree,
+        )
+    }
 
-        it("sorts children by kind then name") {
-            // Given
-            val coordinates = setOf(
-                NadelObjectCoordinates("Query"),
-                NadelObjectCoordinates("Query").field("zzz"),
-                NadelObjectCoordinates("Query").field("aaa"),
-                NadelObjectCoordinates("Query").appliedDirective("auth"),
-            )
+    @Test
+    fun `toTree sorts children by kind then name`() {
+        // Given
+        val coordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("zzz"),
+            NadelObjectCoordinates("Query").field("aaa"),
+            NadelObjectCoordinates("Query").appliedDirective("auth"),
+        )
 
-            // When
-            val tree = NadelCoordinatesTree.toTree(coordinates)
+        // When
+        val tree = NadelCoordinatesTree.toTree(coordinates)
 
-            // Then
-            tree shouldBe listOf(
+        // Then
+        assertEquals(
+            listOf(
                 node(
-                    NadelCoordinateKind.Object, "Query",
+                    NadelCoordinateKind.Object,
+                    "Query",
                     listOf(
                         node(NadelCoordinateKind.AppliedDirective, "auth"),
                         node(NadelCoordinateKind.Field, "aaa"),
                         node(NadelCoordinateKind.Field, "zzz"),
                     ),
                 ),
-            )
-        }
-
-        it("produces the same tree regardless of input iteration order") {
-            // Given
-            val coordinates = listOf(
-                NadelObjectCoordinates("Query"),
-                NadelObjectCoordinates("Query").field("b"),
-                NadelObjectCoordinates("Query").field("a"),
-                NadelInterfaceCoordinates("Node"),
-                NadelInterfaceCoordinates("Node").field("id"),
-            )
-
-            // When
-            val fromOneOrder = NadelCoordinatesTree.toTree(LinkedHashSet(coordinates))
-            val fromAnotherOrder = NadelCoordinatesTree.toTree(LinkedHashSet(coordinates.shuffled()))
-
-            // Then
-            fromOneOrder shouldBe fromAnotherOrder
-        }
+            ),
+            tree,
+        )
     }
 
-    describe("fromTree") {
-        it("returns an empty set for an empty list") {
-            // When
-            val coordinates = NadelCoordinatesTree.fromTree(emptyList())
+    @Test
+    fun `toTree produces the same tree regardless of input iteration order`() {
+        // Given
+        val coordinates = listOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("b"),
+            NadelObjectCoordinates("Query").field("a"),
+            NadelInterfaceCoordinates("Node"),
+            NadelInterfaceCoordinates("Node").field("id"),
+        )
 
-            // Then
-            coordinates shouldBe emptySet()
-        }
+        // When
+        val fromOneOrder = NadelCoordinatesTree.toTree(LinkedHashSet(coordinates))
+        val fromAnotherOrder = NadelCoordinatesTree.toTree(LinkedHashSet(coordinates.shuffled()))
 
-        it("rebuilds every top level kind") {
-            // Given
-            val tree = listOf(
-                node(NadelCoordinateKind.Object, "AnObject"),
-                node(NadelCoordinateKind.Interface, "AnInterface"),
-                node(NadelCoordinateKind.Union, "AUnion"),
-                node(NadelCoordinateKind.Enum, "AnEnum"),
-                node(NadelCoordinateKind.InputObject, "AnInputObject"),
-                node(NadelCoordinateKind.Scalar, "AScalar"),
-                node(NadelCoordinateKind.Directive, "aDirective"),
-            )
+        // Then
+        assertEquals(fromOneOrder, fromAnotherOrder)
+    }
 
-            // When
-            val coordinates = NadelCoordinatesTree.fromTree(tree)
+    @Test
+    fun `fromTree returns an empty set for an empty list`() {
+        // When
+        val coordinates = NadelCoordinatesTree.fromTree(emptyList())
 
-            // Then
-            coordinates shouldBe setOf(
+        // Then
+        assertEquals(emptySet(), coordinates)
+    }
+
+    @Test
+    fun `fromTree rebuilds every top level kind`() {
+        // Given
+        val tree = listOf(
+            node(NadelCoordinateKind.Object, "AnObject"),
+            node(NadelCoordinateKind.Interface, "AnInterface"),
+            node(NadelCoordinateKind.Union, "AUnion"),
+            node(NadelCoordinateKind.Enum, "AnEnum"),
+            node(NadelCoordinateKind.InputObject, "AnInputObject"),
+            node(NadelCoordinateKind.Scalar, "AScalar"),
+            node(NadelCoordinateKind.Directive, "aDirective"),
+        )
+
+        // When
+        val coordinates = NadelCoordinatesTree.fromTree(tree)
+
+        // Then
+        assertEquals(
+            setOf(
                 NadelObjectCoordinates("AnObject"),
                 NadelInterfaceCoordinates("AnInterface"),
                 NadelUnionCoordinates("AUnion"),
@@ -204,54 +236,64 @@ class NadelCoordinatesTreeTest : DescribeSpec({
                 NadelInputObjectCoordinates("AnInputObject"),
                 NadelScalarCoordinates("AScalar"),
                 NadelDirectiveCoordinates("aDirective"),
-            )
-        }
+            ),
+            coordinates,
+        )
+    }
 
-        it("rebuilds every child kind under a valid parent") {
-            // Given
-            val tree = listOf(
-                node(
-                    NadelCoordinateKind.Object, "Query",
-                    listOf(
-                        node(
-                            NadelCoordinateKind.Field, "issue",
-                            listOf(
-                                node(NadelCoordinateKind.Argument, "id"),
-                                node(
-                                    NadelCoordinateKind.AppliedDirective, "auth",
-                                    listOf(
-                                        node(NadelCoordinateKind.AppliedDirectiveArgument, "role"),
-                                    ),
+    @Test
+    fun `fromTree rebuilds every child kind under a valid parent`() {
+        // Given
+        val tree = listOf(
+            node(
+                NadelCoordinateKind.Object,
+                "Query",
+                listOf(
+                    node(
+                        NadelCoordinateKind.Field,
+                        "issue",
+                        listOf(
+                            node(NadelCoordinateKind.Argument, "id"),
+                            node(
+                                NadelCoordinateKind.AppliedDirective,
+                                "auth",
+                                listOf(
+                                    node(NadelCoordinateKind.AppliedDirectiveArgument, "role"),
                                 ),
                             ),
                         ),
                     ),
                 ),
-                node(
-                    NadelCoordinateKind.Enum, "Color",
-                    listOf(
-                        node(NadelCoordinateKind.EnumValue, "RED"),
-                    ),
+            ),
+            node(
+                NadelCoordinateKind.Enum,
+                "Color",
+                listOf(
+                    node(NadelCoordinateKind.EnumValue, "RED"),
                 ),
-                node(
-                    NadelCoordinateKind.InputObject, "Filter",
-                    listOf(
-                        node(NadelCoordinateKind.InputObjectField, "term"),
-                    ),
+            ),
+            node(
+                NadelCoordinateKind.InputObject,
+                "Filter",
+                listOf(
+                    node(NadelCoordinateKind.InputObjectField, "term"),
                 ),
-                node(
-                    NadelCoordinateKind.Directive, "include",
-                    listOf(
-                        node(NadelCoordinateKind.Argument, "if"),
-                    ),
+            ),
+            node(
+                NadelCoordinateKind.Directive,
+                "include",
+                listOf(
+                    node(NadelCoordinateKind.Argument, "if"),
                 ),
-            )
+            ),
+        )
 
-            // When
-            val coordinates = NadelCoordinatesTree.fromTree(tree)
+        // When
+        val coordinates = NadelCoordinatesTree.fromTree(tree)
 
-            // Then
-            coordinates shouldBe setOf(
+        // Then
+        assertEquals(
+            setOf(
                 NadelObjectCoordinates("Query"),
                 NadelObjectCoordinates("Query").field("issue"),
                 NadelObjectCoordinates("Query").field("issue").argument("id"),
@@ -263,64 +305,155 @@ class NadelCoordinatesTreeTest : DescribeSpec({
                 NadelInputObjectCoordinates("Filter").field("term"),
                 NadelDirectiveCoordinates("include"),
                 NadelDirectiveCoordinates("include").argument("if"),
-            )
+            ),
+            coordinates,
+        )
+    }
+
+    @Test
+    fun `fromTree throws when a child kind appears at the top level`() {
+        // Given
+        val tree = listOf(
+            node(NadelCoordinateKind.Field, "issue"),
+        )
+
+        // When
+        val error = assertFailsWith<IllegalStateException> {
+            NadelCoordinatesTree.fromTree(tree)
         }
 
-        it("throws when a child kind appears at the top level") {
-            // Given
-            val tree = listOf(
-                node(NadelCoordinateKind.Field, "issue"),
-            )
+        // Then
+        assertEquals("Field cannot be a top level coordinate", error.message)
+    }
 
-            // When
-            val error = shouldThrow<IllegalStateException> {
-                NadelCoordinatesTree.fromTree(tree)
-            }
-
-            // Then
-            error.message shouldBe "Field cannot be a top level coordinate"
-        }
-
-        it("throws when a top level kind appears as a child") {
-            // Given
-            val tree = listOf(
-                node(
-                    NadelCoordinateKind.Object, "Query",
-                    listOf(
-                        node(NadelCoordinateKind.Object, "NestedObject"),
-                    ),
+    @Test
+    fun `fromTree throws when a top level kind appears as a child`() {
+        // Given
+        val tree = listOf(
+            node(
+                NadelCoordinateKind.Object,
+                "Query",
+                listOf(
+                    node(NadelCoordinateKind.Object, "NestedObject"),
                 ),
-            )
+            ),
+        )
 
-            // When
-            val error = shouldThrow<IllegalStateException> {
-                NadelCoordinatesTree.fromTree(tree)
-            }
-
-            // Then
-            error.message shouldBe "Object cannot be a child coordinate"
+        // When
+        val error = assertFailsWith<IllegalStateException> {
+            NadelCoordinatesTree.fromTree(tree)
         }
 
-        it("throws when a child is nested under an incompatible parent") {
-            // Given
-            val tree = listOf(
-                node(
-                    NadelCoordinateKind.Enum, "Color",
-                    listOf(
-                        node(NadelCoordinateKind.Field, "notAField"),
-                    ),
-                ),
-            )
+        // Then
+        assertEquals("Object cannot be a child coordinate", error.message)
+    }
 
-            // When & Then
-            shouldThrow<ClassCastException> {
-                NadelCoordinatesTree.fromTree(tree)
-            }
+    @Test
+    fun `fromTree throws when a child is nested under an incompatible parent`() {
+        // Given
+        val tree = listOf(
+            node(
+                NadelCoordinateKind.Enum,
+                "Color",
+                listOf(
+                    node(NadelCoordinateKind.Field, "notAField"),
+                ),
+            ),
+        )
+
+        // When & Then
+        assertFailsWith<ClassCastException> {
+            NadelCoordinatesTree.fromTree(tree)
         }
     }
 
-    describe("round trip") {
-        val parentClosedCoordinates = setOf(
+    @Test
+    fun `round trip fromTree of toTree equals the original parent closed set`() {
+        // Given
+        val coordinates = parentClosedCoordinates()
+
+        // When
+        val result = NadelCoordinatesTree.fromTree(NadelCoordinatesTree.toTree(coordinates))
+
+        // Then
+        assertEquals(coordinates, result)
+    }
+
+    @Test
+    fun `round trip adds ancestors when the input set is not parent closed`() {
+        // Given
+        val coordinates = setOf(
+            NadelObjectCoordinates("Query").field("issue").argument("id"),
+        )
+
+        // When
+        val result = NadelCoordinatesTree.fromTree(NadelCoordinatesTree.toTree(coordinates))
+
+        // Then
+        assertEquals(
+            setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("issue"),
+                NadelObjectCoordinates("Query").field("issue").argument("id"),
+            ),
+            result,
+        )
+    }
+
+    @Test
+    fun `jackson serializes a node without any polymorphic type information`() {
+        // Given
+        val tree = listOf(node(NadelCoordinateKind.Object, "Query"))
+
+        // When
+        val json = mapper.readTree(mapper.writeValueAsBytes(tree)).single()
+
+        // Then
+        assertFalse(json.has("@class"))
+        assertEquals("Object", json["kind"].asText())
+        assertEquals("Query", json["name"].asText())
+    }
+
+    @Test
+    fun `jackson round trips a tree`() {
+        // Given
+        val tree = NadelCoordinatesTree.toTree(
+            setOf(
+                NadelObjectCoordinates("Query"),
+                NadelObjectCoordinates("Query").field("issue"),
+                NadelObjectCoordinates("Query").field("issue").argument("id"),
+            ),
+        )
+
+        // When
+        val json = mapper.writeValueAsBytes(tree)
+        val deserialized = mapper.readValue<List<NadelCoordinatesNode>>(json)
+
+        // Then
+        assertEquals(tree, deserialized)
+    }
+
+    @Test
+    fun `jackson round trips coordinates through the full serialization pipeline`() {
+        // Given
+        val coordinates = setOf(
+            NadelObjectCoordinates("Query"),
+            NadelObjectCoordinates("Query").field("issue"),
+            NadelObjectCoordinates("Query").field("issue").argument("id"),
+            NadelEnumCoordinates("Color"),
+            NadelEnumCoordinates("Color").enumValue("RED"),
+        )
+
+        // When
+        val json = mapper.writeValueAsBytes(NadelCoordinatesTree.toTree(coordinates))
+        val result = NadelCoordinatesTree.fromTree(mapper.readValue<List<NadelCoordinatesNode>>(json))
+
+        // Then
+        assertEquals(coordinates, result)
+    }
+
+    private fun parentClosedCoordinates(): Set<NadelSchemaMemberCoordinates> {
+        return setOf(
             NadelObjectCoordinates("Query"),
             NadelObjectCoordinates("Query").field("issue"),
             NadelObjectCoordinates("Query").field("issue").argument("id"),
@@ -337,81 +470,5 @@ class NadelCoordinatesTreeTest : DescribeSpec({
             NadelDirectiveCoordinates("include"),
             NadelDirectiveCoordinates("include").argument("if"),
         )
-
-        it("fromTree(toTree(x)) equals x for a parent closed set") {
-            // When
-            val result = NadelCoordinatesTree.fromTree(NadelCoordinatesTree.toTree(parentClosedCoordinates))
-
-            // Then
-            result shouldBe parentClosedCoordinates
-        }
-
-        it("adds ancestors when the input set is not parent closed") {
-            // Given
-            val coordinates = setOf(
-                NadelObjectCoordinates("Query").field("issue").argument("id"),
-            )
-
-            // When
-            val result = NadelCoordinatesTree.fromTree(NadelCoordinatesTree.toTree(coordinates))
-
-            // Then
-            result shouldBe setOf(
-                NadelObjectCoordinates("Query"),
-                NadelObjectCoordinates("Query").field("issue"),
-                NadelObjectCoordinates("Query").field("issue").argument("id"),
-            )
-        }
     }
-
-    describe("jackson serialization") {
-        it("serializes a node without any polymorphic type information") {
-            // Given
-            val tree = listOf(node(NadelCoordinateKind.Object, "Query"))
-
-            // When
-            val json = mapper.readTree(mapper.writeValueAsBytes(tree)).single()
-
-            // Then
-            json.has("@class") shouldBe false
-            json["kind"].asText() shouldBe "Object"
-            json["name"].asText() shouldBe "Query"
-        }
-
-        it("round trips a tree through jackson") {
-            // Given
-            val tree = NadelCoordinatesTree.toTree(
-                setOf(
-                    NadelObjectCoordinates("Query"),
-                    NadelObjectCoordinates("Query").field("issue"),
-                    NadelObjectCoordinates("Query").field("issue").argument("id"),
-                ),
-            )
-
-            // When
-            val json = mapper.writeValueAsBytes(tree)
-            val deserialized = mapper.readValue<List<NadelCoordinatesNode>>(json)
-
-            // Then
-            deserialized shouldBe tree
-        }
-
-        it("round trips coordinates through the full serialization pipeline") {
-            // Given
-            val coordinates = setOf(
-                NadelObjectCoordinates("Query"),
-                NadelObjectCoordinates("Query").field("issue"),
-                NadelObjectCoordinates("Query").field("issue").argument("id"),
-                NadelEnumCoordinates("Color"),
-                NadelEnumCoordinates("Color").enumValue("RED"),
-            )
-
-            // When
-            val json = mapper.writeValueAsBytes(NadelCoordinatesTree.toTree(coordinates))
-            val result = NadelCoordinatesTree.fromTree(mapper.readValue<List<NadelCoordinatesNode>>(json))
-
-            // Then
-            result shouldBe coordinates
-        }
-    }
-})
+}
