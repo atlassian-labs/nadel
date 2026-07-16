@@ -5,17 +5,40 @@ plugins {
     id "com.jfrog.artifactory" version "4.29.2"
     id "biz.aQute.bnd.builder" version "6.3.1"
     id "com.bnorm.power.kotlin-power-assert" version "0.13.0"
+    id "com.diffplug.spotless" version "8.8.0"
+}
+
+def configureKtlint = { extension ->
+    extension.ktlint("1.8.0")
+    extension.trimTrailingWhitespace()
+    extension.endWithNewline()
+}
+
+spotless {
+    ratchetFrom System.getenv("SPOTLESS_RATCHET_FROM") ?: "origin/master"
+
+    kotlin {
+        target "**/*.kt"
+        targetExclude "**/build/**/*.kt", "**/.gradle/**/*.kt", ".idea/fileTemplates/**"
+        configureKtlint(delegate)
+    }
+
+    kotlinGradle {
+        target "**/*.gradle.kts"
+        targetExclude "**/build/**/*.gradle.kts", "**/.gradle/**/*.gradle.kts"
+        configureKtlint(delegate)
+    }
 }
 
 allprojects {
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(11)
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
     kotlin {
         jvmToolchain {
-            languageVersion = JavaLanguageVersion.of(11)
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
 }
@@ -172,26 +195,4 @@ subprojects {
             }
         }
     }
-}
-
-configurations {
-    ktlint
-}
-
-dependencies {
-    ktlint "com.pinterest:ktlint:0.39.0"
-}
-
-task ktlintFormat(type: JavaExec, group: "formatting") {
-    description = "Fix Kotlin code style deviations"
-    classpath = configurations.ktlint
-    main = "com.pinterest.ktlint.Main"
-    args "-F", "src/**/*.kt"
-}
-
-task ktlintSetCodeStyle(type: JavaExec) {
-    description = "Apply Kotlin formatter style"
-    classpath = configurations.ktlint
-    main = "com.pinterest.ktlint.Main"
-    args "applyToIDEAProject", "-y"
 }
