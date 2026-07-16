@@ -31,7 +31,7 @@ interface NadelTransformJavaCompat<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootFields: List<ExecutableNormalizedField>,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<NadelTransformServiceExecutionContext?> {
         return CompletableFuture.completedFuture(null)
@@ -113,7 +113,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    rootField: ExecutableNormalizedField,
+                    rootFields: List<ExecutableNormalizedField>,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): NadelTransformServiceExecutionContext? {
                     return compat.buildContext(
@@ -122,7 +122,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         executionBlueprint,
                         services,
                         service,
-                        rootField,
+                        rootFields,
                         hydrationDetails
                     ).asDeferred().await()
                 }

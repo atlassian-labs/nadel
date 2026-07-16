@@ -62,7 +62,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
-                    rootField: ExecutableNormalizedField,
+                    rootFields: List<ExecutableNormalizedField>,
                     hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): CompletableFuture<NadelTransformServiceExecutionContext?> {
                     return CompletableFuture.completedFuture(Prop("something"))
@@ -86,7 +86,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                 executionBlueprint,
                 services,
                 service,
-                overallField,
+                listOf(overallField),
                 hydrationDetails = hydrationDetails,
             )
 
@@ -100,7 +100,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
                     executionBlueprint,
                     services,
                     service,
-                    overallField,
+                    listOf(overallField),
                     hydrationDetails,
                 )
             }

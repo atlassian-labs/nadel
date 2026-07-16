@@ -2,6 +2,7 @@ package graphql.nadel
 
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
+import graphql.nadel.hints.NadelBatchRootFieldsHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
@@ -29,6 +30,7 @@ data class NadelExecutionHints(
     val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
     val disableSharedTypes: NadelDisableSharedTypesHint,
     val useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
+    val batchRootFields: NadelBatchRootFieldsHint,
     val noInterfaceToObjectFragmentExpansion: NadelNoInterfaceToObjectFragmentExpansionHint,
 ) {
     /**
@@ -55,6 +57,7 @@ data class NadelExecutionHints(
         private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
         private var useReachableUnderlyingServiceTypes = NadelReachableUnderlyingServiceTypesHint { false }
+        private var batchRootFields = NadelBatchRootFieldsHint { false }
         private var noInterfaceToObjectFragmentExpansion = NadelNoInterfaceToObjectFragmentExpansionHint { false }
 
         constructor()
@@ -73,6 +76,7 @@ data class NadelExecutionHints(
             shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
             useReachableUnderlyingServiceTypes = nadelExecutionHints.useReachableUnderlyingServiceTypes
+            batchRootFields = nadelExecutionHints.batchRootFields
             noInterfaceToObjectFragmentExpansion = nadelExecutionHints.noInterfaceToObjectFragmentExpansion
         }
 
@@ -141,6 +145,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun batchRootFields(flag: NadelBatchRootFieldsHint): Builder {
+            batchRootFields = flag
+            return this
+        }
+
         fun noInterfaceToObjectFragmentExpansion(flag: NadelNoInterfaceToObjectFragmentExpansionHint): Builder {
             noInterfaceToObjectFragmentExpansion = flag
             return this
@@ -161,6 +170,7 @@ data class NadelExecutionHints(
                 shadowUnderlyingTypeNameInvestigation,
                 disableSharedTypes,
                 useReachableUnderlyingServiceTypes,
+                batchRootFields,
                 noInterfaceToObjectFragmentExpansion,
             )
         }

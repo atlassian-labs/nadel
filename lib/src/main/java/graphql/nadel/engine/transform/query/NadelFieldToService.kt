@@ -27,13 +27,58 @@ internal class NadelFieldToService(
         query: ExecutableNormalizedOperation,
         executionHints: NadelExecutionHints,
     ): List<NadelFieldAndService> {
-        return query.topLevelFields.flatMap { topLevelField ->
-            if (isNamespacedField(topLevelField)) {
-                getServicePairsForNamespacedFields(topLevelField, executionHints)
-            } else {
-                listOf(getServicePairFor(field = topLevelField))
+        // Feature flag: when root-field batching is globally disabled, keep the original behaviour
+        // of one entry (i.e. one service call) per root field.
+        if (!executionHints.batchRootFields()) {
+            return query.topLevelFields.flatMap { topLevelField ->
+                if (isNamespacedField(topLevelField)) {
+                    getServicePairsForNamespacedFields(topLevelField, executionHints)
+                } else {
+                    listOf(NadelFieldAndService(fields = listOf(topLevelField), service = getService(topLevelField)))
+                }
             }
         }
+
+        // Group batch-eligible root fields per service into a single entry (one service call).
+        val result = mutableListOf<NadelFieldAndService>()
+        val batchedByService = LinkedHashMap<Service, MutableList<ExecutableNormalizedField>>()
+        for (topLevelField in query.topLevelFields) {
+            if (isNamespacedField(topLevelField)) {
+                result += getServicePairsForNamespacedFields(topLevelField, executionHints)
+                continue
+            }
+
+            val service = getService(topLevelField)
+            if (canBatchRootField(topLevelField, service, executionHints)) {
+                batchedByService.getOrPut(service) { mutableListOf() }.add(topLevelField)
+            } else {
+                result += NadelFieldAndService(fields = listOf(topLevelField), service = service)
+            }
+        }
+
+        batchedByService.forEach { (service, batchedFields) ->
+            result += NadelFieldAndService(fields = batchedFields, service = service)
+        }
+
+        return result
+    }
+
+    /**
+     * Root fields are only batched into a single service call when the service opts in via
+     * [NadelExecutionHints.batchRootFields].
+     */
+    private fun canBatchRootField(
+        field: ExecutableNormalizedField,
+        service: Service,
+        executionHints: NadelExecutionHints,
+    ): Boolean {
+        if (!executionHints.batchRootFields(service)) {
+            return false
+        }
+        if (field.name.startsWith("__")) {
+            return false
+        }
+        return !dynamicServiceResolution.needsDynamicServiceResolution(field)
     }
 
     /**
@@ -41,9 +86,12 @@ internal class NadelFieldToService(
      * otherwise returns the originalService.
      */
     fun resolveDynamicService(
-        field: ExecutableNormalizedField,
+        fields: List<ExecutableNormalizedField>,
         originalService: Service,
     ): Service {
+        // Dynamically-resolved fields are never batched (see canBatchRootField), so dynamic
+        // resolution only applies to single-field entries; batched entries keep the original service.
+        val field = fields.singleOrNull() ?: return originalService
         return if (dynamicServiceResolution.needsDynamicServiceResolution(field)) {
             dynamicServiceResolution.resolveServiceForField(field)
         } else {
@@ -61,17 +109,10 @@ internal class NadelFieldToService(
             }
             .map { (service, childTopLevelFields) ->
                 NadelFieldAndService(
-                    field = topLevelField.copyWithChildren(childTopLevelFields),
+                    fields = listOf(topLevelField.copyWithChildren(childTopLevelFields)),
                     service = service,
                 )
             }
-    }
-
-    private fun getServicePairFor(field: ExecutableNormalizedField): NadelFieldAndService {
-        return NadelFieldAndService(
-            field = field,
-            service = getService(field),
-        )
     }
 
     private fun getServiceForNamespacedField(
@@ -110,7 +151,7 @@ internal class NadelFieldToService(
 }
 
 data class NadelFieldAndService(
-    val field: ExecutableNormalizedField,
+    val fields: List<ExecutableNormalizedField>,
     val service: Service,
 )
 

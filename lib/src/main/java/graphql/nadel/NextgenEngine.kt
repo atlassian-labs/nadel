@@ -201,18 +201,18 @@ internal class NextgenEngine(
                 val fields = fieldToService.getServicesForTopLevelFields(operation, executionHints)
                 val results = coroutineScope {
                     fields
-                        .map { (field, service) ->
+                        .map { (fields, service) ->
                             async {
                                 try {
-                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
+                                    val resolvedService = fieldToService.resolveDynamicService(fields, service)
                                     executeTopLevelField(
-                                        topLevelField = field,
+                                        topLevelFields = fields,
                                         service = resolvedService,
                                         executionContext = executionContext,
                                     )
                                 } catch (e: Throwable) {
                                     when (e) {
-                                        is GraphQLError -> newServiceExecutionErrorResult(field, error = e)
+                                        is GraphQLError -> newServiceExecutionErrorResult(fields, error = e)
                                         else -> throw e
                                     }
                                 }
@@ -221,7 +221,7 @@ internal class NextgenEngine(
                 }.awaitAll()
 
                 if (executionHints.newResultMergerAndNamespacedTypename()) {
-                    NadelResultMerger.mergeResults(fields, engineSchema, results)
+                    NadelResultMerger.mergeResults(operation.topLevelFields, engineSchema, results)
                 } else {
                     graphql.nadel.engine.util.mergeResults(results)
                 }
@@ -260,7 +260,7 @@ internal class NextgenEngine(
     ): ServiceExecutionResult {
         return try {
             executeTopLevelField(
-                topLevelField = topLevelField,
+                topLevelFields = listOf(topLevelField),
                 service = service,
                 executionContext = executionContext.copy(
                     hydrationDetails = hydrationDetails,
@@ -283,7 +283,7 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
         return executeTopLevelField(
-            topLevelField = topLevelField,
+            topLevelFields = listOf(topLevelField),
             service = service,
             executionContext = executionContext.copy(
                 isPartitionedCall = true,
@@ -292,7 +292,7 @@ internal class NextgenEngine(
     }
 
     private suspend fun executeTopLevelField(
-        topLevelField: ExecutableNormalizedField,
+        topLevelFields: List<ExecutableNormalizedField>,
         service: Service,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
@@ -305,7 +305,7 @@ internal class NextgenEngine(
                 serviceExecutionContext = serviceExecutionContext,
                 services = services,
                 service = service,
-                rootField = topLevelField,
+                rootFields = topLevelFields,
                 serviceHydrationDetails = executionContext.hydrationDetails,
             )
         }
@@ -315,7 +315,7 @@ internal class NextgenEngine(
                 executionContext = executionContext,
                 serviceExecutionContext = serviceExecutionContext,
                 executionPlan = executionPlan,
-                field = topLevelField
+                fields = topLevelFields
             )
         }
         val result: ServiceExecutionResult = timer.time(step = RootStep.ServiceExecution.child(service.name)) {
@@ -353,7 +353,9 @@ internal class NextgenEngine(
             )
         }
         val transformedResult: ServiceExecutionResult = when {
-            topLevelField.name.startsWith("__") -> result
+            // Introspection fields are never batched with other fields (see NadelFieldToService),
+            // so an all-introspection batch needs no result transformation.
+            topLevelFields.all { it.name.startsWith("__") } -> result
             else -> timer.time(step = RootStep.ResultTransforming) {
                 resultTransformer.transform(
                     executionContext = executionContext,
@@ -518,7 +520,7 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
-        field: ExecutableNormalizedField,
+        fields: List<ExecutableNormalizedField>,
     ): NadelQueryTransformer.TransformResult {
         return NadelQueryTransformer.transformQuery(
             overallExecutionBlueprint,
@@ -526,7 +528,7 @@ internal class NextgenEngine(
             executionContext,
             serviceExecutionContext,
             executionPlan,
-            field,
+            fields,
         )
     }
 

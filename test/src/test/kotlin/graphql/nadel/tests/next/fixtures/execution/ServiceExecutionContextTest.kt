@@ -158,11 +158,11 @@ class ServiceExecutionContextTest : NadelIntegrationTest(
                             executionBlueprint: NadelOverallExecutionBlueprint,
                             services: Map<String, graphql.nadel.Service>,
                             service: graphql.nadel.Service,
-                            rootField: ExecutableNormalizedField,
+                            rootFields: List<ExecutableNormalizedField>,
                             hydrationDetails: ServiceExecutionHydrationDetails?,
                         ): NadelTransformServiceExecutionContext? {
                             val testTransformServiceExecutionContext =
-                                TestTransformServiceExecutionContext(rootField.toExecutionString())
+                                TestTransformServiceExecutionContext(rootFields.single().toExecutionString())
                             transformServiceExecutionContexts.add(testTransformServiceExecutionContext)
                             return testTransformServiceExecutionContext
                         }

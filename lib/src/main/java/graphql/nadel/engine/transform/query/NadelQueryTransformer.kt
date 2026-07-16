@@ -27,7 +27,7 @@ class NadelQueryTransformer private constructor(
             executionContext: NadelExecutionContext,
             serviceExecutionContext: NadelServiceExecutionContext,
             executionPlan: NadelExecutionPlan,
-            field: ExecutableNormalizedField,
+            fields: List<ExecutableNormalizedField>,
         ): TransformResult {
             val transformContext = TransformContext()
 
@@ -41,7 +41,10 @@ class NadelQueryTransformer private constructor(
                     transformContext,
                     timer,
                 )
-                val result = transformer.transform(field)
+                // Transform every root field. The shared transformContext accumulates the artificial
+                // fields and overall->underlying mapping across all of them, so a batch of root fields
+                // destined for one service becomes a single combined TransformResult (one document).
+                val result = transformer.transform(fields)
                     .also { rootFields ->
                         transformer.fixParentRefs(parent = null, rootFields)
                     }

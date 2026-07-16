@@ -54,14 +54,14 @@ internal class NadelExecutionPlanFactory(
 
     /**
      * This derives an execution plan from with the main input parameters being the
-     * [rootField] and [executionBlueprint].
+     * [rootFields] and [executionBlueprint].
      */
     suspend fun create(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         services: Map<String, Service>,
         service: Service,
-        rootField: ExecutableNormalizedField,
+        rootFields: List<ExecutableNormalizedField>,
         serviceHydrationDetails: ServiceExecutionHydrationDetails?,
     ): NadelExecutionPlan {
         val executionSteps: MutableMap<ExecutableNormalizedField, List<NadelExecutionPlan.Step<Any>>> =
@@ -69,7 +69,7 @@ internal class NadelExecutionPlanFactory(
         val transformContexts: MutableMap<NadelTransform<Any>, NadelTransformServiceExecutionContext?> =
             mutableMapOf()
         executionContext.timer.batch { timer ->
-            traverseQuery(rootField) { field ->
+            traverseQuery(rootFields) { field ->
                 val steps = transformsWithTimingStepInfo.mapNotNull { transformWithTimingInfo ->
                     val transform = transformWithTimingInfo.transform
                     // This is a patch to prevent errors
@@ -88,7 +88,7 @@ internal class NadelExecutionPlanFactory(
                                     executionBlueprint,
                                     services,
                                     service,
-                                    rootField,
+                                    rootFields,
                                     serviceHydrationDetails
                                 )
                             }
@@ -134,14 +134,16 @@ internal class NadelExecutionPlanFactory(
     }
 
     private inline fun traverseQuery(
-        root: ExecutableNormalizedField,
+        roots: List<ExecutableNormalizedField>,
         consumer: (ExecutableNormalizedField) -> Unit,
     ) {
-        dfs(
-            root = root,
-            getChildren = ExecutableNormalizedField::getChildren,
-            consumer = consumer,
-        )
+        for (root in roots) {
+            dfs(
+                root = root,
+                getChildren = ExecutableNormalizedField::getChildren,
+                consumer = consumer,
+            )
+        }
     }
 
     companion object {
