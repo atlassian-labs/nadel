@@ -10,6 +10,7 @@ data class NadelInputObjectFieldCoordinates(
     NadelChildCoordinates,
     NadelAppliedDirectiveParentCoordinates,
     NadelInputCoordinates {
+    override val kind = NadelCoordinateKind.InputObjectField
     override val level: Int = parent.level + 1
 
     override fun resolve(schema: GraphQLSchema): GraphQLInputObjectField? {

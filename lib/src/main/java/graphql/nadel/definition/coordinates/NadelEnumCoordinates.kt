@@ -8,6 +8,8 @@ data class NadelEnumCoordinates(
 ) : NadelSchemaMemberCoordinates,
     NadelTypeCoordinates,
     NadelAppliedDirectiveParentCoordinates {
+    override val kind = NadelCoordinateKind.Enum
+
     override fun resolve(schema: GraphQLSchema): GraphQLEnumType? {
         return schema.getType(name) as GraphQLEnumType?
     }

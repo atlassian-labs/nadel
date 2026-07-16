@@ -8,6 +8,8 @@ data class NadelDirectiveCoordinates(
 ) : NadelSchemaMemberCoordinates,
     NadelTopLevelDefinitionCoordinates,
     NadelArgumentParentCoordinates {
+    override val kind = NadelCoordinateKind.Directive
+
     override fun resolve(schema: GraphQLSchema): GraphQLDirective? {
         return schema.getDirective(name)
     }

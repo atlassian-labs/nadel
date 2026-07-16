@@ -10,6 +10,8 @@ data class NadelInterfaceCoordinates(
     NadelImplementingTypeCoordinates,
     NadelAppliedDirectiveParentCoordinates,
     NadelFieldContainerCoordinates {
+    override val kind = NadelCoordinateKind.Interface
+
     override fun resolve(schema: GraphQLSchema): GraphQLInterfaceType? {
         return schema.getType(name) as GraphQLInterfaceType?
     }

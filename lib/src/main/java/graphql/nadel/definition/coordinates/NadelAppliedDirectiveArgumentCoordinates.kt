@@ -8,6 +8,7 @@ data class NadelAppliedDirectiveArgumentCoordinates(
     override val name: String,
 ) : NadelSchemaMemberCoordinates,
     NadelChildCoordinates {
+    override val kind = NadelCoordinateKind.AppliedDirectiveArgument
     override val level: Int = parent.level + 1
 
     override fun resolve(schema: GraphQLSchema): GraphQLAppliedDirectiveArgument {

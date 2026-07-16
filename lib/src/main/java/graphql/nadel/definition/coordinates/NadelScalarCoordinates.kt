@@ -8,6 +8,8 @@ data class NadelScalarCoordinates(
 ) : NadelSchemaMemberCoordinates,
     NadelTypeCoordinates,
     NadelAppliedDirectiveParentCoordinates {
+    override val kind = NadelCoordinateKind.Scalar
+
     override fun resolve(schema: GraphQLSchema): GraphQLScalarType? {
         return schema.getType(name) as GraphQLScalarType?
     }

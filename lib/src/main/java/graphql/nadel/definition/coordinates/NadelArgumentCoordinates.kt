@@ -10,6 +10,7 @@ data class NadelArgumentCoordinates(
     NadelChildCoordinates,
     NadelAppliedDirectiveParentCoordinates,
     NadelInputCoordinates {
+    override val kind = NadelCoordinateKind.Argument
     override val level: Int = parent.level + 1
 
     override fun resolve(schema: GraphQLSchema): GraphQLArgument? {
