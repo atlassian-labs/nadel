@@ -10,12 +10,12 @@ plugins {
 allprojects {
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(11)
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
     kotlin {
         jvmToolchain {
-            languageVersion = JavaLanguageVersion.of(11)
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
 }
