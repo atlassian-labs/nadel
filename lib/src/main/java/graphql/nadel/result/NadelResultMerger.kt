@@ -33,7 +33,7 @@ internal object NadelResultMerger {
             extensions.putAll(result.extensions)
         }
 
-        return ExecutionResultImpl.newExecutionResult()
+        return (ExecutionResultImpl.newExecutionResult() as ExecutionResultImpl.Builder<*>)
             .data(fixData(topLevelFields, engineSchema, data))
             .extensions(extensions.let {
                 @Suppress("UNCHECKED_CAST") // .extensions should take in a Map<*, *> instead of strictly Map<Any?, Any?>

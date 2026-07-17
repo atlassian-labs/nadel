@@ -34,7 +34,7 @@ fun String.toNoCase(): String {
             " "
         }
         .trim()
-        .toLowerCase()
+        .lowercase()
 }
 
 /**

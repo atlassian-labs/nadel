@@ -1,9 +1,9 @@
-import com.bnorm.power.PowerAssertGradleExtension
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
-    id("com.bnorm.power.kotlin-power-assert")
+    id("org.jetbrains.kotlin.plugin.power-assert")
 }
 
 dependencies {
@@ -62,11 +62,13 @@ tasks.withType<KotlinCompile>().configureEach {
             "-Xopt-in=kotlin.RequiresOptIn",
             "-Xjvm-default=all",
             "-Xcontext-receivers",
+            "-Xnullability-annotations=@org.jspecify.annotations:ignore",
         )
     }
 }
 
-configure<PowerAssertGradleExtension> {
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
+powerAssert {
     // WARNING: do NOT touch this unless you have read https://github.com/bnorm/kotlin-power-assert/issues/55
     functions = listOf("kotlin.assert", "kotlin.test.assertTrue", "kotlin.test.assertFalse")
 }

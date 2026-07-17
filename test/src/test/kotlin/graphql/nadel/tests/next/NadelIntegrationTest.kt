@@ -117,12 +117,11 @@ abstract class NadelIntegrationTest(
         )
 
         // When
+        val noDeferExecutionInput = makeExecutionInput()
+            .query(stripDefer(executionInput.query))
+            .build()
         val noDeferResult = nadel
-            .execute(
-                executionInput.copy(
-                    query = stripDefer(executionInput.query),
-                ),
-            )
+            .execute(noDeferExecutionInput)
             .await()
 
         // Then

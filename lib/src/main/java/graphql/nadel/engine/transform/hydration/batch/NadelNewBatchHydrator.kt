@@ -203,7 +203,7 @@ internal class NadelNewBatchHydrator(
     }
 
     context(NadelBatchHydratorContext)
-    suspend fun hydrate(sourceObjects: List<JsonNode>): List<NadelResultInstruction> {
+    private suspend fun hydrate(sourceObjects: List<JsonNode>): List<NadelResultInstruction> {
         // Gets source inputs, instructions info etc.
         val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects)
         val sourceInputsByInstruction = groupSourceInputsByInstruction(sourceObjectsMetadata)

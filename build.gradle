@@ -1,10 +1,10 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.9.20"
+    id "org.jetbrains.kotlin.jvm" version "2.1.21"
     id "com.jfrog.artifactory" version "4.29.2"
     id "biz.aQute.bnd.builder" version "6.3.1"
-    id "com.bnorm.power.kotlin-power-assert" version "0.13.0"
+    id "org.jetbrains.kotlin.plugin.power-assert" version "2.1.21"
 }
 
 allprojects {

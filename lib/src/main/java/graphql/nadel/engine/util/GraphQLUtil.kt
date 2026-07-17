@@ -3,8 +3,10 @@ package graphql.nadel.engine.util
 import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
+import graphql.ExecutionResultImpl
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder
 import graphql.GraphqlErrorBuilder.newError
 import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
@@ -85,7 +87,7 @@ fun newGraphQLError(
     errorType: ErrorType,
     extensions: MutableJsonMap = mutableMapOf(),
 ): GraphQLError {
-    return newError()
+    return (newError() as GraphqlErrorBuilder<*>)
         .message(message)
         .errorType(errorType)
         .extensions(extensions)
@@ -101,7 +103,7 @@ fun toGraphQLError(
     extensions: JsonMap? = raw["extensions"] as JsonMap?,
     path: AnyList? = raw["path"] as AnyList?,
 ): GraphQLError {
-    val errorBuilder = newError()
+    val errorBuilder = (newError() as GraphqlErrorBuilder<*>)
         .message(message ?: "An error has occurred")
     if (extensions != null) {
         errorBuilder.extensions(extensions)
@@ -390,7 +392,7 @@ internal fun mergeResults(results: List<ServiceExecutionResult>): ExecutionResul
         extensions.putAll(result.extensions)
     }
 
-    return newExecutionResult()
+    return (newExecutionResult() as ExecutionResultImpl.Builder<*>)
         .data(data)
         .extensions(extensions.let {
             @Suppress("UNCHECKED_CAST") // .extensions should take in a Map<*, *> instead of strictly Map<Any?, Any?>
@@ -426,7 +428,7 @@ fun newExecutionResult(
     data: Any? = null,
     error: GraphQLError,
 ): ExecutionResult {
-    return newExecutionResult()
+    return (newExecutionResult() as ExecutionResultImpl.Builder<*>)
         .data(data)
         .addError(error)
         .build()

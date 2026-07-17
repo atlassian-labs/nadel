@@ -57,7 +57,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated("This is only here for backwards compatibility purposes")
     fun toGraphQLError(): GraphQLError {
-        return GraphqlErrorBuilder.newError()
+        return (GraphqlErrorBuilder.newError() as GraphqlErrorBuilder<*>)
             .message(message)
             .errorType(NadelSchemaValidationErrorClassification(this))
             .build()
