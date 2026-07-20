@@ -3,6 +3,7 @@ package graphql.nadel.engine.transform.query
 import graphql.introspection.Introspection
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
@@ -24,9 +25,11 @@ internal class NadelFieldToService(
     private val introspectionService = IntrospectionService(querySchema, introspectionRunnerFactory)
 
     fun getServicesForTopLevelFields(
-        query: ExecutableNormalizedOperation,
-        executionHints: NadelExecutionHints,
+        executionContext: NadelExecutionContext,
     ): List<NadelFieldAndService> {
+        val query = executionContext.query
+        val executionHints = executionContext.hints
+
         // Feature flag: when root-field batching is globally disabled, keep the original behaviour
         // of one entry (i.e. one service call) per root field.
         if (!executionHints.batchRootFields()) {
@@ -39,9 +42,12 @@ internal class NadelFieldToService(
             }
         }
 
-        // Group batch-eligible root fields per service into a single entry (one service call).
+        // Group batch-eligible root fields into a single entry (one service call) per (service, shard).
+        // Two root fields can be owned by the same service but routed to different shards (e.g. different
+        // cloud IDs), so they must not be batched together. Nadel stays generic here: the sharding target
+        // comes from NadelExecutionHooks.getShardingTarget and is used purely as an opaque grouping key.
         val result = mutableListOf<NadelFieldAndService>()
-        val batchedByService = LinkedHashMap<Service, MutableList<ExecutableNormalizedField>>()
+        val batchedByGroup = LinkedHashMap<NadelBatchGroup, MutableList<ExecutableNormalizedField>>()
         for (topLevelField in query.topLevelFields) {
             if (isNamespacedField(topLevelField)) {
                 result += getServicePairsForNamespacedFields(topLevelField, executionHints)
@@ -50,14 +56,15 @@ internal class NadelFieldToService(
 
             val service = getService(topLevelField)
             if (canBatchRootField(topLevelField, service, executionHints)) {
-                batchedByService.getOrPut(service) { mutableListOf() }.add(topLevelField)
+                val shardingTarget = executionContext.hooks.getShardingTarget(executionContext, service, topLevelField)
+                batchedByGroup.getOrPut(NadelBatchGroup(service, shardingTarget)) { mutableListOf() }.add(topLevelField)
             } else {
                 result += NadelFieldAndService(fields = listOf(topLevelField), service = service)
             }
         }
 
-        batchedByService.forEach { (service, batchedFields) ->
-            result += NadelFieldAndService(fields = batchedFields, service = service)
+        batchedByGroup.forEach { (group, batchedFields) ->
+            result += NadelFieldAndService(fields = batchedFields, service = group.service)
         }
 
         return result
@@ -153,5 +160,16 @@ internal class NadelFieldToService(
 data class NadelFieldAndService(
     val fields: List<ExecutableNormalizedField>,
     val service: Service,
+)
+
+/**
+ * Grouping key for root-field batching: root fields are only batched together when they share the
+ * same [service] and the same [shardingTarget]. [shardingTarget] is an opaque value supplied by
+ * [graphql.nadel.hooks.NadelExecutionHooks.getShardingTarget] (`null` when the field is not bound to
+ * a specific shard).
+ */
+private data class NadelBatchGroup(
+    val service: Service,
+    val shardingTarget: Any?,
 )
 

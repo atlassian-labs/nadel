@@ -198,7 +198,7 @@ internal class NextgenEngine(
             )
 
             val result: ExecutionResult = try {
-                val fields = fieldToService.getServicesForTopLevelFields(operation, executionHints)
+                val fields = fieldToService.getServicesForTopLevelFields(executionContext)
                 val results = coroutineScope {
                     fields
                         .map { (fields, service) ->
