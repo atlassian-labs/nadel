@@ -10,6 +10,7 @@ data class NadelFieldCoordinates(
     NadelChildCoordinates,
     NadelArgumentParentCoordinates,
     NadelAppliedDirectiveParentCoordinates {
+    override val kind = NadelCoordinateKind.Field
     override val level: Int = parent.level + 1
 
     override fun resolve(schema: GraphQLSchema): GraphQLFieldDefinition? {

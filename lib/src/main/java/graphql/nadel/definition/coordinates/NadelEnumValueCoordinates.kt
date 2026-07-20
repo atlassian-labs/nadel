@@ -9,6 +9,7 @@ data class NadelEnumValueCoordinates(
 ) : NadelSchemaMemberCoordinates,
     NadelChildCoordinates,
     NadelAppliedDirectiveParentCoordinates {
+    override val kind = NadelCoordinateKind.EnumValue
     override val level: Int = parent.level + 1
 
     override fun resolve(schema: GraphQLSchema): GraphQLEnumValueDefinition? {

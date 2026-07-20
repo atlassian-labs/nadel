@@ -10,6 +10,8 @@ data class NadelObjectCoordinates(
     NadelImplementingTypeCoordinates,
     NadelAppliedDirectiveParentCoordinates,
     NadelFieldContainerCoordinates {
+    override val kind = NadelCoordinateKind.Object
+
     override fun resolve(schema: GraphQLSchema): GraphQLObjectType? {
         return schema.getType(name) as GraphQLObjectType?
     }

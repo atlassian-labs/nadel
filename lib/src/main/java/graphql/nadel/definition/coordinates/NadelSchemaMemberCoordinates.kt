@@ -6,6 +6,8 @@ import graphql.schema.GraphQLSchemaElement
 sealed interface NadelSchemaMemberCoordinates : Comparable<NadelSchemaMemberCoordinates?> {
     val name: String
 
+    val kind: NadelCoordinateKind
+
     val level: Int
 
     val parentOrNull: NadelSchemaMemberCoordinates?
@@ -29,7 +31,7 @@ sealed interface NadelSchemaMemberCoordinates : Comparable<NadelSchemaMemberCoor
         return if (compareLevel == 0) {
             val compareParents = compareValues(parentOrNull, other?.parentOrNull)
             if (compareParents == 0) {
-                val compareKind = compareValues(javaClass.simpleName, other?.javaClass?.simpleName)
+                val compareKind = compareValues(kind, other?.kind)
                 if (compareKind == 0) {
                     compareValues(name, other?.name)
                 } else {
@@ -48,30 +50,12 @@ sealed interface NadelSchemaMemberCoordinates : Comparable<NadelSchemaMemberCoor
             return (sequenceOf(coordinates) + coordinates.parents)
                 .map { c ->
                     val name = c.name
-                    val kind = getHumanReadableKind(c)
+                    val kind = c.kind
                     "$name ($kind)"
                 }
                 .toList()
                 .asReversed()
                 .joinToString(separator = ".")
-        }
-
-        private fun getHumanReadableKind(coordinates: NadelSchemaMemberCoordinates): String {
-            return when (coordinates) {
-                is NadelAppliedDirectiveArgumentCoordinates -> "AppliedDirectiveArgument"
-                is NadelAppliedDirectiveCoordinates -> "AppliedDirective"
-                is NadelArgumentCoordinates -> "Argument"
-                is NadelEnumCoordinates -> "Enum"
-                is NadelEnumValueCoordinates -> "EnumValue"
-                is NadelFieldCoordinates -> "Field"
-                is NadelInputObjectCoordinates -> "InputObject"
-                is NadelInputObjectFieldCoordinates -> "InputObjectField"
-                is NadelInterfaceCoordinates -> "Interface"
-                is NadelObjectCoordinates -> "Object"
-                is NadelScalarCoordinates -> "Scalar"
-                is NadelUnionCoordinates -> "Union"
-                is NadelDirectiveCoordinates -> "Directive"
-            }
         }
     }
 }

@@ -8,6 +8,8 @@ data class NadelUnionCoordinates(
 ) : NadelSchemaMemberCoordinates,
     NadelTypeCoordinates,
     NadelAppliedDirectiveParentCoordinates {
+    override val kind = NadelCoordinateKind.Union
+
     override fun resolve(schema: GraphQLSchema): GraphQLUnionType? {
         return schema.getType(name) as GraphQLUnionType?
     }
