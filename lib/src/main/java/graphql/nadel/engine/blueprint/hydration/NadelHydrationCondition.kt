@@ -34,6 +34,15 @@ sealed class NadelHydrationCondition {
         }
     }
 
+    data class BooleanResultEquals(
+        override val fieldPath: NadelQueryPath,
+        val value: Boolean,
+    ) : NadelHydrationCondition() {
+        override fun evaluate(fieldValue: Any?): Boolean {
+            return fieldValue is Boolean && fieldValue == value
+        }
+    }
+
     data class StringResultMatches(
         override val fieldPath: NadelQueryPath,
         val regex: Regex,

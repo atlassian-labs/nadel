@@ -1,5 +1,6 @@
 package graphql.nadel.validation.hydration
 
+import graphql.Scalars.GraphQLBoolean
 import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLInt
 import graphql.Scalars.GraphQLString
@@ -55,6 +56,10 @@ private sealed class NadelConditionFieldType {
 
     object IdType : NadelConditionFieldType() {
         override val graphQLType = GraphQLID
+    }
+
+    object BooleanType : NadelConditionFieldType() {
+        override val graphQLType = GraphQLBoolean
     }
 
     data class EnumType(
@@ -134,6 +139,7 @@ internal class NadelHydrationConditionValidation {
             GraphQLString -> NadelConditionFieldType.StringType
             GraphQLInt -> NadelConditionFieldType.IntType
             GraphQLID -> NadelConditionFieldType.IdType
+            GraphQLBoolean -> NadelConditionFieldType.BooleanType
             is GraphQLEnumType -> NadelConditionFieldType.EnumType(conditionFieldOutputType)
             else -> null
         } ?: return NadelHydrationResultConditionUnsupportedFieldTypeError(
@@ -303,6 +309,11 @@ internal class NadelHydrationConditionValidation {
             return NadelHydrationCondition.LongResultEquals(
                 fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
                 value = expectedValue.toLong(),
+            ).asInterimSuccess()
+        } else if (expectedValue is Boolean && conditionFieldType == NadelConditionFieldType.BooleanType) {
+            return NadelHydrationCondition.BooleanResultEquals(
+                fieldPath = NadelQueryPath(resultCondition.pathToSourceField),
+                value = expectedValue,
             ).asInterimSuccess()
         } else {
             return NadelHydrationConditionIncompatibleValueError(

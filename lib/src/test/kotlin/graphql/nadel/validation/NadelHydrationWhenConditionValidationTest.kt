@@ -9,6 +9,71 @@ private const val source = "$" + "source"
 private const val argument = "$" + "argument"
 
 class NadelHydrationWhenConditionValidationTest {
+    private fun booleanConditionFixture(
+        conditionFieldType: String = "Boolean",
+        underlyingConditionFieldType: String = "Boolean!",
+        predicate: String = "equals: true",
+    ): NadelValidationTestFixture {
+        return NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "issues" to """
+                        type Query {
+                            issue: JiraIssue
+                        }
+                        type JiraIssue @renamed(from: "Issue") {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                "users" to """
+                        type Query {
+                            users(id: [ID!]!): [User]
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type JiraIssue {
+                            shouldHydrate: $conditionFieldType
+                            collaborators: [User] @hydrated(
+                                service: "users"
+                                field: "users"
+                                arguments: [
+                                    {name: "id", value: "$source.collaboratorIds"}
+                                ]
+                                when: {
+                                    result: {
+                                        sourceField: "shouldHydrate"
+                                        predicate: { $predicate }
+                                    }
+                                }
+                            )
+                        }
+                    """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            collaboratorIds: [ID!]
+                            shouldHydrate: $underlyingConditionFieldType
+                        }
+                    """.trimIndent(),
+                "users" to """
+                        type Query {
+                            users(id: [ID!]!): [User]
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+            ),
+        )
+    }
+
     private fun enumConditionFixture(
         conditionFieldType: String = "IssueType",
         underlyingConditionFieldType: String = "IssueType!",
@@ -80,6 +145,86 @@ class NadelHydrationWhenConditionValidationTest {
                     """.trimIndent(),
             ),
         )
+    }
+
+    @Test
+    fun `boolean condition field is acceptable for true equals predicate`() {
+        val fixture = booleanConditionFixture()
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `boolean condition field is acceptable for false equals predicate`() {
+        val fixture = booleanConditionFixture(predicate = "equals: false")
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `non null boolean condition field is acceptable for equals predicate`() {
+        val fixture = booleanConditionFixture(conditionFieldType = "Boolean!")
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `list boolean condition field is not acceptable for equals predicate`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "[Boolean]",
+            underlyingConditionFieldType = "[Boolean]",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationResultConditionUnsupportedFieldTypeError>()
+    }
+
+    @Test
+    fun `boolean condition field rejects string equals value`() {
+        val fixture = booleanConditionFixture(predicate = "equals: \"true\"")
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationConditionIncompatibleValueError>()
+    }
+
+    @Test
+    fun `boolean condition field rejects matches predicate`() {
+        val fixture = booleanConditionFixture(predicate = "matches: \"true\"")
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationConditionMatchesPredicateRequiresStringFieldError>()
+    }
+
+    @Test
+    fun `boolean condition field rejects startsWith predicate`() {
+        val fixture = booleanConditionFixture(predicate = "startsWith: \"tr\"")
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationConditionStartsWithPredicateRequiresStringFieldError>()
     }
 
     @Test
