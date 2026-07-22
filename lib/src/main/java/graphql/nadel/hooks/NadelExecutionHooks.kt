@@ -44,6 +44,29 @@ interface NadelExecutionHooks {
         return null
     }
 
+    /**
+     * Returns an opaque key identifying the target "shard" that a top level (root) [field] will be
+     * routed to. It is used to decide which root fields may be batched into a single service call.
+     *
+     * Root fields are only batched together when they share the same [service] AND the same sharding
+     * target. Two fields can belong to the same [service] but be routed to different shards (e.g.
+     * different cloud IDs), in which case they cannot be sent in the same request.
+     *
+     * Nadel treats the returned value as opaque - it groups by it via [equals]/[hashCode] and never
+     * interprets it - so Atlassian-specific concerns such as cloud ID / ARI parsing stay entirely in
+     * the implementation.
+     *
+     * Return `null` when the field is not bound to a specific shard; such fields are grouped together
+     * (per service) separately from shard-specific ones.
+     */
+    fun getShardingTarget(
+        executionContext: NadelExecutionContext,
+        service: Service,
+        field: ExecutableNormalizedField,
+    ): Any? {
+        return null
+    }
+
     fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         virtualField: ExecutableNormalizedField,
         instructions: List<T>,
