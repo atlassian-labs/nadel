@@ -26,7 +26,6 @@ class `complex identified by doesnt use all input fields in the inputIdentifiedB
                     type Activity {
                       id: ID
                       issue: Issue @hydrated(
-                        service: "Issue"
                         field: "issues"
                         arguments: [{name: "issuesInput" value: "${'$'}source.context.issueHydrationInput"}]
                         inputIdentifiedBy: [

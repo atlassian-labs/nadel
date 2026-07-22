@@ -57,7 +57,6 @@ class `batching conditional hydration works with int type` : NadelLegacyIntegrat
                   barIds: [Int] @hidden
                   bar: [Bar] 
                     @hydrated(
-                      service: "service2"
                       field: "barsById"
                       arguments: [
                         {

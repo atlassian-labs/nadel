@@ -12,7 +12,6 @@ overallSchema:
       name: String
       nestedBar: Bar
       @hydrated(
-        service: "Bar"
         field: "barById"
         arguments: [{name: "id" value: "$source.barId"}]
       )

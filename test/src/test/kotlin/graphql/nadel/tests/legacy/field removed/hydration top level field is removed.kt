@@ -24,7 +24,6 @@ class `hydration top level field is removed` : NadelLegacyIntegrationTest(
                 type Issue {
                   id: ID
                   comment: Comment @hydrated(
-                    service: "CommentService"
                     field: "commentById"
                     arguments: [
                       {name: "id", value: "${'$'}source.commentId"}

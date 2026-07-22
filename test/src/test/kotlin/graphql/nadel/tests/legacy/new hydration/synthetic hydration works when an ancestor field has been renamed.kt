@@ -25,7 +25,6 @@ class `synthetic hydration works when an ancestor field has been renamed` : Nade
                 type DevOpsRelationship @renamed(from: "Relationship") {
                   devOpsIssue: DevOpsIssue
                   @hydrated(
-                    service: "IssueService"
                     field: "syntheticIssue.issue"
                     arguments: [{name: "id" value: "${'$'}source.issueId"}]
                   )
@@ -63,7 +62,6 @@ class `synthetic hydration works when an ancestor field has been renamed` : Nade
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("syntheticIssue") {
-                        Unit
                     }
                 }
                 wiring.type("Query") { type ->

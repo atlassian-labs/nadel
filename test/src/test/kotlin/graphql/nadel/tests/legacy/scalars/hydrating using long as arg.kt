@@ -29,7 +29,6 @@ class `hydrating using long as arg` : NadelLegacyIntegrationTest(
                   createdAt: Long
                   successor: Foo
                   @hydrated(
-                    service: "service"
                     field: "successor"
                     arguments: [{ name: "after" value: "${'$'}source.createdAt" }]
                   )

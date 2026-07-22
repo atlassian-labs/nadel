@@ -10,7 +10,6 @@ overallSchema:
     type Foo {
       issue: Issue
       @hydrated(
-        service: "Foo"
         field: "issues"
         arguments: [{name: "issueIds" value: "$source.issueId"}]
       )

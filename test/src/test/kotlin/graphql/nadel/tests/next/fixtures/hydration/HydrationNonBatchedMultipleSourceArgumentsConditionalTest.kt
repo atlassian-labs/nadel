@@ -48,19 +48,16 @@ class HydrationNonBatchedMultipleSourceArgumentsConditionalTest : NadelIntegrati
                   userType: String
                   user: IssueUser
                     @hydrated(
-                      service: "myService"
                       field: "customerUser"
                       arguments: [{name: "siteId", value: "$source.siteId"}, {name: "userId", value: "$source.userId"}]
                       when: { result: { sourceField: "userType", predicate: {equals: "CUSTOMER_USER" } } }
                     )
                     @hydrated(
-                      service: "myService"
                       field: "atlassianAccountUser"
                       arguments: [{name: "siteId", value: "$source.siteId"}, {name: "userId", value: "$source.userId"}]
                       when: { result: { sourceField: "userType", predicate: {equals: "ATLASSIAN_ACCOUNT_USER" } } }
                     )
                     @hydrated(
-                      service: "myService"
                       field: "appUser"
                       arguments: [{name: "siteId", value: "$source.siteId"}, {name: "userId", value: "$source.userId"}]
                       when: { result: { sourceField: "userType", predicate: {equals: "APP_USER" } } }

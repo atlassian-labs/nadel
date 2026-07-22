@@ -579,7 +579,6 @@ class NadelFieldValidationTest : DescribeSpec({
 
                         type TypeB {
                             fieldA: TypeA @hydrated(
-                                service: "test",
                                 field: "fieldA",
                                 arguments : [{ name:"id", value:"${'$'}source.aId"}],
                             )

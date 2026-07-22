@@ -44,7 +44,6 @@ class `top level field data returns null in batched synthetic hydration` : Nadel
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("users") {
-                        Unit
                     }
                 }
                 wiring.type("UsersQuery") { type ->
@@ -64,7 +63,6 @@ class `top level field data returns null in batched synthetic hydration` : Nadel
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "service2"
                     field: "users.usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authorIds"}]
                     identifiedBy: "id"

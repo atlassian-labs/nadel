@@ -26,7 +26,6 @@ class `renamed and hydrated query using same underlying source` : NadelLegacyInt
                   renamedField: String @renamed(from: "issue.field")
                   details: [Detail]
                   @hydrated(
-                    service: "Foo"
                     field: "detail"
                     arguments: [{name: "detailId" value: "${'$'}source.issue.fooId"}]
                   )

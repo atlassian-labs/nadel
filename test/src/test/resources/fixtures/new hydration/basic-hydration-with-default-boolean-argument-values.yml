@@ -19,7 +19,6 @@ overallSchema:
     type Foo {
       id: ID
       bar(test: Boolean = false): Bar @hydrated(
-        service: "service2"
         field: "barById"
         arguments: [
           {name: "id" value: "$source.barId"}

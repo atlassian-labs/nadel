@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next.fixtures.hydration
 
-import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
@@ -128,7 +127,6 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
                     after: String
                   ): WorkConnection
                     @hydrated(
-                      service: "graph_store",
                       field: "graphStore_query"
                       arguments: [
                         {
@@ -154,7 +152,6 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
                   nodeId: ID @hidden
                   node: WorkNode
                     @hydrated(
-                      service: "jira"
                       field: "issuesByIds"
                       arguments: [{name: "ids", value: "$source.nodeId"}]
                     )

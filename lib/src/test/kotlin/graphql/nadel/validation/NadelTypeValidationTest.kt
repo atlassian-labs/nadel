@@ -218,7 +218,6 @@ class NadelTypeValidationTest : DescribeSpec({
                         }
                         type World {
                             hello: Something @hydrated(
-                                service: "test"
                                 field: "echo.world"
                                 arguments: []
                             )

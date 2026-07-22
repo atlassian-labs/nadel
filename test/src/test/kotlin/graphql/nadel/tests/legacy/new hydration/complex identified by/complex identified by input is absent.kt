@@ -47,7 +47,6 @@ class `complex identified by input is absent` : NadelLegacyIntegrationTest(
                 type Issue {
                   id: ID
                   authors: [User] @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [
                       {name: "ids" value: "${'$'}source.authors.id"}

@@ -73,7 +73,6 @@ class `extending types via hydration returning a connection` : NadelLegacyIntegr
                   nameOfAssociation: String
                   page: Page
                   @hydrated(
-                    service: "Association"
                     field: "pages.page"
                     arguments: [{name: "id" value: "${'$'}source.pageId"}]
                   )
@@ -84,7 +83,6 @@ class `extending types via hydration returning a connection` : NadelLegacyIntegr
                 extend type Issue {
                   association(filter: Filter): AssociationConnection
                   @hydrated(
-                    service: "Association"
                     field: "association"
                     arguments: [{name: "id" value: "${'$'}source.id"} {name: "filter" value: "${'$'}argument.filter"}]
                   )
@@ -116,7 +114,6 @@ class `extending types via hydration returning a connection` : NadelLegacyIntegr
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("pages") {
-                        Unit
                     }
                 }
                 wiring.type("Query") { type ->

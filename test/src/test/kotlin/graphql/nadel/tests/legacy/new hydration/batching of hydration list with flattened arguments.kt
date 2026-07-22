@@ -59,7 +59,6 @@ class `batching of hydration list with flattened arguments` : NadelLegacyIntegra
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authors.authorId"}]
                     identifiedBy: "id"

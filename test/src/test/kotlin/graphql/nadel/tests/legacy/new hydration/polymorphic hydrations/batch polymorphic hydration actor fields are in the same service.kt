@@ -36,14 +36,12 @@ class `batch polymorphic hydration actor fields are in the same service` : Nadel
                   dataId: ID
                   data: Data
                   @hydrated(
-                    service: "bar"
                     field: "petById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}
                     ]
                   )
                   @hydrated(
-                    service: "bar"
                     field: "humanById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}

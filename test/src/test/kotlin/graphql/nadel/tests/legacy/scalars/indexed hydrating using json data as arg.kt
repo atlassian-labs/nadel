@@ -25,7 +25,6 @@ class `indexed hydrating using json data as arg` : NadelLegacyIntegrationTest(
                   id: ID!
                   baz: JSON @hidden
                   foo: Foo @hydrated(
-                    service: "Baz"
                     field: "baz"
                     arguments: [{ name: "data" value: "${'$'}source.baz" }]
                     indexed: true

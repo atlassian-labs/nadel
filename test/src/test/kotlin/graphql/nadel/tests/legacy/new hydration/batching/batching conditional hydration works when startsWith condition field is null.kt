@@ -51,7 +51,6 @@ class `batching conditional hydration works when startsWith condition field is n
                       type: String
                       bar: [Bars] 
                         @hydrated(
-                          service: "service2"
                           field: "barsById"
                           arguments: [
                             {
@@ -67,7 +66,6 @@ class `batching conditional hydration works when startsWith condition field is n
                           }
                         )
                         @hydrated(
-                          service: "service2"
                           field: "barsById"
                           arguments: [
                             {

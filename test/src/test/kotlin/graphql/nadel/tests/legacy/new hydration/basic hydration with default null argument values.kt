@@ -55,7 +55,6 @@ class `basic hydration with default null argument values` : NadelLegacyIntegrati
                 type Foo {
                   id: ID
                   bar(test: Boolean = null): Bar @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       {name: "id" value: "${'$'}source.barId"}

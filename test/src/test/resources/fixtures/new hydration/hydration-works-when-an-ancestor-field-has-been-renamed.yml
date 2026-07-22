@@ -9,7 +9,6 @@ overallSchema:
     type DevOpsRelationship @renamed(from: "Relationship") {
       devOpsIssue: DevOpsIssue
       @hydrated(
-        service: "IssueService"
         field: "issue"
         arguments: [{name: "id" value: "$source.issueId"}]
       )

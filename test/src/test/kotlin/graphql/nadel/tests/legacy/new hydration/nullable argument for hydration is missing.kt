@@ -26,7 +26,6 @@ class `nullable argument for hydration is missing` : NadelLegacyIntegrationTest(
                   id: ID
                   issue: Issue
                   @hydrated(
-                    service: "issues"
                     field: "issue"
                     arguments: [{ name: "id", value: "${'$'}source.issueId"}]
                   )
@@ -60,7 +59,6 @@ class `nullable argument for hydration is missing` : NadelLegacyIntegrationTest(
                   cloudId: ID!
                   comments(after: String): CommentConnection
                   @hydrated(
-                    service: "comments"
                     field: "comments"
                     arguments: [
                       {name:"cloudId" value:"${'$'}source.cloudId"}

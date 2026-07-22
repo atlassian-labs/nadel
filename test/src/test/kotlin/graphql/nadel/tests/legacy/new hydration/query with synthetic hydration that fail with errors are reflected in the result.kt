@@ -37,7 +37,6 @@ class `query with synthetic hydration that fail with errors are reflected in the
                       name: String
                       nestedBar: Bar
                       @hydrated(
-                        service: "Bar"
                         field: "barQuery.barById"
                         arguments: [{name: "id" value: "${'$'}source.nestedBarId"}]
                       )
@@ -60,7 +59,6 @@ class `query with synthetic hydration that fail with errors are reflected in the
                 runtimeWiring = { wiring ->
                     wiring.type("Query") { type ->
                         type.dataFetcher("barQuery") {
-                            Unit
                         }
                     }
                     wiring.type("BarQuery") { type ->
@@ -95,7 +93,6 @@ class `query with synthetic hydration that fail with errors are reflected in the
                       name: String
                       bar: Bar
                       @hydrated(
-                        service: "Bar"
                         field: "barQuery.barById"
                         arguments: [{name: "id" value: "${'$'}source.barId"}]
                       )

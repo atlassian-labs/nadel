@@ -31,7 +31,6 @@ overallSchema:
       nameOfAssociation: String
       page: Page
       @hydrated(
-        service: "Association"
         field: "pages.page"
         arguments: [{name: "id" value: "$source.pageId"}]
       )
@@ -42,7 +41,6 @@ overallSchema:
     extend type Issue {
       association(filter: Filter): AssociationConnection
       @hydrated(
-        service: "Association"
         field: "association"
         arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}]
       )

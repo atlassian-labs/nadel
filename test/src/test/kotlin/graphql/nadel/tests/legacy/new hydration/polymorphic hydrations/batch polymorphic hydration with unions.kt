@@ -128,7 +128,6 @@ class `batch polymorphic hydration with unions` : NadelLegacyIntegrationTest(
                   dataId: ID
                   data: LivingThing
                   @hydrated(
-                    service: "pets"
                     field: "petById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}
@@ -136,7 +135,6 @@ class `batch polymorphic hydration with unions` : NadelLegacyIntegrationTest(
                     identifiedBy: "id"
                   )
                   @hydrated(
-                    service: "people"
                     field: "humanById"
                     arguments: [
                       {name: "ids" value: "${'$'}source.dataId"}

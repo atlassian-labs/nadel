@@ -29,14 +29,12 @@ class `complex identified by uses same source for hydrations and a deep rename` 
                 type Foo {
                   renamedField: String @renamed(from: "issue.field")
                   issue: Issue @hydrated(
-                    service: "Foo"
                     field: "issues"
                     arguments: [{name: "issueIds" value: "${'$'}source.fooId"}]
                     inputIdentifiedBy: [{sourceId: "fooId" resultId: "issueId"}]
                     batchSize: 2
                   )
                   detail: Detail @hydrated(
-                    service: "Foo"
                     field: "details"
                     arguments: [{name: "detailIds" value: "${'$'}source.fooId"}]
                     inputIdentifiedBy: [{sourceId: "fooId" resultId: "detailId"}]

@@ -21,14 +21,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             id: ID!
                             creator: AbstractUser
                             @hydrated(
-                                service: "users"
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
                                 ]
                             )
                             @hydrated(
-                                service: "users"
                                 field: "externalUser"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
@@ -105,14 +103,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             id: ID!
                             creator: AbstractUser
                             @hydrated(
-                                service: "users"
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
                                 ]
                             )
                             @hydrated(
-                                service: "users"
                                 field: "internalUser"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
@@ -195,14 +191,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             id: ID!
                             creator: AbstractUser
                             @hydrated(
-                                service: "users"
                                 field: "users"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
                                 ]
                             )
                             @hydrated(
-                                service: "users"
                                 field: "externalUser"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
@@ -283,14 +277,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             id: ID!
                             reference: ReferenceObject
                             @hydrated(
-                                service: "issues"
                                 field: "issue"
                                 arguments: [
                                     {name: "id", value: "$source.referenceId"}
                                 ]
                             )
                             @hydrated(
-                                service: "pages"
                                 field: "page"
                                 arguments: [
                                     {name: "id", value: "$source.referenceId"}
@@ -349,14 +341,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             comment: Comment
                             reference: ReferenceObject
                             @hydrated(
-                                service: "issues"
                                 field: "issue"
                                 arguments: [
                                     {name: "id", value: "$source.referenceId"}
                                 ]
                             )
                             @hydrated(
-                                service: "pages"
                                 field: "page"
                                 arguments: [
                                     {name: "id", value: "$source.referenceId"}
@@ -414,14 +404,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             id: ID!
                             creator: AbstractUser
                             @hydrated(
-                                service: "users"
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
                                 ]
                             )
                             @hydrated(
-                                service: "users"
                                 field: "externalUser"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
@@ -487,14 +475,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             id: ID!
                             creator: User
                             @hydrated(
-                                service: "users"
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
                                 ]
                             )
                             @hydrated(
-                                service: "users"
                                 field: "externalUser"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
@@ -563,14 +549,12 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                             id: ID!
                             creator: AbstractUser
                             @hydrated(
-                                service: "users"
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}
                                 ]
                             )
                             @hydrated(
-                                service: "users"
                                 field: "externalUser"
                                 arguments: [
                                     {name: "id", value: "$source.creatorId"}

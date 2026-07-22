@@ -73,7 +73,6 @@ class `basic hydration with static arg object array` : NadelLegacyIntegrationTes
                 type Foo {
                   id: ID
                   bar: Bar @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [
                       { name: "id" value: "${'$'}source.id" }

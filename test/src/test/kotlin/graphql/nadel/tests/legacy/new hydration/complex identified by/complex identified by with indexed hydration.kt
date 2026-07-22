@@ -25,7 +25,6 @@ class `complex identified by with indexed hydration` : NadelLegacyIntegrationTes
                 type Activity {
                   id: ID
                   issue: Issue @hydrated(
-                    service: "Issue"
                     field: "issues"
                     arguments: [{name: "issuesInput" value: "${'$'}source.context.issueHydrationInput"}]
                     indexed: true

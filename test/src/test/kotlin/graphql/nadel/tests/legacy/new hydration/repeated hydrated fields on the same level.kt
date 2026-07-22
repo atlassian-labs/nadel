@@ -27,7 +27,6 @@ class `repeated hydrated fields on the same level` : NadelLegacyIntegrationTest(
                 type Foo {
                   issue: Issue
                   @hydrated(
-                    service: "Foo"
                     field: "issue"
                     arguments: [{name: "issueId" value: "${'$'}source.issueId"}]
                   )

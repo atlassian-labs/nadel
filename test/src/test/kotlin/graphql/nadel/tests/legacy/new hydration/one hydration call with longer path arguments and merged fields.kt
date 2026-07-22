@@ -59,7 +59,6 @@ class `one hydration call with longer path arguments and merged fields` : NadelL
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authors.authorId"}]
                     identifiedBy: "id"

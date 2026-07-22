@@ -27,7 +27,6 @@ class `some renamed object types have fields in the result are backed a hydratio
                   id: ID!
                   user: User
                   @hydrated(
-                    service: "users"
                     field: "userById"
                     arguments: [{name: "id" value: "${'$'}source.userId"}]
                   )

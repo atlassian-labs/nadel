@@ -216,7 +216,6 @@ class StaticHydrationOverlappingHydrationTest : NadelIntegrationTest(
                     after: String
                   ): WorkConnection
                     @hydrated(
-                      service: "graph_store",
                       field: "graphStore_query"
                       arguments: [
                         {
@@ -270,7 +269,7 @@ class StaticHydrationOverlappingHydrationTest : NadelIntegrationTest(
                         instructions: List<T>,
                         sourceInput: JsonNode,
                         userContext: Any?,
-                    ): T? {
+                    ): T {
                         throw UnsupportedOperationException()
                     }
 

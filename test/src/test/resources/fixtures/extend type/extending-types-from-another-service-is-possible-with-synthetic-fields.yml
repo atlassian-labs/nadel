@@ -12,7 +12,6 @@ overallSchema:
     extend type Root {
       extension: Extension
       @hydrated(
-        service: "Service2"
         field: "lookUpQuery.lookup"
         arguments: [{name: "id" value: "$source.id"}]
         identifiedBy: "id"

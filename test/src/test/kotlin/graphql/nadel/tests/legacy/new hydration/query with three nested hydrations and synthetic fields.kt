@@ -35,7 +35,6 @@ class `query with three nested hydrations and synthetic fields` : NadelLegacyInt
                   name: String
                   nestedBar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barsQuery.barsById"
                     arguments: [{ name: "id" value: "${'$'}source.nestedBarId"}]
                     identifiedBy: "barId"
@@ -59,7 +58,6 @@ class `query with three nested hydrations and synthetic fields` : NadelLegacyInt
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("barsQuery") {
-                        Unit
                     }
                 }
                 wiring.type("BarQuery") { type ->
@@ -106,7 +104,6 @@ class `query with three nested hydrations and synthetic fields` : NadelLegacyInt
                   name: String
                   bar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barsQuery.barsById"
                     arguments: [{ name: "id" value: "${'$'}source.barId"}]
                     identifiedBy: "barId"

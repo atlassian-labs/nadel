@@ -45,7 +45,6 @@ class `synthetic hydration forwards error` : NadelLegacyIntegrationTest(
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("barsQuery") {
-                        Unit
                     }
                 }
                 wiring.type("BarsQuery") { type ->
@@ -80,7 +79,6 @@ class `synthetic hydration forwards error` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barsQuery.barById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )

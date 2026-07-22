@@ -58,7 +58,6 @@ class `can generate legacy operation name on batch hydration for specific servic
                   id: ID
                   bar: [Bar]
                   @hydrated(
-                    service: "service2"
                     field: "barsById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                     identifiedBy: "id"

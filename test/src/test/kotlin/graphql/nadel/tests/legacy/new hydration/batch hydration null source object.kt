@@ -26,7 +26,6 @@ class `batch hydration null source object` : NadelLegacyIntegrationTest(
                   assigneeId: ID
                   assignee: User
                   @hydrated(
-                    service: "users"
                     field: "usersByIds"
                     arguments: [{name: "ids" value: "${'$'}source.assigneeId"}]
                     inputIdentifiedBy: [{sourceId: "assigneeId", resultId: "id"}]

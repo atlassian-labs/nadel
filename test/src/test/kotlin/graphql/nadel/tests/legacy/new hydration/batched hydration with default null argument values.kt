@@ -62,7 +62,6 @@ class `batched hydration with default null argument values` : NadelLegacyIntegra
                 type Issue {
                   id: ID
                   authors(test: String = null): [User] @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [
                       {name: "id" value: "${'$'}source.authorIds"}

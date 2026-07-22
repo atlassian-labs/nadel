@@ -66,7 +66,6 @@ class `batching of hydration list with partition` : NadelLegacyIntegrationTest(
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authorIds"}]
                     identifiedBy: "id"

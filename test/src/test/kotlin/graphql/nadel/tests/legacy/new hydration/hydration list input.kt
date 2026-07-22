@@ -61,7 +61,6 @@ class `hydration list input` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: [Bar]
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.barIds"}]
                   )

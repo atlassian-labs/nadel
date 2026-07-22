@@ -56,13 +56,11 @@ class `one hydration call with input value having longer path` : NadelLegacyInte
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )
                   barLongerInput: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.fooDetails.externalBarId"}]
                   )

@@ -56,13 +56,11 @@ class `basic hydration with actor field rename` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barByIdOverall"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )
                   barLongerInput: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barByIdOverall"
                     arguments: [{name: "id" value: "${'$'}source.fooDetails.externalBarId"}]
                   )

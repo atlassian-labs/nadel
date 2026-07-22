@@ -12,7 +12,6 @@ overallSchema:
       createdAt: DateTime
       successor: Foo
       @hydrated(
-        service: "service"
         field: "successor"
         arguments: [{ name: "after" value: "$source.createdAt" }]
       )

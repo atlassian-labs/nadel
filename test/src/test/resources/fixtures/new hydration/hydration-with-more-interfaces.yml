@@ -14,7 +14,6 @@ overallSchema:
     type Troll implements Node {
       id: ID
       @hydrated(
-        service: "Issues"
         field: "trollName"
         arguments: [{name: "id" value: "$source.id"}]
       )
@@ -25,7 +24,6 @@ overallSchema:
     type User implements Node {
       id: ID
       @hydrated(
-        service: "Issues"
         field: "ariById"
         arguments: [{name: "id" value: "$source.id"}]
       )

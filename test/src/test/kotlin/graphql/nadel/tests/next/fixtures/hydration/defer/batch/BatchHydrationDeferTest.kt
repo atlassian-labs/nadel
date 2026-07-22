@@ -30,7 +30,6 @@ class BatchHydrationDeferTest : NadelIntegrationTest(
                   assigneeId: ID! @hidden
                   assignee: User
                     @hydrated(
-                      service: "users"
                       field: "usersByIds"
                       arguments: [{name: "ids", value: "$source.assigneeId"}]
                     )

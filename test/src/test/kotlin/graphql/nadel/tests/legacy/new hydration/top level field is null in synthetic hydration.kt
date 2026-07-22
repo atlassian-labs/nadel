@@ -43,7 +43,6 @@ class `top level field is null in synthetic hydration` : NadelLegacyIntegrationT
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("projects") {
-                        Unit
                     }
                 }
                 wiring.type("ProjectsQuery") { type ->
@@ -67,7 +66,6 @@ class `top level field is null in synthetic hydration` : NadelLegacyIntegrationT
                   id: ID
                   project: Project
                   @hydrated(
-                    service: "service2"
                     field: "projects.project"
                     arguments: [{name: "id" value: "${'$'}source.projectId"}]
                   )

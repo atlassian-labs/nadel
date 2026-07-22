@@ -57,13 +57,11 @@ class `one hydration call with variables defined` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )
                   barLongerInput: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.fooDetails.externalBarId"}]
                   )

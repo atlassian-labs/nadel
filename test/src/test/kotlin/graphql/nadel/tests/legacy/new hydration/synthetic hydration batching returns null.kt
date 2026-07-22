@@ -43,7 +43,6 @@ class `synthetic hydration batching returns null` : NadelLegacyIntegrationTest(
             runtimeWiring = { wiring ->
                 wiring.type("Query") { type ->
                     type.dataFetcher("barsQuery") {
-                        Unit
                     }
                 }
                 wiring.type("BarsQuery") { type ->
@@ -63,7 +62,6 @@ class `synthetic hydration batching returns null` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: [Bar]
                   @hydrated(
-                    service: "service2"
                     field: "barsQuery.barsById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )

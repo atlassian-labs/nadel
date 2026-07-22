@@ -31,7 +31,6 @@ class `hydrating using url as arg` : NadelLegacyIntegrationTest(
                   url: URL
                   details: Lookup
                   @hydrated(
-                    service: "service"
                     field: "lookup"
                     arguments: [{ name: "url" value: "${'$'}source.url" }]
                   )

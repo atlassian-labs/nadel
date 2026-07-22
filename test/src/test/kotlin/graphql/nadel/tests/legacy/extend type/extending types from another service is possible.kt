@@ -27,7 +27,6 @@ class `extending types from another service is possible` : NadelLegacyIntegratio
                 extend type Root {
                   extension: Extension
                   @hydrated(
-                    service: "Service2"
                     field: "lookup"
                     arguments: [{name: "id" value: "${'$'}source.id"}]
                     identifiedBy: "id"

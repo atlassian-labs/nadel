@@ -31,7 +31,6 @@ class `able to ask for field and use same field as hydration source` : NadelLega
                   name: String
                   nestedBar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )

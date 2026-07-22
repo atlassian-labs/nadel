@@ -58,7 +58,6 @@ class `basic hydration with static arg float` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: Bar
                   @hydrated(
-                    service: "service2"
                     field: "barWithSomeFloat"
                     arguments: [{name: "someFloat" value: 123.45}]
                   )

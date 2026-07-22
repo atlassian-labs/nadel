@@ -26,7 +26,6 @@ class `hydration from field in interface with type rename` : NadelLegacyIntegrat
                   title: String
                   issueAuthor: RenamedUser
                   @hydrated(
-                    service: "users"
                     field: "user"
                     arguments: [{name: "id" value: "${'$'}source.author.userId"}]
                   )

@@ -47,7 +47,6 @@ class `query with three nested hydrations and simple data and lots of renames` :
                   barName: String @renamed(from: "name")
                   nestedBar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barsById"
                     arguments: [{name: "id" value: "${'$'}source.nestedBarId"}]
                     identifiedBy: "barId"
@@ -125,7 +124,6 @@ class `query with three nested hydrations and simple data and lots of renames` :
                   fooDetails: FooDetails @renamed(from: "details")
                   bar: Bar
                   @hydrated(
-                    service: "Bar"
                     field: "barsById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                     identifiedBy: "barId"

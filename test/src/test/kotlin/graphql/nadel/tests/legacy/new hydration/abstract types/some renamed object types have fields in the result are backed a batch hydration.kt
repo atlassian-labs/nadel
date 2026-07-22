@@ -28,7 +28,6 @@ class `some renamed object types have fields in the result are backed a batch hy
                       id: ID!
                       user: User
                       @hydrated(
-                        service: "users"
                         field: "usersByIds"
                         arguments: [{name: "ids" value: "${'$'}source.userId"}]
                         inputIdentifiedBy: [{sourceId: "userId" resultId: "id"}]

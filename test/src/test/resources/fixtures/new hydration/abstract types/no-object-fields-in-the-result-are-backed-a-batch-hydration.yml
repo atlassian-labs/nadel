@@ -13,7 +13,6 @@ overallSchema:
       id: ID!
       user: User
       @hydrated(
-        service: "users"
         field: "usersByIds"
         arguments: [{name: "ids" value: "$source.userId"}]
         inputIdentifiedBy: [{sourceId: "userId" resultId: "id"}]

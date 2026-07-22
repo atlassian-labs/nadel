@@ -32,7 +32,6 @@ class `query with hydrated interfaces work as expected` : NadelLegacyIntegration
                   name: String
                   owners: [Owner]
                   @hydrated(
-                    service: "OwnerService"
                     field: "ownerById"
                     arguments: [{name: "id" value: "${'$'}source.ownerIds"}]
                   )
@@ -44,7 +43,6 @@ class `query with hydrated interfaces work as expected` : NadelLegacyIntegration
                   wearsBell: Boolean
                   owners: [Owner]
                   @hydrated(
-                    service: "OwnerService"
                     field: "ownerById"
                     arguments: [{name: "id" value: "${'$'}source.ownerIds"}]
                   )
@@ -56,7 +54,6 @@ class `query with hydrated interfaces work as expected` : NadelLegacyIntegration
                   wearsCollar: Boolean
                   owners: [Owner]
                   @hydrated(
-                    service: "OwnerService"
                     field: "ownerById"
                     arguments: [{name: "id" value: "${'$'}source.ownerIds"}]
                   )

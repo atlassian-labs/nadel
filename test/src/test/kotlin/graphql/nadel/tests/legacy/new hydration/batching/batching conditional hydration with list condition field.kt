@@ -57,7 +57,6 @@ class `batching conditional hydration with list condition field` : NadelLegacyIn
                   barIds: [ID] @hidden
                   bar: [Bar] 
                     @hydrated(
-                      service: "service2"
                       field: "barsById"
                       arguments: [
                         {

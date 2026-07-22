@@ -32,7 +32,6 @@ class `exceptions in hydration call that fail with errors are reflected in the r
                       name: String
                       nestedBar: Bar
                       @hydrated(
-                        service: "Bar"
                         field: "barById"
                         arguments: [{name: "id" value: "${'$'}source.nestedBarId"}]
                       )
@@ -62,7 +61,6 @@ class `exceptions in hydration call that fail with errors are reflected in the r
                       name: String
                       bar: Bar
                       @hydrated(
-                        service: "Bar"
                         field: "barById"
                         arguments: [{name: "id" value: "${'$'}source.barId"}]
                       )

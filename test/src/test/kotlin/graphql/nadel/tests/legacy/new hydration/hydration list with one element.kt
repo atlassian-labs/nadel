@@ -57,7 +57,6 @@ class `hydration list with one element` : NadelLegacyIntegrationTest(
                   id: ID
                   bar: [Bar]
                   @hydrated(
-                    service: "service2"
                     field: "barById"
                     arguments: [{name: "id" value: "${'$'}source.barId"}]
                   )

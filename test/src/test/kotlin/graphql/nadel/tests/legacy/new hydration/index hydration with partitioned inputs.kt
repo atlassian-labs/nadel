@@ -66,7 +66,6 @@ class `index hydration with partitioned inputs` : NadelLegacyIntegrationTest(
                   id: ID
                   authors: [User]
                   @hydrated(
-                    service: "UserService"
                     field: "usersByIds"
                     arguments: [{name: "id" value: "${'$'}source.authorIds"}]
                     identifiedBy: "id"
