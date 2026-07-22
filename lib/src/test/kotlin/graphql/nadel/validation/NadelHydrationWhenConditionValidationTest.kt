@@ -9,77 +9,247 @@ private const val source = "$" + "source"
 private const val argument = "$" + "argument"
 
 class NadelHydrationWhenConditionValidationTest {
-    private fun enumConditionFixture(
-        conditionFieldType: String = "IssueType",
-        underlyingConditionFieldType: String = "IssueType!",
-        predicate: String = "equals: \"BUG\"",
+    private fun booleanConditionFixture(
+        conditionFieldType: String,
+        underlyingConditionFieldType: String,
+        predicate: String,
     ): NadelValidationTestFixture {
         return NadelValidationTestFixture(
             overallSchema = mapOf(
                 "issues" to """
-                        type Query {
-                            issue: JiraIssue
-                        }
-                        type JiraIssue @renamed(from: "Issue") {
-                            id: ID!
-                        }
-                        enum IssueType {
-                            BUG
-                            STORY
-                        }
-                    """.trimIndent(),
+                    type Query {
+                        issue: JiraIssue
+                    }
+                    type JiraIssue @renamed(from: "Issue") {
+                        id: ID!
+                    }
+                """.trimIndent(),
                 "users" to """
-                        type Query {
-                            users(id: [ID!]!): [User]
-                        }
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                        extend type JiraIssue {
-                            type: $conditionFieldType
-                            collaborators: [User] @hydrated(
-                                service: "users"
-                                field: "users"
-                                arguments: [
-                                    {name: "id", value: "$source.collaboratorIds"}
-                                ]
-                                when: {
-                                    result: {
-                                        sourceField: "type"
-                                        predicate: { $predicate }
-                                    }
+                    type Query {
+                        users(id: [ID!]!): [User]
+                    }
+                    type User {
+                        id: ID!
+                        name: String!
+                    }
+                    extend type JiraIssue {
+                        shouldHydrate: $conditionFieldType
+                        collaborators: [User] @hydrated(
+                            service: "users"
+                            field: "users"
+                            arguments: [
+                                {name: "id", value: "$source.collaboratorIds"}
+                            ]
+                            when: {
+                                result: {
+                                    sourceField: "shouldHydrate"
+                                    predicate: { $predicate }
                                 }
-                            )
-                        }
-                    """.trimIndent(),
+                            }
+                        )
+                    }
+                """.trimIndent(),
             ),
             underlyingSchema = mapOf(
                 "issues" to """
-                        type Query {
-                            issue: Issue
-                        }
-                        enum IssueType {
-                            BUG
-                            STORY
-                        }
-                        type Issue {
-                            id: ID!
-                            collaboratorIds: [ID!]
-                            type: $underlyingConditionFieldType
-                        }
-                    """.trimIndent(),
+                    type Query {
+                        issue: Issue
+                    }
+                    type Issue {
+                        id: ID!
+                        collaboratorIds: [ID!]
+                        shouldHydrate: $underlyingConditionFieldType
+                    }
+                """.trimIndent(),
                 "users" to """
-                        type Query {
-                            users(id: [ID!]!): [User]
-                        }
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                    """.trimIndent(),
+                    type Query {
+                        users(id: [ID!]!): [User]
+                    }
+                    type User {
+                        id: ID!
+                        name: String!
+                    }
+                """.trimIndent(),
             ),
         )
+    }
+
+    private fun enumConditionFixture(
+        conditionFieldType: String,
+        underlyingConditionFieldType: String,
+        predicate: String,
+    ): NadelValidationTestFixture {
+        return NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "issues" to """
+                type Query {
+                        issue: JiraIssue
+                    }
+                    type JiraIssue @renamed(from: "Issue") {
+                        id: ID!
+                    }
+                    enum IssueType {
+                        BUG
+                        STORY
+                    }
+                """.trimIndent(),
+                "users" to """
+                    type Query {
+                        users(id: [ID!]!): [User]
+                    }
+                    type User {
+                        id: ID!
+                        name: String!
+                    }
+                    extend type JiraIssue {
+                        type: $conditionFieldType
+                        collaborators: [User] @hydrated(
+                            service: "users"
+                            field: "users"
+                            arguments: [
+                                {name: "id", value: "$source.collaboratorIds"}
+                            ]
+                            when: {
+                                result: {
+                                    sourceField: "type"
+                                    predicate: { $predicate }
+                                }
+                            }
+                        )
+                    }
+                """.trimIndent(),
+            ),
+            underlyingSchema = mapOf(
+                "issues" to """
+                    type Query {
+                        issue: Issue
+                    }
+                    enum IssueType {
+                        BUG
+                        STORY
+                    }
+                    type Issue {
+                        id: ID!
+                        collaboratorIds: [ID!]
+                        type: $underlyingConditionFieldType
+                    }
+                """.trimIndent(),
+                "users" to """
+                    type Query {
+                        users(id: [ID!]!): [User]
+                    }
+                    type User {
+                        id: ID!
+                        name: String!
+                    }
+                """.trimIndent(),
+            ),
+        )
+    }
+
+    @Test
+    fun `boolean condition field is acceptable for true equals predicate`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "Boolean",
+            underlyingConditionFieldType = "Boolean!",
+            predicate = "equals: true",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `boolean condition field is acceptable for false equals predicate`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "Boolean",
+            underlyingConditionFieldType = "Boolean!",
+            predicate = "equals: false",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `non null boolean condition field is acceptable for equals predicate`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "Boolean!",
+            underlyingConditionFieldType = "Boolean!",
+            predicate = "equals: true",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.map { it.message }.isEmpty())
+    }
+
+    @Test
+    fun `list boolean condition field is not acceptable for equals predicate`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "[Boolean]",
+            underlyingConditionFieldType = "[Boolean]",
+            predicate = "equals: true",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationResultConditionUnsupportedFieldTypeError>()
+    }
+
+    @Test
+    fun `boolean condition field rejects string equals value`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "Boolean",
+            underlyingConditionFieldType = "Boolean!",
+            predicate = "equals: \"true\"",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationConditionIncompatibleValueError>()
+    }
+
+    @Test
+    fun `boolean condition field rejects matches predicate`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "Boolean",
+            underlyingConditionFieldType = "Boolean!",
+            predicate = "matches: \"true\"",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationConditionMatchesPredicateRequiresStringFieldError>()
+    }
+
+    @Test
+    fun `boolean condition field rejects startsWith predicate`() {
+        val fixture = booleanConditionFixture(
+            conditionFieldType = "Boolean",
+            underlyingConditionFieldType = "Boolean!",
+            predicate = "startsWith: \"tr\"",
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        errors.assertSingleOfType<NadelHydrationConditionStartsWithPredicateRequiresStringFieldError>()
     }
 
     @Test
@@ -152,7 +322,11 @@ class NadelHydrationWhenConditionValidationTest {
 
     @Test
     fun `enum condition field is acceptable for equals predicate`() {
-        val fixture = enumConditionFixture()
+        val fixture = enumConditionFixture(
+            conditionFieldType = "IssueType",
+            underlyingConditionFieldType = "IssueType!",
+            predicate = "equals: \"BUG\"",
+        )
 
         // When
         val errors = validate(fixture)
@@ -163,7 +337,11 @@ class NadelHydrationWhenConditionValidationTest {
 
     @Test
     fun `non null enum condition field is acceptable for equals predicate`() {
-        val fixture = enumConditionFixture(conditionFieldType = "IssueType!")
+        val fixture = enumConditionFixture(
+            conditionFieldType = "IssueType!",
+            underlyingConditionFieldType = "IssueType!",
+            predicate = "equals: \"BUG\"",
+        )
 
         // When
         val errors = validate(fixture)
@@ -177,6 +355,7 @@ class NadelHydrationWhenConditionValidationTest {
         val fixture = enumConditionFixture(
             conditionFieldType = "[IssueType]",
             underlyingConditionFieldType = "[IssueType]",
+            predicate = "equals: \"BUG\"",
         )
 
         // When
@@ -188,7 +367,11 @@ class NadelHydrationWhenConditionValidationTest {
 
     @Test
     fun `enum condition field rejects invalid equals value`() {
-        val fixture = enumConditionFixture(predicate = "equals: \"TASK\"")
+        val fixture = enumConditionFixture(
+            conditionFieldType = "IssueType",
+            underlyingConditionFieldType = "IssueType!",
+            predicate = "equals: \"TASK\"",
+        )
 
         // When
         val errors = validate(fixture)
@@ -200,7 +383,11 @@ class NadelHydrationWhenConditionValidationTest {
 
     @Test
     fun `enum condition field equals comparison is case sensitive`() {
-        val fixture = enumConditionFixture(predicate = "equals: \"bug\"")
+        val fixture = enumConditionFixture(
+            conditionFieldType = "IssueType",
+            underlyingConditionFieldType = "IssueType!",
+            predicate = "equals: \"bug\"",
+        )
 
         // When
         val errors = validate(fixture)
@@ -212,7 +399,11 @@ class NadelHydrationWhenConditionValidationTest {
 
     @Test
     fun `enum condition field rejects empty string equals value`() {
-        val fixture = enumConditionFixture(predicate = "equals: \"\"")
+        val fixture = enumConditionFixture(
+            conditionFieldType = "IssueType",
+            underlyingConditionFieldType = "IssueType!",
+            predicate = "equals: \"\"",
+        )
 
         // When
         val errors = validate(fixture)
@@ -224,7 +415,11 @@ class NadelHydrationWhenConditionValidationTest {
 
     @Test
     fun `enum condition field rejects matches predicate`() {
-        val fixture = enumConditionFixture(predicate = "matches: \"BUG\"")
+        val fixture = enumConditionFixture(
+            conditionFieldType = "IssueType",
+            underlyingConditionFieldType = "IssueType!",
+            predicate = "matches: \"BUG\"",
+        )
 
         // When
         val errors = validate(fixture)
@@ -235,7 +430,11 @@ class NadelHydrationWhenConditionValidationTest {
 
     @Test
     fun `enum condition field rejects startsWith predicate`() {
-        val fixture = enumConditionFixture(predicate = "startsWith: \"BU\"")
+        val fixture = enumConditionFixture(
+            conditionFieldType = "IssueType",
+            underlyingConditionFieldType = "IssueType!",
+            predicate = "startsWith: \"BU\"",
+        )
 
         // When
         val errors = validate(fixture)

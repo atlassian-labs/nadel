@@ -553,13 +553,14 @@ data class NadelHydrationResultConditionUnsupportedFieldTypeError(
         val str = Scalars.GraphQLString.name
         val int = Scalars.GraphQLInt.name
         val id = Scalars.GraphQLID.name
+        val boolean = Scalars.GraphQLBoolean.name
         val parentTypeName = parentType.overall.name
 
         getHydrationErrorMessage(
             parentType,
             virtualField,
             hydration,
-            reason = "condition field $parentTypeName.$conditionField must be of type $str, $int, $id or enum but is $conditionFieldType",
+            reason = "condition field $parentTypeName.$conditionField must be of type $str, $int, $id, $boolean or enum but is $conditionFieldType",
         )
     }
 
