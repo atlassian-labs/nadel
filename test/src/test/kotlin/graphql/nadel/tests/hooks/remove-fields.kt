@@ -3,7 +3,6 @@ package graphql.nadel.tests.hooks
 import graphql.ErrorClassification
 import graphql.GraphQLError
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
@@ -98,61 +97,46 @@ class `one-of-top-level-fields-is-removed` : EngineTestHook {
 @UseHook
 class `top-level-field-is-removed` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 @UseHook
 class `top-level-field-is-removed-for-a-subscription` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 @UseHook
 class `top-level-field-is-removed-for-a-subscription-with-namespaced-field` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
-}
-
-@UseHook
-class `top-level-field-is-removed-hint-is-off` : EngineTestHook {
-    override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { false }
 }
 
 @UseHook
 class `hydration-top-level-field-is-removed` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 @UseHook
 class `namespaced-hydration-top-level-field-is-removed` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 @UseHook
 class `hidden-namespaced-hydration-top-level-field-is-removed` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 @UseHook
 class `namespaced-field-is-removed` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 @UseHook
 class `namespaced-field-is-removed-with-renames` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 @UseHook
 class `renamed-top-level-field-is-not-removed-short-circuit-hint-is-on` : EngineTestHook {
     override val customTransforms = listOf(RemoveFieldTestTransform())
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder) = builder.shortCircuitEmptyQuery { true }
 }
 
 // @UseHook
