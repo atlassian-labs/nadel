@@ -121,12 +121,18 @@ internal object NadelResultMerger {
         // NOTE: please ensure all fields are from object types and will NOT have multiple field defs
         // Other code in this file relies on this contract
         for (field in topLevelFields) {
+            val namespaced = isNamespacedField(field, engineSchema)
+
+            if (namespaced && field.children.isEmpty()) {
+                continue
+            }
+
             val requiredChildFields = requiredFields
                 .computeIfAbsent(NadelResultKey(field.resultKey)) {
                     mutableListOf()
                 }
 
-            if (isNamespacedField(field, engineSchema)) {
+            if (namespaced) {
                 requiredChildFields.addAll(field.children)
             }
         }
