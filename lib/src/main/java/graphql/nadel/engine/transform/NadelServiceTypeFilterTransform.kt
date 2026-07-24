@@ -4,7 +4,6 @@ import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.definition.hydration.NadelHydrationConditionDefinition.Keyword.result
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
@@ -176,8 +175,14 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
+        // A transform on a parent may have narrowed this field after planning. Intersect with the current types
+        // so service filtering can never reintroduce a type removed by an earlier transform.
+        val currentFieldObjectTypeNamesOwnedByService = field.objectTypeNames.filter {
+            it in state.fieldObjectTypeNamesOwnedByService
+        }
+
         // Nothing to query if there are no fields, we need to add selection
-        if (state.fieldObjectTypeNamesOwnedByService.isEmpty()) {
+        if (currentFieldObjectTypeNamesOwnedByService.isEmpty()) {
             val objectTypeNames = state.overallField.parent.getFieldDefinitions(executionBlueprint.engineSchema)
                 .asSequence()
                 .flatMap { fieldDef ->
@@ -218,7 +223,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             newField = field
                 .toBuilder()
                 .clearObjectTypesNames()
-                .objectTypeNames(state.fieldObjectTypeNamesOwnedByService)
+                .objectTypeNames(currentFieldObjectTypeNamesOwnedByService)
                 .build(),
         )
     }
