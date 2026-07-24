@@ -44,7 +44,11 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         val aliasHelper: NadelAliasHelper,
         val exposedOverallImplNames: Set<String>,
         val relaxedFieldResultKey: String,
-    )
+    ) {
+        // Applicability is planned before query transforms run. Record whether the final field was actually relaxed
+        // so result filtering cannot act on stale planned state.
+        var wasRelaxed = false
+    }
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
@@ -96,6 +100,14 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         state: State,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): NadelTransformFieldResult {
+        // An earlier transform may have narrowed this field since isApplicable was evaluated.
+        val currentExposedImplNames =
+            computeExposedImplNamesIfRelaxable(executionBlueprint, service, field)
+        if (currentExposedImplNames != state.exposedOverallImplNames) {
+            return NadelTransformFieldResult.unmodified(field)
+        }
+        state.wasRelaxed = true
+
         // Keep objectTypeNames honest (only the exposed members). Rather than widen them, flag the field and
         // the injected __typename as forcePrintBare so the forked compiler emits them without a `... on Type`
         // fragment. See [NadelTransformFieldResult.forcePrintBare].
@@ -124,6 +136,10 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         nodes: JsonNodes,
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
     ): List<NadelResultInstruction> {
+        if (!state.wasRelaxed) {
+            return emptyList()
+        }
+
         val parentPath = underlyingParentField?.queryPath ?: overallField.parent?.queryPath ?: return emptyList()
         val parentNodes = nodes.getNodesAt(parentPath, flatten = true)
         val key = state.aliasHelper.typeNameResultKey
