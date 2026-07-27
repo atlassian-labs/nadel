@@ -199,7 +199,6 @@ class StaticHydrationTest : NadelIntegrationTest(
 ) {
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
-            .virtualTypeSupport { true }
             .shortCircuitEmptyQuery { true }
     }
 }

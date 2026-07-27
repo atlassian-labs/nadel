@@ -23,7 +23,6 @@ import graphql.normalized.NormalizedInputValue
 internal object NadelHydrationFieldsBuilder {
     fun makeBackingQueries(
         executionContext: NadelExecutionContext,
-        service: Service,
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         virtualField: ExecutableNormalizedField,
@@ -53,11 +52,9 @@ internal object NadelHydrationFieldsBuilder {
             }
             // Fix types for virtual fields
             .onEach { field ->
-                if (executionContext.hints.virtualTypeSupport(service)) {
-                    setBackingObjectTypeNames(instruction, field)
-                    field.traverseSubTree { child ->
-                        setBackingObjectTypeNames(instruction, child)
-                    }
+                setBackingObjectTypeNames(instruction, field)
+                field.traverseSubTree { child ->
+                    setBackingObjectTypeNames(instruction, child)
                 }
             }
     }
