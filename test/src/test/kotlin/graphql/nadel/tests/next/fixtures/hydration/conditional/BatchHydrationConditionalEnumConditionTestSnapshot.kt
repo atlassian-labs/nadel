@@ -22,36 +22,6 @@ private suspend fun main() {
 public class BatchHydrationConditionalEnumConditionTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "service2",
-                query = """
-                | {
-                |   storyBarsById(ids: ["bar-id-1", "bar-id-2"]) {
-                |     batch_hydration__bars__id: id
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "storyBarsById": [
-                |       {
-                |         "batch_hydration__bars__id": "bar-id-1",
-                |         "name": "Story Bar 1"
-                |       },
-                |       {
-                |         "batch_hydration__bars__id": "bar-id-2",
-                |         "name": "Story Bar 2"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
                 service = "service1",
                 query = """
                 | {
@@ -69,13 +39,50 @@ public class BatchHydrationConditionalEnumConditionTestSnapshot : TestSnapshot()
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__batch_hydration__bars": "Foo",
                 |       "batch_hydration__bars__barIds": [
                 |         "bar-id-1",
                 |         "bar-id-2"
                 |       ],
-                |       "batch_hydration__bars__type": "STORY"
+                |       "batch_hydration__bars__type": "STORY",
+                |       "__typename__batch_hydration__bars": "Foo"
                 |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "service2",
+                query = """
+                | query (${'$'}v0: [ID]) {
+                |   storyBarsById(ids: ${'$'}v0) {
+                |     batch_hydration__bars__id: id
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar-id-1",
+                |     "bar-id-2"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "storyBarsById": [
+                |       {
+                |         "name": "Story Bar 1",
+                |         "batch_hydration__bars__id": "bar-id-1"
+                |       },
+                |       {
+                |         "name": "Story Bar 2",
+                |         "batch_hydration__bars__id": "bar-id-2"
+                |       }
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -84,6 +91,24 @@ public class BatchHydrationConditionalEnumConditionTestSnapshot : TestSnapshot()
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "foo": {
+     *       "bars": [
+     *         {
+     *           "name": "Story Bar 1"
+     *         },
+     *         {
+     *           "name": "Story Bar 2"
+     *         }
+     *       ]
+     *     }
+     *   }
+     * }
+     * ```
+     */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {

@@ -24,8 +24,8 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   appUser(siteId: "site1", userId: "wow") {
+                | query (${'$'}v0: ID!, ${'$'}v1: ID!) {
+                |   appUser(siteId: ${'$'}v0, userId: ${'$'}v1) {
                 |     __typename
                 |     ... on AppUser {
                 |       appUserId: id
@@ -36,7 +36,12 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "site1",
+                |   "v1": "wow"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -53,8 +58,8 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   appUser(siteId: "site2", userId: "aoeu") {
+                | query (${'$'}v0: ID!, ${'$'}v1: ID!) {
+                |   appUser(siteId: ${'$'}v0, userId: ${'$'}v1) {
                 |     __typename
                 |     ... on AppUser {
                 |       appUserId: id
@@ -65,7 +70,12 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "site2",
+                |   "v1": "aoeu"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -82,8 +92,8 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   appUser(siteId: "site2", userId: "wow") {
+                | query (${'$'}v0: ID!, ${'$'}v1: ID!) {
+                |   appUser(siteId: ${'$'}v0, userId: ${'$'}v1) {
                 |     __typename
                 |     ... on AppUser {
                 |       appUserId: id
@@ -94,7 +104,12 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "site2",
+                |   "v1": "wow"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -111,8 +126,8 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   atlassianAccountUser(siteId: "site1", userId: "aoeu") {
+                | query (${'$'}v0: ID!, ${'$'}v1: ID!) {
+                |   atlassianAccountUser(siteId: ${'$'}v0, userId: ${'$'}v1) {
                 |     __typename
                 |     ... on AtlassianAccountUser {
                 |       atlassianAccountUserId: id
@@ -123,7 +138,12 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "site1",
+                |   "v1": "aoeu"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -140,8 +160,8 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   customerUser(siteId: "site2", userId: "asdf") {
+                | query (${'$'}v0: ID!, ${'$'}v1: ID!) {
+                |   customerUser(siteId: ${'$'}v0, userId: ${'$'}v1) {
                 |     __typename
                 |     ... on CustomerUser {
                 |       customerUserId: id
@@ -152,7 +172,12 @@ public class HydrationNonBatchedMultipleSourceArgumentsConditionalTestSnapshot :
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "site2",
+                |   "v1": "asdf"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -65,14 +65,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           issues {
             __typename__batch_hydration__authors: __typename
             batch_hydration__authors__authorIds: authorIds
             id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -110,13 +110,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          usersByIds(id: ["USER-1", "USER-2", "USER-3"], test: "Hello World") {
+        query ($v0: String, $v1: [ID]) {
+          usersByIds(id: $v1, test: $v0) {
             id
             batch_hydration__authors__id: id
           }
         }
-      variables: { }
+      variables: {"v0":"Hello World","v1":["USER-1","USER-2","USER-3"]}
     # language=JSON
     response: |-
       {
@@ -142,13 +142,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          usersByIds(id: ["USER-4", "USER-5"], test: "Hello World") {
+        query ($v0: String, $v1: [ID]) {
+          usersByIds(id: $v1, test: $v0) {
             id
             batch_hydration__authors__id: id
           }
         }
-      variables: { }
+      variables: {"v0":"Hello World","v1":["USER-4","USER-5"]}
     # language=JSON
     response: |-
       {

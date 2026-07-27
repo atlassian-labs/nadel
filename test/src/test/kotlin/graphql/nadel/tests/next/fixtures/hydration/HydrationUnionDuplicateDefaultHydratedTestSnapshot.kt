@@ -24,6 +24,45 @@ public class HydrationUnionDuplicateDefaultHydratedTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "myService",
                 query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
+                |     __typename
+                |     batch_hydration__user__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "aoeu",
+                |     "asdf",
+                |     "wow"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "users": [
+                |       {
+                |         "__typename": "AtlassianAccountUser",
+                |         "batch_hydration__user__id": "aoeu"
+                |       },
+                |       {
+                |         "__typename": "CustomerUser",
+                |         "batch_hydration__user__id": "asdf"
+                |       },
+                |       null
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "myService",
+                query = """
                 | {
                 |   issues {
                 |     __typename__batch_hydration__user: __typename
@@ -48,37 +87,6 @@ public class HydrationUnionDuplicateDefaultHydratedTestSnapshot : TestSnapshot()
                 |         "batch_hydration__user__userId": "wow",
                 |         "__typename__batch_hydration__user": "Issue"
                 |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | {
-                |   users(ids: ["aoeu", "asdf", "wow"]) {
-                |     __typename
-                |     batch_hydration__user__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "users": [
-                |       {
-                |         "__typename": "AtlassianAccountUser",
-                |         "batch_hydration__user__id": "aoeu"
-                |       },
-                |       {
-                |         "__typename": "CustomerUser",
-                |         "batch_hydration__user__id": "asdf"
-                |       },
-                |       null
                 |     ]
                 |   }
                 | }

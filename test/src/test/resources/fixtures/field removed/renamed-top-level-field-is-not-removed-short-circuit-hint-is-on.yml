@@ -32,12 +32,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        {
-          rename__commentById__commentByIdUnderlying: commentByIdUnderlying(id: "C1") {
+        query ($v0: ID) {
+          rename__commentById__commentByIdUnderlying: commentByIdUnderlying(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables: {"v0":"C1"}
     # language=JSON
     response: |-
       {

@@ -26,11 +26,11 @@ public class MultipleRenameTransformsInsideAndOutsideDeferSnapshot : TestSnapsho
                 query = """
                 | {
                 |   defer {
-                |     rename__fastRenamedString__fastString: fastString
                 |     __typename__rename__fastRenamedString: __typename
+                |     rename__fastRenamedString__fastString: fastString
                 |     ... @defer {
-                |       rename__slowRenamedString__slowString: slowString
                 |       __typename__rename__slowRenamedString: __typename
+                |       rename__slowRenamedString__slowString: slowString
                 |     }
                 |   }
                 | }

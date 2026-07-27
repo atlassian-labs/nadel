@@ -21,19 +21,25 @@ private suspend fun main() {
 @Suppress("unused")
 public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-        ExpectedServiceCall(
-            service = "bitbucket",
-            query = """
-                | {
-                |   pullRequestsByIds(ids: ["ari:cloud:bitbucket::pull-request/2"]) {
-                |     title
-                |     patch
+            ExpectedServiceCall(
+                service = "bitbucket",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   pullRequestsByIds(ids: ${'$'}v0) {
                 |     batch_hydration__node__id: id
+                |     patch
+                |     title
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:bitbucket::pull-request/2"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
                 | {
                 |   "data": {
                 |     "pullRequestsByIds": [
@@ -46,19 +52,19 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "graph_store",
-            query = """
-                | query (${'$'}v0: JSON) {
-                |   graphStore_query(other: ${'$'}v0, query: "DROP TABLE", after: "2012", first: 10) {
+            ExpectedServiceCall(
+                service = "graph_store",
+                query = """
+                | query (${'$'}v0: String!, ${'$'}v1: Int, ${'$'}v2: String, ${'$'}v3: JSON) {
+                |   graphStore_query(after: ${'$'}v2, first: ${'$'}v1, other: ${'$'}v3, query: ${'$'}v0) {
                 |     edges {
-                |       batch_hydration__node__nodeId: nodeId
-                |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
                 |       cursor
+                |       batch_hydration__node__nodeId: nodeId
+                |       batch_hydration__node__nodeId: nodeId
                 |     }
                 |     pageInfo {
                 |       hasNextPage
@@ -66,14 +72,17 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            variables = """
+                variables = """
                 | {
-                |   "v0": {
+                |   "v0": "DROP TABLE",
+                |   "v1": 10,
+                |   "v2": "2012",
+                |   "v3": {
                 |     "teamId": "hello"
                 |   }
                 | }
                 """.trimMargin(),
-            result = """
+                result = """
                 | {
                 |   "data": {
                 |     "graphStore_query": {
@@ -96,21 +105,27 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "jira",
-            query = """
-                | {
-                |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
-                |     key
+            ExpectedServiceCall(
+                service = "jira",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     batch_hydration__node__id: id
+                |     key
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::issue/1"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
                 | {
                 |   "data": {
                 |     "issuesByIds": [
@@ -122,28 +137,10 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "work",
-            query = """
-                | {
-                |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
-                | }
-                """.trimMargin(),
-            variables = " {}",
-            result = """
-                | {
-                |   "data": {
-                |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
-                |   }
-                | }
-                """.trimMargin(),
-            delayedResults = listOfJsonStrings(
-            ),
-        ),
-    )
+        )
 
     /**
      * ```json
@@ -174,7 +171,7 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-        result = """
+            result = """
             | {
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
@@ -200,7 +197,7 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
             |   }
             | }
             """.trimMargin(),
-        delayedResults = listOfJsonStrings(
-        ),
-    )
+            delayedResults = listOfJsonStrings(
+            ),
+        )
 }

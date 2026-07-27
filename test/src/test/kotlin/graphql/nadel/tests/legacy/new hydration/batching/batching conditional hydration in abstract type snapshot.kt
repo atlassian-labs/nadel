@@ -24,6 +24,136 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   commentsByIds(ids: ${'$'}v0) {
+                |     __typename
+                |     content
+                |     id
+                |     batch_hydration__content__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "comment/5000",
+                |     "comment/6000",
+                |     "comment/1234",
+                |     "comment/9001"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "commentsByIds": [
+                |       {
+                |         "__typename": "Comment",
+                |         "id": "comment/5000",
+                |         "content": "Five Thousand",
+                |         "batch_hydration__content__id": "comment/5000"
+                |       },
+                |       {
+                |         "__typename": "Comment",
+                |         "id": "comment/6000",
+                |         "content": "Six Thousand",
+                |         "batch_hydration__content__id": "comment/6000"
+                |       },
+                |       {
+                |         "__typename": "Comment",
+                |         "id": "comment/1234",
+                |         "content": "One Two Three Four",
+                |         "batch_hydration__content__id": "comment/1234"
+                |       },
+                |       {
+                |         "__typename": "Comment",
+                |         "id": "comment/9001",
+                |         "content": "It's over 9000",
+                |         "batch_hydration__content__id": "comment/9001"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "monolith",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
+                |     __typename
+                |     id
+                |     batch_hydration__content__id: id
+                |     title
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "issue/4000"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issuesByIds": [
+                |       {
+                |         "__typename": "Issue",
+                |         "id": "issue/4000",
+                |         "title": "Four Thousand",
+                |         "batch_hydration__content__id": "issue/4000"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "monolith",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
+                |     __typename
+                |     id
+                |     batch_hydration__content__id: id
+                |     title
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "issue/8080",
+                |     "issue/7496"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issuesByIds": [
+                |       {
+                |         "__typename": "Issue",
+                |         "id": "issue/7496",
+                |         "title": "Seven Four Nine Six",
+                |         "batch_hydration__content__id": "issue/7496"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "monolith",
+                query = """
                 | {
                 |   activity {
                 |     __typename__batch_hydration__content: __typename
@@ -65,114 +195,6 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |       {
                 |         "__typename__batch_hydration__content": "SingleActivity",
                 |         "batch_hydration__content__contentId": "issue/7496"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "monolith",
-                query = """
-                | {
-                |   commentsByIds(ids: ["comment/5000", "comment/6000", "comment/1234", "comment/9001"]) {
-                |     __typename
-                |     content
-                |     id
-                |     batch_hydration__content__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "commentsByIds": [
-                |       {
-                |         "__typename": "Comment",
-                |         "id": "comment/5000",
-                |         "content": "Five Thousand",
-                |         "batch_hydration__content__id": "comment/5000"
-                |       },
-                |       {
-                |         "__typename": "Comment",
-                |         "id": "comment/6000",
-                |         "content": "Six Thousand",
-                |         "batch_hydration__content__id": "comment/6000"
-                |       },
-                |       {
-                |         "__typename": "Comment",
-                |         "id": "comment/1234",
-                |         "content": "One Two Three Four",
-                |         "batch_hydration__content__id": "comment/1234"
-                |       },
-                |       {
-                |         "__typename": "Comment",
-                |         "id": "comment/9001",
-                |         "content": "It's over 9000",
-                |         "batch_hydration__content__id": "comment/9001"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "monolith",
-                query = """
-                | {
-                |   issuesByIds(ids: ["issue/4000"]) {
-                |     __typename
-                |     id
-                |     batch_hydration__content__id: id
-                |     title
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issuesByIds": [
-                |       {
-                |         "__typename": "Issue",
-                |         "id": "issue/4000",
-                |         "title": "Four Thousand",
-                |         "batch_hydration__content__id": "issue/4000"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "monolith",
-                query = """
-                | {
-                |   issuesByIds(ids: ["issue/8080", "issue/7496"]) {
-                |     __typename
-                |     id
-                |     batch_hydration__content__id: id
-                |     title
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issuesByIds": [
-                |       {
-                |         "__typename": "Issue",
-                |         "id": "issue/7496",
-                |         "title": "Seven Four Nine Six",
-                |         "batch_hydration__content__id": "issue/7496"
                 |       }
                 |     ]
                 |   }

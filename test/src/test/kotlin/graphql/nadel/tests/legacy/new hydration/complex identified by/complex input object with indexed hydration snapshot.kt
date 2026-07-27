@@ -92,14 +92,35 @@ public class `complex input object with indexed hydration snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "Issue",
                 query = """
-                | {
-                |   issues(issuesInput: [{id : "ISSUE-0", site : "CLOUD-0"}, {id : "ISSUE-1", site : "CLOUD-0"}, {id : "ISSUE-2", site : "CLOUD-0"}, {id : "ISSUE-3", site : "CLOUD-0"}]) {
+                | query (${'$'}v0: [IssueInput!]) {
+                |   issues(issuesInput: ${'$'}v0) {
                 |     description
                 |     issueId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     {
+                |       "id": "ISSUE-0",
+                |       "site": "CLOUD-0"
+                |     },
+                |     {
+                |       "id": "ISSUE-1",
+                |       "site": "CLOUD-0"
+                |     },
+                |     {
+                |       "id": "ISSUE-2",
+                |       "site": "CLOUD-0"
+                |     },
+                |     {
+                |       "id": "ISSUE-3",
+                |       "site": "CLOUD-0"
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

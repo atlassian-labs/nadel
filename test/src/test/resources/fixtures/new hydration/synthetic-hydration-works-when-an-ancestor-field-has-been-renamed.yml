@@ -65,7 +65,7 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           rename__devOpsRelationships__relationships: relationships {
             __typename__rename__devOpsNodes: __typename
             rename__devOpsNodes__nodes: nodes {
@@ -74,7 +74,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -95,14 +95,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        query ($v0: ID) {
           syntheticIssue {
-            issue(id: "1") {
+            issue(id: $v0) {
               id
             }
           }
         }
-      variables: { }
+      variables: {"v0":"1"}
     # language=JSON
     response: |-
       {

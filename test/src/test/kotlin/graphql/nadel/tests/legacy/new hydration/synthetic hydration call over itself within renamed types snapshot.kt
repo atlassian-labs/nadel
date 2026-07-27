@@ -24,9 +24,9 @@ public class `synthetic hydration call over itself within renamed types snapshot
             ExpectedServiceCall(
                 service = "testing",
                 query = """
-                | {
+                | query (${'$'}v0: [ID!]!) {
                 |   tests {
-                |     characters(ids: ["C1", "C2", "C3"]) {
+                |     characters(ids: ${'$'}v0) {
                 |       id
                 |       batch_hydration__characters__id: id
                 |       name
@@ -34,7 +34,15 @@ public class `synthetic hydration call over itself within renamed types snapshot
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "C1",
+                |     "C2",
+                |     "C3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

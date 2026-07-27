@@ -28,8 +28,8 @@ public class DeferredFieldIsRenamedTestSnapshot : TestSnapshot() {
                 |   defer {
                 |     hello
                 |     ... @defer {
-                |       rename__overallString__underlyingString: underlyingString
                 |       __typename__rename__overallString: __typename
+                |       rename__overallString__underlyingString: underlyingString
                 |     }
                 |   }
                 | }

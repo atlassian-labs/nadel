@@ -24,19 +24,23 @@ public class HydrationDeferInlineFragmentGroupingTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   node(id: "issue/1") {
+                | query (${'$'}v0: ID!) {
+                |   node(id: ${'$'}v0) {
                 |     ... on Issue @defer {
                 |       key
                 |     }
                 |     ... on Issue {
-                |       hydration__assignee__assigneeId: assigneeId
                 |       __typename__hydration__assignee: __typename
+                |       hydration__assignee__assigneeId: assigneeId
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -69,13 +73,17 @@ public class HydrationDeferInlineFragmentGroupingTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   user(id: "user/1") {
+                | query (${'$'}v0: ID!) {
+                |   user(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -95,10 +103,10 @@ public class HydrationDeferInlineFragmentGroupingTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "node": {
-     *       "key": "TEST-1",
      *       "assignee": {
      *         "name": "Tester"
-     *       }
+     *       },
+     *       "key": "TEST-1"
      *     }
      *   }
      * }
@@ -123,10 +131,10 @@ public class HydrationDeferInlineFragmentGroupingTestSnapshot : TestSnapshot() {
                 |         "node"
                 |       ],
                 |       "data": {
-                |         "key": "TEST-1",
                 |         "assignee": {
                 |           "name": "Tester"
-                |         }
+                |         },
+                |         "key": "TEST-1"
                 |       }
                 |     }
                 |   ]

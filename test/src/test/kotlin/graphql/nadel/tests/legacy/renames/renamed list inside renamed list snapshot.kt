@@ -76,8 +76,8 @@ public class `renamed list inside renamed list snapshot` : TestSnapshot() {
      *         "renamedTicket": {
      *           "renamedTicketTypes": [
      *             {
-     *               "renamedId": "1",
-     *               "renamedDate": "20/11/2020"
+     *               "renamedDate": "20/11/2020",
+     *               "renamedId": "1"
      *             }
      *           ]
      *         }
@@ -96,8 +96,8 @@ public class `renamed list inside renamed list snapshot` : TestSnapshot() {
             |         "renamedTicket": {
             |           "renamedTicketTypes": [
             |             {
-            |               "renamedId": "1",
-            |               "renamedDate": "20/11/2020"
+            |               "renamedDate": "20/11/2020",
+            |               "renamedId": "1"
             |             }
             |           ]
             |         }

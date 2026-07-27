@@ -24,8 +24,8 @@ public class `query with three nested hydrations and simple data snapshot` : Tes
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["bar1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__batch_hydration__nestedBar: __typename
                 |     batch_hydration__bar__barId: barId
                 |     name
@@ -33,7 +33,13 @@ public class `query with three nested hydrations and simple data snapshot` : Tes
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,8 +60,8 @@ public class `query with three nested hydrations and simple data snapshot` : Tes
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["nestedBar1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__batch_hydration__nestedBar: __typename
                 |     batch_hydration__nestedBar__barId: barId
                 |     name
@@ -63,7 +69,13 @@ public class `query with three nested hydrations and simple data snapshot` : Tes
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBar1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -84,14 +96,20 @@ public class `query with three nested hydrations and simple data snapshot` : Tes
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["nestedBarId456"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     batch_hydration__nestedBar__barId: barId
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBarId456"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

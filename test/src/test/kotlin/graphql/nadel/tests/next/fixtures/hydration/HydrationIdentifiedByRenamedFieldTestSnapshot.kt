@@ -24,42 +24,22 @@ public class HydrationIdentifiedByRenamedFieldTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   me {
-                |     batch_hydration__friends__friendIds: friendIds
-                |     __typename__batch_hydration__friends: __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = " {}",
-                result = """
-                | {
-                |   "data": {
-                |     "me": {
-                |       "batch_hydration__friends__friendIds": [
-                |         "i",
-                |         "2i"
-                |       ],
-                |       "__typename__batch_hydration__friends": "Me"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | {
-                |   users(ids: ["i", "2i"]) {
-                |     name
-                |     rename__batch_hydration__friends__id__canonicalAccountId: canonicalAccountId
+                | query (${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
                 |     __typename__rename__batch_hydration__friends__id: __typename
+                |     rename__batch_hydration__friends__id__canonicalAccountId: canonicalAccountId
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "i",
+                |     "2i"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -75,6 +55,33 @@ public class HydrationIdentifiedByRenamedFieldTestSnapshot : TestSnapshot() {
                 |         "__typename__rename__batch_hydration__friends__id": "User"
                 |       }
                 |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "myService",
+                query = """
+                | {
+                |   me {
+                |     __typename__batch_hydration__friends: __typename
+                |     batch_hydration__friends__friendIds: friendIds
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "me": {
+                |       "batch_hydration__friends__friendIds": [
+                |         "i",
+                |         "2i"
+                |       ],
+                |       "__typename__batch_hydration__friends": "Me"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),

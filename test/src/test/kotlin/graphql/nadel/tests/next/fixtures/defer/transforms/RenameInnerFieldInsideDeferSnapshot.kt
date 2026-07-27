@@ -28,8 +28,8 @@ public class RenameInnerFieldInsideDeferSnapshot : TestSnapshot() {
                 |   defer {
                 |     ... @defer {
                 |       user {
-                |         rename__firstName__name: name
                 |         __typename__rename__firstName: __typename
+                |         rename__firstName__name: name
                 |       }
                 |     }
                 |   }

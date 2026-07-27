@@ -25,8 +25,8 @@ public class `dynamic service resolution multiple services with one unmapped nod
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issue: node(id: "issue/id-123") {
+                | query (${'$'}v0: ID!) {
+                |   issue: node(id: ${'$'}v0) {
                 |     id
                 |     ... on Issue {
                 |       issueKey
@@ -34,7 +34,11 @@ public class `dynamic service resolution multiple services with one unmapped nod
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue/id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

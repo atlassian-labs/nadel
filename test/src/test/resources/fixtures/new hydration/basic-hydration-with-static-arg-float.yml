@@ -56,36 +56,16 @@ query: |
   }
 variables: { }
 serviceCalls:
-  - serviceName: "service1"
-    request:
-      # language=GraphQL
-      query: |
-        query {
-          foo {
-            __typename__hydration__bar: __typename
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "foo": {
-            "__typename__hydration__bar": "Foo"
-          }
-        },
-        "extensions": {}
-      }
   - serviceName: "service2"
     request:
       # language=GraphQL
       query: |
-        query {
-          barWithSomeFloat(someFloat: 123.45) {
+        query ($v0: Float) {
+          barWithSomeFloat(someFloat: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":123.45}
     # language=JSON
     response: |-
       {

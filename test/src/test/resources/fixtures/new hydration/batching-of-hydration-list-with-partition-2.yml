@@ -103,13 +103,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          usersByIds(id: ["site-1/user-1"]) {
+        query ($v0: [ID]) {
+          usersByIds(id: $v0) {
             id
             batch_hydration__authors__id: id
           }
         }
-      variables: { }
+      variables: {"v0":["site-1/user-1"]}
     # language=JSON
     response: |-
       {
@@ -127,13 +127,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          usersByIds(id: ["site-2/user-2", "site-2/user-4"]) {
+        query ($v0: [ID]) {
+          usersByIds(id: $v0) {
             id
             batch_hydration__authors__id: id
           }
         }
-      variables: { }
+      variables: {"v0":["site-2/user-2","site-2/user-4"]}
     # language=JSON
     response: |-
       {

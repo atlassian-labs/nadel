@@ -81,8 +81,6 @@ public class AllUnionTypeConditionsUnionTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

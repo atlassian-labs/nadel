@@ -73,8 +73,6 @@ public class PartialUnionTypeConditionsUnionTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

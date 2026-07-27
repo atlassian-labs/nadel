@@ -65,7 +65,7 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           nodes {
             ... on Issue {
               id
@@ -80,7 +80,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -111,10 +111,10 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          trollName(id: "My Arm")
+        query ($v0: ID!) {
+          trollName(id: $v0)
         }
-      variables: { }
+      variables: {"v0":"My Arm"}
     # language=JSON
     response: |-
       {
@@ -127,10 +127,10 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          ariById(id: "Franklin")
+        query ($v0: ID!) {
+          ariById(id: $v0)
         }
-      variables: { }
+      variables: {"v0":"Franklin"}
     # language=JSON
     response: |-
       {

@@ -34,8 +34,8 @@ public class RenamedTypeIsDeferredTestSnapshot : TestSnapshot() {
                 |     }
                 |     ... @defer {
                 |       monkey {
-                |         name
                 |         __typename
+                |         name
                 |       }
                 |     }
                 |   }

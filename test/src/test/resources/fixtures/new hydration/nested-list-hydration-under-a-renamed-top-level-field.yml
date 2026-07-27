@@ -104,13 +104,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           rename__fooService__service: service {
             __typename__hydration__otherServices: __typename
             hydration__otherServices__id: id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -126,15 +126,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          connection(id: "ID") {
+        query ($v0: ID) {
+          connection(id: $v0) {
             __typename__hydration__nodes: __typename
             hydration__nodes__edges: edges {
               node
             }
           }
         }
-      variables: { }
+      variables: {"v0":"ID"}
     # language=JSON
     response: |-
       {
@@ -154,13 +154,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          node(id: "1") {
+        query ($v0: ID) {
+          node(id: $v0) {
             __typename__hydration__space: __typename
             hydration__space__id: id
           }
         }
-      variables: { }
+      variables: {"v0":"1"}
     # language=JSON
     response: |-
       {
@@ -176,12 +176,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          space(id: "1a") {
+        query ($v0: ID) {
+          space(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables: {"v0":"1a"}
     # language=JSON
     response: |-
       {

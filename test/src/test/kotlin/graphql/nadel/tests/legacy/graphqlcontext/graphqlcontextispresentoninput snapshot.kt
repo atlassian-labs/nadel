@@ -24,13 +24,17 @@ public class `graphqlcontextispresentoninput snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | {
-                |   hello(arg: "x") {
+                | query (${'$'}v0: String) {
+                |   hello(arg: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "x"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

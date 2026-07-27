@@ -82,8 +82,6 @@ public class UnionAliasToSameResultKeyTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

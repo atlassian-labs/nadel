@@ -99,7 +99,7 @@ serviceCalls:
             id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -153,14 +153,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        {
-          issues(issuesInput: [{id: "ISSUE-0", site: "CLOUD-0"}, {id: "ISSUE-1", site: "CLOUD-0"}, {id: "ISSUE-2", site: "CLOUD-0"}, {id: "ISSUE-3", site: "CLOUD-0"}]) {
+        query ($v0: [IssueInput!]) {
+          issues(issuesInput: $v0) {
             description
             issueId
             batch_hydration__issue__issueId: issueId
           }
         }
-      variables: { }
+      variables: {"v0":[{"id":"ISSUE-0","site":"CLOUD-0"},{"id":"ISSUE-1","site":"CLOUD-0"},{"id":"ISSUE-2","site":"CLOUD-0"},{"id":"ISSUE-3","site":"CLOUD-0"}]}
     # language=JSON
     response: |-
       {

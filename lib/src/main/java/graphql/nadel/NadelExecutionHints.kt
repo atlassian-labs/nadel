@@ -1,31 +1,21 @@
 package graphql.nadel
 
-import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelBatchRootFieldsHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelHydrationExecutableSourceFields
-import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
 import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
-import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
-import graphql.nadel.hints.NadelVirtualTypeSupportHint
-import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
-    val allDocumentVariablesHint: AllDocumentVariablesHint,
-    val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
-    val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
-    val virtualTypeSupport: NadelVirtualTypeSupportHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
-    val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
     val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
     val disableSharedTypes: NadelDisableSharedTypesHint,
@@ -45,14 +35,9 @@ data class NadelExecutionHints(
 
     class Builder {
         private var legacyOperationNames = LegacyOperationNamesHint { false }
-        private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
-        private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
         private var deferSupport = NadelDeferSupportHint { false }
-        private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
-        private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
-        private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
         private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
         private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
@@ -64,14 +49,9 @@ data class NadelExecutionHints(
 
         constructor(nadelExecutionHints: NadelExecutionHints) {
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
-            allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
-            newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
             deferSupport = nadelExecutionHints.deferSupport
-            shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
-            virtualTypeSupport = nadelExecutionHints.virtualTypeSupport
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
-            hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
             hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
             shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
@@ -85,23 +65,8 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun allDocumentVariablesHint(flag: AllDocumentVariablesHint): Builder {
-            allDocumentVariablesHint = flag
-            return this
-        }
-
-        fun newResultMergerAndNamespacedTypename(flag: NewResultMergerAndNamespacedTypename): Builder {
-            newResultMergerAndNamespacedTypename = flag
-            return this
-        }
-
         fun deferSupport(flag: NadelDeferSupportHint): Builder {
             deferSupport = flag
-            return this
-        }
-
-        fun shortCircuitEmptyQuery(flag: NadelShortCircuitEmptyQueryHint): Builder {
-            shortCircuitEmptyQuery = flag
             return this
         }
 
@@ -110,18 +75,8 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun virtualTypeSupport(flag: NadelVirtualTypeSupportHint): Builder {
-            virtualTypeSupport = flag
-            return this
-        }
-
         fun executeOnEngineSchema(flag: NadelExecuteOnEngineSchemaHint): Builder {
             executeOnEngineSchema = flag
-            return this
-        }
-
-        fun hydrationFilterObjectTypes(flag: NadelHydrationFilterObjectTypesHint): Builder {
-            hydrationFilterObjectTypes = flag
             return this
         }
 
@@ -158,14 +113,9 @@ data class NadelExecutionHints(
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
-                allDocumentVariablesHint,
-                newResultMergerAndNamespacedTypename,
                 deferSupport,
                 sharedTypeRenames,
-                shortCircuitEmptyQuery,
-                virtualTypeSupport,
                 executeOnEngineSchema,
-                hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,
                 shadowUnderlyingTypeNameInvestigation,
                 disableSharedTypes,

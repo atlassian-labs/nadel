@@ -24,8 +24,8 @@ public class `dynamic service resolution multiple services snapshot` : TestSnaps
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issue: node(id: "issue/id-123") {
+                | query (${'$'}v0: ID!) {
+                |   issue: node(id: ${'$'}v0) {
                 |     id
                 |     ... on Issue {
                 |       issueKey
@@ -33,7 +33,11 @@ public class `dynamic service resolution multiple services snapshot` : TestSnaps
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue/id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -50,8 +54,8 @@ public class `dynamic service resolution multiple services snapshot` : TestSnaps
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | {
-                |   pr: node(id: "pull-request:id-123") {
+                | query (${'$'}v0: ID!) {
+                |   pr: node(id: ${'$'}v0) {
                 |     id
                 |     ... on PullRequest {
                 |       description
@@ -59,7 +63,11 @@ public class `dynamic service resolution multiple services snapshot` : TestSnaps
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "pull-request:id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

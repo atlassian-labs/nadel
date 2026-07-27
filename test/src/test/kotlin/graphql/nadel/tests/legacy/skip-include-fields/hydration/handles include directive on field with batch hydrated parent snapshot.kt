@@ -25,6 +25,43 @@ public class `handles include directive on field with batch hydrated parent snap
             ExpectedServiceCall(
                 service = "service",
                 query = """
+                | query (${'$'}v0: [ID]) {
+                |   tests(ids: ${'$'}v0) {
+                |     __typename__skip_include____skip: __typename
+                |     batch_hydration__test__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-3",
+                |     "Foo-4"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "tests": [
+                |       {
+                |         "__typename__skip_include____skip": "Test",
+                |         "batch_hydration__test__id": "Foo-3"
+                |       },
+                |       {
+                |         "__typename__skip_include____skip": "Test",
+                |         "batch_hydration__test__id": "Foo-4"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "service",
+                query = """
                 | {
                 |   foos {
                 |     __typename__batch_hydration__test: __typename
@@ -44,36 +81,6 @@ public class `handles include directive on field with batch hydrated parent snap
                 |       {
                 |         "batch_hydration__test__id": "Foo-4",
                 |         "__typename__batch_hydration__test": "Foo"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "service",
-                query = """
-                | {
-                |   tests(ids: ["Foo-3", "Foo-4"]) {
-                |     __typename__skip_include____skip: __typename
-                |     batch_hydration__test__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "tests": [
-                |       {
-                |         "__typename__skip_include____skip": "Test",
-                |         "batch_hydration__test__id": "Foo-3"
-                |       },
-                |       {
-                |         "__typename__skip_include____skip": "Test",
-                |         "batch_hydration__test__id": "Foo-4"
                 |       }
                 |     ]
                 |   }

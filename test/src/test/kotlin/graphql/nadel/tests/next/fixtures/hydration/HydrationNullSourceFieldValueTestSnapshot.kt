@@ -26,12 +26,12 @@ public class HydrationNullSourceFieldValueTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   issue {
-                |     hydration__user__userId: userId
                 |     __typename__hydration__user: __typename
+                |     hydration__user__userId: userId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = "{}",
                 result = """
                 | {
                 |   "data": {

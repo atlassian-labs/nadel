@@ -59,13 +59,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           users {
             __typename__hydration__issue: __typename
             hydration__issue__issueId: issueId
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -91,15 +91,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          issueById(id: "issue-1") {
+        query ($v0: ID!) {
+          issueById(id: $v0) {
             __typename__deep_rename__name: __typename
             deep_rename__name__detail: detail {
               detailName
             }
           }
         }
-      variables: { }
+      variables: {"v0":"issue-1"}
     # language=JSON
     response: |-
       {
@@ -117,15 +117,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          issueById(id: "issue-2") {
+        query ($v0: ID!) {
+          issueById(id: $v0) {
             __typename__deep_rename__name: __typename
             deep_rename__name__detail: detail {
               detailName
             }
           }
         }
-      variables: { }
+      variables: {"v0":"issue-2"}
     # language=JSON
     response: |-
       {
@@ -143,15 +143,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          issueById(id: "issue-3") {
+        query ($v0: ID!) {
+          issueById(id: $v0) {
             __typename__deep_rename__name: __typename
             deep_rename__name__detail: detail {
               detailName
             }
           }
         }
-      variables: { }
+      variables: {"v0":"issue-3"}
     # language=JSON
     response: |-
       {

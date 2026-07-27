@@ -85,15 +85,15 @@ public class `deep rename of an object snapshot` : TestSnapshot() {
      *       {
      *         "id": "ISSUE-1",
      *         "authorName": {
-     *           "firstName": "George",
-     *           "lastName": "Smith"
+     *           "lastName": "Smith",
+     *           "firstName": "George"
      *         }
      *       },
      *       {
      *         "id": "ISSUE-2",
      *         "authorName": {
-     *           "firstName": "Elizabeth",
-     *           "lastName": "Windsor"
+     *           "lastName": "Windsor",
+     *           "firstName": "Elizabeth"
      *         }
      *       }
      *     ]
@@ -109,15 +109,15 @@ public class `deep rename of an object snapshot` : TestSnapshot() {
             |       {
             |         "id": "ISSUE-1",
             |         "authorName": {
-            |           "firstName": "George",
-            |           "lastName": "Smith"
+            |           "lastName": "Smith",
+            |           "firstName": "George"
             |         }
             |       },
             |       {
             |         "id": "ISSUE-2",
             |         "authorName": {
-            |           "firstName": "Elizabeth",
-            |           "lastName": "Windsor"
+            |           "lastName": "Windsor",
+            |           "firstName": "Elizabeth"
             |         }
             |       }
             |     ]

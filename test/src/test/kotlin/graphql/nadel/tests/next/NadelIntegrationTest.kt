@@ -12,8 +12,6 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
-import graphql.language.AstPrinter
-import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
@@ -24,13 +22,13 @@ import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
 import graphql.nadel.tests.assertJsonObjectEquals
+import graphql.nadel.tests.canonicalizeServiceRequest
 import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationFactory
-import graphql.parser.Parser
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
@@ -188,7 +186,6 @@ abstract class NadelIntegrationTest(
 
     open fun makeExecutionHints(): NadelExecutionHints.Builder {
         return NadelExecutionHints.Builder()
-            .hydrationFilterObjectTypes { true }
             .hydrationExecutableSourceFields { true }
     }
 
@@ -327,14 +324,6 @@ abstract class NadelIntegrationTest(
     }
 
     private fun assertServiceCalls(testSnapshot: TestSnapshot) {
-        fun getCanonicalQuery(query: String): String {
-            return AstPrinter.printAstCompact(
-                AstSorter().sort(
-                    Parser().parseDocument(query),
-                ),
-            )
-        }
-
         fun isDelayedResultsEqual(
             expectedCall: ExpectedServiceCall,
             actualCall: TestExecutionCapture.Call,
@@ -357,14 +346,23 @@ abstract class NadelIntegrationTest(
             expected = testSnapshot.calls,
             actual = executionCapture.calls
         ) { expectedCall, actualCall ->
-            val actualQuery = getCanonicalQuery(actualCall.query)
-            val actualVariables = actualCall.variables
+            val expectedRequest = canonicalizeServiceRequest(
+                query = expectedCall.query,
+                variables = expectedCall.variables,
+            )
+            val actualRequest = canonicalizeServiceRequest(
+                query = actualCall.query,
+                variables = actualCall.variables,
+            )
             val actualResult = actualCall.result
 
             actualCall.service == expectedCall.service
                 && expectedCall.delayedResults.size == actualCall.delayedResults.size
-                && getCanonicalQuery(expectedCall.query) == actualQuery
-                && compareJsonObject(expected = expectedCall.variables, actual = actualVariables).passed()
+                && expectedRequest.query == actualRequest.query
+                && compareJsonObject(
+                    expected = expectedRequest.variables,
+                    actual = actualRequest.variables,
+                ).passed()
                 && compareJsonObject(expected = expectedCall.result, actual = actualResult).passed()
                 && isDelayedResultsEqual(expectedCall, actualCall)
         }

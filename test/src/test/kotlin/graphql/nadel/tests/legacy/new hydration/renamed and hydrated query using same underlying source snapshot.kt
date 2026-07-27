@@ -24,13 +24,17 @@ public class `renamed and hydrated query using same underlying source snapshot` 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   detail(detailId: "ID") {
+                | query (${'$'}v0: ID) {
+                |   detail(detailId: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -86,10 +90,10 @@ public class `renamed and hydrated query using same underlying source snapshot` 
      * {
      *   "data": {
      *     "foo": {
-     *       "renamedField": "field",
      *       "details": {
      *         "name": "apple"
-     *       }
+     *       },
+     *       "renamedField": "field"
      *     }
      *   }
      * }
@@ -100,10 +104,10 @@ public class `renamed and hydrated query using same underlying source snapshot` 
             | {
             |   "data": {
             |     "foo": {
-            |       "renamedField": "field",
             |       "details": {
             |         "name": "apple"
-            |       }
+            |       },
+            |       "renamedField": "field"
             |     }
             |   }
             | }

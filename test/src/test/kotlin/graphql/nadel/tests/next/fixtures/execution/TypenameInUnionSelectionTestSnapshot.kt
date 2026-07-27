@@ -68,8 +68,6 @@ public class TypenameInUnionSelectionTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

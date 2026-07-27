@@ -92,15 +92,16 @@ variables: { }
 serviceCalls:
   - serviceName: "service1"
     request:
+      # language=GraphQL
       query: |
-        query {
+        {
           foo {
             __typename__hydration__bar: __typename
             hydration__bar__class: class
             hydration__bar__type: type
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -115,32 +116,14 @@ serviceCalls:
       }
   - serviceName: "service2"
     request:
+      # language=GraphQL
       query: |
-        query {
-          barById(id: "BAR_A") {
+        query ($v0: ID) {
+          barById(id: $v0) {
             name
           }
         }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barById": {
-            "name": "Bar A"
-          }
-        },
-        "extensions": {}
-      }
-  - serviceName: "service2"
-    request:
-      query: |
-        query {
-          barById(id: "BAR_B") {
-            name
-          }
-        }
-      variables: { }
+      variables: {"v0":"BAR_B"}
     # language=JSON
     response: |-
       {

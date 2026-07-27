@@ -27,10 +27,10 @@ public class DeferredListFieldIsRenamedTestSnapshot : TestSnapshot() {
                 | {
                 |   ... @defer {
                 |     issues {
-                |       key
-                |       assigneeId
-                |       rename__awesomeIssueName__title: title
                 |       __typename__rename__awesomeIssueName: __typename
+                |       assigneeId
+                |       key
+                |       rename__awesomeIssueName__title: title
                 |     }
                 |   }
                 | }

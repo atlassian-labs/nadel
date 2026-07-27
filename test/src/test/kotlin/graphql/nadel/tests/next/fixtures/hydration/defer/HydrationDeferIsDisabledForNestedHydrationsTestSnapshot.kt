@@ -24,14 +24,18 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issueByKey(key: "GQLGW-3") {
-                |     hydration__assignee__assigneeId: assigneeId
+                | query (${'$'}v0: String!) {
+                |   issueByKey(key: ${'$'}v0) {
                 |     __typename__hydration__assignee: __typename
+                |     hydration__assignee__assigneeId: assigneeId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "GQLGW-3"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -48,15 +52,19 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issueByKey(key: "GQLGW-3") {
+                | query (${'$'}v0: String!) {
+                |   issueByKey(key: ${'$'}v0) {
+                |     __typename__hydration__self: __typename
                 |     key
                 |     hydration__self__key: key
-                |     __typename__hydration__self: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "GQLGW-3"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -74,13 +82,17 @@ public class HydrationDeferIsDisabledForNestedHydrationsTestSnapshot : TestSnaps
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

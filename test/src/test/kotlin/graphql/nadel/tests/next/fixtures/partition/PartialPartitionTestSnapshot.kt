@@ -24,20 +24,69 @@ public class PartialPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
                 |   api {
-                |     things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
-                |       id
-                |       name
-                |     }
-                |     stuff(id: "Stuff-1") {
+                |     things(ids: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-2:partition-B",
+                |     "thing-4:partition-B"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "api": {
+                |       "things": [
+                |         {
+                |           "id": "thing-2",
+                |           "name": "THING-2"
+                |         },
+                |         {
+                |           "id": "thing-4",
+                |           "name": "THING-4"
+                |         }
+                |       ]
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "things_service",
+                query = """
+                | query getPartitionedThings(${'$'}v0: [ID!]!, ${'$'}v1: ID!) {
+                |   api {
+                |     stuff(id: ${'$'}v1) {
+                |       id
+                |       name
+                |     }
+                |     things(ids: ${'$'}v0) {
+                |       id
+                |       name
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-1:partition-A",
+                |     "thing-3:partition-A"
+                |   ],
+                |   "v1": "Stuff-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -56,40 +105,6 @@ public class PartialPartitionTestSnapshot : TestSnapshot() {
                 |         "id": "Stuff-1",
                 |         "name": "STUFF-1"
                 |       }
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "things_service",
-                query = """
-                | query getPartitionedThings {
-                |   api {
-                |     things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
-                |       id
-                |       name
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                variables = " {}",
-                result = """
-                | {
-                |   "data": {
-                |     "api": {
-                |       "things": [
-                |         {
-                |           "id": "thing-2",
-                |           "name": "THING-2"
-                |         },
-                |         {
-                |           "id": "thing-4",
-                |           "name": "THING-4"
-                |         }
-                |       ]
                 |     }
                 |   }
                 | }

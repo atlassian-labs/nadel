@@ -6,11 +6,9 @@ import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.nadel.NadelExecutionInput
-import graphql.language.AstPrinter
-import graphql.language.AstSorter
 import graphql.nadel.engine.util.JsonMap
+import graphql.nadel.tests.canonicalizeServiceRequest
 import graphql.nadel.tests.jsonObjectMapper
-import graphql.parser.Parser
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.asPublisher
@@ -47,17 +45,16 @@ class TestExecutionCapture {
     ): ExecutionResult {
         val delayedResults = synchronizedMutableListOf<JsonMap>()
 
-        val canonicalQuery = AstPrinter.printAst(
-            AstSorter().sort(
-                Parser().parseDocument(query)
-            ),
+        val canonicalRequest = canonicalizeServiceRequest(
+            query = query,
+            variables = variables,
         )
 
         _calls.add(
             Call(
                 service = service,
-                query = canonicalQuery,
-                variables = variables,
+                query = canonicalRequest.query,
+                variables = canonicalRequest.variables,
                 result = deepClone(result),
                 delayedResults = delayedResults,
             ),

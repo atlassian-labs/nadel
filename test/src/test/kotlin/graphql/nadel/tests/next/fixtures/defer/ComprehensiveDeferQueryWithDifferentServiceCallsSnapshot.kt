@@ -26,8 +26,8 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                 query = """
                 | {
                 |   product {
-                |     productName
                 |     productDescription
+                |     productName
                 |     ... @defer {
                 |       productImage
                 |     }
@@ -74,8 +74,8 @@ public class ComprehensiveDeferQueryWithDifferentServiceCallsSnapshot : TestSnap
                 |       profilePicture
                 |     }
                 |     ... @defer(label: "team-details") {
-                |       teamName
                 |       teamMembers
+                |       teamName
                 |     }
                 |   }
                 | }

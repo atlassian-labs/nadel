@@ -24,6 +24,32 @@ public class `hydrating using long as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
+                | query (${'$'}v0: Long) {
+                |   successor(after: ${'$'}v0) {
+                |     id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": 3000000000
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "successor": {
+                |       "id": "2023"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "service",
+                query = """
                 | {
                 |   foo {
                 |     __typename__hydration__successor: __typename
@@ -38,28 +64,6 @@ public class `hydrating using long as arg snapshot` : TestSnapshot() {
                 |     "foo": {
                 |       "hydration__successor__createdAt": 3000000000,
                 |       "__typename__hydration__successor": "Foo"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "service",
-                query = """
-                | {
-                |   successor(after: 3000000000) {
-                |     id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "successor": {
-                |       "id": "2023"
                 |     }
                 |   }
                 | }

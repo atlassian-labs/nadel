@@ -24,18 +24,48 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   detail(detailId: "ID") {
+                | query (${'$'}v0: ID) {
+                |   detail(detailId: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
                 |     "detail": {
                 |       "name": "apple"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
+                | query (${'$'}v0: ID) {
+                |   issue(issueId: ${'$'}v0) {
+                |     field
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issue": {
+                |       "field": "field_name"
                 |     }
                 |   }
                 | }
@@ -87,28 +117,6 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | {
-                |   issue(issueId: "ID") {
-                |     field
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issue": {
-                |       "field": "field_name"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**
@@ -116,13 +124,13 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
      * {
      *   "data": {
      *     "foo": {
-     *       "issue": {
-     *         "field": "field_name"
-     *       },
+     *       "renamedField": "field1",
      *       "detail": {
      *         "name": "apple"
      *       },
-     *       "renamedField": "field1"
+     *       "issue": {
+     *         "field": "field_name"
+     *       }
      *     }
      *   }
      * }
@@ -133,13 +141,13 @@ public class `same source for  nested hydrations and a rename snapshot` : TestSn
             | {
             |   "data": {
             |     "foo": {
-            |       "issue": {
-            |         "field": "field_name"
-            |       },
+            |       "renamedField": "field1",
             |       "detail": {
             |         "name": "apple"
             |       },
-            |       "renamedField": "field1"
+            |       "issue": {
+            |         "field": "field_name"
+            |       }
             |     }
             |   }
             | }

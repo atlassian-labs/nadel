@@ -25,6 +25,40 @@ public class `repeated hydrated fields on the same level when using batch hydrat
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
+                | query (${'$'}v0: [ID!]) {
+                |   issues(issueIds: ${'$'}v0) {
+                |     desc
+                |     batch_hydration__issue__id: id
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "ISSUE-1"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issues": [
+                |       {
+                |         "name": "I AM A NAME",
+                |         "desc": "I AM A DESC",
+                |         "batch_hydration__issue__id": "ISSUE-1"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
                 | {
                 |   foo {
                 |     __typename__batch_hydration__issue: __typename
@@ -40,34 +74,6 @@ public class `repeated hydrated fields on the same level when using batch hydrat
                 |       "batch_hydration__issue__issueId": "ISSUE-1",
                 |       "__typename__batch_hydration__issue": "Foo"
                 |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | {
-                |   issues(issueIds: ["ISSUE-1"]) {
-                |     desc
-                |     batch_hydration__issue__id: id
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issues": [
-                |       {
-                |         "name": "I AM A NAME",
-                |         "desc": "I AM A DESC",
-                |         "batch_hydration__issue__id": "ISSUE-1"
-                |       }
-                |     ]
                 |   }
                 | }
                 """.trimMargin(),

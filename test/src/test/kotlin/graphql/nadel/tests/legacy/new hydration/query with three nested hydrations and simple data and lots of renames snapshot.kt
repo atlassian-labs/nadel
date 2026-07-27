@@ -25,8 +25,8 @@ public class `query with three nested hydrations and simple data and lots of ren
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["bar1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__rename__barName: __typename
                 |     __typename__batch_hydration__nestedBar: __typename
                 |     batch_hydration__bar__barId: barId
@@ -35,7 +35,13 @@ public class `query with three nested hydrations and simple data and lots of ren
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -57,8 +63,8 @@ public class `query with three nested hydrations and simple data and lots of ren
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["nestedBar1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__rename__barName: __typename
                 |     __typename__batch_hydration__nestedBar: __typename
                 |     batch_hydration__nestedBar__barId: barId
@@ -67,7 +73,13 @@ public class `query with three nested hydrations and simple data and lots of ren
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBar1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -89,8 +101,8 @@ public class `query with three nested hydrations and simple data and lots of ren
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["nestedBarId456"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__rename__barName: __typename
                 |     __typename__rename__barDetails: __typename
                 |     batch_hydration__nestedBar__barId: barId
@@ -109,7 +121,13 @@ public class `query with three nested hydrations and simple data and lots of ren
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBarId456"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -200,29 +218,29 @@ public class `query with three nested hydrations and simple data and lots of ren
      *   "data": {
      *     "fooz": [
      *       {
-     *         "fooDetails": {
-     *           "fooName": "smith",
-     *           "fooAge": 1,
-     *           "fooContact": {
-     *             "fooEmail": "test",
-     *             "fooPhone": 1
-     *           }
-     *         },
      *         "bar": {
-     *           "barName": "Bar 1",
      *           "nestedBar": {
-     *             "barName": "NestedBarName1",
      *             "nestedBar": {
-     *               "barName": "NestedBarName2",
      *               "barDetails": {
-     *                 "barAge": 1,
      *                 "barContact": {
-     *                   "barEmail": "test",
-     *                   "barPhone": 1
-     *                 }
-     *               }
-     *             }
-     *           }
+     *                   "barPhone": 1,
+     *                   "barEmail": "test"
+     *                 },
+     *                 "barAge": 1
+     *               },
+     *               "barName": "NestedBarName2"
+     *             },
+     *             "barName": "NestedBarName1"
+     *           },
+     *           "barName": "Bar 1"
+     *         },
+     *         "fooDetails": {
+     *           "fooContact": {
+     *             "fooPhone": 1,
+     *             "fooEmail": "test"
+     *           },
+     *           "fooAge": 1,
+     *           "fooName": "smith"
      *         }
      *       }
      *     ]
@@ -236,29 +254,29 @@ public class `query with three nested hydrations and simple data and lots of ren
             |   "data": {
             |     "fooz": [
             |       {
-            |         "fooDetails": {
-            |           "fooName": "smith",
-            |           "fooAge": 1,
-            |           "fooContact": {
-            |             "fooEmail": "test",
-            |             "fooPhone": 1
-            |           }
-            |         },
             |         "bar": {
-            |           "barName": "Bar 1",
             |           "nestedBar": {
-            |             "barName": "NestedBarName1",
             |             "nestedBar": {
-            |               "barName": "NestedBarName2",
             |               "barDetails": {
-            |                 "barAge": 1,
             |                 "barContact": {
-            |                   "barEmail": "test",
-            |                   "barPhone": 1
-            |                 }
-            |               }
-            |             }
-            |           }
+            |                   "barPhone": 1,
+            |                   "barEmail": "test"
+            |                 },
+            |                 "barAge": 1
+            |               },
+            |               "barName": "NestedBarName2"
+            |             },
+            |             "barName": "NestedBarName1"
+            |           },
+            |           "barName": "Bar 1"
+            |         },
+            |         "fooDetails": {
+            |           "fooContact": {
+            |             "fooPhone": 1,
+            |             "fooEmail": "test"
+            |           },
+            |           "fooAge": 1,
+            |           "fooName": "smith"
             |         }
             |       }
             |     ]

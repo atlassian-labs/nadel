@@ -25,6 +25,36 @@ public class `synthetic hydration works when an ancestor field has been renamed 
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
+                | query (${'$'}v0: ID) {
+                |   syntheticIssue {
+                |     issue(id: ${'$'}v0) {
+                |       id
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "syntheticIssue": {
+                |       "issue": {
+                |         "id": "1"
+                |       }
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "IssueService",
+                query = """
                 | {
                 |   rename__devOpsRelationships__relationships: relationships {
                 |     __typename__rename__devOpsNodes: __typename
@@ -47,32 +77,6 @@ public class `synthetic hydration works when an ancestor field has been renamed 
                 |         }
                 |       ],
                 |       "__typename__rename__devOpsNodes": "RelationshipConnection"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "IssueService",
-                query = """
-                | {
-                |   syntheticIssue {
-                |     issue(id: "1") {
-                |       id
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "syntheticIssue": {
-                |       "issue": {
-                |         "id": "1"
-                |       }
                 |     }
                 |   }
                 | }

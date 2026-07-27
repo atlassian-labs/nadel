@@ -25,13 +25,17 @@ public class `renamed top level field is not removed short circuit hint is on sn
             ExpectedServiceCall(
                 service = "CommentService",
                 query = """
-                | {
-                |   rename__commentById__commentByIdUnderlying: commentByIdUnderlying(id: "C1") {
+                | query (${'$'}v0: ID) {
+                |   rename__commentById__commentByIdUnderlying: commentByIdUnderlying(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "C1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -17,18 +17,24 @@ private suspend fun main() {
 @Suppress("unused")
 public class IdHydrationTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-        ExpectedServiceCall(
-            service = "Identity",
-            query = """
-                | {
-                |   usersByIds(ids: ["ari:cloud:identity::user/1"]) {
-                |     name
+            ExpectedServiceCall(
+                service = "Identity",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     batch_hydration__assignee__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:identity::user/1"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
                 | {
                 |   "data": {
                 |     "usersByIds": [
@@ -40,21 +46,27 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "Identity",
-            query = """
-                | {
-                |   usersByIds(ids: ["ari:cloud:identity::user/128"]) {
-                |     name
+            ExpectedServiceCall(
+                service = "Identity",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     batch_hydration__assignee__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:identity::user/128"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
                 | {
                 |   "data": {
                 |     "usersByIds": [
@@ -66,21 +78,21 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "Jira",
-            query = """
+            ExpectedServiceCall(
+                service = "Jira",
+                query = """
                 | {
                 |   issues {
-                |     batch_hydration__assignee__assigneeId: assigneeId
                 |     __typename__batch_hydration__assignee: __typename
+                |     batch_hydration__assignee__assigneeId: assigneeId
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = "{}",
+                result = """
                 | {
                 |   "data": {
                 |     "issues": [
@@ -96,10 +108,10 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-    )
+        )
 
     /**
      * ```json
@@ -122,7 +134,7 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-        result = """
+            result = """
             | {
             |   "data": {
             |     "issues": [
@@ -140,7 +152,7 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
             |   }
             | }
             """.trimMargin(),
-        delayedResults = listOfJsonStrings(
-        ),
-    )
+            delayedResults = listOfJsonStrings(
+            ),
+        )
 }

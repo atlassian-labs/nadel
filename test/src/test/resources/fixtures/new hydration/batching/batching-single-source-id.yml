@@ -104,7 +104,7 @@ serviceCalls:
             batch_hydration__content__contentId: contentId
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -134,15 +134,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        {
-          issuesByIds(ids: ["issue/4000", "issue/8080", "issue/7496"]) {
+        query ($v0: [ID!]!) {
+          issuesByIds(ids: $v0) {
             __typename
             id
             batch_hydration__content__id: id
             title
           }
         }
-      variables: { }
+      variables: {"v0":["issue/4000","issue/8080","issue/7496"]}
     # language=JSON
     response: |-
       {
@@ -174,15 +174,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        {
-          commentsByIds(ids: ["comment/1234"]) {
+        query ($v0: [ID!]!) {
+          commentsByIds(ids: $v0) {
             __typename
             content
             id
             batch_hydration__content__id: id
           }
         }
-      variables: { }
+      variables: {"v0":["comment/1234"]}
     # language=JSON
     response: |-
       {

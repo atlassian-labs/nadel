@@ -70,7 +70,7 @@ serviceCalls:
             title
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -89,13 +89,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        {
-          usersByIds(ids: ["user-256"]) {
+        query ($v0: [ID!]!) {
+          usersByIds(ids: $v0) {
             batch_hydration__assignee__id: id
             name
           }
         }
-      variables: { }
+      variables: {"v0":["user-256"]}
     # language=JSON
     response: |-
       {

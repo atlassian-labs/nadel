@@ -24,6 +24,36 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
+                | query (${'$'}v0: URL) {
+                |   lookup(url: ${'$'}v0) {
+                |     baseUrl
+                |     createdAt
+                |     owner
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "https://github.com/atlassian-labs/nadel"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "lookup": {
+                |       "baseUrl": "https://github.com/",
+                |       "owner": "amarek",
+                |       "createdAt": "2018-02-13T06:23:41Z"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "service",
+                query = """
                 | {
                 |   foo {
                 |     __typename__hydration__details: __typename
@@ -40,32 +70,6 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
                 |       "url": "https://github.com/atlassian-labs/nadel",
                 |       "hydration__details__url": "https://github.com/atlassian-labs/nadel",
                 |       "__typename__hydration__details": "Foo"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "service",
-                query = """
-                | {
-                |   lookup(url: "https://github.com/atlassian-labs/nadel") {
-                |     baseUrl
-                |     createdAt
-                |     owner
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "lookup": {
-                |       "baseUrl": "https://github.com/",
-                |       "owner": "amarek",
-                |       "createdAt": "2018-02-13T06:23:41Z"
                 |     }
                 |   }
                 | }

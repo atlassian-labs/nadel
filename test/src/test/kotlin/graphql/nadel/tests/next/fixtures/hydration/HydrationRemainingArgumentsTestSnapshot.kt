@@ -17,28 +17,29 @@ private suspend fun main() {
 @Suppress("unused")
 public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-        ExpectedServiceCall(
-            service = "graph_store",
-            query = """
-                | query (${'$'}v0: JSON) {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?", remainingArgs: ${'$'}v0) {
+            ExpectedServiceCall(
+                service = "graph_store",
+                query = """
+                | query (${'$'}v0: String!, ${'$'}v1: JSON) {
+                |   graphStore_query(query: ${'$'}v0, remainingArgs: ${'$'}v1) {
                 |     __typename
                 |     edges {
-                |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
+                |       batch_hydration__node__nodeId: nodeId
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-            variables = """
+                variables = """
                 | {
-                |   "v0": {
+                |   "v0": "SELECT * FROM Work WHERE teamId = ?",
+                |   "v1": {
                 |     "orgId": "turtles",
                 |     "teamId": null
                 |   }
                 | }
                 """.trimMargin(),
-            result = """
+                result = """
                 | {
                 |   "data": {
                 |     "graphStore_query": {
@@ -53,22 +54,28 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-        ExpectedServiceCall(
-            service = "jira",
-            query = """
-                | {
-                |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
+            ExpectedServiceCall(
+                service = "jira",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     __typename
-                |     key
                 |     batch_hydration__node__id: id
+                |     key
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
-            result = """
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::issue/1"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
                 | {
                 |   "data": {
                 |     "issuesByIds": [
@@ -81,10 +88,10 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            delayedResults = listOfJsonStrings(
+                delayedResults = listOfJsonStrings(
+                ),
             ),
-        ),
-    )
+        )
 
     /**
      * ```json
@@ -106,7 +113,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
      * ```
      */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
-        result = """
+            result = """
             | {
             |   "data": {
             |     "businessReport_findRecentWorkByTeam": {
@@ -123,7 +130,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
             |   }
             | }
             """.trimMargin(),
-        delayedResults = listOfJsonStrings(
-        ),
-    )
+            delayedResults = listOfJsonStrings(
+            ),
+        )
 }

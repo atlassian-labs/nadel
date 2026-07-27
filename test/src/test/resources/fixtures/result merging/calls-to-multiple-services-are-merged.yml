@@ -51,12 +51,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          foo(id: "1") {
+        query ($v0: ID!) {
+          foo(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"1"}
     # language=JSON
     response: |-
       {
@@ -71,12 +71,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          loot: foo(id: "1") {
+        query ($v0: ID!) {
+          loot: foo(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"1"}
     # language=JSON
     response: |-
       {
@@ -91,12 +91,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          bar(id: "1") {
+        query ($v0: ID!) {
+          bar(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"1"}
     # language=JSON
     response: |-
       {
