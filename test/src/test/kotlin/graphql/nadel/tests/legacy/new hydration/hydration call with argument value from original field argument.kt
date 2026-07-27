@@ -59,7 +59,8 @@ class `hydration call with argument value from original field argument` : NadelL
                 }
                 type Issue {
                   id: ID
-                  author(extraArg: String): User @hydrated(
+                  # The backing argument is String; this verifies batch passthrough arguments use the backing type.
+                  author(extraArg: ID!): User @hydrated(
                     service: "UserService"
                     field: "usersByIds"
                     arguments: [

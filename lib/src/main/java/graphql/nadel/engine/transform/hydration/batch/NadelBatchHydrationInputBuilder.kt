@@ -30,10 +30,7 @@ internal object NadelBatchHydrationInputBuilder {
                             virtualField.normalizedArguments[valueSource.argumentName]
                                 ?: valueSource.defaultValue
                         if (argValue != null) {
-                            argument to NormalizedInputValue(
-                                GraphQLTypeUtil.simplePrint(argument.backingArgumentDef.type),
-                                argValue.value,
-                            )
+                            argument to argValue
                         } else {
                             null
                         }
