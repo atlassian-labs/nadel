@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next.fixtures.namespaced
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
@@ -53,9 +52,4 @@ class EmptyNamespaceIsEmptyObjectTest : NadelIntegrationTest(
             },
         ),
     ),
-) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .newResultMergerAndNamespacedTypename { true }
-    }
-}
+)
