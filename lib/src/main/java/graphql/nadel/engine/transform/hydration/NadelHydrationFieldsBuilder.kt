@@ -19,7 +19,6 @@ import graphql.nadel.engine.util.toBuilder
 import graphql.nadel.engine.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
-import graphql.schema.GraphQLTypeUtil
 
 internal object NadelHydrationFieldsBuilder {
     fun makeBackingQueries(
@@ -199,14 +198,7 @@ internal object NadelHydrationFieldsBuilder {
             schema = executionBlueprint.engineSchema,
             parentType = executionBlueprint.engineSchema.queryType,
             queryPathToField = instruction.queryPathToBackingField,
-            // Values forwarded from hydration arguments retain their source types.
-            // Backing queries must declare variables using the backing argument types.
-            fieldArguments = fieldArguments.mapValues { (argumentName, value) ->
-                NormalizedInputValue(
-                    GraphQLTypeUtil.simplePrint(instruction.backingFieldDef.getArgument(argumentName).type),
-                    value.value,
-                )
-            },
+            fieldArguments = fieldArguments,
             fieldChildren = fieldChildren,
         )
     }
