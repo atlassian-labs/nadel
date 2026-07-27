@@ -62,7 +62,13 @@ internal object NadelResultMerger {
 
             // Ensure field is present in result
             if (topLevelResultKey.value !in data) {
-                data[topLevelResultKey.value] = null
+                val topLevelField = topLevelFields.first { it.resultKey == topLevelResultKey.value }
+                data[topLevelResultKey.value] =
+                    if (isNamespacedField(topLevelField, engineSchema) && children.isEmpty()) {
+                        mutableMapOf<String, Any?>()
+                    } else {
+                        null
+                    }
             }
 
             if (children.isNotEmpty()) {
