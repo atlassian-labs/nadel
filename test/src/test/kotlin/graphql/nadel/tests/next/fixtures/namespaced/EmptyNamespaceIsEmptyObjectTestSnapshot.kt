@@ -26,8 +26,8 @@ public class EmptyNamespaceIsEmptyObjectTestSnapshot : TestSnapshot() {
      * ```graphql
      * query {
      *   hello
-     *   jira {
-     *     sprint @skip(if: true)
+     *   namespace {
+     *     foo @skip(if: true)
      *   }
      * }
      * ```
@@ -64,7 +64,7 @@ public class EmptyNamespaceIsEmptyObjectTestSnapshot : TestSnapshot() {
      * {
      *   "data": {
      *     "hello": "world",
-     *     "jira": {}
+     *     "namespace": {}
      *   }
      * }
      * ```
@@ -74,7 +74,7 @@ public class EmptyNamespaceIsEmptyObjectTestSnapshot : TestSnapshot() {
             | {
             |   "data": {
             |     "hello": "world",
-            |     "jira": {}
+            |     "namespace": {}
             |   }
             | }
             """.trimMargin(),

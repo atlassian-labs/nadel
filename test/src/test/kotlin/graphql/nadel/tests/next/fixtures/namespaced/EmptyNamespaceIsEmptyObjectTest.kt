@@ -4,21 +4,21 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
- * Regression test for the HOT/bug where an empty namespace was materialised as `"jira": null`.
+ * Regression test for the bug where an empty namespace was materialised as `"namespace": null`.
  *
  * When every child of a namespaced field is skipped (e.g. `@skip(if: true)`), the namespace has no
- * children and no service call is made. It must be materialised as an empty object `"jira": {}`,
- * NOT as `"jira": null` (which tripped a downstream Relay non-null handler, turning the whole
+ * children and no service call is made. It must be materialised as an empty object `"namespace": {}`,
+ * NOT as `"namespace": null` (which tripped a downstream non-null handler, turning the whole
  * response into `data: null`).
  *
- * Expected result: `{ "hello": "world", "jira": {} }`.
+ * Expected result: `{ "hello": "world", "namespace": {} }`.
  */
 class EmptyNamespaceIsEmptyObjectTest : NadelIntegrationTest(
     query = """
         query {
           hello
-          jira {
-            sprint @skip(if: true)
+          namespace {
+            foo @skip(if: true)
           }
         }
     """.trimIndent(),
@@ -28,19 +28,19 @@ class EmptyNamespaceIsEmptyObjectTest : NadelIntegrationTest(
             overallSchema = """
                 type Query {
                   hello: String
-                  jira: JiraQuery @namespaced
+                  namespace: NamespaceQuery @namespaced
                 }
-                type JiraQuery {
-                  sprint: String
+                type NamespaceQuery {
+                  foo: String
                 }
             """.trimIndent(),
             underlyingSchema = """
                 type Query {
                   hello: String
-                  jira: JiraQuery
+                  namespace: NamespaceQuery
                 }
-                type JiraQuery {
-                  sprint: String
+                type NamespaceQuery {
+                  foo: String
                 }
             """.trimIndent(),
             runtimeWiring = { wiring ->
@@ -48,7 +48,7 @@ class EmptyNamespaceIsEmptyObjectTest : NadelIntegrationTest(
                     .type("Query") { type ->
                         type
                             .dataFetcher("hello") { "world" }
-                            .dataFetcher("jira") { emptyMap<String, Any?>() }
+                            .dataFetcher("namespace") { emptyMap<String, Any?>() }
                     }
             },
         ),
