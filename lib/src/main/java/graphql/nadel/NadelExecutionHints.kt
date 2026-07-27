@@ -12,7 +12,6 @@ import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
-import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 import graphql.nadel.hints.NadelVirtualTypeSupportHint
 import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
@@ -22,7 +21,6 @@ data class NadelExecutionHints(
     val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
-    val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
     val virtualTypeSupport: NadelVirtualTypeSupportHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
     val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
@@ -48,7 +46,6 @@ data class NadelExecutionHints(
         private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
         private var deferSupport = NadelDeferSupportHint { false }
-        private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
@@ -67,7 +64,6 @@ data class NadelExecutionHints(
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
             deferSupport = nadelExecutionHints.deferSupport
-            shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
             virtualTypeSupport = nadelExecutionHints.virtualTypeSupport
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
@@ -97,11 +93,6 @@ data class NadelExecutionHints(
 
         fun deferSupport(flag: NadelDeferSupportHint): Builder {
             deferSupport = flag
-            return this
-        }
-
-        fun shortCircuitEmptyQuery(flag: NadelShortCircuitEmptyQueryHint): Builder {
-            shortCircuitEmptyQuery = flag
             return this
         }
 
@@ -162,7 +153,6 @@ data class NadelExecutionHints(
                 newResultMergerAndNamespacedTypename,
                 deferSupport,
                 sharedTypeRenames,
-                shortCircuitEmptyQuery,
                 virtualTypeSupport,
                 executeOnEngineSchema,
                 hydrationFilterObjectTypes,

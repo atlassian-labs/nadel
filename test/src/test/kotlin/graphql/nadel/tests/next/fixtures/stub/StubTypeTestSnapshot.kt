@@ -21,29 +21,7 @@ private suspend fun main() {
 @Suppress("unused")
 public class StubTypeTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | {
-                |   person {
-                |     __typename__stubbed__address: __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "person": {
-                |       "__typename__stubbed__address": "Person"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-        )
+            )
 
     /**
      * ```json

@@ -50,28 +50,6 @@ public class `typename is sent to owning service even when no fields are queried
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "Issues",
-                query = """
-                | {
-                |   issue {
-                |     __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issue": {
-                |       "__typename": "IssueQuery"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**

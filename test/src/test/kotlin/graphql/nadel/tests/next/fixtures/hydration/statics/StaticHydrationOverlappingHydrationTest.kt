@@ -258,7 +258,6 @@ class StaticHydrationOverlappingHydrationTest : NadelIntegrationTest(
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .virtualTypeSupport { true }
-            .shortCircuitEmptyQuery { true }
     }
 
     override fun makeNadel(): Nadel.Builder {
