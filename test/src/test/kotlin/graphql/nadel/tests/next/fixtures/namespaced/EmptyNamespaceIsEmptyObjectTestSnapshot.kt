@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<EmptyNamespaceIsOmittedTest>()
+    graphql.nadel.tests.next.update<EmptyNamespaceIsEmptyObjectTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class EmptyNamespaceIsOmittedTestSnapshot : TestSnapshot() {
+public class EmptyNamespaceIsEmptyObjectTestSnapshot : TestSnapshot() {
     /**
      * Query
      *
@@ -63,7 +63,8 @@ public class EmptyNamespaceIsOmittedTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "hello": "world"
+     *     "hello": "world",
+     *     "jira": {}
      *   }
      * }
      * ```
@@ -72,7 +73,8 @@ public class EmptyNamespaceIsOmittedTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "hello": "world"
+            |     "hello": "world",
+            |     "jira": {}
             |   }
             | }
             """.trimMargin(),

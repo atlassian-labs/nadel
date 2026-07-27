@@ -62,7 +62,13 @@ internal object NadelResultMerger {
 
             // Ensure field is present in result
             if (topLevelResultKey.value !in data) {
-                data[topLevelResultKey.value] = null
+                val topLevelField = topLevelFields.first { it.resultKey == topLevelResultKey.value }
+                data[topLevelResultKey.value] =
+                    if (isNamespacedField(topLevelField, engineSchema) && children.isEmpty()) {
+                        mutableMapOf<String, Any?>()
+                    } else {
+                        null
+                    }
             }
 
             if (children.isNotEmpty()) {
@@ -121,18 +127,12 @@ internal object NadelResultMerger {
         // NOTE: please ensure all fields are from object types and will NOT have multiple field defs
         // Other code in this file relies on this contract
         for (field in topLevelFields) {
-            val namespaced = isNamespacedField(field, engineSchema)
-
-            if (namespaced && field.children.isEmpty()) {
-                continue
-            }
-
             val requiredChildFields = requiredFields
                 .computeIfAbsent(NadelResultKey(field.resultKey)) {
                     mutableListOf()
                 }
 
-            if (namespaced) {
+            if (isNamespacedField(field, engineSchema)) {
                 requiredChildFields.addAll(field.children)
             }
         }
