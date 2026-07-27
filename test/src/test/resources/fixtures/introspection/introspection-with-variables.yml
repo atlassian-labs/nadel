@@ -1,4 +1,4 @@
-name: "introspection with variables FF on"
+name: "introspection with variables"
 enabled: true
 # language=GraphQL
 overallSchema:

@@ -63,14 +63,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           issues {
             __typename__batch_hydration__authors: __typename
             batch_hydration__authors__authorIds: authorIds
             id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -107,13 +107,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          usersByIds(id: ["CLOUD-ID-1/USER-1", "CLOUD-ID-1/USER-3"]) {
+        query ($v0: [ID]) {
+          usersByIds(id: $v0) {
             id
             batch_hydration__authors__id: id
           }
         }
-      variables: { }
+      variables: {"v0":["CLOUD-ID-1/USER-1","CLOUD-ID-1/USER-3"]}
     # language=JSON
     response: |-
       {
@@ -135,13 +135,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          usersByIds(id: ["CLOUD-ID-1/USER-5"]) {
+        query ($v0: [ID]) {
+          usersByIds(id: $v0) {
             id
             batch_hydration__authors__id: id
           }
         }
-      variables: { }
+      variables: {"v0":["CLOUD-ID-1/USER-5"]}
     # language=JSON
     response: |-
       {
@@ -159,13 +159,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          usersByIds(id: ["CLOUD-ID-2/USER-2", "CLOUD-ID-2/USER-4"]) {
+        query ($v0: [ID]) {
+          usersByIds(id: $v0) {
             id
             batch_hydration__authors__id: id
           }
         }
-      variables: { }
+      variables: {"v0":["CLOUD-ID-2/USER-2","CLOUD-ID-2/USER-4"]}
     # language=JSON
     response: |-
       {

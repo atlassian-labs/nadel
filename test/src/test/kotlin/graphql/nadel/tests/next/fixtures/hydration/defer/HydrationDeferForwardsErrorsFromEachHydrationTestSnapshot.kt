@@ -24,15 +24,23 @@ public class HydrationDeferForwardsErrorsFromEachHydrationTestSnapshot : TestSna
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issuesByKeys(keys: ["GQLGW-2", "GQLGW-3", "GQLGW-4"]) {
-                |     key
-                |     hydration__assignee__assigneeId: assigneeId
+                | query (${'$'}v0: [String!]!) {
+                |   issuesByKeys(keys: ${'$'}v0) {
                 |     __typename__hydration__assignee: __typename
+                |     hydration__assignee__assigneeId: assigneeId
+                |     key
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "GQLGW-2",
+                |     "GQLGW-3",
+                |     "GQLGW-4"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -62,13 +70,17 @@ public class HydrationDeferForwardsErrorsFromEachHydrationTestSnapshot : TestSna
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/0") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/0"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "errors": [
@@ -90,13 +102,17 @@ public class HydrationDeferForwardsErrorsFromEachHydrationTestSnapshot : TestSna
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -112,13 +128,17 @@ public class HydrationDeferForwardsErrorsFromEachHydrationTestSnapshot : TestSna
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/10") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/10"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "errors": [

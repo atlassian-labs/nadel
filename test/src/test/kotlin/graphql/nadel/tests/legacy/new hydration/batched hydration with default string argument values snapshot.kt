@@ -71,14 +71,23 @@ public class `batched hydration with default string argument values snapshot` : 
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["USER-1", "USER-2", "USER-3"], test: "Hello World") {
+                | query (${'$'}v0: String, ${'$'}v1: [ID]) {
+                |   usersByIds(id: ${'$'}v1, test: ${'$'}v0) {
                 |     id
                 |     batch_hydration__authors__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "Hello World",
+                |   "v1": [
+                |     "USER-1",
+                |     "USER-2",
+                |     "USER-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -105,14 +114,22 @@ public class `batched hydration with default string argument values snapshot` : 
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["USER-4", "USER-5"], test: "Hello World") {
+                | query (${'$'}v0: String, ${'$'}v1: [ID]) {
+                |   usersByIds(id: ${'$'}v1, test: ${'$'}v0) {
                 |     id
                 |     batch_hydration__authors__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "Hello World",
+                |   "v1": [
+                |     "USER-4",
+                |     "USER-5"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -86,8 +86,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          board(id: 1) {
+        query ($v0: ID) {
+          board(id: $v0) {
             __typename__rename__cardChildren: __typename
             id
             rename__cardChildren__issueChildren: issueChildren {
@@ -100,7 +100,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":1}
     # language=JSON
     response: |-
       {
@@ -142,15 +142,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        query ($v0: [ID]) {
           usersQuery {
-            users(accountIds: ["1", "2", "3"]) {
+            users(accountIds: $v0) {
               accountId
               batch_hydration__assignee__accountId: accountId
             }
           }
         }
-      variables: { }
+      variables: {"v0":["1","2","3"]}
     # language=JSON
     response: |-
       {

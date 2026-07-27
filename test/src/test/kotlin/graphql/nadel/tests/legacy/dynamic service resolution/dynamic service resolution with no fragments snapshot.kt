@@ -24,13 +24,17 @@ public class `dynamic service resolution with no fragments snapshot` : TestSnaps
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | {
-                |   node(id: "pull-request:id-123") {
+                | query (${'$'}v0: ID!) {
+                |   node(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "pull-request:id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -70,14 +70,18 @@ public class `extending types from another service is possible snapshot` : TestS
             ExpectedServiceCall(
                 service = "Service2",
                 query = """
-                | {
-                |   lookup(id: "rootId") {
+                | query (${'$'}v0: ID) {
+                |   lookup(id: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "rootId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

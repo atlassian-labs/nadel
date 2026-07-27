@@ -24,13 +24,17 @@ public class HydrationConditionalMultipleEnumConditionsTestSnapshot : TestSnapsh
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   storyBarById(id: "bar-id") {
+                | query (${'$'}v0: ID) {
+                |   storyBarById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "bar-id"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

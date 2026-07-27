@@ -52,14 +52,22 @@ public class `batch hydration with renamed actor field snapshot` : TestSnapshot(
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   rename__barsByIdOverall__barsById: barsById(id: ["barId1", "barId2", "barId3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   rename__barsByIdOverall__barsById: barsById(id: ${'$'}v0) {
                 |     batch_hydration__bar__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "barId1",
+                |     "barId2",
+                |     "barId3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,14 +24,18 @@ public class StaticHydrationVirtualTypeHintOffTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
-                | {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
+                | query (${'$'}v0: String!) {
+                |   graphStore_query(query: ${'$'}v0) {
                 |     __typename__type_filter__edges: __typename
                 |     __typename__type_filter__pageInfo: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": "SELECT * FROM Work WHERE teamId = ?"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -2,7 +2,7 @@ package graphql.nadel.tests.legacy.introspection
 
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 
-class `introspection with variables FF on` : NadelLegacyIntegrationTest(
+class `introspection with variables` : NadelLegacyIntegrationTest(
     query = """
         query {
           __schema {

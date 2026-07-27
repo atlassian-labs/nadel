@@ -24,8 +24,8 @@ public class PolymorphicHydrationCommonInterfaceMigrationTestSnapshot : TestSnap
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   oldObjects(ids: ["ari:cloud:owner::type/1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   oldObjects(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__object__id: id
@@ -33,7 +33,13 @@ public class PolymorphicHydrationCommonInterfaceMigrationTestSnapshot : TestSnap
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:owner::type/1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

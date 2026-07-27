@@ -80,12 +80,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          barWithSomeFloat(someFloat: 123.45) {
+        query ($v0: Float) {
+          barWithSomeFloat(someFloat: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":123.45}
     # language=JSON
     response: |-
       {

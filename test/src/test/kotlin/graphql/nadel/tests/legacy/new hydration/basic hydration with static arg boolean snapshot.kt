@@ -46,13 +46,17 @@ public class `basic hydration with static arg boolean snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barWithSomeAttribute(someAttribute: true) {
+                | query (${'$'}v0: Boolean) {
+                |   barWithSomeAttribute(someAttribute: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": true
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

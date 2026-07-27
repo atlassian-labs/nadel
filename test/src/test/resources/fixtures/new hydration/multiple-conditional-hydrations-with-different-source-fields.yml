@@ -116,12 +116,12 @@ serviceCalls:
   - serviceName: "service2"
     request:
       query: |
-        query {
-          barById(id: "BAR_A") {
+        query ($v0: ID) {
+          barById(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"BAR_A"}
     # language=JSON
     response: |-
       {
@@ -135,12 +135,12 @@ serviceCalls:
   - serviceName: "service2"
     request:
       query: |
-        query {
-          barById(id: "BAR_B") {
+        query ($v0: ID) {
+          barById(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"BAR_B"}
     # language=JSON
     response: |-
       {

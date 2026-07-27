@@ -76,15 +76,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          issue: node(id: "issue/id-123") {
+        query ($v0: ID!) {
+          issue: node(id: $v0) {
             id
             ... on Issue {
               issueKey
             }
           }
         }
-      variables: { }
+      variables: {"v0":"issue/id-123"}
     # language=JSON
     response: |-
       {

@@ -45,13 +45,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           foo {
             __typename__hydration__successor: __typename
             hydration__successor__createdAt: createdAt
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -67,12 +67,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          successor(after: 3000000000) {
+        query ($v0: Long) {
+          successor(after: $v0) {
             id
           }
         }
-      variables: { }
+      variables: {"v0":3000000000}
     # language=JSON
     response: |-
       {

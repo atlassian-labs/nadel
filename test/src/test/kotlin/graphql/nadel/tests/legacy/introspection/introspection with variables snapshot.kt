@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<`introspection with variables FF on`>()
+    graphql.nadel.tests.next.update<`introspection with variables`>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class `introspection with variables FF on snapshot` : TestSnapshot() {
+public class `introspection with variables snapshot` : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             )
 

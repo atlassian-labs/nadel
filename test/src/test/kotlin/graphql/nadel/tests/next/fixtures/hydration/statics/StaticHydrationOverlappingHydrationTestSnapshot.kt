@@ -24,8 +24,8 @@ public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
-                | {
-                |   graphStore_query(query: "Hello World") {
+                | query (${'$'}v0: String!) {
+                |   graphStore_query(query: ${'$'}v0) {
                 |     edges {
                 |       __typename__batch_hydration__node: __typename
                 |       batch_hydration__node__nodeId: nodeId
@@ -33,7 +33,11 @@ public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "Hello World"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -58,8 +62,8 @@ public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
-                | {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
+                | query (${'$'}v0: String!) {
+                |   graphStore_query(query: ${'$'}v0) {
                 |     __typename
                 |     edges {
                 |       __typename
@@ -75,7 +79,11 @@ public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "SELECT * FROM Work WHERE teamId = ?"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -109,14 +117,20 @@ public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "jira",
                 query = """
-                | {
-                |   comments(ids: ["ari:cloud:jira::comment/2"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   comments(ids: ${'$'}v0) {
                 |     __typename
                 |     batch_hydration__node__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::comment/2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -135,14 +149,21 @@ public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "jira",
                 query = """
-                | {
-                |   comments(ids: ["ari:cloud:jira::issue/1", "ari:cloud:jira::comment/2"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   comments(ids: ${'$'}v0) {
                 |     __typename
                 |     batch_hydration__node__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::issue/1",
+                |     "ari:cloud:jira::comment/2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -162,15 +183,21 @@ public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "jira",
                 query = """
-                | {
-                |   issues(ids: ["ari:cloud:jira::issue/1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   issues(ids: ${'$'}v0) {
                 |     __typename
                 |     batch_hydration__node__id: id
                 |     key
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::issue/1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

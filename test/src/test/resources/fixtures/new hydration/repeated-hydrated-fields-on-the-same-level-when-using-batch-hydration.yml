@@ -55,13 +55,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           foo {
             __typename__batch_hydration__issue: __typename
             batch_hydration__issue__issueId: issueId
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -77,14 +77,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          issues(issueIds: ["ISSUE-1"]) {
+        query ($v0: [ID!]) {
+          issues(issueIds: $v0) {
             desc
             batch_hydration__issue__id: id
             name
           }
         }
-      variables: { }
+      variables: {"v0":["ISSUE-1"]}
     # language=JSON
     response: |-
       {

@@ -24,10 +24,10 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          getFoo(arg: 15)
+        query ($v0: Long) {
+          getFoo(arg: $v0)
         }
-      variables: { }
+      variables: {"v0":15}
     # language=JSON
     response: |-
       {

@@ -154,8 +154,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          petsByIds(ids: ["good-boye-1", "tall-boye-9"]) {
+        query ($v0: [ID!]!) {
+          petsByIds(ids: $v0) {
             __typename__batch_hydration__animal: __typename
             batch_hydration__animal__animalId: animalId
             batch_hydration__animal__animalId: animalId
@@ -170,7 +170,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":["good-boye-1","tall-boye-9"]}
     # language=JSON
     response: |-
       {
@@ -198,14 +198,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          dogsByIds(ids: ["good-boye-1"]) {
+        query ($v0: [ID!]!) {
+          dogsByIds(ids: $v0) {
             __typename
             batch_hydration__animal__id: id
             name
           }
         }
-      variables: { }
+      variables: {"v0":["good-boye-1"]}
     # language=JSON
     response: |-
       {
@@ -224,8 +224,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          giraffes(filters: [{birthday: 1001203200, height: 570, nickname: "Tall Boye"}]) {
+        query ($v0: [GiraffeFilter]) {
+          giraffes(filters: $v0) {
             __typename
             birthday
             batch_hydration__animal__birthday: birthday
@@ -235,7 +235,7 @@ serviceCalls:
             batch_hydration__animal__nickname: nickname
           }
         }
-      variables: { }
+      variables: {"v0":[{"nickname":"Tall Boye","birthday":1001203200,"height":570}]}
     # language=JSON
     response: |-
       {

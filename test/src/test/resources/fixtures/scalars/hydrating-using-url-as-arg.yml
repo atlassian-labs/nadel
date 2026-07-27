@@ -59,14 +59,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           foo {
             __typename__hydration__details: __typename
             url
             hydration__details__url: url
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -83,14 +83,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          lookup(url: "https://github.com/atlassian-labs/nadel") {
+        query ($v0: URL) {
+          lookup(url: $v0) {
             baseUrl
             createdAt
             owner
           }
         }
-      variables: { }
+      variables: {"v0":"https://github.com/atlassian-labs/nadel"}
     # language=JSON
     response: |-
       {

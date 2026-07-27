@@ -124,7 +124,7 @@ internal class NadelHydrationInputBuilder private constructor(
         inputDef: NadelHydrationArgument,
     ): NormalizedInputValue? {
         return when (val valueSource = inputDef.valueSource) {
-            is ValueSource.ArgumentValue -> getArgumentValue(valueSource)
+            is ValueSource.ArgumentValue -> getArgumentValue(inputDef, valueSource)
             is ValueSource.FieldResultValue -> makeInputValue(
                 inputDef,
                 value = getResultValue(valueSource),
@@ -162,9 +162,16 @@ internal class NadelHydrationInputBuilder private constructor(
     }
 
     private fun getArgumentValue(
+        inputDef: NadelHydrationArgument,
         valueSource: ValueSource.ArgumentValue,
     ): NormalizedInputValue? {
-        return virtualField.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
+        val argumentValue = virtualField.getNormalizedArgument(valueSource.argumentName) ?: valueSource.defaultValue
+        return argumentValue?.let {
+            NormalizedInputValue(
+                GraphQLTypeUtil.simplePrint(inputDef.backingArgumentDef.type),
+                it.value,
+            )
+        }
     }
 
     private fun getResultValue(

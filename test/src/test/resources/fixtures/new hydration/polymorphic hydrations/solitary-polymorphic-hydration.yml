@@ -136,8 +136,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          petById(id: "PET-0") {
+        query ($v0: ID) {
+          petById(id: $v0) {
             __typename
             __typename__type_filter__id: __typename
             __typename__type_filter__name: __typename
@@ -145,7 +145,7 @@ serviceCalls:
             id
           }
         }
-      variables: { }
+      variables: {"v0":"PET-0"}
     # language=JSON
     response: |-
       {
@@ -164,8 +164,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          humanById(id: "HUMAN-0") {
+        query ($v0: ID) {
+          humanById(id: $v0) {
             __typename
             __typename__type_filter__id: __typename
             __typename__type_filter__breed: __typename
@@ -173,7 +173,7 @@ serviceCalls:
             name
           }
         }
-      variables: { }
+      variables: {"v0":"HUMAN-0"}
     # language=JSON
     response: |-
       {

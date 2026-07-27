@@ -78,12 +78,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          barById(id: 12345) {
+        query ($v0: Int) {
+          barById(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":12345}
     # language=JSON
     response: |-
       {

@@ -59,7 +59,7 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           foo {
             __typename__deep_rename__renamedField: __typename
             __typename__hydration__details: __typename
@@ -71,7 +71,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -93,12 +93,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          detail(detailId: "ID") {
+        query ($v0: ID) {
+          detail(detailId: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"ID"}
     # language=JSON
     response: |-
       {

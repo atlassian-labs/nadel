@@ -57,14 +57,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           rename__foo__fooOriginal: fooOriginal {
             __typename__hydration__fooBar: __typename
             hydration__fooBar__fooBarId: fooBarId
             id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -81,12 +81,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          barById(id: "hydrated-bar") {
+        query ($v0: ID!) {
+          barById(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables: {"v0":"hydrated-bar"}
     # language=JSON
     response: |-
       {

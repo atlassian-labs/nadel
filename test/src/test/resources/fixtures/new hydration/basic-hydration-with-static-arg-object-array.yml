@@ -85,13 +85,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           foo {
             __typename__hydration__bar: __typename
             hydration__bar__id: id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -107,25 +107,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          barById(id: "barId", friends: [
-            {
-              firstName: "first"
-              lastName: "last"
-            },
-            {
-              firstName: "first2"
-              lastName: "last2"
-            },
-            {
-              firstName: "first3"
-              lastName: "last3"
-            }
-          ]) {
+        query ($v0: ID, $v1: [FullName]) {
+          barById(friends: $v1, id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"barId","v1":[{"firstName":"first","lastName":"last"},{"firstName":"first2","lastName":"last2"},{"firstName":"first3","lastName":"last3"}]}
     # language=JSON
     response: |-
       {

@@ -25,14 +25,21 @@ public class `complex identified by uses same source for hydrations and a deep r
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   details(detailIds: ["Foo-1", "Foo-2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   details(detailIds: ${'$'}v0) {
                 |     batch_hydration__detail__detailId: detailId
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-1",
+                |     "Foo-2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -55,14 +62,20 @@ public class `complex identified by uses same source for hydrations and a deep r
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   details(detailIds: ["Foo-3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   details(detailIds: ${'$'}v0) {
                 |     batch_hydration__detail__detailId: detailId
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -139,14 +152,21 @@ public class `complex identified by uses same source for hydrations and a deep r
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   issues(issueIds: ["Foo-1", "Foo-2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   issues(issueIds: ${'$'}v0) {
                 |     field
                 |     batch_hydration__issue__issueId: issueId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-1",
+                |     "Foo-2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -169,14 +189,20 @@ public class `complex identified by uses same source for hydrations and a deep r
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   issues(issueIds: ["Foo-3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   issues(issueIds: ${'$'}v0) {
                 |     field
                 |     batch_hydration__issue__issueId: issueId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

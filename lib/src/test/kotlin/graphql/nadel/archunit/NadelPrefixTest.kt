@@ -67,7 +67,6 @@ class NadelPrefixTest {
                 "graphql.nadel.engine.transform.result.json.JsonNodeExtractor",
                 "graphql.nadel.engine.transform.result.json.JsonNodes",
                 "graphql.nadel.engine.util.AliasesKt",
-                "graphql.nadel.hints.AllDocumentVariablesHint",
                 "graphql.nadel.hints.LegacyOperationNamesHint",
                 "graphql.nadel.hints.NewBatchHydrationGroupingHint",
                 "graphql.nadel.hints.NewResultMergerAndNamespacedTypename",

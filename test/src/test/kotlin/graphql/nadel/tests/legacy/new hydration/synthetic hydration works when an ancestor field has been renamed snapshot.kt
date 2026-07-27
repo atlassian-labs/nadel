@@ -57,15 +57,19 @@ public class `synthetic hydration works when an ancestor field has been renamed 
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   syntheticIssue {
-                |     issue(id: "1") {
+                |     issue(id: ${'$'}v0) {
                 |       id
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

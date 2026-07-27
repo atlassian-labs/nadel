@@ -61,12 +61,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          node(id: "world-1") {
+        query ($v0: ID) {
+          node(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables: {"v0":"world-1"}
     # language=JSON
     response: |-
       {

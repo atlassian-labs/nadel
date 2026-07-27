@@ -61,15 +61,19 @@ public class `solitary polymorphic hydration when hook returns null snapshot` : 
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | {
-                |   humanById(id: "HUMAN-0") {
+                | query (${'$'}v0: ID) {
+                |   humanById(id: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "HUMAN-0"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
