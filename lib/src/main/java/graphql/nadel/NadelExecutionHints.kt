@@ -7,7 +7,6 @@ import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelHydrationExecutableSourceFields
-import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
 import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
@@ -25,7 +24,6 @@ data class NadelExecutionHints(
     val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
     val virtualTypeSupport: NadelVirtualTypeSupportHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
-    val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
     val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
     val disableSharedTypes: NadelDisableSharedTypesHint,
@@ -52,7 +50,6 @@ data class NadelExecutionHints(
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
-        private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
         private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
         private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
@@ -71,7 +68,6 @@ data class NadelExecutionHints(
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
             virtualTypeSupport = nadelExecutionHints.virtualTypeSupport
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
-            hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
             hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
             shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
@@ -120,11 +116,6 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun hydrationFilterObjectTypes(flag: NadelHydrationFilterObjectTypesHint): Builder {
-            hydrationFilterObjectTypes = flag
-            return this
-        }
-
         fun hydrationExecutableSourceFields(flag: NadelHydrationExecutableSourceFields): Builder {
             hydrationExecutableSourceFields = flag
             return this
@@ -165,7 +156,6 @@ data class NadelExecutionHints(
                 shortCircuitEmptyQuery,
                 virtualTypeSupport,
                 executeOnEngineSchema,
-                hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,
                 shadowUnderlyingTypeNameInvestigation,
                 disableSharedTypes,
