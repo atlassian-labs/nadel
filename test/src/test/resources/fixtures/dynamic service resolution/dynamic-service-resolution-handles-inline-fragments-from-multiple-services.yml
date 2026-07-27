@@ -76,8 +76,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          node(id: "pull-request:id-123") {
+        query ($v0: ID!) {
+          node(id: $v0) {
             __typename__type_filter__issueKey: __typename
             id
             ... on PullRequest {
@@ -85,7 +85,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":"pull-request:id-123"}
     # language=JSON
     response: |-
       {

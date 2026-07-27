@@ -22,37 +22,19 @@ private suspend fun main() {
 public class `basic hydration with static args snapshot` : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "service1",
-                query = """
-                | {
-                |   foo {
-                |     __typename__hydration__bar: __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "foo": {
-                |       "__typename__hydration__bar": "Foo"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

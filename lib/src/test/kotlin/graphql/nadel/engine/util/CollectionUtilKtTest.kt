@@ -2,10 +2,33 @@ package graphql.nadel.engine.util
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CollectionUtilTest {
+    @Test
+    fun `mapFrom pairs preserves collection iteration order`() {
+        val map = mapFrom(listOf("third" to 3, "first" to 1, "second" to 2))
+
+        assertEquals(listOf("third", "first", "second"), map.keys.toList())
+    }
+
+    @Test
+    fun `mapFrom pairs preserves sequence iteration order`() {
+        val map = mapFrom(sequenceOf("third" to 3, "first" to 1, "second" to 2))
+
+        assertEquals(listOf("third", "first", "second"), map.keys.toList())
+    }
+
+    @Test
+    fun `mapFrom entries preserves collection iteration order`() {
+        val entries = linkedMapOf("third" to 3, "first" to 1, "second" to 2).entries
+        val map = mapFrom(entries)
+
+        assertEquals(listOf("third", "first", "second"), map.keys.toList())
+    }
+
     @Test
     fun `partitionCount counts number of values in each partition`() {
         val partition = listOf(1, 4, 6, 8, 10)

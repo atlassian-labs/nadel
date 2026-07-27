@@ -27,10 +27,10 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
                 | {
                 |   ... @defer {
                 |     details {
+                |       __typename__deep_rename__name: __typename
                 |       deep_rename__name__issue: issue {
                 |         name
                 |       }
-                |       __typename__deep_rename__name: __typename
                 |     }
                 |   }
                 | }

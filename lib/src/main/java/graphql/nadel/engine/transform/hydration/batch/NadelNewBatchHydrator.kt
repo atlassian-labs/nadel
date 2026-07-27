@@ -443,7 +443,6 @@ internal class NadelNewBatchHydrator(
 
         val queries = NadelHydrationFieldsBuilder
             .makeBatchBackingQueries(
-                executionHints = executionContext.hints,
                 executionBlueprint = executionBlueprint,
                 instruction = instruction,
                 aliasHelper = aliasHelper,

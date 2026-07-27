@@ -78,11 +78,11 @@ public class `two deep renames merged fields with same path and field rename sna
      *   "data": {
      *     "issue": {
      *       "id": "ISSUE-1",
-     *       "authorId": "USER-1",
-     *       "authorName": "User 1",
      *       "details": {
      *         "extra": "extra 1"
-     *       }
+     *       },
+     *       "authorName": "User 1",
+     *       "authorId": "USER-1"
      *     }
      *   }
      * }
@@ -94,11 +94,11 @@ public class `two deep renames merged fields with same path and field rename sna
             |   "data": {
             |     "issue": {
             |       "id": "ISSUE-1",
-            |       "authorId": "USER-1",
-            |       "authorName": "User 1",
             |       "details": {
             |         "extra": "extra 1"
-            |       }
+            |       },
+            |       "authorName": "User 1",
+            |       "authorId": "USER-1"
             |     }
             |   }
             | }

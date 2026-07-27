@@ -26,9 +26,9 @@ public class
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   barQuery {
-                |     barById(id: "barId123") {
+                |     barById(id: ${'$'}v0) {
                 |       __typename__hydration__nestedBar: __typename
                 |       name
                 |       hydration__nestedBar__nestedBarId: nestedBarId
@@ -36,7 +36,11 @@ public class
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "errors": [

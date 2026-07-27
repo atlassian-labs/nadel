@@ -24,13 +24,17 @@ public class `hydrating json data snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Baz",
                 query = """
-                | {
-                |   otherFoo(id: "10000") {
+                | query (${'$'}v0: ID!) {
+                |   otherFoo(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "10000"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

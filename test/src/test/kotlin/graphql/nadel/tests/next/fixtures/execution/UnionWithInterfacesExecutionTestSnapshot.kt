@@ -80,8 +80,6 @@ public class UnionWithInterfacesExecutionTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

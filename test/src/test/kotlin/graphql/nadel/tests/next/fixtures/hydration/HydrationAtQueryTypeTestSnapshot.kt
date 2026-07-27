@@ -24,17 +24,23 @@ public class HydrationAtQueryTypeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   hydration__myIssue__myIssueKey: myIssueKey
-                |   __typename__hydration__myIssue: __typename
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
+                |     title
+                |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "bye"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
-                |     "hydration__myIssue__myIssueKey": "bye",
-                |     "__typename__hydration__myIssue": "Query"
+                |     "issueById": {
+                |       "title": "Farewell"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -45,18 +51,16 @@ public class HydrationAtQueryTypeTestSnapshot : TestSnapshot() {
                 service = "issues",
                 query = """
                 | {
-                |   issueById(id: "bye") {
-                |     title
-                |   }
+                |   __typename__hydration__myIssue: __typename
+                |   hydration__myIssue__myIssueKey: myIssueKey
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 result = """
                 | {
                 |   "data": {
-                |     "issueById": {
-                |       "title": "Farewell"
-                |     }
+                |     "hydration__myIssue__myIssueKey": "bye",
+                |     "__typename__hydration__myIssue": "Query"
                 |   }
                 | }
                 """.trimMargin(),

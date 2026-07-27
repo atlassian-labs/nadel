@@ -335,8 +335,6 @@ internal class NadelHydrationTransform(
             }
 
         val backingQueries = NadelHydrationFieldsBuilder.makeBackingQueries(
-            executionContext = executionContext,
-            service = state.virtualFieldService,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             virtualField = virtualField,

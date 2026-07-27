@@ -22,28 +22,6 @@ private suspend fun main() {
 public class HydrationConditionalMultipleEnumConditionsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "service2",
-                query = """
-                | {
-                |   storyBarById(id: "bar-id") {
-                |     name
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "storyBarById": {
-                |       "name": "Story Bar"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
                 service = "service1",
                 query = """
                 | {
@@ -61,9 +39,35 @@ public class HydrationConditionalMultipleEnumConditionsTestSnapshot : TestSnapsh
                 | {
                 |   "data": {
                 |     "foo": {
-                |       "__typename__hydration__bar": "Foo",
                 |       "hydration__bar__barId": "bar-id",
-                |       "hydration__bar__type": "STORY"
+                |       "hydration__bar__type": "STORY",
+                |       "__typename__hydration__bar": "Foo"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "service2",
+                query = """
+                | query (${'$'}v0: ID) {
+                |   storyBarById(id: ${'$'}v0) {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "bar-id"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "storyBarById": {
+                |       "name": "Story Bar"
                 |     }
                 |   }
                 | }
@@ -73,6 +77,19 @@ public class HydrationConditionalMultipleEnumConditionsTestSnapshot : TestSnapsh
             ),
         )
 
+    /**
+     * ```json
+     * {
+     *   "data": {
+     *     "foo": {
+     *       "bar": {
+     *         "name": "Story Bar"
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     */
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {

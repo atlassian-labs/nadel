@@ -25,6 +25,62 @@ public class `able to ask for field and use same field as hydration source snaps
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
+                |     __typename__hydration__nestedBar: __typename
+                |     hydration__nestedBar__barId: barId
+                |     barId
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "barById": {
+                |       "hydration__nestedBar__barId": "1",
+                |       "__typename__hydration__nestedBar": "Bar",
+                |       "barId": "1"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Bar",
+                query = """
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
+                |     barId
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "barById": {
+                |       "barId": "1"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Bar",
+                query = """
                 | {
                 |   bar {
                 |     __typename__hydration__nestedBar: __typename
@@ -43,54 +99,6 @@ public class `able to ask for field and use same field as hydration source snaps
                 |       "hydration__nestedBar__barId": "1",
                 |       "__typename__hydration__nestedBar": "Bar",
                 |       "name": "Test"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Bar",
-                query = """
-                | {
-                |   barById(id: "1") {
-                |     __typename__hydration__nestedBar: __typename
-                |     hydration__nestedBar__barId: barId
-                |     barId
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "barById": {
-                |       "hydration__nestedBar__barId": "1",
-                |       "__typename__hydration__nestedBar": "Bar",
-                |       "barId": "1"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Bar",
-                query = """
-                | {
-                |   barById(id: "1") {
-                |     barId
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "barById": {
-                |       "barId": "1"
                 |     }
                 |   }
                 | }

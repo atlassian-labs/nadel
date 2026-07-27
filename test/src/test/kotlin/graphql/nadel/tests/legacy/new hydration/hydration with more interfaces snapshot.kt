@@ -24,15 +24,41 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | {
-                |   ariById(id: "Franklin")
+                | query (${'$'}v0: ID!) {
+                |   ariById(id: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "Franklin"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
                 |     "ariById": "ari:user/Franklin"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Issues",
+                query = """
+                | query (${'$'}v0: ID!) {
+                |   trollName(id: ${'$'}v0)
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "My Arm"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "trollName": "Troll"
                 |   }
                 | }
                 """.trimMargin(),
@@ -81,24 +107,6 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
                 |         "id": "GQLGW-11"
                 |       }
                 |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Issues",
-                query = """
-                | {
-                |   trollName(id: "My Arm")
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "trollName": "Troll"
                 |   }
                 | }
                 """.trimMargin(),

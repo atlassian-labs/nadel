@@ -24,13 +24,15 @@ public class `primitive json arguments snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query myQuery(${'$'}v0: JSON, ${'$'}v1: JSON!) {
-                |   hello(arg: {payload : ${'$'}v0}, arg1: ${'$'}v1)
+                | query myQuery(${'$'}v0: InputWithJson, ${'$'}v1: JSON!) {
+                |   hello(arg: ${'$'}v0, arg1: ${'$'}v1)
                 | }
                 """.trimMargin(),
                 variables = """
                 | {
-                |   "v0": "String JSON input",
+                |   "v0": {
+                |     "payload": "String JSON input"
+                |   },
                 |   "v1": false
                 | }
                 """.trimMargin(),

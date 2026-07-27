@@ -28,8 +28,8 @@ public class MultipleFieldsinSingleDeferDirectiveTestSnapshot : TestSnapshot() {
                 |   defer {
                 |     fastField
                 |     ... @defer {
-                |       slowField
                 |       anotherSlowField
+                |       slowField
                 |     }
                 |   }
                 | }

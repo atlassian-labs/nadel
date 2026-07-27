@@ -31,10 +31,10 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query myQuery {
-          search(by: {name: "Figaro"})
+        query myQuery($v0: SearchInput) {
+          search(by: $v0)
         }
-      variables: { }
+      variables: {"v0":{"name":"Figaro"}}
       operationName: "myQuery"
     # language=JSON
     response: |-

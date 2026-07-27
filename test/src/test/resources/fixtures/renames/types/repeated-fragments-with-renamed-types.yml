@@ -132,8 +132,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          service(id: "service-1") {
+        query ($v0: ID!) {
+          service(id: $v0) {
             __typename
             dependedOn {
               __typename
@@ -319,7 +319,7 @@ serviceCalls:
             name
           }
         }
-      variables: { }
+      variables: {"v0":"service-1"}
     # language=JSON
     response: |-
       {

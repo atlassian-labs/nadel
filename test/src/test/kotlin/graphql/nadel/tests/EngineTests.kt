@@ -34,6 +34,7 @@ import kotlinx.coroutines.reactive.asPublisher
 import org.junit.jupiter.api.fail
 import org.reactivestreams.Publisher
 import java.io.File
+import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.concurrent.CompletableFuture
 
@@ -303,6 +304,9 @@ private suspend fun execute(
                         } else {
                             value.toLong()
                         }
+                    } else if (value is BigDecimal) {
+                        // Jackson parses floating point fixture variables as Double
+                        value.toDouble()
                     } else if (value is AnyMap) {
                         @Suppress("UNCHECKED_CAST")
                         fixVariables(value as JsonMap)

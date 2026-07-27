@@ -1,6 +1,7 @@
 package graphql.nadel.engine.util
 
 import java.util.Collections
+import java.util.LinkedHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -56,11 +57,12 @@ inline fun <K, E> Sequence<E>.strictAssociateBy(crossinline keyExtractor: (E) ->
 
 /**
  * Like [mapOf] but takes in a [Collection] instead of vararg. Useful if your input
- * into the [Map] is [List.map]ped from another [Collection].
+ * into the [Map] is [List.map]ped from another [Collection]. Preserves the iteration
+ * order of [entries].
  */
 @JvmName("mapFromPairs")
 fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): Map<K, V> {
-    val map = HashMap<K, V>(entries.size)
+    val map = LinkedHashMap<K, V>(entries.size)
     map.putAll(entries)
     require(map.size == entries.size) {
         @Suppress("SimpleRedundantLet") // For debugging purposes if you want to visit the values
@@ -73,11 +75,12 @@ fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): Map<K, V> {
 
 /**
  * Like [mapOf] but takes in a [Collection] instead of vararg. Useful if your input
- * into the [Map] is [List.map]ped from another [Collection].
+ * into the [Map] is [List.map]ped from another [Collection]. Preserves the iteration
+ * order of [entries].
  */
 @JvmName("mapFromPairs")
 fun <K, V> mapFrom(entries: Sequence<Pair<K, V>>): Map<K, V> {
-    val map = HashMap<K, V>()
+    val map = LinkedHashMap<K, V>()
     var count = 0
     entries.forEach {
         map[it.first] = it.second
@@ -102,11 +105,12 @@ fun <K, V> Collection<Pair<K, V>>.toMapStrictly(): Map<K, V> {
 
 /**
  * Like [mapOf] but takes in a [Collection] instead of vararg. Useful if your input
- * into the [Map] is [List.map]ped from another [Collection].
+ * into the [Map] is [List.map]ped from another [Collection]. Preserves the iteration
+ * order of [entries].
  */
 @JvmName("mapFromEntries")
 fun <K, V> mapFrom(entries: Collection<Map.Entry<K, V>>): Map<K, V> {
-    val map = HashMap<K, V>(entries.size)
+    val map = LinkedHashMap<K, V>(entries.size)
     entries.forEach(map::put)
     require(map.size == entries.size)
     return map

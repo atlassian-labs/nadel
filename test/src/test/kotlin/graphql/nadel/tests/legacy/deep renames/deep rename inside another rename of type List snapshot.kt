@@ -93,13 +93,13 @@ public class `deep rename inside another rename of type List snapshot` : TestSna
      *         "cardChildren": [
      *           {
      *             "id": "1234",
-     *             "key": "abc",
-     *             "summary": "Summary 1"
+     *             "summary": "Summary 1",
+     *             "key": "abc"
      *           },
      *           {
      *             "id": "456",
-     *             "key": "def",
-     *             "summary": "Summary 2"
+     *             "summary": "Summary 2",
+     *             "key": "def"
      *           }
      *         ]
      *       }
@@ -117,13 +117,13 @@ public class `deep rename inside another rename of type List snapshot` : TestSna
             |         "cardChildren": [
             |           {
             |             "id": "1234",
-            |             "key": "abc",
-            |             "summary": "Summary 1"
+            |             "summary": "Summary 1",
+            |             "key": "abc"
             |           },
             |           {
             |             "id": "456",
-            |             "key": "def",
-            |             "summary": "Summary 2"
+            |             "summary": "Summary 2",
+            |             "key": "def"
             |           }
             |         ]
             |       }

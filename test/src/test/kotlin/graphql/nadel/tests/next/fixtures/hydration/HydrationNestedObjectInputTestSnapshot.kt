@@ -24,14 +24,29 @@ public class HydrationNestedObjectInputTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "identity",
                 query = """
-                | {
-                |   userByFilter(filter: {filter : [{parentId : "123", subEntityTypes : ["a", "b", "c"]}]}) {
+                | query (${'$'}v0: UserSearchInput!) {
+                |   userByFilter(filter: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "filter": [
+                |       {
+                |         "parentId": "123",
+                |         "subEntityTypes": [
+                |           "a",
+                |           "b",
+                |           "c"
+                |         ]
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

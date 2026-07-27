@@ -101,7 +101,7 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           foo {
             __typename
             __typename__batch_hydration__data: __typename
@@ -110,7 +110,7 @@ serviceCalls:
             id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -148,43 +148,19 @@ serviceCalls:
         },
         "extensions": {}
       }
-  - serviceName: "pets"
-    request:
-      # language=GraphQL
-      query: |
-        query {
-          petById(ids: ["PET-0", "PET-1"]) {
-            __typename
-            breed
-            id
-            batch_hydration__data__id: id
-          }
-        }
-      variables: { }
-    # language=JSON
-    response: |-
-      {
-        "data": null,
-        "errors": [
-          {
-            "message": "something went wrong"
-          }
-        ],
-        "extensions": {}
-      }
   - serviceName: "people"
     request:
       # language=GraphQL
       query: |
-        query {
-          humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+        query ($v0: [ID]) {
+          humanById(ids: $v0) {
             __typename
             id
             batch_hydration__data__id: id
             name
           }
         }
-      variables: { }
+      variables: {"v0":["HUMAN-0","HUMAN-1"]}
     # language=JSON
     response: |-
       {
@@ -206,6 +182,31 @@ serviceCalls:
         },
         "extensions": {}
       }
+  - serviceName: "pets"
+    request:
+      # language=GraphQL
+      query: |
+        query ($v0: [ID]) {
+          petById(ids: $v0) {
+            __typename
+            breed
+            id
+            batch_hydration__data__id: id
+          }
+        }
+      variables: {"v0":["PET-0","PET-1"]}
+    # language=JSON
+    response: |-
+      {
+        "data": null,
+        "errors": [
+          {
+            "message": "something went wrong"
+          }
+        ],
+        "extensions": {}
+      }
+
 # language=JSON
 response: |-
   {

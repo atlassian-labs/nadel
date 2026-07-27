@@ -10,7 +10,6 @@ import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.util.copyWithChildren
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
-import graphql.nadel.util.NamespacedUtil.serviceOwnsNamespacedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import graphql.schema.GraphQLSchema
@@ -20,7 +19,6 @@ internal class NadelFieldToService(
     private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     private val dynamicServiceResolution: DynamicServiceResolution,
-    private val services: Map<String, Service>,
 ) {
     private val introspectionService = IntrospectionService(querySchema, introspectionRunnerFactory)
 
@@ -35,7 +33,7 @@ internal class NadelFieldToService(
         if (!executionHints.batchRootFields()) {
             return query.topLevelFields.flatMap { topLevelField ->
                 if (isNamespacedField(topLevelField)) {
-                    getServicePairsForNamespacedFields(topLevelField, executionHints)
+                    getServicePairsForNamespacedFields(topLevelField)
                 } else {
                     listOf(NadelFieldAndService(fields = listOf(topLevelField), service = getService(topLevelField)))
                 }
@@ -50,7 +48,7 @@ internal class NadelFieldToService(
         val batchedByGroup = LinkedHashMap<NadelBatchGroup, MutableList<ExecutableNormalizedField>>()
         for (topLevelField in query.topLevelFields) {
             if (isNamespacedField(topLevelField)) {
-                result += getServicePairsForNamespacedFields(topLevelField, executionHints)
+                result += getServicePairsForNamespacedFields(topLevelField)
                 continue
             }
 
@@ -108,11 +106,10 @@ internal class NadelFieldToService(
 
     private fun getServicePairsForNamespacedFields(
         topLevelField: ExecutableNormalizedField,
-        executionHints: NadelExecutionHints,
     ): List<NadelFieldAndService> {
         return topLevelField.children
             .groupBy { childField ->
-                getServiceForNamespacedField(childField, executionHints)
+                getServiceForNamespacedField(childField)
             }
             .map { (service, childTopLevelFields) ->
                 NadelFieldAndService(
@@ -124,18 +121,9 @@ internal class NadelFieldToService(
 
     private fun getServiceForNamespacedField(
         overallField: ExecutableNormalizedField,
-        executionHints: NadelExecutionHints,
     ): Service {
         if (overallField.name == Introspection.TypeNameMetaFieldDef.name) {
-            val namespaceTypeName = overallField.objectTypeNames.single()
-
-            return if (executionHints.newResultMergerAndNamespacedTypename()) {
-                introspectionService
-            } else {
-                services.values.first { service ->
-                    serviceOwnsNamespacedField(namespaceTypeName, service)
-                }
-            }
+            return introspectionService
         }
 
         return getService(overallField)
@@ -172,4 +160,3 @@ private data class NadelBatchGroup(
     val service: Service,
     val shardingTarget: Any?,
 )
-

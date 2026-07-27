@@ -83,10 +83,10 @@ public class BatchRootFieldsPerServiceTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "batchedFoo": "batchedFoo-value",
-     *     "batchedBar": "batchedBar-value",
      *     "unbatchedFoo": "unbatchedFoo-value",
-     *     "unbatchedBar": "unbatchedBar-value"
+     *     "unbatchedBar": "unbatchedBar-value",
+     *     "batchedFoo": "batchedFoo-value",
+     *     "batchedBar": "batchedBar-value"
      *   }
      * }
      * ```
@@ -95,10 +95,10 @@ public class BatchRootFieldsPerServiceTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "batchedFoo": "batchedFoo-value",
-            |     "batchedBar": "batchedBar-value",
             |     "unbatchedFoo": "unbatchedFoo-value",
-            |     "unbatchedBar": "unbatchedBar-value"
+            |     "unbatchedBar": "unbatchedBar-value",
+            |     "batchedFoo": "batchedFoo-value",
+            |     "batchedBar": "batchedBar-value"
             |   }
             | }
             """.trimMargin(),

@@ -26,8 +26,8 @@ public class QueryContainingDeferButNonDeferredFieldIsRenamedTestSnapshot : Test
                 query = """
                 | {
                 |   defer {
-                |     rename__overallString__underlyingString: underlyingString
                 |     __typename__rename__overallString: __typename
+                |     rename__overallString__underlyingString: underlyingString
                 |     ... @defer {
                 |       slow
                 |     }

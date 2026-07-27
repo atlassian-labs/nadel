@@ -83,13 +83,13 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           foos {
             __typename__batch_hydration__bar: __typename
             batch_hydration__bar__barId: barId
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -115,9 +115,9 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        query ($v0: [ID]) {
           barsQuery {
-            barsById(id: ["bar3"]) {
+            barsById(id: $v0) {
               __typename__batch_hydration__nestedBar: __typename
               batch_hydration__bar__barId: barId
               name
@@ -125,7 +125,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":["bar3"]}
     # language=JSON
     response: |-
       {
@@ -147,9 +147,9 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        query ($v0: [ID]) {
           barsQuery {
-            barsById(id: ["bar1", "bar2"]) {
+            barsById(id: $v0) {
               __typename__batch_hydration__nestedBar: __typename
               batch_hydration__bar__barId: barId
               name
@@ -157,7 +157,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":["bar1","bar2"]}
     # language=JSON
     response: |-
       {
@@ -185,9 +185,9 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        query ($v0: [ID]) {
           barsQuery {
-            barsById(id: ["nestedBar1", "nestedBar2"]) {
+            barsById(id: $v0) {
               __typename__batch_hydration__nestedBar: __typename
               batch_hydration__nestedBar__barId: barId
               name
@@ -195,7 +195,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":["nestedBar1","nestedBar2"]}
     # language=JSON
     response: |-
       {
@@ -217,15 +217,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        query ($v0: [ID]) {
           barsQuery {
-            barsById(id: ["nestedBarId456"]) {
+            barsById(id: $v0) {
               batch_hydration__nestedBar__barId: barId
               name
             }
           }
         }
-      variables: { }
+      variables: {"v0":["nestedBarId456"]}
     # language=JSON
     response: |-
       {

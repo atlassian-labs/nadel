@@ -69,16 +69,7 @@ serviceCalls:
             value
           }
         }
-      variables:
-        v0:
-          age: 50
-          inputWithJson:
-            names:
-              - "Bobba"
-              - "Fett"
-            payload:
-              name: "Bobert"
-              age: "23"
+      variables: {"v0":{"age":50,"inputWithJson":{"names":["Bobba","Fett"],"payload":{"name":"Bobert","age":"23"}}}}
       operationName: "myQuery"
     # language=JSON
     response: |-

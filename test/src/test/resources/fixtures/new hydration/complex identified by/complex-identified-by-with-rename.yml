@@ -83,7 +83,7 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           issues {
             __typename__batch_hydration__author: __typename
             batch_hydration__author__authorId: authorId {
@@ -95,7 +95,7 @@ serviceCalls:
             id
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -168,17 +168,12 @@ serviceCalls:
         query ($v0: [UserInputUnderlying]) {
           users(id: $v0) {
             id
-            name
             batch_hydration__author__id: id
+            name
             batch_hydration__author__siteId: siteId
           }
         }
-      variables:
-        v0:
-          - site: "hello"
-            userId: "USER-5"
-          - site: "hello"
-            userId: "USER-2"
+      variables: {"v0":[{"userId":"USER-5","site":"hello"},{"userId":"USER-2","site":"hello"}]}
     # language=JSON
     response: |-
       {
@@ -207,21 +202,12 @@ serviceCalls:
         query ($v0: [UserInputUnderlying]) {
           users(id: $v0) {
             id
-            name
             batch_hydration__author__id: id
+            name
             batch_hydration__author__siteId: siteId
           }
         }
-      variables:
-        v0:
-          - site: "hello"
-            userId: "USER-1"
-          - site: "hello"
-            userId: "USER-3"
-          - site: "jdog"
-            userId: "USER-2"
-          - site: "hello"
-            userId: "USER-4"
+      variables: {"v0":[{"userId":"USER-1","site":"hello"},{"userId":"USER-3","site":"hello"},{"userId":"USER-2","site":"jdog"},{"userId":"USER-4","site":"hello"}]}
     # language=JSON
     response: |-
       {

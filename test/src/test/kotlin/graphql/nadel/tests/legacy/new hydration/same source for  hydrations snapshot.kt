@@ -24,18 +24,48 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   detail(detailId: "ID") {
+                | query (${'$'}v0: ID) {
+                |   detail(detailId: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
                 |     "detail": {
                 |       "name": "apple"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
+                | query (${'$'}v0: ID) {
+                |   issue(issueId: ${'$'}v0) {
+                |     field
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issue": {
+                |       "field": "field_name"
                 |     }
                 |   }
                 | }
@@ -71,28 +101,6 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | {
-                |   issue(issueId: "ID") {
-                |     field
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issue": {
-                |       "field": "field_name"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**
@@ -100,11 +108,11 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
      * {
      *   "data": {
      *     "foo": {
-     *       "issue": {
-     *         "field": "field_name"
-     *       },
      *       "detail": {
      *         "name": "apple"
+     *       },
+     *       "issue": {
+     *         "field": "field_name"
      *       }
      *     }
      *   }
@@ -116,11 +124,11 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
             | {
             |   "data": {
             |     "foo": {
-            |       "issue": {
-            |         "field": "field_name"
-            |       },
             |       "detail": {
             |         "name": "apple"
+            |       },
+            |       "issue": {
+            |         "field": "field_name"
             |       }
             |     }
             |   }

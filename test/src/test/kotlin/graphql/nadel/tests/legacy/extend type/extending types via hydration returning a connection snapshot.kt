@@ -24,26 +24,26 @@ public class `extending types via hydration returning a connection snapshot` : T
             ExpectedServiceCall(
                 service = "Association",
                 query = """
-                | {
-                |   association(filter: {name : "value"}, id: "ISSUE-1") {
-                |     nodes {
-                |       __typename__hydration__page: __typename
-                |       hydration__page__pageId: pageId
+                | query (${'$'}v0: ID) {
+                |   pages {
+                |     page(id: ${'$'}v0) {
+                |       id
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
-                |     "association": {
-                |       "nodes": [
-                |         {
-                |           "hydration__page__pageId": "1",
-                |           "__typename__hydration__page": "Association"
-                |         }
-                |       ]
+                |     "pages": {
+                |       "page": {
+                |         "id": "1"
+                |       }
                 |     }
                 |   }
                 | }
@@ -54,22 +54,33 @@ public class `extending types via hydration returning a connection snapshot` : T
             ExpectedServiceCall(
                 service = "Association",
                 query = """
-                | {
-                |   pages {
-                |     page(id: "1") {
-                |       id
+                | query (${'$'}v0: ID, ${'$'}v1: Filter) {
+                |   association(filter: ${'$'}v1, id: ${'$'}v0) {
+                |     nodes {
+                |       __typename__hydration__page: __typename
+                |       hydration__page__pageId: pageId
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ISSUE-1",
+                |   "v1": {
+                |     "name": "value"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
-                |     "pages": {
-                |       "page": {
-                |         "id": "1"
-                |       }
+                |     "association": {
+                |       "nodes": [
+                |         {
+                |           "hydration__page__pageId": "1",
+                |           "__typename__hydration__page": "Association"
+                |         }
+                |       ]
                 |     }
                 |   }
                 | }

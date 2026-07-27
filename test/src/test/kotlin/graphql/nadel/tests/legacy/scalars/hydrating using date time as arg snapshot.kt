@@ -24,6 +24,32 @@ public class `hydrating using date time as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
+                | query (${'$'}v0: DateTime) {
+                |   successor(after: ${'$'}v0) {
+                |     id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "2022-03-09T05:01:50Z"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "successor": {
+                |       "id": "2023"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "service",
+                query = """
                 | {
                 |   foo {
                 |     __typename__hydration__successor: __typename
@@ -38,28 +64,6 @@ public class `hydrating using date time as arg snapshot` : TestSnapshot() {
                 |     "foo": {
                 |       "hydration__successor__createdAt": "2022-03-09T05:01:50Z",
                 |       "__typename__hydration__successor": "Foo"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "service",
-                query = """
-                | {
-                |   successor(after: "2022-03-09T05:01:50Z") {
-                |     id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "successor": {
-                |       "id": "2023"
                 |     }
                 |   }
                 | }

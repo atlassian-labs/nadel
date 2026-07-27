@@ -81,13 +81,13 @@ public class `two deep renames snapshot` : TestSnapshot() {
      *     "issues": [
      *       {
      *         "id": "ISSUE-1",
-     *         "authorId": "USER-1",
-     *         "authorName": "User 1"
+     *         "authorName": "User 1",
+     *         "authorId": "USER-1"
      *       },
      *       {
      *         "id": "ISSUE-2",
-     *         "authorId": "USER-2",
-     *         "authorName": "User 2"
+     *         "authorName": "User 2",
+     *         "authorId": "USER-2"
      *       }
      *     ]
      *   }
@@ -101,13 +101,13 @@ public class `two deep renames snapshot` : TestSnapshot() {
             |     "issues": [
             |       {
             |         "id": "ISSUE-1",
-            |         "authorId": "USER-1",
-            |         "authorName": "User 1"
+            |         "authorName": "User 1",
+            |         "authorId": "USER-1"
             |       },
             |       {
             |         "id": "ISSUE-2",
-            |         "authorId": "USER-2",
-            |         "authorName": "User 2"
+            |         "authorName": "User 2",
+            |         "authorId": "USER-2"
             |       }
             |     ]
             |   }

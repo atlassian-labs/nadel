@@ -24,14 +24,21 @@ public class `complex identified by uses same source for hydrations snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   details(detailIds: ["Foo-1", "Foo-2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   details(detailIds: ${'$'}v0) {
                 |     batch_hydration__detail__detailId: detailId
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-1",
+                |     "Foo-2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,14 +61,20 @@ public class `complex identified by uses same source for hydrations snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   details(detailIds: ["Foo-3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   details(detailIds: ${'$'}v0) {
                 |     batch_hydration__detail__detailId: detailId
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -69,6 +82,75 @@ public class `complex identified by uses same source for hydrations snapshot` : 
                 |       {
                 |         "name": "Three Apples",
                 |         "batch_hydration__detail__detailId": "Foo-3"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
+                | query (${'$'}v0: [ID]) {
+                |   issues(issueIds: ${'$'}v0) {
+                |     field
+                |     batch_hydration__issue__issueId: issueId
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-1",
+                |     "Foo-2"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issues": [
+                |       {
+                |         "field": "field_name",
+                |         "batch_hydration__issue__issueId": "Foo-1"
+                |       },
+                |       {
+                |         "field": "field_name-2",
+                |         "batch_hydration__issue__issueId": "Foo-2"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
+                | query (${'$'}v0: [ID]) {
+                |   issues(issueIds: ${'$'}v0) {
+                |     field
+                |     batch_hydration__issue__issueId: issueId
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-3"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issues": [
+                |       {
+                |         "field": "field-3",
+                |         "batch_hydration__issue__issueId": "Foo-3"
                 |       }
                 |     ]
                 |   }
@@ -119,62 +201,6 @@ public class `complex identified by uses same source for hydrations snapshot` : 
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | {
-                |   issues(issueIds: ["Foo-1", "Foo-2"]) {
-                |     field
-                |     batch_hydration__issue__issueId: issueId
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issues": [
-                |       {
-                |         "field": "field_name",
-                |         "batch_hydration__issue__issueId": "Foo-1"
-                |       },
-                |       {
-                |         "field": "field_name-2",
-                |         "batch_hydration__issue__issueId": "Foo-2"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | {
-                |   issues(issueIds: ["Foo-3"]) {
-                |     field
-                |     batch_hydration__issue__issueId: issueId
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issues": [
-                |       {
-                |         "field": "field-3",
-                |         "batch_hydration__issue__issueId": "Foo-3"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**
@@ -183,27 +209,27 @@ public class `complex identified by uses same source for hydrations snapshot` : 
      *   "data": {
      *     "foos": [
      *       {
-     *         "issue": {
-     *           "field": "field_name"
-     *         },
      *         "detail": {
      *           "name": "apple"
+     *         },
+     *         "issue": {
+     *           "field": "field_name"
      *         }
      *       },
      *       {
-     *         "issue": {
-     *           "field": "field_name-2"
-     *         },
      *         "detail": {
      *           "name": "Foo 2 Electric Boogaloo"
+     *         },
+     *         "issue": {
+     *           "field": "field_name-2"
      *         }
      *       },
      *       {
-     *         "issue": {
-     *           "field": "field-3"
-     *         },
      *         "detail": {
      *           "name": "Three Apples"
+     *         },
+     *         "issue": {
+     *           "field": "field-3"
      *         }
      *       }
      *     ]
@@ -217,27 +243,27 @@ public class `complex identified by uses same source for hydrations snapshot` : 
             |   "data": {
             |     "foos": [
             |       {
-            |         "issue": {
-            |           "field": "field_name"
-            |         },
             |         "detail": {
             |           "name": "apple"
+            |         },
+            |         "issue": {
+            |           "field": "field_name"
             |         }
             |       },
             |       {
-            |         "issue": {
-            |           "field": "field_name-2"
-            |         },
             |         "detail": {
             |           "name": "Foo 2 Electric Boogaloo"
+            |         },
+            |         "issue": {
+            |           "field": "field_name-2"
             |         }
             |       },
             |       {
-            |         "issue": {
-            |           "field": "field-3"
-            |         },
             |         "detail": {
             |           "name": "Three Apples"
+            |         },
+            |         "issue": {
+            |           "field": "field-3"
             |         }
             |       }
             |     ]

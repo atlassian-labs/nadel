@@ -135,15 +135,15 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          association(filter: {name: "value"}, id: "ISSUE-1") {
+        query ($v0: ID, $v1: Filter) {
+          association(filter: $v1, id: $v0) {
             nodes {
               __typename__hydration__page: __typename
               hydration__page__pageId: pageId
             }
           }
         }
-      variables: { }
+      variables: {"v0":"ISSUE-1","v1":{"name":"value"}}
     # language=JSON
     response: |-
       {
@@ -163,14 +163,14 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        query ($v0: ID) {
           pages {
-            page(id: "1") {
+            page(id: $v0) {
               id
             }
           }
         }
-      variables: { }
+      variables: {"v0":"1"}
     # language=JSON
     response: |-
       {

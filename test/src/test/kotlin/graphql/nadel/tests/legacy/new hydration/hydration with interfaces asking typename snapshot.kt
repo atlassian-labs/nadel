@@ -24,11 +24,15 @@ public class `hydration with interfaces asking typename snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | {
-                |   ariById(id: "ari:i-always-forget-the-format/1")
+                | query (${'$'}v0: ID!) {
+                |   ariById(id: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:i-always-forget-the-format/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

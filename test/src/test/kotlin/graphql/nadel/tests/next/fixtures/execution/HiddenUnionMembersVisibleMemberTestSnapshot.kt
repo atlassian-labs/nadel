@@ -70,8 +70,6 @@ public class HiddenUnionMembersVisibleMemberTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

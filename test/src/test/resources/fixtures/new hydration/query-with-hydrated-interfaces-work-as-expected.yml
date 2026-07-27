@@ -166,8 +166,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query petQ {
-          pets(isLoyal: true) {
+        query petQ($v0: Boolean) {
+          pets(isLoyal: $v0) {
             __typename__hydration__owners: __typename
             name
             ... on Cat {
@@ -178,7 +178,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":true}
       operationName: "petQ"
     # language=JSON
     response: |-
@@ -207,8 +207,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query petQ {
-          ownerById(id: "dearly") {
+        query petQ($v0: String) {
+          ownerById(id: $v0) {
             name
             ... on CaringOwner {
               givesPats
@@ -218,7 +218,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":"dearly"}
       operationName: "petQ"
     # language=JSON
     response: |-
@@ -235,8 +235,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query petQ {
-          ownerById(id: "cruella") {
+        query petQ($v0: String) {
+          ownerById(id: $v0) {
             name
             ... on CaringOwner {
               givesPats
@@ -246,7 +246,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":"cruella"}
       operationName: "petQ"
     # language=JSON
     response: |-

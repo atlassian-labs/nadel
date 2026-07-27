@@ -52,7 +52,7 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
+        {
           nodes {
             ... on Issue {
               id
@@ -63,7 +63,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -87,10 +87,10 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          idByAri(id: "ari:i-always-forget-the-format/1")
+        query ($v0: ID!) {
+          idByAri(id: $v0)
         }
-      variables: { }
+      variables: {"v0":"ari:i-always-forget-the-format/1"}
     # language=JSON
     response: |-
       {

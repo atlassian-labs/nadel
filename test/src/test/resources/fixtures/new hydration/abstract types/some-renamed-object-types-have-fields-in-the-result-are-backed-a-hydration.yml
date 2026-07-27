@@ -77,18 +77,18 @@ serviceCalls:
       query: |
         {
           activity {
-            ... on SomethingLame {
-              __typename__hydration__user: __typename
-              hydration__user__userId: userId
-            }
             ... on SingleActivity {
               user {
                 name
               }
             }
+            ... on SomethingLame {
+              __typename__hydration__user: __typename
+              hydration__user__userId: userId
+            }
           }
         }
-      variables: { }
+      variables: {}
     # language=JSON
     response: |-
       {
@@ -120,12 +120,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        {
-          userById(id: "user-100") {
+        query ($v0: ID!) {
+          userById(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"user-100"}
     # language=JSON
     response: |-
       {
@@ -140,12 +140,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        {
-          userById(id: "user-20") {
+        query ($v0: ID!) {
+          userById(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"user-20"}
     # language=JSON
     response: |-
       {

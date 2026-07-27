@@ -62,10 +62,7 @@ serviceCalls:
             hydration__foo__id: id
           }
         }
-      variables:
-        v0:
-          something: true
-          answer: "42"
+      variables: {"v0":{"something":true,"answer":"42"}}
     # language=JSON
     response: |-
       {
@@ -81,12 +78,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          otherFoo(id: "10000") {
+        query ($v0: ID!) {
+          otherFoo(id: $v0) {
             id
           }
         }
-      variables: { }
+      variables: {"v0":"10000"}
     # language=JSON
     response: |-
       {

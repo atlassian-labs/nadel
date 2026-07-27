@@ -32,12 +32,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
+        query ($v0: ID!) {
+          rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: $v0) {
             name
           }
         }
-      variables: { }
+      variables: {"v0":"OBJECT-001"}
     # language=JSON
     response: |-
       {

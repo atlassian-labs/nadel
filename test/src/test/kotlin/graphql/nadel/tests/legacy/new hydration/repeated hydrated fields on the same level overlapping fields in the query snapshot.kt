@@ -25,6 +25,36 @@ public class `repeated hydrated fields on the same level overlapping fields in t
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
+                | query (${'$'}v0: ID) {
+                |   issue(issueId: ${'$'}v0) {
+                |     desc
+                |     name
+                |     summary
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "ISSUE-1"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "issue": {
+                |       "name": "I AM A NAME",
+                |       "summary": "I AM A SUMMARY",
+                |       "desc": "I AM A DESC"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
                 | {
                 |   foo {
                 |     __typename__hydration__issue: __typename
@@ -39,32 +69,6 @@ public class `repeated hydrated fields on the same level overlapping fields in t
                 |     "foo": {
                 |       "hydration__issue__issueId": "ISSUE-1",
                 |       "__typename__hydration__issue": "Foo"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | {
-                |   issue(issueId: "ISSUE-1") {
-                |     desc
-                |     name
-                |     summary
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issue": {
-                |       "name": "I AM A NAME",
-                |       "summary": "I AM A SUMMARY",
-                |       "desc": "I AM A DESC"
                 |     }
                 |   }
                 | }

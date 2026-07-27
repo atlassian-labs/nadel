@@ -24,8 +24,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | {
-                |   humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   humanById(ids: ${'$'}v0) {
                 |     __typename
                 |     __typename__rename__id: __typename
                 |     batch_hydration__data__hiddenId: hiddenId
@@ -34,7 +34,14 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "HUMAN-0",
+                |     "HUMAN-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -63,8 +70,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | {
-                |   petById(ids: ["PET-0", "PET-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   petById(ids: ${'$'}v0) {
                 |     __typename
                 |     __typename__rename__id: __typename
                 |     __typename__rename__breed: __typename
@@ -74,7 +81,14 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "PET-0",
+                |     "PET-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -163,8 +177,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
      *         "id": "FOO-0",
      *         "data": {
      *           "__typename": "Animal",
-     *           "id": "ANIMAL-0",
-     *           "breed": "Akita"
+     *           "breed": "Akita",
+     *           "id": "ANIMAL-0"
      *         }
      *       },
      *       {
@@ -181,8 +195,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
      *         "id": "FOO-2",
      *         "data": {
      *           "__typename": "Animal",
-     *           "id": "ANIMAL-1",
-     *           "breed": "Labrador"
+     *           "breed": "Labrador",
+     *           "id": "ANIMAL-1"
      *         }
      *       },
      *       {
@@ -209,8 +223,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             |         "id": "FOO-0",
             |         "data": {
             |           "__typename": "Animal",
-            |           "id": "ANIMAL-0",
-            |           "breed": "Akita"
+            |           "breed": "Akita",
+            |           "id": "ANIMAL-0"
             |         }
             |       },
             |       {
@@ -227,8 +241,8 @@ public class `batch polymorphic hydration with lots of renames snapshot` : TestS
             |         "id": "FOO-2",
             |         "data": {
             |           "__typename": "Animal",
-            |           "id": "ANIMAL-1",
-            |           "breed": "Labrador"
+            |           "breed": "Labrador",
+            |           "id": "ANIMAL-1"
             |         }
             |       },
             |       {

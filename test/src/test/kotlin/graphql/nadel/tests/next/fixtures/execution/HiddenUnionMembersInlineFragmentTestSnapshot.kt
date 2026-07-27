@@ -43,8 +43,6 @@ public class HiddenUnionMembersInlineFragmentTestSnapshot : TestSnapshot() {
             )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "errors": [

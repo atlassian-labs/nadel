@@ -162,8 +162,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query petQ {
-          pets(isLoyal: true) {
+        query petQ($v0: Boolean) {
+          pets(isLoyal: $v0) {
             __typename
             name
             ... on Cat {
@@ -174,7 +174,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":true}
       operationName: "petQ"
     # language=JSON
     response: |-
@@ -199,8 +199,8 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query petQ {
-          raining(isLoyal: true) {
+        query petQ($v0: Boolean) {
+          raining(isLoyal: $v0) {
             __typename
             ... on Cat {
               wearsBell
@@ -210,7 +210,7 @@ serviceCalls:
             }
           }
         }
-      variables: { }
+      variables: {"v0":true}
       operationName: "petQ"
     # language=JSON
     response: |-

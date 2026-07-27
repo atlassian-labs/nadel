@@ -88,12 +88,12 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query {
-          association(filter: {name: "value"}, id: "ISSUE-1") {
+        query ($v0: ID, $v1: Filter) {
+          association(filter: $v1, id: $v0) {
             nameOfAssociation
           }
         }
-      variables: { }
+      variables: {"v0":"ISSUE-1","v1":{"name":"value"}}
     # language=JSON
     response: |-
       {

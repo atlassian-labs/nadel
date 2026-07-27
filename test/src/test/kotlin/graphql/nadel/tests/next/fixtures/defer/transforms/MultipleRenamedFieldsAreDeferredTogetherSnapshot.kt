@@ -28,10 +28,10 @@ public class MultipleRenamedFieldsAreDeferredTogetherSnapshot : TestSnapshot() {
                 |   defer {
                 |     hello
                 |     ... @defer {
-                |       rename__overallString__underlyingString: underlyingString
                 |       __typename__rename__overallString: __typename
-                |       rename__overallString2__underlyingString2: underlyingString2
                 |       __typename__rename__overallString2: __typename
+                |       rename__overallString__underlyingString: underlyingString
+                |       rename__overallString2__underlyingString2: underlyingString2
                 |     }
                 |   }
                 | }

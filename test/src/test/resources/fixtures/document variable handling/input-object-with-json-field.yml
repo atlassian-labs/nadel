@@ -36,12 +36,10 @@ serviceCalls:
     request:
       # language=GraphQL
       query: |
-        query myQuery($v0: JSON) {
-          hello(arg: {payload: $v0})
+        query myQuery($v0: InputWithJson) {
+          hello(arg: $v0)
         }
-      variables:
-        v0:
-          48x48: "file.jpeg"
+      variables: {"v0":{"payload":{"48x48":"file.jpeg"}}}
       operationName: "myQuery"
     # language=JSON
     response: |-

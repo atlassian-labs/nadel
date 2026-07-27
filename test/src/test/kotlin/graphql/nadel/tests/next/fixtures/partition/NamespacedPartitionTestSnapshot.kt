@@ -24,16 +24,29 @@ public class NamespacedPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: ThingsFilter) {
                 |   thingsApi {
-                |     things(filter: {thingsIds : [{id : "thing-1:partition-A"}, {id : "thing-3:partition-A"}]}) {
+                |     things(filter: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsIds": [
+                |       {
+                |         "id": "thing-1:partition-A"
+                |       },
+                |       {
+                |         "id": "thing-3:partition-A"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -58,16 +71,29 @@ public class NamespacedPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: ThingsFilter) {
                 |   thingsApi {
-                |     things(filter: {thingsIds : [{id : "thing-2:partition-B"}, {id : "thing-4:partition-B"}]}) {
+                |     things(filter: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsIds": [
+                |       {
+                |         "id": "thing-2:partition-B"
+                |       },
+                |       {
+                |         "id": "thing-4:partition-B"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

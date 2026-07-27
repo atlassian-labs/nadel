@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next.fixtures.hydration.statics
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 class StaticHydrationScalarFieldTest : NadelIntegrationTest(
@@ -64,10 +63,4 @@ class StaticHydrationScalarFieldTest : NadelIntegrationTest(
             },
         ),
     ),
-) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
-            .shortCircuitEmptyQuery { true }
-    }
-}
+)

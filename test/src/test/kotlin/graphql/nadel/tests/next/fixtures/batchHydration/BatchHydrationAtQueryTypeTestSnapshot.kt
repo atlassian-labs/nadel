@@ -24,37 +24,21 @@ public class BatchHydrationAtQueryTypeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   batch_hydration__myIssues__myIssueKeys: myIssueKeys
-                |   __typename__batch_hydration__myIssues: __typename
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "batch_hydration__myIssues__myIssueKeys": [
-                |       "hello",
-                |       "bye"
-                |     ],
-                |     "__typename__batch_hydration__myIssues": "Query"
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "issues",
-                query = """
-                | {
-                |   issuesByIds(ids: ["hello", "bye"]) {
-                |     title
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     batch_hydration__myIssues__id: id
+                |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "hello",
+                |     "bye"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -68,6 +52,29 @@ public class BatchHydrationAtQueryTypeTestSnapshot : TestSnapshot() {
                 |         "batch_hydration__myIssues__id": "bye"
                 |       }
                 |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "issues",
+                query = """
+                | {
+                |   __typename__batch_hydration__myIssues: __typename
+                |   batch_hydration__myIssues__myIssueKeys: myIssueKeys
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "batch_hydration__myIssues__myIssueKeys": [
+                |       "hello",
+                |       "bye"
+                |     ],
+                |     "__typename__batch_hydration__myIssues": "Query"
                 |   }
                 | }
                 """.trimMargin(),

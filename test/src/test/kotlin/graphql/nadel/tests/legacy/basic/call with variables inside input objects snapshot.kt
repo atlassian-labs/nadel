@@ -24,11 +24,15 @@ public class `call with variables inside input objects snapshot` : TestSnapshot(
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query myQuery {
-                |   hello(arg: {})
+                | query myQuery(${'$'}v0: Arg) {
+                |   hello(arg: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": {}
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

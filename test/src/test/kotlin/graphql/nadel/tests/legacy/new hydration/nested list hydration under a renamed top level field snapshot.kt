@@ -24,8 +24,8 @@ public class `nested list hydration under a renamed top level field snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   connection(id: "ID") {
+                | query (${'$'}v0: ID) {
+                |   connection(id: ${'$'}v0) {
                 |     __typename__hydration__nodes: __typename
                 |     hydration__nodes__edges: edges {
                 |       node
@@ -33,7 +33,11 @@ public class `nested list hydration under a renamed top level field snapshot` : 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,20 +58,50 @@ public class `nested list hydration under a renamed top level field snapshot` : 
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   node(id: "1") {
+                | query (${'$'}v0: ID) {
+                |   node(id: ${'$'}v0) {
                 |     __typename__hydration__space: __typename
                 |     hydration__space__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
                 |     "node": {
                 |       "hydration__space__id": "1a",
                 |       "__typename__hydration__space": "Node"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "Foo",
+                query = """
+                | query (${'$'}v0: ID) {
+                |   space(id: ${'$'}v0) {
+                |     id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": "1a"
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "space": {
+                |       "id": "apple"
                 |     }
                 |   }
                 | }
@@ -92,28 +126,6 @@ public class `nested list hydration under a renamed top level field snapshot` : 
                 |     "rename__fooService__service": {
                 |       "hydration__otherServices__id": "ID",
                 |       "__typename__hydration__otherServices": "Service"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Foo",
-                query = """
-                | {
-                |   space(id: "1a") {
-                |     id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "space": {
-                |       "id": "apple"
                 |     }
                 |   }
                 | }

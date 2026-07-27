@@ -24,6 +24,48 @@ public class CastHydrationLongInputToStringForMatchingTestSnapshot : TestSnapsho
             ExpectedServiceCall(
                 service = "myService",
                 query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   spaces(ids: ${'$'}v0) {
+                |     id
+                |     batch_hydration__spaces__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     1,
+                |     2,
+                |     10
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "spaces": [
+                |       {
+                |         "id": "1",
+                |         "batch_hydration__spaces__id": "1"
+                |       },
+                |       {
+                |         "id": "2",
+                |         "batch_hydration__spaces__id": "2"
+                |       },
+                |       {
+                |         "id": "10",
+                |         "batch_hydration__spaces__id": "10"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "myService",
+                query = """
                 | {
                 |   someData {
                 |     __typename__batch_hydration__spaces: __typename
@@ -43,40 +85,6 @@ public class CastHydrationLongInputToStringForMatchingTestSnapshot : TestSnapsho
                 |       ],
                 |       "__typename__batch_hydration__spaces": "SomeData"
                 |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | {
-                |   spaces(ids: [1, 2, 10]) {
-                |     id
-                |     batch_hydration__spaces__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "spaces": [
-                |       {
-                |         "id": "1",
-                |         "batch_hydration__spaces__id": "1"
-                |       },
-                |       {
-                |         "id": "2",
-                |         "batch_hydration__spaces__id": "2"
-                |       },
-                |       {
-                |         "id": "10",
-                |         "batch_hydration__spaces__id": "10"
-                |       }
-                |     ]
                 |   }
                 | }
                 """.trimMargin(),
