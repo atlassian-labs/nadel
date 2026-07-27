@@ -5,6 +5,8 @@ import graphql.GraphQLError
 import graphql.incremental.DeferPayload
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.DelayedIncrementalPartialResultImpl.newIncrementalExecutionResult
+import graphql.language.AstPrinter
+import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
@@ -162,6 +164,7 @@ private suspend fun execute(
             .overallWiringFactory(testHook.wiringFactory)
             .underlyingWiringFactory(testHook.wiringFactory)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
+                private val astSorter = AstSorter()
                 private val serviceCalls = fixture.serviceCalls.toMutableList()
 
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
@@ -170,11 +173,9 @@ private suspend fun execute(
                             val incomingQuery = params.query
                             val actualVariables = fixVariables(params.variables)
                             val actualOperationName = params.operationDefinition.name
-                            val actualRequest = canonicalizeServiceRequest(
-                                document = incomingQuery,
-                                variables = actualVariables,
+                            val actualQuery = AstPrinter.printAst(
+                                astSorter.sort(incomingQuery),
                             )
-                            val actualQuery = actualRequest.query
                             printSyncLine(actualQuery)
 
                             fun failWithFixtureContext(message: String): Nothing {
@@ -192,14 +193,14 @@ private suspend fun execute(
                             synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
-                                        val expectedRequest = canonicalizeServiceRequest(
-                                            document = it.request.document,
-                                            variables = it.request.variables,
-                                        )
-
                                         it.serviceName == serviceName
-                                            && expectedRequest == actualRequest
                                             && it.request.operationName == actualOperationName
+                                            && serviceRequestsMatchIgnoringVariableNames(
+                                                expectedDocument = it.request.document,
+                                                expectedVariables = it.request.variables,
+                                                actualDocument = incomingQuery,
+                                                actualVariables = actualVariables,
+                                            )
                                     }
                                     .takeIf { it != -1 }
 
