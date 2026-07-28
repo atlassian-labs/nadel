@@ -26,6 +26,7 @@ import graphql.nadel.engine.transform.query.DynamicServiceResolution
 import graphql.nadel.engine.transform.query.NadelFieldToService
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultTransformer
+import graphql.nadel.engine.transform.skipInclude.NadelSkipIncludeTransform.Companion.isSkipIncludeArtificialField
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.beginExecute
 import graphql.nadel.engine.util.compileToDocument
@@ -110,7 +111,6 @@ internal class NextgenEngine(
         overallExecutionBlueprint = overallExecutionBlueprint,
         introspectionRunnerFactory = introspectionRunnerFactory,
         dynamicServiceResolution = dynamicServiceResolution,
-        services = this.services,
     )
     private val baseParseOptions = executableNormalizedOperationFactoryOptions()
         .maxChildrenDepth(maxQueryDepth)
@@ -219,11 +219,7 @@ internal class NextgenEngine(
                         }
                 }.awaitAll()
 
-                if (executionHints.newResultMergerAndNamespacedTypename()) {
-                    NadelResultMerger.mergeResults(operation.topLevelFields, engineSchema, results)
-                } else {
-                    graphql.nadel.engine.util.mergeResults(results)
-                }
+                NadelResultMerger.mergeResults(operation.topLevelFields, engineSchema, results)
             } catch (e: Throwable) {
                 beginExecuteContext?.onCompleted(null, e)
                 throw e
@@ -413,7 +409,7 @@ internal class NextgenEngine(
                 .firstOrNull() ?: topLevelFields.first(),
         )
 
-        val serviceExecution = getServiceExecution(service, topLevelFields, executionContext.hints)
+        val serviceExecution = getServiceExecution(service, topLevelFields)
         val serviceExecResult = try {
             serviceExecution.execute(serviceExecParams)
                 .asDeferred()
@@ -471,13 +467,12 @@ internal class NextgenEngine(
     private fun getServiceExecution(
         service: Service,
         topLevelFields: List<ExecutableNormalizedField>,
-        hints: NadelExecutionHints,
     ): ServiceExecution {
-        if (hints.shortCircuitEmptyQuery(service) && isOnlyTopLevelFieldTypename(topLevelFields, service)) {
-            return engineSchemaIntrospectionService.serviceExecution
+        return if (isOnlyTopLevelFieldTypename(topLevelFields, service)) {
+            engineSchemaIntrospectionService.serviceExecution
+        } else {
+            service.serviceExecution
         }
-
-        return service.serviceExecution
     }
 
     private fun isOnlyTopLevelFieldTypename(
@@ -493,6 +488,7 @@ internal class NextgenEngine(
         return isNamespacedFieldLike(service, topLevelField)
             && topLevelField.hasChildren()
             && topLevelField.children.all { it.name == TypeNameMetaFieldDef.name }
+            && topLevelField.children.none(::isSkipIncludeArtificialField)
     }
 
     private fun getOperationName(service: Service, executionContext: NadelExecutionContext): String? {

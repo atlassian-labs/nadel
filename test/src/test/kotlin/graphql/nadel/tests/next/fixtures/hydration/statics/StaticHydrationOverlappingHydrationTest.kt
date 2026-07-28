@@ -1,7 +1,6 @@
 package graphql.nadel.tests.next.fixtures.hydration.statics
 
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.result.json.JsonNode
@@ -255,12 +254,6 @@ class StaticHydrationOverlappingHydrationTest : NadelIntegrationTest(
         ),
     ),
 ) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
-            .shortCircuitEmptyQuery { true }
-    }
-
     override fun makeNadel(): Nadel.Builder {
         return super.makeNadel()
             .executionHooks(

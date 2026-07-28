@@ -38,9 +38,15 @@ import graphql.schema.GraphQLSchema
 internal class NadelSkipIncludeTransform : NadelTransform<State> {
     companion object {
         private const val skipFieldName = "__skip"
+        private const val skipIncludeTag = "skip_include"
 
         fun isSkipIncludeSpecialField(enf: ExecutableNormalizedField): Boolean {
             return enf.name == skipFieldName
+        }
+
+        fun isSkipIncludeArtificialField(enf: ExecutableNormalizedField): Boolean {
+            return enf.name == Introspection.TypeNameMetaFieldDef.name
+                && enf.resultKey == "${Introspection.TypeNameMetaFieldDef.name}__${skipIncludeTag}__${skipFieldName}"
         }
     }
 
@@ -81,7 +87,7 @@ internal class NadelSkipIncludeTransform : NadelTransform<State> {
         return if (overallField.name == skipFieldName) {
             State(
                 aliasHelper = NadelAliasHelper.forField(
-                    tag = "skip_include",
+                    tag = skipIncludeTag,
                     field = overallField,
                 ),
             )

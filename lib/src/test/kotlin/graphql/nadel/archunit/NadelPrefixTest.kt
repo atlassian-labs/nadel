@@ -69,7 +69,6 @@ class NadelPrefixTest {
                 "graphql.nadel.engine.util.AliasesKt",
                 "graphql.nadel.hints.LegacyOperationNamesHint",
                 "graphql.nadel.hints.NewBatchHydrationGroupingHint",
-                "graphql.nadel.hints.NewResultMergerAndNamespacedTypename",
                 "graphql.nadel.hooks.CreateServiceContextParams",
                 "graphql.nadel.hooks.ServiceOrError",
                 "graphql.nadel.instrumentation.ChainedNadelInstrumentation",

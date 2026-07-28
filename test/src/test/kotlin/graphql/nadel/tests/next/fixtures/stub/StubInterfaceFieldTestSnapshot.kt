@@ -25,28 +25,6 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
                 service = "myService",
                 query = """
                 | {
-                |   issue {
-                |     __typename__stubbed__key: __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "issue": {
-                |       "__typename__stubbed__key": "Task"
-                |     }
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | {
                 |   myWork {
                 |     __typename__stubbed__key: __typename
                 |   }
@@ -70,28 +48,6 @@ public class StubInterfaceFieldTestSnapshot : TestSnapshot() {
                 |       null,
                 |       null
                 |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | {
-                |   task {
-                |     __typename__stubbed__key: __typename
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "task": {
-                |       "__typename__stubbed__key": "Issue"
-                |     }
                 |   }
                 | }
                 """.trimMargin(),

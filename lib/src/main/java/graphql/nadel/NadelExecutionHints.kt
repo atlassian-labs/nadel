@@ -11,17 +11,11 @@ import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
-import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
-import graphql.nadel.hints.NadelVirtualTypeSupportHint
-import graphql.nadel.hints.NewResultMergerAndNamespacedTypename
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
-    val newResultMergerAndNamespacedTypename: NewResultMergerAndNamespacedTypename,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
-    val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
-    val virtualTypeSupport: NadelVirtualTypeSupportHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
     val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
@@ -43,11 +37,8 @@ data class NadelExecutionHints(
 
     class Builder {
         private var legacyOperationNames = LegacyOperationNamesHint { false }
-        private var newResultMergerAndNamespacedTypename = NewResultMergerAndNamespacedTypename { false }
         private var deferSupport = NadelDeferSupportHint { false }
-        private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
-        private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
         private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
         private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
@@ -61,11 +52,8 @@ data class NadelExecutionHints(
 
         constructor(nadelExecutionHints: NadelExecutionHints) {
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
-            newResultMergerAndNamespacedTypename = nadelExecutionHints.newResultMergerAndNamespacedTypename
             deferSupport = nadelExecutionHints.deferSupport
-            shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
-            virtualTypeSupport = nadelExecutionHints.virtualTypeSupport
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
             hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
             hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
@@ -81,28 +69,13 @@ data class NadelExecutionHints(
             return this
         }
 
-        fun newResultMergerAndNamespacedTypename(flag: NewResultMergerAndNamespacedTypename): Builder {
-            newResultMergerAndNamespacedTypename = flag
-            return this
-        }
-
         fun deferSupport(flag: NadelDeferSupportHint): Builder {
             deferSupport = flag
             return this
         }
 
-        fun shortCircuitEmptyQuery(flag: NadelShortCircuitEmptyQueryHint): Builder {
-            shortCircuitEmptyQuery = flag
-            return this
-        }
-
         fun sharedTypeRenames(flag: NadelSharedTypeRenamesHint): Builder {
             sharedTypeRenames = flag
-            return this
-        }
-
-        fun virtualTypeSupport(flag: NadelVirtualTypeSupportHint): Builder {
-            virtualTypeSupport = flag
             return this
         }
 
@@ -149,11 +122,8 @@ data class NadelExecutionHints(
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
-                newResultMergerAndNamespacedTypename,
                 deferSupport,
                 sharedTypeRenames,
-                shortCircuitEmptyQuery,
-                virtualTypeSupport,
                 executeOnEngineSchema,
                 hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,

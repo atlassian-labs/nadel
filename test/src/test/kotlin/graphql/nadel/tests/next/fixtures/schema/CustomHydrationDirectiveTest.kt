@@ -2,7 +2,6 @@ package graphql.nadel.tests.next.fixtures.schema
 
 import graphql.language.Value
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.definition.NadelInstructionDefinition
 import graphql.nadel.definition.hydration.NadelBatchObjectIdentifiedByDefinition
 import graphql.nadel.definition.hydration.NadelHydrationArgumentDefinition
@@ -367,10 +366,5 @@ class CustomHydrationDirectiveTest : NadelIntegrationTest(
                 }
             }
         }.create()
-    }
-
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
     }
 }
