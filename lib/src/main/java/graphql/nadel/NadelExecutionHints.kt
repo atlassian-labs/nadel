@@ -7,7 +7,6 @@ import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelHydrationExecutableSourceFields
-import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
 import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
@@ -19,7 +18,6 @@ data class NadelExecutionHints(
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
-    val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
     val shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
     val disableSharedTypes: NadelDisableSharedTypesHint,
@@ -43,7 +41,6 @@ data class NadelExecutionHints(
         private var deferSupport = NadelDeferSupportHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
-        private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
         private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
         private var shadowUnderlyingTypeNameInvestigation = NadelShadowUnderlyingTypeNameInvestigation { false }
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
@@ -59,7 +56,6 @@ data class NadelExecutionHints(
             deferSupport = nadelExecutionHints.deferSupport
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
-            hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
             hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
             shadowUnderlyingTypeNameInvestigation = nadelExecutionHints.shadowUnderlyingTypeNameInvestigation
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
@@ -90,11 +86,6 @@ data class NadelExecutionHints(
 
         fun executeOnEngineSchema(flag: NadelExecuteOnEngineSchemaHint): Builder {
             executeOnEngineSchema = flag
-            return this
-        }
-
-        fun hydrationFilterObjectTypes(flag: NadelHydrationFilterObjectTypesHint): Builder {
-            hydrationFilterObjectTypes = flag
             return this
         }
 
@@ -135,7 +126,6 @@ data class NadelExecutionHints(
                 deferSupport,
                 sharedTypeRenames,
                 executeOnEngineSchema,
-                hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,
                 shadowUnderlyingTypeNameInvestigation,
                 disableSharedTypes,
