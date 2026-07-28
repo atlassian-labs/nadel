@@ -1,7 +1,6 @@
 package graphql.nadel.tests.next.fixtures.hydration
 
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.scalars.ExtendedScalars
@@ -170,9 +169,4 @@ class HydrationRemainingArgumentsTest : NadelIntegrationTest(
             },
         ),
     ),
-) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .virtualTypeSupport { true }
-    }
-}
+)

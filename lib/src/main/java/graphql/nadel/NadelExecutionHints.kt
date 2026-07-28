@@ -12,14 +12,12 @@ import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
-import graphql.nadel.hints.NadelVirtualTypeSupportHint
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
-    val virtualTypeSupport: NadelVirtualTypeSupportHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
     val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
@@ -44,7 +42,6 @@ data class NadelExecutionHints(
         private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
-        private var virtualTypeSupport = NadelVirtualTypeSupportHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
         private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
         private var hydrationExecutableSourceFields = NadelHydrationExecutableSourceFields { false }
@@ -61,7 +58,6 @@ data class NadelExecutionHints(
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             deferSupport = nadelExecutionHints.deferSupport
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
-            virtualTypeSupport = nadelExecutionHints.virtualTypeSupport
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
             hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
             hydrationExecutableSourceFields = nadelExecutionHints.hydrationExecutableSourceFields
@@ -89,11 +85,6 @@ data class NadelExecutionHints(
 
         fun sharedTypeRenames(flag: NadelSharedTypeRenamesHint): Builder {
             sharedTypeRenames = flag
-            return this
-        }
-
-        fun virtualTypeSupport(flag: NadelVirtualTypeSupportHint): Builder {
-            virtualTypeSupport = flag
             return this
         }
 
@@ -143,7 +134,6 @@ data class NadelExecutionHints(
                 allDocumentVariablesHint,
                 deferSupport,
                 sharedTypeRenames,
-                virtualTypeSupport,
                 executeOnEngineSchema,
                 hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,
