@@ -21,25 +21,7 @@ private suspend fun main() {
 @Suppress("unused")
 public class StubRootMutationFieldTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
-            ExpectedServiceCall(
-                service = "myService",
-                query = """
-                | mutation {
-                |   __typename__stubbed__createLlmBackedIssue: __typename
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "__typename__stubbed__createLlmBackedIssue": "Mutation"
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-        )
+            )
 
     /**
      * ```json

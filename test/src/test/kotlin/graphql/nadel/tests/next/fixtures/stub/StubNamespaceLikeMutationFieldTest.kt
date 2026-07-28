@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next.fixtures.stub
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 class StubNamespaceLikeMutationFieldTest : NadelIntegrationTest(
@@ -94,9 +93,4 @@ class StubNamespaceLikeMutationFieldTest : NadelIntegrationTest(
             },
         ),
     ),
-) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .shortCircuitEmptyQuery { true }
-    }
-}
+)
