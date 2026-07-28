@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<graphqlcontextispresentoninput>()
+    graphql.nadel.tests.next.update<`graphqlcontext is present on input`>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
  */
 @Suppress("unused")
-public class `graphqlcontextispresentoninput snapshot` : TestSnapshot() {
+public class `graphqlcontext is present on input snapshot` : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "MyService",

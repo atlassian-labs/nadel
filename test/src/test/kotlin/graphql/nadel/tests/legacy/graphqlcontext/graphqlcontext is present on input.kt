@@ -2,7 +2,7 @@ package graphql.nadel.tests.legacy.graphqlcontext
 
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 
-class graphqlcontextispresentoninput : NadelLegacyIntegrationTest(
+class `graphqlcontext is present on input` : NadelLegacyIntegrationTest(
     query = """
         query {
           hello(arg: "x") {
