@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.legacy.namespaced
+package graphql.nadel.tests.next.fixtures.execution.servicetypefilter
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,27 +10,40 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<`typename is sent owning service even when type is extended in it`>()
+    graphql.nadel.tests.next.update<ServiceTypeFilterDoesNotWidenNarrowedSelectionTest>()
 }
 
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class `typename is sent owning service even when type is extended in it snapshot` :
-        TestSnapshot() {
+public class ServiceTypeFilterDoesNotWidenNarrowedSelectionTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   crossServiceItems {
+     *     value
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "Issues",
+                service = "issues",
                 query = """
                 | {
-                |   issue {
-                |     __typename
-                |     getIssue {
-                |       text
-                |     }
+                |   crossServiceItems {
+                |     __typename__type_filter__value: __typename
                 |   }
                 | }
                 """.trimMargin(),
@@ -38,12 +51,14 @@ public class `typename is sent owning service even when type is extended in it s
                 result = """
                 | {
                 |   "data": {
-                |     "issue": {
-                |       "__typename": "IssueQuery",
-                |       "getIssue": {
-                |         "text": "Foo"
+                |     "crossServiceItems": [
+                |       {
+                |         "__typename__type_filter__value": "AllowedIssuesItem"
+                |       },
+                |       {
+                |         "__typename__type_filter__value": "DeniedIssuesItem"
                 |       }
-                |     }
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -56,12 +71,10 @@ public class `typename is sent owning service even when type is extended in it s
      * ```json
      * {
      *   "data": {
-     *     "issue": {
-     *       "__typename": "IssueQuery",
-     *       "getIssue": {
-     *         "text": "Foo"
-     *       }
-     *     }
+     *     "crossServiceItems": [
+     *       {},
+     *       {}
+     *     ]
      *   }
      * }
      * ```
@@ -70,12 +83,10 @@ public class `typename is sent owning service even when type is extended in it s
             result = """
             | {
             |   "data": {
-            |     "issue": {
-            |       "__typename": "IssueQuery",
-            |       "getIssue": {
-            |         "text": "Foo"
-            |       }
-            |     }
+            |     "crossServiceItems": [
+            |       {},
+            |       {}
+            |     ]
             |   }
             | }
             """.trimMargin(),
