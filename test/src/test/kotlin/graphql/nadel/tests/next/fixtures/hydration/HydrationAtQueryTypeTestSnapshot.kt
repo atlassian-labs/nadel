@@ -25,8 +25,8 @@ public class HydrationAtQueryTypeTestSnapshot : TestSnapshot() {
                 service = "issues",
                 query = """
                 | {
-                |   hydration__myIssue__myIssueKey: myIssueKey
                 |   __typename__hydration__myIssue: __typename
+                |   hydration__myIssue__myIssueKey: myIssueKey
                 | }
                 """.trimMargin(),
                 variables = "{}",
@@ -44,13 +44,17 @@ public class HydrationAtQueryTypeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issueById(id: "bye") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "bye"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

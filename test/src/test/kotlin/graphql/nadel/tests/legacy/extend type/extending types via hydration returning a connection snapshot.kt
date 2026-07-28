@@ -24,8 +24,8 @@ public class `extending types via hydration returning a connection snapshot` : T
             ExpectedServiceCall(
                 service = "Association",
                 query = """
-                | {
-                |   association(filter: {name : "value"}, id: "ISSUE-1") {
+                | query (${'$'}v0: ID, ${'$'}v1: Filter) {
+                |   association(filter: ${'$'}v1, id: ${'$'}v0) {
                 |     nodes {
                 |       __typename__hydration__page: __typename
                 |       hydration__page__pageId: pageId
@@ -33,7 +33,14 @@ public class `extending types via hydration returning a connection snapshot` : T
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ISSUE-1",
+                |   "v1": {
+                |     "name": "value"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,15 +61,19 @@ public class `extending types via hydration returning a connection snapshot` : T
             ExpectedServiceCall(
                 service = "Association",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   pages {
-                |     page(id: "1") {
+                |     page(id: ${'$'}v0) {
                 |       id
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

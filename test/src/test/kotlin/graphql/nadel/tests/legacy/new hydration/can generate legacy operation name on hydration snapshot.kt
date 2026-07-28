@@ -48,13 +48,17 @@ public class `can generate legacy operation name on hydration snapshot` : TestSn
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query nadel_2_service2_TestFoo {
-                |   barById(id: "barId") {
+                | query nadel_2_service2_TestFoo(${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

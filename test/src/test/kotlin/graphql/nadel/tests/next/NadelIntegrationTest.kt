@@ -12,8 +12,6 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
-import graphql.language.AstPrinter
-import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
@@ -26,6 +24,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnab
 import graphql.nadel.tests.assertJsonObjectEquals
 import graphql.nadel.tests.compareJsonObject
 import graphql.nadel.tests.jsonObjectMapper
+import graphql.nadel.tests.serviceRequestsMatchIgnoringVariableNames
 import graphql.nadel.tests.withPrettierPrinter
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
@@ -327,13 +326,7 @@ abstract class NadelIntegrationTest(
     }
 
     private fun assertServiceCalls(testSnapshot: TestSnapshot) {
-        fun getCanonicalQuery(query: String): String {
-            return AstPrinter.printAstCompact(
-                AstSorter().sort(
-                    Parser().parseDocument(query),
-                ),
-            )
-        }
+        val documentParser = Parser()
 
         fun isDelayedResultsEqual(
             expectedCall: ExpectedServiceCall,
@@ -357,14 +350,17 @@ abstract class NadelIntegrationTest(
             expected = testSnapshot.calls,
             actual = executionCapture.calls
         ) { expectedCall, actualCall ->
-            val actualQuery = getCanonicalQuery(actualCall.query)
             val actualVariables = actualCall.variables
             val actualResult = actualCall.result
 
             actualCall.service == expectedCall.service
                 && expectedCall.delayedResults.size == actualCall.delayedResults.size
-                && getCanonicalQuery(expectedCall.query) == actualQuery
-                && compareJsonObject(expected = expectedCall.variables, actual = actualVariables).passed()
+                && serviceRequestsMatchIgnoringVariableNames(
+                    expectedDocument = documentParser.parseDocument(expectedCall.query),
+                    expectedVariables = expectedCall.variables,
+                    actualDocument = documentParser.parseDocument(actualCall.query),
+                    actualVariables = actualVariables,
+                )
                 && compareJsonObject(expected = expectedCall.result, actual = actualResult).passed()
                 && isDelayedResultsEqual(expectedCall, actualCall)
         }

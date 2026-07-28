@@ -23,16 +23,22 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
         ExpectedServiceCall(
             service = "bitbucket",
-            query = """
-                | {
-                |   pullRequestsByIds(ids: ["ari:cloud:bitbucket::pull-request/2"]) {
-                |     title
-                |     patch
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   pullRequestsByIds(ids: ${'$'}v0) {
                 |     batch_hydration__node__id: id
+                |     patch
+                |     title
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:bitbucket::pull-request/2"
+                |   ]
+                | }
+                """.trimMargin(),
             result = """
                 | {
                 |   "data": {
@@ -51,14 +57,14 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
         ),
         ExpectedServiceCall(
             service = "graph_store",
-            query = """
-                | query (${'$'}v0: JSON) {
-                |   graphStore_query(other: ${'$'}v0, query: "DROP TABLE", after: "2012", first: 10) {
+                query = """
+                | query (${'$'}v0: String!, ${'$'}v1: Int, ${'$'}v2: String, ${'$'}v3: JSON) {
+                |   graphStore_query(after: ${'$'}v2, first: ${'$'}v1, other: ${'$'}v3, query: ${'$'}v0) {
                 |     edges {
-                |       batch_hydration__node__nodeId: nodeId
-                |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
                 |       cursor
+                |       batch_hydration__node__nodeId: nodeId
+                |       batch_hydration__node__nodeId: nodeId
                 |     }
                 |     pageInfo {
                 |       hasNextPage
@@ -66,9 +72,12 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-            variables = """
+                variables = """
                 | {
-                |   "v0": {
+                |   "v0": "DROP TABLE",
+                |   "v1": 10,
+                |   "v2": "2012",
+                |   "v3": {
                 |     "teamId": "hello"
                 |   }
                 | }
@@ -101,15 +110,21 @@ public class CustomHydrationDirectiveTestSnapshot : TestSnapshot() {
         ),
         ExpectedServiceCall(
             service = "jira",
-            query = """
-                | {
-                |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
-                |     key
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     batch_hydration__node__id: id
+                |     key
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::issue/1"
+                |   ]
+                | }
+                """.trimMargin(),
             result = """
                 | {
                 |   "data": {

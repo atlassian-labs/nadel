@@ -24,13 +24,20 @@ public class PartitionWithSkipIncludeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
                 |     age
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-1:partition-A",
+                |     "thing-3:partition-A"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -51,13 +58,20 @@ public class PartitionWithSkipIncludeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
                 |     age
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-2:partition-B",
+                |     "thing-4:partition-B"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -78,13 +92,20 @@ public class PartitionWithSkipIncludeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-5:partition-C", "thing-7:partition-C"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
                 |     age
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-5:partition-C",
+                |     "thing-7:partition-C"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -105,13 +126,20 @@ public class PartitionWithSkipIncludeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-6:partition-D", "thing-8:partition-D"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
                 |     age
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-6:partition-D",
+                |     "thing-8:partition-D"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

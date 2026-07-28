@@ -52,14 +52,20 @@ public class `batching conditional hydration works with int type snapshot` : Tes
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barsById(ids: [2]) {
+                | query (${'$'}v0: [Int]) {
+                |   barsById(ids: ${'$'}v0) {
                 |     batch_hydration__bar__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     2
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -54,14 +54,18 @@ public class `rename inside multiple hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     __typename__rename__title: __typename
                 |     rename__title__name: name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -78,14 +82,18 @@ public class `rename inside multiple hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId2") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     __typename__rename__title: __typename
                 |     rename__title__name: name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId2"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

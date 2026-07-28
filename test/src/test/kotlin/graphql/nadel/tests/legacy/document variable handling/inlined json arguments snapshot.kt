@@ -24,15 +24,17 @@ public class `inlined json arguments snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query myQuery(${'$'}v0: JSON, ${'$'}v1: JSON!) {
-                |   hello(arg: {payload : ${'$'}v0}, arg1: ${'$'}v1)
+                | query myQuery(${'$'}v0: InputWithJson, ${'$'}v1: JSON!) {
+                |   hello(arg: ${'$'}v0, arg1: ${'$'}v1)
                 | }
                 """.trimMargin(),
                 variables = """
                 | {
                 |   "v0": {
-                |     "name": "Bobert",
-                |     "age": "23"
+                |     "payload": {
+                |       "name": "Bobert",
+                |       "age": "23"
+                |     }
                 |   },
                 |   "v1": {
                 |     "interests": [

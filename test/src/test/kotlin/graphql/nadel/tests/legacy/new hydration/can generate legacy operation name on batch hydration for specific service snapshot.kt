@@ -53,14 +53,22 @@ public class `can generate legacy operation name on batch hydration for specific
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | query nadel_2_service2 {
-                |   barsById(id: ["barId1", "barId2", "barId3"]) {
+                | query nadel_2_service2(${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     batch_hydration__bar__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "barId1",
+                |     "barId2",
+                |     "barId3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

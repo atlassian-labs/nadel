@@ -50,15 +50,19 @@ public class `hydrating using url as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   lookup(url: "https://github.com/atlassian-labs/nadel") {
+                | query (${'$'}v0: URL) {
+                |   lookup(url: ${'$'}v0) {
                 |     baseUrl
                 |     createdAt
                 |     owner
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "https://github.com/atlassian-labs/nadel"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
