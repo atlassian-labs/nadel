@@ -12,14 +12,12 @@ import graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
-import graphql.nadel.hints.NadelShortCircuitEmptyQueryHint
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
     val allDocumentVariablesHint: AllDocumentVariablesHint,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
-    val shortCircuitEmptyQuery: NadelShortCircuitEmptyQueryHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
     val hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
     val hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
@@ -43,7 +41,6 @@ data class NadelExecutionHints(
         private var legacyOperationNames = LegacyOperationNamesHint { false }
         private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
-        private var shortCircuitEmptyQuery = NadelShortCircuitEmptyQueryHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
         private var hydrationFilterObjectTypes = NadelHydrationFilterObjectTypesHint { false }
@@ -60,7 +57,6 @@ data class NadelExecutionHints(
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             deferSupport = nadelExecutionHints.deferSupport
-            shortCircuitEmptyQuery = nadelExecutionHints.shortCircuitEmptyQuery
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
             hydrationFilterObjectTypes = nadelExecutionHints.hydrationFilterObjectTypes
@@ -84,11 +80,6 @@ data class NadelExecutionHints(
 
         fun deferSupport(flag: NadelDeferSupportHint): Builder {
             deferSupport = flag
-            return this
-        }
-
-        fun shortCircuitEmptyQuery(flag: NadelShortCircuitEmptyQueryHint): Builder {
-            shortCircuitEmptyQuery = flag
             return this
         }
 
@@ -143,7 +134,6 @@ data class NadelExecutionHints(
                 allDocumentVariablesHint,
                 deferSupport,
                 sharedTypeRenames,
-                shortCircuitEmptyQuery,
                 executeOnEngineSchema,
                 hydrationFilterObjectTypes,
                 hydrationExecutableSourceFields,

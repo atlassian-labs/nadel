@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next.fixtures.introspection
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 class NamespaceMutationLikeShortCircuitsIntrospectionTest : NadelIntegrationTest(
@@ -39,9 +38,4 @@ class NamespaceMutationLikeShortCircuitsIntrospectionTest : NadelIntegrationTest
             },
         ),
     ),
-) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .shortCircuitEmptyQuery { true }
-    }
-}
+)
