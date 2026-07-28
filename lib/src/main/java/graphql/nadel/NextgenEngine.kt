@@ -111,7 +111,6 @@ internal class NextgenEngine(
         overallExecutionBlueprint = overallExecutionBlueprint,
         introspectionRunnerFactory = introspectionRunnerFactory,
         dynamicServiceResolution = dynamicServiceResolution,
-        services = this.services,
     )
     private val baseParseOptions = executableNormalizedOperationFactoryOptions()
         .maxChildrenDepth(maxQueryDepth)
@@ -220,11 +219,7 @@ internal class NextgenEngine(
                         }
                 }.awaitAll()
 
-                if (executionHints.newResultMergerAndNamespacedTypename()) {
-                    NadelResultMerger.mergeResults(operation.topLevelFields, engineSchema, results)
-                } else {
-                    graphql.nadel.engine.util.mergeResults(results)
-                }
+                NadelResultMerger.mergeResults(operation.topLevelFields, engineSchema, results)
             } catch (e: Throwable) {
                 beginExecuteContext?.onCompleted(null, e)
                 throw e

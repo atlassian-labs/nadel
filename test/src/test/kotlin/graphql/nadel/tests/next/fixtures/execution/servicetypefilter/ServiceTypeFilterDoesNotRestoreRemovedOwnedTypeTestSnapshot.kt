@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.legacy.namespaced
+package graphql.nadel.tests.next.fixtures.execution.servicetypefilter
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,25 +10,41 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<`typename is sent only to service that owns namespace type`>()
+    graphql.nadel.tests.next.update<ServiceTypeFilterDoesNotRestoreRemovedOwnedTypeTest>()
 }
 
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class `typename is sent only to service that owns namespace type snapshot` : TestSnapshot() {
+public class ServiceTypeFilterDoesNotRestoreRemovedOwnedTypeTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   crossServiceItems {
+     *     value
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "Issues",
+                service = "issues",
                 query = """
                 | {
-                |   issue {
-                |     __typename
-                |     getIssue {
-                |       text
+                |   crossServiceItems {
+                |     ... on AllowedIssuesItem {
+                |       value
                 |     }
                 |   }
                 | }
@@ -37,12 +53,12 @@ public class `typename is sent only to service that owns namespace type snapshot
                 result = """
                 | {
                 |   "data": {
-                |     "issue": {
-                |       "__typename": "IssueQuery",
-                |       "getIssue": {
-                |         "text": "Foo"
-                |       }
-                |     }
+                |     "crossServiceItems": [
+                |       {
+                |         "value": "allowed issues data"
+                |       },
+                |       {}
+                |     ]
                 |   }
                 | }
                 """.trimMargin(),
@@ -55,12 +71,12 @@ public class `typename is sent only to service that owns namespace type snapshot
      * ```json
      * {
      *   "data": {
-     *     "issue": {
-     *       "__typename": "IssueQuery",
-     *       "getIssue": {
-     *         "text": "Foo"
-     *       }
-     *     }
+     *     "crossServiceItems": [
+     *       {
+     *         "value": "allowed issues data"
+     *       },
+     *       {}
+     *     ]
      *   }
      * }
      * ```
@@ -69,12 +85,12 @@ public class `typename is sent only to service that owns namespace type snapshot
             result = """
             | {
             |   "data": {
-            |     "issue": {
-            |       "__typename": "IssueQuery",
-            |       "getIssue": {
-            |         "text": "Foo"
-            |       }
-            |     }
+            |     "crossServiceItems": [
+            |       {
+            |         "value": "allowed issues data"
+            |       },
+            |       {}
+            |     ]
             |   }
             | }
             """.trimMargin(),
