@@ -5,6 +5,7 @@ import graphql.nadel.test.mock
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.verify
+import io.mockk.verifyOrder
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
@@ -214,6 +215,31 @@ class NadelInternalLatencyTrackerImplTest {
         // Then
         assertTrue(wrappedFuture!!.getNow("nothing") == "Hello world")
         verify(exactly = 1) {
+            internalLatency.start()
+        }
+        confirmVerified(internalLatency)
+
+        assertTrue(tracker.noOutstandingCalls())
+    }
+
+    @Test
+    fun `closes external call if supplied future throws`() {
+        val tracker = NadelInternalLatencyTrackerImpl(internalLatency)
+
+        every { internalLatency.start() } returns Unit
+        every { internalLatency.stop() } returns Unit
+
+        // When
+        val exception = assertThrows<RuntimeException> {
+            tracker.onExternalFuture<String> {
+                throw RuntimeException("Something went wrong")
+            }
+        }
+
+        // Then
+        assertTrue(exception.message == "Something went wrong")
+        verifyOrder {
+            internalLatency.stop()
             internalLatency.start()
         }
         confirmVerified(internalLatency)
