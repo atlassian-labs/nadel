@@ -35,7 +35,6 @@ import graphql.schema.GraphQLUnionType
  * on the result side: an aliased `__typename` is injected, and any node whose concrete type isn't exposed is
  * stripped back to `{}`.
  *
- * Gated per-service by [graphql.nadel.hints.NadelNoInterfaceToObjectFragmentExpansionHint]; inert when off.
  * Registered last so its result-side removals run after type renames. Only plain fields (no
  * [NadelFieldInstruction]) are relaxed.
  */
@@ -60,9 +59,6 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
         transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        if (!executionContext.hints.noInterfaceToObjectFragmentExpansion(service)) {
-            return null
-        }
         if (service.name == IntrospectionService.name) {
             return null
         }
@@ -167,8 +163,7 @@ class NadelNoInterfaceToObjectFragmentExpansionTransform : NadelTransform<State>
  * The exposed overall implementation names if [overallField] is relaxable, else `null`. Relaxable means: the
  * parent's output is one or more interfaces (or a single union), the field is selectable at that level (an
  * interface field present on every parent interface, or `__typename`), the selection covers exactly the exposed
- * members, and at least one underlying member is hidden. Doesn't consider the hint or field instructions - the
- * caller does.
+ * members, and at least one underlying member is hidden. Doesn't consider field instructions - the caller does.
  */
 private fun computeExposedImplNamesIfRelaxable(
     executionBlueprint: NadelOverallExecutionBlueprint,

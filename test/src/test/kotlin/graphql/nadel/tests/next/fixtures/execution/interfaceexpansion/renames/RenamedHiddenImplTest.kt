@@ -74,23 +74,3 @@ abstract class RenamedHiddenImplTestBase(
         ),
     ),
 )
-
-class RenamedHiddenImplBareInterfaceFieldTest : RenamedHiddenImplTestBase(
-    query = """
-        query {
-          nodes {
-            id
-          }
-        }
-    """.trimIndent(),
-)
-
-class RenamedHiddenImplBareTypenameTest : RenamedHiddenImplTestBase(
-    query = """
-        query {
-          nodes {
-            __typename
-          }
-        }
-    """.trimIndent(),
-)

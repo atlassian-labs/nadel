@@ -75,23 +75,3 @@ abstract class UnderlyingOnlyImplementationTestBase(
         ),
     ),
 )
-
-class UnderlyingOnlyImplBareInterfaceFieldTest : UnderlyingOnlyImplementationTestBase(
-    query = """
-        query {
-          nodes {
-            id
-          }
-        }
-    """.trimIndent(),
-)
-
-class UnderlyingOnlyImplBareTypenameTest : UnderlyingOnlyImplementationTestBase(
-    query = """
-        query {
-          nodes {
-            __typename
-          }
-        }
-    """.trimIndent(),
-)

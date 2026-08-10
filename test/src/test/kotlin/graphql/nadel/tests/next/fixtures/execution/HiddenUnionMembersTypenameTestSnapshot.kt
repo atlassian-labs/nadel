@@ -16,7 +16,7 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class HiddenUnionMembersTypenameTestSnapshot : TestSnapshot() {
@@ -43,9 +43,8 @@ public class HiddenUnionMembersTypenameTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   abstract {
-                |     ... on User {
-                |       __typename
-                |     }
+                |     __typename
+                |     __typename__abstract_member__abstract: __typename
                 |   }
                 | }
                 """.trimMargin(),
@@ -55,9 +54,13 @@ public class HiddenUnionMembersTypenameTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "abstract": [
                 |       {
-                |         "__typename": "User"
+                |         "__typename": "User",
+                |         "__typename__abstract_member__abstract": "User"
                 |       },
-                |       {}
+                |       {
+                |         "__typename": "Issue",
+                |         "__typename__abstract_member__abstract": "Issue"
+                |       }
                 |     ]
                 |   }
                 | }
@@ -68,8 +71,6 @@ public class HiddenUnionMembersTypenameTestSnapshot : TestSnapshot() {
         )
 
     /**
-     * Combined Result
-     *
      * ```json
      * {
      *   "data": {

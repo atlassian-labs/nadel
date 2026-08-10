@@ -16,22 +16,40 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class `deep rename with interfaces asking typename snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   names {
+     *     __typename
+     *     name
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
                 | {
                 |   names {
+                |     __typename
+                |     __typename__abstract_member__names: __typename
                 |     ... on Issue {
-                |       __typename
                 |       name
                 |     }
                 |     ... on User {
-                |       __typename
                 |       __typename__deep_rename__name: __typename
                 |       deep_rename__name__details: details {
                 |         firstName
@@ -47,14 +65,17 @@ public class `deep rename with interfaces asking typename snapshot` : TestSnapsh
                 |     "names": [
                 |       {
                 |         "__typename": "Issue",
+                |         "__typename__abstract_member__names": "Issue",
                 |         "name": "GQLGW-001"
                 |       },
                 |       {
                 |         "__typename": "Issue",
+                |         "__typename__abstract_member__names": "Issue",
                 |         "name": "GQLGW-1102"
                 |       },
                 |       {
                 |         "__typename": "User",
+                |         "__typename__abstract_member__names": "User",
                 |         "deep_rename__name__details": {
                 |           "firstName": "Franklin"
                 |         },

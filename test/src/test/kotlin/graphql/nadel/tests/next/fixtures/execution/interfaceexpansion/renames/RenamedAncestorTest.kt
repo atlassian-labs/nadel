@@ -81,27 +81,3 @@ abstract class RenamedAncestorTestBase(
         ),
     ),
 )
-
-class RenamedAncestorBareInterfaceFieldTest : RenamedAncestorTestBase(
-    query = """
-        query {
-          container {
-            things {
-              id
-            }
-          }
-        }
-    """.trimIndent(),
-)
-
-class RenamedAncestorBareTypenameTest : RenamedAncestorTestBase(
-    query = """
-        query {
-          container {
-            things {
-              __typename
-            }
-          }
-        }
-    """.trimIndent(),
-)

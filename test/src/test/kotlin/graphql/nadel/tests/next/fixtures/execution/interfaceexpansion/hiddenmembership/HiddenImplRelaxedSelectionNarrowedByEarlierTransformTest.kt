@@ -1,7 +1,6 @@
 package graphql.nadel.tests.next.fixtures.execution.interfaceexpansion.hiddenmembership
 
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
@@ -28,10 +27,6 @@ class HiddenImplRelaxedSelectionNarrowedByEarlierTransformTest : HiddenImplement
         }
     """.trimIndent(),
 ) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints().noInterfaceToObjectFragmentExpansion { _ -> true }
-    }
-
     override fun makeNadel(): Nadel.Builder {
         return super.makeNadel()
             .transforms(listOf(NarrowIdSelectionToIssueTransform()))

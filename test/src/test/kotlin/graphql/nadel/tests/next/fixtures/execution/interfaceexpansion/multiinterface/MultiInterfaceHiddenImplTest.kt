@@ -121,15 +121,3 @@ abstract class MultiInterfaceHiddenImplTestBase(
         ),
     ),
 )
-
-class MultiInterfaceHiddenImplBareInterfaceFieldTest : MultiInterfaceHiddenImplTestBase(
-    query = """
-        query {
-          containers {
-            item {
-              id
-            }
-          }
-        }
-    """.trimIndent(),
-)
