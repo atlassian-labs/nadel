@@ -5,7 +5,7 @@ import org.intellij.lang.annotations.Language
 
 /**
  * Control: Issue/Story/Task all implement Node in both schemas, so nothing is hidden and a bare interface
- * selection is already sent bare — with or without the hint. Contrast the hiddenmembership/underlyingonly fixtures.
+ * selection is already sent bare. Contrast the hiddenmembership/underlyingonly fixtures.
  */
 abstract class AllImplementationsVisibleTestBase(
     @Language("GraphQL") query: String,

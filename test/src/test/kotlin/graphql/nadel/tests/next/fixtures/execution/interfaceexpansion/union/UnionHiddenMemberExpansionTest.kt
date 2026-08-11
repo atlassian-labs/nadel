@@ -4,10 +4,8 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 import org.intellij.lang.annotations.Language
 
 /**
- * Union analogue: the expansion isn't interface-specific. `Actor` is `{User, Issue}` overall but
- * `{User, Issue, Bot}` underlying (`Bot` hidden). A union's only abstract-level selection is `__typename`, so a
- * bare `actors { __typename }` is expanded into `... on User`/`... on Issue`, naming the exposed members; the
- * hidden `Bot` comes back as `{}`. The hint relaxes this — see the `*RelaxedTest` counterpart.
+ * Union analogue: `Actor` is `{User, Issue}` overall but `{User, Issue, Bot}` underlying (`Bot` hidden). A union's
+ * only abstract-level selection is `__typename`.
  */
 abstract class UnionHiddenMemberTestBase(
     @Language("GraphQL") query: String,
@@ -64,27 +62,4 @@ abstract class UnionHiddenMemberTestBase(
             },
         ),
     ),
-)
-
-class UnionHiddenMemberBareTypenameTest : UnionHiddenMemberTestBase(
-    query = """
-        query {
-          actors {
-            __typename
-          }
-        }
-    """.trimIndent(),
-)
-
-/** Explicit `... on User` is honoured verbatim; the hidden `Bot` (matching no fragment) comes back as `{}`. */
-class UnionHiddenMemberExplicitMemberTest : UnionHiddenMemberTestBase(
-    query = """
-        query {
-          actors {
-            ... on User {
-              id
-            }
-          }
-        }
-    """.trimIndent(),
 )

@@ -52,12 +52,12 @@ serviceCalls:
       query: |
         query {
           names {
+            __typename
+            __typename__abstract_member__names: __typename
             ... on Issue {
-              __typename
               name
             }
             ... on User {
-              __typename
               __typename__deep_rename__name: __typename
               deep_rename__name__details: details {
                 firstName
@@ -73,14 +73,17 @@ serviceCalls:
           "names": [
             {
               "__typename": "Issue",
+              "__typename__abstract_member__names": "Issue",
               "name": "GQLGW-001"
             },
             {
               "__typename": "Issue",
+              "__typename__abstract_member__names": "Issue",
               "name": "GQLGW-1102"
             },
             {
               "__typename": "User",
+              "__typename__abstract_member__names": "User",
               "__typename__deep_rename__name": "User",
               "deep_rename__name__details": {
                 "firstName": "Franklin"
