@@ -254,9 +254,27 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         hydrationDetails: ServiceExecutionHydrationDetails,
     ): ServiceExecutionResult {
+        return executeHydration(
+            topLevelFields = listOf(topLevelField),
+            service = service,
+            executionContext = executionContext,
+            hydrationDetails = hydrationDetails,
+        )
+    }
+
+    internal suspend fun executeHydration(
+        topLevelFields: List<ExecutableNormalizedField>,
+        service: Service,
+        executionContext: NadelExecutionContext,
+        hydrationDetails: ServiceExecutionHydrationDetails,
+    ): ServiceExecutionResult {
+        require(topLevelFields.isNotEmpty()) {
+            "At least one top-level field is required for hydration execution"
+        }
+
         return try {
             executeTopLevelField(
-                topLevelFields = listOf(topLevelField),
+                topLevelFields = topLevelFields,
                 service = service,
                 executionContext = executionContext.copy(
                     hydrationDetails = hydrationDetails,
@@ -265,7 +283,7 @@ internal class NextgenEngine(
         } catch (e: Exception) {
             when (e) {
                 is GraphQLError -> newServiceExecutionErrorResult(
-                    field = topLevelField,
+                    fields = topLevelFields,
                     error = e,
                 )
                 else -> throw e

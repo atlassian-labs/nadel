@@ -86,7 +86,11 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
         return batches
             .asSequence()
             .flatMap { batch ->
-                JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToBackingField, flatten = true)
+                JsonNodeExtractor.getNodesAt(
+                    batch.result.data,
+                    batch.resultPath ?: instruction.queryPathToBackingField,
+                    flatten = true,
+                )
                     // Ignore nulls in result
                     .filter {
                         it.value != null

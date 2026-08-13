@@ -7,12 +7,17 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
+import graphql.nadel.engine.plan.AnyNadelExecutionPlanStep
 import graphql.nadel.engine.plan.NadelExecutionPlan
+import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.transform.result.json.NadelResultView
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.queryPath
+import graphql.nadel.engine.util.toGraphQLError
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -30,8 +35,11 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val nodes = JsonNodes(result.data)
-        val instructions = getMutationInstructions(
+        val resultView = makeResultView(
+            executionContext = executionContext,
+            data = result.data,
+        )
+        val mutations = getMutationInstructions(
             executionContext,
             serviceExecutionContext,
             executionPlan,
@@ -39,9 +47,13 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             overallToUnderlyingFields,
             service,
             result,
-            nodes
+            resultView,
         )
-        mutate(result, instructions)
+        mutate(
+            result = result,
+            mutations = mutations,
+            resultView = resultView,
+        )
         return result
     }
 
@@ -55,11 +67,12 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         result: ServiceExecutionResult,
         deferPayload: DeferPayload,
     ): DeferPayload {
-        val nodes = JsonNodes(
-            deferPayload.getData<JsonMap?>() ?: emptyMap(),
-            pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>())
+        val resultView = makeResultView(
+            executionContext = executionContext,
+            data = deferPayload.getData<JsonMap?>() ?: emptyMap(),
+            responsePath = deferPayload.path,
         )
-        val instructions = getMutationInstructions(
+        val mutations = getMutationInstructions(
             executionContext,
             serviceExecutionContext,
             executionPlan,
@@ -67,9 +80,13 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             overallToUnderlyingFields,
             service,
             result,
-            nodes
+            resultView,
         )
-        mutate(deferPayload, instructions)
+        mutate(
+            result = deferPayload,
+            mutations = mutations,
+            resultView = resultView,
+        )
         return deferPayload
     }
 
@@ -81,47 +98,79 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
-        nodes: JsonNodes,
-    ): List<NadelResultInstruction> {
-        val asyncInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
+        resultView: NadelResultView,
+    ): List<NadelResultMutation> {
+        val nodes = resultView.nodes
         val contextByTransform = executionPlan.transformContexts
+        val invocations = getResultTransformInvocations(
+            executionPlan = executionPlan,
+            overallToUnderlyingFields = overallToUnderlyingFields,
+        )
+        val asyncTransformOutputs =
+            ArrayList<Deferred<NadelResultTransformOutput>>()
+        lateinit var removeArtificialFieldInstructions: Deferred<List<NadelResultInstruction>>
+
         coroutineScope {
             executionContext.timer.batch { timer ->
-                for ((field, steps) in executionPlan.transformationSteps) {
-                    val underlyingFields = overallToUnderlyingFields[field]
-                    if (underlyingFields.isNullOrEmpty()) continue
+                invocations
+                    .groupBy { invocation ->
+                        invocation.step.transform
+                    }
+                    .forEach { (transform, transformInvocations) ->
+                        val wave = NadelResultTransformWave(
+                            context = NadelResultTransformContext(
+                                executionContext = executionContext,
+                                serviceExecutionContext = serviceExecutionContext,
+                                executionBlueprint = executionBlueprint,
+                                service = service,
+                                result = result,
+                                resultView = resultView,
+                                transformServiceExecutionContext = contextByTransform[transform],
+                            ),
+                            invocations = transformInvocations.map { invocation ->
+                                invocation.transformInvocation
+                            },
+                        )
 
-                    for (step in steps) {
-                        val transformServiceExecutionContext = contextByTransform[step.transform]
-                        asyncInstructions.add(
+                        asyncTransformOutputs.add(
                             async {
-                                timer.time(step.resultTransformTimingStep) {
-                                    step.transform.getResultInstructions(
-                                        executionContext,
-                                        serviceExecutionContext,
-                                        executionBlueprint,
-                                        service,
-                                        field,
-                                        underlyingFields.first().parent,
-                                        result,
-                                        step.state,
-                                        nodes,
-                                        transformServiceExecutionContext
-                                    )
-                                }
-                            }
+                                executeResultTransformWave(
+                                    transform = transform,
+                                    scheduledInvocations = transformInvocations,
+                                    wave = wave,
+                                    timer = timer,
+                                )
+                            },
                         )
                     }
-                }
             }
 
-            asyncInstructions.add(
+            removeArtificialFieldInstructions =
                 async {
                     getRemoveArtificialFieldInstructions(artificialFields, nodes)
                 }
+        }
+
+        val mutationsByInvocationId =
+            asyncTransformOutputs
+                .awaitAll()
+                .flatMap { output ->
+                    output.mutationsByInvocationId.entries
+                }
+                .associate { (invocationId, mutations) ->
+                    invocationId to mutations
+                }
+
+        val mutations = buildList {
+            invocations.forEach { invocation ->
+                addAll(mutationsByInvocationId[invocation.transformInvocation.id].orEmpty())
+            }
+            addAll(
+                removeArtificialFieldInstructions
+                    .await()
+                    .map(NadelResultMutation::Instruction),
             )
         }
-        val instructions = asyncInstructions.awaitAll().flatten()
 
         coroutineScope {
             contextByTransform.forEach { (transform, transformServiceExecutionContext) ->
@@ -138,25 +187,185 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 }
             }
         }
-        return instructions
+        return mutations
     }
 
-    private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
-        instructions.forEach { transformation ->
-            when (transformation) {
-                is NadelResultInstruction.Set -> process(transformation)
-                is NadelResultInstruction.Remove -> process(transformation)
-                is NadelResultInstruction.AddError -> process(transformation, result.errors)
+    /**
+     * Executes one semantic result wave.
+     *
+     * Native wave transforms process it as one timed unit. Public invocation-based transforms
+     * are adapted into independently timed tasks, preserving their existing execution behavior.
+     */
+    private suspend fun executeResultTransformWave(
+        transform: NadelTransform<Any>,
+        scheduledInvocations: List<ScheduledResultTransformInvocation>,
+        wave: NadelResultTransformWave<Any>,
+        timer: NadelInstrumentationTimer.BatchTimer,
+    ): NadelResultTransformOutput {
+        @Suppress("UNCHECKED_CAST")
+        val waveTransform = transform as? NadelResultWaveTransform<Any>
+        return if (waveTransform != null) {
+            timer.time(scheduledInvocations.first().step.resultTransformTimingStep) {
+                waveTransform.getResultInstructions(wave)
+            }
+        } else {
+            val context = wave.context
+            coroutineScope {
+                val instructionsByInvocationId = scheduledInvocations
+                    .map { scheduledInvocation ->
+                        val invocation = scheduledInvocation.transformInvocation
+                        invocation.id to async {
+                            timer.time(
+                                scheduledInvocation.step.resultTransformTimingStep,
+                            ) {
+                                transform.getResultInstructions(
+                                    context.executionContext,
+                                    context.serviceExecutionContext,
+                                    context.executionBlueprint,
+                                    context.service,
+                                    invocation.overallField,
+                                    invocation.underlyingParentField,
+                                    context.result,
+                                    invocation.state,
+                                    context.nodes,
+                                    context.transformServiceExecutionContext,
+                                )
+                            }
+                        }
+                    }
+                    .associate { (invocationId, instructions) ->
+                        invocationId to instructions.await()
+                    }
+
+                NadelResultTransformOutput.forWave(
+                    wave = wave,
+                    instructionsByInvocationId = instructionsByInvocationId,
+                )
             }
         }
     }
 
-    private fun mutate(result: DeferPayload, instructions: List<NadelResultInstruction>) {
-        instructions.forEach { transformation ->
-            when (transformation) {
-                is NadelResultInstruction.Set -> process(transformation)
-                is NadelResultInstruction.Remove -> process(transformation)
-                is NadelResultInstruction.AddError -> processGraphQLErrors(transformation, result.errors)
+    private fun getResultTransformInvocations(
+        executionPlan: NadelExecutionPlan,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
+    ): List<ScheduledResultTransformInvocation> {
+        val invocations = mutableListOf<ScheduledResultTransformInvocation>()
+
+        for ((field, steps) in executionPlan.transformationSteps) {
+            val underlyingFields = overallToUnderlyingFields[field]
+            if (underlyingFields.isNullOrEmpty()) continue
+
+            for (step in steps) {
+                invocations.add(
+                    ScheduledResultTransformInvocation(
+                        step = step,
+                        transformInvocation = NadelResultTransformInvocation(
+                            id = NadelResultTransformInvocationId(
+                                ordinal = invocations.size,
+                            ),
+                            overallField = field,
+                            underlyingParentField = underlyingFields.first().parent,
+                            state = step.state,
+                        ),
+                    ),
+                )
+            }
+        }
+
+        return invocations
+    }
+
+    private data class ScheduledResultTransformInvocation(
+        val step: AnyNadelExecutionPlanStep,
+        val transformInvocation: NadelResultTransformInvocation<Any>,
+    )
+
+    private fun makeResultView(
+        executionContext: NadelExecutionContext,
+        data: JsonMap,
+        responsePath: List<Any>? = null,
+    ): NadelResultView {
+        return when {
+            executionContext.hydrationDetails != null -> NadelResultView.unaddressable(
+                data = data,
+                queryPrefix = responsePath
+                    ?.let(NadelQueryPath::fromResultPath)
+                    ?: NadelQueryPath.root,
+            )
+            responsePath != null -> NadelResultView.deferred(
+                data = data,
+                path = responsePath,
+            )
+            else -> NadelResultView.root(data)
+        }
+    }
+
+    private fun mutate(
+        result: ServiceExecutionResult,
+        mutations: List<NadelResultMutation>,
+        resultView: NadelResultView,
+    ) {
+        mutate(mutations, resultView) { error ->
+            process(
+                error = error,
+                errors = result.errors,
+            )
+        }
+    }
+
+    private fun mutate(
+        result: DeferPayload,
+        mutations: List<NadelResultMutation>,
+        resultView: NadelResultView,
+    ) {
+        mutate(mutations, resultView) { error ->
+            processGraphQLError(
+                error = error,
+                errors = result.errors,
+            )
+        }
+    }
+
+    private inline fun mutate(
+        mutations: List<NadelResultMutation>,
+        resultView: NadelResultView,
+        addError: (GraphQLError) -> Unit,
+    ) {
+        applyDataMutations(mutations).forEach { errorMutation ->
+            val error = when (errorMutation) {
+                is NadelResultMutation.Instruction -> {
+                    val instruction = errorMutation.instruction
+                    check(instruction is NadelResultInstruction.AddError) {
+                        "Expected an error instruction"
+                    }
+                    instruction.error
+                }
+                is NadelResultMutation.AddErrorAt -> getLocatedError(
+                    errorMutation,
+                    resultView,
+                )
+            }
+            addError(error)
+        }
+    }
+
+    /**
+     * Structural mutations run before errors are located so error paths observe the final
+     * client-shaped result rather than underlying-service aliases.
+     */
+    private fun applyDataMutations(
+        mutations: List<NadelResultMutation>,
+    ): List<NadelResultMutation> {
+        return buildList {
+            mutations.forEach { mutation ->
+                when (mutation) {
+                    is NadelResultMutation.AddErrorAt -> add(mutation)
+                    is NadelResultMutation.Instruction -> when (val instruction = mutation.instruction) {
+                        is NadelResultInstruction.Set -> process(instruction)
+                        is NadelResultInstruction.Remove -> process(instruction)
+                        is NadelResultInstruction.AddError -> add(mutation)
+                    }
+                }
             }
         }
     }
@@ -179,20 +388,32 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     }
 
     private fun process(
-        instruction: NadelResultInstruction.AddError,
+        error: GraphQLError,
         errors: List<JsonMap?>,
     ) {
-        val newError = instruction.error.toSpecification()
-
         val mutableErrors = errors.asMutable()
-        mutableErrors.add(newError)
+        mutableErrors.add(error.toSpecification())
     }
 
-    private fun processGraphQLErrors(
-        instruction: NadelResultInstruction.AddError,
+    private fun processGraphQLError(
+        error: GraphQLError,
         errors: List<GraphQLError>?,
     ) {
-        errors?.asMutable()?.add(instruction.error)
+        errors?.asMutable()?.add(error)
+    }
+
+    private fun getLocatedError(
+        instruction: NadelResultMutation.AddErrorAt,
+        resultView: NadelResultView,
+    ): GraphQLError {
+        val path = resultView
+            .getResultPath(instruction.subject)
+            ?.toRawPath()
+            ?.plus(instruction.relativePath)
+        return toGraphQLError(
+            raw = instruction.rawError,
+            path = path,
+        )
     }
 
     private fun getRemoveArtificialFieldInstructions(

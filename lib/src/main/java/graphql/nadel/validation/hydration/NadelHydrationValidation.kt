@@ -43,6 +43,7 @@ import graphql.nadel.validation.NadelHydrationReferencesNonExistentBackingFieldE
 import graphql.nadel.validation.NadelHydrationTypeMismatchError
 import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
+import graphql.nadel.validation.NadelIdHydratedHydrationDefinition
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationMustBeUsedExclusively
@@ -354,24 +355,31 @@ class NadelHydrationValidation internal constructor(
             sourceFieldValidation2.getBatchHydrationSourceFields(arguments, matchStrategy, hydrationCondition)
                 .onError { return it }
 
+        val fieldInstruction = NadelBatchHydrationFieldInstruction(
+            location = makeFieldCoordinates(parent.overall.name, virtualField.name),
+            virtualFieldDef = virtualField,
+            backingService = backingService,
+            queryPathToBackingField = NadelQueryPath(hydrationDefinition.backingField),
+            backingFieldArguments = arguments,
+            timeout = hydrationDefinition.timeout,
+            sourceFields = sourceFields,
+            executableSourceFields = executableSourceFields,
+            backingFieldDef = backingField,
+            backingFieldContainer = backingFieldContainer,
+            backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, null),
+            condition = hydrationCondition,
+            batchSize = hydrationDefinition.batchSize,
+            batchHydrationMatchStrategy = matchStrategy,
+        ).also { instruction ->
+            instruction.defaultHydrationKeys =
+                (hydrationDefinition as? NadelIdHydratedHydrationDefinition)
+                    ?.defaultHydrationKeys
+                    .orEmpty()
+        }
+
         return NadelValidatedFieldResult(
             service = parent.service,
-            fieldInstruction = NadelBatchHydrationFieldInstruction(
-                location = makeFieldCoordinates(parent.overall.name, virtualField.name),
-                virtualFieldDef = virtualField,
-                backingService = backingService,
-                queryPathToBackingField = NadelQueryPath(hydrationDefinition.backingField),
-                backingFieldArguments = arguments,
-                timeout = hydrationDefinition.timeout,
-                sourceFields = sourceFields,
-                executableSourceFields = executableSourceFields,
-                backingFieldDef = backingField,
-                backingFieldContainer = backingFieldContainer,
-                backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, null),
-                condition = hydrationCondition,
-                batchSize = hydrationDefinition.batchSize,
-                batchHydrationMatchStrategy = matchStrategy,
-            )
+            fieldInstruction = fieldInstruction,
         )
     }
 

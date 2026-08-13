@@ -8,6 +8,7 @@ import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.NadelIdHydrationDefinition
 import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseIdHydrationOrNull
+import graphql.nadel.engine.blueprint.hydration.NadelDefaultHydrationKey
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asInterimError
 import graphql.schema.GraphQLFieldDefinition
@@ -49,7 +50,7 @@ internal class NadelIdHydrationDefinitionParser {
                 type = virtualFieldType,
             ).onErrorCast { return it }
 
-            NadelValidationInterimResult.Success.of(listOf(hydration))
+            NadelValidationInterimResult.Success.of<List<NadelHydrationDefinition>>(listOf(hydration))
         }
     }
 
@@ -76,13 +77,20 @@ internal class NadelIdHydrationDefinitionParser {
         val uniqueHydrations = hydrations
             .groupBy { it.backingField }
             .map { (backingField, hydrations) ->
-                hydrations.toSet().singleOrNull()
+                val uniqueHydration = hydrations.toSet().singleOrNull()
                     ?: return NadelValidationInterimResult.Error.of(
                         NadelAmbiguousUnionDefaultHydrationError(parent, virtualField, backingField),
                     )
+
+                uniqueHydration.also {
+                    it.defaultHydrationKeys = hydrations
+                        .flatMapTo(linkedSetOf()) { hydration ->
+                            hydration.defaultHydrationKeys
+                        }
+                }
             }
 
-        return NadelValidationInterimResult.Success.of(uniqueHydrations)
+        return NadelValidationInterimResult.Success.of<List<NadelHydrationDefinition>>(uniqueHydrations)
     }
 
     private fun getHydrationDefinitionForType(
@@ -90,7 +98,7 @@ internal class NadelIdHydrationDefinitionParser {
         virtualField: GraphQLFieldDefinition,
         idHydration: NadelIdHydrationDefinition,
         type: GraphQLNamedType,
-    ): NadelValidationInterimResult<NadelHydrationDefinition> {
+    ): NadelValidationInterimResult<NadelIdHydratedHydrationDefinition> {
         val defaultHydration = (type as? GraphQLNamedType)?.parseDefaultHydrationOrNull()
             ?: return NadelValidationInterimResult.Error.of(NadelMissingDefaultHydrationError(parent, virtualField))
 
@@ -98,6 +106,9 @@ internal class NadelIdHydrationDefinitionParser {
             NadelIdHydratedHydrationDefinition(
                 idHydration = idHydration,
                 defaultHydration = defaultHydration,
+                defaultHydrationKeys = setOf(
+                    NadelDefaultHydrationKey(declaringTypeName = type.name),
+                ),
             ),
         )
     }
@@ -106,6 +117,7 @@ internal class NadelIdHydrationDefinitionParser {
 internal class NadelIdHydratedHydrationDefinition(
     private val idHydration: NadelIdHydrationDefinition,
     private val defaultHydration: NadelDefaultHydrationDefinition,
+    internal var defaultHydrationKeys: Set<NadelDefaultHydrationKey>,
 ) : NadelHydrationDefinition {
     override val backingField: List<String>
         get() = defaultHydration.backingField
