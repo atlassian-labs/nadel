@@ -36,7 +36,7 @@ fun interface NadelBatchHydrationCoalescingHint {
          *
          * Besides avoiding an allocation for every set of execution hints, this singleton lets
          * internal call sites cheaply distinguish the default from an explicitly supplied hint.
-        */
+         */
         @JvmField
         val disabled: NadelBatchHydrationCoalescingHint = object : NadelBatchHydrationCoalescingHint {
             override fun invoke(service: Service): Boolean {

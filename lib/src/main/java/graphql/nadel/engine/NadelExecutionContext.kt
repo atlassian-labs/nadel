@@ -31,9 +31,9 @@ data class NadelExecutionContext internal constructor(
     internal fun withBatchHydrationCoalescingParticipant(
         participant: NadelBatchHydrationCoalescingRound.Participant?,
     ): NadelExecutionContext {
-        return copy().also { context ->
-            context.batchHydrationCoalescingParticipant = participant
-        }
+        val context = copy()
+        context.batchHydrationCoalescingParticipant = participant
+        return context
     }
 
     val userContext: Any?

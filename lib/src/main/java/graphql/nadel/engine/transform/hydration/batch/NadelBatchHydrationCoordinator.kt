@@ -4,11 +4,11 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.definition.hydration.hasIdHydratedDefinition
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
-import graphql.nadel.engine.blueprint.hydration.NadelDefaultHydrationKey
 import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStrategy
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationOperationPlanner.Operation
 import graphql.nadel.engine.transform.query.NadelQueryPath
@@ -40,11 +40,9 @@ internal class NadelBatchHydrationCoordinator(
     )
 
     private data class CompatibilityKey(
-        val typeDefaultKey: NadelDefaultHydrationKey,
         val backingService: Service,
         val backingPath: NadelQueryPath,
         val batchArgumentName: String,
-        val batchArgumentType: String,
         val batchSize: Int,
         val timeout: Int,
         val matching: List<MatchObjectIdentifierSignature>,
@@ -135,8 +133,10 @@ internal class NadelBatchHydrationCoordinator(
             return null
         }
 
-        val rawInstructions = context.instructionsByObjectTypeNames.values.flatten()
-        val instruction = rawInstructions.distinct().singleOrNull()
+        val instruction = context.instructionsByObjectTypeNames.values
+            .flatten()
+            .distinct()
+            .singleOrNull()
             ?: return null
         val consumer = NadelBatchHydrationCoalescingConsumer.createOrNull(
             stableId = stableId,
@@ -150,12 +150,7 @@ internal class NadelBatchHydrationCoordinator(
             return null
         }
 
-        val defaultHydrationKeys = rawInstructions.flatMapTo(linkedSetOf()) { candidate ->
-            candidate.defaultHydrationKeys
-        }
-        if (defaultHydrationKeys.size != 1 ||
-            rawInstructions.any { candidate -> candidate.defaultHydrationKeys != defaultHydrationKeys }
-        ) {
+        if (!instruction.virtualFieldDef.hasIdHydratedDefinition()) {
             return null
         }
 
@@ -256,11 +251,9 @@ internal class NadelBatchHydrationCoordinator(
             .mapKeys { (argument) -> argument.name }
 
         return CompatibilityKey(
-            typeDefaultKey = instruction.defaultHydrationKeys.single(),
             backingService = instruction.backingService,
             backingPath = instruction.queryPathToBackingField,
             batchArgumentName = batchArgument.name,
-            batchArgumentType = GraphQLTypeUtil.simplePrint(batchArgument.backingArgumentDef.type),
             batchSize = instruction.batchSize,
             timeout = instruction.timeout,
             matching = consumer.objectIdentifiers.map { objectId ->
@@ -380,7 +373,7 @@ internal class NadelBatchHydrationCoordinator(
         consumer: NadelBatchHydrationCoalescingConsumer,
     ): ServiceExecutionHydrationDetails {
         val instruction = consumer.instruction
-        val hydrationSourceService = consumer.executionBlueprint
+        val hydrationSourceService = consumer.context.executionBlueprint
             .getServiceOwning(instruction.location)!!
         val hydrationBackingField =
             FieldCoordinates.coordinates(instruction.backingFieldContainer, instruction.backingFieldDef)

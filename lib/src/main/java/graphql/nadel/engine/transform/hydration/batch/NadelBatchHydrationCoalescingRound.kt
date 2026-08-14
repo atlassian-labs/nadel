@@ -178,7 +178,7 @@ internal class NadelBatchHydrationCoalescingRound(
 
     internal class Participant internal constructor(
         round: NadelBatchHydrationCoalescingRound,
-        val ordinal: Int,
+        private val ordinal: Int,
     ) {
         private val deliveryLock = Any()
         private var round: NadelBatchHydrationCoalescingRound? = round
@@ -221,7 +221,9 @@ internal class NadelBatchHydrationCoalescingRound(
         fun abort(throwable: Throwable) {
             val activeRound = synchronized(deliveryLock) {
                 completionStarted = true
-                round.also { round = null }
+                val activeRound = round
+                round = null
+                activeRound
             }
             activeRound?.abort(throwable)
         }

@@ -7,9 +7,9 @@ import graphql.nadel.tests.next.SimpleClassNameTypeResolver
 
 /**
  * A union can inherit equivalent defaults from several member declarations. Querying the same
- * multi-origin hydration under two aliases must retain the existing isolated execution path.
+ * multi-origin hydration under two aliases coalesces their identical selections and inputs.
  */
-class BatchHydrationCoalescingMultiOriginFallbackTest : NadelIntegrationTest(
+class BatchHydrationCoalescingMultiOriginTest : NadelIntegrationTest(
     query = """
         query {
           issues {

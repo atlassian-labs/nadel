@@ -53,11 +53,6 @@ private data class BatchedArgumentValue(
     val argumentValue: NormalizedInputValue,
 )
 
-private data class NadelPartitionedBatchedArgumentValue(
-    val partitionOrdinal: Int,
-    val value: BatchedArgumentValue,
-)
-
 /**
  * todo: does this apply even with the new matcher?
  *
@@ -110,48 +105,23 @@ internal object NadelNewBatchHydrationInputBuilder {
         partitions: List<NadelBatchHydrationArgumentPartition>,
     ): List<NadelSharedHydrationArgumentsBatch> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchArgumentValueForPartitions(
-            instruction = instruction,
-            partitions = partitions,
-        )
-
-        return batchArgs
-            .map { batchedArgument ->
-                NadelSharedHydrationArgumentsBatch(
-                    partitionOrdinal = batchedArgument.partitionOrdinal,
-                    batch = NadelHydrationArgumentsBatch(
-                        arguments = nonBatchArgs +
-                            (batchedArgument.value.argumentDef to batchedArgument.value.argumentValue),
-                        sourceInputs = batchedArgument.value.sourceInputs,
-                    ),
-                )
-            }
-    }
-
-    private fun getBatchArgumentValueForPartitions(
-        instruction: NadelBatchHydrationFieldInstruction,
-        partitions: List<NadelBatchHydrationArgumentPartition>,
-    ): List<NadelPartitionedBatchedArgumentValue> {
-        val batchSize = instruction.batchSize
-
         val (batchInputDef) = getBatchInputDef(instruction) ?: return emptyList()
         val batchArgDef = instruction.backingFieldDef.getArgument(batchInputDef.name)
 
         return partitions.flatMap { partition ->
             partition.sourceInputs
-                .chunked(size = batchSize)
+                .chunked(size = instruction.batchSize)
                 .map { chunk ->
                     val normalizedInputValue = NormalizedInputValue(
                         GraphQLTypeUtil.simplePrint(batchArgDef.type),
                         javaValueToAstValue(chunk.map(JsonNode::value)),
                     )
 
-                    NadelPartitionedBatchedArgumentValue(
+                    NadelSharedHydrationArgumentsBatch(
                         partitionOrdinal = partition.ordinal,
-                        value = BatchedArgumentValue(
+                        batch = NadelHydrationArgumentsBatch(
                             sourceInputs = chunk,
-                            argumentDef = batchInputDef,
-                            argumentValue = normalizedInputValue,
+                            arguments = nonBatchArgs + (batchInputDef to normalizedInputValue),
                         ),
                     )
                 }

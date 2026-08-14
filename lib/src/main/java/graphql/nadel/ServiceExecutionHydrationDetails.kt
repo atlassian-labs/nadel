@@ -40,7 +40,6 @@ data class ServiceExecutionHydrationDetails(
 
     internal fun toConsumerDetails(): NadelServiceExecutionHydrationConsumerDetails {
         return NadelServiceExecutionHydrationConsumerDetails(
-            instruction = instruction,
             hydrationSourceService = hydrationSourceService,
             hydrationVirtualField = hydrationVirtualField,
             hydrationBackingField = hydrationBackingField,
@@ -50,7 +49,6 @@ data class ServiceExecutionHydrationDetails(
 }
 
 data class NadelServiceExecutionHydrationConsumerDetails internal constructor(
-    internal val instruction: NadelGenericHydrationInstruction,
     val hydrationSourceService: Service,
     val hydrationVirtualField: FieldCoordinates,
     val hydrationBackingField: FieldCoordinates,

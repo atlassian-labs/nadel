@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<BatchHydrationCoalescingMultiOriginFallbackTest>()
+    graphql.nadel.tests.next.update<BatchHydrationCoalescingMultiOriginTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class BatchHydrationCoalescingMultiOriginFallbackTestSnapshot : TestSnapshot() {
+public class BatchHydrationCoalescingMultiOriginTestSnapshot : TestSnapshot() {
     /**
      * Query
      *
@@ -43,6 +43,40 @@ public class BatchHydrationCoalescingMultiOriginFallbackTestSnapshot : TestSnaps
      * ```
      */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "Identity",
+                query = """
+                | {
+                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/customer", "ari:cloud:identity::user/account", "ari:cloud:identity::user/app"]) {
+                |     __typename
+                |     batch_hydration_shared_0_0__first__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "batch_hydration__0_0": [
+                |       {
+                |         "__typename": "CustomerUser",
+                |         "batch_hydration_shared_0_0__first__id": "ari:cloud:identity::user/customer"
+                |       },
+                |       {
+                |         "__typename": "AtlassianAccountUser",
+                |         "batch_hydration_shared_0_0__first__id": "ari:cloud:identity::user/account"
+                |       },
+                |       {
+                |         "__typename": "AppUser",
+                |         "batch_hydration_shared_0_0__first__id": "ari:cloud:identity::user/app"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "Identity",
                 query = """
@@ -85,74 +119,6 @@ public class BatchHydrationCoalescingMultiOriginFallbackTestSnapshot : TestSnaps
                 delayedResults = listOfJsonStrings(
                 ),
             ),
-            ExpectedServiceCall(
-                service = "Identity",
-                query = """
-                | {
-                |   usersByIds(ids: ["ari:cloud:identity::user/customer", "ari:cloud:identity::user/account", "ari:cloud:identity::user/app"]) {
-                |     __typename
-                |     batch_hydration__first__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "usersByIds": [
-                |       {
-                |         "__typename": "CustomerUser",
-                |         "batch_hydration__first__id": "ari:cloud:identity::user/customer"
-                |       },
-                |       {
-                |         "__typename": "AtlassianAccountUser",
-                |         "batch_hydration__first__id": "ari:cloud:identity::user/account"
-                |       },
-                |       {
-                |         "__typename": "AppUser",
-                |         "batch_hydration__first__id": "ari:cloud:identity::user/app"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Identity",
-                query = """
-                | {
-                |   usersByIds(ids: ["ari:cloud:identity::user/customer", "ari:cloud:identity::user/account", "ari:cloud:identity::user/app"]) {
-                |     __typename
-                |     batch_hydration__second__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "usersByIds": [
-                |       {
-                |         "__typename": "CustomerUser",
-                |         "batch_hydration__second__id": "ari:cloud:identity::user/customer"
-                |       },
-                |       {
-                |         "__typename": "AtlassianAccountUser",
-                |         "batch_hydration__second__id": "ari:cloud:identity::user/account"
-                |       },
-                |       {
-                |         "__typename": "AppUser",
-                |         "batch_hydration__second__id": "ari:cloud:identity::user/app"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
         )
 
     /**
@@ -161,26 +127,26 @@ public class BatchHydrationCoalescingMultiOriginFallbackTestSnapshot : TestSnaps
      *   "data": {
      *     "issues": [
      *       {
-     *         "second": {
+     *         "first": {
      *           "__typename": "CustomerUser"
      *         },
-     *         "first": {
+     *         "second": {
      *           "__typename": "CustomerUser"
      *         }
      *       },
      *       {
-     *         "second": {
+     *         "first": {
      *           "__typename": "AtlassianAccountUser"
      *         },
-     *         "first": {
+     *         "second": {
      *           "__typename": "AtlassianAccountUser"
      *         }
      *       },
      *       {
-     *         "second": {
+     *         "first": {
      *           "__typename": "AppUser"
      *         },
-     *         "first": {
+     *         "second": {
      *           "__typename": "AppUser"
      *         }
      *       }
@@ -195,26 +161,26 @@ public class BatchHydrationCoalescingMultiOriginFallbackTestSnapshot : TestSnaps
             |   "data": {
             |     "issues": [
             |       {
-            |         "second": {
+            |         "first": {
             |           "__typename": "CustomerUser"
             |         },
-            |         "first": {
+            |         "second": {
             |           "__typename": "CustomerUser"
             |         }
             |       },
             |       {
-            |         "second": {
+            |         "first": {
             |           "__typename": "AtlassianAccountUser"
             |         },
-            |         "first": {
+            |         "second": {
             |           "__typename": "AtlassianAccountUser"
             |         }
             |       },
             |       {
-            |         "second": {
+            |         "first": {
             |           "__typename": "AppUser"
             |         },
-            |         "first": {
+            |         "second": {
             |           "__typename": "AppUser"
             |         }
             |       }

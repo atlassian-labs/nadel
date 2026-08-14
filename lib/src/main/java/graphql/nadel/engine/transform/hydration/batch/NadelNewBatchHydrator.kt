@@ -221,25 +221,10 @@ internal class NadelNewBatchHydrator(
         val sourceObjectsMetadata = getSourceObjectsMetadata(sourceObjects)
         val sourceInputsByInstruction = groupSourceInputsByInstruction(sourceObjectsMetadata)
 
-        return if (isDeferred()) {
-            deferHydrations(sourceInputsByInstruction, sourceObjectsMetadata)
-            emptyList()
-        } else {
-            val resultsByInstruction = executeHydrations(sourceInputsByInstruction)
-            val indexedResultsByInstruction = getIndexedResultsByInstruction(resultsByInstruction)
-
-            val setData = getSetDataInstructions(
-                sourceObjectsMetadata = sourceObjectsMetadata,
-                indexedResultsByInstruction = indexedResultsByInstruction,
-            )
-
-            val addErrors = resultsByInstruction
-                .flatMap { (_, results) ->
-                    getInstructionsToAddErrors(results)
-                }
-
-            setData + addErrors
-        }
+        return hydrate(
+            sourceObjectsMetadata = sourceObjectsMetadata,
+            sourceInputsByInstruction = sourceInputsByInstruction,
+        )
     }
 
     /**

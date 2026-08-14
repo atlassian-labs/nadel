@@ -43,7 +43,6 @@ import graphql.nadel.validation.NadelHydrationReferencesNonExistentBackingFieldE
 import graphql.nadel.validation.NadelHydrationTypeMismatchError
 import graphql.nadel.validation.NadelHydrationUnionMemberNoBackingError
 import graphql.nadel.validation.NadelHydrationVirtualFieldMustBeNullableError
-import graphql.nadel.validation.NadelIdHydratedHydrationDefinition
 import graphql.nadel.validation.NadelPolymorphicHydrationIncompatibleSourceFieldsError
 import graphql.nadel.validation.NadelPolymorphicHydrationMustOutputUnionError
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationMustBeUsedExclusively
@@ -372,12 +371,7 @@ class NadelHydrationValidation internal constructor(
                 condition = hydrationCondition,
                 batchSize = hydrationDefinition.batchSize,
                 batchHydrationMatchStrategy = matchStrategy,
-            ).also { instruction ->
-                instruction.defaultHydrationKeys =
-                    (hydrationDefinition as? NadelIdHydratedHydrationDefinition)
-                        ?.defaultHydrationKeys
-                        .orEmpty()
-            },
+            )
         )
     }
 

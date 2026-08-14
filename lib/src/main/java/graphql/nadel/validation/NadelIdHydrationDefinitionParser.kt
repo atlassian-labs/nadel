@@ -8,7 +8,6 @@ import graphql.nadel.definition.hydration.NadelHydrationDefinition
 import graphql.nadel.definition.hydration.NadelIdHydrationDefinition
 import graphql.nadel.definition.hydration.parseDefaultHydrationOrNull
 import graphql.nadel.definition.hydration.parseIdHydrationOrNull
-import graphql.nadel.engine.blueprint.hydration.NadelDefaultHydrationKey
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelValidationInterimResult.Error.Companion.asInterimError
 import graphql.schema.GraphQLFieldDefinition
@@ -77,19 +76,10 @@ internal class NadelIdHydrationDefinitionParser {
         val uniqueHydrations = hydrations
             .groupBy { it.backingField }
             .map { (backingField, hydrations) ->
-                val uniqueHydration = hydrations.toSet().singleOrNull()
+                hydrations.toSet().singleOrNull()
                     ?: return NadelValidationInterimResult.Error.of(
                         NadelAmbiguousUnionDefaultHydrationError(parent, virtualField, backingField),
                     )
-
-                uniqueHydration.also { hydration ->
-                    hydration as NadelIdHydratedHydrationDefinition
-                    hydration.defaultHydrationKeys = hydrations
-                        .flatMapTo(linkedSetOf()) { memberHydration ->
-                            memberHydration as NadelIdHydratedHydrationDefinition
-                            memberHydration.defaultHydrationKeys
-                        }
-                }
             }
 
         return NadelValidationInterimResult.Success.of(uniqueHydrations)
@@ -108,9 +98,6 @@ internal class NadelIdHydrationDefinitionParser {
             NadelIdHydratedHydrationDefinition(
                 idHydration = idHydration,
                 defaultHydration = defaultHydration,
-                defaultHydrationKeys = setOf(
-                    NadelDefaultHydrationKey(declaringTypeName = type.name),
-                ),
             ),
         )
     }
@@ -119,7 +106,6 @@ internal class NadelIdHydrationDefinitionParser {
 internal class NadelIdHydratedHydrationDefinition(
     private val idHydration: NadelIdHydrationDefinition,
     private val defaultHydration: NadelDefaultHydrationDefinition,
-    internal var defaultHydrationKeys: Set<NadelDefaultHydrationKey>,
 ) : NadelHydrationDefinition {
     override val backingField: List<String>
         get() = defaultHydration.backingField

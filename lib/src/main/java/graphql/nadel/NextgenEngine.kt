@@ -308,7 +308,7 @@ internal class NextgenEngine(
                 service = service,
                 executionContext = executionContext.copy(
                     hydrationDetails = hydrationDetails,
-                ).withBatchHydrationCoalescingParticipant(null),
+                ),
             )
         } catch (e: Exception) {
             when (e) {
@@ -331,7 +331,7 @@ internal class NextgenEngine(
             service = service,
             executionContext = executionContext.copy(
                 isPartitionedCall = true,
-            ).withBatchHydrationCoalescingParticipant(null),
+            ),
         )
     }
 

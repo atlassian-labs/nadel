@@ -18,9 +18,6 @@ internal class NadelBatchHydrationCoalescingConsumer private constructor(
     val context: NadelBatchHydratorContext
         get() = hydration.context
 
-    val executionBlueprint
-        get() = context.executionBlueprint
-
     val sourceObjectsMetadata: List<NadelNewBatchHydrator.SourceObjectMetadata>
         get() = hydration.sourceObjectsMetadata
 

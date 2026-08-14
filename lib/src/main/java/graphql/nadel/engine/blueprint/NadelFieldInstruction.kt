@@ -2,7 +2,6 @@ package graphql.nadel.engine.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.engine.blueprint.hydration.NadelDefaultHydrationKey
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationCondition
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
@@ -152,17 +151,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val condition: NadelHydrationCondition?,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
-) : NadelFieldInstruction(), NadelGenericHydrationInstruction {
-    /**
-     * Positive provenance for batch hydrations synthesized from `@idHydrated`.
-     *
-     * This is outside the primary constructor so it does not change this instruction's public
-     * constructor or data-class equality. An empty set means the instruction was field-declared
-     * (or otherwise has no built-in type-level provenance); more than one key means an effective
-     * union hydration was derived from several equal declarations.
-     */
-    internal var defaultHydrationKeys: Set<NadelDefaultHydrationKey> = emptySet()
-}
+) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelDeepRenameFieldInstruction(
     override val location: FieldCoordinates,
