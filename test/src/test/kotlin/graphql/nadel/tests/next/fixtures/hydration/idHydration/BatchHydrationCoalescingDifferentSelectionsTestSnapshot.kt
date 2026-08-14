@@ -60,12 +60,22 @@ public class BatchHydrationCoalescingDifferentSelectionsTestSnapshot : TestSnaps
                 variables = "{}",
                 result = """
                 | {
+                |   "errors": [
+                |     {
+                |       "message": "Avatar unavailable",
+                |       "path": [
+                |         "batch_hydration__0_0",
+                |         0,
+                |         "picture"
+                |       ],
+                |       "extensions": {
+                |         "classification": "AvatarUnavailableError"
+                |       }
+                |     }
+                |   ],
                 |   "data": {
                 |     "batch_hydration__0_0": [
-                |       {
-                |         "picture": "One-32",
-                |         "batch_hydration_shared_0_0__assigneeUser__id": "ari:cloud:identity::user/1"
-                |       }
+                |       null
                 |     ],
                 |     "batch_hydration__0_1": [
                 |       {
@@ -114,14 +124,27 @@ public class BatchHydrationCoalescingDifferentSelectionsTestSnapshot : TestSnaps
     /**
      * ```json
      * {
+     *   "errors": [
+     *     {
+     *       "message": "Avatar unavailable",
+     *       "locations": [],
+     *       "path": [
+     *         "issues",
+     *         0,
+     *         "assigneeUser",
+     *         "picture"
+     *       ],
+     *       "extensions": {
+     *         "classification": "AvatarUnavailableError"
+     *       }
+     *     }
+     *   ],
      *   "data": {
      *     "issues": [
      *       {
+     *         "assigneeUser": null,
      *         "reporterUser": {
      *           "picture": "One-64"
-     *         },
-     *         "assigneeUser": {
-     *           "picture": "One-32"
      *         }
      *       }
      *     ]
@@ -132,14 +155,27 @@ public class BatchHydrationCoalescingDifferentSelectionsTestSnapshot : TestSnaps
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
+            |   "errors": [
+            |     {
+            |       "message": "Avatar unavailable",
+            |       "locations": [],
+            |       "path": [
+            |         "issues",
+            |         0,
+            |         "assigneeUser",
+            |         "picture"
+            |       ],
+            |       "extensions": {
+            |         "classification": "AvatarUnavailableError"
+            |       }
+            |     }
+            |   ],
             |   "data": {
             |     "issues": [
             |       {
+            |         "assigneeUser": null,
             |         "reporterUser": {
             |           "picture": "One-64"
-            |         },
-            |         "assigneeUser": {
-            |           "picture": "One-32"
             |         }
             |       }
             |     ]

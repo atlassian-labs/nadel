@@ -8,6 +8,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStra
 import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStrategy.TO_STRING
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
+import graphql.nadel.engine.transform.hydration.batch.NadelSharedResolvedObjectBatch
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.util.MutableJsonMap
@@ -86,9 +87,46 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
         return batches
             .asSequence()
             .flatMap { batch ->
+                JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToBackingField, flatten = true)
+                    // Ignore nulls in result
+                    .filter {
+                        it.value != null
+                    }
+            }
+            .groupBy { node ->
+                @Suppress("UNCHECKED_CAST")
+                (NadelBatchHydrationIndexKey(
+                    strategy.objectIds
+                        .map { objectId ->
+                            val resultKey = aliasHelper.getResultKey(objectId.resultId)
+                            JsonNode(
+                                (node.value as MutableJsonMap).remove(
+                                    resultKey
+                                )
+                            )
+                        }
+                ))
+            }
+            .mapValues { (_, values) ->
+                // todo: stop doing stupid here
+                values.first()
+            }
+    }
+
+    /**
+     * Indexes results from aliased roots in a packed shared operation.
+     *
+     * The ordinary [getIndex] implementation intentionally remains independent of this path.
+     */
+    fun getSharedIndex(
+        batches: List<NadelSharedResolvedObjectBatch>,
+    ): Map<NadelBatchHydrationIndexKey, JsonNode> {
+        return batches
+            .asSequence()
+            .flatMap { batch ->
                 JsonNodeExtractor.getNodesAt(
                     batch.result.data,
-                    batch.resultPath ?: instruction.queryPathToBackingField,
+                    batch.resultPath,
                     flatten = true,
                 )
                     // Ignore nulls in result

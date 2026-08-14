@@ -9,6 +9,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
+import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.NadelTransformServiceExecutionContext
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
@@ -18,10 +19,6 @@ import graphql.nadel.engine.transform.makeTypeNameField
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.NadelResultTransformInvocationId
-import graphql.nadel.engine.transform.result.NadelResultTransformOutput
-import graphql.nadel.engine.transform.result.NadelResultTransformWave
-import graphql.nadel.engine.transform.result.NadelResultWaveTransform
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.queryPath
 import graphql.nadel.engine.util.toBuilder
@@ -29,12 +26,8 @@ import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
-) : NadelResultWaveTransform<State> {
+) : NadelTransform<State> {
     private val newHydrator = NadelNewBatchHydrator(engine)
-    private val hydrationCoordinator = NadelBatchHydrationCoordinator(
-        engine = engine,
-        hydrator = newHydrator,
-    )
 
     data class State(
         val executionBlueprint: NadelOverallExecutionBlueprint,
@@ -134,35 +127,33 @@ internal class NadelBatchHydrationTransform(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
+        val invocationState = if (state.executionContext === executionContext) {
+            state
+        } else {
+            state.copy(executionContext = executionContext)
+        }
 
-        return newHydrator.hydrate(state, executionBlueprint, parentNodes)
-    }
-
-    override suspend fun getResultInstructions(
-        wave: NadelResultTransformWave<State>,
-    ): NadelResultTransformOutput {
-        val context = wave.context
-        val mutationsByOrdinal = hydrationCoordinator.hydrate(
-            wave.invocations.map { invocation ->
-                val sourceOccurrences = context.resultView.getNodeOccurrencesAt(
-                    queryPath = invocation.underlyingParentField?.queryPath ?: NadelQueryPath.root,
-                    flatten = true,
-                )
-                NadelNewBatchHydrator.Invocation(
-                    id = invocation.id.ordinal,
-                    state = invocation.state,
-                    executionBlueprint = context.executionBlueprint,
-                    sourceOccurrences = sourceOccurrences,
-                )
-            },
+        val participant = executionContext.batchHydrationCoalescingParticipant
+            ?: return newHydrator.hydrate(invocationState, executionBlueprint, parentNodes)
+        val mayTargetEnabledService = state.instructionsByObjectTypeNames
+            .values
+            .asSequence()
+            .flatten()
+            .any { instruction -> participant.isEnabledFor(instruction.backingService) }
+        if (!mayTargetEnabledService) {
+            return newHydrator.hydrate(invocationState, executionBlueprint, parentNodes)
+        }
+        val preparedHydration = newHydrator.prepare(
+            state = invocationState,
+            executionBlueprint = executionBlueprint,
+            sourceObjects = parentNodes,
         )
-
-        return NadelResultTransformOutput.forWaveMutations(
-            wave = wave,
-            mutationsByInvocationId = mutationsByOrdinal.mapKeys { (ordinal) ->
-                NadelResultTransformInvocationId(ordinal)
-            },
-        )
+        return if (participant.trySubmit(preparedHydration)) {
+            emptyList()
+        } else {
+            // Incremental or otherwise late work cannot join a completed root round.
+            newHydrator.hydrate(preparedHydration)
+        }
     }
 
     private fun makeTypeNameField(

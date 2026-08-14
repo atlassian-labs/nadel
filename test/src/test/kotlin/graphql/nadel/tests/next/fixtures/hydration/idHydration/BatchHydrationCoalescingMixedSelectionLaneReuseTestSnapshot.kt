@@ -144,14 +144,14 @@ public class BatchHydrationCoalescingMixedSelectionLaneReuseTestSnapshot : TestS
      *   "data": {
      *     "issues": [
      *       {
-     *         "creator": {
-     *           "email": "user3@example.com"
+     *         "assignee": {
+     *           "name": "User 1"
      *         },
      *         "reporter": {
      *           "name": "User 2"
      *         },
-     *         "assignee": {
-     *           "name": "User 1"
+     *         "creator": {
+     *           "email": "user3@example.com"
      *         }
      *       }
      *     ]
@@ -165,14 +165,14 @@ public class BatchHydrationCoalescingMixedSelectionLaneReuseTestSnapshot : TestS
             |   "data": {
             |     "issues": [
             |       {
-            |         "creator": {
-            |           "email": "user3@example.com"
+            |         "assignee": {
+            |           "name": "User 1"
             |         },
             |         "reporter": {
             |           "name": "User 2"
             |         },
-            |         "assignee": {
-            |           "name": "User 1"
+            |         "creator": {
+            |           "email": "user3@example.com"
             |         }
             |       }
             |     ]

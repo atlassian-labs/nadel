@@ -20,6 +20,7 @@ class BatchHydrationCoalescingMixedCardinalityTest : NadelIntegrationTest(
             primary {
               name
             }
+            summary
             reviewers {
               name
             }
@@ -40,6 +41,7 @@ class BatchHydrationCoalescingMixedCardinalityTest : NadelIntegrationTest(
                   primaryId: ID
                   reviewerIds: [ID]
                   absentId: ID
+                  summary: String
                   primary: User @idHydrated(idField: "primaryId")
                   reviewers: [User] @idHydrated(idField: "reviewerIds")
                   absent: User @idHydrated(idField: "absentId")
@@ -50,6 +52,7 @@ class BatchHydrationCoalescingMixedCardinalityTest : NadelIntegrationTest(
                     val primaryId: String,
                     val reviewerIds: List<String>,
                     val absentId: String?,
+                    val summary: String,
                 )
 
                 runtime
@@ -64,6 +67,7 @@ class BatchHydrationCoalescingMixedCardinalityTest : NadelIntegrationTest(
                                     "ari:cloud:identity::user/2",
                                 ),
                                 absentId = null,
+                                summary = "Between hydrated fields",
                             )
                         }
                     }

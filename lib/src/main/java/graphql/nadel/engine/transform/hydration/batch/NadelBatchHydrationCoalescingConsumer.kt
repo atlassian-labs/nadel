@@ -10,30 +10,29 @@ import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
  * ordinary isolated hydrator, but cannot cross this boundary into shared planning or execution.
  */
 internal class NadelBatchHydrationCoalescingConsumer private constructor(
+    val stableId: Int,
     val hydration: NadelNewBatchHydrator.PreparedBatchHydration,
     val instruction: NadelBatchHydrationFieldInstruction,
     val objectIdentifiers: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>,
 ) {
-    val invocation: NadelNewBatchHydrator.Invocation
-        get() = hydration.invocation
-
     val context: NadelBatchHydratorContext
         get() = hydration.context
+
+    val executionBlueprint
+        get() = context.executionBlueprint
 
     val sourceObjectsMetadata: List<NadelNewBatchHydrator.SourceObjectMetadata>
         get() = hydration.sourceObjectsMetadata
 
-    val sourceInputs: List<NadelNewBatchHydrator.SourceInput>
-        get() = hydration.sourceInputs
-
     val selectionSignature: NadelBatchHydrationSelectionSignature by lazy(LazyThreadSafetyMode.NONE) {
         NadelBatchHydrationSelectionSignature.from(
-            invocation.state.virtualField.children,
+            context.sourceField.children,
         )
     }
 
     companion object {
         fun createOrNull(
+            stableId: Int,
             hydration: NadelNewBatchHydrator.PreparedBatchHydration,
             instruction: NadelBatchHydrationFieldInstruction,
         ): NadelBatchHydrationCoalescingConsumer? {
@@ -47,6 +46,7 @@ internal class NadelBatchHydrationCoalescingConsumer private constructor(
             }
 
             return NadelBatchHydrationCoalescingConsumer(
+                stableId = stableId,
                 hydration = hydration,
                 instruction = instruction,
                 objectIdentifiers = objectIdentifiers,

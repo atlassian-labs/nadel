@@ -143,19 +143,19 @@ public class BatchHydrationCoalescingCustomPartitionOptInTestSnapshot : TestSnap
      *   "data": {
      *     "issues": [
      *       {
-     *         "reporter": {
-     *           "name": "Two"
-     *         },
      *         "assignee": {
      *           "name": "One"
+     *         },
+     *         "reporter": {
+     *           "name": "Two"
      *         }
      *       },
      *       {
-     *         "reporter": {
-     *           "name": "Three"
-     *         },
      *         "assignee": {
      *           "name": "One"
+     *         },
+     *         "reporter": {
+     *           "name": "Three"
      *         }
      *       }
      *     ]
@@ -169,19 +169,19 @@ public class BatchHydrationCoalescingCustomPartitionOptInTestSnapshot : TestSnap
             |   "data": {
             |     "issues": [
             |       {
-            |         "reporter": {
-            |           "name": "Two"
-            |         },
             |         "assignee": {
             |           "name": "One"
+            |         },
+            |         "reporter": {
+            |           "name": "Two"
             |         }
             |       },
             |       {
-            |         "reporter": {
-            |           "name": "Three"
-            |         },
             |         "assignee": {
             |           "name": "One"
+            |         },
+            |         "reporter": {
+            |           "name": "Three"
             |         }
             |       }
             |     ]

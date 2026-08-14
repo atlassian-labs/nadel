@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<BatchHydrationCoalescingThreeConsumersTest>()
+    graphql.nadel.tests.next.update<BatchHydrationCoalescingCrossTopLevelDifferentSelectionsTest>()
 }
 
 /**
@@ -19,7 +19,7 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot() {
+public class BatchHydrationCoalescingCrossTopLevelDifferentSelectionsTestSnapshot : TestSnapshot() {
     /**
      * Query
      *
@@ -27,13 +27,12 @@ public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot()
      * query {
      *   issue {
      *     assignee {
-     *       name
+     *       displayName
      *     }
-     *     reporter {
-     *       name
-     *     }
-     *     creator {
-     *       name
+     *   }
+     *   page {
+     *     owner {
+     *       email
      *     }
      *   }
      * }
@@ -47,12 +46,40 @@ public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot()
      */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
+                service = "Confluence",
+                query = """
+                | {
+                |   page {
+                |     __typename__batch_hydration__owner: __typename
+                |     batch_hydration__owner__ownerId: ownerId
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "page": {
+                |       "batch_hydration__owner__ownerId": "ari:cloud:identity::user/confluence",
+                |       "__typename__batch_hydration__owner": "Page"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
                 service = "Identity",
                 query = """
                 | {
-                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/1", "ari:cloud:identity::user/3", "ari:cloud:identity::user/2"]) {
+                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/jira"]) {
+                |     displayName
                 |     batch_hydration_shared_0_0__assignee__id: id
-                |     name
+                |   }
+                |   batch_hydration__0_1: usersByIds(ids: ["ari:cloud:identity::user/confluence"]) {
+                |     email
+                |     batch_hydration_shared_0_1__owner__id: id
                 |   }
                 | }
                 """.trimMargin(),
@@ -62,16 +89,14 @@ public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot()
                 |   "data": {
                 |     "batch_hydration__0_0": [
                 |       {
-                |         "name": "One",
-                |         "batch_hydration_shared_0_0__assignee__id": "ari:cloud:identity::user/1"
-                |       },
+                |         "displayName": "Jira User",
+                |         "batch_hydration_shared_0_0__assignee__id": "ari:cloud:identity::user/jira"
+                |       }
+                |     ],
+                |     "batch_hydration__0_1": [
                 |       {
-                |         "name": "Three",
-                |         "batch_hydration_shared_0_0__assignee__id": "ari:cloud:identity::user/3"
-                |       },
-                |       {
-                |         "name": "Two",
-                |         "batch_hydration_shared_0_0__assignee__id": "ari:cloud:identity::user/2"
+                |         "email": "confluence@example.com",
+                |         "batch_hydration_shared_0_1__owner__id": "ari:cloud:identity::user/confluence"
                 |       }
                 |     ]
                 |   }
@@ -86,11 +111,7 @@ public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot()
                 | {
                 |   issue {
                 |     __typename__batch_hydration__assignee: __typename
-                |     __typename__batch_hydration__reporter: __typename
-                |     __typename__batch_hydration__creator: __typename
                 |     batch_hydration__assignee__assigneeId: assigneeId
-                |     batch_hydration__creator__creatorId: creatorId
-                |     batch_hydration__reporter__reporterId: reporterId
                 |   }
                 | }
                 """.trimMargin(),
@@ -99,12 +120,8 @@ public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot()
                 | {
                 |   "data": {
                 |     "issue": {
-                |       "batch_hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |       "__typename__batch_hydration__assignee": "Issue",
-                |       "batch_hydration__reporter__reporterId": "ari:cloud:identity::user/2",
-                |       "__typename__batch_hydration__reporter": "Issue",
-                |       "batch_hydration__creator__creatorId": "ari:cloud:identity::user/3",
-                |       "__typename__batch_hydration__creator": "Issue"
+                |       "batch_hydration__assignee__assigneeId": "ari:cloud:identity::user/jira",
+                |       "__typename__batch_hydration__assignee": "Issue"
                 |     }
                 |   }
                 | }
@@ -119,14 +136,13 @@ public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot()
      * {
      *   "data": {
      *     "issue": {
-     *       "creator": {
-     *         "name": "Three"
-     *       },
-     *       "reporter": {
-     *         "name": "Two"
-     *       },
      *       "assignee": {
-     *         "name": "One"
+     *         "displayName": "Jira User"
+     *       }
+     *     },
+     *     "page": {
+     *       "owner": {
+     *         "email": "confluence@example.com"
      *       }
      *     }
      *   }
@@ -138,14 +154,13 @@ public class BatchHydrationCoalescingThreeConsumersTestSnapshot : TestSnapshot()
             | {
             |   "data": {
             |     "issue": {
-            |       "creator": {
-            |         "name": "Three"
-            |       },
-            |       "reporter": {
-            |         "name": "Two"
-            |       },
             |       "assignee": {
-            |         "name": "One"
+            |         "displayName": "Jira User"
+            |       }
+            |     },
+            |     "page": {
+            |       "owner": {
+            |         "email": "confluence@example.com"
             |       }
             |     }
             |   }

@@ -6,7 +6,7 @@ import graphql.nadel.hints.NadelBatchHydrationCoalescingHint
 /**
  * The same fixture retains two independent Identity service calls when the rollout hint is off.
  */
-class BatchHydrationCoalescingHintOffTest : BatchHydrationCoalescingDifferentSelectionsTest() {
+class BatchHydrationCoalescingHintOffTest : BatchHydrationCoalescingEqualSelectionsTest() {
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .batchHydrationCoalescing(NadelBatchHydrationCoalescingHint { _ -> false })

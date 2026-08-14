@@ -26,11 +26,11 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
      * ```graphql
      * query {
      *   issues {
-     *     assigneeUser: assignee {
-     *       picture: avatar(size: 32)
+     *     assignee {
+     *       name
      *     }
-     *     reporterUser: reporter {
-     *       picture: avatar(size: 64)
+     *     reporter {
+     *       name
      *     }
      *   }
      * }
@@ -48,8 +48,8 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   usersByIds(ids: ["ari:cloud:identity::user/1"]) {
-                |     picture: avatar(size: 32)
-                |     batch_hydration__assigneeUser__id: id
+                |     batch_hydration__assignee__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
@@ -59,8 +59,8 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "usersByIds": [
                 |       {
-                |         "picture": "One-32",
-                |         "batch_hydration__assigneeUser__id": "ari:cloud:identity::user/1"
+                |         "name": "One",
+                |         "batch_hydration__assignee__id": "ari:cloud:identity::user/1"
                 |       }
                 |     ]
                 |   }
@@ -73,9 +73,9 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
                 service = "Identity",
                 query = """
                 | {
-                |   usersByIds(ids: ["ari:cloud:identity::user/1"]) {
-                |     picture: avatar(size: 64)
-                |     batch_hydration__reporterUser__id: id
+                |   usersByIds(ids: ["ari:cloud:identity::user/2", "ari:cloud:identity::user/3"]) {
+                |     batch_hydration__reporter__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
@@ -85,8 +85,12 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "usersByIds": [
                 |       {
-                |         "picture": "One-64",
-                |         "batch_hydration__reporterUser__id": "ari:cloud:identity::user/1"
+                |         "name": "Two",
+                |         "batch_hydration__reporter__id": "ari:cloud:identity::user/2"
+                |       },
+                |       {
+                |         "name": "Three",
+                |         "batch_hydration__reporter__id": "ari:cloud:identity::user/3"
                 |       }
                 |     ]
                 |   }
@@ -100,10 +104,10 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   issues {
-                |     __typename__batch_hydration__assigneeUser: __typename
-                |     __typename__batch_hydration__reporterUser: __typename
-                |     batch_hydration__assigneeUser__assigneeId: assigneeId
-                |     batch_hydration__reporterUser__reporterId: reporterId
+                |     __typename__batch_hydration__assignee: __typename
+                |     __typename__batch_hydration__reporter: __typename
+                |     batch_hydration__assignee__assigneeId: assigneeId
+                |     batch_hydration__reporter__reporterId: reporterId
                 |   }
                 | }
                 """.trimMargin(),
@@ -113,10 +117,16 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
                 |   "data": {
                 |     "issues": [
                 |       {
-                |         "batch_hydration__assigneeUser__assigneeId": "ari:cloud:identity::user/1",
-                |         "__typename__batch_hydration__assigneeUser": "Issue",
-                |         "batch_hydration__reporterUser__reporterId": "ari:cloud:identity::user/1",
-                |         "__typename__batch_hydration__reporterUser": "Issue"
+                |         "batch_hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |         "__typename__batch_hydration__assignee": "Issue",
+                |         "batch_hydration__reporter__reporterId": "ari:cloud:identity::user/2",
+                |         "__typename__batch_hydration__reporter": "Issue"
+                |       },
+                |       {
+                |         "batch_hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
+                |         "__typename__batch_hydration__assignee": "Issue",
+                |         "batch_hydration__reporter__reporterId": "ari:cloud:identity::user/3",
+                |         "__typename__batch_hydration__reporter": "Issue"
                 |       }
                 |     ]
                 |   }
@@ -133,11 +143,19 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "issues": [
      *       {
-     *         "reporterUser": {
-     *           "picture": "One-64"
+     *         "reporter": {
+     *           "name": "Two"
      *         },
-     *         "assigneeUser": {
-     *           "picture": "One-32"
+     *         "assignee": {
+     *           "name": "One"
+     *         }
+     *       },
+     *       {
+     *         "reporter": {
+     *           "name": "Three"
+     *         },
+     *         "assignee": {
+     *           "name": "One"
      *         }
      *       }
      *     ]
@@ -151,11 +169,19 @@ public class BatchHydrationCoalescingHintOffTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "reporterUser": {
-            |           "picture": "One-64"
+            |         "reporter": {
+            |           "name": "Two"
             |         },
-            |         "assigneeUser": {
-            |           "picture": "One-32"
+            |         "assignee": {
+            |           "name": "One"
+            |         }
+            |       },
+            |       {
+            |         "reporter": {
+            |           "name": "Three"
+            |         },
+            |         "assignee": {
+            |           "name": "One"
             |         }
             |       }
             |     ]

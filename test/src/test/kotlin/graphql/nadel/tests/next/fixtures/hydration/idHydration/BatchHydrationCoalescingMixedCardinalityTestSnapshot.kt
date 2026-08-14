@@ -29,6 +29,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
      *     primary {
      *       name
      *     }
+     *     summary
      *     reviewers {
      *       name
      *     }
@@ -51,7 +52,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
                 query = """
                 | {
                 |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/1", "ari:cloud:identity::user/3"]) {
-                |     batch_hydration_shared_0_0__absent__id: id
+                |     batch_hydration_shared_0_0__primary__id: id
                 |     name
                 |   }
                 | }
@@ -63,11 +64,11 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
                 |     "batch_hydration__0_0": [
                 |       {
                 |         "name": "One",
-                |         "batch_hydration_shared_0_0__absent__id": "ari:cloud:identity::user/1"
+                |         "batch_hydration_shared_0_0__primary__id": "ari:cloud:identity::user/1"
                 |       },
                 |       {
                 |         "name": "Three",
-                |         "batch_hydration_shared_0_0__absent__id": "ari:cloud:identity::user/3"
+                |         "batch_hydration_shared_0_0__primary__id": "ari:cloud:identity::user/3"
                 |       }
                 |     ]
                 |   }
@@ -81,7 +82,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
                 query = """
                 | {
                 |   batch_hydration__0_1: usersByIds(ids: ["ari:cloud:identity::user/2"]) {
-                |     batch_hydration_shared_0_0__absent__id: id
+                |     batch_hydration_shared_0_0__primary__id: id
                 |     name
                 |   }
                 | }
@@ -93,7 +94,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
                 |     "batch_hydration__0_1": [
                 |       {
                 |         "name": "Two",
-                |         "batch_hydration_shared_0_0__absent__id": "ari:cloud:identity::user/2"
+                |         "batch_hydration_shared_0_0__primary__id": "ari:cloud:identity::user/2"
                 |       }
                 |     ]
                 |   }
@@ -113,6 +114,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
                 |     batch_hydration__absent__absentId: absentId
                 |     batch_hydration__primary__primaryId: primaryId
                 |     batch_hydration__reviewers__reviewerIds: reviewerIds
+                |     summary
                 |   }
                 | }
                 """.trimMargin(),
@@ -123,6 +125,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
                 |     "issue": {
                 |       "batch_hydration__primary__primaryId": "ari:cloud:identity::user/1",
                 |       "__typename__batch_hydration__primary": "Issue",
+                |       "summary": "Between hydrated fields",
                 |       "batch_hydration__reviewers__reviewerIds": [
                 |         "ari:cloud:identity::user/3",
                 |         "ari:cloud:identity::user/1",
@@ -146,7 +149,10 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
      * {
      *   "data": {
      *     "issue": {
-     *       "absent": null,
+     *       "primary": {
+     *         "name": "One"
+     *       },
+     *       "summary": "Between hydrated fields",
      *       "reviewers": [
      *         {
      *           "name": "Three"
@@ -161,9 +167,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
      *           "name": "Two"
      *         }
      *       ],
-     *       "primary": {
-     *         "name": "One"
-     *       }
+     *       "absent": null
      *     }
      *   }
      * }
@@ -174,7 +178,10 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
             | {
             |   "data": {
             |     "issue": {
-            |       "absent": null,
+            |       "primary": {
+            |         "name": "One"
+            |       },
+            |       "summary": "Between hydrated fields",
             |       "reviewers": [
             |         {
             |           "name": "Three"
@@ -189,9 +196,7 @@ public class BatchHydrationCoalescingMixedCardinalityTestSnapshot : TestSnapshot
             |           "name": "Two"
             |         }
             |       ],
-            |       "primary": {
-            |         "name": "One"
-            |       }
+            |       "absent": null
             |     }
             |   }
             | }

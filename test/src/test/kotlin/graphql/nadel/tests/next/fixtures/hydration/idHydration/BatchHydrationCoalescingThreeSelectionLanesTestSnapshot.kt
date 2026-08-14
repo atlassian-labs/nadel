@@ -54,13 +54,13 @@ public class BatchHydrationCoalescingThreeSelectionLanesTestSnapshot : TestSnaps
                 |     batch_hydration_shared_0_0__assignee__id: id
                 |     name
                 |   }
-                |   batch_hydration__0_1: usersByIds(ids: ["ari:cloud:identity::user/3"]) {
-                |     avatarUrl
-                |     batch_hydration_shared_0_1__creator__id: id
-                |   }
-                |   batch_hydration__0_2: usersByIds(ids: ["ari:cloud:identity::user/2"]) {
+                |   batch_hydration__0_1: usersByIds(ids: ["ari:cloud:identity::user/2"]) {
                 |     email
-                |     batch_hydration_shared_0_2__reporter__id: id
+                |     batch_hydration_shared_0_1__reporter__id: id
+                |   }
+                |   batch_hydration__0_2: usersByIds(ids: ["ari:cloud:identity::user/3"]) {
+                |     avatarUrl
+                |     batch_hydration_shared_0_2__creator__id: id
                 |   }
                 | }
                 """.trimMargin(),
@@ -76,14 +76,14 @@ public class BatchHydrationCoalescingThreeSelectionLanesTestSnapshot : TestSnaps
                 |     ],
                 |     "batch_hydration__0_1": [
                 |       {
-                |         "avatarUrl": "https://example.com/user-3.png",
-                |         "batch_hydration_shared_0_1__creator__id": "ari:cloud:identity::user/3"
+                |         "email": "user2@example.com",
+                |         "batch_hydration_shared_0_1__reporter__id": "ari:cloud:identity::user/2"
                 |       }
                 |     ],
                 |     "batch_hydration__0_2": [
                 |       {
-                |         "email": "user2@example.com",
-                |         "batch_hydration_shared_0_2__reporter__id": "ari:cloud:identity::user/2"
+                |         "avatarUrl": "https://example.com/user-3.png",
+                |         "batch_hydration_shared_0_2__creator__id": "ari:cloud:identity::user/3"
                 |       }
                 |     ]
                 |   }
@@ -134,14 +134,14 @@ public class BatchHydrationCoalescingThreeSelectionLanesTestSnapshot : TestSnaps
      *   "data": {
      *     "issues": [
      *       {
-     *         "creator": {
-     *           "avatarUrl": "https://example.com/user-3.png"
+     *         "assignee": {
+     *           "name": "User 1"
      *         },
      *         "reporter": {
      *           "email": "user2@example.com"
      *         },
-     *         "assignee": {
-     *           "name": "User 1"
+     *         "creator": {
+     *           "avatarUrl": "https://example.com/user-3.png"
      *         }
      *       }
      *     ]
@@ -155,14 +155,14 @@ public class BatchHydrationCoalescingThreeSelectionLanesTestSnapshot : TestSnaps
             |   "data": {
             |     "issues": [
             |       {
-            |         "creator": {
-            |           "avatarUrl": "https://example.com/user-3.png"
+            |         "assignee": {
+            |           "name": "User 1"
             |         },
             |         "reporter": {
             |           "email": "user2@example.com"
             |         },
-            |         "assignee": {
-            |           "name": "User 1"
+            |         "creator": {
+            |           "avatarUrl": "https://example.com/user-3.png"
             |         }
             |       }
             |     ]

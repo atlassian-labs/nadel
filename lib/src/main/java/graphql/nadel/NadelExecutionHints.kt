@@ -25,8 +25,47 @@ data class NadelExecutionHints(
     val disableSharedTypes: NadelDisableSharedTypesHint,
     val useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
     val batchRootFields: NadelBatchRootFieldsHint,
-    val batchHydrationCoalescing: NadelBatchHydrationCoalescingHint,
 ) {
+    private var batchHydrationCoalescingValue = NadelBatchHydrationCoalescingHint.disabled
+
+    /**
+     * Controls whether compatible batch hydrations may share a backing operation.
+     *
+     * This property deliberately lives outside the data class primary constructor so adding the
+     * opt-in does not change the existing constructor, `copy`, or component method ABI.
+     */
+    val batchHydrationCoalescing: NadelBatchHydrationCoalescingHint
+        get() = batchHydrationCoalescingValue
+
+    private constructor(
+        legacyOperationNames: LegacyOperationNamesHint,
+        allDocumentVariablesHint: AllDocumentVariablesHint,
+        deferSupport: NadelDeferSupportHint,
+        sharedTypeRenames: NadelSharedTypeRenamesHint,
+        executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
+        hydrationFilterObjectTypes: NadelHydrationFilterObjectTypesHint,
+        hydrationExecutableSourceFields: NadelHydrationExecutableSourceFields,
+        shadowUnderlyingTypeNameInvestigation: NadelShadowUnderlyingTypeNameInvestigation,
+        disableSharedTypes: NadelDisableSharedTypesHint,
+        useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
+        batchRootFields: NadelBatchRootFieldsHint,
+        batchHydrationCoalescing: NadelBatchHydrationCoalescingHint,
+    ) : this(
+        legacyOperationNames,
+        allDocumentVariablesHint,
+        deferSupport,
+        sharedTypeRenames,
+        executeOnEngineSchema,
+        hydrationFilterObjectTypes,
+        hydrationExecutableSourceFields,
+        shadowUnderlyingTypeNameInvestigation,
+        disableSharedTypes,
+        useReachableUnderlyingServiceTypes,
+        batchRootFields,
+    ) {
+        batchHydrationCoalescingValue = batchHydrationCoalescing
+    }
+
     /**
      * Returns a builder with the same field values as this object.
      *
@@ -49,7 +88,7 @@ data class NadelExecutionHints(
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
         private var useReachableUnderlyingServiceTypes = NadelReachableUnderlyingServiceTypesHint { false }
         private var batchRootFields = NadelBatchRootFieldsHint { false }
-        private var batchHydrationCoalescing = NadelBatchHydrationCoalescingHint { false }
+        private var batchHydrationCoalescing = NadelBatchHydrationCoalescingHint.disabled
 
         constructor()
 

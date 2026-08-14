@@ -50,7 +50,7 @@ public class BatchHydrationCoalescingReorderedMissingResultsTestSnapshot : TestS
                 service = "Identity",
                 query = """
                 | {
-                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/1", "ari:cloud:identity::user/missing", "ari:cloud:identity::user/2"]) {
+                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/1", "ari:cloud:identity::user/2", "ari:cloud:identity::user/missing"]) {
                 |     batch_hydration_shared_0_0__assignee__id: id
                 |     name
                 |   }
@@ -115,13 +115,13 @@ public class BatchHydrationCoalescingReorderedMissingResultsTestSnapshot : TestS
      * {
      *   "data": {
      *     "issue": {
-     *       "creator": null,
+     *       "assignee": {
+     *         "name": "One"
+     *       },
      *       "reporter": {
      *         "name": "Two"
      *       },
-     *       "assignee": {
-     *         "name": "One"
-     *       }
+     *       "creator": null
      *     }
      *   }
      * }
@@ -132,13 +132,13 @@ public class BatchHydrationCoalescingReorderedMissingResultsTestSnapshot : TestS
             | {
             |   "data": {
             |     "issue": {
-            |       "creator": null,
+            |       "assignee": {
+            |         "name": "One"
+            |       },
             |       "reporter": {
             |         "name": "Two"
             |       },
-            |       "assignee": {
-            |         "name": "One"
-            |       }
+            |       "creator": null
             |     }
             |   }
             | }

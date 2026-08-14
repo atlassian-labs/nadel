@@ -10,7 +10,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
  *
  * Nested backing errors currently cross the hydration execution boundary without source
  * occurrence provenance, so pooling the outer lookups would make those errors impossible to
- * attribute safely. The nested manager fields still hydrate in the next result wave.
+ * attribute safely. The nested manager fields still hydrate through ordinary nested execution.
  */
 class BatchHydrationCoalescingNestedSelectionHydrationTest : NadelIntegrationTest(
     query = """

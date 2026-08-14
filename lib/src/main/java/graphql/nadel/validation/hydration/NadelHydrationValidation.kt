@@ -355,31 +355,29 @@ class NadelHydrationValidation internal constructor(
             sourceFieldValidation2.getBatchHydrationSourceFields(arguments, matchStrategy, hydrationCondition)
                 .onError { return it }
 
-        val fieldInstruction = NadelBatchHydrationFieldInstruction(
-            location = makeFieldCoordinates(parent.overall.name, virtualField.name),
-            virtualFieldDef = virtualField,
-            backingService = backingService,
-            queryPathToBackingField = NadelQueryPath(hydrationDefinition.backingField),
-            backingFieldArguments = arguments,
-            timeout = hydrationDefinition.timeout,
-            sourceFields = sourceFields,
-            executableSourceFields = executableSourceFields,
-            backingFieldDef = backingField,
-            backingFieldContainer = backingFieldContainer,
-            backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, null),
-            condition = hydrationCondition,
-            batchSize = hydrationDefinition.batchSize,
-            batchHydrationMatchStrategy = matchStrategy,
-        ).also { instruction ->
-            instruction.defaultHydrationKeys =
-                (hydrationDefinition as? NadelIdHydratedHydrationDefinition)
-                    ?.defaultHydrationKeys
-                    .orEmpty()
-        }
-
         return NadelValidatedFieldResult(
             service = parent.service,
-            fieldInstruction = fieldInstruction,
+            fieldInstruction = NadelBatchHydrationFieldInstruction(
+                location = makeFieldCoordinates(parent.overall.name, virtualField.name),
+                virtualFieldDef = virtualField,
+                backingService = backingService,
+                queryPathToBackingField = NadelQueryPath(hydrationDefinition.backingField),
+                backingFieldArguments = arguments,
+                timeout = hydrationDefinition.timeout,
+                sourceFields = sourceFields,
+                executableSourceFields = executableSourceFields,
+                backingFieldDef = backingField,
+                backingFieldContainer = backingFieldContainer,
+                backingFieldReturnsObjectTypeNames = getReturnsObjectTypeNames(backingField, null),
+                condition = hydrationCondition,
+                batchSize = hydrationDefinition.batchSize,
+                batchHydrationMatchStrategy = matchStrategy,
+            ).also { instruction ->
+                instruction.defaultHydrationKeys =
+                    (hydrationDefinition as? NadelIdHydratedHydrationDefinition)
+                        ?.defaultHydrationKeys
+                        .orEmpty()
+            },
         )
     }
 

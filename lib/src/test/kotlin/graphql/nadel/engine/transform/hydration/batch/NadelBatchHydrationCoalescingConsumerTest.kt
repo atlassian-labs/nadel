@@ -16,6 +16,7 @@ class NadelBatchHydrationCoalescingConsumerTest {
         }
 
         val consumer = NadelBatchHydrationCoalescingConsumer.createOrNull(
+            stableId = 0,
             hydration = mock(),
             instruction = instruction,
         )

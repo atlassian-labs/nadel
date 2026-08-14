@@ -237,7 +237,7 @@ class Nadel private constructor(
 
     class Builder {
         private var instrumentation: NadelInstrumentation = object : NadelInstrumentation {}
-        private var executionHooks: NadelExecutionHooks = NadelExecutionHooks.default
+        private var executionHooks: NadelExecutionHooks = object : NadelExecutionHooks {}
         private var preparsedDocumentProvider: PreparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE
         private var executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER
         private var transforms = emptyList<NadelTransform<out Any>>()

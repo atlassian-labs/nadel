@@ -6,9 +6,38 @@ import graphql.nadel.test.mock
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NadelBatchHydrationOperationPlannerTest {
+    @Test
+    fun `keeps hook partitions in separate operations`() {
+        val firstPartitionQuery = backingQuery(
+            partitionOrdinal = 0,
+            shardingTarget = "one-shard",
+            sourceInput = "one",
+        )
+        val secondPartitionQuery = backingQuery(
+            partitionOrdinal = 1,
+            shardingTarget = "one-shard",
+            sourceInput = "two",
+        )
+
+        val operations = NadelBatchHydrationOperationPlanner()
+            .packBackingQueriesByExecutionBoundary(
+                queries = listOf(firstPartitionQuery, secondPartitionQuery),
+                maxCardinality = 2,
+            )
+
+        assertEquals(
+            expected = listOf(
+                listOf(firstPartitionQuery),
+                listOf(secondPartitionQuery),
+            ),
+            actual = operations,
+        )
+    }
+
     @Test
     fun `keeps different sharding targets in separate operations`() {
         val firstShardQuery = backingQuery(
@@ -141,6 +170,32 @@ class NadelBatchHydrationOperationPlannerTest {
         }
     }
 
+    @Test
+    fun `partition validation permits reordered values`() {
+        assertTrue(
+            listOf(JsonNode("one"), JsonNode("two"), JsonNode("three"))
+                .hasSameValuesAs(
+                    listOf(JsonNode("three"), JsonNode("one"), JsonNode("two")),
+                ),
+        )
+    }
+
+    @Test
+    fun `partition validation compares the complete value multiset`() {
+        assertTrue(
+            listOf(JsonNode("one"), JsonNode("one"), JsonNode("two"))
+                .hasSameValuesAs(
+                    listOf(JsonNode("two"), JsonNode("one"), JsonNode("one")),
+                ),
+        )
+        assertFalse(
+            listOf(JsonNode("one"), JsonNode("one"), JsonNode("two"))
+                .hasSameValuesAs(
+                    listOf(JsonNode("one"), JsonNode("two"), JsonNode("two")),
+                ),
+        )
+    }
+
     private fun backingQuery(
         partitionOrdinal: Int,
         shardingTarget: Any?,
@@ -151,10 +206,10 @@ class NadelBatchHydrationOperationPlannerTest {
             contributingConsumers = emptyList(),
             inputConsumers = emptyList(),
             batch = NadelHydrationArgumentsBatch(
-                partitionOrdinal = partitionOrdinal,
                 sourceInputs = listOf(JsonNode(sourceInput)),
                 arguments = emptyMap(),
             ),
+            partitionOrdinal = partitionOrdinal,
             field = mock(relaxed = true),
             resultPath = NadelQueryPath.root,
             shardingTarget = shardingTarget,

@@ -7,7 +7,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
  * Multiple result aliases of the same hydrated schema field remain independent consumers while
- * sharing one backing selection lane. The repeated assignee ID should be queried only once.
+ * sharing one pooled backing request. The repeated assignee ID should be queried only once.
  */
 class BatchHydrationCoalescingAliasedConsumersTest : NadelIntegrationTest(
     query = """

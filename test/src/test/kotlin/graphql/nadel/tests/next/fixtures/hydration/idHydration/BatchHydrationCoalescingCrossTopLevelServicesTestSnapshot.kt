@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<BatchHydrationCoalescingLaneConfinedErrorTest>()
+    graphql.nadel.tests.next.update<BatchHydrationCoalescingCrossTopLevelServicesTest>()
 }
 
 /**
@@ -19,18 +19,22 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapshot() {
+public class BatchHydrationCoalescingCrossTopLevelServicesTestSnapshot : TestSnapshot() {
     /**
      * Query
      *
      * ```graphql
      * query {
-     *   issues {
+     *   issue {
      *     assignee {
      *       name
+     *       displayName
      *     }
-     *     reporter {
-     *       email
+     *   }
+     *   page {
+     *     owner {
+     *       name
+     *       displayName
      *     }
      *   }
      * }
@@ -44,10 +48,35 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
      */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
+                service = "Confluence",
+                query = """
+                | {
+                |   page {
+                |     __typename__batch_hydration__owner: __typename
+                |     batch_hydration__owner__ownerId: ownerId
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "page": {
+                |       "batch_hydration__owner__ownerId": "ari:cloud:identity::user/confluence",
+                |       "__typename__batch_hydration__owner": "Page"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
                 service = "Identity",
                 query = """
                 | {
-                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/1"]) {
+                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/jira", "ari:cloud:identity::user/confluence"]) {
+                |     displayName
                 |     batch_hydration_shared_0_0__assignee__id: id
                 |     name
                 |   }
@@ -67,39 +96,30 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
                 |       "extensions": {
                 |         "classification": "NameUnavailableError"
                 |       }
+                |     },
+                |     {
+                |       "message": "Name unavailable",
+                |       "path": [
+                |         "batch_hydration__0_0",
+                |         1,
+                |         "name"
+                |       ],
+                |       "extensions": {
+                |         "classification": "NameUnavailableError"
+                |       }
                 |     }
                 |   ],
                 |   "data": {
                 |     "batch_hydration__0_0": [
                 |       {
                 |         "name": null,
-                |         "batch_hydration_shared_0_0__assignee__id": "ari:cloud:identity::user/1"
-                |       }
-                |     ]
-                |   }
-                | }
-                """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "Identity",
-                query = """
-                | {
-                |   batch_hydration__0_1: usersByIds(ids: ["ari:cloud:identity::user/1"]) {
-                |     email
-                |     batch_hydration_shared_0_1__reporter__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
-                result = """
-                | {
-                |   "data": {
-                |     "batch_hydration__0_1": [
+                |         "displayName": "Jira User",
+                |         "batch_hydration_shared_0_0__assignee__id": "ari:cloud:identity::user/jira"
+                |       },
                 |       {
-                |         "email": "one@example.com",
-                |         "batch_hydration_shared_0_1__reporter__id": "ari:cloud:identity::user/1"
+                |         "name": null,
+                |         "displayName": "Confluence User",
+                |         "batch_hydration_shared_0_0__assignee__id": "ari:cloud:identity::user/confluence"
                 |       }
                 |     ]
                 |   }
@@ -112,11 +132,9 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
                 service = "Jira",
                 query = """
                 | {
-                |   issues {
+                |   issue {
                 |     __typename__batch_hydration__assignee: __typename
-                |     __typename__batch_hydration__reporter: __typename
                 |     batch_hydration__assignee__assigneeId: assigneeId
-                |     batch_hydration__reporter__reporterId: reporterId
                 |   }
                 | }
                 """.trimMargin(),
@@ -124,14 +142,10 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
                 result = """
                 | {
                 |   "data": {
-                |     "issues": [
-                |       {
-                |         "batch_hydration__assignee__assigneeId": "ari:cloud:identity::user/1",
-                |         "__typename__batch_hydration__assignee": "Issue",
-                |         "batch_hydration__reporter__reporterId": "ari:cloud:identity::user/1",
-                |         "__typename__batch_hydration__reporter": "Issue"
-                |       }
-                |     ]
+                |     "issue": {
+                |       "batch_hydration__assignee__assigneeId": "ari:cloud:identity::user/jira",
+                |       "__typename__batch_hydration__assignee": "Issue"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -148,9 +162,20 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
      *       "message": "Name unavailable",
      *       "locations": [],
      *       "path": [
-     *         "issues",
-     *         0,
+     *         "issue",
      *         "assignee",
+     *         "name"
+     *       ],
+     *       "extensions": {
+     *         "classification": "NameUnavailableError"
+     *       }
+     *     },
+     *     {
+     *       "message": "Name unavailable",
+     *       "locations": [],
+     *       "path": [
+     *         "page",
+     *         "owner",
      *         "name"
      *       ],
      *       "extensions": {
@@ -159,16 +184,18 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
      *     }
      *   ],
      *   "data": {
-     *     "issues": [
-     *       {
-     *         "reporter": {
-     *           "email": "one@example.com"
-     *         },
-     *         "assignee": {
-     *           "name": null
-     *         }
+     *     "issue": {
+     *       "assignee": {
+     *         "name": null,
+     *         "displayName": "Jira User"
      *       }
-     *     ]
+     *     },
+     *     "page": {
+     *       "owner": {
+     *         "name": null,
+     *         "displayName": "Confluence User"
+     *       }
+     *     }
      *   }
      * }
      * ```
@@ -181,9 +208,20 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
             |       "message": "Name unavailable",
             |       "locations": [],
             |       "path": [
-            |         "issues",
-            |         0,
+            |         "issue",
             |         "assignee",
+            |         "name"
+            |       ],
+            |       "extensions": {
+            |         "classification": "NameUnavailableError"
+            |       }
+            |     },
+            |     {
+            |       "message": "Name unavailable",
+            |       "locations": [],
+            |       "path": [
+            |         "page",
+            |         "owner",
             |         "name"
             |       ],
             |       "extensions": {
@@ -192,16 +230,18 @@ public class BatchHydrationCoalescingLaneConfinedErrorTestSnapshot : TestSnapsho
             |     }
             |   ],
             |   "data": {
-            |     "issues": [
-            |       {
-            |         "reporter": {
-            |           "email": "one@example.com"
-            |         },
-            |         "assignee": {
-            |           "name": null
-            |         }
+            |     "issue": {
+            |       "assignee": {
+            |         "name": null,
+            |         "displayName": "Jira User"
             |       }
-            |     ]
+            |     },
+            |     "page": {
+            |       "owner": {
+            |         "name": null,
+            |         "displayName": "Confluence User"
+            |       }
+            |     }
             |   }
             | }
             """.trimMargin(),

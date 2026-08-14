@@ -3,6 +3,7 @@ package graphql.nadel.tests.next.fixtures.hydration.idHydration
 import graphql.ExecutionResult
 import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.ServiceExecution
+import graphql.nadel.tests.next.TestSnapshot
 import kotlin.test.assertEquals
 
 /**
@@ -40,5 +41,9 @@ class BatchHydrationCoalescingConsumerMetadataTest : BatchHydrationCoalescingEqu
             ),
             actual = capturedConsumers,
         )
+    }
+
+    override fun getTestSnapshot(): TestSnapshot {
+        return BatchHydrationCoalescingEqualSelectionsTestSnapshot()
     }
 }

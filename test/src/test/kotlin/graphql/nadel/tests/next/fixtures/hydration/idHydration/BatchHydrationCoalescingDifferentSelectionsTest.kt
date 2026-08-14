@@ -1,14 +1,19 @@
 package graphql.nadel.tests.next.fixtures.hydration.idHydration
 
+import graphql.ExecutionResult
+import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.hints.NadelBatchHydrationCoalescingHint
 import graphql.nadel.tests.next.NadelIntegrationTest
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
- * Different selections cannot be pooled into one backing field without changing GraphQL execution
- * semantics. They can still share one service request by using an aliased backing field per
- * selection.
+ * Two different selections share one bounded Identity request using an aliased backing root per
+ * selection. The error in the first root must remain confined to the assignee occurrence while
+ * the second root retains its successful data.
  *
  * The same source ID and child response key are intentional: without distinct backing aliases,
  * GraphQL would merge the roots and the conflicting `avatar` arguments would be invalid.
@@ -76,6 +81,11 @@ open class BatchHydrationCoalescingDifferentSelectionsTest : NadelIntegrationTes
                     val name: String,
                 )
 
+                class AvatarUnavailableError(path: List<Any>) : NadelGraphQLErrorException(
+                    message = "Avatar unavailable",
+                    path = path,
+                )
+
                 val usersById = listOf(
                     User(id = "ari:cloud:identity::user/1", name = "One"),
                 ).strictAssociateBy { it.id }
@@ -91,6 +101,11 @@ open class BatchHydrationCoalescingDifferentSelectionsTest : NadelIntegrationTes
                         type.dataFetcher("avatar") { environment ->
                             val user = environment.getSource<User>()!!
                             val size = environment.getArgument<Int>("size")
+                            if (size == 32) {
+                                throw AvatarUnavailableError(
+                                    path = environment.executionStepInfo.path.toList(),
+                                )
+                            }
                             "${user.name}-$size"
                         }
                     }
@@ -101,5 +116,28 @@ open class BatchHydrationCoalescingDifferentSelectionsTest : NadelIntegrationTes
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .batchHydrationCoalescing(NadelBatchHydrationCoalescingHint { _ -> true })
+    }
+
+    override fun assert(
+        result: ExecutionResult,
+        incrementalResults: List<DelayedIncrementalPartialResult>?,
+    ) {
+        assertNull(incrementalResults)
+
+        val specification = result.toSpecification()
+        @Suppress("UNCHECKED_CAST")
+        val errors = specification["errors"] as List<Map<String, Any?>>
+        assertEquals(
+            expected = listOf("issues", 0, "assigneeUser", "picture"),
+            actual = errors.single()["path"],
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        val data = specification["data"] as Map<String, Any?>
+        @Suppress("UNCHECKED_CAST")
+        val issue = (data["issues"] as List<Map<String, Any?>>).single()
+        @Suppress("UNCHECKED_CAST")
+        val reporter = issue["reporterUser"] as Map<String, Any?>
+        assertEquals(expected = "One-64", actual = reporter["picture"])
     }
 }

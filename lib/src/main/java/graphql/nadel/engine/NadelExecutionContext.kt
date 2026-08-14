@@ -6,6 +6,7 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationCoalescingRound
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.result.NadelResultTracker
 import graphql.normalized.ExecutableNormalizedOperation
@@ -24,6 +25,17 @@ data class NadelExecutionContext internal constructor(
     internal val isPartitionedCall: Boolean = false,
     internal val executionCoroutine: CoroutineScope,
 ) {
+    internal var batchHydrationCoalescingParticipant: NadelBatchHydrationCoalescingRound.Participant? = null
+        private set
+
+    internal fun withBatchHydrationCoalescingParticipant(
+        participant: NadelBatchHydrationCoalescingRound.Participant?,
+    ): NadelExecutionContext {
+        return copy().also { context ->
+            context.batchHydrationCoalescingParticipant = participant
+        }
+    }
+
     val userContext: Any?
         get() {
             return executionInput.context
@@ -32,5 +44,5 @@ data class NadelExecutionContext internal constructor(
     val graphQLContext: GraphQLContext
         get() {
             return executionInput.graphQLContext!!
-        }
+    }
 }

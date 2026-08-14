@@ -47,8 +47,8 @@ public class BatchHydrationCoalescingOverlappingListInputsTestSnapshot : TestSna
                 service = "Identity",
                 query = """
                 | {
-                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/2", "ari:cloud:identity::user/3", "ari:cloud:identity::user/1"]) {
-                |     batch_hydration_shared_0_0__approvers__id: id
+                |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/1", "ari:cloud:identity::user/2", "ari:cloud:identity::user/3"]) {
+                |     batch_hydration_shared_0_0__reviewers__id: id
                 |     name
                 |   }
                 | }
@@ -59,16 +59,16 @@ public class BatchHydrationCoalescingOverlappingListInputsTestSnapshot : TestSna
                 |   "data": {
                 |     "batch_hydration__0_0": [
                 |       {
+                |         "name": "One",
+                |         "batch_hydration_shared_0_0__reviewers__id": "ari:cloud:identity::user/1"
+                |       },
+                |       {
                 |         "name": "Two",
-                |         "batch_hydration_shared_0_0__approvers__id": "ari:cloud:identity::user/2"
+                |         "batch_hydration_shared_0_0__reviewers__id": "ari:cloud:identity::user/2"
                 |       },
                 |       {
                 |         "name": "Three",
-                |         "batch_hydration_shared_0_0__approvers__id": "ari:cloud:identity::user/3"
-                |       },
-                |       {
-                |         "name": "One",
-                |         "batch_hydration_shared_0_0__approvers__id": "ari:cloud:identity::user/1"
+                |         "batch_hydration_shared_0_0__reviewers__id": "ari:cloud:identity::user/3"
                 |       }
                 |     ]
                 |   }
@@ -120,17 +120,6 @@ public class BatchHydrationCoalescingOverlappingListInputsTestSnapshot : TestSna
      * {
      *   "data": {
      *     "issue": {
-     *       "approvers": [
-     *         {
-     *           "name": "Two"
-     *         },
-     *         {
-     *           "name": "Three"
-     *         },
-     *         {
-     *           "name": "Two"
-     *         }
-     *       ],
      *       "reviewers": [
      *         {
      *           "name": "One"
@@ -140,6 +129,17 @@ public class BatchHydrationCoalescingOverlappingListInputsTestSnapshot : TestSna
      *         },
      *         {
      *           "name": "One"
+     *         }
+     *       ],
+     *       "approvers": [
+     *         {
+     *           "name": "Two"
+     *         },
+     *         {
+     *           "name": "Three"
+     *         },
+     *         {
+     *           "name": "Two"
      *         }
      *       ]
      *     }
@@ -152,17 +152,6 @@ public class BatchHydrationCoalescingOverlappingListInputsTestSnapshot : TestSna
             | {
             |   "data": {
             |     "issue": {
-            |       "approvers": [
-            |         {
-            |           "name": "Two"
-            |         },
-            |         {
-            |           "name": "Three"
-            |         },
-            |         {
-            |           "name": "Two"
-            |         }
-            |       ],
             |       "reviewers": [
             |         {
             |           "name": "One"
@@ -172,6 +161,17 @@ public class BatchHydrationCoalescingOverlappingListInputsTestSnapshot : TestSna
             |         },
             |         {
             |           "name": "One"
+            |         }
+            |       ],
+            |       "approvers": [
+            |         {
+            |           "name": "Two"
+            |         },
+            |         {
+            |           "name": "Three"
+            |         },
+            |         {
+            |           "name": "Two"
             |         }
             |       ]
             |     }

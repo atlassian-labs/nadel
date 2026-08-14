@@ -6,7 +6,6 @@ import graphql.nadel.engine.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexKey
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNode
-import graphql.nadel.engine.transform.result.json.NadelResultOccurrence
 import graphql.nadel.engine.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -15,7 +14,7 @@ import graphql.normalized.NormalizedInputValue
  * A stable, value-based description of the selection requested by one hydration consumer.
  *
  * [ExecutableNormalizedField] does not provide the structural equality needed for grouping
- * consumers into shared selection lanes.
+ * consumers before shared hydration planning.
  */
 internal data class NadelBatchHydrationSelectionSignature(
     val fields: List<Field>,
@@ -49,28 +48,20 @@ internal data class NadelBatchHydrationSelectionSignature(
 
 /**
  * One client result location that consumed a deduplicated backing input.
- *
- * Recording this while the operation is planned avoids reconstructing provenance from source
- * objects after the backing request has completed.
  */
 internal data class NadelBatchHydrationInputConsumer(
-    val invocationId: Int,
+    val stableId: Int,
     val indexKey: NadelBatchHydrationIndexKey,
-    val sourceOccurrence: NadelResultOccurrence,
+    val sourceObject: JsonNode,
     val relativePath: List<Any>,
 )
 
 /**
- * Builds the deterministic, no-service-I/O part of a coalesced hydration group.
+ * Builds the deterministic, no-service-I/O part of one compatible coalescing group.
  *
- * The resulting model makes each transition explicit:
- *
- * 1. Consumers with the same effective selection form a [SelectionLane].
- * 2. Each argument batch in a lane becomes one aliased [BackingQuery].
- * 3. Consecutive queries are packed into bounded [Operation]s.
- *
- * Every operation carries its exact consumers, so execution, metadata and error attribution all
- * use the same provenance instead of reconstructing it independently.
+ * Inputs are pooled and partitioned once. Consumers with equal selections then share a lane and
+ * retain the current input deduplication behavior. Each lane batch becomes one aliased backing
+ * root, and roots are packed only when their hook partition, shard and total cardinality permit.
  */
 internal class NadelBatchHydrationOperationPlanner {
     private data class OperationGroupKey(
@@ -81,7 +72,7 @@ internal class NadelBatchHydrationOperationPlanner {
     data class SelectionLane(
         val consumers: List<NadelBatchHydrationCoalescingConsumer>,
         val aliasHelper: NadelAliasHelper,
-        val batches: List<NadelHydrationArgumentsBatch>,
+        val batches: List<NadelSharedHydrationArgumentsBatch>,
         val inputConsumersBySourceInput: Map<JsonNode, List<NadelBatchHydrationInputConsumer>>,
     ) {
         val objectIdentifiers: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>
@@ -93,6 +84,7 @@ internal class NadelBatchHydrationOperationPlanner {
         val contributingConsumers: List<NadelBatchHydrationCoalescingConsumer>,
         val inputConsumers: List<NadelBatchHydrationInputConsumer>,
         val batch: NadelHydrationArgumentsBatch,
+        val partitionOrdinal: Int,
         val field: ExecutableNormalizedField,
         val resultPath: NadelQueryPath,
         val shardingTarget: Any?,
@@ -105,8 +97,19 @@ internal class NadelBatchHydrationOperationPlanner {
 
     data class Operation(
         val queries: List<BackingQuery>,
-        val consumers: List<NadelBatchHydrationCoalescingConsumer>,
-    )
+    ) {
+        init {
+            require(queries.isNotEmpty()) {
+                "A coalesced batch hydration operation must contain a backing query"
+            }
+        }
+
+        val consumers: List<NadelBatchHydrationCoalescingConsumer> = queries
+            .asSequence()
+            .flatMap { query -> query.contributingConsumers.asSequence() }
+            .distinctBy(NadelBatchHydrationCoalescingConsumer::stableId)
+            .toList()
+    }
 
     data class Plan(
         val lanes: List<SelectionLane>,
@@ -121,12 +124,7 @@ internal class NadelBatchHydrationOperationPlanner {
             "A shared batch hydration group must contain at least one consumer"
         }
 
-        val orderedConsumers = consumers.sortedWith(
-            compareBy<NadelBatchHydrationCoalescingConsumer>(
-                { it.context.sourceField.listOfResultKeys.joinToString(separator = "\u0000") },
-                { it.invocation.id },
-            ),
-        )
+        val orderedConsumers = consumers.sortedBy(NadelBatchHydrationCoalescingConsumer::stableId)
         val sharedPartitions = getSharedInputPartitions(orderedConsumers)
             ?: return null
         val lanes = makeSelectionLanes(
@@ -139,26 +137,10 @@ internal class NadelBatchHydrationOperationPlanner {
             lanes = lanes,
         )
         val batchSize = orderedConsumers.first().instruction.batchSize
-        val packedQueries = packBackingQueriesByExecutionBoundary(
+        val operations = packBackingQueriesByExecutionBoundary(
             queries = queries,
             maxCardinality = batchSize,
-        )
-        val operations = packedQueries.map { operationQueries ->
-            val operationConsumers = operationQueries
-                .asSequence()
-                .flatMap { query -> query.contributingConsumers.asSequence() }
-                .distinctBy { consumer -> consumer.invocation.id }
-                .toList()
-
-            check(operationConsumers.isNotEmpty()) {
-                "Every shared backing operation must have at least one contributing consumer"
-            }
-
-            Operation(
-                queries = operationQueries,
-                consumers = operationConsumers,
-            )
-        }
+        ).map(::Operation)
 
         return Plan(
             lanes = lanes,
@@ -167,8 +149,8 @@ internal class NadelBatchHydrationOperationPlanner {
     }
 
     /**
-     * Keeps hook partitions and service shards as hard request boundaries, then applies the
-     * total operation-size bound independently inside each boundary.
+     * Hook partitions and service shards are hard request boundaries. Inside one boundary, the
+     * sum of all root batch cardinalities may not exceed the configured hydration batch size.
      */
     internal fun packBackingQueriesByExecutionBoundary(
         queries: List<BackingQuery>,
@@ -177,15 +159,15 @@ internal class NadelBatchHydrationOperationPlanner {
         return queries
             .groupBy { query ->
                 OperationGroupKey(
-                    partitionOrdinal = query.batch.partitionOrdinal,
+                    partitionOrdinal = query.partitionOrdinal,
                     shardingTarget = query.shardingTarget,
                 )
             }
             .entries
             .sortedBy { (group) -> group.partitionOrdinal }
-            .flatMap { partitionQueries ->
+            .flatMap { (_, partitionQueries) ->
                 packByTotalCardinality(
-                    items = partitionQueries.value,
+                    items = partitionQueries,
                     maxCardinality = maxCardinality,
                     cardinality = { query -> query.batch.sourceInputs.size },
                 )
@@ -198,25 +180,22 @@ internal class NadelBatchHydrationOperationPlanner {
         sharedPartitions: List<NadelBatchHydrationArgumentPartition>,
     ): List<SelectionLane> {
         return consumers
-            .groupBy { consumer -> consumer.selectionSignature }
+            .groupBy(NadelBatchHydrationCoalescingConsumer::selectionSignature)
             .values
             .mapIndexed { laneOrdinal, laneConsumers ->
                 val representative = laneConsumers.first()
-                val uniqueSourceInputs = getUniqueQueryableSourceInputs(laneConsumers)
-                val laneSourceInputs = uniqueSourceInputs.toSet()
+                val laneSourceInputs = getUniqueQueryableSourceInputs(laneConsumers).toSet()
                 val lanePartitions = sharedPartitions.mapNotNull { partition ->
-                    val partitionSourceInputs = partition.sourceInputs.filter { sourceInput ->
+                    val sourceInputs = partition.sourceInputs.filter { sourceInput ->
                         sourceInput in laneSourceInputs
                     }
-                    if (partitionSourceInputs.isEmpty()) {
-                        null
-                    } else {
-                        partition.copy(sourceInputs = partitionSourceInputs)
-                    }
+                    partition
+                        .copy(sourceInputs = sourceInputs)
+                        .takeIf { sourceInputs.isNotEmpty() }
                 }
                 val aliasHelper = NadelAliasHelper.forField(
                     tag = "batch_hydration_shared_${groupOrdinal}_$laneOrdinal",
-                    field = representative.invocation.state.virtualField,
+                    field = representative.context.sourceField,
                 )
                 val batches = NadelNewBatchHydrationInputBuilder.getInputValueBatches(
                     instruction = representative.instruction,
@@ -234,11 +213,9 @@ internal class NadelBatchHydrationOperationPlanner {
     }
 
     /**
-     * Partitions the pooled inputs once so every selection lane observes the same hook boundary.
-     *
-     * A custom hook that replaces, drops or duplicates values cannot be safely pooled with the
-     * current hook API because its output has no source identity. Returning null keeps those
-     * consumers on the existing isolated execution path.
+     * Partitions the pooled inputs once. A hook output is accepted only when its flattened values
+     * are exactly the same multiset as the supplied pool; otherwise the caller falls back to
+     * isolated execution.
      */
     private fun getSharedInputPartitions(
         consumers: List<NadelBatchHydrationCoalescingConsumer>,
@@ -256,8 +233,7 @@ internal class NadelBatchHydrationOperationPlanner {
         }
 
         return partitions.takeIf {
-            partitionedSourceInputs.size == sourceInputs.size &&
-                partitionedSourceInputs.toSet() == sourceInputs.toSet()
+            partitionedSourceInputs.hasSameValuesAs(sourceInputs)
         }
     }
 
@@ -266,7 +242,8 @@ internal class NadelBatchHydrationOperationPlanner {
     ): List<JsonNode> {
         return consumers
             .asSequence()
-            .flatMap { consumer -> consumer.sourceInputs.asSequence() }
+            .flatMap { consumer -> consumer.sourceObjectsMetadata.asSequence() }
+            .flatMap { metadata -> metadata.sourceInputs.orEmpty().asSequence() }
             .filterIsInstance<NadelNewBatchHydrator.SourceInput.Queryable>()
             .map { sourceInput -> sourceInput.sourceInputNode }
             .filter { sourceInput -> sourceInput.value != null }
@@ -289,20 +266,21 @@ internal class NadelBatchHydrationOperationPlanner {
                     instruction = representative.instruction,
                     aliasHelper = lane.aliasHelper,
                     virtualField = representative.context.sourceField,
-                    argBatches = lane.batches.map { batch -> batch.arguments },
+                    argBatches = lane.batches.map { batch -> batch.batch.arguments },
                 )
                 .zip(lane.batches)
-                .map { (query, batch) ->
+                .map { (query, sharedBatch) ->
+                    val batch = sharedBatch.batch
                     val rootAlias = "batch_hydration__${groupOrdinal}_${queryOrdinal++}"
                     val inputConsumers = batch.sourceInputs.flatMap { sourceInput ->
                         lane.inputConsumersBySourceInput[sourceInput].orEmpty()
                     }
-                    val contributingInvocationIds = inputConsumers
+                    val contributingStableIds = inputConsumers
                         .mapTo(mutableSetOf()) { inputConsumer ->
-                            inputConsumer.invocationId
+                            inputConsumer.stableId
                         }
                     val contributingConsumers = lane.consumers.filter { consumer ->
-                        consumer.invocation.id in contributingInvocationIds
+                        consumer.stableId in contributingStableIds
                     }
                     check(contributingConsumers.isNotEmpty()) {
                         "Every shared backing query must have at least one contributing consumer"
@@ -316,6 +294,7 @@ internal class NadelBatchHydrationOperationPlanner {
                         contributingConsumers = contributingConsumers,
                         inputConsumers = inputConsumers,
                         batch = batch,
+                        partitionOrdinal = sharedBatch.partitionOrdinal,
                         field = field,
                         resultPath = NadelQueryPath(
                             listOf(rootAlias) +
@@ -324,15 +303,14 @@ internal class NadelBatchHydrationOperationPlanner {
                                     .drop(1)
                                     .segments,
                         ),
-                        shardingTarget =
-                            representative.context.executionContext.hooks.getShardingTarget(
-                                executionContext = representative.context.executionContext,
-                                service = representative.instruction.backingService,
-                                field = field,
-                            ),
+                        shardingTarget = representative.context.executionContext.hooks.getShardingTarget(
+                            executionContext = representative.context.executionContext,
+                            service = representative.instruction.backingService,
+                            field = field,
+                        ),
                     )
                 }
-        }
+            }
     }
 
     private fun getInputConsumersBySourceInput(
@@ -361,9 +339,9 @@ internal class NadelBatchHydrationOperationPlanner {
                             .getOrPut(queryableInput.sourceInputNode, ::mutableListOf)
                             .add(
                                 NadelBatchHydrationInputConsumer(
-                                    invocationId = consumer.invocation.id,
+                                    stableId = consumer.stableId,
                                     indexKey = queryableInput.indexKey,
-                                    sourceOccurrence = sourceObject.sourceOccurrence,
+                                    sourceObject = sourceObject.sourceObject,
                                     relativePath = relativePath,
                                 ),
                             )
@@ -376,8 +354,16 @@ internal class NadelBatchHydrationOperationPlanner {
 }
 
 /**
- * Packs ordered items without allowing the sum of their cardinalities to exceed
- * [maxCardinality]. The input order is preserved.
+ * Equality is deliberately multiset based: hooks may reorder values, but may not add, remove, or
+ * duplicate them when a pooled hydration is planned.
+ */
+internal fun List<JsonNode>.hasSameValuesAs(other: List<JsonNode>): Boolean {
+    return groupingBy(JsonNode::value).eachCount() ==
+        other.groupingBy(JsonNode::value).eachCount()
+}
+
+/**
+ * Packs ordered items without letting their total cardinality exceed [maxCardinality].
  */
 internal fun <T> packByTotalCardinality(
     items: List<T>,

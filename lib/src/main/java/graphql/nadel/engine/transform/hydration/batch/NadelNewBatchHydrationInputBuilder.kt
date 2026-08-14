@@ -22,17 +22,22 @@ internal data class NadelBatchHydrationArgumentPartition(
 )
 
 /**
- * Represents the arguments for one hydration query.
+ * Represents the arguments for a hydration batch.
  *
  * There may be multiple instances of this class depending on whether
- * [NadelBatchHydrationFieldInstruction.batchSize] was exceeded. [partitionOrdinal] keeps the
- * hook boundary that the query came from so a planner never combines distinct partitions into
- * one GraphQL operation.
+ * [NadelBatchHydrationFieldInstruction.batchSize] was exceeded etc.
  */
 internal data class NadelHydrationArgumentsBatch(
-    val partitionOrdinal: Int,
     val sourceInputs: List<JsonNode>,
     val arguments: Map<NadelHydrationArgument, NormalizedInputValue>,
+)
+
+/**
+ * Shared-planner metadata that must not burden the ordinary hydration path.
+ */
+internal data class NadelSharedHydrationArgumentsBatch(
+    val partitionOrdinal: Int,
+    val batch: NadelHydrationArgumentsBatch,
 )
 
 /**
@@ -43,10 +48,14 @@ internal data class NadelHydrationArgumentsBatch(
  * An intermediary object to store info while we pass data around functions.
  */
 private data class BatchedArgumentValue(
-    val partitionOrdinal: Int,
     val sourceInputs: List<JsonNode>,
     val argumentDef: NadelHydrationArgument,
     val argumentValue: NormalizedInputValue,
+)
+
+private data class NadelPartitionedBatchedArgumentValue(
+    val partitionOrdinal: Int,
+    val value: BatchedArgumentValue,
 )
 
 /**
@@ -65,17 +74,16 @@ internal object NadelNewBatchHydrationInputBuilder {
         hydrationField: ExecutableNormalizedField,
         sourceInputs: List<JsonNode>,
     ): List<NadelHydrationArgumentsBatch> {
-        val partitions = getInputPartitions(
-            hooks = hooks,
-            userContext = userContext,
-            instruction = instruction,
-            sourceInputs = sourceInputs,
-        )
-        return getInputValueBatches(
-            instruction = instruction,
-            hydrationField = hydrationField,
-            partitions = partitions,
-        )
+        val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
+        val batchArgs = getBatchArgumentValue(instruction, sourceInputs, hooks, userContext)
+
+        return batchArgs
+            .map { batchedArgument ->
+                NadelHydrationArgumentsBatch(
+                    arguments = nonBatchArgs + (batchedArgument.argumentDef to batchedArgument.argumentValue),
+                    sourceInputs = batchedArgument.sourceInputs,
+                )
+            }
     }
 
     fun getInputPartitions(
@@ -100,27 +108,30 @@ internal object NadelNewBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
         partitions: List<NadelBatchHydrationArgumentPartition>,
-    ): List<NadelHydrationArgumentsBatch> {
+    ): List<NadelSharedHydrationArgumentsBatch> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchArgumentValue(
+        val batchArgs = getBatchArgumentValueForPartitions(
             instruction = instruction,
             partitions = partitions,
         )
 
         return batchArgs
             .map { batchedArgument ->
-                NadelHydrationArgumentsBatch(
+                NadelSharedHydrationArgumentsBatch(
                     partitionOrdinal = batchedArgument.partitionOrdinal,
-                    arguments = nonBatchArgs + (batchedArgument.argumentDef to batchedArgument.argumentValue),
-                    sourceInputs = batchedArgument.sourceInputs,
+                    batch = NadelHydrationArgumentsBatch(
+                        arguments = nonBatchArgs +
+                            (batchedArgument.value.argumentDef to batchedArgument.value.argumentValue),
+                        sourceInputs = batchedArgument.value.sourceInputs,
+                    ),
                 )
             }
     }
 
-    private fun getBatchArgumentValue(
+    private fun getBatchArgumentValueForPartitions(
         instruction: NadelBatchHydrationFieldInstruction,
         partitions: List<NadelBatchHydrationArgumentPartition>,
-    ): List<BatchedArgumentValue> {
+    ): List<NadelPartitionedBatchedArgumentValue> {
         val batchSize = instruction.batchSize
 
         val (batchInputDef) = getBatchInputDef(instruction) ?: return emptyList()
@@ -135,13 +146,53 @@ internal object NadelNewBatchHydrationInputBuilder {
                         javaValueToAstValue(chunk.map(JsonNode::value)),
                     )
 
-                    BatchedArgumentValue(
+                    NadelPartitionedBatchedArgumentValue(
                         partitionOrdinal = partition.ordinal,
-                        sourceInputs = chunk,
-                        argumentDef = batchInputDef,
-                        argumentValue = normalizedInputValue,
+                        value = BatchedArgumentValue(
+                            sourceInputs = chunk,
+                            argumentDef = batchInputDef,
+                            argumentValue = normalizedInputValue,
+                        ),
                     )
                 }
+            }
+    }
+
+    private fun getBatchArgumentValue(
+        instruction: NadelBatchHydrationFieldInstruction,
+        sourceInputs: List<JsonNode>,
+        hooks: NadelExecutionHooks,
+        userContext: Any?,
+    ): List<BatchedArgumentValue> {
+        val batchSize = instruction.batchSize
+
+        val (batchInputDef) = getBatchInputDef(instruction) ?: return emptyList()
+        val batchArgDef = instruction.backingFieldDef.getArgument(batchInputDef.name)
+
+        val partitionArgumentList = hooks.partitionBatchHydrationArgumentList(
+            argumentValues = sourceInputs.map { it.value },
+            instruction = instruction,
+            userContext = userContext,
+        )
+
+        return partitionArgumentList
+            .flatMap {
+                it.chunked(size = batchSize)
+            }
+            .map { chunk ->
+                val normalizedInputValue = NormalizedInputValue(
+                    GraphQLTypeUtil.simplePrint(batchArgDef.type),
+                    javaValueToAstValue(chunk),
+                )
+
+                BatchedArgumentValue(
+                    sourceInputs = chunk
+                        .map {
+                            JsonNode(it)
+                        },
+                    argumentDef = batchInputDef,
+                    argumentValue = normalizedInputValue,
+                )
             }
     }
 }

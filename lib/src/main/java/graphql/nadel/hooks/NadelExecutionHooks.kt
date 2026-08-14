@@ -20,17 +20,6 @@ import java.util.concurrent.CompletableFuture
  * These hooks allow you to change the way service execution happens
  */
 interface NadelExecutionHooks {
-    companion object {
-        internal val default = object : NadelExecutionHooks {
-            override fun getBatchHydrationCoalescingKey(
-                instruction: NadelBatchHydrationFieldInstruction,
-                userContext: Any?,
-            ): NadelBatchHydrationCoalescingKey {
-                return NadelBatchHydrationCoalescingKey.default
-            }
-        }
-    }
-
     fun createServiceExecutionContext(params: NadelCreateServiceExecutionContextParams): CompletableFuture<NadelServiceExecutionContext> {
         return CompletableFuture.completedFuture(NadelServiceExecutionContext.None)
     }
@@ -132,30 +121,6 @@ interface NadelExecutionHooks {
         userContext: Any?,
     ): List<List<T>> {
         return listOf(argumentValues)
-    }
-
-    /**
-     * Returns an opaque compatibility key for pooling otherwise compatible type-level batch
-     * hydrations into shared backing operations.
-     *
-     * A custom [getHydrationInstruction] may select a different instruction for each consumer, and
-     * a custom [partitionBatchHydrationArgumentList] may partition each consumer's arguments
-     * differently. Nadel therefore keeps custom hooks isolated by default.
-     *
-     * Return `null` to keep this hydration isolated. Return equal
-     * [NadelBatchHydrationCoalescingKey]s only when those hooks are safe to apply to the pooled
-     * inputs for both consumers. The partition hook is invoked once for the pooled input set and
-     * its partitions remain separate backing operations. Unequal keys form separate compatibility
-     * groups.
-     *
-     * Nadel's built-in hooks return a stable default key because their hydration instruction
-     * selection and argument partitioning use the default implementations above.
-     */
-    fun getBatchHydrationCoalescingKey(
-        instruction: NadelBatchHydrationFieldInstruction,
-        userContext: Any?,
-    ): NadelBatchHydrationCoalescingKey? {
-        return null
     }
 
     fun partitionTransformerHook(): NadelPartitionTransformHook {

@@ -6,9 +6,9 @@ import graphql.nadel.hints.NadelBatchHydrationCoalescingHint
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
- * Three distinct child selections form three selection lanes with one argument each. Since
- * `batchSize` is three, the Identity snapshot should contain one operation with all three
- * aliased roots. This covers the inclusive boundary.
+ * Three distinct child selections produce three aliased backing roots. Since each root has one
+ * input and `batchSize` is three, the Identity snapshot must contain one operation with all three
+ * roots. This covers the inclusive packing boundary.
  */
 class BatchHydrationCoalescingThreeSelectionLanesTest : NadelIntegrationTest(
     query = """

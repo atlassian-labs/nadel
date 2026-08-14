@@ -130,7 +130,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
      *       "path": [
      *         "issues",
      *         0,
-     *         "reporter",
+     *         "assignee",
      *         "name"
      *       ],
      *       "extensions": {
@@ -143,7 +143,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
      *       "path": [
      *         "issues",
      *         1,
-     *         "reporter",
+     *         "assignee",
      *         "name"
      *       ],
      *       "extensions": {
@@ -156,7 +156,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
      *       "path": [
      *         "issues",
      *         0,
-     *         "assignee",
+     *         "reporter",
      *         "name"
      *       ],
      *       "extensions": {
@@ -169,7 +169,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
      *       "path": [
      *         "issues",
      *         1,
-     *         "assignee",
+     *         "reporter",
      *         "name"
      *       ],
      *       "extensions": {
@@ -180,18 +180,18 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
      *   "data": {
      *     "issues": [
      *       {
-     *         "reporter": {
+     *         "assignee": {
      *           "name": null
      *         },
-     *         "assignee": {
+     *         "reporter": {
      *           "name": null
      *         }
      *       },
      *       {
-     *         "reporter": {
+     *         "assignee": {
      *           "name": null
      *         },
-     *         "assignee": {
+     *         "reporter": {
      *           "name": null
      *         }
      *       }
@@ -210,7 +210,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
             |       "path": [
             |         "issues",
             |         0,
-            |         "reporter",
+            |         "assignee",
             |         "name"
             |       ],
             |       "extensions": {
@@ -223,7 +223,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
             |       "path": [
             |         "issues",
             |         1,
-            |         "reporter",
+            |         "assignee",
             |         "name"
             |       ],
             |       "extensions": {
@@ -236,7 +236,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
             |       "path": [
             |         "issues",
             |         0,
-            |         "assignee",
+            |         "reporter",
             |         "name"
             |       ],
             |       "extensions": {
@@ -249,7 +249,7 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
             |       "path": [
             |         "issues",
             |         1,
-            |         "assignee",
+            |         "reporter",
             |         "name"
             |       ],
             |       "extensions": {
@@ -260,18 +260,18 @@ public class BatchHydrationCoalescingErrorFanOutTestSnapshot : TestSnapshot() {
             |   "data": {
             |     "issues": [
             |       {
-            |         "reporter": {
+            |         "assignee": {
             |           "name": null
             |         },
-            |         "assignee": {
+            |         "reporter": {
             |           "name": null
             |         }
             |       },
             |       {
-            |         "reporter": {
+            |         "assignee": {
             |           "name": null
             |         },
-            |         "assignee": {
+            |         "reporter": {
             |           "name": null
             |         }
             |       }

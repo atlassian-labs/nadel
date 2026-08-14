@@ -9,7 +9,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
  * Two equal selections reuse one pooled lane while a third selection uses a second lane.
  *
  * The `name` root receives both assignee and reporter IDs, while the `email` root receives the
- * creator ID. Their combined cardinality exceeds `batchSize: 2`, so the Identity snapshot should
+ * creator ID. Their combined cardinality exceeds `batchSize: 2`, so the Identity snapshot must
  * contain two bounded service operations.
  */
 class BatchHydrationCoalescingMixedSelectionLaneReuseTest : NadelIntegrationTest(

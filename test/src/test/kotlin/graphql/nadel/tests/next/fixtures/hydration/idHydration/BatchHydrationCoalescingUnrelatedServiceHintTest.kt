@@ -2,6 +2,7 @@ package graphql.nadel.tests.next.fixtures.hydration.idHydration
 
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.hints.NadelBatchHydrationCoalescingHint
+import graphql.nadel.tests.next.TestSnapshot
 
 /**
  * Enabling coalescing for the source service must not enable it for the hydration service.
@@ -17,5 +18,9 @@ class BatchHydrationCoalescingUnrelatedServiceHintTest : BatchHydrationCoalescin
                     service.name == "Jira"
                 },
             )
+    }
+
+    override fun getTestSnapshot(): TestSnapshot {
+        return BatchHydrationCoalescingHintOffTestSnapshot()
     }
 }

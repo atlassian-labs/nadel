@@ -51,7 +51,7 @@ public class BatchHydrationCoalescingAliasedConsumersTestSnapshot : TestSnapshot
                 query = """
                 | {
                 |   batch_hydration__0_0: usersByIds(ids: ["ari:cloud:identity::user/1", "ari:cloud:identity::user/2"]) {
-                |     batch_hydration_shared_0_0__backupUser__id: id
+                |     batch_hydration_shared_0_0__primaryUser__id: id
                 |     name
                 |   }
                 | }
@@ -63,11 +63,11 @@ public class BatchHydrationCoalescingAliasedConsumersTestSnapshot : TestSnapshot
                 |     "batch_hydration__0_0": [
                 |       {
                 |         "name": "One",
-                |         "batch_hydration_shared_0_0__backupUser__id": "ari:cloud:identity::user/1"
+                |         "batch_hydration_shared_0_0__primaryUser__id": "ari:cloud:identity::user/1"
                 |       },
                 |       {
                 |         "name": "Two",
-                |         "batch_hydration_shared_0_0__backupUser__id": "ari:cloud:identity::user/2"
+                |         "batch_hydration_shared_0_0__primaryUser__id": "ari:cloud:identity::user/2"
                 |       }
                 |     ]
                 |   }
@@ -115,14 +115,14 @@ public class BatchHydrationCoalescingAliasedConsumersTestSnapshot : TestSnapshot
      * {
      *   "data": {
      *     "issue": {
-     *       "reportingUser": {
-     *         "name": "Two"
+     *       "primaryUser": {
+     *         "name": "One"
      *       },
      *       "backupUser": {
      *         "name": "One"
      *       },
-     *       "primaryUser": {
-     *         "name": "One"
+     *       "reportingUser": {
+     *         "name": "Two"
      *       }
      *     }
      *   }
@@ -134,14 +134,14 @@ public class BatchHydrationCoalescingAliasedConsumersTestSnapshot : TestSnapshot
             | {
             |   "data": {
             |     "issue": {
-            |       "reportingUser": {
-            |         "name": "Two"
+            |       "primaryUser": {
+            |         "name": "One"
             |       },
             |       "backupUser": {
             |         "name": "One"
             |       },
-            |       "primaryUser": {
-            |         "name": "One"
+            |       "reportingUser": {
+            |         "name": "Two"
             |       }
             |     }
             |   }

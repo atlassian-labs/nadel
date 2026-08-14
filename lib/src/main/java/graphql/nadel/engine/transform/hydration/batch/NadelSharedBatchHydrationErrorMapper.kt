@@ -5,7 +5,6 @@ import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationOperati
 import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationOperationPlanner.Operation
 import graphql.nadel.engine.transform.hydration.batch.indexing.NadelBatchHydrationIndexKey
 import graphql.nadel.engine.transform.result.NadelResultInstruction
-import graphql.nadel.engine.transform.result.NadelResultMutation
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodes
 import graphql.nadel.engine.util.JsonMap
@@ -13,93 +12,80 @@ import graphql.nadel.engine.util.emptyOrSingle
 import graphql.nadel.engine.util.toGraphQLError
 
 /**
- * Maps backing errors from one shared operation back to the exact consumer occurrences recorded
- * by the planner.
+ * Maps errors from one packed shared backing operation to its recorded source consumers.
  *
- * Keeping this separate from execution makes the provenance boundary explicit. The mapper
- * refines an operation's recorded consumers when the returned identifier survives; if GraphQL
- * null bubbling removes that identifier, it conservatively retains every recorded occurrence
- * rather than inventing an input-to-result ordering.
+ * Each pathful error is first routed to the aliased backing query that produced it, then fanned
+ * out by object identifier. Request-level or unprovable errors are exposed once, and internal
+ * backing aliases are never leaked to the client.
  */
 internal class NadelSharedBatchHydrationErrorMapper {
-    fun getMutations(
+    fun getOutputs(
         result: ServiceExecutionResult,
         operation: Operation,
-    ): Map<Int, List<NadelResultMutation>> {
-        val queries = operation.queries
-        val queryByRootAlias = queries.associateBy { query ->
+    ): Map<Int, NadelCoalescedBatchHydrationOutput> {
+        val queriesByRootResultKey = operation.queries.associateBy { query ->
             query.field.resultKey
         }
-        val internalAliases = queries
-            .flatMapTo(mutableSetOf(), ::getInternalAliases)
-        val mutationsByInvocationId =
-            LinkedHashMap<Int, MutableList<NadelResultMutation>>()
+        val outputsByStableId = LinkedHashMap<Int, NadelCoalescedBatchHydrationOutput>()
 
         result.errors
             .filterNotNull()
             .forEach { error ->
                 val rawPath = error["path"] as? List<*>
                 val query = (rawPath?.firstOrNull() as? String)
-                    ?.let(queryByRootAlias::get)
-                val attributedMutations = if (query == null) {
-                    emptyList()
-                } else {
-                    getAttributedMutations(
+                    ?.let(queriesByRootResultKey::get)
+                val attributedErrors = if (query != null && rawPath != null) {
+                    getAttributedErrors(
                         result = result,
                         query = query,
                         rawError = error,
                         backingErrorPath = rawPath,
                     )
+                } else {
+                    emptyList()
                 }
 
-                if (attributedMutations.isEmpty()) {
-                    // A request-level error, or a path we cannot prove belongs to a concrete
-                    // source occurrence, is exposed exactly once. Never leak a shared root
-                    // alias merely because attribution failed.
-                    val fallbackInvocationId = query
+                if (attributedErrors.isEmpty()) {
+                    val fallbackStableId = query
                         ?.contributingConsumers
-                        ?.minOf { consumer -> consumer.invocation.id }
-                        ?: operation.consumers.minOf { consumer -> consumer.invocation.id }
-                    val sanitizedPath = rawPath?.takeUnless { path ->
-                        path.any { segment ->
-                            segment in internalAliases
-                        }
-                    }
-                    mutationsByInvocationId
-                        .getOrPut(fallbackInvocationId, ::mutableListOf)
-                        .add(
-                            NadelResultMutation.Instruction(
+                        ?.minOf(NadelBatchHydrationCoalescingConsumer::stableId)
+                        ?: operation.consumers.minOf(NadelBatchHydrationCoalescingConsumer::stableId)
+                    outputsByStableId.add(
+                        stableId = fallbackStableId,
+                        output = NadelCoalescedBatchHydrationOutput(
+                            instructions = listOf(
                                 NadelResultInstruction.AddError(
                                     toGraphQLError(
                                         raw = error,
-                                        path = sanitizedPath,
+                                        // This backing path could not be tied to a source
+                                        // occurrence, so exposing it would leak an internal field.
+                                        path = null,
                                     ),
                                 ),
                             ),
-                        )
+                        ),
+                    )
                 } else {
-                    attributedMutations.forEach { (invocationId, mutation) ->
-                        mutationsByInvocationId
-                            .getOrPut(invocationId, ::mutableListOf)
-                            .add(mutation)
+                    attributedErrors.forEach { (stableId, locatedError) ->
+                        outputsByStableId.add(
+                            stableId = stableId,
+                            output = NadelCoalescedBatchHydrationOutput(
+                                locatedErrors = listOf(locatedError),
+                            ),
+                        )
                     }
                 }
             }
 
-        return mutationsByInvocationId
+        return outputsByStableId
     }
 
-    /**
-     * Maps one pathful backing error to every client occurrence that consumed the failing
-     * returned object. Every step must be attributable; otherwise the caller deliberately
-     * treats the error as request-level.
-     */
-    private fun getAttributedMutations(
+    private fun getAttributedErrors(
         result: ServiceExecutionResult,
         query: BackingQuery,
         rawError: JsonMap,
         backingErrorPath: List<*>,
-    ): List<Pair<Int, NadelResultMutation.AddErrorAt>> {
+    ): List<Pair<Int, NadelCoalescedBatchHydrationError>> {
         val backingResultPath = query.resultPath.segments
         if (backingErrorPath.size <= backingResultPath.size ||
             backingResultPath.indices.any { index ->
@@ -116,12 +102,13 @@ internal class NadelSharedBatchHydrationErrorMapper {
             return emptyList()
         }
 
+        val internalAliases = getInternalAliases(query)
         val selectionPath = pathAfterBackingField
             .drop(1)
             .map { segment ->
                 when {
                     segment == null -> return emptyList()
-                    segment in getInternalAliases(query) -> return emptyList()
+                    segment in internalAliases -> return emptyList()
                     else -> segment
                 }
             }
@@ -142,19 +129,17 @@ internal class NadelSharedBatchHydrationErrorMapper {
             )
         }
         val inputConsumers = if (resultIndexKey == null) {
-            // A non-null child can null-bubble the complete returned object, including the
-            // artificial identifier. Object-identifier matching cannot then prove which
-            // reordered item failed, so conservatively attribute the error to every source
-            // occurrence represented by this backing query.
+            // Null bubbling may remove the artificial identifier. Object-ID matching cannot
+            // infer the failed reordered item, so fan out within this argument chunk only.
             query.inputConsumers
         } else {
             query.inputConsumersByIndexKey[resultIndexKey].orEmpty()
         }
 
         return inputConsumers.map { inputConsumer ->
-            inputConsumer.invocationId to NadelResultMutation.AddErrorAt(
+            inputConsumer.stableId to NadelCoalescedBatchHydrationError(
                 rawError = rawError,
-                subject = inputConsumer.sourceOccurrence,
+                subject = inputConsumer.sourceObject,
                 relativePath = inputConsumer.relativePath + selectionPath,
             )
         }
@@ -177,14 +162,19 @@ internal class NadelSharedBatchHydrationErrorMapper {
         )
     }
 
-    private fun getInternalAliases(
-        query: BackingQuery,
-    ): Set<String> {
-        return buildSet {
-            add(query.field.resultKey)
-            query.lane.objectIdentifiers.forEach { objectId ->
-                add(query.lane.aliasHelper.getResultKey(objectId.resultId))
-            }
+    private fun getInternalAliases(query: BackingQuery): Set<String> {
+        return query.lane.objectIdentifiers.mapTo(mutableSetOf()) { objectId ->
+            query.lane.aliasHelper.getResultKey(objectId.resultId)
         }
+    }
+
+    private fun MutableMap<Int, NadelCoalescedBatchHydrationOutput>.add(
+        stableId: Int,
+        output: NadelCoalescedBatchHydrationOutput,
+    ) {
+        this[stableId] = getOrDefault(
+            stableId,
+            NadelCoalescedBatchHydrationOutput.EMPTY,
+        ) + output
     }
 }

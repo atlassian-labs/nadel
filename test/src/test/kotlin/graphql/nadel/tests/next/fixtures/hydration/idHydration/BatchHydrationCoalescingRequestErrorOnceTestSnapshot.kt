@@ -142,10 +142,10 @@ public class BatchHydrationCoalescingRequestErrorOnceTestSnapshot : TestSnapshot
      *   ],
      *   "data": {
      *     "issue": {
-     *       "reporter": null,
      *       "assignee": {
      *         "name": "One"
-     *       }
+     *       },
+     *       "reporter": null
      *     }
      *   }
      * }
@@ -165,10 +165,10 @@ public class BatchHydrationCoalescingRequestErrorOnceTestSnapshot : TestSnapshot
             |   ],
             |   "data": {
             |     "issue": {
-            |       "reporter": null,
             |       "assignee": {
             |         "name": "One"
-            |       }
+            |       },
+            |       "reporter": null
             |     }
             |   }
             | }
