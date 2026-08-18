@@ -23,7 +23,7 @@ import graphql.schema.GraphQLUnionType
 
 class NadelSchemaValidation internal constructor(
     private val typeValidation: NadelTypeValidation,
-    private val instructionDefinitionParser: NadelInstructionDefinitionParser,
+    val instructionDefinitionParser: NadelInstructionDefinitionParser,
     private val hook: NadelSchemaValidationHook,
 ) {
     fun validate(

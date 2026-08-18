@@ -15,7 +15,7 @@ import graphql.nadel.schema.NadelSchemaTraverserElement
 import graphql.nadel.schema.NadelSchemaTraverserVisitor
 import graphql.schema.GraphQLSchema
 
-internal class NadelInstructionDefinitionParser(
+class NadelInstructionDefinitionParser internal constructor(
     private val hook: NadelSchemaValidationHook,
     private val idHydrationDefinitionParser: NadelIdHydrationDefinitionParser,
 ) {

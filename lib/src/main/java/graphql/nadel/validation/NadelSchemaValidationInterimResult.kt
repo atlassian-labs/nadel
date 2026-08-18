@@ -4,7 +4,7 @@ import graphql.nadel.validation.NadelSchemaValidationResults.Companion.flatten
 import graphql.nadel.validation.NadelValidationInterimResult.Error
 import graphql.nadel.validation.NadelValidationInterimResult.Success
 
-internal sealed interface NadelValidationInterimResult<T> {
+sealed interface NadelValidationInterimResult<T> {
     data class Success<T> private constructor(
         val data: T,
     ) : NadelValidationInterimResult<T> {
@@ -52,7 +52,7 @@ internal sealed interface NadelValidationInterimResult<T> {
     }
 }
 
-internal inline fun <T> NadelValidationInterimResult<T>.onError(
+inline fun <T> NadelValidationInterimResult<T>.onError(
     onError: (Error<T>) -> Nothing,
 ): T {
     when (this) {
@@ -61,7 +61,7 @@ internal inline fun <T> NadelValidationInterimResult<T>.onError(
     }
 }
 
-internal inline fun <T, E> NadelValidationInterimResult<T>.onErrorCast(
+inline fun <T, E> NadelValidationInterimResult<T>.onErrorCast(
     onError: (Error<E>) -> Nothing,
 ): T {
     when (this) {
