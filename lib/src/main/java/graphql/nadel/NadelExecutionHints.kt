@@ -2,6 +2,7 @@ package graphql.nadel
 
 import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
+import graphql.nadel.hints.NadelBatchHydrationCoalescingHint
 import graphql.nadel.hints.NadelBatchRootFieldsHint
 import graphql.nadel.hints.NadelDeferSupportHint
 import graphql.nadel.hints.NadelDisableSharedTypesHint
@@ -24,6 +25,7 @@ data class NadelExecutionHints(
     val disableSharedTypes: NadelDisableSharedTypesHint,
     val useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
     val batchRootFields: NadelBatchRootFieldsHint,
+    val batchHydrationCoalescing: NadelBatchHydrationCoalescingHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -47,6 +49,7 @@ data class NadelExecutionHints(
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
         private var useReachableUnderlyingServiceTypes = NadelReachableUnderlyingServiceTypesHint { false }
         private var batchRootFields = NadelBatchRootFieldsHint { false }
+        private var batchHydrationCoalescing = NadelBatchHydrationCoalescingHint.disabled
 
         constructor()
 
@@ -62,6 +65,7 @@ data class NadelExecutionHints(
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
             useReachableUnderlyingServiceTypes = nadelExecutionHints.useReachableUnderlyingServiceTypes
             batchRootFields = nadelExecutionHints.batchRootFields
+            batchHydrationCoalescing = nadelExecutionHints.batchHydrationCoalescing
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -119,6 +123,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun batchHydrationCoalescing(flag: NadelBatchHydrationCoalescingHint): Builder {
+            batchHydrationCoalescing = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -132,6 +141,7 @@ data class NadelExecutionHints(
                 disableSharedTypes,
                 useReachableUnderlyingServiceTypes,
                 batchRootFields,
+                batchHydrationCoalescing,
             )
         }
     }
