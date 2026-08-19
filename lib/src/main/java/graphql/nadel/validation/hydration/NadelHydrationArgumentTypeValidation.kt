@@ -175,7 +175,7 @@ internal class NadelHydrationArgumentTypeValidation(
                 }
                 is GraphQLObjectType -> return NadelHydrationArgumentTypeValidationResult.Success
             }
-        } else if (requiredTypeUnwrapped is GraphQLScalarType && suppliedTypeUnwrapped is GraphQLScalarType) {
+        } else if (requiredTypeUnwrapped is GraphQLScalarType && suppliedTypeUnwrapped is GraphQLNamedInputType) {
             if (isScalarCompatible(suppliedTypeUnwrapped, requiredTypeUnwrapped)) {
                 return NadelHydrationArgumentTypeValidationResult.Success
             }
@@ -220,9 +220,10 @@ internal class NadelHydrationArgumentTypeValidation(
                 suppliedType.name == ExtendedScalars.GraphQLLong.name
         }
 
-        // Accept ID into String for compatibility
+        // Accept ID or enum into String for compatibility
         if (requiredType.name == Scalars.GraphQLString.name) {
-            return suppliedType.name == Scalars.GraphQLID.name
+            return suppliedType.name == Scalars.GraphQLID.name ||
+                suppliedType is GraphQLEnumType
         }
 
         return false
