@@ -8,7 +8,8 @@ import graphql.language.Document
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnabledParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnExceptionParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnGraphQLErrorsParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
@@ -104,12 +105,18 @@ interface NadelInstrumentation {
     }
 
     /**
-     * Called when Nadel encounters an error that can be useful for the caller code - for logging or metrics, for example.
+     * Called when Nadel receives [GraphQLError]s to inject into the response.
      *
-     * The nature of the error can be obtained by looking at the value of [NadelInstrumentationOnErrorParameters.errorType].
-     *
-     *  @param parameters to this step
+     * @param parameters to this step
      */
-    fun onError(parameters: NadelInstrumentationOnErrorParameters) {
+    fun onGraphQLErrors(parameters: NadelInstrumentationOnGraphQLErrorsParameters) {
+    }
+
+    /**
+     * Called when Nadel catches an [Exception] so the caller can perform extra handling.
+     *
+     * @param parameters to this step
+     */
+    fun onException(parameters: NadelInstrumentationOnExceptionParameters) {
     }
 }

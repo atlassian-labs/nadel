@@ -6,8 +6,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.instrumentation.NadelInstrumentation
-import graphql.nadel.instrumentation.parameters.ErrorData
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnErrorParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationOnExceptionParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.assertJsonKeys
@@ -15,7 +14,6 @@ import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.message
 import strikt.api.expectThat
-import strikt.assertions.contains
 import strikt.assertions.get
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
@@ -25,14 +23,14 @@ import strikt.assertions.single
 @UseHook
 class `exceptions-in-service-execution-call-result-in-graphql-errors-and-call-onerror-instrumentation` :
     EngineTestHook {
+    private class PopGoesTheWeaselException : Exception()
+
     var serviceName: String? = null
-    var errorMessage: String? = null
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
-                override fun onError(parameters: NadelInstrumentationOnErrorParameters) {
-                    serviceName = (parameters.errorData as ErrorData.ServiceExecutionErrorData).serviceName
-                    errorMessage = parameters.message
+                override fun onException(parameters: NadelInstrumentationOnExceptionParameters) {
+                    serviceName = parameters.serviceName
                 }
             })
     }
@@ -47,7 +45,7 @@ class `exceptions-in-service-execution-call-result-in-graphql-errors-and-call-on
         baseTestServiceExecution: ServiceExecution,
     ): ServiceExecution {
         return ServiceExecution {
-            throw RuntimeException("Pop goes the weasel")
+            throw PopGoesTheWeaselException()
         }
     }
 
@@ -59,9 +57,8 @@ class `exceptions-in-service-execution-call-result-in-graphql-errors-and-call-on
         expectThat(result).errors
             .single()
             .message
-            .contains("Pop goes the weasel")
+            .isEqualTo("An PopGoesTheWeaselException occurred invoking the service MyService")
 
         expectThat(serviceName).isEqualTo("MyService")
-        expectThat(errorMessage).isEqualTo("An exception occurred invoking the service 'MyService'")
     }
 }
