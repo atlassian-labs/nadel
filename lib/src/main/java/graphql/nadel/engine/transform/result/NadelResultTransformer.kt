@@ -21,7 +21,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
-    suspend fun mutate(
+    suspend fun transform(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
         executionPlan: NadelExecutionPlan,
@@ -53,7 +53,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
         deferPayload: DeferPayload,
-    ): DeferPayload {
+    ) {
         val nodes = JsonNodes(
             deferPayload.getData<JsonMap?>() ?: emptyMap(),
             pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>())
@@ -69,7 +69,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             nodes
         )
         mutate(deferPayload, instructions)
-        return deferPayload
     }
 
     private suspend fun getMutationInstructions(

@@ -373,7 +373,7 @@ internal class NextgenEngine(
         // so an all-introspection batch needs no result transformation.
         if (!topLevelFields.all { it.name.startsWith("__") }) {
             timer.time(step = RootStep.ResultTransforming) {
-                resultTransformer.mutate(
+                resultTransformer.transform(
                     executionContext = executionContext,
                     serviceExecutionContext = serviceExecutionContext,
                     executionPlan = executionPlan,
