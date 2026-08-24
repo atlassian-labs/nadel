@@ -39,6 +39,7 @@ import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.engine.util.toGraphQLError
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.createServiceExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -371,7 +372,7 @@ internal class NextgenEngine(
         // Introspection fields are never batched with other fields (see NadelFieldToService),
         // so an all-introspection batch needs no result transformation.
         if (!topLevelFields.all { it.name.startsWith("__") }) {
-            val transformResult = timer.time(step = RootStep.ResultTransforming) {
+            timer.time(step = RootStep.ResultTransforming) {
                 resultTransformer.mutate(
                     executionContext = executionContext,
                     serviceExecutionContext = serviceExecutionContext,
@@ -382,16 +383,17 @@ internal class NextgenEngine(
                     result = result,
                 )
             }
+        }
 
-            if (transformResult.errorsAdded.isNotEmpty()) {
-                instrumentation.onGraphQLErrors(
-                    NadelInstrumentationOnGraphQLErrorsParameters(
-                        errors = transformResult.errorsAdded,
-                        instrumentationState = executionContext.instrumentationState,
-                        serviceName = service.name,
-                    ),
-                )
-            }
+        val errors = result.errors.mapNotNull { it?.let(::toGraphQLError) }
+        if (errors.isNotEmpty()) {
+            instrumentation.onGraphQLErrors(
+                NadelInstrumentationOnGraphQLErrorsParameters(
+                    errors = errors,
+                    instrumentationState = executionContext.instrumentationState,
+                    serviceName = service.name,
+                ),
+            )
         }
 
         return result
@@ -463,10 +465,8 @@ internal class NextgenEngine(
                 val exceptionClass = e.javaClass.simpleName
                 NadelUncaughtExecutionError(
                     message = "An $exceptionClass occurred invoking the service $serviceName",
+                    extensions = emptyMap(),
                     cause = e,
-                    extensions = mutableMapOf(
-                        "executionId" to serviceExecParams.executionId.toString(),
-                    ),
                 )
             }
             newServiceExecutionResult(errors = mutableListOf(error.toSpecification()))

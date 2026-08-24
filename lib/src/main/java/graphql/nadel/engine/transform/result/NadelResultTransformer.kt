@@ -21,10 +21,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
-    internal data class MutateResult(
-        val errorsAdded: List<GraphQLError>,
-    )
-
     suspend fun mutate(
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
@@ -33,7 +29,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
-    ): MutateResult {
+    ) {
         val nodes = JsonNodes(result.data)
         val instructions = getMutationInstructions(
             executionContext,
@@ -46,10 +42,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             nodes
         )
         mutate(result, instructions)
-        val errorsAdded = instructions.mapNotNull {
-            (it as? NadelResultInstruction.AddError)?.error
-        }
-        return MutateResult(errorsAdded)
     }
 
     suspend fun transform(
