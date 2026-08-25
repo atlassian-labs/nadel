@@ -5,9 +5,9 @@ import graphql.GraphQLContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.ServiceExecutionHydrationDetails
-import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.result.NadelResultTracker
+import graphql.nadel.time.NadelInstrumentationTimer
 import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.CoroutineScope
 

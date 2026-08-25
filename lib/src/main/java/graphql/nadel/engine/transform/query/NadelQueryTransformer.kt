@@ -4,11 +4,11 @@ import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.util.toBuilder
+import graphql.nadel.time.NadelInstrumentationTimer
 import graphql.normalized.ExecutableNormalizedField
 
 class NadelQueryTransformer private constructor(
