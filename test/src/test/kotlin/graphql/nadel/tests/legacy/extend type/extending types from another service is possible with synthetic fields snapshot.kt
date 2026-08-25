@@ -71,16 +71,20 @@ public class `extending types from another service is possible with synthetic fi
             ExpectedServiceCall(
                 service = "Service2",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   lookUpQuery {
-                |     lookup(id: "rootId") {
+                |     lookup(id: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "rootId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

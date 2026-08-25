@@ -26,8 +26,8 @@ public class
             ExpectedServiceCall(
                 service = "PetService",
                 query = """
-                | query petQ {
-                |   pets(isLoyal: true) {
+                | query petQ(${'$'}v0: Boolean) {
+                |   pets(isLoyal: ${'$'}v0) {
                 |     name
                 |     ... on Cat {
                 |       wearsBell
@@ -39,7 +39,11 @@ public class
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": true
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -63,8 +67,8 @@ public class
             ExpectedServiceCall(
                 service = "PetService",
                 query = """
-                | query petQ {
-                |   raining(isLoyal: true) {
+                | query petQ(${'$'}v0: Boolean) {
+                |   raining(isLoyal: ${'$'}v0) {
                 |     __typename
                 |     ... on Cat {
                 |       wearsBell
@@ -75,7 +79,11 @@ public class
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": true
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

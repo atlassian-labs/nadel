@@ -48,15 +48,19 @@ public class `all hydration fields are seen by transformer snapshot` : TestSnaps
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   bars {
-                |     barById(id: "barId") {
+                |     barById(id: ${'$'}v0) {
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

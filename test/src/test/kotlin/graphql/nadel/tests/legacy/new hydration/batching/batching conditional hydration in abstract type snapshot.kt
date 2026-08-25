@@ -76,8 +76,8 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   commentsByIds(ids: ["comment/5000", "comment/6000", "comment/1234", "comment/9001"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   commentsByIds(ids: ${'$'}v0) {
                 |     __typename
                 |     content
                 |     id
@@ -85,7 +85,16 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "comment/5000",
+                |     "comment/6000",
+                |     "comment/1234",
+                |     "comment/9001"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -124,8 +133,8 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   issuesByIds(ids: ["issue/4000"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__content__id: id
@@ -133,7 +142,13 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "issue/4000"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -154,8 +169,8 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   issuesByIds(ids: ["issue/8080", "issue/7496"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__content__id: id
@@ -163,7 +178,14 @@ public class `batching conditional hydration in abstract type snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "issue/8080",
+                |     "issue/7496"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

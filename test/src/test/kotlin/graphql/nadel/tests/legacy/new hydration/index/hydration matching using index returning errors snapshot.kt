@@ -62,13 +62,20 @@ public class `hydration matching using index returning errors snapshot` : TestSn
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(ids: ["1", "2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "1",
+                |     "2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -48,13 +48,20 @@ public class `basic hydration with default object argument values snapshot` : Te
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId", test: {echo : "Hello World"}) {
+                | query (${'$'}v0: ID, ${'$'}v1: Test) {
+                |   barById(id: ${'$'}v0, test: ${'$'}v1) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId",
+                |   "v1": {
+                |     "echo": "Hello World"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

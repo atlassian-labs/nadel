@@ -48,13 +48,17 @@ public class `hydrating using date time as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   successor(after: "2022-03-09T05:01:50Z") {
+                | query (${'$'}v0: DateTime) {
+                |   successor(after: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "2022-03-09T05:01:50Z"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,8 +24,8 @@ public class `query with hydrated interfaces work as expected snapshot` : TestSn
             ExpectedServiceCall(
                 service = "OwnerService",
                 query = """
-                | query petQ {
-                |   ownerById(id: "cruella") {
+                | query petQ(${'$'}v0: String) {
+                |   ownerById(id: ${'$'}v0) {
                 |     name
                 |     ... on CaringOwner {
                 |       givesPats
@@ -36,7 +36,11 @@ public class `query with hydrated interfaces work as expected snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "cruella"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -53,8 +57,8 @@ public class `query with hydrated interfaces work as expected snapshot` : TestSn
             ExpectedServiceCall(
                 service = "OwnerService",
                 query = """
-                | query petQ {
-                |   ownerById(id: "dearly") {
+                | query petQ(${'$'}v0: String) {
+                |   ownerById(id: ${'$'}v0) {
                 |     name
                 |     ... on CaringOwner {
                 |       givesPats
@@ -65,7 +69,11 @@ public class `query with hydrated interfaces work as expected snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "dearly"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -82,8 +90,8 @@ public class `query with hydrated interfaces work as expected snapshot` : TestSn
             ExpectedServiceCall(
                 service = "PetService",
                 query = """
-                | query petQ {
-                |   pets(isLoyal: true) {
+                | query petQ(${'$'}v0: Boolean) {
+                |   pets(isLoyal: ${'$'}v0) {
                 |     __typename__hydration__owners: __typename
                 |     name
                 |     ... on Cat {
@@ -95,7 +103,11 @@ public class `query with hydrated interfaces work as expected snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": true
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -25,8 +25,8 @@ public class `dynamic service resolution handles inline fragments from multiple 
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | {
-                |   node(id: "pull-request:id-123") {
+                | query (${'$'}v0: ID!) {
+                |   node(id: ${'$'}v0) {
                 |     __typename__type_filter__issueKey: __typename
                 |     id
                 |     ... on PullRequest {
@@ -35,7 +35,11 @@ public class `dynamic service resolution handles inline fragments from multiple 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "pull-request:id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

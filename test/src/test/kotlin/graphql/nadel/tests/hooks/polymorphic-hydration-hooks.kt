@@ -60,9 +60,6 @@ class `batch-polymorphic-hydration-where-only-one-type-is-queried` : Polymorphic
 class `batch-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook()
 
 @UseHook
-class `batch-polymorphic-hydration-when-hook-returns-null-1` : PolymorphicHydrationTestHook()
-
-@UseHook
 class `solitary-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook()
 
 @UseHook

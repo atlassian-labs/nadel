@@ -48,13 +48,21 @@ public class `basic hydration with static arg object snapshot` : TestSnapshot() 
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(fullName: {firstName : "first", lastName : "last"}, id: "barId") {
+                | query (${'$'}v0: ID, ${'$'}v1: FullName) {
+                |   barById(fullName: ${'$'}v1, id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId",
+                |   "v1": {
+                |     "firstName": "first",
+                |     "lastName": "last"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

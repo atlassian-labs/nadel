@@ -26,8 +26,8 @@ public class
             ExpectedServiceCall(
                 service = "PetService",
                 query = """
-                | query petQ {
-                |   pets(isLoyal: true) {
+                | query petQ(${'$'}v0: Boolean) {
+                |   pets(isLoyal: ${'$'}v0) {
                 |     name
                 |     ... on Cat {
                 |       aliasedCatTypeName: __typename
@@ -40,7 +40,11 @@ public class
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": true
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

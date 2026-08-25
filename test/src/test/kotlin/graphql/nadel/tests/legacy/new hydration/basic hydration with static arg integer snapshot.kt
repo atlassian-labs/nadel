@@ -24,13 +24,17 @@ public class `basic hydration with static arg integer snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: 12345) {
+                | query (${'$'}v0: Int) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 12345
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

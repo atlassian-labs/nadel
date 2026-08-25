@@ -25,8 +25,8 @@ public class `batch polymorphic hydration actor fields are in the same service s
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | {
-                |   humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   humanById(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__data__id: id
@@ -34,7 +34,14 @@ public class `batch polymorphic hydration actor fields are in the same service s
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "HUMAN-0",
+                |     "HUMAN-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -61,8 +68,8 @@ public class `batch polymorphic hydration actor fields are in the same service s
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | {
-                |   petById(ids: ["PET-0", "PET-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   petById(ids: ${'$'}v0) {
                 |     __typename
                 |     breed
                 |     id
@@ -70,7 +77,14 @@ public class `batch polymorphic hydration actor fields are in the same service s
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "PET-0",
+                |     "PET-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

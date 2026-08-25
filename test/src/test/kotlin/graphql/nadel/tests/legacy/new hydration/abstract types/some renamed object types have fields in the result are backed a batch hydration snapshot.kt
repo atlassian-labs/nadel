@@ -73,14 +73,21 @@ public class
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   usersByIds(ids: ["user-100", "user-20"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     batch_hydration__user__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "user-100",
+                |     "user-20"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

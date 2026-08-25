@@ -25,8 +25,8 @@ public class `expecting one child error on extensive field argument passed to hy
             ExpectedServiceCall(
                 service = "TestBoard",
                 query = """
-                | {
-                |   board(id: 1) {
+                | query (${'$'}v0: ID) {
+                |   board(id: ${'$'}v0) {
                 |     __typename__rename__cardChildren: __typename
                 |     id
                 |     rename__cardChildren__issueChildren: issueChildren {
@@ -41,7 +41,11 @@ public class `expecting one child error on extensive field argument passed to hy
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 1
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -87,14 +91,22 @@ public class `expecting one child error on extensive field argument passed to hy
             ExpectedServiceCall(
                 service = "Users",
                 query = """
-                | {
-                |   users(accountIds: ["1", "2", "3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   users(accountIds: ${'$'}v0) {
                 |     accountId
                 |     batch_hydration__assignee__accountId: accountId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "1",
+                |     "2",
+                |     "3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

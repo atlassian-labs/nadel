@@ -24,13 +24,17 @@ public class `basic hydration with static arg float snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barWithSomeFloat(someFloat: 123.45) {
+                | query (${'$'}v0: Float) {
+                |   barWithSomeFloat(someFloat: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 123.45
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

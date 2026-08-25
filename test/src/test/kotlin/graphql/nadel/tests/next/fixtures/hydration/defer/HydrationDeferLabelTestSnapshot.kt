@@ -24,15 +24,19 @@ public class HydrationDeferLabelTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issue(id: "ari:cloud:jira::issue/1") {
-                |     id
-                |     hydration__assignee__assigneeId: assigneeId
+                | query (${'$'}v0: ID!) {
+                |   issue(id: ${'$'}v0) {
                 |     __typename__hydration__assignee: __typename
+                |     hydration__assignee__assigneeId: assigneeId
+                |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:jira::issue/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -50,13 +54,17 @@ public class HydrationDeferLabelTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   user(id: "ari:cloud:jira::user/1") {
+                | query (${'$'}v0: ID!) {
+                |   user(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:jira::user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

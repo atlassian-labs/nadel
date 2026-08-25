@@ -52,14 +52,18 @@ public class `hydration list input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId1") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -76,14 +80,18 @@ public class `hydration list input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId2") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId2"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -100,14 +108,18 @@ public class `hydration list input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId3") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId3"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

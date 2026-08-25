@@ -26,12 +26,12 @@ public class HydrationIdentifiedByRenamedFieldTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   me {
-                |     batch_hydration__friends__friendIds: friendIds
                 |     __typename__batch_hydration__friends: __typename
+                |     batch_hydration__friends__friendIds: friendIds
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = "{}",
                 result = """
                 | {
                 |   "data": {
@@ -51,15 +51,22 @@ public class HydrationIdentifiedByRenamedFieldTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   users(ids: ["i", "2i"]) {
-                |     name
-                |     rename__batch_hydration__friends__id__canonicalAccountId: canonicalAccountId
+                | query (${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
                 |     __typename__rename__batch_hydration__friends__id: __typename
+                |     rename__batch_hydration__friends__id__canonicalAccountId: canonicalAccountId
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "i",
+                |     "2i"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

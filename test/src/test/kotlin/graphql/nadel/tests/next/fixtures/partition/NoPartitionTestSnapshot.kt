@@ -24,14 +24,27 @@ public class NoPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-1:partition-A", "thing-2:partition-A", "thing-3:partition-A", "thing-4:partition-A", "thing-5:partition-A", "thing-6:partition-A", "thing-7:partition-A", "thing-8:partition-A"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-1:partition-A",
+                |     "thing-2:partition-A",
+                |     "thing-3:partition-A",
+                |     "thing-4:partition-A",
+                |     "thing-5:partition-A",
+                |     "thing-6:partition-A",
+                |     "thing-7:partition-A",
+                |     "thing-8:partition-A"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

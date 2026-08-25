@@ -24,13 +24,17 @@ public class `renamed top level field with argument snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | {
-                |   rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
+                | query (${'$'}v0: ID!) {
+                |   rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "OBJECT-001"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

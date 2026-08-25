@@ -25,8 +25,8 @@ public class BatchHydrationAtQueryTypeTestSnapshot : TestSnapshot() {
                 service = "issues",
                 query = """
                 | {
-                |   batch_hydration__myIssues__myIssueKeys: myIssueKeys
                 |   __typename__batch_hydration__myIssues: __typename
+                |   batch_hydration__myIssues__myIssueKeys: myIssueKeys
                 | }
                 """.trimMargin(),
                 variables = "{}",
@@ -47,14 +47,21 @@ public class BatchHydrationAtQueryTypeTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issuesByIds(ids: ["hello", "bye"]) {
-                |     title
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     batch_hydration__myIssues__id: id
+                |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "hello",
+                |     "bye"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

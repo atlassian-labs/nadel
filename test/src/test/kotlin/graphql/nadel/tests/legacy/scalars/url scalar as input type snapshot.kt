@@ -24,13 +24,17 @@ public class `url scalar as input type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   foo(input: "https://atlassian.com") {
+                | query (${'$'}v0: URL) {
+                |   foo(input: ${'$'}v0) {
                 |     thing
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "https://atlassian.com"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,14 +24,20 @@ public class StubFieldInMutationPayloadTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | mutation {
-                |   createLlmBackedIssue(input: {prompt : "Need tests for stubbed fields in Mutation context"}) {
+                | mutation (${'$'}v0: CreateLlmBackedIssueInput) {
+                |   createLlmBackedIssue(input: ${'$'}v0) {
                 |     __typename__stubbed__issue: __typename
                 |     success
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "prompt": "Need tests for stubbed fields in Mutation context"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

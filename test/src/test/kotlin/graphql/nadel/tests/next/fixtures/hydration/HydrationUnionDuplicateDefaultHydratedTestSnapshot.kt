@@ -58,14 +58,22 @@ public class HydrationUnionDuplicateDefaultHydratedTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   users(ids: ["aoeu", "asdf", "wow"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
                 |     __typename
                 |     batch_hydration__user__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "aoeu",
+                |     "asdf",
+                |     "wow"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

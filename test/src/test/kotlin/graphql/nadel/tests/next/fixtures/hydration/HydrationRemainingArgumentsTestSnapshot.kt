@@ -19,20 +19,21 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
         ExpectedServiceCall(
             service = "graph_store",
-            query = """
-                | query (${'$'}v0: JSON) {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?", remainingArgs: ${'$'}v0) {
+                query = """
+                | query (${'$'}v0: String!, ${'$'}v1: JSON) {
+                |   graphStore_query(query: ${'$'}v0, remainingArgs: ${'$'}v1) {
                 |     __typename
                 |     edges {
-                |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
+                |       batch_hydration__node__nodeId: nodeId
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-            variables = """
+                variables = """
                 | {
-                |   "v0": {
+                |   "v0": "SELECT * FROM Work WHERE teamId = ?",
+                |   "v1": {
                 |     "orgId": "turtles",
                 |     "teamId": null
                 |   }
@@ -58,16 +59,22 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
         ),
         ExpectedServiceCall(
             service = "jira",
-            query = """
-                | {
-                |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     __typename
-                |     key
                 |     batch_hydration__node__id: id
+                |     key
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::issue/1"
+                |   ]
+                | }
+                """.trimMargin(),
             result = """
                 | {
                 |   "data": {

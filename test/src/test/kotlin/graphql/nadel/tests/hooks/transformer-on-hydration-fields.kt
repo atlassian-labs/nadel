@@ -70,7 +70,7 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     state: Any,
                     transformServiceExecutionContext: NadelTransformServiceExecutionContext?,
                 ): NadelTransformFieldResult {
-                    val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
+                    val transformedArgs = mapOf("id" to NormalizedInputValue("ID", StringValue("transformed-id")))
                     return transformer.transform(field.children)
                         .let {
                             field.toBuilder()

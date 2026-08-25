@@ -24,11 +24,17 @@ public class `oneOf successful snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query myQuery {
-                |   search(by: {name : "Figaro"})
+                | query myQuery(${'$'}v0: SearchInput) {
+                |   search(by: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "name": "Figaro"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

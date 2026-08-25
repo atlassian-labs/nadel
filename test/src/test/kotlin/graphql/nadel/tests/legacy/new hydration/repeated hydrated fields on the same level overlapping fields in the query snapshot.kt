@@ -49,15 +49,19 @@ public class `repeated hydrated fields on the same level overlapping fields in t
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   issue(issueId: "ISSUE-1") {
+                | query (${'$'}v0: ID) {
+                |   issue(issueId: ${'$'}v0) {
                 |     desc
                 |     name
                 |     summary
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ISSUE-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

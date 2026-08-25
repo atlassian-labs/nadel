@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next.fixtures.rename
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.tests.next.NadelIntegrationTest
 
 /**
@@ -72,12 +71,4 @@ class RenamedInputTypeTest : NadelIntegrationTest(
             },
         ),
     ),
-) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            // todo: this should be on by default
-            .allDocumentVariablesHint {
-                true
-            }
-    }
-}
+)

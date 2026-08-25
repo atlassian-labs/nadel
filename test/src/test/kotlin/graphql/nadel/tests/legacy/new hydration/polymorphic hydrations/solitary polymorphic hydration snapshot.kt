@@ -61,15 +61,19 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | {
-                |   humanById(id: "HUMAN-0") {
+                | query (${'$'}v0: ID) {
+                |   humanById(id: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "HUMAN-0"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -87,15 +91,19 @@ public class `solitary polymorphic hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "pets",
                 query = """
-                | {
-                |   petById(id: "PET-0") {
+                | query (${'$'}v0: ID) {
+                |   petById(id: ${'$'}v0) {
                 |     __typename
                 |     breed
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "PET-0"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

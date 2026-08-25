@@ -24,15 +24,21 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
             ExpectedServiceCall(
                 service = "Dogs",
                 query = """
-                | {
-                |   dogsByIds(ids: ["good-boye-1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   dogsByIds(ids: ${'$'}v0) {
                 |     __typename
                 |     batch_hydration__animal__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "good-boye-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -52,8 +58,8 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
             ExpectedServiceCall(
                 service = "Pets",
                 query = """
-                | {
-                |   petsByIds(ids: ["good-boye-1", "tall-boye-9"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   petsByIds(ids: ${'$'}v0) {
                 |     __typename__batch_hydration__animal: __typename
                 |     batch_hydration__animal__animalId: animalId
                 |     batch_hydration__animal__animalId: animalId
@@ -65,7 +71,14 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "good-boye-1",
+                |     "tall-boye-9"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -94,8 +107,8 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
             ExpectedServiceCall(
                 service = "Zoo",
                 query = """
-                | {
-                |   giraffes(filters: [{birthday : 1001203200, height : 570, nickname : "Tall Boye"}]) {
+                | query (${'$'}v0: [GiraffeFilter]) {
+                |   giraffes(filters: ${'$'}v0) {
                 |     __typename
                 |     birthday
                 |     batch_hydration__animal__birthday: birthday
@@ -106,7 +119,17 @@ public class `polymorphic hydration instructions use different inputs snapshot` 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     {
+                |       "nickname": "Tall Boye",
+                |       "birthday": 1001203200,
+                |       "height": 570
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

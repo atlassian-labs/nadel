@@ -24,16 +24,20 @@ public class HydrationThrowsErrorTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
+                |     __typename__hydration__assignee: __typename
+                |     hydration__assignee__assigneeId: assigneeId
                 |     id
                 |     key
-                |     hydration__assignee__assigneeId: assigneeId
-                |     __typename__hydration__assignee: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

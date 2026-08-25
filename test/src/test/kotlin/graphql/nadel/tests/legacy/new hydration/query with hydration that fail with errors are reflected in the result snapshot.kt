@@ -25,15 +25,19 @@ public class `query with hydration that fail with errors are reflected in the re
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barById(id: "barId123") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     __typename__hydration__nestedBar: __typename
                 |     name
                 |     hydration__nestedBar__nestedBarId: nestedBarId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "errors": [

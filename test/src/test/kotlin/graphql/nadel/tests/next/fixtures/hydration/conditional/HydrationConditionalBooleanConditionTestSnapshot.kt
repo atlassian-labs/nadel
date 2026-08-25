@@ -78,13 +78,17 @@ public class HydrationConditionalBooleanConditionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "matching-bar-id") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "matching-bar-id"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

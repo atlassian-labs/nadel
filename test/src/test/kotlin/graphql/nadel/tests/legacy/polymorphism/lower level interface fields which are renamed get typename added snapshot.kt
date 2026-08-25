@@ -25,8 +25,8 @@ public class `lower level interface fields which are renamed get typename added 
             ExpectedServiceCall(
                 service = "PetService",
                 query = """
-                | query petQ {
-                |   pets(isLoyal: true) {
+                | query petQ(${'$'}v0: Boolean) {
+                |   pets(isLoyal: ${'$'}v0) {
                 |     __typename__rename__collarToRenamed: __typename
                 |     name
                 |     ... on Cat {
@@ -42,7 +42,11 @@ public class `lower level interface fields which are renamed get typename added 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": true
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

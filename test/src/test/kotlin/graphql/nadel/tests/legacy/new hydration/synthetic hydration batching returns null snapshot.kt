@@ -52,16 +52,24 @@ public class `synthetic hydration batching returns null snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   barsQuery {
-                |     barsById(id: ["barId1", "barId2", "barId3"]) {
+                |     barsById(id: ${'$'}v0) {
                 |       batch_hydration__bar__id: id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "barId1",
+                |     "barId2",
+                |     "barId3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

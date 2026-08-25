@@ -1,6 +1,5 @@
 package graphql.nadel
 
-import graphql.nadel.hints.AllDocumentVariablesHint
 import graphql.nadel.hints.LegacyOperationNamesHint
 import graphql.nadel.hints.NadelBatchRootFieldsHint
 import graphql.nadel.hints.NadelDeferSupportHint
@@ -14,7 +13,6 @@ import graphql.nadel.hints.NadelSharedTypeRenamesHint
 
 data class NadelExecutionHints(
     val legacyOperationNames: LegacyOperationNamesHint,
-    val allDocumentVariablesHint: AllDocumentVariablesHint,
     val deferSupport: NadelDeferSupportHint,
     val sharedTypeRenames: NadelSharedTypeRenamesHint,
     val executeOnEngineSchema: NadelExecuteOnEngineSchemaHint,
@@ -37,7 +35,6 @@ data class NadelExecutionHints(
 
     class Builder {
         private var legacyOperationNames = LegacyOperationNamesHint { false }
-        private var allDocumentVariablesHint = AllDocumentVariablesHint { false }
         private var deferSupport = NadelDeferSupportHint { false }
         private var sharedTypeRenames = NadelSharedTypeRenamesHint { false }
         private var executeOnEngineSchema = NadelExecuteOnEngineSchemaHint { false }
@@ -52,7 +49,6 @@ data class NadelExecutionHints(
 
         constructor(nadelExecutionHints: NadelExecutionHints) {
             legacyOperationNames = nadelExecutionHints.legacyOperationNames
-            allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint
             deferSupport = nadelExecutionHints.deferSupport
             sharedTypeRenames = nadelExecutionHints.sharedTypeRenames
             executeOnEngineSchema = nadelExecutionHints.executeOnEngineSchema
@@ -66,11 +62,6 @@ data class NadelExecutionHints(
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
             legacyOperationNames = flag
-            return this
-        }
-
-        fun allDocumentVariablesHint(flag: AllDocumentVariablesHint): Builder {
-            allDocumentVariablesHint = flag
             return this
         }
 
@@ -122,7 +113,6 @@ data class NadelExecutionHints(
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
-                allDocumentVariablesHint,
                 deferSupport,
                 sharedTypeRenames,
                 executeOnEngineSchema,

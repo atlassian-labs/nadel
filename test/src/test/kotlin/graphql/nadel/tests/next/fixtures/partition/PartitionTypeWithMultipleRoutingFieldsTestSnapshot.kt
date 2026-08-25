@@ -24,14 +24,29 @@ public class PartitionTypeWithMultipleRoutingFieldsTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(filter: {thingsIds : [{primaryId : "thing-1-primary:partition-A", secondaryId : "thing-1-secondary"}, {primaryId : "thing-3-primary-no-partition", secondaryId : "thing-3-secondary:partition-A"}]}) {
+                | query getPartitionedThings(${'$'}v0: ThingsFilter) {
+                |   things(filter: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsIds": [
+                |       {
+                |         "primaryId": "thing-1-primary:partition-A",
+                |         "secondaryId": "thing-1-secondary"
+                |       },
+                |       {
+                |         "primaryId": "thing-3-primary-no-partition",
+                |         "secondaryId": "thing-3-secondary:partition-A"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,14 +69,29 @@ public class PartitionTypeWithMultipleRoutingFieldsTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(filter: {thingsIds : [{primaryId : "thing-2-same-partition:partition-B", secondaryId : "thing-2-secondary-same-partition:partition-B"}, {primaryId : "thing-4-primary:partition-B", secondaryId : "thing-4-secondary"}]}) {
+                | query getPartitionedThings(${'$'}v0: ThingsFilter) {
+                |   things(filter: ${'$'}v0) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsIds": [
+                |       {
+                |         "primaryId": "thing-2-same-partition:partition-B",
+                |         "secondaryId": "thing-2-secondary-same-partition:partition-B"
+                |       },
+                |       {
+                |         "primaryId": "thing-4-primary:partition-B",
+                |         "secondaryId": "thing-4-secondary"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,19 +24,23 @@ public class HydrationDeferInListTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issueByKey(key: "GQLGW-2") {
-                |     key
-                |     hydration__assignee__assigneeId: assigneeId
+                | query (${'$'}v0: String!) {
+                |   issueByKey(key: ${'$'}v0) {
                 |     __typename__hydration__assignee: __typename
+                |     hydration__assignee__assigneeId: assigneeId
+                |     key
                 |     related {
-                |       hydration__assignee__assigneeId: assigneeId
                 |       __typename__hydration__assignee: __typename
+                |       hydration__assignee__assigneeId: assigneeId
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "GQLGW-2"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -60,13 +64,17 @@ public class HydrationDeferInListTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -82,13 +90,17 @@ public class HydrationDeferInListTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/2") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/2"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

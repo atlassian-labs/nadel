@@ -48,13 +48,17 @@ public class `transformer on hydration fields snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "transformed-id") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "transformed-id"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,13 +24,17 @@ public class `rename on shared abstract type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "worlds",
                 query = """
-                | {
-                |   node(id: "world-1") {
+                | query (${'$'}v0: ID) {
+                |   node(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "world-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

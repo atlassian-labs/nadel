@@ -22,9 +22,9 @@ public class BatchHydrationDeferTestSnapshot : TestSnapshot() {
                 query = """
                 | {
                 |   issues {
-                |     key
-                |     batch_hydration__assignee__assigneeId: assigneeId
                 |     __typename__batch_hydration__assignee: __typename
+                |     batch_hydration__assignee__assigneeId: assigneeId
+                |     key
                 |   }
                 | }
                 """.trimMargin(),
@@ -58,14 +58,22 @@ public class BatchHydrationDeferTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   usersByIds(ids: ["fwang", "sbarker2", "freis"]) {
-                |     name
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     batch_hydration__assignee__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "fwang",
+                |     "sbarker2",
+                |     "freis"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
