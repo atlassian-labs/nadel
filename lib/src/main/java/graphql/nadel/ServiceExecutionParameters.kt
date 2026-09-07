@@ -19,6 +19,18 @@ class ServiceExecutionParameters internal constructor(
      * @return details abut this service hydration or null if it's not a hydration call
      */
     val hydrationDetails: ServiceExecutionHydrationDetails?,
+    /**
+     * The overall-schema top-level fields grouped into this service execution.
+     *
+     * All fields in this list are assigned to the same service and sharding target.
+     */
+    val overallExecutableNormalizedFields: List<ExecutableNormalizedField>,
+    /**
+     * A representative top-level field after query transformation.
+     *
+     * Use [overallExecutableNormalizedFields] when every overall-schema field in this service
+     * execution is required.
+     */
     val executableNormalizedField: ExecutableNormalizedField,
 ) {
     val isHydrationCall: Boolean

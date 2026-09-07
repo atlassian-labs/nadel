@@ -2,10 +2,12 @@ package graphql.nadel.tests.next.fixtures.batching
 
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.tests.next.NadelIntegrationTest
 import graphql.normalized.ExecutableNormalizedField
+import kotlin.test.assertEquals
 
 /**
  * Root fields owned by the same service but routed to different shards must NOT be batched together.
@@ -48,6 +50,21 @@ class BatchRootFieldsByShardTest : NadelIntegrationTest(
         ),
     ),
 ) {
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        val delegate = super.makeServiceExecution(service)
+        return ServiceExecution { parameters ->
+            val fields = parameters.overallExecutableNormalizedFields
+            val shardingTargets = fields.map { it.resolvedArguments["cloudId"] }.toSet()
+            assertEquals(1, shardingTargets.size)
+            when (shardingTargets.single()) {
+                "site-1" -> assertEquals(2, fields.size)
+                "site-2" -> assertEquals(1, fields.size)
+                else -> error("Unexpected sharding target: ${shardingTargets.single()}")
+            }
+            delegate.execute(parameters)
+        }
+    }
+
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .batchRootFields { true }

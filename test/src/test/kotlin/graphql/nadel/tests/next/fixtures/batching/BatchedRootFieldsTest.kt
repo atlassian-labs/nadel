@@ -1,7 +1,9 @@
 package graphql.nadel.tests.next.fixtures.batching
 
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.ServiceExecution
 import graphql.nadel.tests.next.NadelIntegrationTest
+import kotlin.test.assertEquals
 
 /**
  * Multiple sibling root fields destined for the same service are combined into a single service
@@ -12,6 +14,7 @@ import graphql.nadel.tests.next.NadelIntegrationTest
 class BatchedRootFieldsTest : NadelIntegrationTest(
     query = """
         query {
+          __typename
           foo
           bar
           baz
@@ -23,7 +26,14 @@ class BatchedRootFieldsTest : NadelIntegrationTest(
             overallSchema = """
                 type Query {
                   foo: String
-                  bar: String
+                  bar: String @renamed(from: "underlyingBar")
+                  baz: String
+                }
+            """.trimIndent(),
+            underlyingSchema = """
+                type Query {
+                  foo: String
+                  underlyingBar: String
                   baz: String
                 }
             """.trimIndent(),
@@ -32,13 +42,24 @@ class BatchedRootFieldsTest : NadelIntegrationTest(
                     .type("Query") { type ->
                         type
                             .dataFetcher("foo") { "foo-value" }
-                            .dataFetcher("bar") { "bar-value" }
+                            .dataFetcher("underlyingBar") { "bar-value" }
                             .dataFetcher("baz") { "baz-value" }
                     }
             },
         ),
     ),
 ) {
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        val delegate = super.makeServiceExecution(service)
+        return ServiceExecution { parameters ->
+            assertEquals(
+                listOf("foo", "bar", "baz"),
+                parameters.overallExecutableNormalizedFields.map { it.fieldName },
+            )
+            delegate.execute(parameters)
+        }
+    }
+
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .batchRootFields { true }
