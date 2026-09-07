@@ -317,6 +317,7 @@ internal class NextgenEngine(
         val result: ServiceExecutionResult = timer.time(step = RootStep.ServiceExecution.child(service.name)) {
             executeService(
                 service = service,
+                overallTopLevelFields = topLevelFields,
                 topLevelFields = queryTransform.result,
                 executionContext = executionContext,
                 serviceExecutionContext = serviceExecutionContext,
@@ -370,6 +371,7 @@ internal class NextgenEngine(
 
     private suspend fun executeService(
         service: Service,
+        overallTopLevelFields: List<ExecutableNormalizedField>,
         topLevelFields: List<ExecutableNormalizedField>,
         executionContext: NadelExecutionContext,
         serviceExecutionContext: NadelServiceExecutionContext,
@@ -403,6 +405,7 @@ internal class NextgenEngine(
             operationDefinition = compileResult.document.definitions.singleOfType(),
             serviceExecutionContext = serviceExecutionContext,
             hydrationDetails = executionHydrationDetails,
+            overallExecutableNormalizedFields = overallTopLevelFields.toList(),
             // Prefer non __typename field first, otherwise we just get first
             executableNormalizedField = topLevelFields
                 .asSequence()
