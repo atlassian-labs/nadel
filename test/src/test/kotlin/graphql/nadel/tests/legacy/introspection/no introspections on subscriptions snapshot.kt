@@ -29,7 +29,7 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
      *   "errors": [
      *     {
      *       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription
-     * operation 'null' root field '__typename' cannot be an introspection field",
+     * operation '' root field '__typename' cannot be an introspection field",
      *       "locations": [
      *         {
      *           "line": 2,
@@ -49,7 +49,7 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
             | {
             |   "errors": [
             |     {
-            |       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription operation 'null' root field '__typename' cannot be an introspection field",
+            |       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription operation '' root field '__typename' cannot be an introspection field",
             |       "locations": [
             |         {
             |           "line": 2,
