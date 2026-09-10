@@ -33,7 +33,6 @@ import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.WiringFactory
-import graphql.validation.GoodFaithIntrospectionExceeded
 import graphql.validation.OperationValidationRule
 import graphql.validation.QueryComplexityLimits
 import graphql.validation.ValidationError
@@ -173,12 +172,12 @@ class Nadel private constructor(
             executionInputRef.set(executionInput)
 
             logNotSafe.debug("Validating query: '{}'", query)
-            val errors = try {
-                validate(executionInput, document, graphQLSchema, instrumentationState)
-            } catch (e: GoodFaithIntrospectionExceeded) {
-                return PreparsedDocumentEntry(document, listOf(e.toBadFaithError()))
-            }
-
+            val errors = validate(
+                executionInput,
+                document,
+                graphQLSchema,
+                instrumentationState
+            )
             if (errors.isNotEmpty()) {
                 logNotSafe.warn("Query failed to validate : '{}' because of {} ", query, errors)
                 PreparsedDocumentEntry(errors)
@@ -247,7 +246,13 @@ class Nadel private constructor(
 
         val validator = Validator()
         val validationErrors =
-            validator.validateDocument(graphQLSchema, document, validationRulePredicate, Locale.getDefault(), queryLimits)
+            validator.validateDocument(
+                graphQLSchema,
+                document,
+                validationRulePredicate,
+                Locale.getDefault(),
+                queryLimits
+            )
         validationCtx.onCompleted(validationErrors, null)
         return validationErrors
     }
