@@ -1,8 +1,11 @@
 package graphql.nadel.tests.next.fixtures.batching
 
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.ServiceExecution
 import graphql.nadel.hints.NadelBatchRootFieldsHint
 import graphql.nadel.tests.next.NadelIntegrationTest
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Root-field batching is opt-in per service. Here it is enabled for "batched" but not "unbatched".
@@ -57,6 +60,19 @@ class BatchRootFieldsPerServiceTest : NadelIntegrationTest(
         ),
     ),
 ) {
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        val serviceExecution = super.makeServiceExecution(service)
+        return ServiceExecution { parameters ->
+            val fields = parameters.executableNormalizedFields.map { it.name }
+            when (service.name) {
+                "batched" -> assertEquals(listOf("batchedFoo", "batchedBar"), fields)
+                "unbatched" -> assertTrue(fields.single() in setOf("unbatchedFoo", "unbatchedBar"))
+                else -> error("Unexpected service: ${service.name}")
+            }
+            serviceExecution.execute(parameters)
+        }
+    }
+
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .batchRootFields(object : NadelBatchRootFieldsHint {
