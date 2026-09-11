@@ -12,6 +12,7 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.preparsed.NoOpPreparsedDocumentProvider
 import graphql.execution.preparsed.PreparsedDocumentEntry
 import graphql.execution.preparsed.PreparsedDocumentProvider
+import graphql.introspection.GoodFaithIntrospection
 import graphql.language.Document
 import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
@@ -32,6 +33,9 @@ import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.WiringFactory
+import graphql.validation.GoodFaithIntrospectionExceeded
+import graphql.validation.OperationValidationRule
+import graphql.validation.QueryComplexityLimits
 import graphql.validation.ValidationError
 import graphql.validation.Validator
 import org.slf4j.Logger
@@ -42,6 +46,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
+import java.util.function.Predicate
 
 class Nadel private constructor(
     private val engine: NextgenEngine,
@@ -157,9 +162,9 @@ class Nadel private constructor(
 
         return if (parseResult.isFailure) {
             logNotSafe.warn("Query failed to parse : '{}'", executionInput.query)
-            PreparsedDocumentEntry(parseResult.syntaxException.toInvalidSyntaxError())
+            PreparsedDocumentEntry(parseResult.syntaxException!!.toInvalidSyntaxError())
         } else {
-            val document = parseResult.document
+            val document = parseResult.document!!
 
             // they may have changed the document and the variables via instrumentation so update the reference to it
             executionInput = executionInput.transform { builder: ExecutionInput.Builder ->
@@ -168,8 +173,16 @@ class Nadel private constructor(
             executionInputRef.set(executionInput)
 
             logNotSafe.debug("Validating query: '{}'", query)
-            val errors = validate(executionInput, document, graphQLSchema, instrumentationState)
-
+            val errors = try {
+                validate(
+                    executionInput,
+                    document,
+                    graphQLSchema,
+                    instrumentationState
+                )
+            } catch (e: GoodFaithIntrospectionExceeded) {
+                listOf(e.toBadFaithError())
+            }
             if (errors.isNotEmpty()) {
                 logNotSafe.warn("Query failed to validate : '{}' because of {} ", query, errors)
                 PreparsedDocumentEntry(errors)
@@ -229,8 +242,22 @@ class Nadel private constructor(
                 context = executionInput.context,
             ),
         )
+        val goodFaithIntrospectionEnabled = GoodFaithIntrospection.isEnabled(executionInput.graphQLContext)
+        val validationRulePredicate: Predicate<OperationValidationRule> = Predicate { rule ->
+            goodFaithIntrospectionEnabled || rule != OperationValidationRule.GOOD_FAITH_INTROSPECTION
+        }
+        // get possible limits per request - it will default to JVM wide ones if null
+        val queryLimits = executionInput.graphQLContext.get<QueryComplexityLimits>(QueryComplexityLimits.KEY)
+
         val validator = Validator()
-        val validationErrors = validator.validateDocument(graphQLSchema, document, Locale.getDefault())
+        val validationErrors =
+            validator.validateDocument(
+                graphQLSchema,
+                document,
+                validationRulePredicate,
+                Locale.getDefault(),
+                queryLimits
+            )
         validationCtx.onCompleted(validationErrors, null)
         return validationErrors
     }

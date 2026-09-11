@@ -4,6 +4,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
 import graphql.language.DirectiveDefinition
+import graphql.language.DirectiveExtensionDefinition
 import graphql.language.EnumTypeDefinition
 import graphql.language.EnumTypeExtensionDefinition
 import graphql.language.InputObjectTypeDefinition
@@ -179,6 +180,7 @@ class NadelPseudoSealedTypeKtTest {
             .areNotInterfaces()
             .equalsExactly(
                 DirectiveDefinition::class,
+                DirectiveExtensionDefinition::class,
                 EnumTypeDefinition::class,
                 EnumTypeExtensionDefinition::class,
                 InputObjectTypeDefinition::class,
@@ -206,6 +208,7 @@ class NadelPseudoSealedTypeKtTest {
             .areNotInterfaces()
             .equalsExactly(
                 DirectiveDefinition::class,
+                DirectiveExtensionDefinition::class,
                 EnumTypeDefinition::class,
                 EnumTypeExtensionDefinition::class,
                 InputObjectTypeDefinition::class,
