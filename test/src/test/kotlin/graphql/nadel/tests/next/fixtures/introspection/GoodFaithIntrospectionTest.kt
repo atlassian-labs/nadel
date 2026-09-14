@@ -5,7 +5,9 @@ import graphql.nadel.NadelExecutionInput
 import graphql.nadel.tests.next.fixtures.validation.QueryValidationTestBase
 import graphql.validation.QueryComplexityLimits
 
-class GoodFaithIntrospectionRejectedTest : GoodFaithIntrospectionTestBase()
+class GoodFaithIntrospectionRejectedTest : GoodFaithIntrospectionTestBase(
+    disabled = false
+)
 
 class GoodFaithIntrospectionDisabledTest : GoodFaithIntrospectionTestBase(
     disabled = true,
@@ -17,7 +19,7 @@ class GoodFaithIntrospectionDisabledWithQueryLimitsTest : GoodFaithIntrospection
 )
 
 abstract class GoodFaithIntrospectionTestBase(
-    private val disabled: Boolean = false,
+    private val disabled: Boolean,
     limits: QueryComplexityLimits? = null,
 ) : QueryValidationTestBase(
     query = """

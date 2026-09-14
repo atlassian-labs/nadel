@@ -243,8 +243,9 @@ class Nadel private constructor(
             ),
         )
         val goodFaithIntrospectionEnabled = GoodFaithIntrospection.isEnabled(executionInput.graphQLContext)
+        @Suppress("RedundantIf")
         val validationRulePredicate: Predicate<OperationValidationRule> = Predicate { rule ->
-            goodFaithIntrospectionEnabled || rule != OperationValidationRule.GOOD_FAITH_INTROSPECTION
+            if (rule == OperationValidationRule.GOOD_FAITH_INTROSPECTION) { goodFaithIntrospectionEnabled } else { true }
         }
         // get possible limits per request - it will default to JVM wide ones if null
         val queryLimits = executionInput.graphQLContext.get<QueryComplexityLimits>(QueryComplexityLimits.KEY)
