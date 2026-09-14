@@ -19,7 +19,10 @@ class ServiceExecutionParameters internal constructor(
      * @return details abut this service hydration or null if it's not a hydration call
      */
     val hydrationDetails: ServiceExecutionHydrationDetails?,
-    val executableNormalizedField: ExecutableNormalizedField,
+    /**
+     * All transformed underlying-schema root fields represented by [query], including artificial fields.
+     */
+    val executableNormalizedFields: List<ExecutableNormalizedField>,
 ) {
     val isHydrationCall: Boolean
         get() = hydrationDetails != null

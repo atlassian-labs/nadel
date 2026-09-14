@@ -1,6 +1,8 @@
 package graphql.nadel.tests.legacy.renames
 
+import graphql.nadel.ServiceExecution
 import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
+import kotlin.test.assertEquals
 
 class `string field rename` : NadelLegacyIntegrationTest(
     query = """
@@ -115,6 +117,16 @@ class `string field rename` : NadelLegacyIntegrationTest(
         ),
     ),
 ) {
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        val serviceExecution = super.makeServiceExecution(service)
+        return ServiceExecution { parameters ->
+            val field = parameters.executableNormalizedFields.single()
+            assertEquals("renameStringUnderlying", field.name)
+            assertEquals("rename__renameString__renameStringUnderlying", field.resultKey)
+            serviceExecution.execute(parameters)
+        }
+    }
+
     private enum class MyService_EnumUnderlying {
         X,
         Y,
