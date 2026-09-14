@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.legacy.monitor
+package graphql.nadel.tests.next.fixtures.validation
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,7 +10,7 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<`monitor emits timings`>()
+    graphql.nadel.tests.next.update<QueryDepthAtLimitTest>()
 }
 
 /**
@@ -19,14 +19,12 @@ private suspend fun main() {
  * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class `monitor emits timings snapshot` : TestSnapshot() {
+public class QueryDepthAtLimitTestSnapshot : TestSnapshot() {
     /**
      * Query
      *
      * ```graphql
-     * query {
-     *   foo
-     * }
+     * { echo { value } }
      * ```
      *
      * Variables
@@ -37,17 +35,21 @@ public class `monitor emits timings snapshot` : TestSnapshot() {
      */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
-                service = "service",
+                service = "echo",
                 query = """
                 | {
-                |   foo
+                |   echo {
+                |     value
+                |   }
                 | }
                 """.trimMargin(),
                 variables = "{}",
                 result = """
                 | {
                 |   "data": {
-                |     "foo": null
+                |     "echo": {
+                |       "value": "hello"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),
@@ -60,7 +62,9 @@ public class `monitor emits timings snapshot` : TestSnapshot() {
      * ```json
      * {
      *   "data": {
-     *     "foo": null
+     *     "echo": {
+     *       "value": "hello"
+     *     }
      *   }
      * }
      * ```
@@ -69,7 +73,9 @@ public class `monitor emits timings snapshot` : TestSnapshot() {
             result = """
             | {
             |   "data": {
-            |     "foo": null
+            |     "echo": {
+            |       "value": "hello"
+            |     }
             |   }
             | }
             """.trimMargin(),

@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.legacy.introspection
+package graphql.nadel.tests.next.fixtures.validation
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,16 +10,29 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<`no introspections on subscriptions`>()
+    graphql.nadel.tests.next.update<QueryDepthLimitExceededTest>()
 }
 
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class `no introspections on subscriptions snapshot` : TestSnapshot() {
+public class QueryDepthLimitExceededTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * { echo { value } }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             )
 
@@ -28,14 +41,8 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
      * {
      *   "errors": [
      *     {
-     *       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription
-     * operation '' root field '__typename' cannot be an introspection field",
-     *       "locations": [
-     *         {
-     *           "line": 2,
-     *           "column": 3
-     *         }
-     *       ],
+     *       "message": "Query depth 2 exceeds maximum allowed depth 1",
+     *       "locations": [],
      *       "extensions": {
      *         "classification": "ValidationError"
      *       }
@@ -49,13 +56,8 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
             | {
             |   "errors": [
             |     {
-            |       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription operation '' root field '__typename' cannot be an introspection field",
-            |       "locations": [
-            |         {
-            |           "line": 2,
-            |           "column": 3
-            |         }
-            |       ],
+            |       "message": "Query depth 2 exceeds maximum allowed depth 1",
+            |       "locations": [],
             |       "extensions": {
             |         "classification": "ValidationError"
             |       }

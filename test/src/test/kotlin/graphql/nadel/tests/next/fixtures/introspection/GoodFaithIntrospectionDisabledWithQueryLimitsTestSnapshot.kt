@@ -1,5 +1,5 @@
 // @formatter:off
-package graphql.nadel.tests.legacy.introspection
+package graphql.nadel.tests.next.fixtures.introspection
 
 import graphql.nadel.tests.next.ExpectedNadelResult
 import graphql.nadel.tests.next.ExpectedServiceCall
@@ -10,16 +10,36 @@ import kotlin.collections.List
 import kotlin.collections.listOf
 
 private suspend fun main() {
-    graphql.nadel.tests.next.update<`no introspections on subscriptions`>()
+    graphql.nadel.tests.next.update<GoodFaithIntrospectionDisabledWithQueryLimitsTest>()
 }
 
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
-public class `no introspections on subscriptions snapshot` : TestSnapshot() {
+public class GoodFaithIntrospectionDisabledWithQueryLimitsTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * {
+     *   first: __type(name: "Echo") {
+     *     name
+     *   }
+     *   second: __type(name: "Echo") {
+     *     name
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             )
 
@@ -28,14 +48,8 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
      * {
      *   "errors": [
      *     {
-     *       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription
-     * operation '' root field '__typename' cannot be an introspection field",
-     *       "locations": [
-     *         {
-     *           "line": 2,
-     *           "column": 3
-     *         }
-     *       ],
+     *       "message": "Query has 2 fields which exceeds maximum allowed 1",
+     *       "locations": [],
      *       "extensions": {
      *         "classification": "ValidationError"
      *       }
@@ -49,13 +63,8 @@ public class `no introspections on subscriptions snapshot` : TestSnapshot() {
             | {
             |   "errors": [
             |     {
-            |       "message": "Validation error (SubscriptionIntrospectionRootField) : Subscription operation '' root field '__typename' cannot be an introspection field",
-            |       "locations": [
-            |         {
-            |           "line": 2,
-            |           "column": 3
-            |         }
-            |       ],
+            |       "message": "Query has 2 fields which exceeds maximum allowed 1",
+            |       "locations": [],
             |       "extensions": {
             |         "classification": "ValidationError"
             |       }
