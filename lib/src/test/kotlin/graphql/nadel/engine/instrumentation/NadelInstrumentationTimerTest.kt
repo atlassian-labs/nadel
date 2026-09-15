@@ -6,9 +6,9 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationIsTimingEnab
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.ChildStep
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.RootStep
+import graphql.nadel.time.NadelInstrumentationTimer
 import io.kotest.core.spec.style.DescribeSpec
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.junit.jupiter.api.assertThrows
 import java.time.Duration
 
@@ -383,7 +383,7 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             assert(instrumentationParams.isNotEmpty())
         }
 
-        it("takes the highest time in a batch") {
+        it("combines times together") {
             // given
             var time = 10L
             val ticker = { Duration.ofMillis(time) }
@@ -409,33 +409,32 @@ class NadelInstrumentationTimerTest : DescribeSpec({
             // when
             timer.batch { batchTimer ->
                 coroutineScope {
-                    launch {
-                        batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
-                        ) { time += 64 }
-                        batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
-                        ) { time += 128 }
-                        batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
-                        ) { time += 128 }
-                    }
-                    launch {
-                        batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
-                        ) { time += 32 }
-                        batchTimer.time(
-                            ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
-                        ) { time += 32 }
-                    }
-                    launch {
-                        batchTimer.time(
-                            ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
-                        ) { time += 256 }
-                        batchTimer.time(
-                            ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
-                        ) { time += 64 }
-                    }
+                    batchTimer.time(
+                        ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
+                    ) { time += 64 }
+                    time -= 32 // Go back in time to cause overlap
+                    batchTimer.time(
+                        ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
+                    ) { time += 128 }
+                    batchTimer.time(
+                        ChildStep(parent = RootStep.ExecutionPlanning, "NadelHydrationTransform"),
+                    ) { time += 128 }
+
+                    batchTimer.time(
+                        ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
+                    ) { time += 32 }
+                    time -= 31 // Go back in time to cause overlap
+                    batchTimer.time(
+                        ChildStep(parent = RootStep.ExecutionPlanning, "NadelBatchHydrationTransform"),
+                    ) { time += 32 }
+
+                    batchTimer.time(
+                        ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
+                    ) { time += 256 }
+                    time += 20 // Go forward in time, timings are distinct
+                    batchTimer.time(
+                        ChildStep(parent = RootStep.ResultTransforming, "NadelBatchHydrationTransform"),
+                    ) { time += 64 }
                 }
             }
 
@@ -444,19 +443,19 @@ class NadelInstrumentationTimerTest : DescribeSpec({
                 it.step.getFullName() == "ExecutionPlanning.NadelHydrationTransform"
             }
             assert(planHydration.exception == null)
-            assert(planHydration.internalLatency == Duration.ofMillis(128))
+            assert(planHydration.internalLatency == Duration.ofMillis(64 + 128 - 32 + 128))
 
             val planBatchHydration = instrumentationParams.single {
                 it.step.getFullName() == "ExecutionPlanning.NadelBatchHydrationTransform"
             }
             assert(planBatchHydration.exception == null)
-            assert(planBatchHydration.internalLatency == Duration.ofMillis(32))
+            assert(planBatchHydration.internalLatency == Duration.ofMillis(32 - 31 + 32))
 
             val resultTransformBatchHydration = instrumentationParams.single {
                 it.step.getFullName() == "ResultTransforming.NadelBatchHydrationTransform"
             }
             assert(resultTransformBatchHydration.exception == null)
-            assert(resultTransformBatchHydration.internalLatency == Duration.ofMillis(256))
+            assert(resultTransformBatchHydration.internalLatency == Duration.ofMillis(256 + 64))
         }
     }
 })

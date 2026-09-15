@@ -1,4 +1,4 @@
-package graphql.nadel.engine.instrumentation
+package graphql.nadel.time
 
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -7,7 +7,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParame
 import java.io.Closeable
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
 
 internal class NadelInstrumentationTimer(
     private val isEnabled: Boolean,
@@ -89,17 +88,13 @@ internal class NadelInstrumentationTimer(
     }
 
     inner class BatchTimer internal constructor() : Closeable {
-        private val timings: MutableMap<Step, AtomicReference<Duration>> = ConcurrentHashMap()
+        private val timings: MutableMap<Step, NadelParallelElapsedCalculator> = ConcurrentHashMap()
 
         private var exception: Throwable? = null
 
         inline fun <T> time(step: Step, function: () -> T): T {
             if (!isEnabled) {
                 return function()
-            }
-
-            timings.computeIfAbsent(step) {
-                AtomicReference(Duration.ZERO)
             }
 
             val start = ticker()
@@ -112,16 +107,15 @@ internal class NadelInstrumentationTimer(
             } finally {
                 val end = ticker()
 
-                timings[step]!!.getAndUpdate { current ->
-                    // Just get the max
-                    current.coerceAtLeast(end - start)
-                }
+                timings.computeIfAbsent(step) {
+                    NadelParallelElapsedCalculator()
+                }.submit(start, end)
             }
         }
 
         override fun close() {
-            timings.forEach { (step, durationNs) ->
-                emit(step, durationNs.get(), exception)
+            timings.forEach { (step, calculator) ->
+                emit(step, calculator.calculate(), exception)
             }
         }
 
