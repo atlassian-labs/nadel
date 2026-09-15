@@ -8,6 +8,7 @@ import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStra
 import graphql.nadel.engine.blueprint.hydration.NadelObjectIdentifierCastingStrategy.TO_STRING
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.transform.hydration.batch.NadelResolvedObjectBatch
+import graphql.nadel.engine.transform.hydration.batch.NadelSharedResolvedObjectBatch
 import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.engine.transform.result.json.JsonNodeExtractor
 import graphql.nadel.engine.util.MutableJsonMap
@@ -83,28 +84,52 @@ internal class NadelBatchHydrationObjectIdentifiedIndexer(
     override fun getIndex(
         batches: List<NadelResolvedObjectBatch>,
     ): Map<NadelBatchHydrationIndexKey, JsonNode> {
-        return batches
-            .asSequence()
-            .flatMap { batch ->
-                JsonNodeExtractor.getNodesAt(batch.result.data, instruction.queryPathToBackingField, flatten = true)
-                    // Ignore nulls in result
-                    .filter {
-                        it.value != null
-                    }
-            }
+        return makeIndex(
+            batches.asSequence().flatMap { batch ->
+                JsonNodeExtractor.getNodesAt(
+                    batch.result.data,
+                    instruction.queryPathToBackingField,
+                    flatten = true,
+                )
+            },
+        )
+    }
+
+    /**
+     * Indexes results from aliased roots in a packed shared operation.
+     */
+    fun getSharedIndex(
+        batches: List<NadelSharedResolvedObjectBatch>,
+    ): Map<NadelBatchHydrationIndexKey, JsonNode> {
+        return makeIndex(
+            batches.asSequence().flatMap { batch ->
+                JsonNodeExtractor.getNodesAt(
+                    batch.result.data,
+                    batch.resultPath,
+                    flatten = true,
+                )
+            },
+        )
+    }
+
+    private fun makeIndex(
+        nodes: Sequence<JsonNode>,
+    ): Map<NadelBatchHydrationIndexKey, JsonNode> {
+        return nodes
+            .filter { node -> node.value != null }
             .groupBy { node ->
                 @Suppress("UNCHECKED_CAST")
-                (NadelBatchHydrationIndexKey(
+                NadelBatchHydrationIndexKey(
                     strategy.objectIds
                         .map { objectId ->
                             val resultKey = aliasHelper.getResultKey(objectId.resultId)
                             JsonNode(
                                 (node.value as MutableJsonMap).remove(
-                                    resultKey
+                                    resultKey,
                                 )
                             )
-                        }
-                ))
+                        },
+                )
             }
             .mapValues { (_, values) ->
                 // todo: stop doing stupid here

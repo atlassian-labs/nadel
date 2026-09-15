@@ -22,6 +22,9 @@ import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationCoalescingRound
+import graphql.nadel.engine.transform.hydration.batch.NadelBatchHydrationCoordinator
+import graphql.nadel.engine.transform.hydration.batch.NadelNewBatchHydrator
 import graphql.nadel.engine.transform.query.DynamicServiceResolution
 import graphql.nadel.engine.transform.query.NadelFieldToService
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -39,6 +42,7 @@ import graphql.nadel.engine.util.newServiceExecutionResult
 import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
+import graphql.nadel.hints.NadelBatchHydrationCoalescingHint
 import graphql.nadel.hooks.NadelExecutionHooks
 import graphql.nadel.hooks.createServiceExecutionContext
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -59,6 +63,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -199,22 +204,47 @@ internal class NextgenEngine(
 
             val result: ExecutionResult = try {
                 val fields = fieldToService.getServicesForTopLevelFields(executionContext)
+                val enabledBatchHydrationServices = getEnabledBatchHydrationServices(executionHints)
+                val coalescingRound = if (fields.isNotEmpty() && enabledBatchHydrationServices.isNotEmpty()) {
+                    val coordinator = NadelBatchHydrationCoordinator(
+                        engine = this@NextgenEngine,
+                        hydrator = NadelNewBatchHydrator(this@NextgenEngine),
+                    )
+                    NadelBatchHydrationCoalescingRound(
+                        participantCount = fields.size,
+                        enabledBackingServices = enabledBatchHydrationServices,
+                        dispatch = coordinator::hydrate,
+                    )
+                } else {
+                    null
+                }
                 val results = coroutineScope {
                     fields
-                        .map { (fields, service) ->
+                        .mapIndexed { index, (fields, service) ->
                             async {
+                                val participant = coalescingRound?.participant(index)
+                                val fieldExecutionContext = participant?.let {
+                                    executionContext.withBatchHydrationCoalescingParticipant(it)
+                                } ?: executionContext
                                 try {
-                                    val resolvedService = fieldToService.resolveDynamicService(fields, service)
-                                    executeTopLevelField(
-                                        topLevelFields = fields,
-                                        service = resolvedService,
-                                        executionContext = executionContext,
-                                    )
-                                } catch (e: Throwable) {
-                                    when (e) {
-                                        is GraphQLError -> newServiceExecutionErrorResult(fields, error = e)
-                                        else -> throw e
+                                    val fieldResult = try {
+                                        val resolvedService = fieldToService.resolveDynamicService(fields, service)
+                                        executeTopLevelField(
+                                            topLevelFields = fields,
+                                            service = resolvedService,
+                                            executionContext = fieldExecutionContext,
+                                        )
+                                    } catch (e: Throwable) {
+                                        when (e) {
+                                            is GraphQLError -> newServiceExecutionErrorResult(fields, error = e)
+                                            else -> throw e
+                                        }
                                     }
+                                    participant?.complete()
+                                    fieldResult
+                                } catch (e: Throwable) {
+                                    participant?.abort(e)
+                                    throw e
                                 }
                             }
                         }
@@ -254,9 +284,27 @@ internal class NextgenEngine(
         executionContext: NadelExecutionContext,
         hydrationDetails: ServiceExecutionHydrationDetails,
     ): ServiceExecutionResult {
+        return executeHydration(
+            topLevelFields = listOf(topLevelField),
+            service = service,
+            executionContext = executionContext,
+            hydrationDetails = hydrationDetails,
+        )
+    }
+
+    internal suspend fun executeHydration(
+        topLevelFields: List<ExecutableNormalizedField>,
+        service: Service,
+        executionContext: NadelExecutionContext,
+        hydrationDetails: ServiceExecutionHydrationDetails,
+    ): ServiceExecutionResult {
+        require(topLevelFields.isNotEmpty()) {
+            "At least one top-level field is required for hydration execution"
+        }
+
         return try {
             executeTopLevelField(
-                topLevelFields = listOf(topLevelField),
+                topLevelFields = topLevelFields,
                 service = service,
                 executionContext = executionContext.copy(
                     hydrationDetails = hydrationDetails,
@@ -265,7 +313,7 @@ internal class NextgenEngine(
         } catch (e: Exception) {
             when (e) {
                 is GraphQLError -> newServiceExecutionErrorResult(
-                    field = topLevelField,
+                    fields = topLevelFields,
                     error = e,
                 )
                 else -> throw e
@@ -325,6 +373,8 @@ internal class NextgenEngine(
             )
         }
         if (result is NadelIncrementalServiceExecutionResult) {
+            val incrementalExecutionContext = executionContext
+                .withBatchHydrationCoalescingParticipant(null)
             executionContext.incrementalResultSupport.defer(
                 result.incrementalItemPublisher
                     .asFlow()
@@ -335,7 +385,7 @@ internal class NextgenEngine(
                             ?.forEach { deferPayload ->
                                 resultTransformer
                                     .transform(
-                                        executionContext = executionContext,
+                                        executionContext = incrementalExecutionContext,
                                         serviceExecutionContext = serviceExecutionContext,
                                         executionPlan = executionPlan,
                                         artificialFields = queryTransform.artificialFields,
@@ -418,6 +468,9 @@ internal class NextgenEngine(
                 .asDeferred()
                 .await()
         } catch (e: Exception) {
+            if (e is CancellationException) {
+                throw e
+            }
             val errorMessage = "An exception occurred invoking the service '${service.name}'"
             val errorMessageNotSafe = "$errorMessage: ${e.message}"
             val executionId = serviceExecParams.executionId.toString()
@@ -508,6 +561,18 @@ internal class NextgenEngine(
             return OperationNameUtil.getLegacyOperationName(service.name, originalOperationName)
         } else {
             originalOperationName
+        }
+    }
+
+    private fun getEnabledBatchHydrationServices(
+        executionHints: NadelExecutionHints,
+    ): Set<Service> {
+        val hint = executionHints.batchHydrationCoalescing
+        if (hint === NadelBatchHydrationCoalescingHint.disabled) {
+            return emptySet()
+        }
+        return services.values.filterTo(linkedSetOf()) { service ->
+            hint(service)
         }
     }
 
