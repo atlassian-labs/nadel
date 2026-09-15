@@ -14,7 +14,7 @@ import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.message
 import strikt.api.Assertion
 import strikt.api.expectThat
-import strikt.assertions.contains
+import strikt.assertions.isEqualTo
 import strikt.assertions.get
 import strikt.assertions.isA
 import strikt.assertions.isNotNull
@@ -23,11 +23,13 @@ import strikt.assertions.single
 
 @UseHook
 class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-result` : EngineTestHook {
+    private class PopGoesTheWeaselException : Exception()
+
     override fun wrapServiceExecution(serviceName: String, baseTestServiceExecution: ServiceExecution): ServiceExecution {
         return when (serviceName) {
             // This is the hydration service, we die on hydration
             "Bar" -> ServiceExecution {
-                throw RuntimeException("Pop goes the weasel")
+                throw PopGoesTheWeaselException()
             }
             else -> baseTestServiceExecution
         }
@@ -48,7 +50,7 @@ class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-r
         expectThat(result).errors
             .single()
             .message
-            .contains("Pop goes the weasel")
+            .isEqualTo("An PopGoesTheWeaselException occurred invoking the service Bar")
     }
 }
 
