@@ -67,15 +67,22 @@ public class HydrationFollowedByPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "videos_service",
                 query = """
-                | query getViewedVideos {
-                |   videos(ids: ["video-1:partition-A", "video-3:partition-A"]) {
+                | query getViewedVideos(${'$'}v0: [ID!]!) {
+                |   videos(ids: ${'$'}v0) {
                 |     id
                 |     batch_hydration__data__id: id
                 |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "video-1:partition-A",
+                |     "video-3:partition-A"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -100,15 +107,22 @@ public class HydrationFollowedByPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "videos_service",
                 query = """
-                | query getViewedVideos {
-                |   videos(ids: ["video-2:partition-B", "video-4:partition-B"]) {
+                | query getViewedVideos(${'$'}v0: [ID!]!) {
+                |   videos(ids: ${'$'}v0) {
                 |     id
                 |     batch_hydration__data__id: id
                 |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "video-2:partition-B",
+                |     "video-4:partition-B"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

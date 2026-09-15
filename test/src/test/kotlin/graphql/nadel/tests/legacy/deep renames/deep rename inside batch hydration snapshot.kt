@@ -24,8 +24,8 @@ public class `deep rename inside batch hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
+                | query (${'$'}v0: [ID!]) {
+                |   issuesByIds(id: ${'$'}v0) {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
                 |       detailName
@@ -34,7 +34,15 @@ public class `deep rename inside batch hydration snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "issue-1",
+                |     "issue-2",
+                |     "issue-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

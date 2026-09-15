@@ -24,15 +24,21 @@ public class StaticHydrationAndPolymorphicHydrationTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "bitbucket",
                 query = """
-                | {
-                |   pullRequestsByIds(ids: ["ari:cloud:bitbucket::pull-request/2"]) {
-                |     title
-                |     patch
+                | query (${'$'}v0: [ID!]!) {
+                |   pullRequestsByIds(ids: ${'$'}v0) {
                 |     batch_hydration__node__id: id
+                |     patch
+                |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:bitbucket::pull-request/2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -52,13 +58,13 @@ public class StaticHydrationAndPolymorphicHydrationTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
-                | {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
+                | query (${'$'}v0: String!) {
+                |   graphStore_query(query: ${'$'}v0) {
                 |     edges {
-                |       batch_hydration__node__nodeId: nodeId
-                |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
                 |       cursor
+                |       batch_hydration__node__nodeId: nodeId
+                |       batch_hydration__node__nodeId: nodeId
                 |     }
                 |     pageInfo {
                 |       hasNextPage
@@ -66,7 +72,11 @@ public class StaticHydrationAndPolymorphicHydrationTestSnapshot : TestSnapshot()
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": "SELECT * FROM Work WHERE teamId = ?"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -96,14 +106,20 @@ public class StaticHydrationAndPolymorphicHydrationTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "jira",
                 query = """
-                | {
-                |   issuesByIds(ids: ["ari:cloud:jira::issue/1"]) {
-                |     key
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     batch_hydration__node__id: id
+                |     key
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:jira::issue/1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

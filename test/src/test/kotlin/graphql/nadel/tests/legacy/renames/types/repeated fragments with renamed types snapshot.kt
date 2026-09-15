@@ -24,8 +24,8 @@ public class `repeated fragments with renamed types snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Users",
                 query = """
-                | {
-                |   service(id: "service-1") {
+                | query (${'$'}v0: ID!) {
+                |   service(id: ${'$'}v0) {
                 |     __typename
                 |     dependedOn {
                 |       __typename
@@ -212,7 +212,11 @@ public class `repeated fragments with renamed types snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "service-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

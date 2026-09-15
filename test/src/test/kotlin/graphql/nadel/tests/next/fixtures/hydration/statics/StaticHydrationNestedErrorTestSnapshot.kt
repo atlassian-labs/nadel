@@ -24,14 +24,14 @@ public class StaticHydrationNestedErrorTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
-                | {
-                |   graphStore_query(query: "SELECT * FROM Work WHERE teamId = ?") {
+                | query (${'$'}v0: String!) {
+                |   graphStore_query(query: ${'$'}v0) {
                 |     __typename
                 |     edges {
                 |       __typename
-                |       batch_hydration__node__nodeId: nodeId
                 |       __typename__batch_hydration__node: __typename
                 |       cursor
+                |       batch_hydration__node__nodeId: nodeId
                 |     }
                 |     pageInfo {
                 |       __typename
@@ -40,7 +40,11 @@ public class StaticHydrationNestedErrorTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": "SELECT * FROM Work WHERE teamId = ?"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

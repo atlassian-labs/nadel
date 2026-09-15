@@ -53,14 +53,21 @@ public class `hydration call with argument value from original field argument sn
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(extraArg: "extraArg", id: ["USER-1"]) {
+                | query (${'$'}v0: String, ${'$'}v1: [ID]) {
+                |   usersByIds(extraArg: ${'$'}v0, id: ${'$'}v1) {
                 |     batch_hydration__author__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "extraArg",
+                |   "v1": [
+                |     "USER-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

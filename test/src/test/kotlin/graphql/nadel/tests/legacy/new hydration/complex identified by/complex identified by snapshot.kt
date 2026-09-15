@@ -106,8 +106,8 @@ public class `complex identified by snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   users(id: [{site : "hello", userId : "USER-1"}, {site : "hello", userId : "USER-3"}, {site : "jdog", userId : "USER-2"}, {site : "hello", userId : "USER-4"}]) {
+                | query (${'$'}v0: [UserInput]) {
+                |   users(id: ${'$'}v0) {
                 |     id
                 |     batch_hydration__author__id: id
                 |     name
@@ -115,7 +115,28 @@ public class `complex identified by snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     {
+                |       "userId": "USER-1",
+                |       "site": "hello"
+                |     },
+                |     {
+                |       "userId": "USER-3",
+                |       "site": "hello"
+                |     },
+                |     {
+                |       "userId": "USER-2",
+                |       "site": "jdog"
+                |     },
+                |     {
+                |       "userId": "USER-4",
+                |       "site": "hello"
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -154,8 +175,8 @@ public class `complex identified by snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   users(id: [{site : "hello", userId : "USER-5"}, {site : "hello", userId : "USER-2"}]) {
+                | query (${'$'}v0: [UserInput]) {
+                |   users(id: ${'$'}v0) {
                 |     id
                 |     batch_hydration__author__id: id
                 |     name
@@ -163,7 +184,20 @@ public class `complex identified by snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     {
+                |       "userId": "USER-5",
+                |       "site": "hello"
+                |     },
+                |     {
+                |       "userId": "USER-2",
+                |       "site": "hello"
+                |     }
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

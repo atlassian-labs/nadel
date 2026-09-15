@@ -24,8 +24,8 @@ public class `renamed type inside hydration that returns null snapshot` : TestSn
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issueById(id: "issue-2") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     details {
                 |       __typename
                 |       name
@@ -33,7 +33,11 @@ public class `renamed type inside hydration that returns null snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue-2"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

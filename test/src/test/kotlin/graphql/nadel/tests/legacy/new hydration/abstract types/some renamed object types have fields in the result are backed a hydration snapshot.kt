@@ -72,13 +72,17 @@ public class `some renamed object types have fields in the result are backed a h
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "user-100") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "user-100"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -94,13 +98,17 @@ public class `some renamed object types have fields in the result are backed a h
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "user-20") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "user-20"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

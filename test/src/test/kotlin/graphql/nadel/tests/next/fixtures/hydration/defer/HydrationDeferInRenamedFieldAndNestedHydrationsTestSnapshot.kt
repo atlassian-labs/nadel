@@ -24,14 +24,18 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   rename__issueById__getIssueById: getIssueById(id: "1") {
-                |     hydration__assigneeV2__assigneeId: assigneeId
+                | query (${'$'}v0: ID!) {
+                |   rename__issueById__getIssueById: getIssueById(id: ${'$'}v0) {
                 |     __typename__hydration__assigneeV2: __typename
+                |     hydration__assigneeV2__assigneeId: assigneeId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -48,14 +52,18 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   rename__issueById__getIssueById: getIssueById(id: "1") {
-                |     hydration__self__id: id
+                | query (${'$'}v0: ID!) {
+                |   rename__issueById__getIssueById: getIssueById(id: ${'$'}v0) {
                 |     __typename__hydration__self: __typename
+                |     hydration__self__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -72,14 +80,18 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   rename__issueById__getIssueById: getIssueById(id: "1") {
-                |     hydration__self__id: id
+                | query (${'$'}v0: ID!) {
+                |   rename__issueById__getIssueById: getIssueById(id: ${'$'}v0) {
                 |     __typename__hydration__self: __typename
+                |     hydration__self__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -96,15 +108,19 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   rename__issueByKey__getIssueByKey: getIssueByKey(key: "GQLGW-1") {
+                | query (${'$'}v0: String!) {
+                |   rename__issueByKey__getIssueByKey: getIssueByKey(key: ${'$'}v0) {
+                |     __typename__hydration__self: __typename
+                |     hydration__self__id: id
                 |     key
-                |     hydration__self__id: id
-                |     __typename__hydration__self: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "GQLGW-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -122,13 +138,17 @@ public class HydrationDeferInRenamedFieldAndNestedHydrationsTestSnapshot : TestS
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   rename__quickUser__user_fast: user_fast(id: "ari:cloud:identity::user/1") {
+                | query (${'$'}v0: ID!) {
+                |   rename__quickUser__user_fast: user_fast(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

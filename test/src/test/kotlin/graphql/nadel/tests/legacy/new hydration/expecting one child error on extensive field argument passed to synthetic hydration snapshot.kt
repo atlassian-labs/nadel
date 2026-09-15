@@ -26,8 +26,8 @@ public class
             ExpectedServiceCall(
                 service = "TestBoard",
                 query = """
-                | {
-                |   board(id: 1) {
+                | query (${'$'}v0: ID) {
+                |   board(id: ${'$'}v0) {
                 |     __typename__rename__cardChildren: __typename
                 |     id
                 |     rename__cardChildren__issueChildren: issueChildren {
@@ -41,7 +41,11 @@ public class
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 1
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -84,16 +88,24 @@ public class
             ExpectedServiceCall(
                 service = "Users",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   usersQuery {
-                |     users(accountIds: ["1", "2", "3"]) {
+                |     users(accountIds: ${'$'}v0) {
                 |       accountId
                 |       batch_hydration__assignee__accountId: accountId
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "1",
+                |     "2",
+                |     "3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

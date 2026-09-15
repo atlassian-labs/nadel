@@ -24,8 +24,8 @@ public class `renamed type inside deep rename snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issueById(id: "issue-1") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__deep_rename__assignee: __typename
                 |     deep_rename__assignee__details: details {
                 |       assignee {
@@ -39,7 +39,11 @@ public class `renamed type inside deep rename snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

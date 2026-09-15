@@ -24,11 +24,11 @@ public class DeferGroupingTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   issue(id: 1) {
+                | query (${'$'}v0: ID!) {
+                |   issue(id: ${'$'}v0) {
                 |     ... @defer {
-                |       key
                 |       id
+                |       key
                 |     }
                 |     ... @defer {
                 |       key
@@ -36,7 +36,11 @@ public class DeferGroupingTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 1
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

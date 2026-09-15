@@ -24,13 +24,17 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   detail(detailId: "ID") {
+                | query (${'$'}v0: ID) {
+                |   detail(detailId: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -74,13 +78,17 @@ public class `same source for  hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   issue(issueId: "ID") {
+                | query (${'$'}v0: ID) {
+                |   issue(issueId: ${'$'}v0) {
                 |     field
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ID"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

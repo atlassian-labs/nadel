@@ -25,16 +25,20 @@ public class `simple synthetic hydration with one service and type renaming snap
             ExpectedServiceCall(
                 service = "testing",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   tests {
-                |     character(id: "C1") {
+                |     character(id: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "C1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

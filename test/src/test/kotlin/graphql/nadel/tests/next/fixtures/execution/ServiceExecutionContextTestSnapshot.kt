@@ -20,13 +20,17 @@ private suspend fun main() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   bug: issue(id: 6) {
+                | query (${'$'}v0: ID!) {
+                |   bug: issue(id: ${'$'}v0) {
                 |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 6
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -42,13 +46,17 @@ private suspend fun main() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   issue(id: "9") {
+                | query (${'$'}v0: ID!) {
+                |   issue(id: ${'$'}v0) {
                 |     title
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "9"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

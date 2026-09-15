@@ -24,17 +24,21 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   issue(id: 1) {
-                |     hydration__assignee__assigneeId: assigneeId
+                | query (${'$'}v0: ID!) {
+                |   issue(id: ${'$'}v0) {
                 |     __typename__hydration__assignee: __typename
+                |     hydration__assignee__assigneeId: assigneeId
                 |     ... @defer {
                 |       key
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 1
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -67,13 +71,17 @@ public class HydrationDeferGroupingTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   user(id: "1") {
+                | query (${'$'}v0: ID!) {
+                |   user(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

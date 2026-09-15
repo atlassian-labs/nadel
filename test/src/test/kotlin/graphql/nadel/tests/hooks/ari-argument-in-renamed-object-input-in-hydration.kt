@@ -5,7 +5,6 @@ import graphql.language.ObjectField.newObjectField
 import graphql.language.ObjectValue
 import graphql.language.ObjectValue.newObjectValue
 import graphql.language.StringValue
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
@@ -186,8 +185,4 @@ class `ari-argument-in-renamed-object-input-in-hydration` : EngineTestHook {
             }
         )
 
-    override fun makeExecutionHints(builder: NadelExecutionHints.Builder): NadelExecutionHints.Builder {
-        return builder
-            .allDocumentVariablesHint { true }
-    }
 }

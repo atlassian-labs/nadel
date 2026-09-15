@@ -24,14 +24,18 @@ public class `ari argument transform on renamed field snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   rename__issue__issueById: issueById(id: "57") {
+                | query (${'$'}v0: ID) {
+                |   rename__issue__issueById: issueById(id: ${'$'}v0) {
                 |     __typename__rename__key: __typename
                 |     rename__key__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "57"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,8 +24,8 @@ public class `query with three nested hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["bar1", "bar2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__batch_hydration__nestedBar: __typename
                 |     batch_hydration__bar__barId: barId
                 |     name
@@ -33,7 +33,14 @@ public class `query with three nested hydrations snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar1",
+                |     "bar2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -60,8 +67,8 @@ public class `query with three nested hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["bar3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__batch_hydration__nestedBar: __typename
                 |     batch_hydration__bar__barId: barId
                 |     name
@@ -69,7 +76,13 @@ public class `query with three nested hydrations snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -90,8 +103,8 @@ public class `query with three nested hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["nestedBar1", "nestedBar2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     __typename__batch_hydration__nestedBar: __typename
                 |     batch_hydration__nestedBar__barId: barId
                 |     name
@@ -99,7 +112,14 @@ public class `query with three nested hydrations snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBar1",
+                |     "nestedBar2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -120,14 +140,20 @@ public class `query with three nested hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barsById(id: ["nestedBarId456"]) {
+                | query (${'$'}v0: [ID]) {
+                |   barsById(id: ${'$'}v0) {
                 |     batch_hydration__nestedBar__barId: barId
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBarId456"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

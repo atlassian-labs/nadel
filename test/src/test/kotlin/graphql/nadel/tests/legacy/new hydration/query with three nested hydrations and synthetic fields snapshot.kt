@@ -24,9 +24,9 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   barsQuery {
-                |     barsById(id: ["bar1", "bar2"]) {
+                |     barsById(id: ${'$'}v0) {
                 |       __typename__batch_hydration__nestedBar: __typename
                 |       batch_hydration__bar__barId: barId
                 |       name
@@ -35,7 +35,14 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar1",
+                |     "bar2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -64,9 +71,9 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   barsQuery {
-                |     barsById(id: ["bar3"]) {
+                |     barsById(id: ${'$'}v0) {
                 |       __typename__batch_hydration__nestedBar: __typename
                 |       batch_hydration__bar__barId: barId
                 |       name
@@ -75,7 +82,13 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -98,9 +111,9 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   barsQuery {
-                |     barsById(id: ["nestedBar1", "nestedBar2"]) {
+                |     barsById(id: ${'$'}v0) {
                 |       __typename__batch_hydration__nestedBar: __typename
                 |       batch_hydration__nestedBar__barId: barId
                 |       name
@@ -109,7 +122,14 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBar1",
+                |     "nestedBar2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -132,16 +152,22 @@ public class `query with three nested hydrations and synthetic fields snapshot` 
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   barsQuery {
-                |     barsById(id: ["nestedBarId456"]) {
+                |     barsById(id: ${'$'}v0) {
                 |       batch_hydration__nestedBar__barId: barId
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "nestedBarId456"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

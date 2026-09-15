@@ -24,14 +24,18 @@ public class HydrationDeferForwardsErrorsTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issueByKey(key: "GQLGW-2") {
-                |     hydration__assignee__assigneeId: assigneeId
+                | query (${'$'}v0: String!) {
+                |   issueByKey(key: ${'$'}v0) {
                 |     __typename__hydration__assignee: __typename
+                |     hydration__assignee__assigneeId: assigneeId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "GQLGW-2"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -48,13 +52,17 @@ public class HydrationDeferForwardsErrorsTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/0") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/0"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "errors": [

@@ -50,13 +50,17 @@ public class `conditional hydration matches predicate works with id type snapsho
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "BAR_B") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "BAR_B"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

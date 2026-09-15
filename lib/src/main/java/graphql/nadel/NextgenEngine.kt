@@ -57,7 +57,6 @@ import graphql.nadel.util.OperationNameUtil
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
-import graphql.normalized.VariablePredicate
 import graphql.schema.GraphQLSchema
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -380,15 +379,13 @@ internal class NextgenEngine(
 
         val executionInput = executionContext.executionInput
 
-        val jsonPredicate: VariablePredicate = getDocumentVariablePredicate(executionContext.hints, service)
-
         val compileResult = timer.time(step = DocumentCompilation) {
             compileToDocument(
                 schema = service.underlyingSchema,
                 operationKind = topLevelFields.first().getOperationKind(engineSchema),
                 operationName = getOperationName(service, executionContext),
                 topLevelFields = topLevelFields,
-                variablePredicate = jsonPredicate,
+                variablePredicate = DocumentPredicates.allVariablesPredicate,
                 deferSupport = executionContext.hints.deferSupport(),
                 forcePrintBareFields = forcePrintBareFields,
             )
@@ -492,14 +489,6 @@ internal class NextgenEngine(
             && topLevelField.hasChildren()
             && topLevelField.children.all { it.name == TypeNameMetaFieldDef.name }
             && topLevelField.children.none(::isSkipIncludeArtificialField)
-    }
-
-    private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
-        return if (hints.allDocumentVariablesHint.invoke(service)) {
-            DocumentPredicates.allVariablesPredicate
-        } else {
-            DocumentPredicates.jsonPredicate
-        }
     }
 
     private fun getOperationName(service: Service, executionContext: NadelExecutionContext): String? {

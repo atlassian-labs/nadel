@@ -24,17 +24,21 @@ public class HydrationRenamedFieldInDeferTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
+                | query (${'$'}v0: String!) {
                 |   ... @defer {
-                |     rename__issueByKey__getIssueByKey: getIssueByKey(key: "GQLGW-1") {
-                |       key
-                |       hydration__assignee__assigneeId: assigneeId
+                |     rename__issueByKey__getIssueByKey: getIssueByKey(key: ${'$'}v0) {
                 |       __typename__hydration__assignee: __typename
+                |       hydration__assignee__assigneeId: assigneeId
+                |       key
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "GQLGW-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {},
@@ -64,13 +68,17 @@ public class HydrationRenamedFieldInDeferTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   userById(id: "ari:cloud:identity::user/1") {
+                | query (${'$'}v0: ID!) {
+                |   userById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:identity::user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

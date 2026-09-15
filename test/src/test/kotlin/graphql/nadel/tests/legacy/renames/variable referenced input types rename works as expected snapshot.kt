@@ -24,11 +24,17 @@ public class `variable referenced input types rename works as expected snapshot`
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query X {
-                |   renameInput(arg1: {inputVal : "x"})
+                | query X(${'$'}v0: InputUnderlying!) {
+                |   renameInput(arg1: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "inputVal": "x"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

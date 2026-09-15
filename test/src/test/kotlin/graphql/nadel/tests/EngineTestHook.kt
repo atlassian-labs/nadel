@@ -8,6 +8,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.SchemaTransformationHook
+import graphql.nadel.tests.legacy.NadelLegacyIntegrationTest
 import graphql.nadel.tests.util.join
 import graphql.nadel.tests.util.toSlug
 import graphql.nadel.validation.NadelSchemaValidationError
@@ -129,20 +130,26 @@ private object Util {
 
         // TODO: provide single source of truth for this logic - duplicated in EngineTests
         @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        val allFixtureFileNames = File(javaClass.classLoader.getResource("fixtures").path)
+        val allTestNames = File(javaClass.classLoader.getResource("fixtures").path)
             .walkTopDown()
             .filter { it.extension == "yml" || it.extension == "yaml" }
             .map { it.nameWithoutExtension }
             .toHashSet()
-
-        hookImpls
-            .filter { it.isAnnotationPresent(UseHook::class.java) }
-            .forEach { hookImpl ->
-                val fixtureName = hookImpl.simpleName
-                if (fixtureName !in allFixtureFileNames) {
-                    error("Unable to find matching test for hook: $fixtureName")
-                }
+            .apply {
+                Reflections(NadelLegacyIntegrationTest::class.java.packageName)
+                    .getSubTypesOf(NadelLegacyIntegrationTest::class.java)
+                    .mapTo(this) { it.simpleName.toSlug() }
             }
+
+        val hooksWithoutTests = hookImpls
+            .filter { it.isAnnotationPresent(UseHook::class.java) }
+            .map { it.simpleName }
+            .filterNot { it in allTestNames }
+            .sorted()
+
+        check(hooksWithoutTests.isEmpty()) {
+            "Unable to find matching tests for hooks: ${hooksWithoutTests.joinToString()}"
+        }
 
         return true
     }

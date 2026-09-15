@@ -24,16 +24,23 @@ public class PartitionWithNamespaceFieldAliasTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
                 |   aliasedNamespace: namespace {
-                |     things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
+                |     things(ids: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-1:partition-A",
+                |     "thing-3:partition-A"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -58,16 +65,23 @@ public class PartitionWithNamespaceFieldAliasTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
                 |   aliasedNamespace: namespace {
-                |     things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
+                |     things(ids: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-2:partition-B",
+                |     "thing-4:partition-B"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -92,16 +106,23 @@ public class PartitionWithNamespaceFieldAliasTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
                 |   aliasedNamespace: namespace {
-                |     things(ids: ["thing-5:partition-C", "thing-7:partition-C"]) {
+                |     things(ids: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-5:partition-C",
+                |     "thing-7:partition-C"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -126,16 +147,23 @@ public class PartitionWithNamespaceFieldAliasTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
                 |   aliasedNamespace: namespace {
-                |     things(ids: ["thing-6:partition-D", "thing-8:partition-D"]) {
+                |     things(ids: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-6:partition-D",
+                |     "thing-8:partition-D"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -48,15 +48,19 @@ public class `top level field data returns null in synthetic hydration snapshot`
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   projects {
-                |     project(id: "project1") {
+                |     project(id: ${'$'}v0) {
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "project1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

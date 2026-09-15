@@ -48,13 +48,17 @@ public class `basic hydration with actor field rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   rename__barByIdOverall__barById: barById(id: "barId") {
+                | query (${'$'}v0: ID) {
+                |   rename__barByIdOverall__barById: barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

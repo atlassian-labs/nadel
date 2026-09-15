@@ -24,20 +24,28 @@ public class PartialPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: [ID!]!, ${'$'}v1: ID!) {
                 |   api {
-                |     things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
+                |     stuff(id: ${'$'}v1) {
                 |       id
                 |       name
                 |     }
-                |     stuff(id: "Stuff-1") {
+                |     things(ids: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-1:partition-A",
+                |     "thing-3:partition-A"
+                |   ],
+                |   "v1": "Stuff-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -66,16 +74,23 @@ public class PartialPartitionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
                 |   api {
-                |     things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
+                |     things(ids: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-2:partition-B",
+                |     "thing-4:partition-B"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

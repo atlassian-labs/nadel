@@ -24,13 +24,17 @@ public class `date time scalar as input type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   foo(input: "2022-03-09T05:01:50Z") {
+                | query (${'$'}v0: DateTime) {
+                |   foo(input: ${'$'}v0) {
                 |     thing
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "2022-03-09T05:01:50Z"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

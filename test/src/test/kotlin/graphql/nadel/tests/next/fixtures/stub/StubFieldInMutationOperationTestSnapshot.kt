@@ -24,8 +24,8 @@ public class StubFieldInMutationOperationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | mutation {
-                |   createLlmBackedIssue(input: {prompt : "Need tests for stubbed fields in Mutation context"}) {
+                | mutation (${'$'}v0: CreateLlmBackedIssueInput) {
+                |   createLlmBackedIssue(input: ${'$'}v0) {
                 |     issue {
                 |       __typename__stubbed__key: __typename
                 |       id
@@ -35,7 +35,13 @@ public class StubFieldInMutationOperationTestSnapshot : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "prompt": "Need tests for stubbed fields in Mutation context"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

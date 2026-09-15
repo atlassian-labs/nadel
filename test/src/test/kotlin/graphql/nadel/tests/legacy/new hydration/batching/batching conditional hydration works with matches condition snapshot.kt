@@ -56,14 +56,21 @@ public class `batching conditional hydration works with matches condition snapsh
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   othersById(ids: ["barId1", "barId2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   othersById(ids: ${'$'}v0) {
                 |     batch_hydration__bar__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "barId1",
+                |     "barId2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

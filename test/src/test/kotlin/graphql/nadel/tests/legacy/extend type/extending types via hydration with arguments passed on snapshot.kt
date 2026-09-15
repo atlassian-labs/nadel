@@ -24,13 +24,20 @@ public class `extending types via hydration with arguments passed on snapshot` :
             ExpectedServiceCall(
                 service = "Association",
                 query = """
-                | {
-                |   association(filter: {name : "value"}, id: "ISSUE-1") {
+                | query (${'$'}v0: ID, ${'$'}v1: Filter) {
+                |   association(filter: ${'$'}v1, id: ${'$'}v0) {
                 |     nameOfAssociation
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ISSUE-1",
+                |   "v1": {
+                |     "name": "value"
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

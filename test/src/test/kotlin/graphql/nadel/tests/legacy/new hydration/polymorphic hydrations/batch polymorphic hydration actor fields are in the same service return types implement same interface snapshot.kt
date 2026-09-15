@@ -26,8 +26,8 @@ public class
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | {
-                |   humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   humanById(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__data__id: id
@@ -35,7 +35,14 @@ public class
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "HUMAN-0",
+                |     "HUMAN-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -62,8 +69,8 @@ public class
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | {
-                |   petById(ids: ["PET-0", "PET-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   petById(ids: ${'$'}v0) {
                 |     __typename
                 |     breed
                 |     id
@@ -71,7 +78,14 @@ public class
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "PET-0",
+                |     "PET-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,13 +24,17 @@ public class `handles include directive field with hydrated parent snapshot` : T
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   fooById(id: "Foo-1") {
+                | query (${'$'}v0: ID) {
+                |   fooById(id: ${'$'}v0) {
                 |     __typename__skip_include____skip: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "Foo-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

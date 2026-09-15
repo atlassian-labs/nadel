@@ -70,14 +70,21 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["CLOUD-ID-1/USER-1", "CLOUD-ID-1/USER-3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(id: ${'$'}v0) {
                 |     id
                 |     batch_hydration__authors__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "CLOUD-ID-1/USER-1",
+                |     "CLOUD-ID-1/USER-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -100,14 +107,20 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["CLOUD-ID-1/USER-5"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(id: ${'$'}v0) {
                 |     id
                 |     batch_hydration__authors__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "CLOUD-ID-1/USER-5"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -126,14 +139,21 @@ public class `batching of hydration list with partition snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["CLOUD-ID-2/USER-2", "CLOUD-ID-2/USER-4"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(id: ${'$'}v0) {
                 |     id
                 |     batch_hydration__authors__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "CLOUD-ID-2/USER-2",
+                |     "CLOUD-ID-2/USER-4"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

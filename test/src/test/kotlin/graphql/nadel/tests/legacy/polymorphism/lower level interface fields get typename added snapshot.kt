@@ -24,8 +24,8 @@ public class `lower level interface fields get typename added snapshot` : TestSn
             ExpectedServiceCall(
                 service = "PetService",
                 query = """
-                | query petQ {
-                |   pets(isLoyal: true) {
+                | query petQ(${'$'}v0: Boolean) {
+                |   pets(isLoyal: ${'$'}v0) {
                 |     collar {
                 |       color
                 |     }
@@ -33,7 +33,11 @@ public class `lower level interface fields get typename added snapshot` : TestSn
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": true
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -48,13 +48,17 @@ public class `hydrating using long as arg snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   successor(after: 3000000000) {
+                | query (${'$'}v0: Long) {
+                |   successor(after: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 3000000000
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

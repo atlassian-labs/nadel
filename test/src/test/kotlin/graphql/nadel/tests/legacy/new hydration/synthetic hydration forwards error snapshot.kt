@@ -48,15 +48,19 @@ public class `synthetic hydration forwards error snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
+                | query (${'$'}v0: ID) {
                 |   barsQuery {
-                |     barById(id: "barId1") {
+                |     barById(id: ${'$'}v0) {
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "errors": [

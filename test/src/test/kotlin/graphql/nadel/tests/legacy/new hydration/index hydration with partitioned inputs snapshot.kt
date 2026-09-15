@@ -70,13 +70,20 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["site-1/user-1", "site-1/user-3"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "site-1/user-1",
+                |     "site-1/user-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -97,13 +104,19 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["site-1/user-5"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "site-1/user-5"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -121,13 +134,20 @@ public class `index hydration with partitioned inputs snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["site-2/user-2", "site-2/user-4"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "site-2/user-2",
+                |     "site-2/user-4"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

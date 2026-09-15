@@ -49,13 +49,17 @@ public class `hydration with multiple true conditions takes first snapshot` : Te
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "BAR_A") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "BAR_A"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

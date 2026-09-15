@@ -24,14 +24,16 @@ public class `input object with json field snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | query myQuery(${'$'}v0: JSON) {
-                |   hello(arg: {payload : ${'$'}v0})
+                | query myQuery(${'$'}v0: InputWithJson) {
+                |   hello(arg: ${'$'}v0)
                 | }
                 """.trimMargin(),
                 variables = """
                 | {
                 |   "v0": {
-                |     "48x48": "file.jpeg"
+                |     "payload": {
+                |       "48x48": "file.jpeg"
+                |     }
                 |   }
                 | }
                 """.trimMargin(),

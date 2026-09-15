@@ -24,15 +24,19 @@ public class `new batched with null value in source array snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | {
-                |   issueById(id: "10000") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__batch_hydration__collaborators: __typename
                 |     batch_hydration__collaborators__collaboratorIds: collaboratorIds
                 |     key
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "10000"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,15 +58,22 @@ public class `new batched with null value in source array snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "Users",
                 query = """
-                | {
-                |   usersByIds(ids: ["100", "200"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     __typename
                 |     batch_hydration__collaborators__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "100",
+                |     "200"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

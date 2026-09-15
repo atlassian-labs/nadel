@@ -24,8 +24,8 @@ public class `batching absent source input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "comments",
                 query = """
-                | {
-                |   commentsByIds(ids: ["comment/9001"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   commentsByIds(ids: ${'$'}v0) {
                 |     __typename
                 |     content
                 |     id
@@ -33,7 +33,13 @@ public class `batching absent source input snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "comment/9001"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,8 +60,8 @@ public class `batching absent source input snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issuesByIds(ids: ["issue/1234"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   issuesByIds(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__content__id: id
@@ -63,7 +69,13 @@ public class `batching absent source input snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "issue/1234"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

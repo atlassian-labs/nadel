@@ -53,15 +53,19 @@ public class `able to ask for field and use same field as hydration source snaps
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barById(id: "1") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     __typename__hydration__nestedBar: __typename
                 |     hydration__nestedBar__barId: barId
                 |     barId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -79,13 +83,17 @@ public class `able to ask for field and use same field as hydration source snaps
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barById(id: "1") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     barId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

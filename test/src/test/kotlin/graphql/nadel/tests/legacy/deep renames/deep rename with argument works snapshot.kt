@@ -24,16 +24,20 @@ public class `deep rename with argument works snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
+                | query (${'$'}v0: ID!) {
                 |   issue {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
-                |       detailName(userId: "USER-01")
+                |       detailName(userId: ${'$'}v0)
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "USER-01"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

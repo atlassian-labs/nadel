@@ -24,13 +24,17 @@ public class HydrationConditionalEnumConditionTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "matching-bar-id") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "matching-bar-id"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -49,10 +53,10 @@ public class HydrationConditionalEnumConditionTestSnapshot : TestSnapshot() {
                 | {
                 |   foo {
                 |     __typename__hydration__matchingBar: __typename
-                |     hydration__matchingBar__matchingBarId: matchingBarId
-                |     hydration__matchingBar__type: type
                 |     __typename__hydration__nonMatchingBar: __typename
+                |     hydration__matchingBar__matchingBarId: matchingBarId
                 |     hydration__nonMatchingBar__nonMatchingBarId: nonMatchingBarId
+                |     hydration__matchingBar__type: type
                 |     hydration__nonMatchingBar__type: type
                 |   }
                 | }

@@ -55,14 +55,21 @@ public class `handles include directive on field with batch hydrated parent snap
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   tests(ids: ["Foo-3", "Foo-4"]) {
+                | query (${'$'}v0: [ID]) {
+                |   tests(ids: ${'$'}v0) {
                 |     __typename__skip_include____skip: __typename
                 |     batch_hydration__test__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "Foo-3",
+                |     "Foo-4"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

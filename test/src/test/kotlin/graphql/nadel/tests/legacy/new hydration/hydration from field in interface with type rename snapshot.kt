@@ -24,8 +24,8 @@ public class `hydration from field in interface with type rename snapshot` : Tes
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issue(id: "1") {
+                | query (${'$'}v0: ID) {
+                |   issue(id: ${'$'}v0) {
                 |     __typename__hydration__issueAuthor: __typename
                 |     hydration__issueAuthor__author: author {
                 |       userId
@@ -34,7 +34,11 @@ public class `hydration from field in interface with type rename snapshot` : Tes
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -54,13 +58,17 @@ public class `hydration from field in interface with type rename snapshot` : Tes
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   user(id: "1001") {
+                | query (${'$'}v0: ID!) {
+                |   user(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1001"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

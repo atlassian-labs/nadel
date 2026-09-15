@@ -24,10 +24,9 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | mutation linkABunchOfThings {
+                | mutation linkABunchOfThings(${'$'}v0: LinkThingsInput!) {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-1:partition-A", to : "thing-2:partition-A"}]}) {
-                |       success
+                |     linkThings(linkThingsInput: ${'$'}v0) {
                 |       errors {
                 |         message
                 |       }
@@ -35,11 +34,23 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
                 |         id
                 |         name
                 |       }
+                |       success
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsLinked": [
+                |       {
+                |         "from": "thing-1:partition-A",
+                |         "to": "thing-2:partition-A"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -68,10 +79,9 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | mutation linkABunchOfThings {
+                | mutation linkABunchOfThings(${'$'}v0: LinkThingsInput!) {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-3:partition-B", to : "thing-4:partition-B"}]}) {
-                |       success
+                |     linkThings(linkThingsInput: ${'$'}v0) {
                 |       errors {
                 |         message
                 |       }
@@ -79,11 +89,23 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
                 |         id
                 |         name
                 |       }
+                |       success
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsLinked": [
+                |       {
+                |         "from": "thing-3:partition-B",
+                |         "to": "thing-4:partition-B"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -107,10 +129,9 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | mutation linkABunchOfThings {
+                | mutation linkABunchOfThings(${'$'}v0: LinkThingsInput!) {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-5:partition-C", to : "thing-6:partition-C"}]}) {
-                |       success
+                |     linkThings(linkThingsInput: ${'$'}v0) {
                 |       errors {
                 |         message
                 |       }
@@ -118,11 +139,23 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
                 |         id
                 |         name
                 |       }
+                |       success
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsLinked": [
+                |       {
+                |         "from": "thing-5:partition-C",
+                |         "to": "thing-6:partition-C"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -146,10 +179,9 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | mutation linkABunchOfThings {
+                | mutation linkABunchOfThings(${'$'}v0: LinkThingsInput!) {
                 |   thingsApi {
-                |     linkThings(linkThingsInput: {thingsLinked : [{from : "thing-7:partition-D", to : "thing-8:partition-D"}]}) {
-                |       success
+                |     linkThings(linkThingsInput: ${'$'}v0) {
                 |       errors {
                 |         message
                 |       }
@@ -157,11 +189,23 @@ public class MutationPartitionWithMutationErrorInPartitionCallTestSnapshot : Tes
                 |         id
                 |         name
                 |       }
+                |       success
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsLinked": [
+                |       {
+                |         "from": "thing-7:partition-D",
+                |         "to": "thing-8:partition-D"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
