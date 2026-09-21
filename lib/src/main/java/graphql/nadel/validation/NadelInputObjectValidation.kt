@@ -30,10 +30,24 @@ class NadelInputObjectValidation internal constructor(
         val overallFieldsByName = overallFields.strictAssociateBy { it.name }
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
-        val overallFieldIssues = overallFields.map { overallField ->
-            validate(parent, overallField, underlyingFieldsByName)
-        }
-        val missingOverallFieldIssues = underlyingFields
+        val inputFieldIssues = overallFields
+            .map { overallField ->
+                validate(parent, overallField, underlyingFieldsByName)
+            }
+            .toResult()
+        val requiredInputFieldIssues = validateRequiredInputFields(parent, overallFieldsByName, underlyingFields)
+
+        return results(inputFieldIssues, requiredInputFieldIssues)
+    }
+
+    context(NadelValidationContext)
+    private fun validateRequiredInputFields(
+        parent: NadelServiceSchemaElement.InputObject,
+        overallFieldsByName: Map<String, GraphQLInputObjectField>,
+        underlyingFields: List<GraphQLInputObjectField>,
+    ): NadelSchemaValidationResult {
+        // Required input fields must be surfaced in the overall schema or the query will never work.
+        return underlyingFields
             .asSequence()
             .filter { underlyingField ->
                 underlyingField.type.isNonNull && !underlyingField.hasSetDefaultValue()
@@ -44,9 +58,7 @@ class NadelInputObjectValidation internal constructor(
             .map { underlyingField ->
                 MissingRequiredInputFieldOnOverall(parent, underlyingField)
             }
-            .toList()
-
-        return (overallFieldIssues + missingOverallFieldIssues).toResult()
+            .toResult()
     }
 
     context(NadelValidationContext)

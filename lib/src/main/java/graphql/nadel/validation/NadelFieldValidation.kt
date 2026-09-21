@@ -140,6 +140,7 @@ class NadelFieldValidation internal constructor(
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
+        // Required arguments must be surfaced in the overall schema or the query will never work.
         return underlyingField.arguments
             .asSequence()
             .filter { underlyingArg ->
