@@ -3,6 +3,7 @@ package graphql.nadel.validation
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredArgumentOnOverall
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
@@ -64,6 +65,64 @@ class NadelFieldValidationTest : DescribeSpec({
             assertTrue(error.overallField.name == "echo")
             assertTrue(error.subject == error.overallField)
             assertTrue(error.argument.name == "world")
+        }
+
+        it("fails if a required underlying argument is missing from the overall field") {
+            // Given
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo(world: Boolean!): String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            // When
+            val errors = validate(fixture)
+
+            // Then
+            val error = errors.assertSingleOfType<MissingRequiredArgumentOnOverall>()
+            assertTrue(error.parentType.overall.name == "Query")
+            assertTrue(error.parentType.underlying.name == "Query")
+            assertTrue(error.overallField.name == "echo")
+            assertTrue(error.underlyingField.name == "echo")
+            assertTrue(error.argument.name == "world")
+            assertTrue(error.subject == error.argument)
+        }
+
+        it("passes if a missing required underlying argument has a default value") {
+            // Given
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo(world: Boolean! = true): String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            // When
+            val errors = validate(fixture)
+
+            // Then
+            assertTrue(errors.isEmpty())
         }
 
         it("passes if overall argument value is stricter") {

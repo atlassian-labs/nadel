@@ -1,7 +1,9 @@
 package graphql.nadel.validation
 
+import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInputType
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredInputFieldOnOverall
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
 import graphql.schema.GraphQLInputObjectField
 
@@ -25,13 +27,23 @@ class NadelInputObjectValidation internal constructor(
         overallFields: List<GraphQLInputObjectField>,
         underlyingFields: List<GraphQLInputObjectField>,
     ): NadelSchemaValidationResult {
+        val overallFieldsByName = overallFields.strictAssociateBy { it.name }
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
-        return overallFields
-            .map { overallField ->
-                validate(parent, overallField, underlyingFieldsByName)
+        val overallFieldIssues = overallFields.map { overallField ->
+            validate(parent, overallField, underlyingFieldsByName)
+        }
+        val missingOverallFieldIssues = underlyingFields
+            .filter { underlyingField ->
+                underlyingField.type.isNonNull &&
+                    !underlyingField.hasSetDefaultValue() &&
+                    underlyingField.name !in overallFieldsByName
             }
-            .toResult()
+            .map { underlyingField ->
+                MissingRequiredInputFieldOnOverall(parent, underlyingField)
+            }
+
+        return (overallFieldIssues + missingOverallFieldIssues).toResult()
     }
 
     context(NadelValidationContext)
