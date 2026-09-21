@@ -179,7 +179,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
             val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
             val s = service.name
             val ot = parentType.overall.name
-            "Required underlying input field $uf in service $s does not exist on the overall input type $ot"
+            "Underlying input field $uf in service $s is required and must be added to overall input type $ot"
         }
 
         override val subject = underlyingField
@@ -302,7 +302,7 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
             val a = argument.name
             val s = service.name
             val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
-            "The underlying field $uf in service $s defines required argument $a which does not exist on overall field $of"
+            "Underlying argument $a on field $uf in service $s is required and must be added to overall field $of"
         }
 
         override val subject = argument

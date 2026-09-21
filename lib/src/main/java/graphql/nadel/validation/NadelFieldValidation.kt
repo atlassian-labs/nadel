@@ -127,7 +127,20 @@ class NadelFieldValidation internal constructor(
             }
             .toResult()
 
-        val missingRequiredArgumentIssues = underlyingField.arguments
+        val requiredArgumentIssues = validateRequiredArguments(parent, overallField, underlyingField)
+        val outputTypeIssues = validateOutputType(parent, overallField, underlyingField)
+        val partitionDirectiveIssues = partitionValidation.validate(parent, overallField)
+
+        return results(argumentIssues, requiredArgumentIssues, outputTypeIssues, partitionDirectiveIssues)
+    }
+
+    context(NadelValidationContext)
+    private fun validateRequiredArguments(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        overallField: GraphQLFieldDefinition,
+        underlyingField: GraphQLFieldDefinition,
+    ): NadelSchemaValidationResult {
+        return underlyingField.arguments
             .filter { underlyingArg ->
                 underlyingArg.type.isNonNull &&
                     !underlyingArg.hasSetDefaultValue() &&
@@ -137,10 +150,6 @@ class NadelFieldValidation internal constructor(
                 MissingRequiredArgumentOnOverall(parent, overallField, underlyingField, underlyingArg)
             }
             .toResult()
-        val outputTypeIssues = validateOutputType(parent, overallField, underlyingField)
-        val partitionDirectiveIssues = partitionValidation.validate(parent, overallField)
-
-        return results(argumentIssues, missingRequiredArgumentIssues, outputTypeIssues, partitionDirectiveIssues)
     }
 
     context(NadelValidationContext)
