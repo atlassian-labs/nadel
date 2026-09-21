@@ -34,14 +34,17 @@ class NadelInputObjectValidation internal constructor(
             validate(parent, overallField, underlyingFieldsByName)
         }
         val missingOverallFieldIssues = underlyingFields
+            .asSequence()
             .filter { underlyingField ->
-                underlyingField.type.isNonNull &&
-                    !underlyingField.hasSetDefaultValue() &&
-                    underlyingField.name !in overallFieldsByName
+                underlyingField.type.isNonNull && !underlyingField.hasSetDefaultValue()
+            }
+            .filter { underlyingField ->
+                underlyingField.name !in overallFieldsByName
             }
             .map { underlyingField ->
                 MissingRequiredInputFieldOnOverall(parent, underlyingField)
             }
+            .toList()
 
         return (overallFieldIssues + missingOverallFieldIssues).toResult()
     }

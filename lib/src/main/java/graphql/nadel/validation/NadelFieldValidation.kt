@@ -141,10 +141,12 @@ class NadelFieldValidation internal constructor(
         underlyingField: GraphQLFieldDefinition,
     ): NadelSchemaValidationResult {
         return underlyingField.arguments
+            .asSequence()
             .filter { underlyingArg ->
-                underlyingArg.type.isNonNull &&
-                    !underlyingArg.hasSetDefaultValue() &&
-                    overallField.getArgument(underlyingArg.name) == null
+                underlyingArg.type.isNonNull && !underlyingArg.hasSetDefaultValue()
+            }
+            .filter { underlyingArg ->
+                overallField.getArgument(underlyingArg.name) == null
             }
             .map { underlyingArg ->
                 MissingRequiredArgumentOnOverall(parent, overallField, underlyingField, underlyingArg)
