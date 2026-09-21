@@ -169,6 +169,22 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         override val subject = overallField
     }
 
+    data class MissingRequiredInputFieldOnOverall(
+        val parentType: NadelServiceSchemaElement,
+        val underlyingField: GraphQLInputObjectField,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
+            val s = service.name
+            val ot = parentType.overall.name
+            "Underlying input field $uf in service $s is required and must be added to overall input type $ot"
+        }
+
+        override val subject = underlyingField
+    }
+
     data class IncompatibleFieldInputType(
         val parentType: NadelServiceSchemaElement,
         val overallInputField: GraphQLInputObjectField,
@@ -271,6 +287,25 @@ sealed interface NadelSchemaValidationError : NadelSchemaValidationResult {
         }
 
         override val subject = overallField
+    }
+
+    data class MissingRequiredArgumentOnOverall(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val underlyingField: GraphQLFieldDefinition,
+        val argument: GraphQLArgument,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val a = argument.name
+            val s = service.name
+            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
+            "Underlying argument $a on field $uf in service $s is required and must be added to overall field $of"
+        }
+
+        override val subject = argument
     }
 
     data class MissingArgumentOnUnderlying(

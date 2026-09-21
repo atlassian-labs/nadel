@@ -6,6 +6,7 @@ import graphql.nadel.engine.blueprint.NadelFieldInstruction
 import graphql.nadel.engine.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.util.getFieldAt
+import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
@@ -13,6 +14,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentI
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredArgumentOnOverall
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.NadelSchemaValidationError.RenameMustBeUsedExclusively
 import graphql.nadel.validation.hydration.NadelHydrationValidation
@@ -125,10 +127,32 @@ class NadelFieldValidation internal constructor(
             }
             .toResult()
 
+        val requiredArgumentIssues = validateRequiredArguments(parent, overallField, underlyingField)
         val outputTypeIssues = validateOutputType(parent, overallField, underlyingField)
         val partitionDirectiveIssues = partitionValidation.validate(parent, overallField)
 
-        return results(argumentIssues, outputTypeIssues, partitionDirectiveIssues)
+        return results(argumentIssues, requiredArgumentIssues, outputTypeIssues, partitionDirectiveIssues)
+    }
+
+    context(NadelValidationContext)
+    private fun validateRequiredArguments(
+        parent: NadelServiceSchemaElement.FieldsContainer,
+        overallField: GraphQLFieldDefinition,
+        underlyingField: GraphQLFieldDefinition,
+    ): NadelSchemaValidationResult {
+        // Required arguments must be surfaced in the overall schema or the query will never work.
+        return underlyingField.arguments
+            .asSequence()
+            .filter { underlyingArg ->
+                underlyingArg.type.isNonNull && !underlyingArg.hasSetDefaultValue()
+            }
+            .filter { underlyingArg ->
+                overallField.getArgument(underlyingArg.name) == null
+            }
+            .map { underlyingArg ->
+                MissingRequiredArgumentOnOverall(parent, overallField, underlyingField, underlyingArg)
+            }
+            .toResult()
     }
 
     context(NadelValidationContext)

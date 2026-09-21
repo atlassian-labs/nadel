@@ -1,7 +1,9 @@
 package graphql.nadel.validation
 
+import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInputType
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredInputFieldOnOverall
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
 import graphql.schema.GraphQLInputObjectField
 
@@ -25,11 +27,36 @@ class NadelInputObjectValidation internal constructor(
         overallFields: List<GraphQLInputObjectField>,
         underlyingFields: List<GraphQLInputObjectField>,
     ): NadelSchemaValidationResult {
+        val overallFieldsByName = overallFields.strictAssociateBy { it.name }
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
-        return overallFields
+        val inputFieldIssues = overallFields
             .map { overallField ->
                 validate(parent, overallField, underlyingFieldsByName)
+            }
+            .toResult()
+        val requiredInputFieldIssues = validateRequiredInputFields(parent, overallFieldsByName, underlyingFields)
+
+        return results(inputFieldIssues, requiredInputFieldIssues)
+    }
+
+    context(NadelValidationContext)
+    private fun validateRequiredInputFields(
+        parent: NadelServiceSchemaElement.InputObject,
+        overallFieldsByName: Map<String, GraphQLInputObjectField>,
+        underlyingFields: List<GraphQLInputObjectField>,
+    ): NadelSchemaValidationResult {
+        // Required input fields must be surfaced in the overall schema or the query will never work.
+        return underlyingFields
+            .asSequence()
+            .filter { underlyingField ->
+                underlyingField.type.isNonNull && !underlyingField.hasSetDefaultValue()
+            }
+            .filter { underlyingField ->
+                underlyingField.name !in overallFieldsByName
+            }
+            .map { underlyingField ->
+                MissingRequiredInputFieldOnOverall(parent, underlyingField)
             }
             .toResult()
     }

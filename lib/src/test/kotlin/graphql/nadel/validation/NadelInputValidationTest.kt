@@ -3,6 +3,7 @@ package graphql.nadel.validation
 import graphql.nadel.engine.util.isNonNull
 import graphql.nadel.engine.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInputType
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredInputFieldOnOverall
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
@@ -64,6 +65,76 @@ class NadelInputValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("fails if a required underlying input field is missing from the overall input type") {
+            // Given
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            name: String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            name: String
+                            level: Int!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            // When
+            val errors = validate(fixture)
+
+            // Then
+            val error = errors.assertSingleOfType<MissingRequiredInputFieldOnOverall>()
+            assert(error.parentType.overall.name == "Role")
+            assert(error.parentType.underlying.name == "Role")
+            assert(error.underlyingField.name == "level")
+            assert(error.subject == error.underlyingField)
+        }
+
+        it("passes if a missing required underlying input field has a default value") {
+            // Given
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            name: String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            name: String
+                            level: Int! = 1
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            // When
+            val errors = validate(fixture)
+
+            // Then
+            assert(errors.isEmpty())
         }
 
         it("passes if all input values exist in underlying type and input types match accounting for rename") {
