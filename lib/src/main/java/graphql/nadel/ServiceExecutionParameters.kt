@@ -2,6 +2,7 @@ package graphql.nadel
 
 import graphql.GraphQLContext
 import graphql.execution.ExecutionId
+import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.language.Document
 import graphql.language.OperationDefinition
 import graphql.nadel.engine.NadelServiceExecutionContext
@@ -24,6 +25,17 @@ class ServiceExecutionParameters internal constructor(
      */
     val executableNormalizedFields: List<ExecutableNormalizedField>,
 ) {
+    /**
+     * The first non-__typename underlying field, or the first field if all are __typename.
+     * Retains the legacy selection behavior; additional service-call fields are omitted.
+     */
+    @Deprecated(
+        message = "Use executableNormalizedFields and explicitly handle all fields in the service call.",
+    )
+    val executableNormalizedField: ExecutableNormalizedField =
+        executableNormalizedFields.firstOrNull { it.fieldName != TypeNameMetaFieldDef.name }
+            ?: executableNormalizedFields.first()
+
     val isHydrationCall: Boolean
         get() = hydrationDetails != null
 }
