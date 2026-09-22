@@ -20,14 +20,32 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class BatchedRootFieldsTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   __typename
+     *   foo
+     *   bar
+     *   baz
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
                 | {
-                |   bar
                 |   baz
                 |   foo
+                |   rename__bar__underlyingBar: underlyingBar
                 | }
                 """.trimMargin(),
                 variables = "{}",
@@ -35,7 +53,7 @@ public class BatchedRootFieldsTestSnapshot : TestSnapshot() {
                 | {
                 |   "data": {
                 |     "foo": "foo-value",
-                |     "bar": "bar-value",
+                |     "rename__bar__underlyingBar": "bar-value",
                 |     "baz": "baz-value"
                 |   }
                 | }
@@ -49,9 +67,10 @@ public class BatchedRootFieldsTestSnapshot : TestSnapshot() {
      * ```json
      * {
      *   "data": {
+     *     "__typename": "Query",
      *     "foo": "foo-value",
-     *     "bar": "bar-value",
-     *     "baz": "baz-value"
+     *     "baz": "baz-value",
+     *     "bar": "bar-value"
      *   }
      * }
      * ```
@@ -60,9 +79,10 @@ public class BatchedRootFieldsTestSnapshot : TestSnapshot() {
             result = """
             | {
             |   "data": {
+            |     "__typename": "Query",
             |     "foo": "foo-value",
-            |     "bar": "bar-value",
-            |     "baz": "baz-value"
+            |     "baz": "baz-value",
+            |     "bar": "bar-value"
             |   }
             | }
             """.trimMargin(),
