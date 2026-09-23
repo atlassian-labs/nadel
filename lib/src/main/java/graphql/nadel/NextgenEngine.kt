@@ -403,13 +403,7 @@ internal class NextgenEngine(
             operationDefinition = compileResult.document.definitions.singleOfType(),
             serviceExecutionContext = serviceExecutionContext,
             hydrationDetails = executionHydrationDetails,
-            // Prefer non __typename field first, otherwise we just get first
-            executableNormalizedField = topLevelFields
-                .asSequence()
-                .filterNot {
-                    it.fieldName == TypeNameMetaFieldDef.name
-                }
-                .firstOrNull() ?: topLevelFields.first(),
+            executableNormalizedFields = topLevelFields,
         )
 
         val serviceExecution = getServiceExecution(service, topLevelFields)

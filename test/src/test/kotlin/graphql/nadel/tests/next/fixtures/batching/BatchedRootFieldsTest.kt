@@ -1,7 +1,10 @@
 package graphql.nadel.tests.next.fixtures.batching
 
 import graphql.nadel.NadelExecutionHints
+import graphql.nadel.ServiceExecution
 import graphql.nadel.tests.next.NadelIntegrationTest
+import kotlin.test.assertEquals
+import kotlin.test.assertSame
 
 /**
  * Multiple sibling root fields destined for the same service are combined into a single service
@@ -39,6 +42,19 @@ class BatchedRootFieldsTest : NadelIntegrationTest(
         ),
     ),
 ) {
+    @Suppress("DEPRECATION")
+    override fun makeServiceExecution(service: Service): ServiceExecution {
+        val serviceExecution = super.makeServiceExecution(service)
+        return ServiceExecution { parameters ->
+            assertEquals(
+                listOf("foo", "bar", "baz"),
+                parameters.executableNormalizedFields.map { it.name },
+            )
+            assertSame(parameters.executableNormalizedFields.first(), parameters.executableNormalizedField)
+            serviceExecution.execute(parameters)
+        }
+    }
+
     override fun makeExecutionHints(): NadelExecutionHints.Builder {
         return super.makeExecutionHints()
             .batchRootFields { true }
