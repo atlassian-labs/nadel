@@ -11,7 +11,7 @@ import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.message
 import strikt.api.expectThat
-import strikt.assertions.contains
+import strikt.assertions.isEqualTo
 import strikt.assertions.get
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
@@ -20,6 +20,8 @@ import java.util.concurrent.CompletableFuture
 
 @UseHook
 class `exceptions-in-service-execution-result-completable-future-in-graphql-errors` : EngineTestHook {
+    private class PopGoesTheWeaselException : Exception()
+
     override fun makeExecutionInput(builder: NadelExecutionInput.Builder): NadelExecutionInput.Builder {
         return super.makeExecutionInput(builder)
             .executionId(ExecutionId.from("test"))
@@ -29,7 +31,7 @@ class `exceptions-in-service-execution-result-completable-future-in-graphql-erro
         return ServiceExecution {
             CompletableFuture.completedFuture(null)
                 .thenCompose {
-                    throw RuntimeException("Pop goes the weasel")
+                    throw PopGoesTheWeaselException()
                 }
         }
     }
@@ -42,6 +44,6 @@ class `exceptions-in-service-execution-result-completable-future-in-graphql-erro
         expectThat(result).errors
             .single()
             .message
-            .contains("Pop goes the weasel")
+            .isEqualTo("An PopGoesTheWeaselException occurred invoking the service MyService")
     }
 }
