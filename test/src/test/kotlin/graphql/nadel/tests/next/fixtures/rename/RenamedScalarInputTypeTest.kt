@@ -1,6 +1,5 @@
 package graphql.nadel.tests.next.fixtures.rename
 
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelSchemas
 import graphql.nadel.tests.GatewaySchemaWiringFactory
 import graphql.nadel.tests.next.NadelIntegrationTest
@@ -79,11 +78,6 @@ class RenamedScalarInputTypeTest : NadelIntegrationTest(
         ),
     ),
 ) {
-    override fun makeExecutionHints(): NadelExecutionHints.Builder {
-        return super.makeExecutionHints()
-            .allDocumentVariablesHint { true }
-    }
-
     override fun makeNadelSchemas(): NadelSchemas.Builder {
         return super.makeNadelSchemas()
             .overallWiringFactory(GatewaySchemaWiringFactory())

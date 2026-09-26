@@ -19,15 +19,21 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
     override val calls: List<ExpectedServiceCall> = listOf(
         ExpectedServiceCall(
             service = "Identity",
-            query = """
-                | {
-                |   usersByIds(ids: ["ari:cloud:identity::user/1"]) {
-                |     name
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     batch_hydration__assignee__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:identity::user/1"
+                |   ]
+                | }
+                """.trimMargin(),
             result = """
                 | {
                 |   "data": {
@@ -45,15 +51,21 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
         ),
         ExpectedServiceCall(
             service = "Identity",
-            query = """
-                | {
-                |   usersByIds(ids: ["ari:cloud:identity::user/128"]) {
-                |     name
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     batch_hydration__assignee__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:identity::user/128"
+                |   ]
+                | }
+                """.trimMargin(),
             result = """
                 | {
                 |   "data": {
@@ -71,15 +83,15 @@ public class IdHydrationTestSnapshot : TestSnapshot() {
         ),
         ExpectedServiceCall(
             service = "Jira",
-            query = """
+                query = """
                 | {
                 |   issues {
-                |     batch_hydration__assignee__assigneeId: assigneeId
                 |     __typename__batch_hydration__assignee: __typename
+                |     batch_hydration__assignee__assigneeId: assigneeId
                 |   }
                 | }
                 """.trimMargin(),
-            variables = " {}",
+                variables = "{}",
             result = """
                 | {
                 |   "data": {

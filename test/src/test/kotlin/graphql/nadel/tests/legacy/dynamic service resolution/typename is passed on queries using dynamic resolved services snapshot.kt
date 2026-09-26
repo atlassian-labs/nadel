@@ -25,8 +25,8 @@ public class `typename is passed on queries using dynamic resolved services snap
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | {
-                |   node(id: "pull-request:id-123") {
+                | query (${'$'}v0: ID!) {
+                |   node(id: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     ... on PullRequest {
@@ -35,7 +35,11 @@ public class `typename is passed on queries using dynamic resolved services snap
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "pull-request:id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

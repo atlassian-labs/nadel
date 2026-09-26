@@ -49,15 +49,21 @@ public class `repeated hydrated fields on the same level when using batch hydrat
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   issues(issueIds: ["ISSUE-1"]) {
+                | query (${'$'}v0: [ID!]) {
+                |   issues(issueIds: ${'$'}v0) {
                 |     desc
                 |     batch_hydration__issue__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ISSUE-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

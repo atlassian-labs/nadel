@@ -48,14 +48,18 @@ public class `rename inside hydration snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId") {
+                | query (${'$'}v0: ID) {
+                |   barById(id: ${'$'}v0) {
                 |     __typename__rename__title: __typename
                 |     rename__title__name: name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

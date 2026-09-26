@@ -68,13 +68,19 @@ public class `batch polymorphic hydration where only one type is queried snapsho
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | {
-                |   humanById(ids: ["HUMAN-0"]) {
+                | query (${'$'}v0: [ID]) {
+                |   humanById(ids: ${'$'}v0) {
                 |     batch_hydration__data__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "HUMAN-0"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -92,8 +98,8 @@ public class `batch polymorphic hydration where only one type is queried snapsho
             ExpectedServiceCall(
                 service = "pets",
                 query = """
-                | {
-                |   petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   petById(ids: ${'$'}v0) {
                 |     ... on Dog {
                 |       batch_hydration__data__id: id
                 |     }
@@ -106,7 +112,16 @@ public class `batch polymorphic hydration where only one type is queried snapsho
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "DOG-0",
+                |     "FISH-0",
+                |     "DOG-1",
+                |     "FISH-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,11 +24,15 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | {
-                |   ariById(id: "Franklin")
+                | query (${'$'}v0: ID!) {
+                |   ariById(id: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "Franklin"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -90,11 +94,15 @@ public class `hydration with more interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | {
-                |   trollName(id: "My Arm")
+                | query (${'$'}v0: ID!) {
+                |   trollName(id: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "My Arm"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

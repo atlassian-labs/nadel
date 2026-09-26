@@ -24,8 +24,8 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issueById(id: "issue-1") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
                 |       detailName
@@ -33,7 +33,11 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -52,8 +56,8 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issueById(id: "issue-2") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
                 |       detailName
@@ -61,7 +65,11 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue-2"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -80,8 +88,8 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issueById(id: "issue-3") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__deep_rename__name: __typename
                 |     deep_rename__name__detail: detail {
                 |       detailName
@@ -89,7 +97,11 @@ public class `deep rename inside hydrations snapshot` : TestSnapshot() {
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "issue-3"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

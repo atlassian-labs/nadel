@@ -71,16 +71,24 @@ public class `top level field is null in batched synthetic hydration snapshot` :
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   users {
-                |     usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+                |     usersByIds(id: ${'$'}v0) {
                 |       id
                 |       batch_hydration__authors__id: id
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "USER-1",
+                |     "USER-2",
+                |     "USER-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -94,16 +102,23 @@ public class `top level field is null in batched synthetic hydration snapshot` :
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   users {
-                |     usersByIds(id: ["USER-4", "USER-5"]) {
+                |     usersByIds(id: ${'$'}v0) {
                 |       id
                 |       batch_hydration__authors__id: id
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "USER-4",
+                |     "USER-5"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

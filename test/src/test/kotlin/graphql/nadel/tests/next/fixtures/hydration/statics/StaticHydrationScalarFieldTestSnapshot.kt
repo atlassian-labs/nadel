@@ -24,11 +24,16 @@ public class StaticHydrationScalarFieldTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """
-                | {
-                |   backingField(id: "wow", secret: "cowabunga")
+                | query (${'$'}v0: String, ${'$'}v1: String) {
+                |   backingField(id: ${'$'}v0, secret: ${'$'}v1)
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": "wow",
+                |   "v1": "cowabunga"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

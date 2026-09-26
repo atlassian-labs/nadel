@@ -62,9 +62,9 @@ public class `hydration call with fragments in the hydrated part and synthetic f
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   userQuery {
-                |     usersByIds(id: ["USER-1", "USER-2"]) {
+                |     usersByIds(id: ${'$'}v0) {
                 |       id
                 |       batch_hydration__authors__id: id
                 |       name
@@ -72,7 +72,14 @@ public class `hydration call with fragments in the hydrated part and synthetic f
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "USER-1",
+                |     "USER-2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -99,16 +106,22 @@ public class `hydration call with fragments in the hydrated part and synthetic f
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
+                | query (${'$'}v0: [ID]) {
                 |   userQuery {
-                |     usersByIds(id: ["USER-1"]) {
+                |     usersByIds(id: ${'$'}v0) {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "USER-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

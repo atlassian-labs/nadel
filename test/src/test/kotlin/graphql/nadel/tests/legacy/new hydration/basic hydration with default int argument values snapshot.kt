@@ -48,13 +48,18 @@ public class `basic hydration with default int argument values snapshot` : TestS
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId", test: 10) {
+                | query (${'$'}v0: ID, ${'$'}v1: Int) {
+                |   barById(id: ${'$'}v0, test: ${'$'}v1) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId",
+                |   "v1": 10
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

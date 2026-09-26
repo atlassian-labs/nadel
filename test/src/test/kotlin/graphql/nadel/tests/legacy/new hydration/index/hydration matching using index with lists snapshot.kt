@@ -57,13 +57,20 @@ public class `hydration matching using index with lists snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIssueIds(issueIds: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ISSUE-1",
+                |     "ISSUE-2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

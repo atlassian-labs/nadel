@@ -36,7 +36,7 @@ class StaticHydrationScalarFieldTest : NadelIntegrationTest(
             overallSchema = """
                 type Query {
                   copyField(
-                    id: ID!
+                    id: String
                   ): String
                     @hydrated(
                       service: "graph_store",

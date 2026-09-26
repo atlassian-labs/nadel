@@ -24,8 +24,8 @@ public class `dynamic service resolution simple success case snapshot` : TestSna
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | {
-                |   node(id: "pull-request:id-123") {
+                | query (${'$'}v0: ID!) {
+                |   node(id: ${'$'}v0) {
                 |     id
                 |     ... on PullRequest {
                 |       description
@@ -33,7 +33,11 @@ public class `dynamic service resolution simple success case snapshot` : TestSna
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "pull-request:id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

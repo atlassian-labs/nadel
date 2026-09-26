@@ -62,15 +62,22 @@ public class `one hydration call with longer path arguments and merged fields sn
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(id: ["USER-1", "USER-2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(id: ${'$'}v0) {
                 |     id
                 |     batch_hydration__authors__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "USER-1",
+                |     "USER-2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

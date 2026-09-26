@@ -70,13 +70,20 @@ public class `hydration matching using index one batch returns errors snapshot` 
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(ids: ["1", "2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "1",
+                |     "2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -95,13 +102,19 @@ public class `hydration matching using index one batch returns errors snapshot` 
             ExpectedServiceCall(
                 service = "UserService",
                 query = """
-                | {
-                |   usersByIds(ids: ["4"]) {
+                | query (${'$'}v0: [ID]) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "4"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "errors": [

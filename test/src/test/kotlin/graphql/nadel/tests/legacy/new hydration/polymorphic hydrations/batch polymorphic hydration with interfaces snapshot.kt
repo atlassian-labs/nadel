@@ -79,8 +79,8 @@ public class `batch polymorphic hydration with interfaces snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | {
-                |   humanById(ids: ["HUMAN-0"]) {
+                | query (${'$'}v0: [ID]) {
+                |   humanById(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__data__id: id
@@ -88,7 +88,13 @@ public class `batch polymorphic hydration with interfaces snapshot` : TestSnapsh
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "HUMAN-0"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -109,8 +115,8 @@ public class `batch polymorphic hydration with interfaces snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "pets",
                 query = """
-                | {
-                |   petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   petById(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__data__id: id
@@ -123,7 +129,16 @@ public class `batch polymorphic hydration with interfaces snapshot` : TestSnapsh
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "DOG-0",
+                |     "FISH-0",
+                |     "DOG-1",
+                |     "FISH-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

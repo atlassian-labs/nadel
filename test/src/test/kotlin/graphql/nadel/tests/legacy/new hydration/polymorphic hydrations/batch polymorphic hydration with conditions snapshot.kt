@@ -73,8 +73,8 @@ public class `batch polymorphic hydration with conditions snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "people",
                 query = """
-                | {
-                |   humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   humanById(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__data__id: id
@@ -82,7 +82,14 @@ public class `batch polymorphic hydration with conditions snapshot` : TestSnapsh
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "HUMAN-0",
+                |     "HUMAN-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -109,8 +116,8 @@ public class `batch polymorphic hydration with conditions snapshot` : TestSnapsh
             ExpectedServiceCall(
                 service = "pets",
                 query = """
-                | {
-                |   petById(ids: ["PET-0", "PET-1"]) {
+                | query (${'$'}v0: [ID]) {
+                |   petById(ids: ${'$'}v0) {
                 |     __typename
                 |     breed
                 |     id
@@ -118,7 +125,14 @@ public class `batch polymorphic hydration with conditions snapshot` : TestSnapsh
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "PET-0",
+                |     "PET-1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

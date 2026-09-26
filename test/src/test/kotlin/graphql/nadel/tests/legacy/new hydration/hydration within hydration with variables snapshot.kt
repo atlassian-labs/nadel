@@ -48,13 +48,18 @@ public class `hydration within hydration with variables snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "comments",
                 query = """
-                | {
-                |   comments(cloudId: "CLOUD_ID-1", first: 10) {
+                | query (${'$'}v0: ID!, ${'$'}v1: Int) {
+                |   comments(cloudId: ${'$'}v0, first: ${'$'}v1) {
                 |     totalCount
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "CLOUD_ID-1",
+                |   "v1": 10
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -70,14 +75,18 @@ public class `hydration within hydration with variables snapshot` : TestSnapshot
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issue(id: "ISSUE-1") {
+                | query (${'$'}v0: ID!) {
+                |   issue(id: ${'$'}v0) {
                 |     __typename__hydration__comments: __typename
                 |     hydration__comments__cloudId: cloudId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ISSUE-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

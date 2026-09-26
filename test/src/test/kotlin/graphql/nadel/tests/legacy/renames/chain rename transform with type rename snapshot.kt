@@ -24,16 +24,21 @@ public class `chain rename transform with type rename snapshot` : TestSnapshot()
             ExpectedServiceCall(
                 service = "MyService",
                 query = """
-                | {
-                |   rename__test__world: world(arg: "aaarrg") {
+                | query (${'$'}v0: Continent, ${'$'}v1: String) {
+                |   rename__test__world: world(arg: ${'$'}v1) {
                 |     __typename
                 |     __typename__rename__cities: __typename
                 |     id
-                |     rename__cities__places: places(continent: Asia)
+                |     rename__cities__places: places(continent: ${'$'}v0)
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "Asia",
+                |   "v1": "aaarrg"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

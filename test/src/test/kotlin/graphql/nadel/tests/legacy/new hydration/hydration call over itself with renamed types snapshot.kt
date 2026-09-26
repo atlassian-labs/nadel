@@ -24,15 +24,23 @@ public class `hydration call over itself with renamed types snapshot` : TestSnap
             ExpectedServiceCall(
                 service = "testing",
                 query = """
-                | {
-                |   characters(ids: ["C1", "C2", "C3"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   characters(ids: ${'$'}v0) {
                 |     id
                 |     batch_hydration__characters__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "C1",
+                |     "C2",
+                |     "C3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

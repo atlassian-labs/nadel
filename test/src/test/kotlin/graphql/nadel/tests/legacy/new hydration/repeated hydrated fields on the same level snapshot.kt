@@ -48,14 +48,18 @@ public class `repeated hydrated fields on the same level snapshot` : TestSnapsho
             ExpectedServiceCall(
                 service = "Foo",
                 query = """
-                | {
-                |   issue(issueId: "ISSUE-1") {
+                | query (${'$'}v0: ID) {
+                |   issue(issueId: ${'$'}v0) {
                 |     desc
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ISSUE-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

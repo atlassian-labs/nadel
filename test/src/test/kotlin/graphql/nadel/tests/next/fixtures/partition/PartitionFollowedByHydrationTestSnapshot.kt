@@ -24,16 +24,23 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-1:partition-A", "thing-3:partition-A"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
+                |     __typename__batch_hydration__owner: __typename
                 |     id
                 |     name
                 |     batch_hydration__owner__ownerId: ownerId
-                |     __typename__batch_hydration__owner: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-1:partition-A",
+                |     "thing-3:partition-A"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -60,16 +67,23 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-2:partition-B", "thing-4:partition-B"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
+                |     __typename__batch_hydration__owner: __typename
                 |     id
                 |     name
                 |     batch_hydration__owner__ownerId: ownerId
-                |     __typename__batch_hydration__owner: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-2:partition-B",
+                |     "thing-4:partition-B"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -96,16 +110,23 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-5:partition-C", "thing-7:partition-C"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
+                |     __typename__batch_hydration__owner: __typename
                 |     id
                 |     name
                 |     batch_hydration__owner__ownerId: ownerId
-                |     __typename__batch_hydration__owner: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-5:partition-C",
+                |     "thing-7:partition-C"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -132,16 +153,23 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedThings {
-                |   things(ids: ["thing-6:partition-D", "thing-8:partition-D"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   things(ids: ${'$'}v0) {
+                |     __typename__batch_hydration__owner: __typename
                 |     id
                 |     name
                 |     batch_hydration__owner__ownerId: ownerId
-                |     __typename__batch_hydration__owner: __typename
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "thing-6:partition-D",
+                |     "thing-8:partition-D"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -168,15 +196,22 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users_service",
                 query = """
-                | query getPartitionedThings {
-                |   users(ids: ["owner-thing-1", "owner-thing-3"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
                 |     id
-                |     name
                 |     batch_hydration__owner__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "owner-thing-1",
+                |     "owner-thing-3"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -201,15 +236,22 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users_service",
                 query = """
-                | query getPartitionedThings {
-                |   users(ids: ["owner-thing-2", "owner-thing-4"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
                 |     id
-                |     name
                 |     batch_hydration__owner__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "owner-thing-2",
+                |     "owner-thing-4"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -234,15 +276,22 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users_service",
                 query = """
-                | query getPartitionedThings {
-                |   users(ids: ["owner-thing-5", "owner-thing-7"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
                 |     id
-                |     name
                 |     batch_hydration__owner__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "owner-thing-5",
+                |     "owner-thing-7"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -267,15 +316,22 @@ public class PartitionFollowedByHydrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users_service",
                 query = """
-                | query getPartitionedThings {
-                |   users(ids: ["owner-thing-6", "owner-thing-8"]) {
+                | query getPartitionedThings(${'$'}v0: [ID!]!) {
+                |   users(ids: ${'$'}v0) {
                 |     id
-                |     name
                 |     batch_hydration__owner__id: id
+                |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "owner-thing-6",
+                |     "owner-thing-8"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

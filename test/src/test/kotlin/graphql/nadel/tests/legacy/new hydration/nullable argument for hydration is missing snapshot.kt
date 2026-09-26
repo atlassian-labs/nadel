@@ -48,13 +48,17 @@ public class `nullable argument for hydration is missing snapshot` : TestSnapsho
             ExpectedServiceCall(
                 service = "comments",
                 query = """
-                | {
-                |   comments(cloudId: "CLOUD_ID-1") {
+                | query (${'$'}v0: ID!) {
+                |   comments(cloudId: ${'$'}v0) {
                 |     totalCount
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "CLOUD_ID-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -70,14 +74,18 @@ public class `nullable argument for hydration is missing snapshot` : TestSnapsho
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issue(id: "ISSUE-1") {
+                | query (${'$'}v0: ID) {
+                |   issue(id: ${'$'}v0) {
                 |     __typename__hydration__comments: __typename
                 |     hydration__comments__cloudId: cloudId
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ISSUE-1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

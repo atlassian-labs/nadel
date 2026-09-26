@@ -99,14 +99,20 @@ public class PolymorphicHydrationMigrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   newObjects(ids: ["ari:cloud:owner::type/1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   newObjects(ids: ${'$'}v0) {
                 |     __typename
                 |     batch_hydration__object__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:owner::type/1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -125,43 +131,21 @@ public class PolymorphicHydrationMigrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   newObjects(ids: ["ari:cloud:owner::type/1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   newObjects(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__object__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
-                result = """
+                variables = """
                 | {
-                |   "data": {
-                |     "newObjects": [
-                |       {
-                |         "__typename": "NewObject",
-                |         "id": "ari:cloud:owner::type/1",
-                |         "batch_hydration__object__id": "ari:cloud:owner::type/1"
-                |       }
-                |     ]
-                |   }
+                |   "v0": [
+                |     "ari:cloud:owner::type/1"
+                |   ]
                 | }
                 """.trimMargin(),
-                delayedResults = listOfJsonStrings(
-                ),
-            ),
-            ExpectedServiceCall(
-                service = "monolith",
-                query = """
-                | {
-                |   newObjects(ids: ["ari:cloud:owner::type/1"]) {
-                |     __typename
-                |     id
-                |     batch_hydration__object__id: id
-                |   }
-                | }
-                """.trimMargin(),
-                variables = "{}",
                 result = """
                 | {
                 |   "data": {
@@ -181,15 +165,55 @@ public class PolymorphicHydrationMigrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   newObjects(ids: ["ari:cloud:owner::type/1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   newObjects(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__object__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:owner::type/1"
+                |   ]
+                | }
+                """.trimMargin(),
+                result = """
+                | {
+                |   "data": {
+                |     "newObjects": [
+                |       {
+                |         "__typename": "NewObject",
+                |         "id": "ari:cloud:owner::type/1",
+                |         "batch_hydration__object__id": "ari:cloud:owner::type/1"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "monolith",
+                query = """
+                | query (${'$'}v0: [ID!]!) {
+                |   newObjects(ids: ${'$'}v0) {
+                |     __typename
+                |     id
+                |     batch_hydration__object__id: id
+                |   }
+                | }
+                """.trimMargin(),
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:owner::type/1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -259,15 +283,21 @@ public class PolymorphicHydrationMigrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   oldObjects(ids: ["ari:cloud:owner::type/1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   oldObjects(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__object__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:owner::type/1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -287,15 +317,21 @@ public class PolymorphicHydrationMigrationTestSnapshot : TestSnapshot() {
             ExpectedServiceCall(
                 service = "monolith",
                 query = """
-                | {
-                |   oldObjects(ids: ["ari:cloud:owner::type/1"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   oldObjects(ids: ${'$'}v0) {
                 |     __typename
                 |     id
                 |     batch_hydration__object__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "ari:cloud:owner::type/1"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

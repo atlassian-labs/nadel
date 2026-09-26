@@ -24,13 +24,17 @@ public class `hydration inside a renamed field snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
-                |   barById(id: "hydrated-bar") {
+                | query (${'$'}v0: ID!) {
+                |   barById(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "hydrated-bar"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

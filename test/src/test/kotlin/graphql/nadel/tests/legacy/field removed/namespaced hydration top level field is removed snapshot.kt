@@ -24,15 +24,19 @@ public class `namespaced hydration top level field is removed snapshot` : TestSn
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issueById(id: "C1") {
+                | query (${'$'}v0: ID) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__hydration__comment: __typename
                 |     hydration__comment__commentId: commentId
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "C1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

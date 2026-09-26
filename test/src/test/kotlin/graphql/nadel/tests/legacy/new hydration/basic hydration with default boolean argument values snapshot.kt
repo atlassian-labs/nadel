@@ -48,13 +48,18 @@ public class `basic hydration with default boolean argument values snapshot` : T
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   barById(id: "barId", test: false) {
+                | query (${'$'}v0: ID, ${'$'}v1: Boolean) {
+                |   barById(id: ${'$'}v0, test: ${'$'}v1) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "barId",
+                |   "v1": false
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

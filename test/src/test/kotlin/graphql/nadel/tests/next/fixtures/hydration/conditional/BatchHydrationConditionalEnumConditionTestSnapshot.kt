@@ -24,14 +24,21 @@ public class BatchHydrationConditionalEnumConditionTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "service2",
                 query = """
-                | {
-                |   storyBarsById(ids: ["bar-id-1", "bar-id-2"]) {
+                | query (${'$'}v0: [ID]) {
+                |   storyBarsById(ids: ${'$'}v0) {
                 |     batch_hydration__bars__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "bar-id-1",
+                |     "bar-id-2"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

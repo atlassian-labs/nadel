@@ -24,14 +24,20 @@ public class HydrationMultipleNestedSourceArgumentsTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "identity",
                 query = """
-                | {
-                |   issueUser(issueId: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1", siteId: "ari:cloud:platform::site/123", userId: "ari:cloud:identity::user/1") {
+                | query (${'$'}v0: ID!, ${'$'}v1: ID!, ${'$'}v2: ID!) {
+                |   issueUser(issueId: ${'$'}v1, siteId: ${'$'}v0, userId: ${'$'}v2) {
                 |     id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:platform::site/123",
+                |   "v1": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1",
+                |   "v2": "ari:cloud:identity::user/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -48,8 +54,8 @@ public class HydrationMultipleNestedSourceArgumentsTestSnapshot : TestSnapshot()
             ExpectedServiceCall(
                 service = "issues",
                 query = """
-                | {
-                |   issueById(id: "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__hydration__assignee: __typename
                 |     hydration__assignee__assigneeCriteria: assigneeCriteria {
                 |       assigneeId
@@ -61,7 +67,11 @@ public class HydrationMultipleNestedSourceArgumentsTestSnapshot : TestSnapshot()
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:cloud:jira:19b8272f-8d25-4706-adce-8db72305e615:issue/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

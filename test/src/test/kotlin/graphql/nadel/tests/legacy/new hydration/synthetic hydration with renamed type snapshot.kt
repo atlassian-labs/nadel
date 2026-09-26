@@ -24,15 +24,19 @@ public class `synthetic hydration with renamed type snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Bar",
                 query = """
-                | {
+                | query (${'$'}v0: ID!) {
                 |   bars {
-                |     barById(id: "hydrated-bar") {
+                |     barById(id: ${'$'}v0) {
                 |       id
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "hydrated-bar"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

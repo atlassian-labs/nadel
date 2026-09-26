@@ -24,20 +24,35 @@ public class PartitionWithConflictingRoutingValuesThatAreFilteredTestSnapshot : 
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedConnections {
-                |   things(filter: {thingsIds : [{to : "thing-1-primary:partition-A", from : "thing-1-secondary:partition-B"}, {to : "thing-4-secondary:partition-B", from : "thing-4-primary:partition-A"}]}) {
-                |     to {
+                | query getPartitionedConnections(${'$'}v0: ThingsFilter) {
+                |   things(filter: ${'$'}v0) {
+                |     from {
                 |       id
                 |       name
                 |     }
-                |     from {
+                |     to {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsIds": [
+                |       {
+                |         "to": "thing-1-primary:partition-A",
+                |         "from": "thing-1-secondary:partition-B"
+                |       },
+                |       {
+                |         "to": "thing-4-secondary:partition-B",
+                |         "from": "thing-4-primary:partition-A"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -72,20 +87,35 @@ public class PartitionWithConflictingRoutingValuesThatAreFilteredTestSnapshot : 
             ExpectedServiceCall(
                 service = "things_service",
                 query = """
-                | query getPartitionedConnections {
-                |   things(filter: {thingsIds : [{to : "thing-2-secondary:partition-A", from : "thing-2-primary:partition-B"}, {to : "thing-3-primary:partition-B", from : "thing-3-secondary:partition-A"}]}) {
-                |     to {
+                | query getPartitionedConnections(${'$'}v0: ThingsFilter) {
+                |   things(filter: ${'$'}v0) {
+                |     from {
                 |       id
                 |       name
                 |     }
-                |     from {
+                |     to {
                 |       id
                 |       name
                 |     }
                 |   }
                 | }
                 """.trimMargin(),
-                variables = " {}",
+                variables = """
+                | {
+                |   "v0": {
+                |     "thingsIds": [
+                |       {
+                |         "to": "thing-2-secondary:partition-A",
+                |         "from": "thing-2-primary:partition-B"
+                |       },
+                |       {
+                |         "to": "thing-3-primary:partition-B",
+                |         "from": "thing-3-secondary:partition-A"
+                |       }
+                |     ]
+                |   }
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

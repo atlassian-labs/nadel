@@ -24,13 +24,17 @@ public class `hydration works when an ancestor field has been renamed snapshot` 
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
-                | {
-                |   issue(id: "1") {
+                | query (${'$'}v0: ID) {
+                |   issue(id: ${'$'}v0) {
                 |     id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

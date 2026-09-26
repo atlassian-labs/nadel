@@ -24,15 +24,19 @@ public class `index hydration all null ids snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | {
-                |   issueById(id: "10000") {
+                | query (${'$'}v0: ID!) {
+                |   issueById(id: ${'$'}v0) {
                 |     __typename__batch_hydration__collaborators: __typename
                 |     batch_hydration__collaborators__collaboratorIds: collaboratorIds
                 |     key
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "10000"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

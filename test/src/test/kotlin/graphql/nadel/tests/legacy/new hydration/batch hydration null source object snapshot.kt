@@ -53,14 +53,20 @@ public class `batch hydration null source object snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "users",
                 query = """
-                | {
-                |   usersByIds(ids: ["user-256"]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   usersByIds(ids: ${'$'}v0) {
                 |     batch_hydration__assignee__id: id
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     "user-256"
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

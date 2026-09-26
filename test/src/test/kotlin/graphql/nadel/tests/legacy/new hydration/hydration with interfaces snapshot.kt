@@ -24,11 +24,15 @@ public class `hydration with interfaces snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "Issues",
                 query = """
-                | {
-                |   idByAri(id: "ari:i-always-forget-the-format/1")
+                | query (${'$'}v0: ID!) {
+                |   idByAri(id: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "ari:i-always-forget-the-format/1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

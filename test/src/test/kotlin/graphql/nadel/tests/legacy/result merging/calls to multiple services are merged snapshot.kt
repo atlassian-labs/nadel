@@ -24,13 +24,17 @@ public class `calls to multiple services are merged snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "bar",
                 query = """
-                | {
-                |   bar(id: "1") {
+                | query (${'$'}v0: ID!) {
+                |   bar(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -46,13 +50,17 @@ public class `calls to multiple services are merged snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | {
-                |   foo(id: "1") {
+                | query (${'$'}v0: ID!) {
+                |   foo(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
@@ -68,13 +76,17 @@ public class `calls to multiple services are merged snapshot` : TestSnapshot() {
             ExpectedServiceCall(
                 service = "foo",
                 query = """
-                | {
-                |   loot: foo(id: "1") {
+                | query (${'$'}v0: ID!) {
+                |   loot: foo(id: ${'$'}v0) {
                 |     name
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "1"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

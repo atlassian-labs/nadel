@@ -52,14 +52,22 @@ public class CastHydrationLongInputToStringForMatchingTestSnapshot : TestSnapsho
             ExpectedServiceCall(
                 service = "myService",
                 query = """
-                | {
-                |   spaces(ids: [1, 2, 10]) {
+                | query (${'$'}v0: [ID!]!) {
+                |   spaces(ids: ${'$'}v0) {
                 |     id
                 |     batch_hydration__spaces__id: id
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": [
+                |     1,
+                |     2,
+                |     10
+                |   ]
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

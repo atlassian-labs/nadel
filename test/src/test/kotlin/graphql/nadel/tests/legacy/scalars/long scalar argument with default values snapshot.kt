@@ -24,11 +24,15 @@ public class `long scalar argument with default values snapshot` : TestSnapshot(
             ExpectedServiceCall(
                 service = "service",
                 query = """
-                | {
-                |   getFoo(arg: 15)
+                | query (${'$'}v0: Long) {
+                |   getFoo(arg: ${'$'}v0)
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": 15
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {

@@ -24,8 +24,8 @@ public class `dynamic service resolution handles complex fragments snapshot` : T
             ExpectedServiceCall(
                 service = "RepoService",
                 query = """
-                | {
-                |   node(id: "pull-request:id-123") {
+                | query (${'$'}v0: ID!) {
+                |   node(id: ${'$'}v0) {
                 |     id
                 |     ... on PullRequest {
                 |       author {
@@ -37,7 +37,11 @@ public class `dynamic service resolution handles complex fragments snapshot` : T
                 |   }
                 | }
                 """.trimMargin(),
-                variables = "{}",
+                variables = """
+                | {
+                |   "v0": "pull-request:id-123"
+                | }
+                """.trimMargin(),
                 result = """
                 | {
                 |   "data": {
