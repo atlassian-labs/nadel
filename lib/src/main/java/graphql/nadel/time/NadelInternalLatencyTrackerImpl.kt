@@ -4,7 +4,6 @@ import java.io.Closeable
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
 open class NadelInternalLatencyTrackerImpl(
@@ -13,7 +12,10 @@ open class NadelInternalLatencyTrackerImpl(
      */
     private val internalLatency: NadelStopwatch,
 ) : NadelInternalLatencyTracker {
-    private val outstandingExternalLatencyCount = AtomicInteger()
+    private val lock = Any()
+
+    @Volatile
+    private var outstandingExternalLatencyCount = 0
 
     override fun getInternalLatency(): Duration {
         return internalLatency.elapsed()
@@ -47,10 +49,15 @@ open class NadelInternalLatencyTrackerImpl(
     fun <T : Any> onExternalFuture(future: Supplier<CompletableFuture<T>>): CompletableFuture<T> {
         val call = newExternalCall()
 
-        return future.get()
-            .whenComplete { _, _ ->
-                call.close()
-            }
+        try {
+            return future.get()
+                .whenComplete { _, _ ->
+                    call.close()
+                }
+        } catch (e: Throwable) {
+            call.close()
+            throw e
+        }
     }
 
     /**
@@ -59,7 +66,7 @@ open class NadelInternalLatencyTrackerImpl(
      * @return true if all external calls were closed
      */
     fun noOutstandingCalls(): Boolean {
-        return outstandingExternalLatencyCount.get() == 0
+        return outstandingExternalLatencyCount == 0
     }
 
     private inner class ExternalCall : Closeable {
@@ -69,15 +76,19 @@ open class NadelInternalLatencyTrackerImpl(
         private val closed = AtomicBoolean(false)
 
         init {
-            if (outstandingExternalLatencyCount.getAndIncrement() == 0) {
-                internalLatency.stop()
+            synchronized(lock) {
+                if ((++outstandingExternalLatencyCount) == 1) {
+                    internalLatency.stop()
+                }
             }
         }
 
         override fun close() {
             if (!closed.getAndSet(true)) {
-                if (outstandingExternalLatencyCount.decrementAndGet() == 0) {
-                    internalLatency.start()
+                synchronized(lock) {
+                    if ((--outstandingExternalLatencyCount) == 0) {
+                        internalLatency.start()
+                    }
                 }
             }
         }
