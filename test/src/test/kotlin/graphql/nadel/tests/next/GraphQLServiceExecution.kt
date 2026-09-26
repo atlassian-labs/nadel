@@ -98,6 +98,6 @@ and responded with
 ${response.replaceIndent(fourSpaces)}
 """
 
-        println(logMessage)
+        // println(logMessage)
     }
 }
