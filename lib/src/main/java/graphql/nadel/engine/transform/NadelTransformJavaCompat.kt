@@ -124,7 +124,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         service,
                         rootFields,
                         hydrationDetails
-                    ).asDeferred().await()
+                    ).awaitNoWrapper(executionContext.javaTransformFutureFastPath)
                 }
 
                 override suspend fun isApplicable(
@@ -146,7 +146,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         overallField = overallField,
                         transformServiceExecutionContext = transformServiceExecutionContext,
                         hydrationDetails = hydrationDetails,
-                    ).asDeferred().await()
+                    ).awaitNoWrapper(executionContext.javaTransformFutureFastPath)
                 }
 
                 override suspend fun transformField(
@@ -171,7 +171,7 @@ interface NadelTransformJavaCompat<State : Any> {
                             field = field,
                             state = state,
                             transformServiceExecutionContext = transformServiceExecutionContext
-                        ).asDeferred().await()
+                        ).awaitNoWrapper(executionContext.javaTransformFutureFastPath)
                     }
                 }
 
@@ -198,7 +198,7 @@ interface NadelTransformJavaCompat<State : Any> {
                         state = state,
                         nodes = nodes,
                         transformServiceExecutionContext = transformServiceExecutionContext,
-                    ).asDeferred().await()
+                    ).awaitNoWrapper(executionContext.javaTransformFutureFastPath)
                 }
 
                 override suspend fun onComplete(
@@ -218,9 +218,25 @@ interface NadelTransformJavaCompat<State : Any> {
                         result = result,
                         nodes = nodes,
                         transformServiceExecutionContext = transformServiceExecutionContext,
-                    ).asDeferred().await()
+                    ).awaitNoWrapper(executionContext.javaTransformFutureFastPath)
                 }
             }
         }
     }
+}
+
+private suspend fun <T> CompletableFuture<T>.awaitNoWrapper(skipWrapperOnCompleted: Boolean): T {
+    if (!skipWrapperOnCompleted) {
+        return asDeferred().await()
+    }
+    val future = toCompletableFuture()
+    if (future.isDone) {
+        return try {
+            future.get()
+        } catch (_: Throwable) {
+            // recover as usual
+            future.asDeferred().await()
+        }
+    }
+    return future.asDeferred().await()
 }
