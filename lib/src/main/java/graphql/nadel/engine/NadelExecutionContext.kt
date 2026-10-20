@@ -24,6 +24,8 @@ data class NadelExecutionContext internal constructor(
     internal val isPartitionedCall: Boolean = false,
     internal val executionCoroutine: CoroutineScope,
 ) {
+    internal val javaTransformFutureFastPath = hints.javaTransformFutureFastPath()
+
     val userContext: Any?
         get() {
             return executionInput.context
