@@ -232,7 +232,7 @@ private suspend fun <T> CompletableFuture<T>.awaitNoWrapper(skipWrapperOnComplet
     val future = toCompletableFuture()
     if (future.isDone) {
         return try {
-            future.get()
+            future.getNow(null)
         } catch (_: Throwable) {
             // recover as usual
             future.asDeferred().await()

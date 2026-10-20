@@ -20,6 +20,7 @@ import graphql.nadel.test.mock
 import graphql.nadel.test.spy
 import graphql.normalized.ExecutableNormalizedField
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.datatest.withData
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.verify
@@ -49,7 +50,11 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             confirmVerified(compat)
         }
 
-        it("delegates buildContext to compat") {
+        withData(
+            nameFn = { "delegates buildContext to compat with javaTransformFutureFastPath=$it" },
+            false,
+            true,
+        ) { javaTransformFutureFastPath ->
             class Prop(val prop: String) : NadelTransformServiceExecutionContext()
 
             // given
@@ -73,7 +78,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
-            every { executionContext.javaTransformFutureFastPath } returns false
+            every { executionContext.javaTransformFutureFastPath } returns javaTransformFutureFastPath
             val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val services = mock<Map<String, Service>>()
@@ -110,7 +115,11 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             confirmVerified(compat)
         }
 
-        it("delegates isApplicable to compat") {
+        withData(
+            nameFn = { "delegates isApplicable to compat with javaTransformFutureFastPath=$it" },
+            false,
+            true,
+        ) { javaTransformFutureFastPath ->
             // given
             val compat = spy(object : NadelTransformJavaCompatAdapter {
                 override val name: String
@@ -133,7 +142,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
-            every { executionContext.javaTransformFutureFastPath } returns false
+            every { executionContext.javaTransformFutureFastPath } returns javaTransformFutureFastPath
             val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val services = mock<Map<String, Service>>()
@@ -173,7 +182,11 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             confirmVerified(compat)
         }
 
-        it("delegates transformField to compat") {
+        withData(
+            nameFn = { "delegates transformField to compat with javaTransformFutureFastPath=$it" },
+            false,
+            true,
+        ) { javaTransformFutureFastPath ->
             // given
             val expectedResult = mock<NadelTransformFieldResult>()
             val compat = spy(object : NadelTransformJavaCompatAdapter {
@@ -197,7 +210,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
-            every { executionContext.javaTransformFutureFastPath } returns false
+            every { executionContext.javaTransformFutureFastPath } returns javaTransformFutureFastPath
             val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val queryTransformer = mock<NadelQueryTransformer>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
@@ -238,7 +251,11 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             confirmVerified(compat)
         }
 
-        it("delegates getResultInstructions to compat") {
+        withData(
+            nameFn = { "delegates getResultInstructions to compat with javaTransformFutureFastPath=$it" },
+            false,
+            true,
+        ) { javaTransformFutureFastPath ->
             // given
             val expectedResult = listOf<NadelResultInstruction>(
                 NadelResultInstruction.Set(
@@ -270,7 +287,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
-            every { executionContext.javaTransformFutureFastPath } returns false
+            every { executionContext.javaTransformFutureFastPath } returns javaTransformFutureFastPath
             val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val service = mock<Service>()
@@ -316,7 +333,11 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             confirmVerified(compat)
         }
 
-        it("delegates onComplete to compat") {
+        withData(
+            nameFn = { "delegates onComplete to compat with javaTransformFutureFastPath=$it" },
+            false,
+            true,
+        ) { javaTransformFutureFastPath ->
             // given
             val compat = spy(object : NadelTransformJavaCompatAdapter {
                 override val name: String
@@ -338,7 +359,7 @@ class NadelTransformJavaCompatTest : DescribeSpec({
             val transformer = NadelTransformJavaCompat.create(compat)
 
             val executionContext = mock<NadelExecutionContext>()
-            every { executionContext.javaTransformFutureFastPath } returns false
+            every { executionContext.javaTransformFutureFastPath } returns javaTransformFutureFastPath
             val serviceExecutionContext = mock<NadelServiceExecutionContext>()
             val executionBlueprint = mock<NadelOverallExecutionBlueprint>()
             val service = mock<Service>()
