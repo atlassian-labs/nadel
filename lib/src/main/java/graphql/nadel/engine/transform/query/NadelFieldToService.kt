@@ -73,8 +73,6 @@ internal class NadelFieldToService(
 
         for ((group, namespaces) in namespacesByGroup) {
             val roots = batchedByGroup[group]
-            // Partition transforms choose the primary shard later. Preserve existing root batches,
-            // but do not attach namespace wrappers to a batch whose target can still change.
             if (roots != null && roots.none(::hasPartitionInstruction)) {
                 roots.addAll(namespaces)
             } else {
@@ -113,7 +111,6 @@ internal class NadelFieldToService(
             return null
         }
 
-        // A null target is a valid unsharded group; a null group means the wrapper stays separate.
         return NadelBatchGroup(entry.service, targets.single())
     }
 
