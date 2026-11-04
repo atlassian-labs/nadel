@@ -45,8 +45,10 @@ interface NadelExecutionHooks {
     }
 
     /**
-     * Returns an opaque key identifying the target "shard" that a top level (root) [field] will be
-     * routed to. It is used to decide which root fields may be batched into a single service call.
+     * Returns an opaque key identifying the target "shard" that [field] will be routed to. It is
+     * called for non-namespaced roots and, when namespace batching is enabled, the immediate
+     * service-owned children of a namespace. Implementations must account for any routing inherited
+     * from the namespace wrapper. It decides which roots may be batched into a single service call.
      *
      * Root fields are only batched together when they share the same [service] AND the same sharding
      * target. Two fields can belong to the same [service] but be routed to different shards (e.g.
@@ -57,7 +59,8 @@ interface NadelExecutionHooks {
      * the implementation.
      *
      * Return `null` when the field is not bound to a specific shard; such fields are grouped together
-     * (per service) separately from shard-specific ones.
+     * (per service) separately from shard-specific ones. If no shareable target can be determined,
+     * return a distinct non-null key for the field rather than treating it as unsharded.
      */
     fun getShardingTarget(
         executionContext: NadelExecutionContext,
