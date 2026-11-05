@@ -79,9 +79,7 @@ public class DeferredDeepRenameTestSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "details": null
-            |   },
+            |   "data": {},
             |   "hasNext": true
             | }
             """.trimMargin(),
