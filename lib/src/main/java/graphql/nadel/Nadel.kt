@@ -257,7 +257,8 @@ class Nadel private constructor(
                 document,
                 validationRulePredicate,
                 Locale.getDefault(),
-                queryLimits
+                queryLimits,
+                executionInput.graphQLContext
             )
         validationCtx.onCompleted(validationErrors, null)
         return validationErrors

@@ -7,7 +7,7 @@ plugins {
     id("com.bnorm.power.kotlin-power-assert")
 }
 
-val graphqlJavaVersion = "0.0.0-2026-08-23T10-34-47-acc4678"
+val graphqlJavaVersion = "0.0.0-2026-11-05T00-37-51-dac6604"
 val slf4jVersion = "1.7.25"
 
 dependencies {
@@ -57,7 +57,7 @@ tasks.withType<Test> {
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.apply {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
         freeCompilerArgs = listOf(
             "-progressive",
             "-java-parameters",

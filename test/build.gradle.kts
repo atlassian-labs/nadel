@@ -55,7 +55,7 @@ tasks.register<JavaExec>("updateTestSnapshots") {
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.apply {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
         freeCompilerArgs = listOf(
             "-progressive",
             "-java-parameters",
