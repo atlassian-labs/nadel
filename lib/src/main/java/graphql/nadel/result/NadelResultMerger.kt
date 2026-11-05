@@ -63,6 +63,9 @@ internal object NadelResultMerger {
             // Ensure field is present in result
             if (topLevelResultKey.value !in data) {
                 val topLevelField = topLevelFields.first { it.resultKey == topLevelResultKey.value }
+                if (topLevelField.deferredExecutions.isNotEmpty()) {
+                    continue
+                }
                 data[topLevelResultKey.value] =
                     if (isNamespacedField(topLevelField, engineSchema) && children.isEmpty()) {
                         mutableMapOf<String, Any?>()
@@ -76,7 +79,10 @@ internal object NadelResultMerger {
                 val childrenData = data[topLevelResultKey.value] as? MutableJsonMap?
 
                 if (childrenData != null) {
-                    val queryHasNonTypenameFields = children.any { it.name != Introspection.TypeNameMetaFieldDef.name }
+                    val initialChildren = children.filter { child ->
+                        child.deferredExecutions.isEmpty() || child.resultKey in childrenData
+                    }
+                    val queryHasNonTypenameFields = initialChildren.any { it.name != Introspection.TypeNameMetaFieldDef.name }
 
                     // This portion mutates the result if the __typename is the only field successfully resolved
                     // This is to simulate the __typename being resolved by an underlying service
@@ -84,7 +90,7 @@ internal object NadelResultMerger {
                         val dataOnlyHasTypenameFields = childrenData
                             .keys
                             .all { key ->
-                                children
+                                initialChildren
                                     .find { it.resultKey == key }
                                     ?.name == Introspection.TypeNameMetaFieldDef.name
                             }
@@ -95,7 +101,7 @@ internal object NadelResultMerger {
                     }
 
                     // This portion ensures that all namespaced fields are present in the object
-                    for (child in children) {
+                    for (child in initialChildren) {
                         if (child.resultKey !in childrenData) {
                             childrenData[child.resultKey] = null
                         }

@@ -444,9 +444,12 @@ internal class NextgenEngine(
 
         val transformedData: MutableJsonMap = serviceExecResult.data
             .let { data ->
-                // Ensures data always has root fields as keys
+                // Ensures data always has non-deferred root fields as keys
                 topLevelFields
                     .asSequence()
+                    .filter { field ->
+                        field.deferredExecutions.isEmpty() || field.resultKey in data
+                    }
                     .map {
                         it.resultKey
                     }
