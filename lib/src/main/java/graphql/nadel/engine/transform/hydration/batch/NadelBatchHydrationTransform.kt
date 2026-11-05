@@ -127,8 +127,33 @@ internal class NadelBatchHydrationTransform(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
+        val invocationState = if (state.executionContext === executionContext) {
+            state
+        } else {
+            state.copy(executionContext = executionContext)
+        }
 
-        return newHydrator.hydrate(state, executionBlueprint, parentNodes)
+        val participant = executionContext.batchHydrationCoalescingParticipant
+            ?: return newHydrator.hydrate(invocationState, executionBlueprint, parentNodes)
+        val mayTargetEnabledService = state.instructionsByObjectTypeNames
+            .values
+            .asSequence()
+            .flatten()
+            .any { instruction -> participant.isEnabledFor(instruction.backingService) }
+        if (!mayTargetEnabledService) {
+            return newHydrator.hydrate(invocationState, executionBlueprint, parentNodes)
+        }
+        val preparedHydration = newHydrator.prepare(
+            state = invocationState,
+            executionBlueprint = executionBlueprint,
+            sourceObjects = parentNodes,
+        )
+        return if (participant.trySubmit(preparedHydration)) {
+            emptyList()
+        } else {
+            // Incremental or otherwise late work cannot join a completed root round.
+            newHydrator.hydrate(preparedHydration)
+        }
     }
 
     private fun makeTypeNameField(

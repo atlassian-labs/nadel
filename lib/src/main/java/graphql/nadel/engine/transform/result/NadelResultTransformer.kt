@@ -8,12 +8,19 @@ import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.plan.NadelExecutionPlan
+import graphql.nadel.engine.transform.hydration.batch.NadelCoalescedBatchHydrationError
+import graphql.nadel.engine.transform.hydration.batch.NadelCoalescedResultFieldOrder
 import graphql.nadel.engine.transform.query.NadelQueryPath
 import graphql.nadel.engine.transform.result.json.JsonNodes
+import graphql.nadel.engine.util.AnyList
+import graphql.nadel.engine.util.AnyMap
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.engine.util.MutableJsonMap
 import graphql.nadel.engine.util.queryPath
+import graphql.nadel.engine.util.toGraphQLError
 import graphql.normalized.ExecutableNormalizedField
+import java.util.Collections
+import java.util.IdentityHashMap
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -42,6 +49,20 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             nodes
         )
         mutate(result, instructions)
+
+        executionContext.batchHydrationCoalescingParticipant
+            ?.completeAndTakeOutput()
+            ?.let { output ->
+                mutate(result, output.instructions)
+                reorderResultFields(
+                    fieldOrders = output.resultFieldOrders,
+                )
+                process(
+                    errorsToLocate = output.locatedErrors,
+                    data = result.data,
+                    errors = result.errors,
+                )
+            }
         return result
     }
 
@@ -169,6 +190,33 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         map[instruction.key.value] = instruction.newValue?.value
     }
 
+    private fun reorderResultFields(
+        fieldOrders: List<NadelCoalescedResultFieldOrder>,
+    ) {
+        if (fieldOrders.isEmpty()) {
+            return
+        }
+        val processedParents = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
+        fieldOrders.forEach { (parent, fieldOrder) ->
+            val parentValue = parent.value ?: return@forEach
+            if (!processedParents.add(parentValue)) {
+                return@forEach
+            }
+            @Suppress("UNCHECKED_CAST")
+            val map = parentValue as? MutableJsonMap ?: return@forEach
+            val orderByResultKey = fieldOrder.withIndex().associate { (index, key) -> key to index }
+            val existingOrder = map.keys.withIndex().associate { (index, key) -> key to index }
+            val orderedEntries = map.entries.sortedWith(
+                compareBy<Map.Entry<String, Any?>>(
+                    { entry -> orderByResultKey[entry.key] ?: Int.MAX_VALUE },
+                    { entry -> existingOrder.getValue(entry.key) },
+                ),
+            )
+            map.clear()
+            orderedEntries.forEach { (key, value) -> map[key] = value }
+        }
+    }
+
     private fun process(
         instruction: NadelResultInstruction.Remove,
     ) {
@@ -186,6 +234,91 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
         val mutableErrors = errors.asMutable()
         mutableErrors.add(newError)
+    }
+
+    private fun process(
+        errorsToLocate: List<NadelCoalescedBatchHydrationError>,
+        data: JsonMap,
+        errors: List<JsonMap?>,
+    ) {
+        if (errorsToLocate.isEmpty()) {
+            return
+        }
+
+        val mutableErrors = errors.asMutable()
+        val resultPathIndex = makeResultPathIndex(data)
+        errorsToLocate.forEach { error ->
+            mutableErrors += toGraphQLError(
+                raw = error.rawError,
+                path = resultPathIndex[error.subject.value]
+                    ?.plus(error.relativePath),
+            ).toSpecification()
+        }
+    }
+
+    /**
+     * Indexes maps and lists in the final source payload by reference identity.
+     *
+     * A shared map or list may occur at several response paths. Returning no path in that case
+     * is safer than attaching a backing error to one arbitrarily selected client occurrence.
+     */
+    private fun makeResultPathIndex(root: Any?): ResultPathIndex {
+        val currentPath = mutableListOf<Any>()
+        val ancestors = Collections.newSetFromMap(
+            IdentityHashMap<Any, Boolean>(),
+        )
+        val pathsByValue = IdentityHashMap<Any, List<Any>>()
+        val ambiguousValues = Collections.newSetFromMap(
+            IdentityHashMap<Any, Boolean>(),
+        )
+
+        fun index(value: Any?) {
+            if (value !is AnyMap && value !is AnyList) {
+                return
+            }
+            if (!ancestors.add(value)) {
+                return
+            }
+            if (pathsByValue.containsKey(value)) {
+                ambiguousValues += value
+            } else {
+                pathsByValue[value] = currentPath.toList()
+            }
+
+            when (value) {
+                is AnyMap -> value.forEach { (key, child) ->
+                    val resultKey = key as? String
+                        ?: return@forEach
+                    currentPath += resultKey
+                    index(child)
+                    currentPath.removeLast()
+                }
+                is AnyList -> value.forEachIndexed { childIndex, child ->
+                    currentPath += childIndex
+                    index(child)
+                    currentPath.removeLast()
+                }
+            }
+
+            ancestors.remove(value)
+        }
+
+        index(root)
+        return ResultPathIndex(
+            pathsByValue = pathsByValue,
+            ambiguousValues = ambiguousValues,
+        )
+    }
+
+    private data class ResultPathIndex(
+        val pathsByValue: IdentityHashMap<Any, List<Any>>,
+        val ambiguousValues: Set<Any>,
+    ) {
+        operator fun get(value: Any?): List<Any>? {
+            return value
+                ?.takeUnless { it in ambiguousValues }
+                ?.let(pathsByValue::get)
+        }
     }
 
     private fun processGraphQLErrors(
