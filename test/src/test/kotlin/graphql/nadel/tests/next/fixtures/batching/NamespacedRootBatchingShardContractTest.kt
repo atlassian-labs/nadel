@@ -16,12 +16,12 @@ class NamespacedRootBatchingShardContractTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    ambiguous: jira { issue(cloudId: "ambiguous") }
-                    alsoAmbiguous: jira { issue(cloudId: "ambiguous") }
-                    free: jira { issue }
-                    flatFree: jira_issue
-                    bound: jira { issue(cloudId: "one") }
-                    flatBound: jira_issue(cloudId: "one")
+                    ambiguous: service { issue(cloudId: "ambiguous") }
+                    alsoAmbiguous: service { issue(cloudId: "ambiguous") }
+                    free: service { issue }
+                    flatFree: service_issue
+                    bound: service { issue(cloudId: "one") }
+                    flatBound: service_issue(cloudId: "one")
                 }
             """.trimIndent(),
             hooks = object : CloudIdBatchingHooks() {
@@ -38,10 +38,10 @@ class NamespacedRootBatchingShardContractTest {
 
         assertBatchingQueries(
             capture,
-            "{ ambiguous: jira { issue(cloudId: \"ambiguous\") } }",
-            "{ alsoAmbiguous: jira { issue(cloudId: \"ambiguous\") } }",
-            "{ free: jira { issue } rename__flatFree__issue: issue }",
-            "{ bound: jira { issue(cloudId: \"one\") } rename__flatBound__issue: issue(cloudId: \"one\") }",
+            "{ ambiguous: service { issue(cloudId: \"ambiguous\") } }",
+            "{ alsoAmbiguous: service { issue(cloudId: \"ambiguous\") } }",
+            "{ free: service { issue } rename__flatFree__issue: issue }",
+            "{ bound: service { issue(cloudId: \"one\") } rename__flatBound__issue: issue(cloudId: \"one\") }",
         )
         assertBatchingData(
             capture,
@@ -62,10 +62,10 @@ class NamespacedRootBatchingShardContractTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    first: jira { issue }
-                    second: jira { issue }
-                    flatOne: jira_issue
-                    flatTwo: jira_issue
+                    first: service { issue }
+                    second: service { issue }
+                    flatOne: service_issue
+                    flatTwo: service_issue
                 }
             """.trimIndent(),
             namespaceHint = null,
@@ -82,11 +82,11 @@ class NamespacedRootBatchingShardContractTest {
             },
         )
 
-        assertEquals(listOf("jira_issue", "jira_issue"), inspectedFields.toList())
+        assertEquals(listOf("service_issue", "service_issue"), inspectedFields.toList())
         assertBatchingQueries(
             capture,
-            "{ first: jira { issue } }",
-            "{ second: jira { issue } }",
+            "{ first: service { issue } }",
+            "{ second: service { issue } }",
             "{ rename__flatOne__issue: issue rename__flatTwo__issue: issue }",
         )
         assertBatchingData(
@@ -106,19 +106,19 @@ class NamespacedRootBatchingShardContractTest {
             name = "issues",
             overallSchema = """
                 type Query {
-                    jira(cloudId: String): JiraQuery @namespaced
-                    jira_issue(cloudId: String): String @renamed(from: "issue")
+                    service(cloudId: String): ServiceQuery @namespaced
+                    service_issue(cloudId: String): String @renamed(from: "issue")
                 }
-                type JiraQuery { issue: String }
+                type ServiceQuery { issue: String }
             """.trimIndent(),
             runtimeWiring = { wiring ->
                 wiring
                     .type("Query") { type ->
                         type
-                            .dataFetcher("jira") { env -> mapOf("cloudId" to env.getArgument<String>("cloudId")) }
+                            .dataFetcher("service") { env -> mapOf("cloudId" to env.getArgument<String>("cloudId")) }
                             .dataFetcher("issue") { env -> env.getArgument<String>("cloudId") }
                     }
-                    .type("JiraQuery") { type ->
+                    .type("ServiceQuery") { type ->
                         type.dataFetcher("issue") { env ->
                             requireNotNull(env.getSource<Map<String, String?>>())["cloudId"]
                         }
@@ -128,10 +128,10 @@ class NamespacedRootBatchingShardContractTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    first: jira(cloudId: "one") { issue }
-                    second: jira(cloudId: "one") { issue }
-                    other: jira(cloudId: "two") { issue }
-                    flat: jira_issue(cloudId: "one")
+                    first: service(cloudId: "one") { issue }
+                    second: service(cloudId: "one") { issue }
+                    other: service(cloudId: "two") { issue }
+                    flat: service_issue(cloudId: "one")
                 }
             """.trimIndent(),
             services = listOf(service),
@@ -151,12 +151,12 @@ class NamespacedRootBatchingShardContractTest {
             capture,
             """
                 {
-                    first: jira(cloudId: "one") { issue }
-                    second: jira(cloudId: "one") { issue }
+                    first: service(cloudId: "one") { issue }
+                    second: service(cloudId: "one") { issue }
                     rename__flat__issue: issue(cloudId: "one")
                 }
             """.trimIndent(),
-            "{ other: jira(cloudId: \"two\") { issue } }",
+            "{ other: service(cloudId: \"two\") { issue } }",
         )
         assertBatchingData(
             capture,

@@ -11,8 +11,8 @@ class NamespacedRootBatchingTest {
     @Test
     fun `namespace and ordinary batching require their own global and service opt ins`() = runTest {
         val namespaces = listOf(
-            "first: jira { issue(cloudId: \"one\") }",
-            "second: jira { issue(cloudId: \"one\") }",
+            "first: service { issue(cloudId: \"one\") }",
+            "second: service { issue(cloudId: \"one\") }",
         )
         val roots = listOf(
             "rename__flatOne__issue: issue(cloudId: \"one\")",
@@ -26,8 +26,8 @@ class NamespacedRootBatchingTest {
                             query = """
                                 {
                                     ${namespaces.joinToString("\n")}
-                                    flatOne: jira_issue(cloudId: "one")
-                                    flatTwo: jira_issue(cloudId: "one")
+                                    flatOne: service_issue(cloudId: "one")
+                                    flatTwo: service_issue(cloudId: "one")
                                 }
                             """.trimIndent(),
                             rootHint = object : NadelBatchRootFieldsHint {
@@ -69,10 +69,10 @@ class NamespacedRootBatchingTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    first: jira { issue }
-                    second: jira { issue }
-                    flatOne: jira_issue
-                    flatTwo: jira_issue
+                    first: service { issue }
+                    second: service { issue }
+                    flatOne: service_issue
+                    flatTwo: service_issue
                 }
             """.trimIndent(),
             namespaceHint = null,
@@ -80,8 +80,8 @@ class NamespacedRootBatchingTest {
 
         assertBatchingQueries(
             capture,
-            "{ first: jira { issue } }",
-            "{ second: jira { issue } }",
+            "{ first: service { issue } }",
+            "{ second: service { issue } }",
             "{ rename__flatOne__issue: issue rename__flatTwo__issue: issue }",
         )
         assertBatchingData(
@@ -98,11 +98,11 @@ class NamespacedRootBatchingTest {
     @Test
     fun `namespace only requests batch with ordinary batching disabled`() = runTest {
         val capture = executeNamespacedQuery(
-            query = "{ first: jira { issue } second: jira { issue } }",
+            query = "{ first: service { issue } second: service { issue } }",
             rootHint = NadelBatchRootFieldsHint { false },
         )
 
-        assertBatchingQueries(capture, "{ first: jira { issue } second: jira { issue } }")
+        assertBatchingQueries(capture, "{ first: service { issue } second: service { issue } }")
         assertBatchingData(
             capture,
             mapOf("first" to mapOf("issue" to "unsharded"), "second" to mapOf("issue" to "unsharded")),
@@ -114,16 +114,16 @@ class NamespacedRootBatchingTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    one: jira { value: issue(cloudId: "one") }
-                    oneAgain: jira { value: issue(cloudId: "one") }
-                    two: jira { value: issue(cloudId: "two") }
-                    free: jira { value: issue }
-                    freeAgain: jira { value: issue }
-                    mixed: jira { bound: issue(cloudId: "one") free: issue }
-                    different: jira { one: issue(cloudId: "one") two: issue(cloudId: "two") }
-                    flatOne: jira_issue(cloudId: "one")
-                    flatTwo: jira_issue(cloudId: "two")
-                    flatFree: jira_issue
+                    one: service { value: issue(cloudId: "one") }
+                    oneAgain: service { value: issue(cloudId: "one") }
+                    two: service { value: issue(cloudId: "two") }
+                    free: service { value: issue }
+                    freeAgain: service { value: issue }
+                    mixed: service { bound: issue(cloudId: "one") free: issue }
+                    different: service { one: issue(cloudId: "one") two: issue(cloudId: "two") }
+                    flatOne: service_issue(cloudId: "one")
+                    flatTwo: service_issue(cloudId: "two")
+                    flatFree: service_issue
                 }
             """.trimIndent(),
         )
@@ -132,15 +132,15 @@ class NamespacedRootBatchingTest {
             capture,
             """
                 {
-                    one: jira { value: issue(cloudId: "one") }
-                    oneAgain: jira { value: issue(cloudId: "one") }
+                    one: service { value: issue(cloudId: "one") }
+                    oneAgain: service { value: issue(cloudId: "one") }
                     rename__flatOne__issue: issue(cloudId: "one")
                 }
             """.trimIndent(),
-            "{ two: jira { value: issue(cloudId: \"two\") } rename__flatTwo__issue: issue(cloudId: \"two\") }",
-            "{ free: jira { value: issue } freeAgain: jira { value: issue } rename__flatFree__issue: issue }",
-            "{ mixed: jira { bound: issue(cloudId: \"one\") free: issue } }",
-            "{ different: jira { one: issue(cloudId: \"one\") two: issue(cloudId: \"two\") } }",
+            "{ two: service { value: issue(cloudId: \"two\") } rename__flatTwo__issue: issue(cloudId: \"two\") }",
+            "{ free: service { value: issue } freeAgain: service { value: issue } rename__flatFree__issue: issue }",
+            "{ mixed: service { bound: issue(cloudId: \"one\") free: issue } }",
+            "{ different: service { one: issue(cloudId: \"one\") two: issue(cloudId: \"two\") } }",
         )
         assertBatchingData(
             capture,
@@ -164,17 +164,17 @@ class NamespacedRootBatchingTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    first: jira { ...IssueFields }
-                    second: jira {
+                    first: service { ...IssueFields }
+                    second: service {
                         same: issue(cloudId: "one") @include(if: true)
                         skipped: issue(cloudId: "two") @skip(if: true)
                         excluded: issue(cloudId: "two") @include(if: false)
                     }
-                    empty: jira { issue @skip(if: true) }
-                    same: jira_issue(cloudId: "one")
-                    skippedRoot: jira_issue(cloudId: "two") @skip(if: true)
+                    empty: service { issue @skip(if: true) }
+                    same: service_issue(cloudId: "one")
+                    skippedRoot: service_issue(cloudId: "two") @skip(if: true)
                 }
-                fragment IssueFields on JiraQuery {
+                fragment IssueFields on ServiceQuery {
                     same: issue(cloudId: "one")
                 }
             """.trimIndent(),
@@ -184,8 +184,8 @@ class NamespacedRootBatchingTest {
             capture,
             """
                 {
-                    first: jira { same: issue(cloudId: "one") }
-                    second: jira { same: issue(cloudId: "one") }
+                    first: service { same: issue(cloudId: "one") }
+                    second: service { same: issue(cloudId: "one") }
                     rename__same__issue: issue(cloudId: "one")
                 }
             """.trimIndent(),
@@ -206,9 +206,9 @@ class NamespacedRootBatchingTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    first: jira { same: issue(cloudId: "one", fail: true) }
-                    second: jira { same: issue(cloudId: "one") }
-                    same: jira_issue(cloudId: "one")
+                    first: service { same: issue(cloudId: "one", fail: true) }
+                    second: service { same: issue(cloudId: "one") }
+                    same: service_issue(cloudId: "one")
                 }
             """.trimIndent(),
         )
@@ -217,8 +217,8 @@ class NamespacedRootBatchingTest {
             capture,
             """
                 {
-                    first: jira { same: issue(cloudId: "one", fail: true) }
-                    second: jira { same: issue(cloudId: "one") }
+                    first: service { same: issue(cloudId: "one", fail: true) }
+                    second: service { same: issue(cloudId: "one") }
                     rename__same__issue: issue(cloudId: "one")
                 }
             """.trimIndent(),

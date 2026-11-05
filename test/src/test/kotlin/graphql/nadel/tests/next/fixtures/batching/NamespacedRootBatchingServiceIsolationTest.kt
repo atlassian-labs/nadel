@@ -18,11 +18,11 @@ class NamespacedRootBatchingServiceIsolationTest {
                 val capture = executeNamespacedQuery(
                     query = """
                         {
-                            first: jira { issue(cloudId: "one") search(cloudId: "two") }
-                            second: jira { issue(cloudId: "one") search(cloudId: "two") }
-                            flatIssue: jira_issue(cloudId: "one")
-                            flatSearch: jira_search(cloudId: "two")
-                            flatSearchAgain: jira_search(cloudId: "two")
+                            first: service { issue(cloudId: "one") search(cloudId: "two") }
+                            second: service { issue(cloudId: "one") search(cloudId: "two") }
+                            flatIssue: service_issue(cloudId: "one")
+                            flatSearch: service_search(cloudId: "two")
+                            flatSearchAgain: service_search(cloudId: "two")
                         }
                     """.trimIndent(),
                     services = listOf(namespacedBatchingService(), searchService()),
@@ -41,13 +41,13 @@ class NamespacedRootBatchingServiceIsolationTest {
                             field: ExecutableNormalizedField,
                         ): Any? {
                             val expectedService = when (field.name) {
-                                "issue", "jira_issue" -> "issues"
-                                "search", "jira_search" -> "search"
+                                "issue", "service_issue" -> "issues"
+                                "search", "service_search" -> "search"
                                 else -> error("Unexpected sharding field: ${field.name}")
                             }
                             assertEquals(expectedService, service.name)
                             if (field.parent != null) {
-                                assertEquals("jira", field.parent.name)
+                                assertEquals("service", field.parent.name)
                             }
                             return super.getShardingTarget(executionContext, service, field)
                         }
@@ -55,8 +55,8 @@ class NamespacedRootBatchingServiceIsolationTest {
                 )
 
                 val namespaces = listOf(
-                    "first: jira { search(cloudId: \"two\") }",
-                    "second: jira { search(cloudId: \"two\") }",
+                    "first: service { search(cloudId: \"two\") }",
+                    "second: service { search(cloudId: \"two\") }",
                 )
                 val roots = listOf(
                     "rename__flatSearch__search: search(cloudId: \"two\")",
@@ -74,8 +74,8 @@ class NamespacedRootBatchingServiceIsolationTest {
                         "issues" to listOf(
                             """
                                 {
-                                    first: jira { issue(cloudId: "one") }
-                                    second: jira { issue(cloudId: "one") }
+                                    first: service { issue(cloudId: "one") }
+                                    second: service { issue(cloudId: "one") }
                                     rename__flatIssue__issue: issue(cloudId: "one")
                                 }
                             """.trimIndent(),
@@ -102,12 +102,12 @@ class NamespacedRootBatchingServiceIsolationTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    first: jira {
+                    first: service {
                         broken: issue(cloudId: "one", fail: true)
                         healthy: search(cloudId: "two")
                     }
-                    second: jira { issue(cloudId: "one") search(cloudId: "two") }
-                    flat: jira_issue(cloudId: "one")
+                    second: service { issue(cloudId: "one") search(cloudId: "two") }
+                    flat: service_issue(cloudId: "one")
                 }
             """.trimIndent(),
             services = listOf(namespacedBatchingService(), searchService()),
@@ -119,14 +119,14 @@ class NamespacedRootBatchingServiceIsolationTest {
                 "issues" to listOf(
                     """
                         {
-                            first: jira { broken: issue(cloudId: "one", fail: true) }
-                            second: jira { issue(cloudId: "one") }
+                            first: service { broken: issue(cloudId: "one", fail: true) }
+                            second: service { issue(cloudId: "one") }
                             rename__flat__issue: issue(cloudId: "one")
                         }
                     """.trimIndent(),
                 ),
                 "search" to listOf(
-                    "{ first: jira { healthy: search(cloudId: \"two\") } second: jira { search(cloudId: \"two\") } }",
+                    "{ first: service { healthy: search(cloudId: \"two\") } second: service { search(cloudId: \"two\") } }",
                 ),
             ),
         )
@@ -147,18 +147,18 @@ class NamespacedRootBatchingServiceIsolationTest {
             name = "search",
             overallSchema = """
                 type Query {
-                    jira_search(cloudId: String): String @renamed(from: "search")
+                    service_search(cloudId: String): String @renamed(from: "search")
                 }
-                extend type JiraQuery {
+                extend type ServiceQuery {
                     search(cloudId: String): String
                 }
             """.trimIndent(),
             underlyingSchema = """
                 type Query {
-                    jira: JiraQuery
+                    service: ServiceQuery
                     search(cloudId: String): String
                 }
-                type JiraQuery {
+                type ServiceQuery {
                     search(cloudId: String): String
                 }
             """.trimIndent(),
@@ -166,10 +166,10 @@ class NamespacedRootBatchingServiceIsolationTest {
                 wiring
                     .type("Query") { type ->
                         type
-                            .dataFetcher("jira") { emptyMap<String, Any?>() }
+                            .dataFetcher("service") { emptyMap<String, Any?>() }
                             .dataFetcher("search") { env -> env.getArgument<String>("cloudId") ?: "unsharded" }
                     }
-                    .type("JiraQuery") { type ->
+                    .type("ServiceQuery") { type ->
                         type.dataFetcher("search") { env -> env.getArgument<String>("cloudId") ?: "unsharded" }
                     }
             },

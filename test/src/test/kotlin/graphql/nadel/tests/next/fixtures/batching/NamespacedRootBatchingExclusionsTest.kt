@@ -20,10 +20,10 @@ class NamespacedRootBatchingExclusionsTest {
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    split: jira { partitioned(ids: ["one:A", "two:B"]) }
-                    first: jira { issue }
-                    second: jira { issue }
-                    flat: jira_issue
+                    split: service { partitioned(ids: ["one:A", "two:B"]) }
+                    first: service { issue }
+                    second: service { issue }
+                    flat: service_issue
                 }
             """.trimIndent(),
             hooks = partitionHooks(),
@@ -31,9 +31,9 @@ class NamespacedRootBatchingExclusionsTest {
 
         assertBatchingQueries(
             capture,
-            "{ split: jira { partitioned(ids: [\"one:A\"]) } }",
-            "{ split: jira { partitioned(ids: [\"two:B\"]) } }",
-            "{ first: jira { issue } second: jira { issue } rename__flat__issue: issue }",
+            "{ split: service { partitioned(ids: [\"one:A\"]) } }",
+            "{ split: service { partitioned(ids: [\"two:B\"]) } }",
+            "{ first: service { issue } second: service { issue } rename__flat__issue: issue }",
         )
         assertBatchingData(
             capture,
@@ -52,9 +52,9 @@ class NamespacedRootBatchingExclusionsTest {
             query = """
                 {
                     partitioned(ids: ["one:A", "two:B"])
-                    flat: jira_issue
-                    first: jira { issue }
-                    second: jira { issue }
+                    flat: service_issue
+                    first: service { issue }
+                    second: service { issue }
                 }
             """.trimIndent(),
             hooks = partitionHooks(),
@@ -64,7 +64,7 @@ class NamespacedRootBatchingExclusionsTest {
             capture,
             "{ partitioned(ids: [\"one:A\"]) rename__flat__issue: issue }",
             "{ partitioned(ids: [\"two:B\"]) }",
-            "{ first: jira { issue } second: jira { issue } }",
+            "{ first: service { issue } second: service { issue } }",
         )
         assertBatchingData(
             capture,
@@ -83,10 +83,10 @@ class NamespacedRootBatchingExclusionsTest {
             val capture = executeNamespacedQuery(
                 query = """
                     mutation {
-                        first: jira { update(value: "one") }
-                        second: jira { update(value: "two") }
-                        flatOne: jira_update(value: "three")
-                        flatTwo: jira_update(value: "four")
+                        first: service { update(value: "one") }
+                        second: service { update(value: "two") }
+                        flatOne: service_update(value: "three")
+                        flatTwo: service_update(value: "four")
                     }
                 """.trimIndent(),
                 namespaceHint = NadelBatchNamespacedRootFieldsHint { enabled },
@@ -94,8 +94,8 @@ class NamespacedRootBatchingExclusionsTest {
 
             assertBatchingQueries(
                 capture,
-                "mutation { first: jira { update(value: \"one\") } }",
-                "mutation { second: jira { update(value: \"two\") } }",
+                "mutation { first: service { update(value: \"one\") } }",
+                "mutation { second: service { update(value: \"two\") } }",
                 """
                     mutation {
                         rename__flatOne__update: update(value: "three")
@@ -121,25 +121,25 @@ class NamespacedRootBatchingExclusionsTest {
             query = """
                 {
                     rootType: __typename
-                    first: jira { namespaceType: __typename issue }
-                    second: jira { issue }
-                    typeOnly: jira { name: __typename }
-                    flat: jira_issue
+                    first: service { namespaceType: __typename issue }
+                    second: service { issue }
+                    typeOnly: service { name: __typename }
+                    flat: service_issue
                 }
             """.trimIndent(),
         )
 
         assertBatchingQueries(
             capture,
-            "{ first: jira { issue } second: jira { issue } rename__flat__issue: issue }",
+            "{ first: service { issue } second: service { issue } rename__flat__issue: issue }",
         )
         assertBatchingData(
             capture,
             mapOf(
                 "rootType" to "Query",
-                "first" to mapOf("namespaceType" to "JiraQuery", "issue" to "unsharded"),
+                "first" to mapOf("namespaceType" to "ServiceQuery", "issue" to "unsharded"),
                 "second" to mapOf("issue" to "unsharded"),
-                "typeOnly" to mapOf("name" to "JiraQuery"),
+                "typeOnly" to mapOf("name" to "ServiceQuery"),
                 "flat" to "unsharded",
             ),
         )
@@ -152,11 +152,11 @@ class NamespacedRootBatchingExclusionsTest {
             overallSchema = """
                 directive @dynamicServiceResolution on FIELD_DEFINITION
                 type Query {
-                    jira: JiraQuery @namespaced
+                    service: ServiceQuery @namespaced
                     node(id: ID!): Node @dynamicServiceResolution
                     plain: String
                 }
-                type JiraQuery {
+                type ServiceQuery {
                     node(id: ID!): Node @dynamicServiceResolution
                     plain: String
                 }
@@ -164,23 +164,23 @@ class NamespacedRootBatchingExclusionsTest {
                 type Item implements Node { id: ID! }
             """.trimIndent(),
             runtimeWiring = { wiring ->
-                for (typeName in listOf("Query", "JiraQuery")) {
+                for (typeName in listOf("Query", "ServiceQuery")) {
                     wiring.type(typeName) { type ->
                         type
                             .dataFetcher("plain") { "ok" }
                             .dataFetcher("node") { env -> mapOf("id" to env.getArgument<String>("id")) }
                     }
                 }
-                wiring.type("Query") { type -> type.dataFetcher("jira") { emptyMap<String, Any?>() } }
+                wiring.type("Query") { type -> type.dataFetcher("service") { emptyMap<String, Any?>() } }
                 wiring.type("Node") { type -> type.typeResolver { env -> env.schema.getObjectType("Item") } }
             },
         )
         val capture = executeNamespacedQuery(
             query = """
                 {
-                    dynamic: jira { node(id: "child") { id } }
-                    first: jira { plain }
-                    second: jira { plain }
+                    dynamic: service { node(id: "child") { id } }
+                    first: service { plain }
+                    second: service { plain }
                     top: node(id: "root") { id }
                     plain
                 }

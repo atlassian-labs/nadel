@@ -55,19 +55,19 @@ internal fun namespacedBatchingService(): NadelIntegrationTest.Service {
         name = "issues",
         overallSchema = """
             type Query {
-                jira: JiraQuery @namespaced
-                jira_issue(cloudId: String, fail: Boolean): String @renamed(from: "issue")
+                service: ServiceQuery @namespaced
+                service_issue(cloudId: String, fail: Boolean): String @renamed(from: "issue")
                 partitioned(ids: [ID!]!): [String] @partition(pathToPartitionArg: ["ids"])
             }
-            type JiraQuery {
+            type ServiceQuery {
                 issue(cloudId: String, fail: Boolean): String
                 partitioned(ids: [ID!]!): [String] @partition(pathToPartitionArg: ["ids"])
             }
             type Mutation {
-                jira: JiraMutation @namespaced
-                jira_update(value: String!): String @renamed(from: "update")
+                service: ServiceMutation @namespaced
+                service_update(value: String!): String @renamed(from: "update")
             }
-            type JiraMutation {
+            type ServiceMutation {
                 update(value: String!): String
             }
         """.trimIndent(),
@@ -75,21 +75,21 @@ internal fun namespacedBatchingService(): NadelIntegrationTest.Service {
             wiring
                 .type("Query") { type ->
                     type
-                        .dataFetcher("jira") { emptyMap<String, Any?>() }
+                        .dataFetcher("service") { emptyMap<String, Any?>() }
                         .dataFetcher("issue", ::fetchIssue)
                         .dataFetcher("partitioned") { env -> env.getArgument<List<String>>("ids") }
                 }
-                .type("JiraQuery") { type ->
+                .type("ServiceQuery") { type ->
                     type
                         .dataFetcher("issue", ::fetchIssue)
                         .dataFetcher("partitioned") { env -> env.getArgument<List<String>>("ids") }
                 }
                 .type("Mutation") { type ->
                     type
-                        .dataFetcher("jira") { emptyMap<String, Any?>() }
+                        .dataFetcher("service") { emptyMap<String, Any?>() }
                         .dataFetcher("update") { env -> env.getArgument<String>("value") }
                 }
-                .type("JiraMutation") { type ->
+                .type("ServiceMutation") { type ->
                     type.dataFetcher("update") { env -> env.getArgument<String>("value") }
                 }
         },
