@@ -118,9 +118,7 @@ public class DeferredListFieldIsRenamedTestSnapshot : TestSnapshot() {
     override val result: ExpectedNadelResult = ExpectedNadelResult(
             result = """
             | {
-            |   "data": {
-            |     "issues": null
-            |   },
+            |   "data": {},
             |   "hasNext": true
             | }
             """.trimMargin(),
