@@ -8,17 +8,17 @@ import graphql.schema.FieldCoordinates
  * Refer to one of the constructor methods [groupBy] or [from]
  */
 class NadelFieldMap<T> private constructor(
-    private val map: Map<Int, T>,
+    private val map: Map<String, Map<String, T>>,
 ) {
     operator fun get(fieldCoordinates: FieldCoordinates): T? {
         return get(fieldCoordinates.typeName, fieldCoordinates.fieldName)
     }
 
     fun get(objectTypeName: String, fieldName: String): T? {
-        return map[hashCode(objectTypeName, fieldName)]
+        return map[objectTypeName]?.get(fieldName)
     }
 
-    val size: Int = map.size
+    val size: Int = map.values.sumOf { it.size }
 
     fun isEmpty(): Boolean {
         return map.isEmpty()
@@ -88,11 +88,13 @@ class NadelFieldMap<T> private constructor(
             getFieldName: (E) -> String,
             getValue: (E) -> T,
         ): NadelFieldMap<T> {
-            val map: MutableMap<Int, T> = mutableMapOf()
+            val map: MutableMap<String, MutableMap<String, T>> = mutableMapOf()
             values.forEach { value ->
                 val typeName = getTypeName(value)
                 val fieldName = getFieldName(value)
-                map[hashCode(typeName, fieldName)] = getValue(value)
+                map.computeIfAbsent(typeName) {
+                    mutableMapOf()
+                }[fieldName] = getValue(value)
             }
             return NadelFieldMap(map)
         }
@@ -149,24 +151,20 @@ class NadelFieldMap<T> private constructor(
             getFieldName: (E) -> String,
             getValue: (E) -> T,
         ): NadelFieldMap<List<T>> {
-            val map: MutableMap<Int, MutableList<T>> = mutableMapOf()
+            val map: MutableMap<String, MutableMap<String, MutableList<T>>> = mutableMapOf()
             values.forEach { value ->
                 val typeName = getTypeName(value)
                 val fieldName = getFieldName(value)
                 map
-                    .computeIfAbsent(hashCode(typeName, fieldName)) {
+                    .computeIfAbsent(typeName) {
+                        mutableMapOf()
+                    }
+                    .computeIfAbsent(fieldName) {
                         mutableListOf()
                     }
                     .add(getValue(value))
             }
             return NadelFieldMap(map)
-        }
-
-        private fun hashCode(typeName: String, fieldName: String): Int {
-            var result = 1
-            result = 31 * result + typeName.hashCode()
-            result = 31 * result + fieldName.hashCode()
-            return result
         }
     }
 }
