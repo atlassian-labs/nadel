@@ -28,10 +28,10 @@ internal class NadelFieldToService(
     ): List<NadelFieldAndService> {
         val query = executionContext.query
         val executionHints = executionContext.hints
-        val batchRoots = executionHints.batchRootFields()
-        val batchNamespaces = query.operation == Operation.QUERY && executionHints.batchNamespacedRootFields()
+        val batchPrefixedFields = executionHints.batchRootFields()
+        val batchNamespacedFields = query.operation == Operation.QUERY && executionHints.batchNamespacedRootFields()
 
-        if (!batchRoots && !batchNamespaces) {
+        if (!batchPrefixedFields && !batchNamespacedFields) {
             return query.topLevelFields.flatMap { topLevelField ->
                 if (isNamespacedField(topLevelField)) {
                     getServicePairsForNamespacedFields(topLevelField)
@@ -47,7 +47,7 @@ internal class NadelFieldToService(
         for (topLevelField in query.topLevelFields) {
             if (isNamespacedField(topLevelField)) {
                 for (entry in getServicePairsForNamespacedFields(topLevelField)) {
-                    val group = if (batchNamespaces) {
+                    val group = if (batchNamespacedFields) {
                         getNamespaceBatchGroup(executionContext, entry)
                     } else {
                         null
@@ -63,7 +63,7 @@ internal class NadelFieldToService(
             }
 
             val service = getService(topLevelField)
-            if (batchRoots && canBatchRootField(topLevelField, service, executionHints)) {
+            if (batchPrefixedFields && canBatchRootField(topLevelField, service, executionHints)) {
                 val shardingTarget = executionContext.hooks.getShardingTarget(executionContext, service, topLevelField)
                 batchedByGroup.getOrPut(NadelBatchGroup(service, shardingTarget)) { mutableListOf() }.add(topLevelField)
             } else {
