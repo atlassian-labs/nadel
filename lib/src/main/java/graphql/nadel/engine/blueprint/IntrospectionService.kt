@@ -1,10 +1,13 @@
 package graphql.nadel.engine.blueprint
 
 import graphql.ExecutionInput
+import graphql.ExperimentalApi
 import graphql.GraphQL
 import graphql.GraphqlErrorHelper.toSpecification
+import graphql.incremental.IncrementalExecutionResult
 import graphql.language.AstPrinter
 import graphql.language.OperationDefinition
+import graphql.nadel.NadelIncrementalServiceExecutionResult
 import graphql.nadel.NadelServiceExecutionResultImpl
 import graphql.nadel.NadelTypeDefinitionRegistry
 import graphql.nadel.Service
@@ -50,14 +53,25 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
                 ExecutionInput.newExecutionInput()
                     .query(AstPrinter.printAstCompact(serviceExecutionParameters.query))
                     .variables(serviceExecutionParameters.variables)
+                    .graphQLContext(mapOf(ExperimentalApi.ENABLE_INCREMENTAL_SUPPORT to true))
                     .also(::makeExecutionInput)
                     .build()
             )
             .thenApply {
-                NadelServiceExecutionResultImpl(
-                    data = it.getData() ?: mutableMapOf(),
-                    errors = it.errors.mapTo(ArrayList(), ::toSpecification),
-                )
+                if (it is IncrementalExecutionResult) {
+                    NadelIncrementalServiceExecutionResult(
+                        data = it.getData() ?: mutableMapOf(),
+                        errors = it.errors.mapTo(ArrayList(), ::toSpecification),
+                        incremental = it.incremental,
+                        incrementalItemPublisher = it.incrementalItemPublisher,
+                        hasNext = it.hasNext(),
+                    )
+                } else {
+                    NadelServiceExecutionResultImpl(
+                        data = it.getData() ?: mutableMapOf(),
+                        errors = it.errors.mapTo(ArrayList(), ::toSpecification),
+                    )
+                }
             }
     }
 
