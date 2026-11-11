@@ -48,12 +48,17 @@ open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecu
         if (serviceExecutionParameters.operationDefinition.operation == OperationDefinition.Operation.SUBSCRIPTION) {
             return CompletableFuture.completedFuture(NadelServiceExecutionResultImpl())
         }
+        val executionContext = serviceExecutionParameters.executionContext
         return graphQL
             .executeAsync(
                 ExecutionInput.newExecutionInput()
                     .query(AstPrinter.printAstCompact(serviceExecutionParameters.query))
                     .variables(serviceExecutionParameters.variables)
-                    .graphQLContext(mapOf(ExperimentalApi.ENABLE_INCREMENTAL_SUPPORT to true))
+                    .graphQLContext(
+                        mapOf(
+                            ExperimentalApi.ENABLE_INCREMENTAL_SUPPORT to executionContext.hints.deferSupport(),
+                        ),
+                    )
                     .also(::makeExecutionInput)
                     .build()
             )
