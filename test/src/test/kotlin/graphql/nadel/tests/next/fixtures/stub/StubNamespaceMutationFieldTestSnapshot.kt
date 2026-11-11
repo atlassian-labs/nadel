@@ -20,8 +20,55 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class StubNamespaceMutationFieldTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * mutation {
+     *   jira {
+     *     createLlmBackedIssue(input: {prompt: "Need tests for stubbed fields in Mutation
+     * context"}) {
+     *       success
+     *       issue {
+     *         id
+     *         key
+     *         title
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | mutation {
+                |   jira {
+                |     __typename__stubbed__createLlmBackedIssue: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "jira": {
+                |       "__typename__stubbed__createLlmBackedIssue": "JiraMutation"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

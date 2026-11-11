@@ -16,7 +16,50 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   businessReport_findRecentWorkByTeam(orgId: "turtles") {
+     *     __typename
+     *     edges {
+     *       node {
+     *         __typename
+     *         ... on JiraIssue {
+     *           key
+     *         }
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+        ExpectedServiceCall(
+            service = "__introspection",
+            query = """
+            | {
+            |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
+            | }
+            """.trimMargin(),
+            variables = "{}",
+            result = """
+            | {
+            |   "data": {
+            |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
+            |   }
+            | }
+            """.trimMargin(),
+            delayedResults = listOfJsonStrings(
+            ),
+        ),
         ExpectedServiceCall(
             service = "graph_store",
             query = """
@@ -84,7 +127,7 @@ public class HydrationRemainingArgumentsTestSnapshot : TestSnapshot() {
             delayedResults = listOfJsonStrings(
             ),
         ),
-    )
+        )
 
     /**
      * ```json

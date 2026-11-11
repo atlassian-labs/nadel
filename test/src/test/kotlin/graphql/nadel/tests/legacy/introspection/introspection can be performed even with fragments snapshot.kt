@@ -20,8 +20,100 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `introspection can be performed even with fragments snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   ...IntrospectionFrag
+     *   __type(name: "World") {
+     *     name
+     *   }
+     *   __typename
+     * }
+     * fragment IntrospectionFrag on Query {
+     *   __schema {
+     *     queryType {
+     *       name
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __schema {
+                |     queryType {
+                |       name
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__schema": {
+                |       "queryType": {
+                |         "name": "Query"
+                |       }
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __type(name: "World") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__type": {
+                |       "name": "World"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

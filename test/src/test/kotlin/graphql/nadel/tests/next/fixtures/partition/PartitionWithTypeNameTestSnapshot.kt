@@ -20,7 +20,50 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class PartitionWithTypeNameTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query getPartitionedThings{
+     *   __typename
+     *   things(ids: [
+     *       "thing-1:partition-A", "thing-2:partition-B", "thing-3:partition-A",
+     * "thing-4:partition-B",
+     *       "thing-5:partition-C", "thing-6:partition-D", "thing-7:partition-C",
+     * "thing-8:partition-D"
+     *   ]) {
+     *     __typename
+     *     id
+     *     name
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | query getPartitionedThings {
+                |   __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "things_service",
                 query = """

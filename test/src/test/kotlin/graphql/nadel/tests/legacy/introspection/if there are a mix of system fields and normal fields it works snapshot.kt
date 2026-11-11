@@ -21,7 +21,74 @@ private suspend fun main() {
 @Suppress("unused")
 public class `if there are a mix of system fields and normal fields it works snapshot` :
         TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   __schema {
+     *     queryType {
+     *       name
+     *     }
+     *   }
+     *   __typename
+     *   hello {
+     *     name
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __schema {
+                |     queryType {
+                |       name
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__schema": {
+                |       "queryType": {
+                |         "name": "Query"
+                |       }
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "MyService",
                 query = """

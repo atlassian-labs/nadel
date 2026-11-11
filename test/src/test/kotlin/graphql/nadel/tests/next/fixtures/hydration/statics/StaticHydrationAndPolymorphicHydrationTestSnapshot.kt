@@ -20,7 +20,56 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class StaticHydrationAndPolymorphicHydrationTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   businessReport_findRecentWorkByTeam(teamId: "hello") {
+     *     edges {
+     *       node {
+     *         ... on JiraIssue {
+     *           key
+     *         }
+     *         ... on BitbucketPullRequest {
+     *           title
+     *           patch
+     *         }
+     *       }
+     *       cursor
+     *     }
+     *     pageInfo {
+     *       hasNextPage
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "bitbucket",
                 query = """

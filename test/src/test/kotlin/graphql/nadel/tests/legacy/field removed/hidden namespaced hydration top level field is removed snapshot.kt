@@ -20,7 +20,49 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `hidden namespaced hydration top level field is removed snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   issueById(id: "C1") {
+     *     id
+     *     comment {
+     *       id
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   commentApi {
+                |     uuid_typename: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "commentApi": {
+                |       "uuid_typename": "CommentApi"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "IssueService",
                 query = """
