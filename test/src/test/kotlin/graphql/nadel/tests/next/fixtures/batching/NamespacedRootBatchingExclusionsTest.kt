@@ -47,34 +47,94 @@ class NamespacedRootBatchingExclusionsTest {
     }
 
     @Test
-    fun `ordinary batch containing a partition keeps its existing membership`() = runTest {
-        val capture = executeNamespacedQuery(
-            query = """
-                {
-                    partitioned(ids: ["one:A", "two:B"])
-                    flat: service_issue
-                    first: service { issue }
-                    second: service { issue }
+    fun `partitioned query roots stay separate regardless of namespace batching`() = runTest {
+        for (namespaceBatchingEnabled in listOf(false, true)) {
+            val capture = executeNamespacedQuery(
+                query = """
+                    {
+                        partitioned(ids: ["one:A", "two:B"])
+                        flat: service_issue
+                        first: service { issue }
+                        second: service { issue }
+                        reversed: partitioned(ids: ["two:B", "one:A"])
+                    }
+                """.trimIndent(),
+                namespaceHint = NadelBatchNamespacedRootFieldsHint { namespaceBatchingEnabled },
+                hooks = partitionHooks(),
+            )
+
+            val nonPartitionedQueries = if (namespaceBatchingEnabled) {
+                arrayOf("{ first: service { issue } second: service { issue } rename__flat__issue: issue }")
+            } else {
+                arrayOf(
+                    "{ first: service { issue } }",
+                    "{ second: service { issue } }",
+                    "{ rename__flat__issue: issue }",
+                )
+            }
+            assertBatchingQueries(
+                capture,
+                "{ partitioned(ids: [\"one:A\"]) }",
+                "{ partitioned(ids: [\"two:B\"]) }",
+                "{ reversed: partitioned(ids: [\"two:B\"]) }",
+                "{ reversed: partitioned(ids: [\"one:A\"]) }",
+                *nonPartitionedQueries,
+            )
+            assertBatchingData(
+                capture,
+                mapOf(
+                    "partitioned" to listOf("one:A", "two:B"),
+                    "reversed" to listOf("two:B", "one:A"),
+                    "flat" to "unsharded",
+                    "first" to mapOf("issue" to "unsharded"),
+                    "second" to mapOf("issue" to "unsharded"),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `partitioned mutation keeps its existing batch regardless of namespace batching`() = runTest {
+        val service = NadelIntegrationTest.Service(
+            name = "issues",
+            overallSchema = """
+                type Query { unused: String }
+                type Mutation {
+                    partitioned(ids: [ID!]!): [String] @partition(pathToPartitionArg: ["ids"])
+                    update(value: String!): String
                 }
             """.trimIndent(),
-            hooks = partitionHooks(),
+            runtimeWiring = { wiring ->
+                wiring.type("Mutation") { type ->
+                    type
+                        .dataFetcher("partitioned") { env -> env.getArgument<List<String>>("ids") }
+                        .dataFetcher("update") { env -> env.getArgument<String>("value") }
+                }
+            },
         )
+        for (namespaceBatchingEnabled in listOf(false, true)) {
+            val capture = executeNamespacedQuery(
+                query = """
+                    mutation {
+                        partitioned(ids: ["one:A", "two:B"])
+                        update(value: "three")
+                    }
+                """.trimIndent(),
+                namespaceHint = NadelBatchNamespacedRootFieldsHint { namespaceBatchingEnabled },
+                services = listOf(service),
+                hooks = partitionHooks(),
+            )
 
-        assertBatchingQueries(
-            capture,
-            "{ partitioned(ids: [\"one:A\"]) rename__flat__issue: issue }",
-            "{ partitioned(ids: [\"two:B\"]) }",
-            "{ first: service { issue } second: service { issue } }",
-        )
-        assertBatchingData(
-            capture,
-            mapOf(
-                "partitioned" to listOf("one:A", "two:B"),
-                "flat" to "unsharded",
-                "first" to mapOf("issue" to "unsharded"),
-                "second" to mapOf("issue" to "unsharded"),
-            ),
-        )
+            assertBatchingQueries(
+                capture,
+                "mutation { partitioned(ids: [\"one:A\"]) update(value: \"three\") }",
+                "mutation { partitioned(ids: [\"two:B\"]) }",
+            )
+            assertBatchingData(
+                capture,
+                mapOf("partitioned" to listOf("one:A", "two:B"), "update" to "three"),
+            )
+        }
     }
 
     @Test

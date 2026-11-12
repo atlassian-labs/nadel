@@ -43,7 +43,6 @@ internal class NadelFieldToService(
 
         val result = mutableListOf<NadelFieldAndService>()
         val batchedByGroup = LinkedHashMap<NadelBatchGroup, MutableList<ExecutableNormalizedField>>()
-        val namespacesByGroup = LinkedHashMap<NadelBatchGroup, MutableList<ExecutableNormalizedField>>()
         for (topLevelField in query.topLevelFields) {
             if (isNamespacedField(topLevelField)) {
                 for (entry in getServicePairsForNamespacedFields(topLevelField)) {
@@ -56,27 +55,18 @@ internal class NadelFieldToService(
                     if (group == null) {
                         result += entry
                     } else {
-                        namespacesByGroup.getOrPut(group) { mutableListOf() }.addAll(entry.fields)
+                        batchedByGroup.getOrPut(group) { mutableListOf() }.addAll(entry.fields)
                     }
                 }
                 continue
             }
 
             val service = getService(topLevelField)
-            if (batchPrefixedFields && canBatchRootField(topLevelField, service, executionHints)) {
+            if (batchPrefixedFields && canBatchRootField(topLevelField, service, executionContext)) {
                 val shardingTarget = executionContext.hooks.getShardingTarget(executionContext, service, topLevelField)
                 batchedByGroup.getOrPut(NadelBatchGroup(service, shardingTarget)) { mutableListOf() }.add(topLevelField)
             } else {
                 result += NadelFieldAndService(fields = listOf(topLevelField), service = service)
-            }
-        }
-
-        for ((group, namespaces) in namespacesByGroup) {
-            val roots = batchedByGroup[group]
-            if (roots != null && roots.none(::hasPartitionInstruction)) {
-                roots.addAll(namespaces)
-            } else {
-                result += NadelFieldAndService(fields = namespaces, service = group.service)
             }
         }
 
@@ -133,12 +123,15 @@ internal class NadelFieldToService(
     private fun canBatchRootField(
         field: ExecutableNormalizedField,
         service: Service,
-        executionHints: NadelExecutionHints,
+        executionContext: NadelExecutionContext,
     ): Boolean {
-        if (!executionHints.batchRootFields(service)) {
+        if (!executionContext.hints.batchRootFields(service)) {
             return false
         }
         if (field.name.startsWith("__")) {
+            return false
+        }
+        if (executionContext.query.operation == Operation.QUERY && hasPartitionInstruction(field)) {
             return false
         }
         return !dynamicServiceResolution.needsDynamicServiceResolution(field)
