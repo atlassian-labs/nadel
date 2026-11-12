@@ -41,7 +41,51 @@ public class GoodFaithIntrospectionDisabledTestSnapshot : TestSnapshot() {
      * ```
      */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   first: __type(name: "Echo") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "first": {
+                |       "name": "Echo"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   second: __type(name: "Echo") {
+                |     name
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "second": {
+                |       "name": "Echo"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

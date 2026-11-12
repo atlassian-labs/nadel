@@ -19,6 +19,7 @@ import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NadelSchemas
 import graphql.nadel.ServiceExecution
+import graphql.nadel.engine.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.error.NadelGraphQLErrorException
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -31,6 +32,7 @@ import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.nadel.validation.NadelSchemaValidationFactory
 import graphql.parser.Parser
+import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
@@ -204,6 +206,19 @@ abstract class NadelIntegrationTest(
 
         return Nadel.newNadel()
             .schemas(schemas)
+            .introspectionRunnerFactory { schema ->
+                val runner = makeIntrospectionRunner(schema)
+                ServiceExecution { parameters ->
+                    runner.execute(parameters).thenApply { result ->
+                        executionCapture.capture(
+                            service = "__introspection",
+                            query = AstPrinter.printAst(parameters.query),
+                            variables = parameters.variables,
+                            result = result,
+                        )
+                    }
+                }
+            }
             .instrumentation(makeInstrumentation())
             .schemaValidation(nadelSchemaValidation)
     }
@@ -228,6 +243,10 @@ abstract class NadelIntegrationTest(
             .serviceExecutionFactory { service ->
                 serviceExecutions[service]!!
             }
+    }
+
+    open fun makeIntrospectionRunner(schema: GraphQLSchema): ServiceExecution {
+        return NadelDefaultIntrospectionRunner(schema)
     }
 
     open fun makeServiceExecution(service: Service): ServiceExecution {

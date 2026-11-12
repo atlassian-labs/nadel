@@ -21,7 +21,50 @@ private suspend fun main() {
 @Suppress("unused")
 public class `typename is resolved even when no fields are queried from declaring service snapshot`
         : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * {
+     *   issue {
+     *     __typename
+     *     search {
+     *       id
+     *       count
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   issue {
+                |     __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "issue": {
+                |       "__typename": "IssueQuery"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "IssueSearch",
                 query = """

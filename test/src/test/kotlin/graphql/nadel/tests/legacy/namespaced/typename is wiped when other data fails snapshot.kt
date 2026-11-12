@@ -20,7 +20,49 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `typename is wiped when other data fails snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * {
+     *   issue {
+     *     __typename
+     *     getIssue {
+     *       text
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   issue {
+                |     __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "issue": {
+                |       "__typename": "IssueQuery"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "Issues",
                 query = """

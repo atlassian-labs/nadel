@@ -20,8 +20,47 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class NamespaceLikeShortCircuitsIntrospectionTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * {
+     *   test {
+     *     __typename
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   test {
+                |     __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "test": {
+                |       "__typename": "TestQuery"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

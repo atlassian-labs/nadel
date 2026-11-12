@@ -4,8 +4,12 @@ import graphql.GraphQLContext
 import graphql.execution.ExecutionId
 import graphql.language.Document
 import graphql.language.OperationDefinition
+import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.normalized.ExecutableNormalizedField
+import io.mockk.coVerifyOrder
+import io.mockk.confirmVerified
+import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
@@ -48,6 +52,7 @@ class ServiceExecutionParametersTest {
         fields: List<ExecutableNormalizedField>,
         expectedSingular: ExecutableNormalizedField,
     ) {
+        val executionContext = mockk<NadelExecutionContext>()
         val parameters = ServiceExecutionParameters(
             query = Document.newDocument().build(),
             context = null,
@@ -57,16 +62,22 @@ class ServiceExecutionParametersTest {
                 .operation(OperationDefinition.Operation.QUERY)
                 .build(),
             executionId = ExecutionId.from("service-execution-parameters-test"),
+            executionContext = executionContext,
             serviceExecutionContext = NadelServiceExecutionContext.None,
             hydrationDetails = null,
             executableNormalizedFields = fields,
         )
 
+        assertSame(executionContext, parameters.executionContext)
         assertSame(expectedSingular, parameters.executableNormalizedField)
         assertEquals(fields.size, parameters.executableNormalizedFields.size)
         fields.forEachIndexed { index, field ->
             assertSame(field, parameters.executableNormalizedFields[index])
         }
+        coVerifyOrder(inverse = true) {
+            executionContext.hints
+        }
+        confirmVerified(executionContext)
     }
 
     private fun field(name: String): ExecutableNormalizedField {

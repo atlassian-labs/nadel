@@ -20,8 +20,44 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class StubRootMutationFieldTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * mutation {
+     *   createLlmBackedIssue(input: {prompt: "Need tests for stubbed fields in Mutation context"})
+     * {
+     *     success
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | mutation {
+                |   __typename__stubbed__createLlmBackedIssue: __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename__stubbed__createLlmBackedIssue": "Mutation"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

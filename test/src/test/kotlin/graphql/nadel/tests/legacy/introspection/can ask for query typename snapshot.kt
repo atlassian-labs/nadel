@@ -20,8 +20,41 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `can ask for query typename snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   __typename
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

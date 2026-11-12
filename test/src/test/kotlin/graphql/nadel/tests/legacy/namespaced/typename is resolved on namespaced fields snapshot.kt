@@ -20,7 +20,54 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `typename is resolved on namespaced fields snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * {
+     *   issue {
+     *     __typename
+     *     aliasTypename: __typename
+     *     getIssue {
+     *       __typename
+     *       aliasTypename: __typename
+     *       text
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   issue {
+                |     __typename
+                |     aliasTypename: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "issue": {
+                |       "__typename": "IssueQuery",
+                |       "aliasTypename": "IssueQuery"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "Issues",
                 query = """

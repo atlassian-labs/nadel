@@ -20,7 +20,40 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class StaticHydrationScalarFieldTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   copyField(id: "wow")
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __typename__hydration__copyField: __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename__hydration__copyField": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """

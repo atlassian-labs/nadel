@@ -20,8 +20,118 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `can delete fields and types snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query GetTypes {
+     *   __schema {
+     *     types {
+     *       name
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | query GetTypes {
+                |   __schema {
+                |     types {
+                |       name
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__schema": {
+                |       "types": [
+                |         {
+                |           "name": "Bar"
+                |         },
+                |         {
+                |           "name": "Boolean"
+                |         },
+                |         {
+                |           "name": "Float"
+                |         },
+                |         {
+                |           "name": "Foo"
+                |         },
+                |         {
+                |           "name": "ID"
+                |         },
+                |         {
+                |           "name": "Int"
+                |         },
+                |         {
+                |           "name": "JSON"
+                |         },
+                |         {
+                |           "name": "NadelBatchObjectIdentifiedBy"
+                |         },
+                |         {
+                |           "name": "NadelHydrationArgument"
+                |         },
+                |         {
+                |           "name": "NadelHydrationCondition"
+                |         },
+                |         {
+                |           "name": "NadelHydrationResultCondition"
+                |         },
+                |         {
+                |           "name": "NadelHydrationResultFieldPredicate"
+                |         },
+                |         {
+                |           "name": "Query"
+                |         },
+                |         {
+                |           "name": "String"
+                |         },
+                |         {
+                |           "name": "__Directive"
+                |         },
+                |         {
+                |           "name": "__DirectiveLocation"
+                |         },
+                |         {
+                |           "name": "__EnumValue"
+                |         },
+                |         {
+                |           "name": "__Field"
+                |         },
+                |         {
+                |           "name": "__InputValue"
+                |         },
+                |         {
+                |           "name": "__Schema"
+                |         },
+                |         {
+                |           "name": "__Type"
+                |         },
+                |         {
+                |           "name": "__TypeKind"
+                |         }
+                |       ]
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

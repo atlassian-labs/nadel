@@ -20,8 +20,43 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `top level field is removed snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   commentById(id: "C1") {
+     *     id
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   uuid_typename: __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "uuid_typename": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

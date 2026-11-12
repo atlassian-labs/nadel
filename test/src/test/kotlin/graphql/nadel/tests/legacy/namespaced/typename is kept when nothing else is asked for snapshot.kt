@@ -20,8 +20,47 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `typename is kept when nothing else is asked for snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * {
+     *   issue {
+     *     __typename
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   issue {
+                |     __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "issue": {
+                |       "__typename": "IssueQuery"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json

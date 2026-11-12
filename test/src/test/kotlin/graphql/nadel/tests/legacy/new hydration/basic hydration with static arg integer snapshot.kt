@@ -20,7 +20,48 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class `basic hydration with static arg integer snapshot` : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   foo {
+     *     bar {
+     *       name
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   foo {
+                |     __typename__hydration__bar: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "foo": {
+                |       "__typename__hydration__bar": "Foo"
+                |     }
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "service2",
                 query = """

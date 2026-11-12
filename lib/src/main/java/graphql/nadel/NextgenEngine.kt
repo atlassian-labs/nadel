@@ -401,6 +401,7 @@ internal class NextgenEngine(
             executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
             variables = compileResult.variables,
             operationDefinition = compileResult.document.definitions.singleOfType(),
+            executionContext = executionContext,
             serviceExecutionContext = serviceExecutionContext,
             hydrationDetails = executionHydrationDetails,
             executableNormalizedFields = topLevelFields,

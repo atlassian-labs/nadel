@@ -20,7 +20,63 @@ private suspend fun main() {
  */
 @Suppress("unused")
 public class StaticHydrationOverlappingHydrationTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   graphStore_query(query: "Hello World") {
+     *     edges {
+     *       node {
+     *         __typename
+     *       }
+     *     }
+     *   }
+     *   businessReport_findRecentWorkByTeam(teamId: "hello") {
+     *     __typename
+     *     edges {
+     *       __typename
+     *       node {
+     *         __typename
+     *         ... on JiraIssue {
+     *           key
+     *         }
+     *       }
+     *       cursor
+     *     }
+     *     pageInfo {
+     *       __typename
+     *       hasNextPage
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | {
+                |   __typename__hydration__businessReport_findRecentWorkByTeam: __typename
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {
+                |     "__typename__hydration__businessReport_findRecentWorkByTeam": "Query"
+                |   }
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
             ExpectedServiceCall(
                 service = "graph_store",
                 query = """

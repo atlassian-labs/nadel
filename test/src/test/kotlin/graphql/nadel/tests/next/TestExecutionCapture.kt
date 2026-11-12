@@ -6,6 +6,9 @@ import graphql.incremental.DelayedIncrementalPartialResult
 import graphql.incremental.IncrementalExecutionResult
 import graphql.incremental.IncrementalExecutionResultImpl
 import graphql.nadel.NadelExecutionInput
+import graphql.nadel.NadelIncrementalServiceExecutionResult
+import graphql.nadel.NadelServiceExecutionResultImpl
+import graphql.nadel.ServiceExecutionResult
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.engine.util.JsonMap
@@ -45,6 +48,54 @@ class TestExecutionCapture {
         variables: JsonMap,
         result: ExecutionResult,
     ): ExecutionResult {
+        val delayedResults = captureCall(service, query, variables, deepClone(result))
+
+        return spyOnIncrementalResults(result) {
+            delayedResults.add(deepClone(it))
+        }
+    }
+
+    fun capture(
+        service: String,
+        query: String,
+        variables: JsonMap,
+        result: ServiceExecutionResult,
+    ): ServiceExecutionResult {
+        val specification = linkedMapOf<String, Any?>("data" to result.data)
+        if (result.errors.isNotEmpty()) {
+            specification["errors"] = result.errors
+        }
+        if (result.extensions.isNotEmpty()) {
+            specification["extensions"] = result.extensions
+        }
+        if (result is NadelIncrementalServiceExecutionResult) {
+            specification["hasNext"] = result.hasNext
+            result.incremental?.let { incremental ->
+                specification["incremental"] = incremental.map { it.toSpecification() }
+            }
+        }
+
+        val delayedResults = captureCall(service, query, variables, jsonObjectMapper.convertValue(specification))
+
+        return when (result) {
+            is NadelServiceExecutionResultImpl -> result
+            is NadelIncrementalServiceExecutionResult -> result.copy(
+                incrementalItemPublisher = result.incrementalItemPublisher
+                    .asFlow()
+                    .onEach {
+                        delayedResults.add(deepClone(it))
+                    }
+                    .asPublisher(),
+            )
+        }
+    }
+
+    private fun captureCall(
+        service: String,
+        query: String,
+        variables: JsonMap,
+        result: JsonMap,
+    ): MutableList<JsonMap> {
         val delayedResults = synchronizedMutableListOf<JsonMap>()
 
         val canonicalQuery = AstPrinter.printAst(
@@ -58,14 +109,12 @@ class TestExecutionCapture {
                 service = service,
                 query = canonicalQuery,
                 variables = variables,
-                result = deepClone(result),
+                result = result,
                 delayedResults = delayedResults,
             ),
         )
 
-        return spyOnIncrementalResults(result) {
-            delayedResults.add(deepClone(it))
-        }
+        return delayedResults
     }
 
     fun capture(executionInput: NadelExecutionInput, result: ExecutionResult): ExecutionResult {

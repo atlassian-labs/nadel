@@ -21,8 +21,45 @@ private suspend fun main() {
 @Suppress("unused")
 public class `top level field is removed for a subscription with namespaced field snapshot` :
         TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * subscription {
+     *   commentsApi {
+     *     onCommentUpdated(id: "C1") {
+     *       id
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
-            )
+            ExpectedServiceCall(
+                service = "__introspection",
+                query = """
+                | subscription {
+                |   commentsApi {
+                |     uuid_typename: __typename
+                |   }
+                | }
+                """.trimMargin(),
+                variables = "{}",
+                result = """
+                | {
+                |   "data": {}
+                | }
+                """.trimMargin(),
+                delayedResults = listOfJsonStrings(
+                ),
+            ),
+        )
 
     /**
      * ```json
