@@ -126,7 +126,7 @@ internal fun assertBatchingServiceQueries(
 
     assertEquals(
         queries.mapValues { (_, documents) -> documents.map(::canonical).sorted() },
-        capture.calls.groupBy { it.service }
+        capture.calls.filterNot { it.service == "__introspection" }.groupBy { it.service }
             .mapValues { (_, calls) -> calls.map { canonical(it.query) }.sorted() },
     )
 }
