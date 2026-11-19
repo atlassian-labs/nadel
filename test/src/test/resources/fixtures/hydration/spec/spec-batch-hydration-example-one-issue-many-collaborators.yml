@@ -1,0 +1,135 @@
+name: "spec batch hydration example one issue many collaborators"
+enabled: true
+# language=GraphQL
+overallSchema:
+  issues: |
+    type Query {
+      topIssue: Issue
+    }
+    type Issue {
+      title: String
+      collaboratorIds: [ID!]
+      collaborators: [User]
+      @hydrated(
+        service: "users"
+        field: "usersByIds"
+        arguments: [{name: "ids" value: "$source.collaboratorIds"}]
+        inputIdentifiedBy: [{sourceId: "collaboratorIds", resultId: "id"}]
+      )
+    }
+  users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+      email: String
+    }
+# language=GraphQL
+underlyingSchema:
+  issues: |
+    type Query {
+      topIssue: Issue
+      myIssues(n: Int! = 10): [Issue]
+    }
+    type Issue {
+      title: String
+      assigneeId: ID
+      collaboratorIds: [ID!]
+    }
+  users: |
+    type Query {
+      usersByIds(ids: [ID!]!): [User]
+    }
+    type User {
+      id: ID!
+      name: String
+      email: String
+    }
+# language=GraphQL
+query: |
+  query {
+    topIssue {
+      title
+      collaborators {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: "issues"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          topIssue {
+            __typename__batch_hydration__collaborators: __typename
+            batch_hydration__collaborators__collaboratorIds: collaboratorIds
+            title
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "topIssue": {
+            "__typename__batch_hydration__collaborators": "Issue",
+            "batch_hydration__collaborators__collaboratorIds": [
+              "user-256",
+              "user-8",
+              "user-64"
+            ],
+            "title": "Popular"
+          }
+        }
+      }
+  - serviceName: "users"
+    request:
+      # language=GraphQL
+      query: |
+        {
+          usersByIds(ids: ["user-256", "user-8", "user-64"]) {
+            batch_hydration__collaborators__id: id
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIds": [
+            {
+              "batch_hydration__collaborators__id": "user-256",
+              "name": "2^8"
+            },
+            {
+              "batch_hydration__collaborators__id": "user-64",
+              "name": "2^6"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "topIssue": {
+        "title": "Popular",
+        "collaborators": [
+          {
+            "name": "2^8"
+          },
+          null,
+          {
+            "name": "2^6"
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }
