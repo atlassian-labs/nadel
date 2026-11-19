@@ -390,6 +390,37 @@ class NadelHydrationArgumentTypeValidationTest {
     }
 
     @Test
+    fun `non-batched hydration succeeds if enum is supplied where String is required`() {
+        val fixture = NadelValidationTestFixture(
+            overallSchema = mapOf(
+                "jira" to /*language=GraphQL*/ """
+                    type Query {
+                        issueById(search: String): JiraIssue
+                    }
+                    enum IssueType {
+                      Story
+                      Task
+                      Bug
+                    }
+                    type JiraIssue {
+                        info: IssueType
+                        related: JiraIssue @hydrated(
+                            field: "issueById"
+                            arguments: [{ name: "search", value: "$source.info" }]
+                        )
+                    }
+                """.trimIndent(),
+            ),
+        )
+
+        // When
+        val errors = validate(fixture)
+
+        // Then
+        assertTrue(errors.isEmpty())
+    }
+
+    @Test
     fun `non-batched hydration fails if required argument is missing`() {
         val fixture = NadelValidationTestFixture(
             overallSchema = mapOf(
