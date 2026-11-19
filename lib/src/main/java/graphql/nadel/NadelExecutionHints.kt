@@ -8,6 +8,7 @@ import graphql.nadel.hints.NadelDisableSharedTypesHint
 import graphql.nadel.hints.NadelExecuteOnEngineSchemaHint
 import graphql.nadel.hints.NadelHydrationExecutableSourceFields
 import graphql.nadel.hints.NadelHydrationFilterObjectTypesHint
+import graphql.nadel.hints.NadelJavaTransformFutureFastPathHint
 import graphql.nadel.hints.NadelReachableUnderlyingServiceTypesHint
 import graphql.nadel.hints.NadelShadowUnderlyingTypeNameInvestigation
 import graphql.nadel.hints.NadelSharedTypeRenamesHint
@@ -24,6 +25,7 @@ data class NadelExecutionHints(
     val disableSharedTypes: NadelDisableSharedTypesHint,
     val useReachableUnderlyingServiceTypes: NadelReachableUnderlyingServiceTypesHint,
     val batchRootFields: NadelBatchRootFieldsHint,
+    val javaTransformFutureFastPath: NadelJavaTransformFutureFastPathHint,
 ) {
     /**
      * Returns a builder with the same field values as this object.
@@ -47,6 +49,7 @@ data class NadelExecutionHints(
         private var disableSharedTypes = NadelDisableSharedTypesHint { false }
         private var useReachableUnderlyingServiceTypes = NadelReachableUnderlyingServiceTypesHint { false }
         private var batchRootFields = NadelBatchRootFieldsHint { false }
+        private var javaTransformFutureFastPath = NadelJavaTransformFutureFastPathHint { false }
 
         constructor()
 
@@ -62,6 +65,7 @@ data class NadelExecutionHints(
             disableSharedTypes = nadelExecutionHints.disableSharedTypes
             useReachableUnderlyingServiceTypes = nadelExecutionHints.useReachableUnderlyingServiceTypes
             batchRootFields = nadelExecutionHints.batchRootFields
+            javaTransformFutureFastPath = nadelExecutionHints.javaTransformFutureFastPath
         }
 
         fun legacyOperationNames(flag: LegacyOperationNamesHint): Builder {
@@ -119,6 +123,11 @@ data class NadelExecutionHints(
             return this
         }
 
+        fun javaTransformFutureFastPath(flag: NadelJavaTransformFutureFastPathHint): Builder {
+            javaTransformFutureFastPath = flag
+            return this
+        }
+
         fun build(): NadelExecutionHints {
             return NadelExecutionHints(
                 legacyOperationNames,
@@ -132,6 +141,7 @@ data class NadelExecutionHints(
                 disableSharedTypes,
                 useReachableUnderlyingServiceTypes,
                 batchRootFields,
+                javaTransformFutureFastPath,
             )
         }
     }
