@@ -105,9 +105,13 @@ interface NadelExecutionHooks {
      *  * batch hydration with arguments `"shard-0/issue-0", "shard-0/issue-1"`
      *  * batch hydration with arguments `"shard-1/issue-0", "shard-1/issue-1"`
      *
+     * The flattened result should contain every supplied value exactly once according to value
+     * equality. Coalesced hydration validates this partition contract and falls back to isolated
+     * execution when values are added, removed or duplicated.
+     *
      * @param argumentValues list of argument values for this batch hydration
      * @param instruction batch hydration instruction for this hydration
-     * @param instruction user context supplied to the execution input
+     * @param userContext user context supplied to the execution input
      * @return list of argument values partitioned accordingly. If no partitioning needed, return
      * `listOf(argumentValues)`
      */
