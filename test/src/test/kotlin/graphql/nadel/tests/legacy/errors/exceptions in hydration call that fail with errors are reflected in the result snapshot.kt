@@ -16,12 +16,37 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class
         `exceptions in hydration call that fail with errors are reflected in the result snapshot` :
         TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   foo {
+     *     bar {
+     *       name
+     *       nestedBar {
+     *         name
+     *         nestedBar {
+     *           name
+     *         }
+     *       }
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             ExpectedServiceCall(
                 service = "Foo",
@@ -54,11 +79,11 @@ public class
      * {
      *   "errors": [
      *     {
-     *       "message": "An exception occurred invoking the service 'Bar': Pop goes the weasel",
+     *       "message": "An PopGoesTheWeaselException occurred invoking the service Bar",
      *       "locations": [],
      *       "extensions": {
      *         "executionId": "test",
-     *         "classification": "DataFetchingException"
+     *         "classification": "NadelUncaughtExecutionError"
      *       }
      *     }
      *   ],
@@ -75,11 +100,11 @@ public class
             | {
             |   "errors": [
             |     {
-            |       "message": "An exception occurred invoking the service 'Bar': Pop goes the weasel",
+            |       "message": "An PopGoesTheWeaselException occurred invoking the service Bar",
             |       "locations": [],
             |       "extensions": {
             |         "executionId": "test",
-            |         "classification": "DataFetchingException"
+            |         "classification": "NadelUncaughtExecutionError"
             |       }
             |     }
             |   ],

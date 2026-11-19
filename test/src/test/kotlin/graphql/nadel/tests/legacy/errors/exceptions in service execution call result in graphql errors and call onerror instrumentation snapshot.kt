@@ -16,12 +16,29 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class
         `exceptions in service execution call result in graphql errors and call onerror instrumentation snapshot`
         : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   hello {
+     *     name
+     *   }
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             )
 
@@ -30,12 +47,11 @@ public class
      * {
      *   "errors": [
      *     {
-     *       "message": "An exception occurred invoking the service 'MyService': Pop goes the
-     * weasel",
+     *       "message": "An PopGoesTheWeaselException occurred invoking the service MyService",
      *       "locations": [],
      *       "extensions": {
      *         "executionId": "test",
-     *         "classification": "DataFetchingException"
+     *         "classification": "NadelUncaughtExecutionError"
      *       }
      *     }
      *   ],
@@ -50,11 +66,11 @@ public class
             | {
             |   "errors": [
             |     {
-            |       "message": "An exception occurred invoking the service 'MyService': Pop goes the weasel",
+            |       "message": "An PopGoesTheWeaselException occurred invoking the service MyService",
             |       "locations": [],
             |       "extensions": {
             |         "executionId": "test",
-            |         "classification": "DataFetchingException"
+            |         "classification": "NadelUncaughtExecutionError"
             |       }
             |     }
             |   ],

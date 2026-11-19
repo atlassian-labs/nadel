@@ -16,10 +16,25 @@ private suspend fun main() {
 /**
  * This class is generated. Do NOT modify.
  *
- * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots
+ * Refer to [graphql.nadel.tests.next.UpdateTestSnapshots]
  */
 @Suppress("unused")
 public class InstrumentationBeginQueryExecutionOnCompleteOnFailureTestSnapshot : TestSnapshot() {
+    /**
+     * Query
+     *
+     * ```graphql
+     * query {
+     *   echo
+     * }
+     * ```
+     *
+     * Variables
+     *
+     * ```json
+     * {}
+     * ```
+     */
     override val calls: List<ExpectedServiceCall> = listOf(
             )
 
@@ -28,11 +43,11 @@ public class InstrumentationBeginQueryExecutionOnCompleteOnFailureTestSnapshot :
      * {
      *   "errors": [
      *     {
-     *       "message": "An exception occurred invoking the service 'tester': no-op",
+     *       "message": "An UnsupportedOperationException occurred invoking the service tester",
      *       "locations": [],
      *       "extensions": {
      *         "executionId": "stable-id",
-     *         "classification": "DataFetchingException"
+     *         "classification": "NadelUncaughtExecutionError"
      *       }
      *     }
      *   ],
@@ -47,11 +62,11 @@ public class InstrumentationBeginQueryExecutionOnCompleteOnFailureTestSnapshot :
             | {
             |   "errors": [
             |     {
-            |       "message": "An exception occurred invoking the service 'tester': no-op",
+            |       "message": "An UnsupportedOperationException occurred invoking the service tester",
             |       "locations": [],
             |       "extensions": {
             |         "executionId": "stable-id",
-            |         "classification": "DataFetchingException"
+            |         "classification": "NadelUncaughtExecutionError"
             |       }
             |     }
             |   ],

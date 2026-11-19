@@ -29,7 +29,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
-    ): ServiceExecutionResult {
+    ) {
         val nodes = JsonNodes(result.data)
         val instructions = getMutationInstructions(
             executionContext,
@@ -42,7 +42,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             nodes
         )
         mutate(result, instructions)
-        return result
     }
 
     suspend fun transform(
@@ -54,7 +53,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
         deferPayload: DeferPayload,
-    ): DeferPayload {
+    ) {
         val nodes = JsonNodes(
             deferPayload.getData<JsonMap?>() ?: emptyMap(),
             pathPrefix = NadelQueryPath(deferPayload.path.filterIsInstance<String>())
@@ -70,7 +69,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             nodes
         )
         mutate(deferPayload, instructions)
-        return deferPayload
     }
 
     private suspend fun getMutationInstructions(
