@@ -18,7 +18,7 @@ import graphql.nadel.engine.NadelServiceExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.document.DocumentPredicates
-import graphql.nadel.engine.instrumentation.NadelInstrumentationTimer
+import graphql.nadel.time.NadelInstrumentationTimer
 import graphql.nadel.engine.plan.NadelExecutionPlan
 import graphql.nadel.engine.plan.NadelExecutionPlanFactory
 import graphql.nadel.engine.transform.NadelTransform
