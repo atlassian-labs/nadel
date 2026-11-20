@@ -1,17 +1,18 @@
 package graphql.nadel.engine.transform.query
 
 import graphql.introspection.Introspection
+import graphql.language.OperationDefinition.Operation
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.IntrospectionService
 import graphql.nadel.engine.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.blueprint.NadelPartitionInstruction
 import graphql.nadel.engine.util.copyWithChildren
 import graphql.nadel.engine.util.makeFieldCoordinates
 import graphql.nadel.util.NamespacedUtil.isNamespacedField
 import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedOperation
 import graphql.schema.GraphQLSchema
 
 internal class NadelFieldToService(
@@ -27,10 +28,10 @@ internal class NadelFieldToService(
     ): List<NadelFieldAndService> {
         val query = executionContext.query
         val executionHints = executionContext.hints
+        val batchPrefixedFields = executionHints.batchRootFields()
+        val batchNamespacedFields = query.operation == Operation.QUERY && executionHints.batchNamespacedRootFields()
 
-        // Feature flag: when root-field batching is globally disabled, keep the original behaviour
-        // of one entry (i.e. one service call) per root field.
-        if (!executionHints.batchRootFields()) {
+        if (!batchPrefixedFields && !batchNamespacedFields) {
             return query.topLevelFields.flatMap { topLevelField ->
                 if (isNamespacedField(topLevelField)) {
                     getServicePairsForNamespacedFields(topLevelField)
@@ -40,20 +41,28 @@ internal class NadelFieldToService(
             }
         }
 
-        // Group batch-eligible root fields into a single entry (one service call) per (service, shard).
-        // Two root fields can be owned by the same service but routed to different shards (e.g. different
-        // cloud IDs), so they must not be batched together. Nadel stays generic here: the sharding target
-        // comes from NadelExecutionHooks.getShardingTarget and is used purely as an opaque grouping key.
         val result = mutableListOf<NadelFieldAndService>()
         val batchedByGroup = LinkedHashMap<NadelBatchGroup, MutableList<ExecutableNormalizedField>>()
         for (topLevelField in query.topLevelFields) {
             if (isNamespacedField(topLevelField)) {
-                result += getServicePairsForNamespacedFields(topLevelField)
+                for (entry in getServicePairsForNamespacedFields(topLevelField)) {
+                    val group = if (batchNamespacedFields) {
+                        getNamespaceBatchGroup(executionContext, entry)
+                    } else {
+                        null
+                    }
+
+                    if (group == null) {
+                        result += entry
+                    } else {
+                        batchedByGroup.getOrPut(group) { mutableListOf() }.addAll(entry.fields)
+                    }
+                }
                 continue
             }
 
             val service = getService(topLevelField)
-            if (canBatchRootField(topLevelField, service, executionHints)) {
+            if (batchPrefixedFields && canBatchRootField(topLevelField, service, executionContext)) {
                 val shardingTarget = executionContext.hooks.getShardingTarget(executionContext, service, topLevelField)
                 batchedByGroup.getOrPut(NadelBatchGroup(service, shardingTarget)) { mutableListOf() }.add(topLevelField)
             } else {
@@ -68,6 +77,45 @@ internal class NadelFieldToService(
         return result
     }
 
+    private fun getNamespaceBatchGroup(
+        executionContext: NadelExecutionContext,
+        entry: NadelFieldAndService,
+    ): NadelBatchGroup? {
+        if (!executionContext.hints.batchNamespacedRootFields(entry.service)) {
+            return null
+        }
+
+        val namespace = entry.fields.single()
+        if (!canBatchNamespaceField(namespace) ||
+            namespace.children.isEmpty() ||
+            namespace.children.any { !canBatchNamespaceField(it) }
+        ) {
+            return null
+        }
+
+        val targets = namespace.children.map { child ->
+            executionContext.hooks.getShardingTarget(executionContext, entry.service, child)
+        }.distinct()
+
+        if (targets.size != 1) {
+            return null
+        }
+
+        return NadelBatchGroup(entry.service, targets.single())
+    }
+
+    private fun canBatchNamespaceField(field: ExecutableNormalizedField): Boolean {
+        return !field.name.startsWith("__") &&
+            !hasPartitionInstruction(field) &&
+            !dynamicServiceResolution.needsDynamicServiceResolution(field)
+    }
+
+    private fun hasPartitionInstruction(field: ExecutableNormalizedField): Boolean {
+        return overallExecutionBlueprint
+            .getTypeNameToInstructionMap<NadelPartitionInstruction>(field)
+            .isNotEmpty()
+    }
+
     /**
      * Root fields are only batched into a single service call when the service opts in via
      * [NadelExecutionHints.batchRootFields].
@@ -75,12 +123,15 @@ internal class NadelFieldToService(
     private fun canBatchRootField(
         field: ExecutableNormalizedField,
         service: Service,
-        executionHints: NadelExecutionHints,
+        executionContext: NadelExecutionContext,
     ): Boolean {
-        if (!executionHints.batchRootFields(service)) {
+        if (!executionContext.hints.batchRootFields(service)) {
             return false
         }
         if (field.name.startsWith("__")) {
+            return false
+        }
+        if (executionContext.query.operation == Operation.QUERY && hasPartitionInstruction(field)) {
             return false
         }
         return !dynamicServiceResolution.needsDynamicServiceResolution(field)
@@ -94,8 +145,6 @@ internal class NadelFieldToService(
         fields: List<ExecutableNormalizedField>,
         originalService: Service,
     ): Service {
-        // Dynamically-resolved fields are never batched (see canBatchRootField), so dynamic
-        // resolution only applies to single-field entries; batched entries keep the original service.
         val field = fields.singleOrNull() ?: return originalService
         return if (dynamicServiceResolution.needsDynamicServiceResolution(field)) {
             dynamicServiceResolution.resolveServiceForField(field)
